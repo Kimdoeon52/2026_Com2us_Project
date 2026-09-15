@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-// 파츠 배치 그리드. 드래그·UI는 다루지 않는다
+// 파츠 배치 그리드
 public class InventoryGrid
 {
     public struct Placement
@@ -53,6 +53,26 @@ public class InventoryGrid
             }
         }
 
+        return true;
+    }
+
+    // 칸을 점유한 배치 인덱스. 비었으면 -1
+    public int GetIndexAt(Vector2Int cell)
+    {
+        if (cell.x < 0 || cell.y < 0 || cell.x >= _width || cell.y >= _height)
+            return Empty;
+
+        return _cells[CellIndex(cell.x, cell.y)];
+    }
+
+    public bool TryGetPlacement(int index, out Placement placement)
+    {
+        placement = default;
+
+        if (index < 0 || index >= _placements.Count)
+            return false;
+
+        placement = _placements[index];
         return true;
     }
 

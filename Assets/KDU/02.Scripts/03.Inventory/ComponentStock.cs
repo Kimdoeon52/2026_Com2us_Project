@@ -1,7 +1,7 @@
-using System;
+﻿using System;
 using UnityEngine;
 
-// 등급별 부품 스택. 개별 ID 없이 int 배열 하나로 충분하다
+// 등급별 부품 스택
 [Serializable]
 public class ComponentStock : IComponentSink
 {
@@ -45,7 +45,6 @@ public class ComponentStock : IComponentSink
         Array.Clear(_counts, 0, _counts.Length);
     }
 
-    // 세이브가 예전 등급 개수로 저장돼 있어도 맞춘다
     private void EnsureSize()
     {
         if (_counts == null)

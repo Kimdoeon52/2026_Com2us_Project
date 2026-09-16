@@ -52,16 +52,18 @@
 
 ### 폴더 구조
 
+실제 저장소 컨벤션(번호+한글 네이밍, NYH/CSH/KDU/LSH 공통)에 맞춰 아래 경로를 쓴다.
+
 ```
-Assets/Scripts/Combat/
-    Data/       ActionData.cs  PartData.cs  CoreData.cs  FrameBox.cs  CombatEnums.cs
-    Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs
-    Systems/    ActionExecutor.cs  HitDetection.cs  DurabilitySystem.cs
+Assets/NYH/02. Scripts/Combat/
+    Data/       ActionData.cs ✅  PartData.cs  CoreData.cs  FrameBox.cs  CombatEnums.cs ✅
+    Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
+    Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  StunSystem.cs  RobotAssembler.cs
-    Input/      IInputSource.cs  PlayerInputSource.cs  AIInputSource.cs
+    Input/      IInputSource.cs ✅  PlayerInputSource.cs  AIInputSource.cs
     View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs
 
-Assets/Data/Combat/
+Assets/NYH/04. SO/Combat/
     Actions/    잽.asset  훅.asset  스트레이트.asset  ...
     Parts/
     Cores/
@@ -467,13 +469,17 @@ F3 : CombatTick()을 수동으로 1회 호출 → 정확히 1프레임 전진
 2. ⬜ 좌우 이동 + 키 입력 시 디버그 로그
 3. ⬜ `CombatClock` — 1/60초 고정 틱 (§3). **전투 로직을 짜기 전에 먼저 만든다.**
    나중에 끼워 넣으려 하면 이미 `Update()`에 흩어진 코드를 전부 뜯어야 한다
-4. ⬜ `ActionData` / `ActionState` / `ActionExecutor` — 잽 하나가 3구간으로 도는 것
-   - 후딜 중 재입력이 무시되는지 반드시 확인
+4. 🔶 `ActionData` / `ActionState` / `ActionExecutor` — 잽 하나가 3구간으로 도는 것
+   - ✅ `ActionData` (SO), `ActionState`, `ActionExecutor`, `IInputSource` 초안 작성 완료
+   - ✅ `ActionState`에 스킬 연동용 이벤트 훅(`OnActionBegin`/`OnActionActiveStart`/`OnActionEnd`) 포함 — §13 참조
+   - ⬜ 후딜 중 재입력이 무시되는지 실제 플레이로 반드시 확인 (`CanAcceptNewAction` 로직 자체는 구현됨)
+   - ⬜ `CombatClock`과 배선 (지금은 `ExecuteTick()`을 누가 호출할지 미연결 상태)
 5. ⬜ `BoxDrawer` (Gizmos) + `FrameStepper` — 판정 없이 네모만
 6. ⬜ `HitDetection` — AABB 겹침
 7. ⬜ `KnockbackSystem` / `StunSystem`
 8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴
 9. ⬜ `AIInputSource` — 보스 패턴
+10. ⬜ `IUsable` 인터페이스 확정 + 상희(CSH) 스킬 연동 지점 배선 (§13) — CSH `SkillBase` 쪽이 어느 정도 채워진 뒤 진행
 
 ---
 
@@ -486,3 +492,74 @@ F3 : CombatTick()을 수동으로 1회 호출 → 정확히 1프레임 전진
   3층의 시스템 개수는 고정이며, 늘어나야 할 이유가 있으면 먼저 물어볼 것
 - 수치가 필요한데 프레임표에 없으면 **임의로 지어내지 말고 물어볼 것.**
   밸런스 수치는 기획이 정하는 것이지 프로그래머가 정하는 것이 아니다
+
+---
+
+## 13. 스킬(CSH) 연동 — 이벤트 훅으로만 접촉한다
+
+담당 경계: **NYH는 기본 행동(선딜 → 판정 → 후딜)이 나가는 것까지만 책임진다.**
+"맞았을 때 이펙트가 나온다", "스킬이 프레임을 늘리거나 줄인다", "추가 스킬이 발동한다" 같은
+효과의 **유무·타이밍 판단은 전부 스킬 담당(최상희/CSH) 몫**이다. NYH 코드는 그 판단을 몰라도 된다.
+
+### 접촉 지점은 이벤트 3개뿐
+
+`ActionState`(2층)가 아래 이벤트를 노출한다. 전투 실행 엔진은 이 이벤트를 **모든 `ActionData`에 대해
+무조건 발생**시키고, "이게 무슨 기술인지, 지금 반응해야 하는지"는 구독하는 쪽이 판단한다.
+
+```csharp
+public event Action<ActionData> OnActionBegin;        // Startup 진입
+public event Action<ActionData> OnActionActiveStart;  // Active 진입 — 이펙트 타점으로 주로 씀
+public event Action<ActionData> OnActionEnd;           // Recovery 끝나고 Idle 복귀
+```
+
+```csharp
+// 예시 — CSH 쪽에서 구독하는 코드 (NYH 폴더에는 절대 이런 분기를 넣지 않는다)
+actionState.OnActionActiveStart += (action) =>
+{
+    if (action.ActionName != "훅") return;       // 어떤 기술인지 판단은 구독자 몫
+    if (!내스킬이켜져있음) return;                 // 켜져있는지 판단도 구독자 몫
+    이펙트재생();
+};
+```
+
+### ❌ 금지 — NYH 쪽 코드에 기술 이름으로 분기하는 if문
+
+```csharp
+// 금지 — ActionExecutor/ActionState는 무슨 기술인지 몰라야 한다
+if (action.ActionName == "훅") { ... }
+```
+
+이런 분기가 필요해지는 순간, 그건 스킬 쪽 구독자 코드에 들어가야 할 로직이 엔진에 새어 들어온 것이다.
+
+### 서로 다른 구현 방식이어도 된다 — 접점은 `IUsable` 하나
+
+NYH는 `ActionData`(SO)로, CSH는 `SkillBase`(MonoBehaviour 상속)로 — 서로 다른 방식을 써도 된다.
+어느 쪽이 "옳다"를 강요하지 않는다. 대신 둘 다 만족하는 최소 계약만 인터페이스로 둔다.
+
+```csharp
+public interface IUsable
+{
+    int StartupFrames { get; }
+    int ActiveFrames  { get; }
+    int RecoveryFrames { get; }
+}
+```
+
+`ActionExecutor`는 구체 타입이 아니라 이 인터페이스로만 다뤄야 한다 (실제 배선은 §11-10, CSH 쪽이
+어느 정도 채워진 뒤 진행 — 지금은 빈 껍데기라 연동해도 얻을 게 없다).
+
+### 프레임 값 자체를 스킬이 바꿔야 할 때
+
+`ActionData`는 불변 SO라 스킬이 직접 `startupFrames` 등을 고치면 안 된다 (§2 원칙 재확인).
+대신 `RuntimeRobot`(2층, 가변)에 보정치를 두고 거기서만 조정한다.
+
+```csharp
+// RuntimeRobot 쪽 — 원본 에셋은 절대 안 건드림
+public float FrameSpeedModifier { get; set; } = 1f;
+```
+
+### 구독 배선
+
+스킬 쪽이 특정 로봇의 이벤트를 구독하려면 `ActionExecutor.State`(또는 `RuntimeRobot`을 경유한 참조)로
+접근한다. 이 참조 경로는 상희 님과 합의 후 고정하고, 합의 전까지 CSH 폴더 코드를 NYH 쪽에서 직접
+참조하지 않는다 (수정 금지 범위와 별개로, 결합 방지 차원).

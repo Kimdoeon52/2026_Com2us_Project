@@ -10,6 +10,8 @@ using UnityEngine;
 //}
 public class GlobalGold: MonoBehaviour
 {
+    // 어디서든 접근할 수 있는 싱글톤
+    public static GlobalGold Instance { get; private set; }
     // 현재 게임 데이터
     public List<Gold> data;
     
@@ -18,6 +20,16 @@ public class GlobalGold: MonoBehaviour
 
     void Awake()
     {
+        if(Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // 씬 전환 시에도 파괴되지 않도록 설정
+        }
+        else
+        {
+            Destroy(gameObject); // 이미 인스턴스가 존재하면 현재 오브젝트를 파괴
+            return;
+        }
         // 저장 파일 경로 설정
         savePath = Path.Combine(Application.persistentDataPath, "DorajiGold.json");
     }

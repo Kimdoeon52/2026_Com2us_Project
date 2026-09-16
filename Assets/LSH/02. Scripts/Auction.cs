@@ -1,4 +1,4 @@
-using Cysharp.Threading.Tasks;
+ï»¿using Cysharp.Threading.Tasks;
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,14 +6,14 @@ using UnityEngine.UI;
 
 public class Auction : MonoBehaviour
 {
-    [SerializeField] public Text auctionName; // ÀÌ¸§ ³ª¿À´Â Text°ø°£
-    [SerializeField] public Text auctionCost; // °¡°İ ³ª¿À´Â Text°ø°£
-    [SerializeField] public Text chat; // Ã¤ÆÃ ³ª¿À´Â Text°ø°£
-    public List<TestStuff> testStuff; //³ªÁß¿¡ TestStuff¸¦ ¹Ù²Ù±â Áö±İÀº ½ÇÇè¿ëÀÓ
+    [SerializeField] public Text auctionName; // ì´ë¦„ ë‚˜ì˜¤ëŠ” Textê³µê°„
+    [SerializeField] public Text auctionCost; // ê°€ê²© ë‚˜ì˜¤ëŠ” Textê³µê°„
+    [SerializeField] public Text chat; // ì±„íŒ… ë‚˜ì˜¤ëŠ” Textê³µê°„
+    public List<TestStuff> testStuff; //ë‚˜ì¤‘ì— TestStuffë¥¼ ë°”ê¾¸ê¸° ì§€ê¸ˆì€ ì‹¤í—˜ìš©ì„
 
-    private int currentCost = 0; // ÇöÀç °¡°İ
+    private int currentCost = 0; // í˜„ì¬ ê°€ê²©
     private TestStuff stuff;
-    int stuffCost = 0; // TestStuffÀÇ cost°ª
+    int stuffCost = 0; // TestStuffì˜ costê°’
     private void Start()
     {
         stuff = testStuff[Random.Range(0, testStuff.Count)];
@@ -26,11 +26,11 @@ public class Auction : MonoBehaviour
            StartAuction().Forget();
         }
     }
-    private async UniTask StartAuction() //°æ¸Å ½ÃÀÛ ºÎºĞ.
+    private async UniTask StartAuction() //ê²½ë§¤ ì‹œì‘ ë¶€ë¶„.
     {
         auctionName.text = stuff.name;
         auctionCost.text = currentCost.ToString();
-        await UniTask.Delay(1000); // 1ÃÊ ´ë±â
-        chat.text = "°æ¸Å ½ÃÀÛ!";
+        await UniTask.Delay(1000); // 1ì´ˆ ëŒ€ê¸°
+        chat.text = "ê²½ë§¤ ì‹œì‘!";
     }
 }

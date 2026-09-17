@@ -2,21 +2,42 @@ using UnityEngine;
 
 public class AttackSkillBase : SkillBase
 {
-    [SerializeField]
-    [Tooltip("스킬의 시작 프레임")]
-    [Min(0)]
-    private int startupFrames = 0;
-    [SerializeField]
-    [Tooltip("스킬의 활성 프레임")]
-    [Min(0)]
-    private int activeFrames = 0;
-    [SerializeField]
-    [Tooltip("스킬의 회수 프레임")]
-    [Min(0)]
-    private int recoveryFrames = 0;
 
-    public override void UseSkill()
+    protected Vector3 hitBox;
+    protected Vector3 hurtBox;
+
+    void Start()
     {
-        base.UseSkill();
+        if (hitBox == Vector3.zero)
+        {
+            hitBox = new Vector3(1f, 0.5f, 0.5f);
+        }
+
+        if (hurtBox == Vector3.zero)
+        {
+            hurtBox = new Vector3(0.9f, 0.5f, 0.5f);
+        }
     }
+
+    public override void BoxCast()
+    {
+        base.BoxCast();
+        RaycastHit[] hit = Physics.BoxCastAll(transform.position, hitBox, Vector3.forward);        
+        RaycastHit[] hurt = Physics.BoxCastAll(transform.position, hurtBox, Vector3.forward);
+
+        foreach (RaycastHit h in hit)
+        {
+            Debug.Log($"Hit: {h.collider.name}");
+        }
+    }
+
+    public override void GizmosDraw()
+    {
+        base.GizmosDraw();
+        Gizmos.color = new Color(1, 0, 0, 0.2f);
+        Gizmos.DrawCube(transform.position, hitBox);
+        Gizmos.color = new Color(0, 1, 0, 0.2f);
+        Gizmos.DrawCube(transform.position, hurtBox);
+    }
+
 }

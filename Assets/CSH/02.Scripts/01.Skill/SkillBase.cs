@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// 스킬의 기본구조 클래스
@@ -24,6 +24,7 @@ public class SkillBase : MonoBehaviour
     [Min(0)]
     private int recoveryFrames = 0;
 
+    public int TotalFrames => startupFrames + activeFrames + recoveryFrames;
     public int StartupFrames => startupFrames;
     public int ActiveFrames => activeFrames;
     public int RecoveryFrames => recoveryFrames;

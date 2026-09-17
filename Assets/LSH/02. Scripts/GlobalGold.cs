@@ -2,52 +2,41 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-//// 1. ÀúÀåÇÒ µ¥ÀÌÅÍ ±¸Á¶
+//// 1. ì €ì¥í•  ë°ì´í„° êµ¬ì¡°
 //[System.Serializable]
 //public class GameData
 //{
 //    public int gold;
 //}
-public class GlobalGold: MonoBehaviour
+public class GlobalGold: PersistentSingleton<GlobalGold>
 {
-    // ¾îµğ¼­µç Á¢±ÙÇÒ ¼ö ÀÖ´Â ½Ì±ÛÅæ
-    public static GlobalGold Instance { get; private set; }
-    // ÇöÀç °ÔÀÓ µ¥ÀÌÅÍ
+    // í˜„ì¬ ê²Œì„ ë°ì´í„°
     public List<Gold> data;
     
-    // ÀúÀå ÆÄÀÏ °æ·Î
+    // ì €ì¥ íŒŒì¼ ê²½ë¡œ
     private string savePath;
 
-    void Awake()
+    protected override void Awake()
     {
-        if(Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // ¾À ÀüÈ¯ ½Ã¿¡µµ ÆÄ±«µÇÁö ¾Êµµ·Ï ¼³Á¤
-        }
-        else
-        {
-            Destroy(gameObject); // ÀÌ¹Ì ÀÎ½ºÅÏ½º°¡ Á¸ÀçÇÏ¸é ÇöÀç ¿ÀºêÁ§Æ®¸¦ ÆÄ±«
-            return;
-        }
-        // ÀúÀå ÆÄÀÏ °æ·Î ¼³Á¤
+        base.Awake();
+        // ì €ì¥ íŒŒì¼ ê²½ë¡œ ì„¤ì •
         savePath = Path.Combine(Application.persistentDataPath, "DorajiGold.json");
     }
 
     void Start()
     {
-        // °ÔÀÓ ½ÃÀÛ ½Ã ±âÁ¸ µ¥ÀÌÅÍ ºÒ·¯¿À±â
+        // ê²Œì„ ì‹œì‘ ì‹œ ê¸°ì¡´ ë°ì´í„° ë¶ˆëŸ¬ì˜¤ê¸°
         LoadGame();
         foreach (var goldData in data)
         {
-            Debug.Log($"ÇöÀç NPC: {goldData.npcName}, °ñµå: {goldData.gold}");
+            Debug.Log($"í˜„ì¬ NPC: {goldData.npcName}, ê³¨ë“œ: {goldData.gold}");
         }
     }
 
     void Update()
     {
-        // [Å×½ºÆ®¿ë Å° ÀÔ·Â]
-        // G: °ñµå 100 Áõ°¡
+        // [í…ŒìŠ¤íŠ¸ìš© í‚¤ ì…ë ¥]
+        // G: ê³¨ë“œ 100 ì¦ê°€
         if (Input.GetKeyDown(KeyCode.G))
         {
             GetGold(1, 100);
@@ -63,13 +52,13 @@ public class GlobalGold: MonoBehaviour
         {
             AddGoldAllNpc(100);
         }
-        // S: ¼öµ¿ ÀúÀå
+        // S: ìˆ˜ë™ ì €ì¥
         if (Input.GetKeyDown(KeyCode.S))
         {
             SaveGame();
         }
 
-        // L: ¼öµ¿ ºÒ·¯¿À±â
+        // L: ìˆ˜ë™ ë¶ˆëŸ¬ì˜¤ê¸°
         if (Input.GetKeyDown(KeyCode.L))
         {
             LoadGame();
@@ -77,36 +66,36 @@ public class GlobalGold: MonoBehaviour
     }
 
 
-    //================================================°ñµå °ü·Ã ±â´É=====================================================
+    //================================================ê³¨ë“œ ê´€ë ¨ ê¸°ëŠ¥=====================================================
 
-    public void GetGold(int id, int goldplus) //°ñµå Ãß°¡ÇÏ´Â ÇÔ¼öÀÓ
+    public void GetGold(int id, int goldplus) //ê³¨ë“œ ì¶”ê°€í•˜ëŠ” í•¨ìˆ˜ì„
     {
-        foreach (var goldData in data) //¸ğµç µ¥ÀÌÅÍ¸¦ µ¹¸é¼­ °°Àº id°¡ ÀÖ´Â npc³ª ÇÃ·¹ÀÌ¾î¿¡°Ô °ñµå¸¦ Ãß°¡ÇØÁÜ
+        foreach (var goldData in data) //ëª¨ë“  ë°ì´í„°ë¥¼ ëŒë©´ì„œ ê°™ì€ idê°€ ìˆëŠ” npcë‚˜ í”Œë ˆì´ì–´ì—ê²Œ ê³¨ë“œë¥¼ ì¶”ê°€í•´ì¤Œ
         {
             if (goldData.ID == id)
             {
                 goldData.gold += goldplus;
-                Debug.Log($"NPC {goldData.npcName}ÀÇ °ñµåÃß°¡Çß´Ù´É~ {goldData.gold}");
+                Debug.Log($"NPC {goldData.npcName}ì˜ ê³¨ë“œì¶”ê°€í–ˆë‹¤ëŠ¥~ {goldData.gold}");
                 return;
             }
         }
     }
 
-    public bool UseGold(int id, int goldminus) //°ñµå »ç¿ëÇß´Ù´Â ÇÔ¼öÀÓ ÀÏºÎ·¯ boolÀ» ¸®ÅÏÇØ¼­ °ñµå »ç¿ë °¡´É ºÒ°¡´É ¿©ºÎ Àü´Ş.
+    public bool UseGold(int id, int goldminus) //ê³¨ë“œ ì‚¬ìš©í–ˆë‹¤ëŠ” í•¨ìˆ˜ì„ ì¼ë¶€ëŸ¬ boolì„ ë¦¬í„´í•´ì„œ ê³¨ë“œ ì‚¬ìš© ê°€ëŠ¥ ë¶ˆê°€ëŠ¥ ì—¬ë¶€ ì „ë‹¬.
     {
-        foreach (var goldData in data) //¸ğµç µ¥ÀÌÅÍ¸¦ µ¹¸é¼­ °°Àº id°¡ ÀÖ´Â npc³ª ÇÃ·¹ÀÌ¾î¿¡°Ô °ñµå¸¦ »ç¿ëÇØÁÜ
+        foreach (var goldData in data) //ëª¨ë“  ë°ì´í„°ë¥¼ ëŒë©´ì„œ ê°™ì€ idê°€ ìˆëŠ” npcë‚˜ í”Œë ˆì´ì–´ì—ê²Œ ê³¨ë“œë¥¼ ì‚¬ìš©í•´ì¤Œ
         {
             if (goldData.ID == id)
             {
                 if (goldData.gold >= goldminus)
                 {
                     goldData.gold -= goldminus;
-                    Debug.Log($"NPC {goldData.npcName}ÀÇ °ñµå»ç¿ëÇß´Ù´É~ {goldData.gold}");
+                    Debug.Log($"NPC {goldData.npcName}ì˜ ê³¨ë“œì‚¬ìš©í–ˆë‹¤ëŠ¥~ {goldData.gold}");
                     return true;
                 }
                 else
                 {
-                    Debug.Log($"NPC {goldData.npcName}ÀÇ °ñµå°¡ ºÎÁ·ÇÏ´Ù´É~ ÇöÀç °ñµå: {goldData.gold}");
+                    Debug.Log($"NPC {goldData.npcName}ì˜ ê³¨ë“œê°€ ë¶€ì¡±í•˜ë‹¤ëŠ¥~ í˜„ì¬ ê³¨ë“œ: {goldData.gold}");
                 }
                 return false;
             }
@@ -114,53 +103,53 @@ public class GlobalGold: MonoBehaviour
         return false;
     }
 
-    public void AddGoldAllNpc(int goldplus) //¸ğµç npc¿¡°Ô °ñµå Ãß°¡ÇÏ´Â ÇÔ¼öÀÓ
+    public void AddGoldAllNpc(int goldplus) //ëª¨ë“  npcì—ê²Œ ê³¨ë“œ ì¶”ê°€í•˜ëŠ” í•¨ìˆ˜ì„
     {
         foreach (var goldData in data)
         {
             goldData.gold += goldplus;
-            Debug.Log($"NPC {goldData.npcName}ÀÇ °ñµåÃß°¡Çß´Ù´É~ {goldData.gold}");
+            Debug.Log($"NPC {goldData.npcName}ì˜ ê³¨ë“œì¶”ê°€í–ˆë‹¤ëŠ¥~ {goldData.gold}");
         }
     }
 
-    //================================================SAVE&LOAD ±â´É=====================================================
-    // JSON ÆÄÀÏ·Î ÀúÀå
+    //================================================SAVE&LOAD ê¸°ëŠ¥=====================================================
+    // JSON íŒŒì¼ë¡œ ì €ì¥
     public void SaveGame()
     {
         string json = "";
         foreach (var goldData in data)
         {
-            json += JsonUtility.ToJson(goldData) + "\n"; //¹®ÀÚ¿­·Î ¹ø¿ªÇÏ´Â ±â´É
+            json += JsonUtility.ToJson(goldData) + "\n"; //ë¬¸ìì—´ë¡œ ë²ˆì—­í•˜ëŠ” ê¸°ëŠ¥
         }
-        //json +=JsonUtility.ToJson(data, true); //¹®ÀÚ¿­·Î ¹ø¿ªÇÏ´Â ±â´É
+        //json +=JsonUtility.ToJson(data, true); //ë¬¸ìì—´ë¡œ ë²ˆì—­í•˜ëŠ” ê¸°ëŠ¥
         File.WriteAllText(savePath, json);
-        Debug.Log($"[ÀúÀå ¿Ï·á] °æ·Î: {savePath}\n³»¿ë: {json}");
+        Debug.Log($"[ì €ì¥ ì™„ë£Œ] ê²½ë¡œ: {savePath}\në‚´ìš©: {json}");
     }
 
-    // JSON ÆÄÀÏ¿¡¼­ ºÒ·¯¿À±â
+    // JSON íŒŒì¼ì—ì„œ ë¶ˆëŸ¬ì˜¤ê¸°
     public void LoadGame()
     {
         if (File.Exists(savePath))
         {
-            string[] json = File.ReadAllLines(savePath); //savePath¿¡ ÀÖ´Â jsonÆÄÀÏÀ» ÀĞ¾î¿Í¼­ jsonº¯¼ö¿¡ ÀúÀå
+            string[] json = File.ReadAllLines(savePath); //savePathì— ìˆëŠ” jsoníŒŒì¼ì„ ì½ì–´ì™€ì„œ jsonë³€ìˆ˜ì— ì €ì¥
             if (data == null) {
                 Debug.Log("data is null");
                 //data = ScriptableObject.CreateInstance<Gold>(); 
             }
             //Debug.Log(data.name + " " + json);  
-            //data = JsonUtility.FromJson<Gold>(json); //json ¹®ÀÚ¿­À» GameData °´Ã¼·Î º¯È¯ data¿¡´Â ÀÌÁ¦ º¯°æµÈ °ñµå°ªÀÌ µé¾î°¡°Ô ‰Î! //class´Â Á÷Á¢ ³Ö°í
+            //data = JsonUtility.FromJson<Gold>(json); //json ë¬¸ìì—´ì„ GameData ê°ì²´ë¡œ ë³€í™˜ dataì—ëŠ” ì´ì œ ë³€ê²½ëœ ê³¨ë“œê°’ì´ ë“¤ì–´ê°€ê²Œ ëŒ! //classëŠ” ì§ì ‘ ë„£ê³ 
             int index = 0;
             foreach (var goldData in data)
             {
                 if (index >= json.Length)
                     break;
-                JsonUtility.FromJsonOverwrite(json[index], goldData); // ±âÁ¸ goldData °´Ã¼¸¦ À¯ÁöÇÏ¸é¼­ json µ¥ÀÌÅÍ¸¦ µ¤¾î¾¸
+                JsonUtility.FromJsonOverwrite(json[index], goldData); // ê¸°ì¡´ goldData ê°ì²´ë¥¼ ìœ ì§€í•˜ë©´ì„œ json ë°ì´í„°ë¥¼ ë®ì–´ì”€
                 index++;
             }
         }
         //else
         //{
-        //    Debug.LogWarning("ÀúÀåµÈ µ¥ÀÌÅÍ ÆÄÀÏÀÌ ¾ø¾î ±âº»°ª(0)À¸·Î ½ÃÀÛÇÕ´Ï´Ù.");
+        //    Debug.LogWarning("ì €ì¥ëœ ë°ì´í„° íŒŒì¼ì´ ì—†ì–´ ê¸°ë³¸ê°’(0)ìœ¼ë¡œ ì‹œì‘í•©ë‹ˆë‹¤.");
         //    data = new GameData();
         //}
     }

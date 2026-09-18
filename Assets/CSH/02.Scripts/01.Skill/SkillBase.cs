@@ -7,9 +7,12 @@ public class SkillBase : MonoBehaviour
 {
     [SerializeField]// 스킬 데이터
     private SkillData skillData;
-
     public SkillData SkillData => skillData;
 
+    [SerializeField]
+    protected ActionData actionData;
+
+    protected ActionExecutor actionExecutor;
 
     [SerializeField]
     [Tooltip("스킬의 선딜레이 프레임")]
@@ -29,6 +32,14 @@ public class SkillBase : MonoBehaviour
     public int ActiveFrames => activeFrames;
     public int RecoveryFrames => recoveryFrames;
 
+    protected virtual void Start()
+    {
+               actionExecutor = GetComponent<ActionExecutor>();
+        if (actionExecutor == null)
+        {
+            Debug.LogError("ActionExecutor component not found on the GameObject.");
+        }
+    }
 
     public virtual void UseSkill()
     {

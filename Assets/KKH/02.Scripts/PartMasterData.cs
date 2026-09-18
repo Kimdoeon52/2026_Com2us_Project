@@ -26,7 +26,7 @@ public class PartMasterData : ScriptableObject
 {
     [Header("1. 기본 식별 정보")]
     [Tooltip("부품 고유 식별 번호 (DB 및 인벤토리 연동 키)")]
-    public int partID;
+    public string partID;
 
     [Tooltip("게임 내 UI에 표시될 부품 명칭")]
     public string partName;

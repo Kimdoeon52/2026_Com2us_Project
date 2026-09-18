@@ -16,6 +16,7 @@ namespace RealSteel.EditorTools
     ///
     /// 두 가지를 제공한다.
     ///   · <b>돌계단 생성</b> — 단마다 돌을 따로 쌓아 폭·깊이·각도를 흩어 놓는다
+    ///   · <b>울퉁불퉁 바닥 생성</b> — 격자 칸마다 돌을 따로 놓고 윗면 높이를 계단식으로 흩어 놓는다
     ///   · <b>정점 흔들기</b> — 기존 메시의 정점을 격자에 스냅해서 밀어 놓는다
     ///
     /// 흔들림은 항상 <b>격자에 스냅</b>된다. 연속적으로 흔들면 표면이 매끈한 곡면이 되어
@@ -32,6 +33,15 @@ namespace RealSteel.EditorTools
         float sizeJitter = 0.18f;
         float rotJitter = 2.5f;
 
+        // ── 울퉁불퉁 바닥 ──
+        float groundWidth = 8f;
+        float groundDepth = 6f;
+        float groundCell = 0.75f;
+        float groundThickness = 0.6f;
+        float heightRange = 0.3f;
+        float heightStep = 0.1f;
+        bool groundStatic = true;
+
         // ── 정점 흔들기 ──
         float jitterAmount = 0.12f;
         float jitterSnap = 0.05f;
@@ -47,7 +57,7 @@ namespace RealSteel.EditorTools
         Vector2 scroll;
         string report = "";
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/지형 흐트러뜨리기 (돌계단 · 정점 흔들기)", false, 45)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/지형 흐트러뜨리기 (돌계단 · 울퉁불퉁 바닥 · 정점 흔들기)", false, 45)]
         static void Open()
         {
             var w = GetWindow<StageRoughenTool>("지형 흐트러뜨리기");
@@ -94,6 +104,41 @@ namespace RealSteel.EditorTools
                 rotJitter, 0f, 10f);
 
             if (GUILayout.Button("돌계단 만들기", GUILayout.Height(28f))) BuildStoneStairs();
+
+            // ── 울퉁불퉁 바닥 ──────────────────────────────────
+            EditorGUILayout.Space(14f);
+            EditorGUILayout.LabelField("울퉁불퉁 바닥 생성", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "정점 흔들기는 정점이 많은 메시에만 먹는다 — 육면체 하나짜리 바닥은 흔들어도\n" +
+                "그냥 기울어질 뿐이다. 울퉁불퉁한 바닥은 칸마다 돌을 따로 놓아서 만든다.",
+                MessageType.None);
+
+            groundWidth = EditorGUILayout.FloatField("폭 (X)", groundWidth);
+            groundDepth = EditorGUILayout.FloatField("깊이 (Z)", groundDepth);
+            groundCell = Mathf.Max(0.1f, EditorGUILayout.FloatField(
+                new GUIContent("칸 크기", "돌 하나의 크기. 작을수록 조밀하지만 오브젝트가 많아진다."), groundCell));
+            groundThickness = Mathf.Max(0.05f, EditorGUILayout.FloatField(
+                new GUIContent("두께", "아래로 파묻는 깊이. 넉넉해야 비틀어도 아래가 안 뚫린다."), groundThickness));
+
+            heightRange = EditorGUILayout.Slider(
+                new GUIContent("높이 편차", "칸마다 윗면 높이가 이 범위 안에서 달라진다. 0 = 평평한 돌바닥."),
+                heightRange, 0f, 1.5f);
+            heightStep = EditorGUILayout.Slider(
+                new GUIContent("높이 단위",
+                    "높이를 이 단위로 끊는다. 0 에 가까우면 매끈한 언덕이 되어 부드러운\n" +
+                    "그라데이션이 생긴다 — 픽셀아트에는 층이 져 있는 편이 낫다."),
+                heightStep, 0f, 0.4f);
+
+            groundStatic = EditorGUILayout.Toggle(
+                new GUIContent("Static 으로 표시", "돌이 오브젝트마다 하나라 개수가 많다. 정적 배칭이 먹게 켜 둔다."),
+                groundStatic);
+
+            int nxPreview = Mathf.Max(1, Mathf.CeilToInt(groundWidth / groundCell));
+            int nzPreview = Mathf.Max(1, Mathf.CeilToInt(groundDepth / groundCell));
+            EditorGUILayout.LabelField(" ", nxPreview + " × " + nzPreview + " = 돌 " + (nxPreview * nzPreview) + "개",
+                EditorStyles.miniLabel);
+
+            if (GUILayout.Button("울퉁불퉁 바닥 만들기", GUILayout.Height(28f))) BuildRockGround();
 
             // ── 정점 흔들기 ────────────────────────────────────
             EditorGUILayout.Space(14f);
@@ -233,6 +278,106 @@ namespace RealSteel.EditorTools
         }
 
         static float Rand(System.Random r, float amp) => ((float)r.NextDouble() * 2f - 1f) * amp;
+
+        // ─────────────────────────────────────────────────────────
+        // 울퉁불퉁 바닥
+        // ─────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// 격자 칸마다 돌을 따로 놓아 울퉁불퉁한 바닥을 만든다.
+        ///
+        /// 정점 흔들기로는 이걸 만들 수 없다. 육면체 하나는 모서리 정점 8개뿐이라
+        /// 흔들면 바닥 전체가 기울어질 뿐이고, 가운데가 솟거나 꺼지지 않는다.
+        /// 옥토패스의 지면이 풍부한 이유도 면이 휘어서가 아니라 <b>덩어리가 여러 개라서</b>다.
+        ///
+        /// 높이는 넓은 기복(coarse) 7 : 칸별 잔변화(fine) 3 으로 섞는다.
+        /// 칸마다 순수 난수를 주면 TV 노이즈처럼 보이고 지형으로 안 읽힌다.
+        /// 섞은 값은 <c>높이 단위</c>로 끊어 층이 지게 만든다 — 연속적이면 매끈한 곡면이 되어
+        /// 부드러운 그라데이션이 생기고, 그게 픽셀 텍스처와 싸운다.
+        /// </summary>
+        void BuildRockGround()
+        {
+            int nx = Mathf.Max(1, Mathf.CeilToInt(groundWidth / groundCell));
+            int nz = Mathf.Max(1, Mathf.CeilToInt(groundDepth / groundCell));
+            int cells = nx * nz;
+
+            if (cells > 1200)
+            {
+                report = "돌 " + cells + "개는 너무 많다. 칸 크기를 키우거나 범위를 줄일 것.";
+                return;
+            }
+            if (cells > 300 && !EditorUtility.DisplayDialog("울퉁불퉁 바닥",
+                    "돌 " + cells + "개를 만든다. 씬이 무거워질 수 있다.", "계속", "취소"))
+                return;
+
+            var rng = new System.Random(seed);
+            var mat = stoneMaterial;
+
+            var root = new GameObject("TER_RockGround_" + seed);
+            Undo.RegisterCreatedObjectUndo(root, "울퉁불퉁 바닥 만들기");
+
+            // 칸끼리 넉넉히 겹쳐 놓는다 — 비틀면 모서리에서 틈이 벌어진다
+            float overlap = groundCell * 0.14f;
+            float h = groundThickness + heightRange;
+
+            float loY = float.MaxValue, hiY = float.MinValue;
+
+            for (int ix = 0; ix < nx; ix++)
+            {
+                for (int iz = 0; iz < nz; iz++)
+                {
+                    float topY = CellHeight(ix, iz);
+                    loY = Mathf.Min(loY, topY); hiY = Mathf.Max(hiY, topY);
+
+                    float w = groundCell * (1f + Rand(rng, sizeJitter)) + overlap;
+                    float d = groundCell * (1f + Rand(rng, sizeJitter)) + overlap;
+
+                    float x = -groundWidth * 0.5f + groundCell * (ix + 0.5f) + Rand(rng, groundCell * 0.05f);
+                    float z = -groundDepth * 0.5f + groundCell * (iz + 0.5f) + Rand(rng, groundCell * 0.05f);
+
+                    var pb = ShapeGenerator.GenerateCube(PivotLocation.Center, new Vector3(w, h, d));
+                    pb.name = "Rock_" + ix.ToString("00") + "_" + iz.ToString("00");
+                    pb.transform.SetParent(root.transform, false);
+                    pb.transform.localRotation = Quaternion.Euler(
+                        Rand(rng, rotJitter * 0.6f),
+                        Rand(rng, rotJitter * 2f),      // 요우는 바닥에서 티가 안 나므로 넉넉히
+                        Rand(rng, rotJitter * 0.6f));
+
+                    pb.ToMesh();
+                    pb.Refresh();
+
+                    PlaceTop(pb, new Vector3(x, topY, z));
+
+                    var mr = pb.GetComponent<MeshRenderer>();
+                    if (mr != null && mat != null) mr.sharedMaterial = mat;
+                    if (groundStatic) pb.gameObject.isStatic = true;
+                }
+            }
+
+            if (groundStatic) root.isStatic = true;
+            Selection.activeGameObject = root;
+
+            report = "돌 " + cells + "개로 " + nx + " × " + nz + " 바닥 생성 (시드 " + seed + ")\n\n" +
+                     "  범위 " + groundWidth.ToString("0.##") + " × " + groundDepth.ToString("0.##") +
+                     " · 칸 " + groundCell.ToString("0.###") + "\n" +
+                     "  윗면 높이 " + loY.ToString("0.###") + " ~ " + hiY.ToString("0.###") +
+                     " (단위 " + heightStep.ToString("0.###") + ")\n" +
+                     "  마음에 안 들면 시드만 바꿔 다시 뽑을 것.\n\n" +
+                     "캐릭터가 걸어다닐 바닥이면 높이 편차 0.1~0.2 이 적당하다. 그 이상은 발이 뜬다.\n" +
+                     "다음: UV 밀도 맞추기 → 픽셀 텍스처 선명하게 순서로 돌리면 된다.";
+        }
+
+        /// <summary>넓은 기복 7 : 칸별 잔변화 3 을 섞고 높이 단위로 끊는다.</summary>
+        float CellHeight(int ix, int iz)
+        {
+            float coarse = Hash(new Vector3(Mathf.Floor(ix / 3f), 0f, Mathf.Floor(iz / 3f)), seed, 7);
+            float fine = Hash(new Vector3(ix, 0f, iz), seed, 8);
+            float v = coarse * 0.7f + fine * 0.3f;
+
+            float y = (v * 2f - 1f) * heightRange * 0.5f;
+            if (heightStep <= 0.0001f) return y;
+            return Mathf.Round(y / heightStep) * heightStep;
+        }
 
         // ─────────────────────────────────────────────────────────
         // 정점 흔들기

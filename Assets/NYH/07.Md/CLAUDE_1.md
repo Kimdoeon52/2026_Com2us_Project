@@ -11,8 +11,12 @@
 - **장르**: 로봇 커스터마이징 RPG. 전투는 **실시간 사이드뷰 격투 게임** (스트리트 파이터 2~4 참고)
 - **표현**: 3D 공간 위 2D 픽셀아트 스프라이트 (2.5D, 옥토패스 트래블러 형식)
 - **이동**: 좌우 2방향만. 점프 없음. 근거리 교전만
-- **담당 범위**: 이 지침이 다루는 것은 전투의 실행 엔진 — 행동(상태기계), 부위 파괴, 판정, 넉백, 장비 연결
-- **인접 담당**: 스킬 데이터(최상희), 전투 결과·데이터 관리(김관현), 그래픽(심예성)
+- **담당 범위**: 이 지침이 다루는 것은 전투의 실행 엔진 — 행동(상태기계), 부위 파괴 판정/로직, 히트 판정, 넉백, 장비 연결(조립 로직)
+- **인접 담당**: 스킬 데이터(최상희), 전투 결과·데이터 관리(김관현/KKH), 그래픽(심예성)
+- **데이터 소유 경계 (2026-09-18 논의, 팀 확인 필요)**:
+  - `ActionData`(행동/프레임 데이터) — **NYH 소유**. `ActionState`/`ActionExecutor`가 직접 읽는 실행 계약이라 다른 담당에게 넘기지 않는다.
+  - `PartData`/`CoreData`(파츠·코어 원장 스탯) — **NYH가 별도로 만들지 않는다.** KKH가 `PartMasterData`(SO)로 4개 파트 공용 데이터를 이미 만들어뒀으므로, NYH의 `DurabilitySystem`/`RuntimePart`/`RobotAssembler`는 이 데이터를 **참조만** 한다. 로직(부위 파괴 판정 등)은 여전히 NYH 소유, 데이터 정의만 KKH 소유.
+  - 데미지 계산식(ActionData.Damage와 PartMasterData의 팔 스탯을 어떻게 합산할지)은 아직 미확정 — KKH·CSH와 확인 전까지 `HitDetection`/`DurabilitySystem` 쪽 계산 로직을 확정하지 말 것.
 - **수정 폴더 범위** NYH(남윤호)외 폴더는 사용자의 요청 전까진 보고 어떤게 있는지만 파악하고 수정은 절대 금지
 
 ### 이 문서의 상위 소스
@@ -32,7 +36,8 @@
 ```
 ┌──────────────────────────────────────────────────────────┐
 │ 1층 · 데이터 (ScriptableObject)   — 불변. 에셋으로 존재     │
-│     ActionData    PartData    CoreData    FrameBox        │
+│     ActionData(NYH)    FrameBox(NYH)                       │
+│     PartData/CoreData 역할은 KKH의 PartMasterData가 대신함   │
 ├──────────────────────────────────────────────────────────┤
 │ 2층 · 런타임 상태 (순수 C# class) — 가변. 전투 중에만 존재   │
 │     RuntimeRobot  RuntimePart  RuntimeCore  ActionState   │
@@ -56,17 +61,17 @@
 
 ```
 Assets/NYH/02. Scripts/Combat/
-    Data/       ActionData.cs ✅  PartData.cs  CoreData.cs  FrameBox.cs  CombatEnums.cs ✅
+    Data/       ActionData.cs ✅  FrameBox.cs  CombatEnums.cs ✅
+                (PartData.cs / CoreData.cs는 만들지 않음 — KKH의 PartMasterData 참조)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  StunSystem.cs  RobotAssembler.cs
-    Input/      IInputSource.cs ✅  PlayerInputSource.cs  AIInputSource.cs
-    View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs
+    Input/      IInputSource.cs ✅  PlayerInputSource.cs ✅  AIInputSource.cs
+    View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs  RobotMover.cs ✅(임시)
 
 Assets/NYH/04. SO/Combat/
     Actions/    잽.asset  훅.asset  스트레이트.asset  ...
-    Parts/
-    Cores/
+    (Parts/, Cores/ 폴더는 만들지 않음 — Assets/KKH/03.SOData/의 PartMasterData 참조)
 ```
 
 에셋 파일 이름은 **프레임표 [기술] 칸과 1:1로 같게** 쓴다. 표와 에셋을 대조할 수 있어야 한다.
@@ -117,7 +122,8 @@ Animator Controller에 전이 조건을 주렁주렁 다는 것도 금지. `Play
 public class PartData : ScriptableObject { public int currentDurability; }
 ```
 
-`PartData`는 `maxDurability`(불변)만 갖고, `currentDurability`는 `RuntimePart`(2층)가 갖는다.
+`PartData`(현재는 KKH의 `PartMasterData`)는 `baseDurability`(불변)만 갖고, `currentDurability`는 `RuntimePart`(2층, NYH 소유)가 갖는다.
+이 원칙은 NYH가 SO를 직접 안 만들어도 그대로 적용된다 — KKH의 `PartMasterData`를 읽을 때도 거기서 가변 상태를 읽어오면 안 되고, 가변 상태는 항상 `RuntimePart`에서만 관리한다.
 
 ### ❌ 플레이어가 부위/행동을 상속하는 구조를 만들지 말 것
 

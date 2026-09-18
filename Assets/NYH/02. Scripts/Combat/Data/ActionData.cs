@@ -41,7 +41,7 @@ using UnityEngine;
 /// 에셋 파일 이름은 전투 프레임표 [기술] 칸과 1:1로 같게 만든다. (예: 잽.asset, 훅.asset)
 /// 수치는 전투 프레임표 v3가 최종 근거 — 여기 기본값은 전부 임시값이며 확정 전까지 TODO로 표시한다.
 /// </summary>
-[CreateAssetMenu(menuName = "Combat/Action Data", fileName = "NewActionData")]
+[CreateAssetMenu(menuName = "NYH/Combat/Action Data", fileName = "NewActionData")]
 public class ActionData : ScriptableObject
 {
     [Header("식별")]

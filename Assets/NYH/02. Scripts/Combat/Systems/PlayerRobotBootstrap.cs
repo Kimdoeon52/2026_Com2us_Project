@@ -22,7 +22,7 @@ public class PlayerRobotBootstrap : MonoBehaviour
 
         executor.Init(input);
         GetComponent<RobotMover>().Init(input);
-        GetComponent<RobotView>()?.Init(executor.State);
+        GetComponent<RobotView>()?.Init(executor.State, input);
     }
 
     private void Update()

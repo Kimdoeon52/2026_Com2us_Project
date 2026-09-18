@@ -12,10 +12,20 @@ using UnityEngine;
 public class RobotView : MonoBehaviour
 {
     [SerializeField] private Animator animator;
+    [SerializeField] private string idleStateName = "Idle";
+    [SerializeField] private string walkStateName = "Walk";
 
-    public void Init(ActionState state)
+    private IInputSource inputSource;
+
+    /// <summary>
+    /// state: 재생 트리거를 받는 이벤트 소스. input: 액션 끝나고 Idle/Walk 중 뭘 틀지 판단용
+    /// (걷기는 3구간 상태기계 대상이 아니라 이동 입력만 보면 되므로, RobotMover와 별개로 여기서 직접 확인)
+    /// </summary>
+    public void Init(ActionState state, IInputSource input)
     {
+        inputSource = input;
         state.OnActionBegin += PlayAction;
+        state.OnActionEnd += OnActionEnd;
     }
 
     private void PlayAction(ActionData action)
@@ -34,5 +44,19 @@ public class RobotView : MonoBehaviour
         animator.speed = dataLength > 0f ? clipLength / dataLength : 1f;
 
         Debug.Log($"[RobotView] {action.ActionName} 클립길이={clipLength:F3}s 데이터길이={dataLength:F3}s → speed={animator.speed:F2}");
+    }
+
+    /// <summary>
+    /// Recovery 끝나고 Idle로 복귀하는 순간 — Animator Exit Time에 기대지 않고 여기서 강제로 되돌린다 (§3).
+    /// 액션 중 바꿔둔 animator.speed도 1로 원복해야 Idle/Walk이 정상 속도로 재생된다.
+    /// </summary>
+    private void OnActionEnd(ActionData finishedAction)
+    {
+        if (animator == null) return;
+
+        animator.speed = 1f;
+
+        bool isMoving = Mathf.Abs(inputSource?.GetMoveInput() ?? 0f) > 0.01f;
+        animator.Play(isMoving ? walkStateName : idleStateName, 0, 0f);
     }
 }

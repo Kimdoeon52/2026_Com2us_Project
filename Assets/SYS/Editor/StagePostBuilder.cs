@@ -33,7 +33,7 @@ namespace RealSteel.EditorTools
 
         static readonly Vector3 LookTarget = new Vector3(1.5f, 1.5f, 2f);
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/5. 카메라 + 조명 + 포스트 (HD-2D 룩)", false, 14)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/5. 카메라 + 조명 + 포스트 (HD-2D 룩)", false, 20)]
         public static void BuildLook()
         {
             var old = GameObject.Find(RigName);
@@ -241,7 +241,23 @@ namespace RealSteel.EditorTools
 
         static void EnsureFolders()
         {
-            StageSampleBuilder.EnsureFolderPath(ArtDir);
+            EnsureFolderPath(ArtDir);
+        }
+
+        /// <summary>"Assets/a/b/c" 처럼 몇 단계든 한 번에 만든다.</summary>
+        static void EnsureFolderPath(string path)
+        {
+            if (string.IsNullOrEmpty(path) || AssetDatabase.IsValidFolder(path)) return;
+
+            string[] parts = path.Split('/');
+            string cur = parts[0];
+            for (int i = 1; i < parts.Length; i++)
+            {
+                if (string.IsNullOrEmpty(parts[i])) continue;
+                string next = cur + "/" + parts[i];
+                if (!AssetDatabase.IsValidFolder(next)) AssetDatabase.CreateFolder(cur, parts[i]);
+                cur = next;
+            }
         }
     }
 }

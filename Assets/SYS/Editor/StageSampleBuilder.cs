@@ -70,7 +70,7 @@ namespace RealSteel.EditorTools
             }
         }
 
-        static string MatDir { get { return ArtDir + "/Materials"; } }
+        internal static string MatDir { get { return ArtDir + "/Materials"; } }
         static string TexDir { get { return ArtDir + "/Textures"; } }
         static string CheckerTexPath { get { return TexDir + "/TEX_Checker_8px.png"; } }
 
@@ -168,7 +168,7 @@ namespace RealSteel.EditorTools
             SceneView.lastActiveSceneView?.FrameSelected();
         }
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/3. 건물 샘플 생성 (파츠 분리)", false, 12)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/3. 건물 샘플 생성 (파츠 분리)", false, 14)]
         public static void MenuBuildBuilding()
         {
             MenuCreateAssets();
@@ -181,7 +181,7 @@ namespace RealSteel.EditorTools
             SceneView.lastActiveSceneView?.FrameSelected();
         }
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/4. 전체 생성 (지형 + 건물 + 스케일 더미)", false, 13)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/4. 전체 생성 (지형 + 건물 + 스케일 더미)", false, 15)]
         public static void MenuBuildAll()
         {
             MenuCreateAssets();

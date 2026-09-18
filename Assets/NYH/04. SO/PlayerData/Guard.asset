@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
+  m_Name: Guard
+  m_EditorClassIdentifier: 
+  actionName: Guard
+  source: 0
+  requiredPart: 5
+  startupFrames: 0
+  activeFrames: 0
+  recoveryFrames: 0
+  isInvincibleDuringActive: 0
+  isGuardable: 1
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 0
+  animationClipName: 

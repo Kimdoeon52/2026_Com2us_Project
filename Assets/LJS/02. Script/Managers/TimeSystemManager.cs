@@ -40,7 +40,7 @@ public class TimeSystemManager : MonoBehaviour
         UpdateTimeUI();                                                     // 시간 UI 최신화
         nextHourTime = Time.unscaledTime + timeToGame;      // 시간 세팅
     }
-    private void Update()
+    private void Update() // 사용자 환경에 맞춘 시간 흐름이기 때문에 update
     {
         if (currentState != TimeState.Running) return;               // 게임이 현재 정상 실행중이면 무시
 

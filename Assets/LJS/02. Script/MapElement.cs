@@ -1,44 +1,59 @@
+using System;
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 /// <summary>
 /// 맵UI의 아이콘 이미지마다 삽입하는 코드.
 /// </summary>
 
+[RequireComponent(typeof(Image))]
 public class MapElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
+    // MapIconHovering이 받는 이벤트 액션
+    public static event Action<MapElement, Vector3> OnHovered;
+    public static event Action OnUnhovered;
+    public static event Action<MapElement> OnClicked; // 해당 아이콘 클릭시 발생 이벤트
+
     [Header("이동지점 정보")]
     public string elementName; // 이동지점 이름
     public int useHours; // 사용시간. 인스펙터 상에서 작성
     public Transform teleportPoint; // 씬 내의 도착 지점 (빈 게임오브젝트의 Transform)
 
-    [Header("위치 아이콘")]
     private Image locationImage; // 해당 위치 아이콘
-    public Color highlightColor = new Color(1f, 1f, 1f, 1f); // 밝은 하이라이트 색상
-    private Color normalColor = new Color(0.7f, 0.7f, 0.7f, 1f); // 평상시 약간 어두운 색상
+
+    private Vector3 normalScale = Vector3.one; // 마우스 호버링시 커졌다 작아짐
+    private Vector3 hoverScale = new Vector3(1.1f, 1.1f, 1.1f);
 
     private void Awake()
     {
         locationImage = GetComponent<Image>();
-        locationImage.color = normalColor;
+        //locationImage.color = Color.white;
     }
 
-    // 마우스를 올렸을 때 (호버링) - 밝게 하이라이트
+    // 마우스를 올렸을 때 - 밝게 하이라이트
     public void OnPointerEnter(PointerEventData eventData)
     {
-        locationImage.color = highlightColor;
+        if (MapSystemManager.Instance.isConfirmOpen) return;
+        transform.localScale = hoverScale;
+        OnHovered?.Invoke(this, transform.position);
     }
 
     // 마우스를 뗐을 때 - 원래 색상 복귀
     public void OnPointerExit(PointerEventData eventData)
     {
-        locationImage.color = normalColor;
+        transform.localScale = normalScale;
+        OnUnhovered?.Invoke();
     }
 
-    // 아이콘을 클릭했을 때 - 확인 팝업 호출
+    // 아이콘을 클릭했을 때 - 팝업 알림
     public void OnPointerClick(PointerEventData eventData)
     {
-        MapSystemManager.Instance.OpenConfirmPopup(this);
+        if (MapSystemManager.Instance.isConfirmOpen) return; // 선택지 켜져있으면 리턴
+
+        transform.localScale = normalScale;
+        OnUnhovered?.Invoke();
+
+        OnClicked?.Invoke(this);
     }
 }

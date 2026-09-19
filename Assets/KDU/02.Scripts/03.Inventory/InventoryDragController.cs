@@ -131,7 +131,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         _ghost.SetAsLastSibling();
 
         if (_ghostShape != null)
-            _ghostShape.Draw(_shape, _view.CellSize, _validColor);
+            _ghostShape.Draw(_shape, null, _view.CellSize, _validColor);
 
         MoveGhost(local);
     }

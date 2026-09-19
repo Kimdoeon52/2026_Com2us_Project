@@ -20,8 +20,8 @@ public class InventoryView : MonoBehaviour
     [SerializeField] private GameObject _componentPrefab;
 
     [Header("표시")]
-    [Tooltip("셀 크기. GridLayoutGroup과 같아야 한다")]
-    [SerializeField] private float _cellSize = 56f;
+    [Tooltip("셀 크기. 레이어와 GridLayoutGroup을 여기에 맞춘다")]
+    [SerializeField] private float _cellSize = 64f;
 
     [Tooltip("파츠 색")]
     [SerializeField] private Color _partsColor = Color.white;
@@ -43,6 +43,7 @@ public class InventoryView : MonoBehaviour
             return;
         }
 
+        ApplyLayout();
         BuildGrid();
         _host.Changed += Refresh;
         Refresh();
@@ -80,6 +81,37 @@ public class InventoryView : MonoBehaviour
         DeactivateFrom(_componentLayer, componentCount);
     }
 
+    // 셀 크기와 그리드 규격으로 레이어·GridLayoutGroup을 맞춘다. 씬에서 손으로 맞추지 않는다
+    [ContextMenu("레이아웃 적용")]
+    public void ApplyLayout()
+    {
+        if (_host == null || _host.Definition == null)
+        {
+            Debug.LogWarning("Host나 인벤토리 정의가 비었다.");
+            return;
+        }
+
+        Vector2Int grid = _host.Definition.GridSize;
+        Vector2 size = (Vector2)grid * _cellSize;
+
+        SetSize(_gridRoot, size);
+        SetSize(_partsLayer, size);
+        SetSize(_componentLayer, size);
+
+        if (_gridRoot != null && _gridRoot.TryGetComponent(out GridLayoutGroup layout))
+        {
+            layout.cellSize = new Vector2(_cellSize, _cellSize);
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = grid.x;
+        }
+    }
+
+    private void SetSize(RectTransform rect, Vector2 size)
+    {
+        if (rect != null)
+            rect.sizeDelta = size;
+    }
+
     // 배경 칸. 한 번만 생성한다
     private void BuildGrid()
     {
@@ -103,7 +135,7 @@ public class InventoryView : MonoBehaviour
         RectTransform rect = Prepare(_partsLayer, _partsPrefab, poolIndex, entry);
 
         if (rect.TryGetComponent(out ShapeRenderer shape))
-            shape.Draw(entry.Shape, _cellSize, _partsColor);
+            shape.Draw(entry.Shape, entry.Definition != null ? entry.Definition.Sprite : null, _cellSize, _partsColor);
 
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)

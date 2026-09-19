@@ -22,6 +22,7 @@ public class InventoryTestHost : MonoBehaviour
     private InventorySaveData _save;
     private string _snapshot;
 
+    public InventoryDefinition Definition => _inventoryDefinition;
     public InventoryGrid Grid => _grid;
     public InventorySaveData Save => _save;
     public PartsCatalog Catalog => _catalog;

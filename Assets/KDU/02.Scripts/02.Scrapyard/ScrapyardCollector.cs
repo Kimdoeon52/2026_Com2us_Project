@@ -5,11 +5,13 @@ public class ScrapyardCollector
 {
     private readonly Rng _rng;
     private readonly IGameClock _clock;
+    private readonly ComponentCatalog _catalog;
 
-    public ScrapyardCollector(Rng rng, IGameClock clock)
+    public ScrapyardCollector(Rng rng, IGameClock clock, ComponentCatalog catalog)
     {
         _rng = rng;
         _clock = clock;
+        _catalog = catalog;
     }
 
     // 잔량·시간이 모자라거나 가중치가 비어 있으면 false
@@ -17,7 +19,7 @@ public class ScrapyardCollector
     {
         outcome = default;
 
-        if (definition == null || state == null || _rng == null)
+        if (definition == null || state == null || _rng == null || _catalog == null)
             return false;
 
         if (!state.HasRemaining(definition.MonthlyTotal))
@@ -32,12 +34,12 @@ public class ScrapyardCollector
             return true;
         }
 
-        if (!GradeRoller.TryRoll(definition.InstantWeights, _rng, out PartGrade grade))
+        if (!TryRollComponent(definition.InstantWeights, out ComponentDefinition component))
             return false;
 
         int amount = RollAmount(definition.InstantAmount);
         amount = state.Consume(amount, definition.MonthlyTotal);
-        outcome = CollectOutcome.Instant(grade, amount);
+        outcome = CollectOutcome.Instant(component, amount);
         return true;
     }
 
@@ -46,16 +48,27 @@ public class ScrapyardCollector
     {
         outcome = default;
 
-        if (definition == null || table == null || state == null || _rng == null)
+        if (definition == null || table == null || state == null || _rng == null || _catalog == null)
             return false;
 
-        if (!GradeRoller.TryRoll(table.SuccessWeights, _rng, out PartGrade grade))
+        if (!TryRollComponent(table.SuccessWeights, out ComponentDefinition component))
             return false;
 
         int amount = RollAmount(table.SuccessAmount);
         amount = state.Consume(amount, definition.MonthlyTotal);
-        outcome = CollectOutcome.Instant(grade, amount);
+        outcome = CollectOutcome.Instant(component, amount);
         return true;
+    }
+
+    // 등급을 뽑고 그 등급 부품 중 하나를 고른다
+    private bool TryRollComponent(GradeWeight[] weights, out ComponentDefinition component)
+    {
+        component = null;
+
+        if (!GradeRoller.TryRoll(weights, _rng, out PartGrade grade))
+            return false;
+
+        return _catalog.TryPick(grade, _rng, out component);
     }
 
     private int RollAmount(Vector2Int range)

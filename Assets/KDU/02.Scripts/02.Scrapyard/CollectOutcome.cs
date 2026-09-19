@@ -3,12 +3,14 @@ public struct CollectOutcome
 {
     public bool IsMinigame;
     public MinigameRewardTable Table;
-    public PartGrade Grade;
+    public ComponentDefinition Component;
     public int Amount;
 
-    public static CollectOutcome Instant(PartGrade grade, int amount)
+    public PartGrade Grade => Component != null ? Component.Grade : PartGrade.Common;
+
+    public static CollectOutcome Instant(ComponentDefinition component, int amount)
     {
-        return new CollectOutcome { IsMinigame = false, Grade = grade, Amount = amount };
+        return new CollectOutcome { IsMinigame = false, Component = component, Amount = amount };
     }
 
     public static CollectOutcome Minigame(MinigameRewardTable table)

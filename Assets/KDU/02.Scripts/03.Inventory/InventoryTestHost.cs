@@ -10,6 +10,9 @@ public class InventoryTestHost : MonoBehaviour
     [Tooltip("파츠 목록")]
     [SerializeField] private PartsCatalog _catalog;
 
+    [Tooltip("부품 목록")]
+    [SerializeField] private ComponentCatalog _componentCatalog;
+
     [Tooltip("난수 시드")]
     [SerializeField] private int _seed = 1;
 
@@ -26,6 +29,7 @@ public class InventoryTestHost : MonoBehaviour
     public InventoryGrid Grid => _grid;
     public InventorySaveData Save => _save;
     public PartsCatalog Catalog => _catalog;
+    public ComponentCatalog ComponentCatalog => _componentCatalog;
 
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
@@ -34,7 +38,7 @@ public class InventoryTestHost : MonoBehaviour
     {
         _rng = new Rng(_seed);
         _save = new InventorySaveData();
-        _grid = new InventoryGrid(_inventoryDefinition, _save.Components);
+        _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
 
         for (int i = 0; i < _startingParts; i++)
         {
@@ -74,27 +78,36 @@ public class InventoryTestHost : MonoBehaviour
         return true;
     }
 
-    public void GiveComponent(PartGrade grade, int amount)
+    // 최대 소지 개수를 넘는 양은 버려진다. 실제 지급량 반환
+    public int GiveComponent(ComponentDefinition component, int amount)
     {
-        _save.Components.Add(grade, amount);
+        int added = _save.Components.Add(component, amount);
         _grid.SyncComponents();
         Changed?.Invoke();
+        return added;
     }
 
     [ContextMenu("부품 지급")]
     public void GiveSampleComponents()
     {
-        _save.Components.Add(PartGrade.Common, 10);
-        _save.Components.Add(PartGrade.Rare, 3);
-        _save.Components.Add(PartGrade.Epic, 1);
-        _grid.SyncComponents();
-        Changed?.Invoke();
+        if (_componentCatalog == null)
+            return;
+
+        GiveRandomComponent(PartGrade.Common, 10);
+        GiveRandomComponent(PartGrade.Rare, 3);
+        GiveRandomComponent(PartGrade.Epic, 1);
+    }
+
+    public void GiveRandomComponent(PartGrade grade, int amount)
+    {
+        if (_componentCatalog != null && _componentCatalog.TryPick(grade, _rng, out ComponentDefinition component))
+            GiveComponent(component, amount);
     }
 
     // 수량이 0이 되면 칸도 사라진다
-    public bool ConsumeComponent(PartGrade grade, int amount)
+    public bool ConsumeComponent(string id, int amount)
     {
-        bool consumed = _save.Components.TryConsume(grade, amount);
+        bool consumed = _save.Components.TryConsume(id, amount);
         if (!consumed)
             return false;
 
@@ -103,10 +116,18 @@ public class InventoryTestHost : MonoBehaviour
         return true;
     }
 
-    [ContextMenu("에픽 부품 1개 소모")]
+    [ContextMenu("첫 부품 1개 소모")]
     public void ConsumeSampleComponent()
     {
-        ConsumeComponent(PartGrade.Epic, 1);
+        var slots = _save.Components.Slots;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (slots[i].Count <= 0)
+                continue;
+
+            ConsumeComponent(slots[i].Id, 1);
+            return;
+        }
     }
 
     [ContextMenu("전체 비우기")]
@@ -136,7 +157,7 @@ public class InventoryTestHost : MonoBehaviour
         }
 
         _save = JsonUtility.FromJson<InventorySaveData>(_snapshot);
-        _grid = new InventoryGrid(_inventoryDefinition, _save.Components);
+        _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
         _save.RestoreTo(_grid, _catalog);
         Changed?.Invoke();
     }

@@ -150,11 +150,11 @@ public class InventoryView : MonoBehaviour
 
         var image = rect.GetComponent<Image>();
         if (image != null)
-            image.color = GetGradeColor(entry.Grade);
+            image.color = GetGradeColor(entry.Component.Grade);
 
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)
-            label.text = _host.Save.Components.Get(entry.Grade).ToString();
+            label.text = _host.Save.Components.Get(entry.Component.Id).ToString();
 
         return rect;
     }

@@ -1,117 +1,111 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
-// 등급별 부품 스택. 개별 ID 없이 등급당 1칸, 수량 무제한
+// 부품별 스택. 부품 1종당 1칸, 수량은 정의의 최대 소지 개수까지
 [Serializable]
 public class ComponentStock : IComponentSink
 {
-    [SerializeField] private int[] _counts = new int[PartGrades.Count];
-    [SerializeField] private Vector2Int[] _origins = CreateOrigins();
-
-    public int Get(PartGrade grade)
+    [Serializable]
+    public class Slot
     {
-        if (!PartGrades.IsValid(grade))
+        public string Id;
+        public int Count;
+        public Vector2Int Origin = NoOrigin;
+    }
+
+    [SerializeField] private List<Slot> _slots = new List<Slot>();
+
+    public IReadOnlyList<Slot> Slots => _slots;
+
+    public int Get(string id)
+    {
+        Slot slot = FindSlot(id);
+        return slot != null ? slot.Count : 0;
+    }
+
+    // 최대 소지 개수를 넘는 양은 버린다. 실제로 더해진 양을 반환
+    public int Add(ComponentDefinition component, int amount)
+    {
+        if (component == null || string.IsNullOrEmpty(component.Id) || amount <= 0)
             return 0;
 
-        EnsureSize();
-        return _counts[(int)grade];
+        Slot slot = GetOrCreateSlot(component.Id);
+        int added = Mathf.Min(amount, component.RemainingCapacity(slot.Count));
+        slot.Count += added;
+        return added;
     }
 
-    public void Add(PartGrade grade, int amount)
+    public bool TryConsume(string id, int amount)
     {
-        if (!PartGrades.IsValid(grade) || amount <= 0)
-            return;
-
-        EnsureSize();
-        _counts[(int)grade] += amount;
-    }
-
-    public bool TryConsume(PartGrade grade, int amount)
-    {
-        if (!PartGrades.IsValid(grade) || amount <= 0)
+        if (amount <= 0)
             return false;
 
-        EnsureSize();
-        int index = (int)grade;
-        if (_counts[index] < amount)
+        Slot slot = FindSlot(id);
+        if (slot == null || slot.Count < amount)
             return false;
 
-        _counts[index] -= amount;
+        slot.Count -= amount;
         return true;
     }
 
     // 배치된 칸 좌표. x가 음수면 미배치
-    public bool TryGetOrigin(PartGrade grade, out Vector2Int origin)
+    public bool TryGetOrigin(string id, out Vector2Int origin)
     {
         origin = Vector2Int.zero;
 
-        if (!PartGrades.IsValid(grade))
+        Slot slot = FindSlot(id);
+        if (slot == null)
             return false;
 
-        EnsureSize();
-        origin = _origins[(int)grade];
+        origin = slot.Origin;
         return origin.x >= 0 && origin.y >= 0;
     }
 
-    public void SetOrigin(PartGrade grade, Vector2Int origin)
+    public void SetOrigin(string id, Vector2Int origin)
     {
-        if (!PartGrades.IsValid(grade))
-            return;
-
-        EnsureSize();
-        _origins[(int)grade] = origin;
+        Slot slot = FindSlot(id);
+        if (slot != null)
+            slot.Origin = origin;
     }
 
-    public void ClearOrigin(PartGrade grade)
+    public void ClearOrigin(string id)
     {
-        SetOrigin(grade, NoOrigin);
+        SetOrigin(id, NoOrigin);
     }
 
     public void Clear()
     {
-        EnsureSize();
-        Array.Clear(_counts, 0, _counts.Length);
-        for (int i = 0; i < _origins.Length; i++)
-        {
-            _origins[i] = NoOrigin;
-        }
+        _slots.Clear();
     }
 
     private static Vector2Int NoOrigin => new Vector2Int(-1, -1);
 
-    private static Vector2Int[] CreateOrigins()
+    private Slot FindSlot(string id)
     {
-        var origins = new Vector2Int[PartGrades.Count];
-        for (int i = 0; i < origins.Length; i++)
+        if (_slots == null || string.IsNullOrEmpty(id))
+            return null;
+
+        for (int i = 0; i < _slots.Count; i++)
         {
-            origins[i] = NoOrigin;
+            if (_slots[i] != null && _slots[i].Id == id)
+                return _slots[i];
         }
 
-        return origins;
+        return null;
     }
 
-    // 세이브가 예전 등급 개수로 저장돼 있어도 맞춘다
-    private void EnsureSize()
+    private Slot GetOrCreateSlot(string id)
     {
-        if (_counts == null)
-            _counts = new int[PartGrades.Count];
-        else if (_counts.Length != PartGrades.Count)
-            Array.Resize(ref _counts, PartGrades.Count);
+        Slot slot = FindSlot(id);
+        if (slot != null)
+            return slot;
 
-        if (_origins == null)
-        {
-            _origins = CreateOrigins();
-            return;
-        }
+        if (_slots == null)
+            _slots = new List<Slot>();
 
-        if (_origins.Length == PartGrades.Count)
-            return;
-
-        int previous = _origins.Length;
-        Array.Resize(ref _origins, PartGrades.Count);
-        for (int i = previous; i < _origins.Length; i++)
-        {
-            _origins[i] = NoOrigin;
-        }
+        slot = new Slot { Id = id };
+        _slots.Add(slot);
+        return slot;
     }
 }

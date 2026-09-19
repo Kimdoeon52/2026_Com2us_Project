@@ -8,7 +8,7 @@ public class InventoryGrid
     public struct Entry
     {
         public bool IsComponent;
-        public PartGrade Grade;
+        public ComponentDefinition Component;
         public PartsInstance Parts;
         public PartsDefinition Definition;
         public PartsShape Shape;
@@ -25,19 +25,21 @@ public class InventoryGrid
     private readonly int[] _cells;
     private readonly List<Entry> _entries = new List<Entry>();
     private readonly ComponentStock _stock;
+    private readonly ComponentCatalog _components;
 
     public int Width => _width;
     public int Height => _height;
     public int Count => _entries.Count;
     public IReadOnlyList<Entry> Entries => _entries;
 
-    public InventoryGrid(InventoryDefinition definition, ComponentStock stock)
+    public InventoryGrid(InventoryDefinition definition, ComponentStock stock, ComponentCatalog components)
     {
         Vector2Int size = definition != null ? definition.GridSize : Vector2Int.one;
         _width = Mathf.Max(1, size.x);
         _height = Mathf.Max(1, size.y);
         _cells = new int[_width * _height];
         _stock = stock;
+        _components = components;
         ClearCells();
     }
 
@@ -140,7 +142,7 @@ public class InventoryGrid
         entry.Origin = origin;
 
         if (entry.IsComponent && _stock != null)
-            _stock.SetOrigin(entry.Grade, origin);
+            _stock.SetOrigin(entry.Component.Id, origin);
         else if (!entry.IsComponent && entry.Parts != null)
             entry.Parts.Origin = origin;
 
@@ -166,21 +168,26 @@ public class InventoryGrid
     // 스택 수량과 칸을 맞춘다. 수량이 바뀐 뒤 호출한다
     public void SyncComponents()
     {
-        if (_stock == null)
+        if (_stock == null || _components == null)
             return;
 
         RemoveEmptyComponents();
 
-        for (int i = 0; i < PartGrades.Count; i++)
+        var slots = _stock.Slots;
+        for (int i = 0; i < slots.Count; i++)
         {
-            var grade = (PartGrade)i;
-            if (_stock.Get(grade) <= 0)
+            if (slots[i] == null || slots[i].Count <= 0)
                 continue;
 
-            if (IndexOfComponent(grade) >= 0)
+            if (IndexOfComponent(slots[i].Id) >= 0)
                 continue;
 
-            PlaceComponent(grade);
+            // 카탈로그에서 빠진 부품은 칸을 만들지 않는다
+            ComponentDefinition component = _components.Find(slots[i].Id);
+            if (component == null)
+                continue;
+
+            PlaceComponent(component);
         }
     }
 
@@ -235,10 +242,10 @@ public class InventoryGrid
     }
 
     // 저장된 좌표를 먼저 쓰고, 막혀 있으면 빈자리를 찾는다
-    private void PlaceComponent(PartGrade grade)
+    private void PlaceComponent(ComponentDefinition component)
     {
         Vector2Int origin;
-        bool hasSaved = _stock.TryGetOrigin(grade, out origin) && CanPlace(SingleCell, origin);
+        bool hasSaved = _stock.TryGetOrigin(component.Id, out origin) && CanPlace(SingleCell, origin);
 
         if (!hasSaved && !TryFindFreeOrigin(SingleCell, out origin))
             return;
@@ -246,13 +253,13 @@ public class InventoryGrid
         Add(new Entry
         {
             IsComponent = true,
-            Grade = grade,
+            Component = component,
             Shape = SingleCell,
             Origin = origin,
             Size = Vector2Int.one,
         });
 
-        _stock.SetOrigin(grade, origin);
+        _stock.SetOrigin(component.Id, origin);
     }
 
     private void RemoveEmptyComponents()
@@ -261,10 +268,10 @@ public class InventoryGrid
         for (int i = _entries.Count - 1; i >= 0; i--)
         {
             Entry entry = _entries[i];
-            if (!entry.IsComponent || _stock.Get(entry.Grade) > 0)
+            if (!entry.IsComponent || _stock.Get(entry.Component.Id) > 0)
                 continue;
 
-            _stock.ClearOrigin(entry.Grade);
+            _stock.ClearOrigin(entry.Component.Id);
             _entries.RemoveAt(i);
             removed = true;
         }
@@ -273,11 +280,11 @@ public class InventoryGrid
             RebuildCells();
     }
 
-    private int IndexOfComponent(PartGrade grade)
+    private int IndexOfComponent(string id)
     {
         for (int i = 0; i < _entries.Count; i++)
         {
-            if (_entries[i].IsComponent && _entries[i].Grade == grade)
+            if (_entries[i].IsComponent && _entries[i].Component.Id == id)
                 return i;
         }
 

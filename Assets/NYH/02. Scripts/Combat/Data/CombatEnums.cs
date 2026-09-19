@@ -11,13 +11,13 @@ using UnityEngine;
 /// </summary>
 public enum ActionPhase
 {
-    Idle,
-    Startup,
-    Active,
-    Recovery,
+    Idle, //대기
+    Startup, //선딜
+    Active, //활성 프레임
+    Recovery, //후딜
     Stagger,
-    Down,
-    Dead
+    Down, //다운
+    Dead //사망
 }
 
 /// <summary>
@@ -25,7 +25,7 @@ public enum ActionPhase
 /// </summary>
 public enum BodyPart
 {
-    Head,
+    Head,    
     LeftArm,
     RightArm,
     LeftLeg,

@@ -13,19 +13,38 @@ public class RobotMover : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 3f; // TODO: 임시값. 프레임표/기획 확정 전
     [SerializeField] private Transform opponent;
+    [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
 
+    // 
     private IInputSource inputSource;
+    private ActionState actionState;
     private bool facingRight = true;
 
-    public void Init(IInputSource source)
+    /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 — 
+    /// 지금은 "키 누르면 움직인다"를 눈으로 확인하기 위한 최소 스캐폴드</summary>
+    // 호출: PlayerRobotBootstrap.Awake. 받음: source(이동 키 읽기), state(공격 중 이동 잠금 판단)
+    public void Init(IInputSource source, ActionState state)
     {
         inputSource = source;
+        actionState = state;
+        if (combatCamera == null) combatCamera = FindFirstObjectByType<CombatCamera>();
     }
 
+    // 호출: Unity 매 렌더 프레임. 순서: 이동 입력(잠금 확인) → 이동 → CombatCamera.ClampFighterX로 화면 밖 보정 → 상대 방향으로 좌우 반전
     private void Update()
     {
-        float moveInput = inputSource?.GetMoveInput() ?? 0f;
+        // 공격·가드·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
+        bool canMove = actionState == null || actionState.CanMove;
+        float moveInput = canMove ? (inputSource?.GetMoveInput() ?? 0f) : 0f;
         transform.Translate(Vector3.right * moveInput * moveSpeed * Time.deltaTime, Space.World);
+
+        // 화면 밖으로 못 나가게 스테이지 벽 / 최대 거리로 보정
+        if (combatCamera != null)
+        {
+            Vector3 pos = transform.position;
+            pos.x = combatCamera.ClampFighterX(pos.x);
+            transform.position = pos;
+        }
 
         if (opponent != null)
         {

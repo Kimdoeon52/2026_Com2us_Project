@@ -18,11 +18,13 @@ public class ActionExecutor : MonoBehaviour
     /// </summary>
     public ActionState State => state;
 
+    // 호출: PlayerRobotBootstrap.Awake. 받음: 입력원 — 사람인지 AI인지 몰라도 되게 인터페이스로 받는다
     public void Init(IInputSource source)
     {
         inputSource = source;
     }
 
+    // 호출: CombatClock.OnCombatTick (1/60초마다). 순서: Idle이면 입력 확인 → state.Begin으로 시작 → state.Advance로 프레임 +1
     public void ExecuteTick()
     {
         if (state.CanAcceptNewAction)

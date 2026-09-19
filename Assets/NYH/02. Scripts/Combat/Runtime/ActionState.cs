@@ -13,10 +13,15 @@ using System;
 /// </summary>
 public class ActionState
 {
+    /// <summary>지금 진행 중인 행동. null이면 Idle.</summary>
     public ActionData CurrentAction { get; private set; }
+    // <summary>지금 진행 중인 행동의 상태</summary>
     public ActionPhase Phase { get; private set; } = ActionPhase.Idle;
+    // <summary>지금 진행 중인 행동의 진입프레임</summary>
     public int FrameInPhase { get; private set; }
 
+    // <summary> Idle일 때만 이동 가능 선후딜/경직/다운 중에는 이동 불가능</summary>
+    public bool CanMove => Phase == ActionPhase.Idle;
     /// <summary>Idle일 때만 새 행동을 받는다. Recovery 중 재입력 무시 검증은 이 값으로 한다 (§11-4)</summary>
     public bool CanAcceptNewAction => Phase == ActionPhase.Idle;
 
@@ -29,6 +34,7 @@ public class ActionState
     /// <summary>회수까지 끝나고 Idle로 돌아가는 순간</summary>
     public event Action<ActionData> OnActionEnd;
 
+    // 호출: ActionExecutor.ExecuteTick. 받음: 시작할 ActionData. 전달: OnActionBegin 이벤트 → RobotView.PlayAction이 애니메이션 재생
     public void Begin(ActionData action)
     {
         if (action == null) return;
@@ -41,6 +47,7 @@ public class ActionState
     }
 
     /// <summary>CombatClock.CombatTick()마다 정확히 1번 호출된다. 프레임을 직접 세지, Time.deltaTime을 곱하지 않는다</summary>
+    // 호출: ActionExecutor.ExecuteTick (틱마다 1회). 구간이 바뀔 때 OnActionActiveStart / OnActionEnd 이벤트를 발생시킨다
     public void Advance()
     {
         if (CurrentAction == null) return;

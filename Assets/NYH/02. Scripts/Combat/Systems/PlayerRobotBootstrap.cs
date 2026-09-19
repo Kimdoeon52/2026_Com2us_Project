@@ -2,32 +2,35 @@ using UnityEngine;
 
 /// <summary>
 /// [임시/테스트용] 플레이어 오브젝트에 붙은 컴포넌트들을 서로 연결하고,
-/// CombatClock이 없는 지금 ActionExecutor.ExecuteTick()을 대신 호출해주는 자리.
+/// ActionExecutor.ExecuteTick()을 CombatClock의 틱에 구독시키는 자리.
 ///
-/// CombatClock이 완성되면:
-///   - Update()의 ExecuteTick() 호출은 삭제하고 CombatClock.CombatTick()에서 호출하도록 옮긴다 (§3 원칙)
-///   - Init() 와이어링만 여기 남아도 되고, 아니면 RobotAssembler(§11-8)가 대신할 수도 있음
-///
-/// 지금은 모니터 주사율에 프레임 카운트가 종속되는 문제(§3)를 그대로 안고 가는 임시 코드다.
-/// "키 누르면 잽이 나가나" 확인용일 뿐, 이 상태로 밸런스 테스트를 하면 안 된다.
+/// 정식 조립기(RobotAssembler, §11-8)가 생기면 이 와이어링은 거기로 흡수될 수 있다.
 /// </summary>
 public class PlayerRobotBootstrap : MonoBehaviour
 {
     private ActionExecutor executor;
 
+    // 호출: Unity(오브젝트 생성 시). 같은 오브젝트의 부품들을 찾아 서로 연결한다 — 입력(IInputSource)과 상태(ActionState)를 여기서만 나눠준다
     private void Awake()
     {
         var input = GetComponent<PlayerInputSource>();
         executor = GetComponent<ActionExecutor>();
 
         executor.Init(input);
-        GetComponent<RobotMover>().Init(input);
+        GetComponent<RobotMover>().Init(input, executor.State);
         GetComponent<RobotView>()?.Init(executor.State, input);
     }
 
-    private void Update()
+    // 호출: Unity(활성화 시). CombatClock의 틱에 ExecuteTick을 등록한다 — 전투 로직이 1/60초마다 도는 연결 고리
+    private void OnEnable()
     {
-        // TODO: CombatClock 완성되면 이 줄을 지우고 CombatTick()에서 호출하도록 옮길 것
-        executor.ExecuteTick();
+        CombatClock.Instance.OnCombatTick += executor.ExecuteTick;
+    }
+
+    // 호출: Unity(비활성화/파괴 시). 등록했던 ExecuteTick을 해제한다 (안 하면 파괴된 오브젝트를 계속 호출함)
+    private void OnDisable()
+    {
+        var clock = CombatClock.Existing;
+        if (clock != null) clock.OnCombatTick -= executor.ExecuteTick;
     }
 }

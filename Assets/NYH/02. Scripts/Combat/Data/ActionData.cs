@@ -93,8 +93,11 @@ public class ActionData : ScriptableObject
     public ActionSource Source => source;
     public BodyPart RequiredPart => requiredPart;
 
+    // 시작 프레임
     public int StartupFrames => startupFrames;
+    // 활성(공격판정이 생기는)프레임
     public int ActiveFrames => activeFrames;
+    // 후딜 프레임(공격을 회수하는 프레임)
     public int RecoveryFrames => recoveryFrames;
 
     /// <summary>전체 프레임. 시작+활성+회수 그냥 합 — SF 원본 표기와 달리 -1 보정 없음 (§3)</summary>

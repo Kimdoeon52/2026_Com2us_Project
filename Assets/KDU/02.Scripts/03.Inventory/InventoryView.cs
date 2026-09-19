@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,8 +23,14 @@ public class InventoryView : MonoBehaviour
     [Tooltip("셀 크기. GridLayoutGroup과 같아야 한다")]
     [SerializeField] private float _cellSize = 56f;
 
+    [Tooltip("파츠 색")]
+    [SerializeField] private Color _partsColor = Color.white;
+
     [Tooltip("등급 색")]
     [SerializeField] private Color[] _gradeColors = new Color[PartGrades.Count];
+
+    // 엔트리 인덱스로 그려진 렉트를 찾는다. 드래그가 원본을 집을 때 쓴다
+    private readonly List<RectTransform> _entryRects = new List<RectTransform>();
 
     public float CellSize => _cellSize;
     public RectTransform PartsLayer => _partsLayer;
@@ -53,16 +60,18 @@ public class InventoryView : MonoBehaviour
         int partsCount = 0;
         int componentCount = 0;
 
+        _entryRects.Clear();
+
         for (int i = 0; i < entries.Count; i++)
         {
             if (entries[i].IsComponent)
             {
-                DrawComponent(entries[i], componentCount);
+                _entryRects.Add(DrawComponent(entries[i], componentCount));
                 componentCount++;
             }
             else
             {
-                DrawParts(entries[i], partsCount);
+                _entryRects.Add(DrawParts(entries[i], partsCount));
                 partsCount++;
             }
         }
@@ -81,16 +90,29 @@ public class InventoryView : MonoBehaviour
         }
     }
 
-    private void DrawParts(InventoryGrid.Entry entry, int poolIndex)
+    public RectTransform GetEntryRect(int index)
+    {
+        if (index < 0 || index >= _entryRects.Count)
+            return null;
+
+        return _entryRects[index];
+    }
+
+    private RectTransform DrawParts(InventoryGrid.Entry entry, int poolIndex)
     {
         RectTransform rect = Prepare(_partsLayer, _partsPrefab, poolIndex, entry);
+
+        if (rect.TryGetComponent(out ShapeRenderer shape))
+            shape.Draw(entry.Shape, _cellSize, _partsColor);
 
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)
             label.text = entry.Definition != null ? entry.Definition.DisplayName : string.Empty;
+
+        return rect;
     }
 
-    private void DrawComponent(InventoryGrid.Entry entry, int poolIndex)
+    private RectTransform DrawComponent(InventoryGrid.Entry entry, int poolIndex)
     {
         RectTransform rect = Prepare(_componentLayer, _componentPrefab, poolIndex, entry);
 
@@ -101,6 +123,8 @@ public class InventoryView : MonoBehaviour
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)
             label.text = _host.Save.Components.Get(entry.Grade).ToString();
+
+        return rect;
     }
 
     // 파괴하지 않고 재사용한다. 드래그 중 파괴되면 포인터 이벤트가 끊긴다

@@ -10,16 +10,18 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("표시명")]
     [SerializeField] private string _displayName;
 
-    [Tooltip("그리드 크기")]
-    [SerializeField] private Vector2Int _size = Vector2Int.one;
+    [Tooltip("점유 모양")]
+    [SerializeField] private PartsShape _shape = new PartsShape();
 
     public string Id => _id;
     public string DisplayName => _displayName;
-    public Vector2Int Size => _size;
+    public PartsShape Shape => _shape;
+
+    // 외곽 크기. 렌더 크기 계산용
+    public Vector2Int Size => _shape.Size;
 
     private void OnValidate()
     {
-        _size.x = Mathf.Max(1, _size.x);
-        _size.y = Mathf.Max(1, _size.y);
+        _shape.Validate();
     }
 }

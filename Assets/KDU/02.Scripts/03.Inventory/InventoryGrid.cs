@@ -4,18 +4,21 @@ using UnityEngine;
 // 파츠와 부품이 같이 올라가는 배치 그리드. 드래그·UI는 다루지 않는다
 public class InventoryGrid
 {
-    // 부품 칸은 1x1 고정, 파츠는 정의 크기
+    // 부품 칸은 1x1 고정, 파츠는 정의 모양
     public struct Entry
     {
         public bool IsComponent;
         public PartGrade Grade;
         public PartsInstance Parts;
         public PartsDefinition Definition;
+        public PartsShape Shape;
         public Vector2Int Origin;
         public Vector2Int Size;
     }
 
     private const int Empty = -1;
+
+    private static readonly PartsShape SingleCell = new PartsShape(Vector2Int.one);
 
     private readonly int _width;
     private readonly int _height;
@@ -39,22 +42,28 @@ public class InventoryGrid
     }
 
     // ignoreIndex는 자기 자신을 옮길 때 제외할 엔트리
-    public bool CanPlace(Vector2Int size, Vector2Int origin, int ignoreIndex = Empty)
+    public bool CanPlace(PartsShape shape, Vector2Int origin, int ignoreIndex = Empty)
     {
-        if (size.x <= 0 || size.y <= 0)
+        if (shape == null)
             return false;
 
-        if (origin.x < 0 || origin.y < 0)
-            return false;
+        Vector2Int size = shape.Size;
 
-        if (origin.x + size.x > _width || origin.y + size.y > _height)
-            return false;
-
+        // 빈 구석은 그리드 밖이어도 되므로 점유 칸만 본다
         for (int y = 0; y < size.y; y++)
         {
             for (int x = 0; x < size.x; x++)
             {
-                int occupant = _cells[CellIndex(origin.x + x, origin.y + y)];
+                if (!shape.Contains(x, y))
+                    continue;
+
+                int cellX = origin.x + x;
+                int cellY = origin.y + y;
+
+                if (cellX < 0 || cellY < 0 || cellX >= _width || cellY >= _height)
+                    return false;
+
+                int occupant = _cells[CellIndex(cellX, cellY)];
                 if (occupant != Empty && occupant != ignoreIndex)
                     return false;
             }
@@ -87,7 +96,7 @@ public class InventoryGrid
     {
         index = Empty;
 
-        if (definition == null || !CanPlace(definition.Size, origin))
+        if (definition == null || !CanPlace(definition.Shape, origin))
             return false;
 
         var entry = new Entry
@@ -95,6 +104,7 @@ public class InventoryGrid
             IsComponent = false,
             Parts = new PartsInstance(definition.Id, origin),
             Definition = definition,
+            Shape = definition.Shape,
             Origin = origin,
             Size = definition.Size,
         };
@@ -111,7 +121,7 @@ public class InventoryGrid
         if (definition == null)
             return false;
 
-        if (!TryFindFreeOrigin(definition.Size, out Vector2Int origin))
+        if (!TryFindFreeOrigin(definition.Shape, out Vector2Int origin))
             return false;
 
         return TryPlaceParts(definition, origin, out index);
@@ -123,10 +133,10 @@ public class InventoryGrid
             return false;
 
         Entry entry = _entries[index];
-        if (!CanPlace(entry.Size, origin, index))
+        if (!CanPlace(entry.Shape, origin, index))
             return false;
 
-        Fill(entry.Size, entry.Origin, Empty);
+        Fill(entry.Shape, entry.Origin, Empty);
         entry.Origin = origin;
 
         if (entry.IsComponent && _stock != null)
@@ -135,7 +145,7 @@ public class InventoryGrid
             entry.Parts.Origin = origin;
 
         _entries[index] = entry;
-        Fill(entry.Size, origin, index);
+        Fill(entry.Shape, origin, index);
         return true;
     }
 
@@ -194,7 +204,7 @@ public class InventoryGrid
                     continue;
 
                 PartsDefinition definition = catalog.Find(instance.DefinitionId);
-                if (definition == null || !CanPlace(definition.Size, instance.Origin))
+                if (definition == null || !CanPlace(definition.Shape, instance.Origin))
                     continue;
 
                 Add(new Entry
@@ -202,6 +212,7 @@ public class InventoryGrid
                     IsComponent = false,
                     Parts = instance,
                     Definition = definition,
+                    Shape = definition.Shape,
                     Origin = instance.Origin,
                     Size = definition.Size,
                 });
@@ -227,15 +238,16 @@ public class InventoryGrid
     private void PlaceComponent(PartGrade grade)
     {
         Vector2Int origin;
-        bool hasSaved = _stock.TryGetOrigin(grade, out origin) && CanPlace(Vector2Int.one, origin);
+        bool hasSaved = _stock.TryGetOrigin(grade, out origin) && CanPlace(SingleCell, origin);
 
-        if (!hasSaved && !TryFindFreeOrigin(Vector2Int.one, out origin))
+        if (!hasSaved && !TryFindFreeOrigin(SingleCell, out origin))
             return;
 
         Add(new Entry
         {
             IsComponent = true,
             Grade = grade,
+            Shape = SingleCell,
             Origin = origin,
             Size = Vector2Int.one,
         });
@@ -272,14 +284,14 @@ public class InventoryGrid
         return Empty;
     }
 
-    private bool TryFindFreeOrigin(Vector2Int size, out Vector2Int origin)
+    private bool TryFindFreeOrigin(PartsShape shape, out Vector2Int origin)
     {
         for (int y = 0; y < _height; y++)
         {
             for (int x = 0; x < _width; x++)
             {
                 origin = new Vector2Int(x, y);
-                if (CanPlace(size, origin))
+                if (CanPlace(shape, origin))
                     return true;
             }
         }
@@ -292,16 +304,22 @@ public class InventoryGrid
     {
         _entries.Add(entry);
         int index = _entries.Count - 1;
-        Fill(entry.Size, entry.Origin, index);
+        Fill(entry.Shape, entry.Origin, index);
         return index;
     }
 
-    private void Fill(Vector2Int size, Vector2Int origin, int value)
+    private void Fill(PartsShape shape, Vector2Int origin, int value)
     {
-        for (int y = 0; y < size.y; y++)
+        if (shape == null)
+            return;
+
+        for (int y = 0; y < shape.Size.y; y++)
         {
-            for (int x = 0; x < size.x; x++)
+            for (int x = 0; x < shape.Size.x; x++)
             {
+                if (!shape.Contains(x, y))
+                    continue;
+
                 _cells[CellIndex(origin.x + x, origin.y + y)] = value;
             }
         }
@@ -312,7 +330,7 @@ public class InventoryGrid
         ClearCells();
         for (int i = 0; i < _entries.Count; i++)
         {
-            Fill(_entries[i].Size, _entries[i].Origin, i);
+            Fill(_entries[i].Shape, _entries[i].Origin, i);
         }
     }
 

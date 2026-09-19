@@ -63,6 +63,16 @@ public class InventoryTestHost : MonoBehaviour
         return GivePart(_catalog.Parts[_rng.Range(0, _catalog.Parts.Length)]);
     }
 
+    // 드래그 드롭으로 엔트리를 옮긴다
+    public bool MoveEntry(int index, Vector2Int origin)
+    {
+        if (_grid == null || !_grid.TryMove(index, origin))
+            return false;
+
+        Changed?.Invoke();
+        return true;
+    }
+
     public void GiveComponent(PartGrade grade, int amount)
     {
         _save.Components.Add(grade, amount);

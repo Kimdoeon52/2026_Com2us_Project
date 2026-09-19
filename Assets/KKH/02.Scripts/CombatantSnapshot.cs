@@ -92,14 +92,26 @@ public class PartRuntimeState
     public bool IsPartBrokenOrNotEquipped(BodyPart partType)
     {
         if (!partStates.TryGetValue(partType, out var partState))
-            return true; // 미장착 상태
-        return partStates[partType].isBroken; // 파손 여부 반환
+            return true; // 미장착 상태임
+        return partStates[partType].isBroken; // 파손 여부 반환함
     }
+
+    /// <summary>
+    /// 설계서 및 전투 행동 파트용 alias: 부위 파손 여부 검사함
+    /// </summary>
+    public bool IsPartBroken(BodyPart partType)
+    {
+        return IsPartBrokenOrNotEquipped(partType);
+    }
+
+    /// <summary>
+    /// 생존 여부 (현재 코어 HP > 0) 반환함
+    /// </summary>
+    public bool IsAlive => currentHp > 0;
 
     /// <summary>
     /// 지정된 부위의 내구도를 차감함
     /// </summary>
-    
     public void ConsumePartDurability(BodyPart partType, int amount)
     {
         if (partStates.TryGetValue(partType, out var partState))
@@ -109,9 +121,16 @@ public class PartRuntimeState
     }
 
     /// <summary>
+    /// 설계서 및 연산 엔진용 alias: 지정된 부위의 내구도를 차감함
+    /// </summary>
+    public void ConsumeDurability(BodyPart partType, int amount)
+    {
+        ConsumePartDurability(partType, amount);
+    }
+
+    /// <summary>
     /// 지정된 부위의 런타임 상태를 반환함
     /// </summary>
-    
     public PartRuntimeState GetPartRuntimeState(BodyPart partType)
     {
         partStates.TryGetValue(partType, out var partState);
@@ -119,26 +138,24 @@ public class PartRuntimeState
     }
 
     /// <summary>
-    /// 다리 1개만 파괴된 상태인지 확인함 위빙 50% 실패
+    /// 다리 1개만 파괴된 상태인지 확인함 (위빙 50% 실패 대상임)
     /// </summary>
-    
     public bool IsOneLegBroken()
     {
         bool leftLegBroken = IsPartBrokenOrNotEquipped(BodyPart.LeftLeg);
         bool rightLegBroken = IsPartBrokenOrNotEquipped(BodyPart.RightLeg);
 
-
-        return (leftLegBroken ^ rightLegBroken); // XOR 연산으로 한쪽만 파손된 경우 true 반환
+        return (leftLegBroken ^ rightLegBroken); // XOR 연산으로 한쪽만 파손된 경우 true 반환함
     }
 
     /// <summary>
-    /// 다리 2개 모두 파괴된 상태인지 확인함 위빙 100% 실패
+    /// 다리 2개 모두 파괴된 상태인지 확인함 (위빙 100% 실패 대상임)
     /// </summary>
     public bool IsBothLegsBroken()
     {
         bool leftLegBroken = IsPartBrokenOrNotEquipped(BodyPart.LeftLeg);
         bool rightLegBroken = IsPartBrokenOrNotEquipped(BodyPart.RightLeg);
 
-        return (leftLegBroken && rightLegBroken); // AND 연산으로 양쪽 모두 파손된 경우 true 반환
+        return (leftLegBroken && rightLegBroken); // AND 연산으로 양쪽 모두 파손된 경우 true 반환함
     }
 }

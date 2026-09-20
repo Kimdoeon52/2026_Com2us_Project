@@ -10,14 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e890f28f66f6af4eb0816a23acb7fcb, type: 3}
-  m_Name: PartsDefinition 1
+  m_Name: RightLeg3
   m_EditorClassIdentifier: 
-  _id: 2001
-  _displayName: "\uB2E4\uB9AC 1"
+  _id: ITEM_20_1_012
+  _displayName: "\uB179\uC2A8 \uC720\uC555 \uC2E4\uB9B0\uB354 \uC624\uB978\uB2E4\uB9AC"
+  _description: "\uAE30\uB984\uC774 \uC0C8\uB294 \uB0A1\uC740 \uC720\uC555 \uC2E4\uB9B0\uB354\uB97C
+    \uC5B5\uC9C0\uB85C \uB07C\uC6CC \uB9DE\uCD98 \uC624\uB978\uB2E4\uB9AC \uD30C\uCE20."
   _shape:
-    _size: {x: 2, y: 3}
-    _cells: 010101000100
+    _size: {x: 1, y: 1}
+    _cells: 01
   _sprite: {fileID: 0}
+  _slot: 3
   _grade: 0
   _destructiveResistance: 0
-  _durability: 0
+  _durability: 12

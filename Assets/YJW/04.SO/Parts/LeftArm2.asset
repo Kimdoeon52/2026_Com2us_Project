@@ -10,14 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e890f28f66f6af4eb0816a23acb7fcb, type: 3}
-  m_Name: PartsDefinition 1
+  m_Name: LeftArm2
   m_EditorClassIdentifier: 
-  _id: 2001
-  _displayName: "\uB2E4\uB9AC 1"
+  _id: ITEM_20_1_002
+  _displayName: "\uB179\uC2A8 \uD30C\uC774\uD504 \uC67C\uD314"
+  _description: "\uD3D0\uACF5\uC0AC\uC7A5\uC758 \uD30C\uC774\uD504\uB97C \uB367\uB300\uC5B4
+    \uB9CC\uB4E0 \uC67C\uD314 \uD30C\uCE20. \uCDA9\uACA9\uC744 \uBC1B\uC73C\uBA74
+    \uC1F3\uC18C\uB9AC\uAC00 \uB09C\uB2E4."
   _shape:
-    _size: {x: 2, y: 3}
-    _cells: 010101000100
+    _size: {x: 1, y: 1}
+    _cells: 01
   _sprite: {fileID: 0}
+  _slot: 0
   _grade: 0
   _destructiveResistance: 0
-  _durability: 0
+  _durability: 15

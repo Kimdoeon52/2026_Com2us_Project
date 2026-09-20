@@ -10,14 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e890f28f66f6af4eb0816a23acb7fcb, type: 3}
-  m_Name: PartsDefinition 1
+  m_Name: RightArm3
   m_EditorClassIdentifier: 
-  _id: 2001
-  _displayName: "\uB2E4\uB9AC 1"
+  _id: ITEM_20_1_006
+  _displayName: "\uC6A9\uC811 \uBD88\uB7C9 \uC1E0\uD30C\uC774\uD504 \uC624\uB978\uD314"
+  _description: "\uC6A9\uC811\uC774 \uC81C\uB300\uB85C \uB418\uC9C0 \uC54A\uC544
+    \uAE08\uBC29\uC774\uB77C\uB3C4 \uBD80\uC11C\uC9C8 \uAC83 \uAC19\uC740 \uC624\uB978\uD314.
+    \uB0B4\uAD6C\uC131\uC744 \uAE30\uB300\uD558\uAE34 \uD798\uB4E4\uB2E4."
   _shape:
-    _size: {x: 2, y: 3}
-    _cells: 010101000100
+    _size: {x: 1, y: 1}
+    _cells: 01
   _sprite: {fileID: 0}
+  _slot: 1
   _grade: 0
   _destructiveResistance: 0
-  _durability: 0
+  _durability: 12

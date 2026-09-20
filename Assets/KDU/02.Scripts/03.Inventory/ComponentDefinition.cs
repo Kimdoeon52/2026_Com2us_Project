@@ -11,6 +11,9 @@ public class ComponentDefinition
     [Tooltip("표시명")]
     [SerializeField] private string _displayName;
 
+    [Tooltip("설명")]
+    [SerializeField] private string _description;
+
     [Tooltip("등급")]
     [SerializeField] private PartGrade _grade;
 
@@ -20,6 +23,7 @@ public class ComponentDefinition
 
     public string Id => _id;
     public string DisplayName => _displayName;
+    public string Description => _description;
     public PartGrade Grade => _grade;
     public int MaxCount => _maxCount;
 

@@ -10,14 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5e890f28f66f6af4eb0816a23acb7fcb, type: 3}
-  m_Name: PartsDefinition 1
+  m_Name: LeftLeg1
   m_EditorClassIdentifier: 
-  _id: 2001
-  _displayName: "\uB2E4\uB9AC 1"
+  _id: ITEM_20_1_007
+  _displayName: "\uACE0\uBB3C\uC0C1\uC81C \uB0A1\uC740 \uADA4\uB3C4 \uC67C\uB2E4\uB9AC"
+  _description: "\uB04A\uC5B4\uC9C0\uAE30 \uC9C1\uC804\uC778 \uADA4\uB3C4\uB97C \uC5B5\uC9C0\uB85C
+    \uC774\uC5B4 \uBD99\uC778 \uC67C\uB2E4\uB9AC. \uC090\uAC71\uAC70\uB9AC\uB294
+    \uC18C\uB9AC\uAC00 \uAC70\uC2AC\uB9B0\uB2E4."
   _shape:
-    _size: {x: 2, y: 3}
-    _cells: 010101000100
+    _size: {x: 1, y: 1}
+    _cells: 01
   _sprite: {fileID: 0}
+  _slot: 2
   _grade: 0
   _destructiveResistance: 0
-  _durability: 0
+  _durability: 18

@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using NUnit.Framework;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 /*
@@ -16,15 +17,15 @@ using UnityEngine.UI;
 public class Auction : PersistentSingleton<Auction>
 {
     [Header("물건 이름 나올 곳")]
-    [SerializeField] public Text auctionName; // 이름 나오는 Text공간
+    [SerializeField] public TextMeshProUGUI auctionName; // 이름 나오는 Text공간
     [Header("물건 가격 나올 곳")]
-    [SerializeField] public Text auctionCost; // 가격 나오는 Text공간
+    [SerializeField] public TextMeshProUGUI auctionCost; // 가격 나오는 Text공간
     [Header("경매 대사 나올 곳")]
-    [SerializeField] public Text chat; // 채팅 나오는 Text공간
+    [SerializeField] public TextMeshProUGUI chat; // 채팅 나오는 Text공간
     [Header("오류 메시지 출력")]
-    [SerializeField] public Text errorMessage; // 오류 메시지 출력 공간
+    [SerializeField] public TextMeshProUGUI errorMessage; // 오류 메시지 출력 공간
     [Header("내 골드 나올 곳")]
-    [SerializeField] public Text myGold; // 채팅 나오는 Text공간
+    [SerializeField] public TextMeshProUGUI myGold; // 채팅 나오는 Text공간
 
     [Header("조작 버튼")]
     [SerializeField] public Button raiseButton;
@@ -38,7 +39,7 @@ public class Auction : PersistentSingleton<Auction>
 
     private int currentCost = 0; // 현재 가격
     private TestStuff stuff;
-    private bool isAuctioningFin = false; // 경매가 끝낫는지 확인
+    private bool isAuctioningFin = true; // 경매가 끝낫는지 확인
     //=======================시간 제한=================================
     [Header("제한 시간 UI")]
     [SerializeField] public Image timeBar; // 제한 시간 UI
@@ -50,16 +51,17 @@ public class Auction : PersistentSingleton<Auction>
     bool isChatting = false; // 대사 진행중인지 확인
     private Vector2 errorMessagePos;
 
-    private bool isPlayerTurn = false;
     private bool isPlayerGiveUp = false;
     private string winnerName = "";
     private bool ifPlayerWin = false;
-    private bool isGameOver = false; //게임 종료 여부
+
+    private const int playerId = 1;
 
     protected override void Awake()
     {
         base.Awake();
-        errorMessagePos = errorMessage.rectTransform.anchoredPosition;
+        if(errorMessage != null)
+            errorMessagePos = errorMessage.rectTransform.anchoredPosition;
 
         ButtonReady(false);//내 턴에 나타나는 버튼 비활성화
     }
@@ -72,13 +74,14 @@ public class Auction : PersistentSingleton<Auction>
     }
     private void Update()
     {
-        if(!isAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
+        if(isAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
         {
            StartAuction().Forget();
         }
     }
     private async UniTask StartAuction() //경매 시작 부분.
     {
+        isAuctioningFin = false;
         isChatting = true;
         ButtonReady(false); //플레이어 선택 버튼 비활성화
 
@@ -96,8 +99,9 @@ public class Auction : PersistentSingleton<Auction>
         isPlayerGiveUp = false; //포기 초기화
         winnerName = "";
         ifPlayerWin = false;
+        auctionTime = 60f; // 첫 경매 시작 제한시간 재설정
 
-        foreach(var ai in aiList)
+        foreach (var ai in aiList)
         {
             if(ai != null)
             {
@@ -106,14 +110,14 @@ public class Auction : PersistentSingleton<Auction>
         }
         isChatting = false;
         ButtonReady(true); //플레이어 선택 버튼 활성화
-        RunAllAiAsync().Forget(); //Ai판단 루프 시작
-        
-        await StartAuctionTimer(); //시간제한 루프 시작
-        // 경매 종료
-        while(!isGameOver)//시간이 아직 진행중이면 대기
-        {
-            await EndAuction();
-        }
+
+        isTimeRunning = true; //이거 해놔야 정상적으로 ai가 돌아감;; 진짜 조건부 힘들다
+        RunAllAiAsync().Forget();  // AI들의 독립 입찰 루프 가동
+        await StartAuctionTimer(); // 타이머 카운트다운 (시간 다 되면 자동으로 루프 통과)
+
+        //타이머 종료 후 낙찰 처리
+        await EndAuction();
+        isAuctioningFin = true;
     }
     //================================AI들의 실시간 루프========================================
     private async UniTask RunAllAiAsync()
@@ -243,10 +247,9 @@ public class Auction : PersistentSingleton<Auction>
 
     private async UniTask EndAuction()
     {
-        if (!isPlayerGiveUp || isTimeRunning) return;
         isAuctioningFin = true;
         isChatting = true;
-        isGameOver = true; //게임 종료
+        isTimeRunning = false;
         ButtonReady(false);
 
         await ActionFinish();
@@ -296,17 +299,9 @@ public class Auction : PersistentSingleton<Auction>
             }
         }
     }
-    private void AuctioningChatting() //경매중 대사 함수 UniTask 비동기 불필요
-    {
-        List<string> chatList = ChatList.Instance.GetChat("경매중");
-        if(chatList != null && chatList.Count > 0)
-        {
-            chat.text = chatList[Random.Range(0, chatList.Count)]; //랜덤으로 대사 출력
-        }
-    }
     private async UniTask ActionFinish() //경매완료
     { 
-        string winerName = ifPlayerWin ? "플레이어" : this.winnerName; //낙찰자 이름 결정
+        string winerName = ifPlayerWin ? GlobalGold.Instance.data[0].npcName : this.winnerName; //낙찰자 이름 결정
        
         if (string.IsNullOrEmpty(winerName)) //낙찰자가 없으면
         {
@@ -364,7 +359,6 @@ public class Auction : PersistentSingleton<Auction>
     //============================== 버튼 활성화/비활성화 ============================================================
     private void ButtonReady(bool active)
     {
-        Debug.Log($"ButtonReady: {active}");
         if(raiseButton != null)
             raiseButton.gameObject.SetActive(active);
         if(giveUpButton != null)
@@ -380,7 +374,7 @@ public class Auction : PersistentSingleton<Auction>
     //=============================== 포기 or 레이즈 버튼클릭==================================================
     public void GiveUpButton() //포기 버튼 클릭시
     {
-        if (!isTimeRunning || isPlayerTurn) return;
+        if (!isTimeRunning || isPlayerGiveUp) return;
         isPlayerGiveUp = true;
         ButtonReady(false); //버튼 비활성화
         ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
@@ -392,8 +386,8 @@ public class Auction : PersistentSingleton<Auction>
     }
     public void OnRaiseButton() //레이즈 버튼 클릭시
     {
-        if (!isTimeRunning || isPlayerTurn) return;
-        if(winnerName == "플레이어") //이미 내가 최고 입찰자면 레이즈 불가
+        if (!isTimeRunning || isPlayerGiveUp) return;
+        if(winnerName == GlobalGold.Instance.data[0].npcName) //이미 내가 최고 입찰자면 레이즈 불가
         {
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
@@ -404,9 +398,9 @@ public class Auction : PersistentSingleton<Auction>
             currentCost = needGold;
             auctionCost.text = currentCost.ToString();
 
-            winnerName = "플레이어"; //입찰자 이름 업데이트
+            winnerName = GlobalGold.Instance.data[0].npcName; //입찰자 이름 업데이트
             ifPlayerWin = true;
-
+            chat.text = $"{GlobalGold.Instance.data[0].npcName} 님이 {currentCost}G로 레이즈!";
             if (remainingTime < 10f) //10초 미만이면 10초로 초기화
             {
                 remainingTime = 10f;

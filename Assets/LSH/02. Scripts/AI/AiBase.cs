@@ -24,9 +24,10 @@ public class AiBase : MonoBehaviour
 
         int NextPrice = actionPrise + 100;
 
-        if(NextPrice > data.gold)
+        // GlobalGold 매니저를 통해 안전하게 잔고 검사
+        if (!GlobalGold.Instance.CanUseGold(data.ID, NextPrice))
         {
-            IsReady = true;
+            IsReady = true; // 예산 부족으로 포기
             return false;
         }
         return true;

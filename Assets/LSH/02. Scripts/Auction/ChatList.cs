@@ -24,13 +24,6 @@ public class ChatList : PersistentSingleton<ChatList>
             "상당히 귀한 물건으로 보입니다.",
             "이번 물품의 주인은 누가 될지 궁금해지는군요."
         };
-        chatDictionary["경매중"] = new List<string>
-        {
-            "더 없으십니까?",
-            "다음 입찰자 계십니까?",
-            "입찰하실 분 계십니까?",
-            "시간이 흐르고 있습니다."
-        };
         chatDictionary["경매완료"] = new List<string>
         {
             "{0}님 축하드립니다.",

@@ -38,15 +38,6 @@ public class MapSystemManager : MonoBehaviour
     private void OnEnable() { MapElement.OnClicked += OpenConfirmPopup; }
     private void OnDisable() { MapElement.OnClicked -= OpenConfirmPopup; }
 
-    private void Update() // 전투때를 제외하고 M키를 누르면 호출
-    {
-        if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Combat) return;
-        if (Input.GetKeyDown(KeyCode.M))
-        {
-            ToggleMapUI();
-        }
-    }
-
     public void ToggleMapUI()
     {
         isMapOpen = !isMapOpen;

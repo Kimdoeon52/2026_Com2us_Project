@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine.Rendering.VirtualTexturing;
+using UnityEngine.UIElements;
+using static Unity.VisualScripting.Member;
+using static UnityEngine.UI.Image;
 
 /// <summary>
 /// 로봇 한 마리가 "지금 뭘 하고 있는가"를 담는 유일한 상태 (2층 · 런타임 상태).
@@ -83,6 +87,17 @@ public class ActionState
 
     /// <summary>회수까지 끝나고 Idle로 돌아가는 순간</summary>
     public event Action<ActionData> OnActionEnd;
+    
+    #region 최. 추가
+    private Func<ActionData, ResolvedModifiers> modifierResolver;
+
+    public ResolvedModifiers Resolved { get; private set; } = ResolvedModifiers.Identity;
+
+    public void SetModifierResolver(Func<ActionData, ResolvedModifiers> resolver)
+    {
+        modifierResolver = resolver;
+    }
+    #endregion
 
     // 호출: ActionExecutor.ExecuteTick. 받음: 시작할 ActionData. 전달: OnActionBegin 이벤트 → RobotView.PlayAction이 애니메이션 재생
     public void Begin(ActionData action)
@@ -94,6 +109,7 @@ public class ActionState
         // (예: CurrentAction만 바꾸고 GlobalFrame을 안 돌리면) 이전 행동의 프레임 카운트를 그대로
         // 물려받는 버그가 생기므로, 반드시 여기서 한꺼번에 세팅한다
         CurrentAction = action;
+        Resolved = modifierResolver != null ? modifierResolver(action) : ResolvedModifiers.Identity; // 최. 추가
         FrameInPhase = 0;
         GlobalFrame = 0;
         HasHitThisAction = false; // 새 행동이 시작됐으니 "이미 맞혔음" 기록도 초기화 — 이번 공격은 아직 아무도 못 맞혔다
@@ -161,7 +177,10 @@ public class ActionState
         }
     }
 
+
+
     /// <summary>
+    /// 최. 추가
     /// 지금 이 순간 활성화된 판정 박스. BoxDrawer(표시)와 HitDetection(판정)이 둘 다 이 함수 하나만 보게 한다 (§4).
     /// 행동 중이면 그 행동의 현재 프레임 박스, 대기·이동 중이면 IdleAction의 박스(보통 프레임 1 고정 — 서 있는 자세라 프레임별로 안 바뀜)를 반환한다.
     /// </summary>
@@ -169,12 +188,35 @@ public class ActionState
     {
         // 행동 중이면 그 행동이 "지금 전체 타임라인 기준 몇 프레임째인지"(GlobalFrame)에 맞는 박스를 그대로 넘긴다
         if (CurrentAction != null)
-            return CurrentAction.GetActiveBoxes(GlobalFrame);
+            //return CurrentAction.GetActiveBoxes(GlobalFrame); // 최. 수정
+            return ApplyHitBoxModifiers(CurrentAction.GetActiveBoxes(GlobalFrame)); // 최. 추가
 
         // 행동이 없으면(=Idle, 걷기 포함) IdleAction의 1번 프레임 박스를 대신 쓴다.
         // 굳이 GlobalFrame이 아니라 고정값 1을 넘기는 이유: 서 있는 자세는 프레임에 따라 박스가
         // 바뀔 이유가 없어서(팔을 뻗는 동작이 아니니까), Idle.asset에는 항상 프레임 1짜리 박스 하나만 등록해두면 된다.
         // IdleAction 자체가 없으면(아직 인스펙터에 안 넣었으면) 빈 배열을 줘서 "판정 없음"으로 안전하게 처리한다
         return IdleAction != null ? IdleAction.GetActiveBoxes(1) : Array.Empty<FrameBox>();
+    }
+    private IEnumerable<FrameBox> ApplyHitBoxModifiers(IEnumerable<FrameBox> source)
+    {
+        if (Resolved.HitBoxWidthAdd == 0f && Resolved.HitBoxHeightAdd == 0f)
+            return source;
+        return ApplyHitBoxModifiersIterator(source);
+    }
+
+    private IEnumerable<FrameBox> ApplyHitBoxModifiersIterator(IEnumerable<FrameBox> source)
+    {
+        foreach (var original in source)
+        {
+            var box = original;
+            if (box.type == BoxType.Hit)
+            {
+                var r = box.rect;
+                r.width = Math.Max(0f, r.width + Resolved.HitBoxWidthAdd);
+                r.height = Math.Max(0f, r.height + Resolved.HitBoxHeightAdd);
+                box.rect = r;
+            }
+            yield return box;
+        }
     }
 }

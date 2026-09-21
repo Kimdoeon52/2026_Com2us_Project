@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -68,6 +69,7 @@ public class ActionExecutor : MonoBehaviour
             ActionData requested = inputSource?.GetDesiredAction();
             if (requested != null)
             {
+                requested = ResolveReplacement(requested); // 최. 추가
                 state.Begin(requested);
                 // 구간별로 프레임 수를 전부 찍어두면, 나중에 "훅이 정말 선딜 3프레임에 나가는지" 같은
                 // 걸 로그만 보고도 검증할 수 있다 (§9 "상태 로그" 규칙)
@@ -103,4 +105,57 @@ public class ActionExecutor : MonoBehaviour
         // 안전하게 false로 처리해서 가드가 잘못 켜지는 일이 없게 한다
         IsGuarding = mover != null && (mover.FacingRight ? moveInput < 0f : moveInput > 0f);
     }
+
+
+    #region 최.추가
+    private EquipmentEffectSet effects;
+
+    public void SetEffects(EquipmentEffectSet set)
+    {
+        if (state == null)
+        {
+            Debug.LogWarning("[ActionExecutor] SetEffects 호출 시점에 state가 아직 없음 - Init(PlayerRobotBootstrap.Awake) 이후에 호출해야 함");
+            return;
+        }
+
+        effects?.Unequip();
+
+        effects = set;
+        state.SetModifierResolver(set != null ? (Func<ActionData, ResolvedModifiers>)ResolveModifiers : null);
+
+        effects?.Equip();
+    }
+
+    private void OnDestroy()
+    {
+        effects?.Unequip();
+        effects = null;
+    }
+
+    private ResolvedModifiers ResolveModifiers(ActionData action)
+    {
+        return effects != null ? effects.Resolve(action, IsPartBroken) : ResolvedModifiers.Identity;
+    }
+
+    private ActionData ResolveReplacement(ActionData requested)
+    {
+        if (effects == null) return requested;
+
+        ActionData replaced = effects.ResolveReplacement(requested, IsPartBroken);
+        if (replaced == requested) return requested;
+
+        var hub = CombatDataHub.Instance;
+        if (hub != null && !hub.CanExecuteAction(FighterId, replaced)) return requested;
+
+        return replaced;
+    }
+
+    private bool IsPartBroken(BodyPart part)
+    {
+        var hub = CombatDataHub.Instance;
+        return hub != null && hub.GetSnapshot(FighterId) != null && hub.IsPartBroken(FighterId, part);
+    }
+
+
+    #endregion
 }

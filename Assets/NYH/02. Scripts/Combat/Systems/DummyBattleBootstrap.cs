@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -12,6 +13,7 @@ using UnityEngine;
 /// </summary>
 public class DummyBattleBootstrap : MonoBehaviour
 {
+
     // Start에서 자동 실행하는 이유: HitDetection.OnEnable이 씬의 로봇을 찾는 시점과 별개로,
     // "게임이 시작되면 일단 스탯부터 등록돼 있어야 한다"가 조건 없이 항상 성립해야 하기 때문 —
     // 타이밍을 맞추려고 다른 스크립트와 순서를 조율할 필요 없이 그냥 켜지자마자 실행한다
@@ -32,6 +34,9 @@ public class DummyBattleBootstrap : MonoBehaviour
         // InitializeBattle이 CombatDataHub에 두 스냅샷을 등록해준다 — 이게 안 되어 있으면
         // ProcessHit을 아무리 불러도 "스냅샷을 찾을 수 없음" 경고만 뜨고 데미지 계산 자체가 안 된다
         BattleManager.Instance.InitializeBattle(player, enemy);
+
+        ApplyEquipmentEffects(); // 최. 추가
+
         // 라이프사이클상 Ready 다음 단계로 넘겨서 "지금 전투 중"인 정상 상태로 맞춰둔다.
         // (지금 HitDetection 자체는 이 상태를 검사하지 않지만, BattleManager를 참조하는 다른 코드가
         //  Ready 상태에서 이상하게 동작하는 걸 막기 위해 정석대로 호출해둔다)
@@ -39,4 +44,22 @@ public class DummyBattleBootstrap : MonoBehaviour
 
         Debug.Log("[DummyBattleBootstrap] 더미 스탯으로 Player/Enemy 등록 완료 — HitDetection 테스트 준비됨");
     }
+    #region 최. 추가
+    [Header("장비 효과 테스트 (선택)")]
+    [SerializeField] private EquipmentEffectTable effectTable;
+    [SerializeField] private List<PartMasterData> playerParts = new List<PartMasterData>();
+    [SerializeField] private List<PartMasterData> enemyParts = new List<PartMasterData>();
+
+    private void ApplyEquipmentEffects()
+    {
+        if (effectTable == null) return;
+
+        foreach (var executor in FindObjectsByType<ActionExecutor>(FindObjectsSortMode.None))
+        {
+            var parts = executor.FighterId == "Enemy" ? enemyParts : playerParts;
+            EquipmentEffectApplier.Apply(executor, parts, effectTable);
+        }
+    }
+
+    #endregion
 }

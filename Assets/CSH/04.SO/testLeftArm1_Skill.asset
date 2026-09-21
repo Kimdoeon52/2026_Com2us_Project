@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27abb1f71b0542e4bbe2e5ee8d97f2dd, type: 3}
+  m_Name: testLeftArm1_Skill
+  m_EditorClassIdentifier: 
+  targetTags: 1
+  limitToRequiredPart: 0
+  requiredPart: 1
+  hitBoxWidthAdd: 80
+  hitBoxHeightAdd: 0
+  knockbackMultiplier: 1

@@ -43,3 +43,14 @@ public enum ActionSource
     CoreFixed,
     Part
 }
+
+/// <summary>
+/// 판정 상자의 종류 (CLAUDE.md §4).
+/// Hit=공격이 닿는 범위 / Hurt=맞는 범위 / Push=몸끼리 겹쳐 지나가지 못하게 미는 상자.
+/// </summary>
+public enum BoxType
+{
+    Hit,
+    Hurt,
+    Push
+}

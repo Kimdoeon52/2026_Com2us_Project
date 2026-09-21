@@ -54,6 +54,19 @@ public class RobotView : MonoBehaviour
     }
 
     /// <summary>
+    /// FrameStepper(F3)가 정지 상태에서 애니메이터를 정확히 1틱 미는 용도.
+    /// Animator는 Update()의 Time.deltaTime으로만 움직이는데 Time.timeScale=0이면 그게 0이라
+    /// 자동으로는 전혀 진행하지 않는다 (§3) — 그래서 여기서 직접 시간을 넣어 밀어줘야
+    /// F3를 누를 때마다 눈으로 한 프레임씩 확인할 수 있다.
+    /// </summary>
+    // 호출: FrameStepper.Update (F3, CombatClock.Tick 직후). 논리 프레임과 그림 프레임을 같은 타이밍에 맞춰 전진시킨다
+    public void AdvanceOneTick()
+    {
+        if (animator == null) return;
+        animator.Update(CombatClock.TICK);
+    }
+
+    /// <summary>
     /// Recovery 끝나고 Idle로 복귀하는 순간 — Animator Exit Time에 기대지 않고 여기서 강제로 되돌린다 (§3).
     /// 액션 중 바꿔둔 animator.speed도 1로 원복해야 Idle/Walk이 정상 속도로 재생된다.
     /// </summary>

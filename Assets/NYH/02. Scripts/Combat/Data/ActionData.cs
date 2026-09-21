@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 // ============================================================================
@@ -88,6 +89,10 @@ public class ActionData : ScriptableObject
     [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다. 그래픽 담당과 합의 후 채움")]
     [SerializeField] private string animationClipName;
 
+    [Header("판정 박스 (§4) — 좌표는 엑셀에 없음. Scene 뷰에서 스프라이트 보며 맞출 것. 지금은 비어있음")]
+    [Tooltip("Hit/Hurt/Push 박스 목록. startFrame~endFrame은 ActionState.GlobalFrame 기준(1부터, endFrame 포함)")]
+    [SerializeField] private FrameBox[] frameBoxes = new FrameBox[0];
+
     // ---- 읽기 전용 접근자 — 런타임(2층)과 시스템(3층)은 이 값을 읽기만 하고 절대 쓰지 않는다 ----
     public string ActionName => actionName;
     public ActionSource Source => source;
@@ -112,4 +117,20 @@ public class ActionData : ScriptableObject
     public float Damage => damage;
 
     public string AnimationClipName => animationClipName;
+
+    public FrameBox[] FrameBoxes => frameBoxes;
+
+    /// <summary>
+    /// 지정한 전체-타임라인 프레임(ActionState.GlobalFrame 기준)에 활성화된 박스만 반환한다.
+    /// HitDetection(판정)과 BoxDrawer(표시)가 반드시 같은 이 함수를 통해서 박스를 읽는다 —
+    /// 표시기가 별도 데이터를 보면 "거짓말하는 표시기"가 된다 (§4).
+    /// </summary>
+    public IEnumerable<FrameBox> GetActiveBoxes(int globalFrame)
+    {
+        foreach (var box in frameBoxes)
+        {
+            if (globalFrame >= box.startFrame && globalFrame <= box.endFrame)
+                yield return box;
+        }
+    }
 }

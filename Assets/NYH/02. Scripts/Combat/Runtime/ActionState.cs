@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 /// <summary>
 /// 로봇 한 마리가 "지금 뭘 하고 있는가"를 담는 유일한 상태 (2층 · 런타임 상태).
@@ -13,12 +14,31 @@ using System;
 /// </summary>
 public class ActionState
 {
+    /// <summary>
+    /// 대기·이동 중(=CurrentAction이 null)일 때 대신 쓸 허트/푸시박스 소스.
+    /// 걷기는 3구간 상태기계를 안 거치므로 ActionData가 따로 없다 — 그렇다고 그 동안
+    /// 맞을 수도 없고 몸통도 없는 건 말이 안 되므로, Hit박스 없이 Hurt/Push만 담은
+    /// 전용 ActionData(예: Idle.asset)를 여기에 연결해서 GetActiveBoxes()가 항상 뭔가를 반환하게 한다.
+    /// </summary>
+    public ActionData IdleAction { get; }
+
+    public ActionState(ActionData idleAction = null)
+    {
+        IdleAction = idleAction;
+    }
+
     /// <summary>지금 진행 중인 행동. null이면 Idle.</summary>
     public ActionData CurrentAction { get; private set; }
     // <summary>지금 진행 중인 행동의 상태</summary>
     public ActionPhase Phase { get; private set; } = ActionPhase.Idle;
     // <summary>지금 진행 중인 행동의 진입프레임</summary>
     public int FrameInPhase { get; private set; }
+
+    /// <summary>
+    /// 이 행동의 전체 타임라인 기준 경과 프레임 (Begin 후 1틱째가 1). Phase가 바뀌어도 리셋되지 않는다.
+    /// FrameBox.startFrame/endFrame이 이 값과 같은 기준이다 — GetActiveBoxes(GlobalFrame)로 조회한다 (§4).
+    /// </summary>
+    public int GlobalFrame { get; private set; }
 
     // <summary> Idle일 때만 이동 가능 선후딜/경직/다운 중에는 이동 불가능</summary>
     public bool CanMove => Phase == ActionPhase.Idle;
@@ -42,6 +62,7 @@ public class ActionState
 
         CurrentAction = action;
         FrameInPhase = 0;
+        GlobalFrame = 0;
         Phase = ActionPhase.Startup;
         OnActionBegin?.Invoke(action);
     }
@@ -53,6 +74,7 @@ public class ActionState
         if (CurrentAction == null) return;
 
         FrameInPhase++;
+        GlobalFrame++;
 
         switch (Phase)
         {
@@ -84,5 +106,17 @@ public class ActionState
                 }
                 break;
         }
+    }
+
+    /// <summary>
+    /// 지금 이 순간 활성화된 판정 박스. BoxDrawer(표시)와 HitDetection(판정)이 둘 다 이 함수 하나만 보게 한다 (§4).
+    /// 행동 중이면 그 행동의 현재 프레임 박스, 대기·이동 중이면 IdleAction의 박스(보통 프레임 1 고정 — 서 있는 자세라 프레임별로 안 바뀜)를 반환한다.
+    /// </summary>
+    public IEnumerable<FrameBox> GetActiveBoxes()
+    {
+        if (CurrentAction != null)
+            return CurrentAction.GetActiveBoxes(GlobalFrame);
+
+        return IdleAction != null ? IdleAction.GetActiveBoxes(1) : Array.Empty<FrameBox>();
     }
 }

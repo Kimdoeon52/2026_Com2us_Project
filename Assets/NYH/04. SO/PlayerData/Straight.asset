@@ -25,3 +25,104 @@ MonoBehaviour:
   knockbackDistance: 0
   damage: 0
   animationClipName: Straight
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    startFrame: 1
+    endFrame: 9
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.09
+      y: 0.31
+      width: 0.35
+      height: 0.05
+    startFrame: 10
+    endFrame: 13
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.19
+      y: -0.01
+      width: 0.39
+      height: 0.58
+    startFrame: 10
+    endFrame: 19
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.1
+      y: 0.29
+      width: 0.37
+      height: 0.1
+    startFrame: 10
+    endFrame: 13
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.05
+      y: 0.27
+      width: 0.21
+      height: 0.14
+    startFrame: 14
+    endFrame: 16
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.19
+      y: -0.01
+      width: 0.39
+      height: 0.58
+    startFrame: 20
+    endFrame: 22
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    startFrame: 23
+    endFrame: 33
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.23
+      height: 0.45
+    startFrame: 1
+    endFrame: 9
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: -0.01
+      width: 0.32
+      height: 0.57
+    startFrame: 10
+    endFrame: 22
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.14
+      y: 0
+      width: 0.21
+      height: 0.48
+    startFrame: 23
+    endFrame: 33

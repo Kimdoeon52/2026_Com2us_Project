@@ -20,6 +20,9 @@ public class RobotMover : MonoBehaviour
     private ActionState actionState;
     private bool facingRight = true;
 
+    /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
+    public bool FacingRight => facingRight;
+
     /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 — 
     /// 지금은 "키 누르면 움직인다"를 눈으로 확인하기 위한 최소 스캐폴드</summary>
     // 호출: PlayerRobotBootstrap.Awake. 받음: source(이동 키 읽기), state(공격 중 이동 잠금 판단)

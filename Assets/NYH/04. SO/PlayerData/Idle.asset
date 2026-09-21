@@ -10,32 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
-  m_Name: Jap
+  m_Name: Idle
   m_EditorClassIdentifier: 
-  actionName: Jap
+  actionName: Idle
   source: 0
   requiredPart: 5
-  startupFrames: 4
-  activeFrames: 2
-  recoveryFrames: 6
+  startupFrames: 0
+  activeFrames: 0
+  recoveryFrames: 0
   isInvincibleDuringActive: 0
-  isGuardable: 1
+  isGuardable: 0
   causesKnockdown: 0
   staggerValue: 0
   knockbackDistance: 0
   damage: 0
-  animationClipName: Jap
+  animationClipName: Idle
   frameBoxes:
-  - type: 0
-    bodyPart: 5
-    rect:
-      serializedVersion: 2
-      x: 0.02
-      y: 0.29
-      width: 0.3
-      height: 0.16
-    startFrame: 3
-    endFrame: 5
   - type: 1
     bodyPart: 5
     rect:
@@ -45,17 +35,7 @@ MonoBehaviour:
       width: 0.25
       height: 0.5
     startFrame: 1
-    endFrame: 12
-  - type: 1
-    bodyPart: 5
-    rect:
-      serializedVersion: 2
-      x: 0.05
-      y: 0.33
-      width: 0.23
-      height: 0.08
-    startFrame: 3
-    endFrame: 5
+    endFrame: 1
   - type: 2
     bodyPart: 5
     rect:
@@ -65,4 +45,4 @@ MonoBehaviour:
       width: 0.23
       height: 0.45
     startFrame: 1
-    endFrame: 12
+    endFrame: 1

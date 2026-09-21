@@ -9,8 +9,11 @@ using UnityEngine;
 /// </summary>
 public class ActionExecutor : MonoBehaviour
 {
+    [Tooltip("걷기·대기 중(행동 없음) 허트/푸시박스로 쓸 ActionData. Hit박스는 없이 Hurt/Push만 담아야 한다")]
+    [SerializeField] private ActionData idleAction;
+
     private IInputSource inputSource;
-    private readonly ActionState state = new ActionState();
+    private ActionState state;
 
     /// <summary>
     /// 스킬(CSH) 쪽이 이벤트를 구독하려면 이 참조가 필요하다.
@@ -18,10 +21,19 @@ public class ActionExecutor : MonoBehaviour
     /// </summary>
     public ActionState State => state;
 
-    // 호출: PlayerRobotBootstrap.Awake. 받음: 입력원 — 사람인지 AI인지 몰라도 되게 인터페이스로 받는다
-    public void Init(IInputSource source)
+    /// <summary>
+    /// CombatDataHub/BattleManager(KKH) API가 조회 키로 쓰는 식별자 ("Player" / "Enemy").
+    /// PlayerRobotBootstrap.Awake에서 주입된다. HitDetection 등 다른 3층 시스템도
+    /// GetComponent&lt;ActionExecutor&gt;().FighterId로 이 값을 가져다 쓴다.
+    /// </summary>
+    public string FighterId { get; private set; }
+
+    // 호출: PlayerRobotBootstrap.Awake. 받음: 입력원(사람인지 AI인지 몰라도 되게 인터페이스로 받는다), fighterId(CombatDataHub 조회 키)
+    public void Init(IInputSource source, string fighterId)
     {
         inputSource = source;
+        FighterId = fighterId;
+        state = new ActionState(idleAction);
     }
 
     // 호출: CombatClock.OnCombatTick (1/60초마다). 순서: Idle이면 입력 확인 → state.Begin으로 시작 → state.Advance로 프레임 +1

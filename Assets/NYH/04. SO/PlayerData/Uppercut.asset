@@ -25,3 +25,44 @@ MonoBehaviour:
   knockbackDistance: 0
   damage: 0
   animationClipName: Uppercut
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    startFrame: 1
+    endFrame: 34
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.05
+      y: 0.19
+      width: 0.2
+      height: 0.4
+    startFrame: 13
+    endFrame: 22
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.03
+      y: 0.16
+      width: 0.275
+      height: 0.5
+    startFrame: 13
+    endFrame: 16
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.15
+      y: 0.01
+      width: 0.23
+      height: 0.45
+    startFrame: 1
+    endFrame: 34

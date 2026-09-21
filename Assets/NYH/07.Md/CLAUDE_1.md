@@ -307,6 +307,15 @@ GetActiveBoxes ─┤
 
 디버그 표시기가 별도 데이터를 보면 **거짓말하는 표시기**가 된다. 반드시 같은 함수를 통한다.
 
+### 대기·이동 중의 박스 (2026-09-21 추가)
+
+`FrameBox`는 원래 `ActionData`에만 있어서, 걷거나 가만히 서 있을 때(`ActionState.CurrentAction == null`)는
+Hit/Hurt/Push 박스가 전부 없었다 — 서 있는 상대를 때려도 판정이 안 뜨고 몸통끼리도 안 부딪히는 구멍이었다.
+
+`ActionState.GetActiveBoxes()`가 이걸 메운다: 행동 중이면 그 행동의 박스, 아니면 `IdleAction`
+(`Idle.asset` — Hit박스 없이 Hurt+Push만 담은 전용 `ActionData`)의 박스를 대신 반환한다.
+`BoxDrawer`/`HitDetection`은 전부 이 함수 하나만 봐야 한다 — `CurrentAction`을 직접 들여다보지 않는다.
+
 ### 박스 좌표는 엑셀에 넣지 않는다
 
 프레임·데미지·스턴·넉백은 엑셀. **박스 위치·크기는 유니티에서 스프라이트를 보며 맞춘다.**
@@ -359,6 +368,24 @@ class RuntimeRobot
 
 양팔이 파괴돼도 잽은 나가야 한다. 안 그러면 공격 수단이 0이 되어 전투가 성립하지 않는다.
 
+### 가드·위닝 판정 방법 (2026-09-21 확정 — HitDetection이 참조할 값)
+
+기술 이름으로 분기하지 않는다 (§13 원칙과 동일하게 적용). `HitDetection`은 아래 두 값만 계산해서
+`CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)`에 그대로 넘긴다.
+
+```csharp
+// 가드 — 버튼이 아니라 방향 입력으로 매 틱 계산됨 (§8). ActionState를 안 거친다
+bool isGuarding = defender.GetComponent<ActionExecutor>().IsGuarding;
+
+// 위닝(무적) — 특정 기술 이름이 아니라 "지금 활성 구간에 무적인 행동 중인가"로 판정
+bool isWeaving = defender.State.CurrentAction != null
+              && defender.State.CurrentAction.IsInvincibleDuringActive
+              && defender.State.Phase == ActionPhase.Active;
+```
+
+`IsInvincibleDuringActive`는 위닝 전용이 아니다 — 나중에 생길 다른 무적기(필살기 등)도
+이 플래그 하나로 자동 인식된다. 새 무적기를 추가해도 `HitDetection` 코드는 안 고쳐도 된다.
+
 ---
 
 ## 6. 넉백 — SF2 방식
@@ -410,7 +437,7 @@ class AIInputSource     : IInputSource { }   // 보스 패턴
 
 적 전용 `EnemyRobot` 클래스를 만들지 말 것. 입력만 바꿔 끼운다.
 
-### 입력 키 (기획서 494~511행)
+### 입력 키 (기획서 494~511행 — 가드는 2026-09-21 방식 변경, 아래 참고)
 
 | 행동 | 키 |
 |---|---|
@@ -420,8 +447,17 @@ class AIInputSource     : IInputSource { }   // 보스 패턴
 | 훅 | A |
 | 어퍼컷 | W |
 | 백스핀 엘보우 | S |
-| 가드 | C |
+| 가드 | **없음 — 방향으로 자동 판정** (아래 참고) |
 | 위닝 | Space |
+
+**가드는 버튼이 아니다 (2026-09-21 결정, SF2 방식).**
+상대를 바라보는 방향의 반대쪽(← →)을 누르고 있으면 자동으로 가드가 성립한다.
+계기: `Guard.asset`(ActionData)의 프레임표 값이 "선딜 2 / 활성 **유지** / 후딜 10"인데,
+"유지"는 고정 프레임 수로 셀 수 있는 값이 아니라서 §3의 3구간(선딜→활성→후딜) 상태기계에
+안 들어간다. 그래서 가드를 아예 `ActionData`/`ActionState` 밖으로 빼서, 매 틱 방향 입력만으로
+판정하는 방식으로 바꿨다 — 자세한 판정식은 §5 "가드·위닝 판정 방법" 참조.
+`Guard.asset`은 더 이상 실행 경로에서 쓰이지 않는다 (애니메이션 클립 이름 참고용으로만 남겨둠).
+기획서 494~511행의 "가드 C" 표기는 이 문서가 우선이므로 따르지 않는다 — 기획 쪽에 반영 필요.
 
 ---
 
@@ -429,13 +465,13 @@ class AIInputSource     : IInputSource { }   // 보스 패턴
 
 판정을 만들기 전에 판정을 볼 수 있게 만들 것. 안 보이는 것을 디버깅하면 시간이 몇 배로 든다.
 
-### BoxDrawer
+### BoxDrawer ✅ (2026-09-21 완료)
 
 - 1단계: `OnDrawGizmos` — Scene 뷰 전용. 빌드에 안 들어감
-- 2단계: `GL` 또는 반투명 쿼드로 Game 뷰에도 표시. 토글 키 제공
+- 2단계: `GL` 또는 반투명 쿼드로 Game 뷰에도 표시. 토글 키 제공 — 아직 안 함(필요해지면 진행)
 - 색: Hit = 빨강 / Hurt = 하늘 / Push = 초록
 
-### FrameStepper
+### FrameStepper ✅ (2026-09-21 완료)
 
 ```
 F2 : 일시정지 (Time.timeScale = 0 → CombatClock이 자연히 멈춘다)
@@ -446,6 +482,23 @@ F3 : CombatTick()을 수동으로 1회 호출 → 정확히 1프레임 전진
 로직이 `Update()`에 흩어져 있으면 이 도구 자체를 만들 수 없다 — §11에서 `CombatClock`이 먼저인 이유다.
 
 프레임 단위로 멈춰서 보지 않으면 "훅이 3프레임에 나간다"를 검증할 방법이 없다.
+
+**주의 (실제로 겪은 문제)**: F3로 `CombatClock.Tick()`만 부르면 논리(`ActionState`)는 전진하는데
+그림(`Animator`)은 안 움직인다 — `Animator`는 `Update()`의 `Time.deltaTime`으로만 재생되는데
+`Time.timeScale = 0`이면 그게 0이라 자동으로는 전혀 안 움직이기 때문이다. `RobotView.AdvanceOneTick()`
+(`animator.Update(CombatClock.TICK)`)을 F3에서 같이 호출해서 그림도 정확히 1틱 밀어줘야 한다.
+
+### ActionDataEditor ✅ (2026-09-21 추가 — 원래 계획엔 없던 도구)
+
+`FrameBox` 좌표를 인스펙터에 숫자로 타이핑하는 대신 Scene 뷰에서 마우스로 드래그해 맞추는
+커스텀 에디터. `Assets/NYH/02. Scripts/Combat/Editor/ActionDataEditor.cs` ("Editor" 폴더라 빌드 제외).
+`ActionData` 에셋을 선택하면 인스펙터 하단에 미리보기/편집 UI가 뜨고, Scene 뷰에서 박스 중심을
+끌면 이동, 모서리를 끌면 크기 조절이 된다.
+
+**주의 (실제로 겪은 문제)**: `Handles`는 기본적으로 zTest가 걸려있어서 바닥(`Ground`)이나 캐릭터
+스프라이트 같은 3D 지오메트리에 가려지면 그려놓고도 화면엔 안 보인다. `Handles.zTest =
+CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene 뷰 커스텀 Handle 도구를 만들 때마다
+걸리는 문제라 기록해둔다.
 
 ### 상태 로그
 
@@ -472,18 +525,20 @@ F3 : CombatTick()을 수동으로 1회 호출 → 정확히 1프레임 전진
 현재 단계와 다음 할 일. 순서를 건너뛰지 말 것.
 
 1. ✅ 프레임표 확정 (v3)
-2. ⬜ 좌우 이동 + 키 입력 시 디버그 로그
-3. ⬜ `CombatClock` — 1/60초 고정 틱 (§3). **전투 로직을 짜기 전에 먼저 만든다.**
-   나중에 끼워 넣으려 하면 이미 `Update()`에 흩어진 코드를 전부 뜯어야 한다
+2. ✅ 좌우 이동 + 키 입력 시 디버그 로그
+3. ✅ `CombatClock` — 1/60초 고정 틱 (§3)
 4. 🔶 `ActionData` / `ActionState` / `ActionExecutor` — 잽 하나가 3구간으로 도는 것
    - ✅ `ActionData` (SO), `ActionState`, `ActionExecutor`, `IInputSource` 초안 작성 완료
    - ✅ `ActionState`에 스킬 연동용 이벤트 훅(`OnActionBegin`/`OnActionActiveStart`/`OnActionEnd`) 포함 — §13 참조
+   - ✅ `CombatClock`과 배선 (`PlayerRobotBootstrap.OnEnable`에서 `ExecuteTick` 구독)
+   - ✅ `fighterId` 배선 (`ActionExecutor.FighterId`) — KKH `CombatDataHub` 조회 키로 씀 (§14)
+   - ✅ 가드 판정 (`ActionExecutor.IsGuarding`, 방향 기반) — §5 "가드·위닝 판정 방법"
    - ⬜ 후딜 중 재입력이 무시되는지 실제 플레이로 반드시 확인 (`CanAcceptNewAction` 로직 자체는 구현됨)
-   - ⬜ `CombatClock`과 배선 (지금은 `ExecuteTick()`을 누가 호출할지 미연결 상태)
-5. ⬜ `BoxDrawer` (Gizmos) + `FrameStepper` — 판정 없이 네모만
-6. ⬜ `HitDetection` — AABB 겹침
+   - ⬜ `CombatDataHub.CanExecuteAction` 게이트 — 지금은 부위 파손 여부와 무관하게 기술이 나감 (§14)
+5. ✅ `BoxDrawer` (Gizmos) + `FrameStepper` — 판정 없이 네모만. `ActionDataEditor`(박스 드래그 편집기)도 추가 제작
+6. ⬜ `HitDetection` — AABB 겹침. 선행 조건(`FrameBox`, `GetActiveBoxes`, `IsGuarding`, `IsInvincibleDuringActive`)은 준비됨 — 다음 단계
 7. ⬜ `KnockbackSystem` / `StunSystem`
-8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴
+8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴. KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음 — NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14)
 9. ⬜ `AIInputSource` — 보스 패턴
 10. ⬜ `IUsable` 인터페이스 확정 + 상희(CSH) 스킬 연동 지점 배선 (§13) — CSH `SkillBase` 쪽이 어느 정도 채워진 뒤 진행
 
@@ -569,3 +624,48 @@ public float FrameSpeedModifier { get; set; } = 1f;
 스킬 쪽이 특정 로봇의 이벤트를 구독하려면 `ActionExecutor.State`(또는 `RuntimeRobot`을 경유한 참조)로
 접근한다. 이 참조 경로는 상희 님과 합의 후 고정하고, 합의 전까지 CSH 폴더 코드를 NYH 쪽에서 직접
 참조하지 않는다 (수정 금지 범위와 별개로, 결합 방지 차원).
+
+---
+
+## 14. KKH 데이터 연동 지점 (2026-09-21 확인)
+
+KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약을 **참조만** 하고 KKH 폴더는 건드리지 않는다 (§0).
+
+| KKH 쪽 | 하는 일 | NYH가 호출/참조하는 지점 |
+|---|---|---|
+| `CombatDataHub`(싱글톤) | 스탯 조회 + 판정 연산 창구 | `CombatDataHub.Instance` |
+| `CombatDataHub.CanExecuteAction(fighterId, action)` | 부위 파손 시 기술 시전 차단 | ⬜ 아직 `ActionExecutor`가 안 부름 — §11-4 다음 작업 |
+| `CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)` | 데미지·가드분산·크리티컬 계산 + 이벤트 발행 | ⬜ `HitDetection`이 만들어지면 여기서 호출 (§11-6) |
+| `CombatDataHub.GetFinalMoveSpeed(fighterId)` 등 스탯 조회 | 실시간 스탯 공급 | ⬜ `RobotMover`가 아직 하드코딩값(`moveSpeed`) 씀 — 연결 안 함 |
+| `BattleManager.InitializeBattle(playerSnapshot, enemySnapshot)` | `CombatDataHub`에 두 파이터 스탯 등록 | ⬜ 아직 아무도 안 부름 (테스터의 더미 데이터로만 검증됨) — `RobotAssembler`가 할 일 |
+| `BodyPart`, `ActionSource`, `ActionData`의 필드들(`Damage`/`IsGuardable`/`StaggerValue`/`CausesKnockdown`/`KnockbackDistance`) | 계산에 그대로 씀 | NYH가 이미 정의한 것 그대로 KKH가 읽음 — 필드명 바꾸면 KKH 쪽도 깨짐, 바꾸기 전 확인 필수 |
+
+각 로봇은 `fighterId`("Player"/"Enemy")를 들고 있어야 위 API들이 어느 쪽인지 구분한다 —
+`ActionExecutor.FighterId`, `PlayerRobotBootstrap`의 인스펙터 필드로 배선됨 (§11-4).
+
+**주의**: `CombatCalculator.EvaluateHit`의 데미지 계산식(`ActionData.Damage`와 팔 스탯을 어떻게 합산할지)은
+KKH가 이미 코드로 구현해뒀지만, §0에 적힌 대로 **아직 팀 합의로 확정된 값이 아니다.** 그대로 믿고
+연동만 하되, 실제 수치가 이상하면 "우리가 고칠 문제"가 아니라 "확인해야 할 문제"로 다룰 것.
+
+---
+
+## 15. 작업 로그 (포트폴리오용)
+
+날짜별 진행 상황·문제/해결 과정을 **여기 말고** `Assets/NYH/07.Md/개발일지.md`에 자세히 적는다.
+이 문서(CLAUDE.md)는 "지금 지켜야 할 규칙" 중심으로 짧게 유지하고, 서사(무엇을 시도했고 왜 이렇게
+바꿨는지, 삽질 과정)는 개발일지 쪽에 쌓는다. 이 문서가 바뀔 때(규칙 추가/변경)는 여기서도 날짜를 남긴다.
+
+### 개발일지에 뭘 적어야 하는가
+
+나중에 포트폴리오에서 "이 프로젝트에서 어떤 문제를 겪었고 어떻게 해결했는지"를 물어볼 때 바로 꺼내
+쓸 수 있게 아래 형식으로 하루치씩 쌓는다:
+
+- **날짜 + 한 줄 요약** — 오늘 뭘 했는지
+- **한 일** — 만든 파일/기능 목록 (짧게)
+- **문제 → 원인 → 해결** — 이게 핵심. "뭐가 안 됐는지 / 왜 그랬는지 / 어떻게 고쳤는지" 3단으로.
+  겪지 않은 문제는 억지로 안 만든다 — 있었던 것만 적는다
+- **설계 결정과 이유** — 여러 방법 중에 왜 이걸 골랐는지 (예: 가드를 버튼 대신 방향 판정으로 바꾼 이유)
+- **다음에 할 일** — 다음 세션에 뭘 이어서 할지
+
+코드 조각은 필요할 때만, 짧게. 전체 diff를 옮겨 적지 않는다 — 포트폴리오에서 필요한 건
+"무슨 일이 있었는가"지 "정확히 몇 줄을 고쳤는가"가 아니다.

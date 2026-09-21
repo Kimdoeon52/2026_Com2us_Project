@@ -6,22 +6,32 @@ using UnityEngine;
 ///
 /// 키 배치는 기획서 494~511행 기준 (CLAUDE.md §8):
 ///   이동 ←→ / 잽 D / 스트레이트 Q / 훅 A / 어퍼컷 W / 백스핀 엘보우 S / 가드 C / 위닝 Space
+/// (가드는 2026-09-18 방식 변경으로 지금은 C키가 아니라 방향 입력으로 자동 판정됨 —
+///  아래 guard 필드와 ReadKeyDown의 C키 매핑은 그 변경 전 남은 죽은 코드. 정리는 §15 다음 할 일 참고)
 /// </summary>
 public class PlayerInputSource : MonoBehaviour, IInputSource
 {
     // GetKeyDown은 누른 렌더 프레임에서만 true라, 그 프레임에 전투 틱이 없으면 입력이 유실된다.
     // 그래서 Update에서 잡아두고 다음 틱에서 소비한다. 2틱이 지나면 만료 — 후딜 중 재입력은 무시되어야 한다 (§11-4)
+    //
+    // "왜 하필 2틱인가": 렌더링이 전투 틱(1/60초)보다 느린 순간(프레임 드랍 등)에도 최소 한 번은
+    // 그 입력을 소비할 틱이 돌아오게 하기 위한 여유값이다. 1틱만 주면 타이밍이 딱 맞아떨어져야만
+    // 입력이 살아남고, 너무 길게 주면(예: 10틱) 이미 지나간 오래된 입력이 뒤늦게 실행되는 이상한 느낌이 든다
     private const float INPUT_BUFFER_SECONDS = CombatClock.TICK * 2f;
 
+    // 인스펙터에서 프레임표와 이름이 같은 .asset을 직접 드래그해서 연결한다 — 코드에 "잽이면 이 데미지"처럼
+    // 하드코딩하지 않고, 어떤 키에 어떤 ActionData를 연결할지 자체를 데이터(인스펙터 값)로 뺀 것
     [Header("행동 에셋 연결 (인스펙터에서 프레임표와 이름이 같은 .asset 드래그)")]
     [SerializeField] private ActionData jab;             // D
     [SerializeField] private ActionData straight;        // Q
     [SerializeField] private ActionData hook;            // A
     [SerializeField] private ActionData uppercut;        // W
     [SerializeField] private ActionData backspinElbow;   // S
-    [SerializeField] private ActionData guard;           // C
+    [SerializeField] private ActionData guard;           // C — 지금은 안 쓰임(가드가 방향 판정으로 바뀜)
     [SerializeField] private ActionData weaving;         // Space
 
+    // 키를 누른 "그 렌더 프레임"과, ActionExecutor가 실제로 그 값을 "가져가는 틱"의 타이밍이 다를 수 있어서
+    // 즉시 반환하지 않고 일단 여기 잡아둔다 (자세한 이유는 위 INPUT_BUFFER_SECONDS 설명 참고)
     private ActionData pendingAction;
     private float pendingTime;
 
@@ -29,8 +39,10 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
     private void Update()
     {
         ActionData pressed = ReadKeyDown();
-        if (pressed == null) return;
+        if (pressed == null) return; // 이번 프레임에 아무 공격 키도 안 눌렸으면 할 일 없음
 
+        // 새로 눌린 키가 있으면 이전에 대기 중이던 입력을 덮어쓴다 — 같은 틱 안에서 여러 키를 눌러도
+        // 마지막에 누른 것 하나만 실행되게 하기 위한 단순한 정책 (동시입력 우선순위 규칙은 아직 없음)
         pendingAction = pressed;
         pendingTime = Time.time;
     }
@@ -42,11 +54,15 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
         // 그건 §6-1 규칙대로 RuntimeRobot.availableActions가 판단할 몫이다.
         // (RuntimeRobot 완성 전까지는 그냥 눌린 키 → ActionData 매핑만 한다)
 
-        if (pendingAction == null) return null;
+        if (pendingAction == null) return null; // 대기 중인 입력이 없으면 그냥 null — "이번 틱엔 하고 싶은 게 없다"는 뜻
 
+        // 꺼내주기 전에 미리 비워둔다("1회성 소비") — 안 비우면 다음 틱에도 같은 행동이 계속 나가버려서
+        // 한 번 키를 눌렀는데 잽이 연속으로 계속 나가는 버그가 생긴다
         ActionData action = pendingAction;
         pendingAction = null;
 
+        // 너무 오래된 입력(2틱 이상 지남)이면 실제로는 버려야 한다 — 예를 들어 긴 후딜 중에 눌러둔 입력이
+        // 한참 뒤 Idle로 돌아왔을 때 뒤늦게 튀어나오면 플레이어가 예상 못 한 타이밍에 기술이 나가버린다
         bool isExpired = Time.time - pendingTime > INPUT_BUFFER_SECONDS;
         return isExpired ? null : action;
     }
@@ -54,23 +70,29 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
     // 호출: RobotMover.Update(이동), RobotView.OnActionEnd(Walk/Idle 선택). 반환: -1(왼쪽) ~ 1(오른쪽)
     public float GetMoveInput()
     {
+        // 이동은 공격 입력과 달리 버퍼링이 필요 없다 — "지금 이 순간 눌려있는지"만 알면 되고,
+        // 키를 뗀 순간 즉시 멈춰야 자연스럽기 때문에 GetKey(누르고 있는 동안 계속 true)를 그대로 쓴다
         if (Input.GetKey(KeyCode.LeftArrow)) return -1f;
         if (Input.GetKey(KeyCode.RightArrow)) return 1f;
 
-        return 0f;
+        return 0f; // 둘 다 안 눌렸거나 둘 다 눌렸으면(상쇄) 중립
     }
 
     // 호출: Update. 이번 프레임에 눌린 키를 인스펙터에 연결된 ActionData로 바꿔서 돌려준다
     private ActionData ReadKeyDown()
     {
+        // GetKeyDown(누른 그 순간 한 프레임만 true)을 쓰는 이유: 공격 키는 GetKey를 쓰면 누르고 있는
+        // 내내 계속 true라서, "누른 순간 한 번만" 기술이 나가게 하려면 Down이 맞다.
+        // 위에서 아래로 순서대로 검사하다가 하나라도 맞으면 즉시 반환 — 여러 키를 동시에 눌러도
+        // 코드에 먼저 적힌 키가 우선권을 갖는다(D가 최우선)
         if (Input.GetKeyDown(KeyCode.D)) return jab;
         if (Input.GetKeyDown(KeyCode.Q)) return straight;
         if (Input.GetKeyDown(KeyCode.A)) return hook;
         if (Input.GetKeyDown(KeyCode.W)) return uppercut;
         if (Input.GetKeyDown(KeyCode.S)) return backspinElbow;
-        if (Input.GetKeyDown(KeyCode.C)) return guard;
+        if (Input.GetKeyDown(KeyCode.C)) return guard; // 지금은 ActionExecutor.IsGuarding이 방향으로 대신 판정하므로, 여기서 guard가 반환돼도 실질적으로 안 쓰임
         if (Input.GetKeyDown(KeyCode.Space)) return weaving;
 
-        return null;
+        return null; // 아무 공격 키도 안 눌림
     }
 }

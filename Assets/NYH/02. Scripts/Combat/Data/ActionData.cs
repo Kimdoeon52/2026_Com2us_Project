@@ -42,6 +42,8 @@ using UnityEngine;
 /// 에셋 파일 이름은 전투 프레임표 [기술] 칸과 1:1로 같게 만든다. (예: 잽.asset, 훅.asset)
 /// 수치는 전투 프레임표 v3가 최종 근거 — 여기 기본값은 전부 임시값이며 확정 전까지 TODO로 표시한다.
 /// </summary>
+// CreateAssetMenu를 붙이면 프로젝트 창 우클릭 메뉴에 "NYH/Combat/Action Data"가 생겨서
+// 매번 스크립트로 인스턴스를 만들 필요 없이 기획/애니메이터도 직접 에셋을 만들 수 있게 된다
 [CreateAssetMenu(menuName = "NYH/Combat/Action Data", fileName = "NewActionData")]
 public class ActionData : ScriptableObject
 {
@@ -49,15 +51,18 @@ public class ActionData : ScriptableObject
     [Tooltip("프레임표 [기술] 칸과 동일하게. 로그·디버그 표시에도 이 이름을 그대로 쓴다")]
     [SerializeField] private string actionName;
 
+    // 이 값 하나로 "부위가 파괴돼도 이 기술이 계속 나가는지"가 갈린다 — CanExecuteAction(KKH)이 이걸 읽는다
     [Tooltip("이 행동이 코어 고정인지 파츠 소속인지. 파츠 파괴 시 사용 가능 여부를 가른다 (§5)")]
     [SerializeField] private ActionSource source = ActionSource.Part;
 
     [Tooltip("source가 Part일 때만 의미 있음. 이 부위가 파괴되면 이 행동은 사용 불가")]
     [SerializeField] private BodyPart requiredPart;
 
-    [Header("프레임 (60fps 기준, 전투 프레임표 v3)")]
+    [Header("프레임 (60fps)")]
+    // 선딜/활성/후딜 세 값이 이 클래스에서 가장 중요한 데이터다 — ActionState가 이 세 값만 보고
+    // 언제 Phase를 넘길지 판단한다(선딜만큼 세면 Active로, 활성만큼 세면 Recovery로, ...)
     [Tooltip("선딜 프레임 — 순수 대기 구간. 판정 없음")]
-    [Min(0)] [SerializeField] private int startupFrames;
+    [Min(0)] [SerializeField] private int startupFrames; // [Min(0)]으로 음수 입력 자체를 인스펙터에서 막아둠 — 음수 프레임은 의미가 없으니까
 
     [Tooltip("활성 프레임 — 판정이 켜지는 구간")]
     [Min(0)] [SerializeField] private int activeFrames;
@@ -65,6 +70,8 @@ public class ActionData : ScriptableObject
     [Tooltip("회수(후딜) 프레임 — 이 구간엔 재입력이 무시되어야 한다 (§11-4 필수 검증 항목)")]
     [Min(0)] [SerializeField] private int recoveryFrames;
 
+    // 위닝 전용이 아니라 "무적 여부"라는 범용 플래그로 만든 이유: 나중에 다른 무적기(필살기 등)가
+    // 생겨도 이름으로 분기하지 않고 이 플래그 하나로 인식되게 하기 위해서다 (§13 원칙과 동일한 이유)
     [Tooltip("위닝처럼 활성 구간 전체가 무적인 행동에 체크. 부분 무적이 필요해지면 FrameBox 쪽으로 확장")]
     [SerializeField] private bool isInvincibleDuringActive;
 
@@ -75,6 +82,8 @@ public class ActionData : ScriptableObject
     [Tooltip("맞으면 그 자리에서 콤보가 끊기고 다운 처리 (어퍼컷, 백스핀 엘보우)")]
     [SerializeField] private bool causesKnockdown;
 
+    // 아래 세 값은 기획이 프레임표를 아직 확정 안 해서 전부 임시값(0)이다. 코드에서 하드코딩하지 않고
+    // 여기 필드로 빼둔 이유는 §2 원칙(밸런스 수치는 에셋에서) — 값이 확정되면 코드 수정 없이 인스펙터만 바꾸면 됨
     [Header("경직도 / 넉백 — 값 전부 임시 (기획 확정 전, 설계 결정서 §8·§9 신뢰도 0%)")]
     [Tooltip("경직도 게이지 누적량. 잽은 반드시 0 (기획서: 잽은 경직도 안 쌓임)")]
     [Min(0)] [SerializeField] private int staggerValue;
@@ -86,14 +95,19 @@ public class ActionData : ScriptableObject
     [Min(0)] [SerializeField] private float damage;
 
     [Header("연출")]
-    [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다. 그래픽 담당과 합의 후 채움")]
+    [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다.")]
     [SerializeField] private string animationClipName;
 
-    [Header("판정 박스 (§4) — 좌표는 엑셀에 없음. Scene 뷰에서 스프라이트 보며 맞출 것. 지금은 비어있음")]
+    [Header("판정 박스")]
+    // 이 배열 안의 각 FrameBox가 "이 행동 도중 어느 프레임에 어떤 판정 상자가 있는지"를 전부 담는다.
+    // 빈 배열(new FrameBox[0])을 기본값으로 둔 이유: 아직 아무 좌표도 안 채워진 상태에서도
+    // GetActiveBoxes()가 null 참조 예외 없이 그냥 빈 결과를 돌려주게 하기 위함
     [Tooltip("Hit/Hurt/Push 박스 목록. startFrame~endFrame은 ActionState.GlobalFrame 기준(1부터, endFrame 포함)")]
     [SerializeField] private FrameBox[] frameBoxes = new FrameBox[0];
 
     // ---- 읽기 전용 접근자 — 런타임(2층)과 시스템(3층)은 이 값을 읽기만 하고 절대 쓰지 않는다 ----
+    // 프로퍼티(=>)로만 노출하고 public 필드로 안 만든 이유: 외부에서 실수로라도 값을 대입하지 못하게
+    // 막기 위해서다. ActionData는 "불변 데이터"인데 public 필드였다면 누구든 런타임에 값을 바꿔버릴 수 있었을 것
     public string ActionName => actionName;
     public ActionSource Source => source;
     public BodyPart RequiredPart => requiredPart;
@@ -106,6 +120,9 @@ public class ActionData : ScriptableObject
     public int RecoveryFrames => recoveryFrames;
 
     /// <summary>전체 프레임. 시작+활성+회수 그냥 합 — SF 원본 표기와 달리 -1 보정 없음 (§3)</summary>
+    // 필드로 따로 저장하지 않고 매번 계산하는 이유: 세 프레임 값 중 하나라도 바뀌면 자동으로
+    // 최신값을 반영해야 하는데, 별도 필드로 캐싱해두면 값이 바뀔 때마다 이 캐시도 같이 갱신해야 해서
+    // 깜빡하면 실제 값과 어긋나는 버그가 생긴다. 계산이 워낙 가벼워서 그냥 매번 더하는 게 안전하다
     public int TotalFrames => startupFrames + activeFrames + recoveryFrames;
 
     public bool IsInvincibleDuringActive => isInvincibleDuringActive;
@@ -127,6 +144,9 @@ public class ActionData : ScriptableObject
     /// </summary>
     public IEnumerable<FrameBox> GetActiveBoxes(int globalFrame)
     {
+        // 배열 전체를 순회하면서 "지금 프레임이 이 박스의 활성 구간 안에 있는지"만 확인한다.
+        // 박스 개수가 캐릭터당 많아야 십수 개 수준이라 매번 순회해도 성능 문제가 없어서,
+        // 따로 프레임별 캐시(Dictionary<int, List<FrameBox>> 같은 것)를 만들지 않고 단순하게 짰다
         foreach (var box in frameBoxes)
         {
             if (globalFrame >= box.startFrame && globalFrame <= box.endFrame)

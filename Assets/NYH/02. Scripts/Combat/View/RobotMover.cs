@@ -8,28 +8,35 @@ using UnityEngine;
 ///
 /// CombatClock이 아직 없어서 임시로 Update()에서 직접 프레임을 센다.
 /// CombatClock 완성되면 이 이동 로직도 CombatTick()로 옮겨야 한다 (§3 원칙).
+/// (참고: CombatClock 자체는 이제 있음. 이동 로직을 CombatTick으로 옮기는 작업은 아직 안 함 —
+///  이동은 판정에 직접 쓰이는 값이 아니라서 우선순위가 낮았을 뿐, 위 원칙 자체는 여전히 유효)
 /// </summary>
 public class RobotMover : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 3f; // TODO: 임시값. 프레임표/기획 확정 전
+    // 상대 로봇의 Transform. 이게 있어야 "상대를 바라보는 방향"을 정확히 계산할 수 있다
+    // (가드 판정(ActionExecutor.IsGuarding)과 좌우 반전 판정(BoxResolver)이 전부 이 방향값에 의존함)
     [SerializeField] private Transform opponent;
     [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
 
-    // 
+    //
     private IInputSource inputSource;
     private ActionState actionState;
+    // 지금 오른쪽을 보고 있는지. Update()에서 매 프레임 갱신되고, 다른 시스템(BoxDrawer, ActionExecutor의
+    // 가드 판정)은 이 필드를 직접 못 건드리고 아래 FacingRight 프로퍼티로 읽기만 한다
     private bool facingRight = true;
 
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
-    /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 — 
+    /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 —
     /// 지금은 "키 누르면 움직인다"를 눈으로 확인하기 위한 최소 스캐폴드</summary>
     // 호출: PlayerRobotBootstrap.Awake. 받음: source(이동 키 읽기), state(공격 중 이동 잠금 판단)
     public void Init(IInputSource source, ActionState state)
     {
         inputSource = source;
         actionState = state;
+        // 인스펙터에서 안 넣어줬으면 씬에서 직접 찾는다 — 카메라는 씬에 보통 하나뿐이라 자동 검색이 안전함
         if (combatCamera == null) combatCamera = FindFirstObjectByType<CombatCamera>();
     }
 
@@ -37,21 +44,27 @@ public class RobotMover : MonoBehaviour
     private void Update()
     {
         // 공격·가드·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
+        // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
         bool canMove = actionState == null || actionState.CanMove;
         float moveInput = canMove ? (inputSource?.GetMoveInput() ?? 0f) : 0f;
+        // Time.deltaTime을 곱해서 프레임 속도와 무관하게 "초당 moveSpeed만큼" 이동하게 한다.
+        // (이동 자체는 아직 CombatTick으로 안 옮겨서, 위 클래스 주석대로 §3 원칙을 완전히 지키진 못한 임시 상태)
         transform.Translate(Vector3.right * moveInput * moveSpeed * Time.deltaTime, Space.World);
 
         // 화면 밖으로 못 나가게 스테이지 벽 / 최대 거리로 보정
         if (combatCamera != null)
         {
             Vector3 pos = transform.position;
-            pos.x = combatCamera.ClampFighterX(pos.x);
+            pos.x = combatCamera.ClampFighterX(pos.x); // 방금 이동한 값을 그대로 화면 경계 안으로 다시 잘라낸다 — 먼저 이동시키고 나중에 보정하는 순서라 "밀어붙여도 벽을 못 뚫는" 느낌이 남
             transform.position = pos;
         }
 
         if (opponent != null)
         {
             // 정식 방식 — 상대 위치 기준 (§ 격겜 컨벤션: 뒤로 물러나도 상대를 계속 바라봄)
+            // 격투 게임에서 캐릭터는 이동 방향과 무관하게 항상 상대를 마주보는 게 표준이다 —
+            // 뒷걸음질을 쳐도(가드를 위해 뒤로 물러나도) 등을 보이지 않고 계속 상대를 바라봐야
+            // 애니메이션도 자연스럽고, 가드 판정(뒤로 버티기)도 방향이 헷갈리지 않는다
             facingRight = opponent.position.x > transform.position.x;
         }
         else if (Mathf.Abs(moveInput) > 0.01f)
@@ -60,8 +73,66 @@ public class RobotMover : MonoBehaviour
             // opponent 연결되는 순간 이 분기는 안 타고 위쪽(정식 방식)으로 넘어간다.
             facingRight = moveInput > 0f;
         }
+        // (moveInput이 거의 0이고 opponent도 없으면 마지막 방향을 그대로 유지 — 멈춰있는데 방향이 갑자기 바뀌면 부자연스러움)
 
+        // 상대의 Push박스와 겹치면 그만큼 뒤로 밀어낸다 — 이게 없으면 Push박스는 그냥 Scene 뷰에
+        // 그려지기만 할 뿐 아무 역할도 안 해서, 서로 그냥 뚫고 지나가 버린다 (§4 "몸끼리 겹쳐 지나가지 못하게")
+        ResolvePushOverlap();
+
+        // localScale.x의 부호만 뒤집어서 스프라이트를 좌우 반전시킨다. Mathf.Abs로 감싼 이유는
+        // 이미 한 번 뒤집힌 상태(x가 음수)에서 다시 뒤집으려 할 때 부호가 꼬이지 않게, 항상 "크기"만
+        // 가져와서 새로 부호를 매기기 위함 — 그냥 sign을 곱하기만 하면 반복 실행 시 계속 반전되는 버그가 생김
         float sign = facingRight ? 1f : -1f;
         transform.localScale = new Vector3(sign * Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+    }
+
+    // 호출: Update(이동·방향 계산 끝난 뒤). 내 Push박스가 상대 Push박스와 겹치면, 겹친 만큼 나만 뒤로 물러난다.
+    // "나만" 미는 이유: 상대도 똑같이 자기 Update()에서 이 함수를 돌려서 스스로 물러날 것이므로,
+    // 각자 자기 위치만 책임지면 결과적으로 서로 밀어내는 것과 같은 효과가 난다 — 굳이 상대의 transform까지
+    // 건드리는 중앙 조정자를 따로 안 둬도 되는 단순한 방식
+    private void ResolvePushOverlap()
+    {
+        if (opponent == null || actionState == null) return;
+
+        // 상대의 ActionExecutor/RobotMover가 있어야 상대의 박스 데이터와 방향을 읽을 수 있다.
+        // 없으면(아직 배선 전 등) 그냥 아무 보정도 안 하고 넘어간다
+        var opponentExecutor = opponent.GetComponent<ActionExecutor>();
+        if (opponentExecutor == null) return;
+        var opponentMover = opponent.GetComponent<RobotMover>();
+        bool opponentFacingRight = opponentMover == null || opponentMover.FacingRight;
+
+        // 양쪽 다 "지금 활성화된 박스 중 Push 타입"을 찾는다. 공격 중인 액션에 아직 Push박스를
+        // 안 채워뒀으면 null이 나올 수 있는데, 그럴 땐 보정할 기준이 없으니 그냥 넘어간다
+        // (지금은 Idle.asset에만 Push박스가 채워져 있어서, 서로 걷기/대기 중일 때만 실제로 막힌다)
+        Rect? myPush = FindPushWorldRect(actionState, transform.position, facingRight);
+        Rect? theirPush = FindPushWorldRect(opponentExecutor.State, opponent.position, opponentFacingRight);
+        if (myPush == null || theirPush == null) return;
+
+        Rect a = myPush.Value;
+        Rect b = theirPush.Value;
+
+        // x축으로 얼마나 겹쳤는지 계산 — 두 구간 [min,max]의 교집합 길이. 이 게임은 좌우로만 싸우므로
+        // y축 겹침은 따로 안 본다(어차피 둘 다 같은 바닥 높이에 서 있어서 y는 항상 겹치는 게 정상)
+        float overlap = Mathf.Min(a.xMax, b.xMax) - Mathf.Max(a.xMin, b.xMin);
+        if (overlap <= 0f) return; // 안 겹치면 할 일 없음
+
+        // 내가 상대보다 왼쪽에 있으면 나를 더 왼쪽으로, 오른쪽에 있으면 더 오른쪽으로 겹친 만큼 밀어낸다.
+        // 이러면 내 Push박스의 경계가 상대 Push박스의 경계에 딱 맞닿는 위치까지만 물러나게 된다
+        float pushDir = a.center.x <= b.center.x ? -1f : 1f;
+        Vector3 pos = transform.position;
+        pos.x += pushDir * overlap;
+        transform.position = pos;
+    }
+
+    // state에 등록된 박스 중 Push 타입 하나를 찾아 월드 좌표로 변환해서 반환한다. 없으면 null.
+    // (§4 "Push는 액션당 1개"라 보통 하나만 있지만, 혹시 여러 개 등록돼 있어도 여기선 첫 번째 것만 쓴다)
+    private static Rect? FindPushWorldRect(ActionState state, Vector3 position, bool facingRight)
+    {
+        foreach (var box in state.GetActiveBoxes())
+        {
+            if (box.type == BoxType.Push)
+                return BoxResolver.ToWorldRect(position, box.rect, facingRight);
+        }
+        return null;
     }
 }

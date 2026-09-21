@@ -549,6 +549,12 @@ MonoBehaviour:
   chat: {fileID: 308863857}
   errorMessage: {fileID: 747054019}
   myGold: {fileID: 2079058782}
+  raiseButton: {fileID: 419734987}
+  giveUpButton: {fileID: 1661963258}
+  aiList:
+  - {fileID: 7966300344390778085, guid: 5ba687b49e2434342a7948215d9d97ad, type: 3}
+  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
+  - {fileID: 3774233451545845227, guid: c58854e1bab55ac408bcc8dc1d637b50, type: 3}
   auctionItem:
   - {fileID: 11400000, guid: 3f76ab18b89153f4d9c207f4b8552538, type: 2}
   - {fileID: 11400000, guid: ec9d9589f1a21d843ac1ea01ad000660, type: 2}

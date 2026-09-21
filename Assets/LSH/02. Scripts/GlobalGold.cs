@@ -21,12 +21,13 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
         base.Awake();
         // 저장 파일 경로 설정
         savePath = Path.Combine(Application.persistentDataPath, "DorajiGold.json");
+        Debug.Log($"[저장 경로] {savePath}");
+        LoadGame();
     }
 
     void Start()
     {
         // 게임 시작 시 기존 데이터 불러오기
-        LoadGame();
         foreach (var goldData in data)
         {
             Debug.Log($"현재 NPC: {goldData.npcName}, 골드: {goldData.gold}");
@@ -35,34 +36,33 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
 
     void Update()
     {
-        // [테스트용 키 입력]
-        // G: 골드 100 증가
-        if (Input.GetKeyDown(KeyCode.G))
-        {
-            GetGold(1, 100);
-            GetGold(4, 100);
-        }
-        if(Input.GetKeyDown(KeyCode.H))
-        {
+        //// [테스트용 키 입력]
+        //// G: 골드 100 증가
+        //if (Input.GetKeyDown(KeyCode.G))
+        //{
+        //    GetGold(1, 100);
+        //    GetGold(4, 100);
+        //}
+        //if(Input.GetKeyDown(KeyCode.H))
+        //{
+        //    UseGold(1, 50);
+        //    UseGold(4, 50);
+        //}
+        //if (Input.GetKeyDown(KeyCode.E))
+        //{
+        //    AddGoldAllNpc(100);
+        //}
+        //// S: 수동 저장
+        //if (Input.GetKeyDown(KeyCode.S))
+        //{
+        //    SaveGame();
+        //}
 
-            UseGold(1, 50);
-            UseGold(4, 50);
-        }
-        if (Input.GetKeyDown(KeyCode.E))
-        {
-            AddGoldAllNpc(100);
-        }
-        // S: 수동 저장
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            SaveGame();
-        }
-
-        // L: 수동 불러오기
-        if (Input.GetKeyDown(KeyCode.L))
-        {
-            LoadGame();
-        }
+        //// L: 수동 불러오기
+        //if (Input.GetKeyDown(KeyCode.L))
+        //{
+        //    LoadGame();
+        //}
     }
 
 
@@ -111,7 +111,18 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
             Debug.Log($"NPC {goldData.npcName}의 골드추가했다능~ {goldData.gold}");
         }
     }
-
+    //====================================골드 사용 가능 불가능 판단 여부===============================================
+    public bool CanUseGold(int id, int requiredGold) //골드 사용 가능 여부 판단하는 함수임
+    {
+        foreach (var goldData in data)
+        {
+            if (goldData.ID == id)
+            {
+                return goldData.gold >= requiredGold;
+            }
+        }
+        return false;
+    }
     //================================================SAVE&LOAD 기능=====================================================
     // JSON 파일로 저장
     public void SaveGame()

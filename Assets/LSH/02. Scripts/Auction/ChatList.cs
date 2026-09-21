@@ -28,8 +28,8 @@ public class ChatList : PersistentSingleton<ChatList>
         {
             "더 없으십니까?",
             "다음 입찰자 계십니까?",
-            "{0}님, 입찰하시겠습니까?",
-            "입찰하실 분 계십니까?"
+            "입찰하실 분 계십니까?",
+            "시간이 흐르고 있습니다."
         };
         chatDictionary["경매완료"] = new List<string>
         {

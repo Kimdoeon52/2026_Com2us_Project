@@ -8,9 +8,9 @@ public class ScrapNode : MonoBehaviour
     [Min(0f)]
     [SerializeField] private float _detectRadius = 6f;
 
-    [Tooltip("이 반경 안에서 상호작용 입력을 받는다. 철로 근처 노드는 좁게 잡는다")]
+    [Tooltip("이 반경 안에서 상호작용 입력을 받는다.")]
     [Min(0f)]
-    [SerializeField] private float _interactRadius = 1.2f;
+    [SerializeField] private float _interactRadius = 4f;
 
     [Tooltip("가로축 0=탐지 반경 끝, 1=노드 바로 위. 세로축이 강도")]
     [SerializeField] private AnimationCurve _intensityCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);

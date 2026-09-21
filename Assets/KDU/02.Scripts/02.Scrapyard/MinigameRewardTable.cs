@@ -13,12 +13,21 @@ public class MinigameRewardTable : ScriptableObject
     [Tooltip("성공 수집량 범위")]
     [SerializeField] private Vector2Int _successAmount;
 
+    [Tooltip("실패 등급 가중치. 일반 부품만 넣으면 실패 시 항상 일반 부품")]
+    [SerializeField] private GradeWeight[] _failureWeights;
+
+    [Tooltip("실패 수집량 범위")]
+    [SerializeField] private Vector2Int _failureAmount;
+
     public string DisplayName => _displayName;
     public GradeWeight[] SuccessWeights => _successWeights;
     public Vector2Int SuccessAmount => _successAmount;
+    public GradeWeight[] FailureWeights => _failureWeights;
+    public Vector2Int FailureAmount => _failureAmount;
 
     private void OnValidate()
     {
         GradeWeightUtil.RecalculatePercents(_successWeights);
+        GradeWeightUtil.RecalculatePercents(_failureWeights);
     }
 }

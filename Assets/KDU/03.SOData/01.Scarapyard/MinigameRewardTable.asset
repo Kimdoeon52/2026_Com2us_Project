@@ -12,9 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b56e4dc437ff1ba46972068a08ff5003, type: 3}
   m_Name: MinigameRewardTable
   m_EditorClassIdentifier: 
-  _displayName: 
+  _displayName: "\uBBF8\uB2C8 \uAC8C\uC784 \uBCF4\uC0C1 \uD14C\uC774\uBE14"
   _successWeights:
+  - Grade: 1
+    Weight: 100
+    Percent: 100
+  _successAmount: {x: 5, y: 20}
+  _failureWeights:
   - Grade: 0
-    Weight: 0
-    Percent: 0
-  _successAmount: {x: 0, y: 0}
+    Weight: 100
+    Percent: 100
+  _failureAmount: {x: 1, y: 10}

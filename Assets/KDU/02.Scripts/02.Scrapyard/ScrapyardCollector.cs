@@ -43,18 +43,29 @@ public class ScrapyardCollector
         return true;
     }
 
-    // 미니게임 성공 보상. 실패는 패널티가 없어 호출하지 않는다
+    // 미니게임 성공 보상
     public bool TryResolveMinigameSuccess(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, out CollectOutcome outcome)
+    {
+        return TryResolveMinigame(definition, table, state, table != null ? table.SuccessWeights : null, table != null ? table.SuccessAmount : default, out outcome);
+    }
+
+    // 미니게임 실패 보상. 빈손으로 돌려보내지 않고 낮은 등급을 준다
+    public bool TryResolveMinigameFailure(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, out CollectOutcome outcome)
+    {
+        return TryResolveMinigame(definition, table, state, table != null ? table.FailureWeights : null, table != null ? table.FailureAmount : default, out outcome);
+    }
+
+    private bool TryResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, GradeWeight[] weights, Vector2Int amountRange, out CollectOutcome outcome)
     {
         outcome = default;
 
         if (definition == null || table == null || state == null || _rng == null || _catalog == null)
             return false;
 
-        if (!TryRollComponent(table.SuccessWeights, out ComponentDefinition component))
+        if (!TryRollComponent(weights, out ComponentDefinition component))
             return false;
 
-        int amount = RollAmount(table.SuccessAmount);
+        int amount = RollAmount(amountRange);
         amount = state.Consume(amount, definition.MonthlyTotal);
         outcome = CollectOutcome.Instant(component, amount);
         return true;

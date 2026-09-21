@@ -26,6 +26,9 @@ public class ScrapPulseEmitter : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float _minIntensity = 0.01f;
 
+    [Tooltip("재생 중인 파동이 발밑을 계속 따라가게 할지. 끄면 생성된 자리에 남는다")]
+    [SerializeField] private bool _followEmitter = true;
+
     private readonly List<ScrapPulseInstance> _instances = new List<ScrapPulseInstance>();
     private float _timer;
 
@@ -47,14 +50,25 @@ public class ScrapPulseEmitter : MonoBehaviour
         Emit(Mathf.Lerp(_alphaRange.x, _alphaRange.y, intensity));
     }
 
+    // 부모로 붙이지 않고 위치만 맞춘다. 자식이 되면 플레이어 회전을 물려받아 타원이 돌아버린다
+    private void LateUpdate()
+    {
+        if (!_followEmitter)
+            return;
+
+        for (int i = 0; i < _instances.Count; i++)
+        {
+            if (_instances[i].Playing)
+                _instances[i].transform.position = transform.position;
+        }
+    }
+
     private void Emit(float alpha)
     {
         if (_pulsePrefab == null)
             return;
 
         ScrapPulseInstance instance = Rent();
-
-        // 파동은 발생 지점에 머문다. 플레이어 회전을 따라가면 타원이 돌아버린다
         instance.transform.SetPositionAndRotation(transform.position, _pulsePrefab.transform.rotation);
         instance.Play(alpha);
     }

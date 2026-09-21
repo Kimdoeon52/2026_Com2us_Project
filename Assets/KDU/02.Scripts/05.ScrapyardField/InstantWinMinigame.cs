@@ -1,11 +1,11 @@
 using System;
 using UnityEngine;
 
-// 미니게임 구현 전 자리표시자. 즉시 성공 처리한다
+// 실제 미니게임 없이 흐름만 확인할 때 쓰는 자리표시자
 public class InstantWinMinigame : MonoBehaviour, IScrapMinigame
 {
-    public void Begin(MinigameRewardTable table, Action<bool> onResult)
+    public void Begin(Action<ScrapMinigameResult> onComplete)
     {
-        onResult?.Invoke(true);
+        onComplete?.Invoke(ScrapMinigameResult.Win(1f));
     }
 }

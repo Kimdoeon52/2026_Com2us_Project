@@ -23,6 +23,7 @@ MonoBehaviour:
     Percent: 20
   _instantAmount: {x: 10, y: 20}
   _minigameChance: 0.3
-  _rewardTables: []
+  _rewardTables:
+  - {fileID: 11400000, guid: 6e41005562fe2ca4987d1437d3e19ec2, type: 2}
   _monthlyTotal: 100
   _timeCostPerCollect: 5

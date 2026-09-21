@@ -4,6 +4,7 @@ using UnityEngine;
 /// 프레임 단위 정지·전진 디버그 도구 (§9 3단계).
 /// F2: Time.timeScale 토글 — deltaTime이 0이 되어 CombatClock이 자연히 멈춘다.
 /// F3: 정지 상태에서 CombatClock.Tick()을 수동으로 1회 호출해 정확히 1프레임 전진한다.
+/// F4: 판정 박스를 Game 뷰에도 표시할지 토글 (§9 2단계, BoxDrawer.ShowInGameView).
 /// 씬에 빈 오브젝트 하나 만들어 붙여두면 된다 (전투 로봇에 붙일 필요 없음).
 /// </summary>
 public class FrameStepper : MonoBehaviour
@@ -41,6 +42,13 @@ public class FrameStepper : MonoBehaviour
             {
                 view.AdvanceOneTick();
             }
+        }
+
+        if (Input.GetKeyDown(KeyCode.F4))
+        {
+            // 모든 BoxDrawer가 공유하는 static 스위치 하나만 뒤집으면 된다 — 로봇마다 따로 꺼줄 필요 없음
+            BoxDrawer.ShowInGameView = !BoxDrawer.ShowInGameView;
+            Debug.Log(BoxDrawer.ShowInGameView ? "[FrameStepper] 게임 뷰 판정 박스 표시 켬" : "[FrameStepper] 게임 뷰 판정 박스 표시 끔");
         }
     }
 }

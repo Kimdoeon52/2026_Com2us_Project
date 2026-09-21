@@ -65,9 +65,9 @@ public class CombatCamera : MonoBehaviour
     private float extraZoomOffset; // 필살기 연출 등에서 "기본 계산된 줌 값에 추가로 더 당기고 싶을 때" 쓰는 보정치
 
     private void Awake()
-    {
+    {  
         cam = GetComponent<Camera>();
-        if (cam == null)
+        if (cam == null) // 예외처리
             Debug.LogWarning("[CombatCamera] 같은 오브젝트에 Camera 컴포넌트가 없음 — 줌/이동 제한 불가");
     }
 

@@ -8,6 +8,8 @@ public class CorrectRecipe : MonoBehaviour
     [SerializeField] private ResultSlot resultSlot;
     public PartsDefinition resultPart;
 
+    [SerializeField] private InventoryTestHost _host;
+
     private void Awake()
     {
         GetSlotDatas();
@@ -52,10 +54,41 @@ public class CorrectRecipe : MonoBehaviour
         return a == b;
     }
 
-    private void PushPartData()
+    public void PushPartData()
     {
         string partID = FindRecipe();
-        resultPart = partID != null ? resultSlot.FindPart(partID) : null;
-        resultSlot.SetPart(resultPart);   // null이면 결과 슬롯을 비움
+        if (isCorrect() == true)
+        { 
+            partID = FindRecipe();
+            resultPart = partID != null ? resultSlot.FindPart(partID) : null;
+            resultSlot.SetPart(resultPart);   // null이면 결과 슬롯을 비움
+        }
+        else
+        {
+            partID = "";
+            resultPart = null;
+            resultSlot.SetPart(null);
+        }
+    }
+
+    public void ConfirmCraft()
+    {
+        if (resultPart != null)
+            ConsumeSlots();
+    }
+
+    private void ConsumeSlots()
+    {
+        if (_host == null)
+            return;
+
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (string.IsNullOrEmpty(slots[i].componentID))
+                continue;
+
+            _host.ConsumeComponent(slots[i].componentID, 1);
+            slots[i].SetComponent(null);   // 슬롯도 비워서 재사용 못 하게 함
+        }
     }
 }

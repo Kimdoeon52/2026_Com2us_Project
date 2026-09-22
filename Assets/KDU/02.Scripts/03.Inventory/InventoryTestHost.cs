@@ -180,4 +180,33 @@ public class InventoryTestHost : MonoBehaviour
 
         Debug.Log(text.ToString());
     }
+
+    ///////////////////////////
+    /// 크래프팅 디버그용
+    ///////////////////////////
+    [Header("디버그 지급")]
+    [Tooltip("지급할 부품 ID 목록")]
+    [SerializeField] private string[] _debugComponentIds;
+
+    [Tooltip("각 부품당 지급 수량")]
+    [SerializeField] private int _debugAmount = 1;
+
+    [ContextMenu("지정 부품 지급")]
+    public void GiveDebugComponents()
+    {
+        if (_componentCatalog == null || _debugComponentIds == null)
+            return;
+
+        for (int i = 0; i < _debugComponentIds.Length; i++)
+        {
+            ComponentDefinition component = _componentCatalog.Find(_debugComponentIds[i]);
+            if (component == null)
+            {
+                Debug.LogWarning($"'{_debugComponentIds[i]}' 부품을 찾을 수 없다.");
+                continue;
+            }
+
+            GiveComponent(component, _debugAmount);
+        }
+    }
 }

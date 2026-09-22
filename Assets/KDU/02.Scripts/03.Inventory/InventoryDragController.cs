@@ -88,12 +88,34 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         if (_index == None)
             return;
 
-        if (TryGetLocal(eventData, out Vector2 local))
+        if (_host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
+        && entry.IsComponent
+        && TryGetCombinationSlot(eventData, out CombinationSlot slot))
+        {
+            slot.SetComponent(entry.Component);
+            slot.GetComponentInParent<CorrectRecipe>().PushPartData();
+        }
+        else if (TryGetLocal(eventData, out Vector2 local))
+        {
             _host.MoveEntry(_index, ToOrigin(local));
+        }
 
         RestoreSource();
         HideGhost();
         _index = None;
+    }
+
+    // 크래프팅 용
+    private bool TryGetCombinationSlot(PointerEventData eventData, out CombinationSlot slot)
+    {
+        slot = null;
+        GameObject hit = eventData.pointerCurrentRaycast.gameObject;
+        Debug.Log($"드롭 위치 hit = {(hit != null ? hit.name : "null")}");   // 임시 로그
+        if (hit == null)
+            return false;
+
+        slot = hit.GetComponentInParent<CombinationSlot>();
+        return slot != null;
     }
 
     private bool IsReady()
@@ -139,13 +161,19 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     // 포인터를 따라가지 않고 배치될 칸에 스냅한다
     private void MoveGhost(Vector2 local)
     {
-        if (_ghost == null)
-            return;
+        if(_ghost == null)
+        return;
 
         Vector2Int origin = ToOrigin(local);
-        _ghost.anchoredPosition = _view.CellToAnchored(origin);
+        bool insideGrid = origin.x >= 0 && origin.y >= 0
+            && origin.x + _shape.Size.x <= _host.Grid.Width
+            && origin.y + _shape.Size.y <= _host.Grid.Height;
 
-        Color color = _host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor;
+        _ghost.anchoredPosition = insideGrid
+            ? _view.CellToAnchored(origin)                       // 격자 안: 칸에 스냅
+            : local - (Vector2)_grabOffset * _view.CellSize;     // 격자 밖: 포인터를 그대로 따라감
+
+        Color color = insideGrid && _host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor;
 
         if (_ghostShape != null)
             _ghostShape.Tint(color);

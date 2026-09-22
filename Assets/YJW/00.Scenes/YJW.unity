@@ -131,6 +131,7 @@ GameObject:
   - component: {fileID: 25890160}
   - component: {fileID: 25890159}
   - component: {fileID: 25890161}
+  - component: {fileID: 25890162}
   m_Layer: 5
   m_Name: Slot
   m_TagString: Untagged
@@ -171,7 +172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -210,6 +211,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allParts: {fileID: 11400000, guid: 39437a5512cf120419dd0f9072539cd0, type: 2}
   _icon: {fileID: 314683914}
+--- !u!114 &25890162
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 25890157}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdd2fba76a554e74b80dba29bd8543a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _recipe: {fileID: 1805423856}
+  _resultSlot: {fileID: 25890161}
+  _host: {fileID: 1459865256}
+  _view: {fileID: 1770459791}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
 --- !u!1 &44543007
 GameObject:
   m_ObjectHideFlags: 0
@@ -222,6 +241,7 @@ GameObject:
   - component: {fileID: 44543010}
   - component: {fileID: 44543009}
   - component: {fileID: 44543011}
+  - component: {fileID: 44543012}
   m_Layer: 5
   m_Name: Slot (3)
   m_TagString: Untagged
@@ -262,7 +282,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -299,8 +319,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 1899226017}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &44543012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 44543007}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 44543011}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &118856348
 GameObject:
   m_ObjectHideFlags: 0
@@ -465,7 +502,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -540,7 +577,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -713,7 +750,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -788,7 +825,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -900,6 +937,7 @@ GameObject:
   - component: {fileID: 580004569}
   - component: {fileID: 580004568}
   - component: {fileID: 580004570}
+  - component: {fileID: 580004571}
   m_Layer: 5
   m_Name: Slot
   m_TagString: Untagged
@@ -940,7 +978,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -977,8 +1015,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 2015207847}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &580004571
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 580004566}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 580004570}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &584596743
 GameObject:
   m_ObjectHideFlags: 0
@@ -1029,7 +1084,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1106,7 +1161,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.8584906, g: 0.8584906, b: 0.8584906, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1379,7 +1434,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1553,6 +1608,7 @@ GameObject:
   - component: {fileID: 1163968700}
   - component: {fileID: 1163968699}
   - component: {fileID: 1163968701}
+  - component: {fileID: 1163968702}
   m_Layer: 5
   m_Name: Slot (4)
   m_TagString: Untagged
@@ -1593,7 +1649,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1630,8 +1686,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 584596745}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1163968702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1163968697}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1163968701}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1182783380
 GameObject:
   m_ObjectHideFlags: 0
@@ -1644,6 +1717,7 @@ GameObject:
   - component: {fileID: 1182783383}
   - component: {fileID: 1182783382}
   - component: {fileID: 1182783384}
+  - component: {fileID: 1182783385}
   m_Layer: 5
   m_Name: Slot (2)
   m_TagString: Untagged
@@ -1684,7 +1758,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1721,8 +1795,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 900038572}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1182783385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1182783380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1182783384}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1183860803
 GameObject:
   m_ObjectHideFlags: 0
@@ -1773,7 +1864,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1969,6 +2060,10 @@ MonoBehaviour:
   _componentCatalog: {fileID: 11400000, guid: 019fada31c90fb74eb17d7ffdc793b20, type: 2}
   _seed: 1
   _startingParts: 0
+  _debugComponentIds:
+  - ITEM_10_1_001
+  - ITEM_10_1_002
+  _debugAmount: 3
 --- !u!4 &1459865257
 Transform:
   m_ObjectHideFlags: 0
@@ -1996,6 +2091,7 @@ GameObject:
   - component: {fileID: 1479538805}
   - component: {fileID: 1479538804}
   - component: {fileID: 1479538806}
+  - component: {fileID: 1479538807}
   m_Layer: 5
   m_Name: Slot (5)
   m_TagString: Untagged
@@ -2036,7 +2132,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2073,8 +2169,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 1507783533}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1479538807
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1479538802}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1479538806}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1507783531
 GameObject:
   m_ObjectHideFlags: 0
@@ -2125,7 +2238,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2162,6 +2275,7 @@ GameObject:
   - component: {fileID: 1529054337}
   - component: {fileID: 1529054336}
   - component: {fileID: 1529054338}
+  - component: {fileID: 1529054339}
   m_Layer: 5
   m_Name: Slot (7)
   m_TagString: Untagged
@@ -2202,7 +2316,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2239,8 +2353,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 476703267}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1529054339
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1529054334}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1529054338}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1629456831
 GameObject:
   m_ObjectHideFlags: 0
@@ -2253,6 +2384,7 @@ GameObject:
   - component: {fileID: 1629456834}
   - component: {fileID: 1629456833}
   - component: {fileID: 1629456835}
+  - component: {fileID: 1629456836}
   m_Layer: 5
   m_Name: Slot (8)
   m_TagString: Untagged
@@ -2293,7 +2425,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2330,8 +2462,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 226414721}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1629456836
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1629456831}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1629456835}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1630821185
 GameObject:
   m_ObjectHideFlags: 0
@@ -2344,6 +2493,7 @@ GameObject:
   - component: {fileID: 1630821188}
   - component: {fileID: 1630821187}
   - component: {fileID: 1630821189}
+  - component: {fileID: 1630821190}
   m_Layer: 5
   m_Name: Slot (1)
   m_TagString: Untagged
@@ -2384,7 +2534,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2421,8 +2571,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 466520032}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1630821190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1630821185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1630821189}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1763375317
 GameObject:
   m_ObjectHideFlags: 0
@@ -2641,6 +2808,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 337f100128e5a7c48b3bc1a3724dfefd, type: 2}
   resultSlot: {fileID: 25890161}
   resultPart: {fileID: 0}
+  _host: {fileID: 1459865256}
 --- !u!1 &1839540024
 GameObject:
   m_ObjectHideFlags: 0
@@ -2653,6 +2821,7 @@ GameObject:
   - component: {fileID: 1839540027}
   - component: {fileID: 1839540026}
   - component: {fileID: 1839540028}
+  - component: {fileID: 1839540029}
   m_Layer: 5
   m_Name: Slot (6)
   m_TagString: Untagged
@@ -2693,7 +2862,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2730,8 +2899,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9712df97659a5eb4eb43a52cf0721c04, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _icon: {fileID: 1183860805}
   sprite: {fileID: 0}
   componentID: 
+--- !u!114 &1839540029
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1839540024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dd78c111b5208c47b2f07c2613c1d03, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _slot: {fileID: 1839540028}
+  _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
+  _ghostLayer: {fileID: 812039427}
+  _recipe: {fileID: 1805423856}
 --- !u!1 &1899226015
 GameObject:
   m_ObjectHideFlags: 0
@@ -2782,7 +2968,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2902,7 +3088,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.67058825, g: 0.67058825, b: 0.67058825, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

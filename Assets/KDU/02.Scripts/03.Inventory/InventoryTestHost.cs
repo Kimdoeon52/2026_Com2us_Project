@@ -59,6 +59,19 @@ public class InventoryTestHost : MonoBehaviour
         return placed;
     }
 
+    // 지정 파츠를 원하는 칸에 배치. 그 칸이 막혀있거나 범위 밖이면 실패
+    public bool TryPlacePartAt(PartsDefinition definition, Vector2Int origin)
+    {
+        if (_grid == null || definition == null)
+            return false;
+
+        bool placed = _grid.TryPlaceParts(definition, origin, out int _);
+        if (placed)
+            Changed?.Invoke();
+
+        return placed;
+    }
+
     [ContextMenu("파츠 지급")]
     public bool GiveRandomPart()
     {

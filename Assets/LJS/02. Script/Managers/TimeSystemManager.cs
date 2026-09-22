@@ -12,8 +12,8 @@ public class TimeSystemManager : MonoBehaviour
 
     [Header("Time Data")] // 시간 데이터
     public int year = 2080;
-    public int month = 4;
-    public int day = 1;
+    public int month = 3;
+    public int day = 28;
     public int hour = 8;
 
     [Header("Settings")]

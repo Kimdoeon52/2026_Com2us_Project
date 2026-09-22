@@ -57,7 +57,7 @@ public class MapSystemManager : MonoBehaviour
     public void OpenConfirmPopup(MapElement element)
     {
         selectedElement = element;
-        confirmText.text = $"'{element.elementName}'(으)로 이동하시겠습니까?";
+        confirmText.text = $"'{element.elementName}'(으)로\n이동하시겠습니까?";
         confirmButton.SetActive(true);
 
         isConfirmOpen = true;

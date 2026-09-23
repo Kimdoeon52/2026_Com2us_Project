@@ -84,6 +84,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5786473452144137633}
+  - component: {fileID: 4511986916848678276}
   m_Layer: 0
   m_Name: PartGaugeWidget
   m_TagString: Untagged
@@ -110,6 +111,27 @@ Transform:
   - {fileID: 6181780967205291254}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4511986916848678276
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1907725770409941375}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5dfc80ed43898e84aaab82ce4d681745, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetPart: 0
+  durabilitySlider: {fileID: 1051024770668375232}
+  durabilityFillImage: {fileID: 3319455429362999185}
+  partNameText: {fileID: 5982123716151389425}
+  partValueText: {fileID: 94433874665383600}
+  normalColor: {r: 0.1, g: 0.95, b: 0.2, a: 1}
+  warningColor: {r: 0.95, g: 0.95, b: 0.2, a: 1}
+  dangerColor: {r: 0.95, g: 0.2, b: 0.2, a: 1}
+  brokenColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
 --- !u!1 &3629189302240004492
 GameObject:
   m_ObjectHideFlags: 0
@@ -213,8 +235,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 694527aaed127d744b4a0fb7aa07e0d5, type: 2}
+  m_sharedMaterial: {fileID: -8834167923067453648, guid: 694527aaed127d744b4a0fb7aa07e0d5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -350,8 +372,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: New Text
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 694527aaed127d744b4a0fb7aa07e0d5, type: 2}
+  m_sharedMaterial: {fileID: -8834167923067453648, guid: 694527aaed127d744b4a0fb7aa07e0d5, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

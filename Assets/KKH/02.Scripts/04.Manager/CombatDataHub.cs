@@ -215,7 +215,8 @@ public class CombatDataHub : MonoBehaviour
         string defenderId,
         ActionData attackAction,
         bool isGuarding,
-        bool isWeaving)
+        bool isWeaving,
+        BodyPart hitPart = BodyPart.Core)
     {
         var attacker = GetSnapshot(attackerId);
         var defender = GetSnapshot(defenderId);
@@ -226,8 +227,8 @@ public class CombatDataHub : MonoBehaviour
             return new HitResolutionResult();
         }
 
-        // 순수 수치 판정기 호출함
-        var result = CombatCalculator.EvaluateHit(attacker, defender, attackAction, isGuarding, isWeaving);
+        // 순수 수치 판정기 호출함 (피격 부위 전달)
+        var result = CombatCalculator.EvaluateHit(attacker, defender, attackAction, isGuarding, isWeaving, hitPart);
 
         // 이벤트 알림 처리함
         if (result.DamageToHp > 0)
@@ -235,6 +236,7 @@ public class CombatDataHub : MonoBehaviour
             OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
         }
 
+        // 가드로 인한 양팔 내구도 차감 이벤트
         if (result.LeftArmDurabilityDamage > 0)
         {
             var arm = defender.GetPartRuntimeState(BodyPart.LeftArm);
@@ -247,6 +249,14 @@ public class CombatDataHub : MonoBehaviour
             var arm = defender.GetPartRuntimeState(BodyPart.RightArm);
             if (arm != null)
                 OnPartDurabilityChanged?.Invoke(defender.fighterID, BodyPart.RightArm, arm.currentDurability, arm.maxDurability);
+        }
+
+        // 직접 피격된 파츠(머리, 다리 등) 내구도 차감 이벤트
+        if (hitPart != BodyPart.Core && hitPart != BodyPart.LeftArm && hitPart != BodyPart.RightArm)
+        {
+            var state = defender.GetPartRuntimeState(hitPart);
+            if (state != null)
+                OnPartDurabilityChanged?.Invoke(defender.fighterID, hitPart, state.currentDurability, state.maxDurability);
         }
 
         OnHitResolved?.Invoke(result);
@@ -283,4 +293,96 @@ public class CombatDataHub : MonoBehaviour
 
         return success;
     }
+
+    // ========================================================================
+    // 3. 직접 수치 조작 및 실시간 이벤트 발생 API (테스트 및 특수 피격용)
+    // ========================================================================
+
+    /// <summary>
+    /// [코어 체력 직접 차감]
+    /// 유효타 피격, 크리티컬 추가타 또는 HUD 테스트 시 코어 체력을 직접 삭감하고 OnHpChanged 이벤트를 호출함.
+    /// </summary>
+    public void ApplyCoreDamage(string fighterId, int damage)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s == null) return;
+
+        s.currentHp = Mathf.Max(0, s.currentHp - damage);
+        OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
+
+        if (s.currentHp <= 0 && BattleManager.Instance != null)
+        {
+            BattleManager.Instance.OnFighterKilled(s.fighterID);
+        }
+    }
+
+    /// <summary>
+    /// [특정 부위 내구도 직접 차감]
+    /// 가드/치명타/특수 상태이상 또는 HUD 테스트 시 해당 부위 내구도를 차감하고 OnPartDurabilityChanged 이벤트를 호출함.
+    /// </summary>
+    public void ConsumePartDurability(string fighterId, BodyPart part, int amount)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s == null) return;
+
+        s.ConsumePartDurability(part, amount);
+        var state = s.GetPartRuntimeState(part);
+        if (state != null)
+        {
+            OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
+        }
+    }
+
+    /// <summary>
+    /// [파츠 유효타 피격 처리: 파츠 내구도 + 코어 체력 동시 차감]
+    /// 특정 부위 피격 시 해당 파츠 내구도를 깎음과 동시에, 기체 본체인 코어 체력(HP)에도 피해를 전달함.
+    /// </summary>
+    public void ApplyPartHit(string fighterId, BodyPart part, int partDamage, int coreDamage)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s == null) return;
+
+        // 1. 파츠 내구도 차감
+        if (partDamage > 0)
+        {
+            s.ConsumePartDurability(part, partDamage);
+            var state = s.GetPartRuntimeState(part);
+            if (state != null)
+            {
+                OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
+            }
+        }
+
+        // 2. 코어 체력 동시 차감 (기획서: 파츠 피격 시 본체 생명력 동반 감소)
+        if (coreDamage > 0)
+        {
+            s.currentHp = Mathf.Max(0, s.currentHp - coreDamage);
+            OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
+
+            if (s.currentHp <= 0 && BattleManager.Instance != null)
+            {
+                BattleManager.Instance.OnFighterKilled(s.fighterID);
+            }
+        }
+    }
+
+    /// <summary>
+    /// [전투 참가자 상태 전체 초기화]
+    /// 코어 체력 및 5개 파츠 내구도를 최대치로 완전 복구하고 UI를 갱신함.
+    /// </summary>
+    public void ResetFighter(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s == null) return;
+
+        s.currentHp = s.maxHp;
+        OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
+
+        foreach (var kvp in s.partStates)
+        {
+            kvp.Value.currentDurability = kvp.Value.maxDurability;
+            OnPartDurabilityChanged?.Invoke(s.fighterID, kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
+        }
+    }
 }
+

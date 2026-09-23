@@ -40,7 +40,8 @@ public static class CombatCalculator
         CombatantSnapshot defender,
         ActionData attackAction,
         bool isGuarding,
-        bool isWeaving)
+        bool isWeaving,
+        BodyPart hitPart = BodyPart.Core)
     {
         var result = new HitResolutionResult();
 
@@ -79,24 +80,34 @@ public static class CombatCalculator
         }
         else
         {
-            // 4. 본체(코어) 직격함
+            // 4. 유효타 피격 (코어 본체 HP + 피격 파츠 내구도 동시 감쇄)
             float finalDmg = rawAtk * (100f / (defender.baseDefense + 100f));
 
-            // 머리 파츠 치명타 저항 및 삭감률 적용함 (기본 크리티컬 확률 15% 가정함)
+            // 머리 파츠 피격 또는 치명타 발생 판정
             float baseCritChance = 0.15f;
             float effectiveCritChance = Mathf.Max(0f, baseCritChance - defender.critResistance);
 
-            if (Random.value < effectiveCritChance)
+            if (hitPart == BodyPart.Head || Random.value < effectiveCritChance)
             {
                 result.IsCritical = true;
-                // 기본 치명타 배율 1.5배에서 defender.critDamageReduction 만큼 감쇄함
                 float critMultiplier = Mathf.Max(1.0f, 1.5f - defender.critDamageReduction);
                 finalDmg *= critMultiplier;
 
-                // 치명타 피격 시 머리 파츠 내구도 일부 차감함
-                defender.ConsumeDurability(BodyPart.Head, Mathf.RoundToInt(finalDmg * 0.2f));
+                // 머리 피격 시 머리 내구도 차감
+                int headDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
+                defender.ConsumeDurability(BodyPart.Head, headDmg);
+            }
+            else if (hitPart != BodyPart.Core)
+            {
+                // 팔 또는 다리 부위 피격 시 해당 파츠 내구도 차감
+                int partDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
+                defender.ConsumeDurability(hitPart, partDmg);
+
+                if (hitPart == BodyPart.LeftArm) result.LeftArmDurabilityDamage = partDmg;
+                else if (hitPart == BodyPart.RightArm) result.RightArmDurabilityDamage = partDmg;
             }
 
+            // [핵심] 기체 본체(코어) 체력 차감 (파츠 피격 시에도 본체 생명력에 피해가 반영됨)
             result.DamageToHp = Mathf.Max(1, Mathf.RoundToInt(finalDmg));
             defender.currentHp = Mathf.Max(0, defender.currentHp - result.DamageToHp);
         }

@@ -60,8 +60,13 @@ public class CombatDataHubTester : MonoBehaviour
         Test_4_WeavingAttempt(hub);
         Test_5_BattleLifecycleAndKO(battleMgr, hub);
 
+        // [테스트 후처리(Clean-up)]
+        // 단위 테스트 과정에서 파손/소모된 플레이어 및 적의 체력과 모든 부위 내구도를 최댓값으로 원상복구함
+        hub.ResetFighter("Player");
+        hub.ResetFighter("Enemy");
+
         Debug.Log("<color=cyan>===============================================================</color>");
-        Debug.Log("<color=green><b>[전투 DB & 배틀매니저 (KKH)] 모든 연동 및 수치 검증 완료됨 (ALL PASS)</b></color>");
+        Debug.Log("<color=green><b>[전투 DB & 배틀매니저 (KKH)] 모든 연동 및 수치 검증 완료됨 (ALL PASS) - 참가자 상태 풀 복구 완료</b></color>");
         Debug.Log("<color=cyan>===============================================================</color>");
     }
 

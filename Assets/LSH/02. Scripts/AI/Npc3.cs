@@ -8,7 +8,7 @@ public class Npc3 : AiBase
 
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     {
-        if(IsReady || data == null) return false;
+        if (IsReady || data == null) return false;
         int NextPrice = actionPrise + 100;
         if(NextPrice > data.gold * actionRate)
         {

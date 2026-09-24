@@ -55,8 +55,9 @@ public class Auction : PersistentSingleton<Auction>
     private string winnerName = "";
     private bool ifPlayerWin = false;
 
-    private const int playerId = 1;
-
+    //===========================임시 콘솔창================================
+    [Header("임시 콘솔창")]
+    public TextMeshProUGUI console;
     protected override void Awake()
     {
         base.Awake();
@@ -84,7 +85,14 @@ public class Auction : PersistentSingleton<Auction>
         isAuctioningFin = false;
         isChatting = true;
         ButtonReady(false); //플레이어 선택 버튼 비활성화
-
+        foreach (var ai in aiList)
+        {
+            if (ai != null)
+            {
+                console.text += $"{ai.NpcName}님이 참가 했습니다.\n";
+                ai.ReadyForAction(); //AI 준비
+            }
+        }
         // 첫 대사 하고
         await StartAuctionChatting();
         await UniTask.Delay(1000);
@@ -101,13 +109,7 @@ public class Auction : PersistentSingleton<Auction>
         ifPlayerWin = false;
         auctionTime = 60f; // 첫 경매 시작 제한시간 재설정
 
-        foreach (var ai in aiList)
-        {
-            if(ai != null)
-            {
-                ai.ReadyForAction(); //AI 준비
-            }   
-        }
+        
         isChatting = false;
         ButtonReady(true); //플레이어 선택 버튼 활성화
 
@@ -139,14 +141,20 @@ public class Auction : PersistentSingleton<Auction>
     {
         while (isTimeRunning && !isAuctioningFin)
         {
-            // 각 AI마다 고민하는 시간을 다르게 부여 (1.5초 ~ 3.5초 사이)
-            int thinkDelay = Random.Range(5000, 10000);
+            // 각 AI마다 고민하는 시간을 다르게 부여 (5초~ 20초 사이)
+            int thinkDelay = Random.Range(5000, 20000);
+            console.text += $"{ai.NpcName}님이 {thinkDelay/1000}초 동안 고민중.\n";
             await UniTask.Delay(thinkDelay);
 
             if (!isTimeRunning || isAuctioningFin) break;
 
             // 이미 자기가 최고 입찰자면 굳이 자기 돈을 또 올릴 필요 없음
-            if (winnerName == ai.NpcName) continue;
+            if (winnerName == ai.NpcName)
+            {
+                console.text += $"{ai.NpcName}은 현재 최고 입찰자라 더이상 레이즈하지 않습니다.\n";
+                continue;
+            }
+                
 
             // AI가 포기 상태면 제외 (IsReady 혹은 IsGiveUp 플래그 확인)
             if (ai.IsReady) continue;
@@ -154,6 +162,7 @@ public class Auction : PersistentSingleton<Auction>
             // AI의 고유 판단 실행
             if (ai.RaiseThink(currentCost, stuff.cost))
             {
+                console.text += $"{ai.NpcName}판단 끝! 결과 레이즈.\n";
                 // 실시간 입찰 성공!
                 currentCost += 100;
                 auctionCost.text = currentCost.ToString();
@@ -169,6 +178,7 @@ public class Auction : PersistentSingleton<Auction>
             }
             else
             {
+                console.text += $"{ai.NpcName}판단 끝! 결과 포기.\n";
                 // 예산 초과 등으로 포기
                 chat.text = $"{ai.NpcName} 님이 입찰을 포기했습니다.";
             }

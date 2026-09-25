@@ -42,6 +42,10 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
         _LightStrength ("조명 반영   (0 원본색 / 1 완전히 조명대로)", Range(0, 1)) = 0.7
         _NormalLean    ("법선 기울이기   (0 카메라쪽 / 1 하늘쪽)", Range(0, 1)) = 0.5
 
+        [Header(See Through)]
+        [Space(4)]
+        [ToggleUI] _SeeThrough ("시야 가리면 뚫기   (캐릭터 앞을 가릴 때 점무늬 구멍 · RSSeeThrough)", Float) = 0
+
         [Header(FX)]
         [Space(4)]
         _FlashColor  ("피격 플래시 색", Color) = (1, 1, 1, 1)
@@ -67,6 +71,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
         // ─────────────────────────────────────────────────────────────
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "RSSeeThrough.hlsl"   // 시야 가림 투명 (RSSeeThrough 컴포넌트)
 
         TEXTURE2D(_MainTex);    SAMPLER(sampler_MainTex);
         float4 _MainTex_TexelSize;
@@ -78,6 +83,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             half4  _OutlineColor;
             float  _Cutoff;
             float  _PitchFollow;
+            float  _SeeThrough;
             float  _LightStrength;
             float  _NormalLean;
             float  _FlashAmount;
@@ -179,6 +185,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES   // 구름 그림자 (RS Lighting · 라이트 쿠키)
 
             // Forward+ 키워드는 URP 버전마다 이름이 다르다. 둘 다 선언해 둔다.
             #pragma multi_compile _ _FORWARD_PLUS
@@ -226,6 +233,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
 
             half4 BbFrag(Varyings IN) : SV_Target
             {
+                RSSeeThroughClip(IN.positionWS, IN.positionCS, _SeeThrough);
                 half4 albedo = SampleSprite(IN.uv) * IN.vcolor;
                 clip(albedo.a - _Cutoff);
 
@@ -373,6 +381,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             {
                 float4 positionCS : SV_POSITION;
                 float2 uv         : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
             };
 
             DVaryings DepthVert(DAttributes IN)
@@ -381,12 +390,14 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
                 float3 planeN;
                 float3 posWS = Billboard(IN.positionOS.xyz, true, planeN);
                 OUT.positionCS = TransformWorldToHClip(posWS);
+                OUT.positionWS = posWS;
                 OUT.uv = TRANSFORM_TEX(IN.uv, _MainTex);
                 return OUT;
             }
 
             half4 DepthFrag(DVaryings IN) : SV_Target
             {
+                RSSeeThroughClip(IN.positionWS, IN.positionCS, _SeeThrough);
                 half4 c = SampleSprite(IN.uv);
                 clip(c.a - _Cutoff);
                 return 0;

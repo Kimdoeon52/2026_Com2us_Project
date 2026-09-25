@@ -25,7 +25,7 @@ namespace RealSteel.EditorTools
     /// </summary>
     public class StageUvTool : EditorWindow
     {
-        /// <summary>픽셀/유닛. StageSampleBuilder 와 같은 값을 써야 한다.</summary>
+        /// <summary>픽셀/유닛. 지형 셰이더 PPU 와 같은 값을 쓴다.</summary>
         float ppu = 32f;
 
         /// <summary>0 이면 머티리얼 텍스처에서 읽는다. 1 이상이면 이 값을 강제한다.</summary>

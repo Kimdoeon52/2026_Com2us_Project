@@ -1,9 +1,9 @@
 ﻿// RE:AL STEEL - HD-2D 룩 세팅 (카메라 / 조명 / 포스트 프로세싱)
 //
-// StageSampleBuilder 와 의존 관계가 없는 독립 클래스다.
-// 지오메트리 생성과 룩 세팅을 따로 실행할 수 있게 일부러 분리해 두었다.
+// 카메라 · 태양 · 보조광 · Volume(블룸 · 틸트시프트 등)을 한 번에 만든다.
+// 시간대 · 구름 · 햇살은 RS 조명(옥토패스 조명) 메뉴가 이 태양을 이어받아 쓴다.
 //
-// 메뉴: Tools > RE_AL STEEL > Stage > 5. 카메라 + 조명 + 포스트
+// 메뉴: Tools > RE_AL STEEL > Stage > 카메라 + 조명 + 포스트 (HD-2D 룩)
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -14,10 +14,17 @@ namespace RealSteel.EditorTools
     public static class StagePostBuilder
     {
         /// <summary>
-        /// 출력 폴더는 StageSampleBuilder 와 공유한다 —
-        /// 메뉴 `0. 출력 폴더 지정` 에서 한 번 고르면 둘 다 그쪽에 쓴다.
+        /// Volume 프로파일을 저장할 폴더 (예전 샘플 도구와 같은 EditorPrefs 키를 그대로 읽는다. 기본 Assets/StageSamples)
         /// </summary>
-        static string ArtDir { get { return StageSampleBuilder.ArtDir; } }
+        static string ArtDir
+        {
+            get
+            {
+                string v = EditorPrefs.GetString("RSPixelStageTools.StageSampleBuilder.ArtDir", "Assets/StageSamples");
+                if (string.IsNullOrEmpty(v) || !v.StartsWith("Assets")) v = "Assets/StageSamples";
+                return v;
+            }
+        }
         static string ProfilePath { get { return ArtDir + "/VP_Stage_HD2D.asset"; } }
 
         const string RigName = "STAGE_Look";
@@ -33,7 +40,7 @@ namespace RealSteel.EditorTools
 
         static readonly Vector3 LookTarget = new Vector3(1.5f, 1.5f, 2f);
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/5. 카메라 + 조명 + 포스트 (HD-2D 룩)", false, 20)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/카메라 + 조명 + 포스트 (HD-2D 룩)", false, 31)]
         public static void BuildLook()
         {
             var old = GameObject.Find(RigName);
@@ -59,7 +66,7 @@ namespace RealSteel.EditorTools
         /// 씬의 모든 카메라에 near/far 를 다시 잡아준다.
         /// 면이 깜빡일 때(Z-fighting) 지오메트리를 건드리기 전에 먼저 눌러볼 레버.
         /// </summary>
-        [MenuItem("Tools/RE_AL STEEL/Stage/Z-fighting 완화 - 카메라 클립 거리 최적화", false, 42)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/Z-fighting 완화 - 카메라 클립 거리 최적화", false, 32)]
         public static void FixClipPlanes()
         {
             var cams = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);

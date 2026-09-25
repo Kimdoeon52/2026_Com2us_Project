@@ -1,0 +1,22 @@
+{
+    "name": "RSLighting.Editor",
+    "rootNamespace": "RealSteel.Lighting.EditorTools",
+    "references": [
+        "RSLighting.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime",
+        "RSCommon.Runtime",
+        "RSCommon.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

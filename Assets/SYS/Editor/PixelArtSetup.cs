@@ -35,7 +35,7 @@ namespace RealSteel.EditorTools
         Vector2 scroll;
         string report = "";
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/픽셀 텍스처 선명하게 (진단 + 일괄 설정)", false, 44)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/픽셀 텍스처 선명하게 (진단 + 일괄 설정)", false, 2)]
         static void Open()
         {
             var w = GetWindow<PixelArtSetup>("픽셀 텍스처");

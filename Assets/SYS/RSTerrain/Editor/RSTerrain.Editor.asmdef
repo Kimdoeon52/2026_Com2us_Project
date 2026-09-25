@@ -1,0 +1,21 @@
+{
+    "name": "RSTerrain.Editor",
+    "rootNamespace": "RealSteel.Terrain.EditorTools",
+    "references": [
+        "RSTerrain.Runtime",
+        "Unity.ProBuilder",
+        "RSCommon.Runtime",
+        "RSCommon.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -34,6 +34,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
         _Cutoff     ("  오려낼 기준값", Range(0, 1)) = 0.5
         [Toggle(_RECEIVE_SHADOWS_OFF)] _ReceiveShadowsOff ("그림자 안 받기", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)] _Cull ("보이는 면", Float) = 2
+        [ToggleUI] _SeeThrough ("시야 가리면 뚫기   (캐릭터 앞을 가릴 때 점무늬 구멍 · RSSeeThrough)", Float) = 1
     }
 
     SubShader
@@ -52,6 +53,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
         // ─────────────────────────────────────────────────────────────
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "RSSeeThrough.hlsl"   // 시야 가림 투명 (RSSeeThrough 컴포넌트)
 
         TEXTURE2D(_SideMap);    SAMPLER(sampler_SideMap);
         TEXTURE2D(_TopMap);     SAMPLER(sampler_TopMap);
@@ -71,6 +73,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
             float  _UseObjectSpace;
             float  _AlphaClip;
             float  _ReceiveShadowsOff;
+            float  _SeeThrough;
         CBUFFER_END
 
         // 세 축 투영 가중치. 법선이 향한 쪽이 크게 나온다.
@@ -143,6 +146,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
             #pragma multi_compile_fog
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES   // 구름 그림자 (RS Lighting · 라이트 쿠키)
 
             // Forward+ 키워드는 URP 버전마다 이름이 다르다. 둘 다 선언해 두면
             // 어느 버전에서든 해당하는 쪽이 켜진다. (URP 14~16 / URP 17)
@@ -204,6 +208,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
 
             half4 TriFrag(Varyings IN) : SV_Target
             {
+                RSSeeThroughClip(IN.positionWS, IN.positionCS, _SeeThrough);
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
 
@@ -383,6 +388,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
                 float4 positionCS : SV_POSITION;
                 float3 projPos    : TEXCOORD0;
                 float3 projNormal : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -397,6 +403,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
                 VertexPositionInputs pos = GetVertexPositionInputs(IN.positionOS.xyz);
                 VertexNormalInputs   nrm = GetVertexNormalInputs(IN.normalOS);
                 OUT.positionCS = pos.positionCS;
+                OUT.positionWS = pos.positionWS;
 
             #ifdef _OBJECT_SPACE
                 OUT.projPos    = IN.positionOS.xyz;
@@ -412,6 +419,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+                RSSeeThroughClip(IN.positionWS, IN.positionCS, _SeeThrough);
             #ifdef _ALPHATEST_ON
                 half4 c = SampleTriplanar(IN.projPos, normalize(IN.projNormal));
                 clip(c.a - _Cutoff);
@@ -457,6 +465,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
                 float3 normalWS   : TEXCOORD0;
                 float3 projPos    : TEXCOORD1;
                 float3 projNormal : TEXCOORD2;
+                float3 positionWS : TEXCOORD3;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -473,6 +482,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
 
                 OUT.positionCS = pos.positionCS;
                 OUT.normalWS   = nrm.normalWS;
+                OUT.positionWS = pos.positionWS;
 
             #ifdef _OBJECT_SPACE
                 OUT.projPos    = IN.positionOS.xyz;
@@ -488,6 +498,7 @@ Shader "RE_AL STEEL/Triplanar Pixel Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(IN);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(IN);
+                RSSeeThroughClip(IN.positionWS, IN.positionCS, _SeeThrough);
             #ifdef _ALPHATEST_ON
                 half4 c = SampleTriplanar(IN.projPos, normalize(IN.projNormal));
                 clip(c.a - _Cutoff);

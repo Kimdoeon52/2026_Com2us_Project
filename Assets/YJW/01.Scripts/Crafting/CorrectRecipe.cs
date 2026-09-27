@@ -79,16 +79,9 @@ public class CorrectRecipe : MonoBehaviour
 
     private void ConsumeSlots()
     {
-        if (_host == null)
-            return;
-
         for (int i = 0; i < slots.Length; i++)
         {
-            if (string.IsNullOrEmpty(slots[i].componentID))
-                continue;
-
-            _host.ConsumeComponent(slots[i].componentID, 1);
-            slots[i].SetComponent(null);   // 슬롯도 비워서 재사용 못 하게 함
+            slots[i].SetComponent(null);
         }
     }
 }

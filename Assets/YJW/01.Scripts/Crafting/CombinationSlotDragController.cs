@@ -5,7 +5,7 @@ using UnityEngine.UI;
 // 크래프팅 슬롯 9칸끼리 부품을 드래그로 재배치한다.
 // 인벤토리 격자와 달리 칸 크기가 정해진 그리드가 아니라서, 셀 스냅 없이 포인터를 그대로 따라가는 고스트를 쓴다.
 // 이 스크립트는 슬롯 1개당 1개씩 붙는다 (9개 슬롯 = 9개 인스턴스, 각자 자기 슬롯만 안다).
-public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [Tooltip("이 컨트롤러가 속한 슬롯. 비우면 Reset에서 같은 오브젝트의 CombinationSlot을 자동으로 채운다")]
     [SerializeField] private CombinationSlot _slot;
@@ -18,6 +18,9 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
 
     [Tooltip("슬롯 내용이 바뀐 뒤 레시피를 다시 검사시키기 위한 참조")]
     [SerializeField] private CorrectRecipe _recipe;
+
+    [SerializeField] private InventoryTestHost _host;
+    [SerializeField] private InventoryView _view;
 
     // 실제로 화면에 떠 있는 고스트. 슬롯당 하나만 만들고 재사용한다 (드래그마다 새로 Instantiate하지 않음)
     private RectTransform _ghost;
@@ -77,6 +80,13 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
                 // 배치가 바뀌었으니 지금 9칸 조합이 레시피와 맞는지 다시 확인시킨다
                 _recipe.PushPartData();
             }
+            else if (target == null && IsOverInventory(eventData))
+            {
+                // 인벤토리 위에 놓였다 → 수량을 돌려주고 슬롯을 비운다
+                _host.GiveComponent(_dragged, 1);
+                _slot.SetComponent(null);
+                _recipe.PushPartData();
+            }
             // target이 null(빈 곳에 놓임)이거나 자기 자신이면 아무것도 안 하고 원래 자리 그대로 둔다
         }
 
@@ -89,6 +99,12 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
 
         HideGhost();
         _dragged = null;
+    }
+
+    private bool IsOverInventory(PointerEventData eventData)
+    {
+        GameObject hit = eventData.pointerCurrentRaycast.gameObject;
+        return hit != null && hit.transform.IsChildOf(_view.PartsLayer.parent);
     }
 
     // 포인터 바로 아래(또는 그 부모 쪽)에서 CombinationSlot을 찾는다.
@@ -142,5 +158,23 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
     {
         if (_ghost != null)
             _ghost.gameObject.SetActive(false);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Right)
+            return;
+
+        ReturnComponent();
+    }
+
+    public void ReturnComponent()
+    {
+        ComponentDefinition component = _slot.Component;
+        if (component == null) return;
+
+        _host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
+        _slot.SetComponent(null);           // 슬롯 비움
+        _recipe.PushPartData();             // 조합 다시 판정
     }
 }

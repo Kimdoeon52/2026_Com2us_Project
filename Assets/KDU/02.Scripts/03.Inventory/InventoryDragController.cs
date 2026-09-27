@@ -90,7 +90,9 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
 
         if (_host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
         && entry.IsComponent
-        && TryGetCombinationSlot(eventData, out CombinationSlot slot))
+        && TryGetCombinationSlot(eventData, out CombinationSlot slot)
+        && slot.Component == null                              // 이미 차 있으면 대상에서 제외. 아래 else로 빠져서 그냥 격자 이동 처리
+        && _host.ConsumeComponent(entry.Component.Id, 1))       // 놓는 순간 인벤토리에서 실제로 소모
         {
             slot.SetComponent(entry.Component);
             slot.GetComponentInParent<CorrectRecipe>().PushPartData();

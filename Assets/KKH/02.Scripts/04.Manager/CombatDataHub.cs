@@ -53,6 +53,54 @@ public class CombatDataHub : MonoBehaviour
         else if (instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        // 인스펙터 직렬화 데이터 검증 및 자가 복구 (체력 0 또는 파츠 내구도 누락 방어)
+        ValidateAndRepairSnapshots();
+    }
+
+    /// <summary>
+    /// [인스펙터 스냅샷 자가 복구 (Self-Healing)]
+    /// 씬 인스펙터에 직렬화된 PlayerSnapshot/EnemySnapshot의 체력이 0이거나
+    /// 딕셔너리(partStates)가 비어있는 경우 정상 수치(100%)로 자동 복구함
+    /// </summary>
+    private void ValidateAndRepairSnapshots()
+    {
+        RepairSnapshot(PlayerSnapshot, "Player", true);
+        RepairSnapshot(EnemySnapshot, "Enemy", false);
+    }
+
+    private void RepairSnapshot(CombatantSnapshot s, string defaultId, bool isPlayer)
+    {
+        if (s == null) return;
+        if (string.IsNullOrEmpty(s.fighterID)) s.fighterID = defaultId;
+        s.isPlayer = isPlayer;
+
+        if (s.maxHp <= 0) s.maxHp = 1000;
+        if (s.currentHp <= 0)
+        {
+            s.currentHp = s.maxHp;
+            Debug.Log($"<color=cyan>[CombatDataHub] 인스펙터 스냅샷({s.fighterID})의 체력이 0이어서 maxHp({s.maxHp})로 자동 복구했습니다.</color>");
+        }
+
+        if (s.partStates == null)
+        {
+            s.partStates = new Dictionary<BodyPart, PartRuntimeState>();
+        }
+
+        var parts = new[] { BodyPart.Head, BodyPart.Core, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
+        foreach (var p in parts)
+        {
+            if (!s.partStates.ContainsKey(p) || s.partStates[p] == null)
+            {
+                s.partStates[p] = new PartRuntimeState($"DEFAULT_{p}", p, 100);
+            }
+            else if (s.partStates[p].maxDurability <= 0)
+            {
+                s.partStates[p].maxDurability = 100;
+                s.partStates[p].currentDurability = 100;
+            }
         }
     }
 

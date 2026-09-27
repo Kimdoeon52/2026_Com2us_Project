@@ -43,6 +43,10 @@ Material:
         m_Texture: {fileID: 2800000, guid: 4c8435e5a76035b47bfa159d276e80f3, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _LayerGrass:
+        m_Texture: {fileID: 2800000, guid: dd418e3501b2e574d8994a60c3f485be, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _LayerR:
         m_Texture: {fileID: 2800000, guid: 4c8435e5a76035b47bfa159d276e80f3, type: 3}
         m_Scale: {x: 1, y: 1}
@@ -57,6 +61,7 @@ Material:
     - _PPU: 32
     - _PixelGrain: 0.3
     - _ReceiveShadowsOff: 0
+    - _SeeThrough: 1
     - _SplatDebug: 0
     m_Colors:
     - _BaseSideColor: {r: 0.37999994, g: 0.36999997, b: 0.34999996, a: 1}
@@ -64,6 +69,7 @@ Material:
     - _ColorA: {r: 0.55, g: 0.55, b: 0.55, a: 1}
     - _ColorB: {r: 0.41999996, g: 0.29999998, b: 0.21999997, a: 1}
     - _ColorG: {r: 0.45999992, g: 0.45, b: 0.42999998, a: 1}
+    - _ColorGrass: {r: 1, g: 1, b: 1, a: 1}
     - _ColorR: {r: 0.7924528, g: 0.7924528, b: 0.7924528, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

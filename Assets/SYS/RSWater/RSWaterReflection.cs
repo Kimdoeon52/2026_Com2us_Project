@@ -32,6 +32,8 @@ namespace RealSteel.Water
         public bool reflectInSceneView = true;
         [Tooltip("수면 바로 아래가 반사에 비치지 않게 자르는 여유 (m)")]
         public float clipOffset = 0.03f;
+        [Tooltip("반사에 그릴 최대 거리 (m). 씬 뷰 카메라는 먼 평면이 아주 멀어서, 그대로 쓰면 비스듬한 근평면 행렬이 깨진다")]
+        public float maxDistance = 300f;
 
         const string CamName = "__RS_WaterReflectionCam (자동 생성)";
         static readonly int TexId = Shader.PropertyToID("_RSReflectionTex");
@@ -65,6 +67,9 @@ namespace RealSteel.Water
 
             float h = transform.position.y;
             if (cam.transform.position.y <= h + 0.01f) { Shader.SetGlobalFloat(OnId, 0f); return; }   // 물 밑에서는 반사 안 함
+            // 직교 카메라(씬 뷰 2D · 등각 보기)와 아주 작은 창은 반사를 건너뛴다 — 비스듬한 행렬이 깨져
+            // "Screen position out of view frustum" 오류가 난다
+            if (cam.orthographic || cam.pixelWidth < 16 || cam.pixelHeight < 16) { Shader.SetGlobalFloat(OnId, 0f); return; }
 
             float seeThrough = Shader.GetGlobalFloat(SeeThroughOnId);
             try
@@ -85,9 +90,22 @@ namespace RealSteel.Water
                 Matrix4x4 R = ReflectionMatrix(plane);
                 reflCam.worldToCameraMatrix = cam.worldToCameraMatrix * R;
 
-                // 수면 아래를 잘라내는 비스듬한 근평면
-                Vector4 clip = CameraSpacePlane(reflCam, new Vector3(0f, h + clipOffset, 0f), n);
-                reflCam.projectionMatrix = cam.CalculateObliqueMatrix(clip);
+                // 먼 평면을 줄인 투영에서 출발한다 (씬 뷰 카메라는 먼 평면이 수만 m 라 행렬이 깨짐)
+                reflCam.nearClipPlane = Mathf.Max(0.01f, cam.nearClipPlane);
+                reflCam.farClipPlane = Mathf.Clamp(Mathf.Min(cam.farClipPlane, maxDistance), reflCam.nearClipPlane + 1f, 100000f);
+                reflCam.ResetProjectionMatrix();
+                Matrix4x4 baseProj = reflCam.projectionMatrix;
+
+                // 수면 아래를 잘라내는 비스듬한 근평면.
+                // 카메라가 수면에 너무 가깝거나 결과 행렬이 이상하면 그냥 투영을 쓴다 (수면 아래가 조금 비칠 뿐)
+                Matrix4x4 proj = baseProj;
+                if (cam.transform.position.y - (h + clipOffset) > reflCam.nearClipPlane * 2f)
+                {
+                    Vector4 clip = CameraSpacePlane(reflCam, new Vector3(0f, h + clipOffset, 0f), n);
+                    Matrix4x4 ob = reflCam.CalculateObliqueMatrix(clip);
+                    if (IsSane(ob)) proj = ob;
+                }
+                reflCam.projectionMatrix = proj;
 
                 // 컬링 · 셰이더용 위치
                 reflCam.transform.position = R.MultiplyPoint(cam.transform.position);
@@ -154,6 +172,16 @@ namespace RealSteel.Water
                 filterMode = FilterMode.Bilinear,
             };
             rt.Create();
+        }
+
+        static bool IsSane(Matrix4x4 m)
+        {
+            for (int i = 0; i < 16; i++)
+            {
+                float v = m[i];
+                if (float.IsNaN(v) || float.IsInfinity(v) || Mathf.Abs(v) > 1e6f) return false;
+            }
+            return Mathf.Abs(m.determinant) > 1e-8f;
         }
 
         static Matrix4x4 ReflectionMatrix(Vector4 p)

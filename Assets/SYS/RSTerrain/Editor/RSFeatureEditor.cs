@@ -92,6 +92,9 @@ namespace RealSteel.Terrain.EditorTools
                 }
             }
 
+            var fol = f as RSFoliage;
+            if (fol != null) RSFoliageTools.DrawFoliageInspector(fol);
+
             var owner = f.Owner;
             if (owner != null)
             {
@@ -127,6 +130,8 @@ namespace RealSteel.Terrain.EditorTools
             else if (f is RSPit) RadiusHandle(f, ((RSPit)f).radius, v => ((RSPit)f).radius = v);
             else if (f is RSScatter && ((RSScatter)f).area == RSScatter.Area.Circle)
                 RadiusHandle(f, ((RSScatter)f).radius, v => ((RSScatter)f).radius = v);
+            else if (f is RSFoliage && ((RSFoliage)f).area == RSFoliage.Area.Circle)
+                RadiusHandle(f, ((RSFoliage)f).radius, v => ((RSFoliage)f).radius = v);
             else if (f is RSSpline) SplineHandles((RSSpline)f, t);
         }
 

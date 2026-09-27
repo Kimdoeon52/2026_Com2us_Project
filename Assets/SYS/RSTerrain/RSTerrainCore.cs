@@ -15,6 +15,7 @@ namespace RealSteel.Terrain
         [InspectorName("G  콘크리트")]        G = 2,
         [InspectorName("B  고물")]            B = 3,
         [InspectorName("A  진흙 / 기름")]      A = 4,
+        [InspectorName("풀")]                  Grass = 5,
     }
 
     /// <summary>지형 한 점의 상태. 요소들이 순서대로 이걸 고쳐 나간다.</summary>
@@ -26,6 +27,9 @@ namespace RealSteel.Terrain
         /// <summary>레이어 가중치 R G B A (0 = 바탕)</summary>
         public Vector4 w;
 
+        /// <summary>풀 레이어 가중치 (다섯 번째 레이어 — 메시 UV2.x 로 셰이더에 간다)</summary>
+        public float grass;
+
         /// <summary>바탕 노이즈 중 잔요철 성분. 길이 "지형 따라" 모드에서 이만큼 눌러 편다.</summary>
         public float detail;
 
@@ -36,7 +40,9 @@ namespace RealSteel.Terrain
         public void Paint(RSLayer layer, float m)
         {
             if (layer == RSLayer.None || m <= 0f) return;
-            w = Vector4.Lerp(w, RSMath.LayerVector(layer), Mathf.Clamp01(m));
+            float t = Mathf.Clamp01(m);
+            w = Vector4.Lerp(w, RSMath.LayerVector(layer), t);
+            grass = Mathf.Lerp(grass, RSMath.LayerGrass(layer), t);
         }
     }
 
@@ -55,6 +61,9 @@ namespace RealSteel.Terrain
                 default:        return Vector4.zero;
             }
         }
+
+        /// <summary>풀 레이어면 1</summary>
+        public static float LayerGrass(RSLayer l) { return l == RSLayer.Grass ? 1f : 0f; }
 
         public static Color LayerColor(RSLayer l)
         {

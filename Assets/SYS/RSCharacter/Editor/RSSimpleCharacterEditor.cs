@@ -52,6 +52,7 @@ public class RSSimpleCharacterEditor : Editor
         go.transform.position = pos;
         go.AddComponent<RSSimpleCharacter>();   // CharacterController 는 자동으로 붙는다
         go.AddComponent<RSSeeThrough>();        // 벽 뒤로 가도 보이게
+        go.AddComponent<RSFoliagePusher>();     // 지나가면 풀이 눕게
         Selection.activeGameObject = go;
         Debug.Log("[캐릭터] 테스트 캐릭터를 놓았습니다. 플레이하면 WASD 로 움직이고 Main Camera 가 따라옵니다. " +
                   "모델을 자식으로 넣으면 임시 캡슐 대신 그 모델을 씁니다.");

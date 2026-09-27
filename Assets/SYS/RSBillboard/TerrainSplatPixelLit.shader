@@ -4,6 +4,7 @@
 //
 //   정점 컬러 0 (검정) = 바탕  → 윗면은 흙, 가파른 면은 절벽 (법선으로 자동)
 //   R = 길       G = 콘크리트       B = 고물       A = 진흙·기름
+//   UV2.x = 풀 (다섯 번째 레이어 — 정점 컬러 채널이 모자라서 UV 채널 2 에 굽는다. 가파른 면은 절벽으로)
 //
 // 핵심: 레이어를 부드럽게 "섞지" 않는다. 텍셀마다 한 레이어를 "고른다".
 //   부드럽게 섞으면 경계에서 두 픽셀 텍스처가 반투명하게 겹쳐 뭉개진다 — 픽셀 아트에는 독.
@@ -38,6 +39,8 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
         _ColorB       ("  색조", Color) = (1, 1, 1, 1)
         _LayerA       ("A  진흙 / 기름", 2D) = "white" {}
         _ColorA       ("  색조", Color) = (1, 1, 1, 1)
+        _LayerGrass   ("풀  (UV2)", 2D) = "white" {}
+        _ColorGrass   ("  색조", Color) = (1, 1, 1, 1)
 
         [Header(Pixel Density)]
         _PPU          ("PPU  (픽셀 / 유닛)", Float) = 32
@@ -81,6 +84,7 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
         TEXTURE2D(_LayerG);   SAMPLER(sampler_LayerG);
         TEXTURE2D(_LayerB);   SAMPLER(sampler_LayerB);
         TEXTURE2D(_LayerA);   SAMPLER(sampler_LayerA);
+        TEXTURE2D(_LayerGrass); SAMPLER(sampler_LayerGrass);
 
         // SRP Batcher: 머티리얼 프로퍼티(TexelSize 포함) 전부 여기에
         CBUFFER_START(UnityPerMaterial)
@@ -90,12 +94,14 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
             float4 _LayerG_ST;   float4 _LayerG_TexelSize;
             float4 _LayerB_ST;   float4 _LayerB_TexelSize;
             float4 _LayerA_ST;   float4 _LayerA_TexelSize;
+            float4 _LayerGrass_ST; float4 _LayerGrass_TexelSize;
             half4  _BaseTopColor;
             half4  _BaseSideColor;
             half4  _ColorR;
             half4  _ColorG;
             half4  _ColorB;
             half4  _ColorA;
+            half4  _ColorGrass;
             float  _PPU;
             float  _EdgeNoise;
             float  _NoiseSize;
@@ -146,6 +152,7 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 half4  color      : COLOR;
+                float2 uv2        : TEXCOORD2;    // x = 풀 레이어
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -156,6 +163,7 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 float3 normalWS    : TEXCOORD1;
                 half4  splat       : TEXCOORD2;
                 half4  fogAndLight : TEXCOORD3;   // x = fog, yzw = 버텍스 라이팅
+                half   grass       : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -211,6 +219,7 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 OUT.positionWS = pos.positionWS;
                 OUT.normalWS   = nrm.normalWS;
                 OUT.splat      = IN.color;
+                OUT.grass      = IN.uv2.x;
 
                 OUT.fogAndLight.x   = ComputeFogFactor(pos.positionCS.z);
                 OUT.fogAndLight.yzw = VertexLighting(pos.positionWS, nrm.normalWS);
@@ -243,6 +252,7 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 half4 cG    = SAMPLE_TEXTURE2D(_LayerG,   sampler_LayerG,   TexUV(coord, _LayerG_TexelSize))   * _ColorG;
                 half4 cB    = SAMPLE_TEXTURE2D(_LayerB,   sampler_LayerB,   TexUV(coord, _LayerB_TexelSize))   * _ColorB;
                 half4 cA    = SAMPLE_TEXTURE2D(_LayerA,   sampler_LayerA,   TexUV(coord, _LayerA_TexelSize))   * _ColorA;
+                half4 cGr   = SAMPLE_TEXTURE2D(_LayerGrass, sampler_LayerGrass, TexUV(coord, _LayerGrass_TexelSize)) * _ColorGrass;
 
                 // 바탕: 윗면 흙 / 절벽. 기준선 근처 면은 텍셀 단위로 섞여 절벽 윗선이 들쭉날쭉해진다.
                 bool cliff  = normalWS.y < _CliffY + (Hash21(cell + 91.7) - 0.5) * _CliffDither;
@@ -250,7 +260,8 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
 
                 // 점수 = 정점 컬러 가중치 + 노이즈 + 텍스처 밝기. 최고점 하나만 고른다.
                 half4 w  = saturate(IN.splat);
-                float wb = saturate(1.0 - (w.r + w.g + w.b + w.a));
+                float wg = saturate(IN.grass);
+                float wb = saturate(1.0 - (w.r + w.g + w.b + w.a + wg));
                 float spread = _EdgeNoise * 2.0;
 
                 float4 nz = float4(LayerNoise(cell, 1), LayerNoise(cell, 2), LayerNoise(cell, 3), LayerNoise(cell, 4));
@@ -260,6 +271,8 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 float4 sc = (float4)w + (nz - 0.5) * spread + (lum - 0.5) * _HeightBlend;
                 sc = lerp(float4(-10, -10, -10, -10), sc, step(0.02, (float4)w));   // 가중치 0 인 레이어는 절대 안 나온다
                 float  sb = wb + (nb - 0.5) * spread + (Luma(cBase.rgb) - 0.5) * _HeightBlend;
+                float  sgr = wg + (LayerNoise(cell, 5) - 0.5) * spread + (Luma(cGr.rgb) - 0.5) * _HeightBlend;
+                if (wg < 0.02) sgr = -10.0;
 
                 half4 albedo = cBase;
                 float best = sb;
@@ -268,6 +281,8 @@ Shader "RE_AL STEEL/Terrain Splat Pixel Lit"
                 if (sc.y > best) { best = sc.y; albedo = cG; dbg = half3(0.80, 0.80, 0.80); }
                 if (sc.z > best) { best = sc.z; albedo = cB; dbg = half3(0.85, 0.40, 0.15); }
                 if (sc.w > best) { best = sc.w; albedo = cA; dbg = half3(0.20, 0.30, 0.55); }
+                // 풀은 가파른 면에선 절벽 텍스처 (풀이 벽에 붙어 자라지 않게)
+                if (sgr > best)  { best = sgr;  albedo = cliff ? cSide : cGr; dbg = cliff ? half3(0.35, 0.35, 0.38) : half3(0.35, 0.75, 0.25); }
 
             #ifdef _SPLAT_DEBUG
                 albedo.rgb = dbg;

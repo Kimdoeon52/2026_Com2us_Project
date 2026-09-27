@@ -2,7 +2,7 @@
 //
 // 아무 오브젝트에 이것 하나만 붙이면 바로 움직인다.
 //  · 조작: WASD / 방향키 이동 · Shift 달리기 · Space 점프
-//          카메라: 마우스 오른쪽 드래그 돌리기 · 휠 줌 · Q / E 45° · R / F 위아래 기울이기 · Home 처음 각도
+//          카메라: 마우스 오른쪽 드래그 돌리기 · 휠 · +/- 줌 · Q / E 45° · R / F 위아래 기울이기 · Home 처음 각도
 //          게임패드: 왼쪽 스틱 이동 · 남쪽 버튼(A) 점프 · 왼쪽 트리거 달리기 · 어깨 버튼 카메라 돌리기
 //  · 이동은 카메라 기준 (화면 위 = 앞)
 //  · CharacterController 가 자동으로 붙는다. 모델이 없으면 플레이할 때 임시 캡슐을 만든다
@@ -21,7 +21,7 @@ using RealSteel.Terrain;
 [RSSummary("간단 캐릭터 (이동 + 카메라)",
     "붙이기만 하면 움직이는 테스트용 캐릭터.\n" +
     "· 조작: WASD/방향키 이동 · Shift 달리기 · Space 점프 (게임패드도 됨)\n" +
-    "· 카메라: 마우스 오른쪽 드래그 돌리기 · 휠 줌 · Q/E 45° · R/F 기울기 · Home 처음 각도\n" +
+    "· 카메라: 마우스 오른쪽 드래그 돌리기 · 휠 · +/- 키 줌 · Q/E 45° · R/F 기울기 · Home 처음 각도\n" +
     "· 이동은 카메라 기준 (화면 위 = 앞)\n" +
     "· 모델이 없으면 플레이할 때 임시 캡슐이 생긴다. 모델을 자식으로 넣으면 그걸 쓴다\n" +
     "· 시작할 때 씬 카메라 각도를 가져온다. 플레이 중 Pitch · Yaw · Distance 를 바꿔 보고 마음에 들면 값을 적어 두자 (플레이가 끝나면 되돌아감)")]
@@ -52,7 +52,7 @@ public class RSSimpleCharacter : MonoBehaviour
     public bool snapToRSTerrain = true;
 
     [Header("카메라")]
-    [RSHelp("비워 두면 Main Camera 를 쓴다. 플레이 중에 Pitch · Yaw · Distance 를 인스펙터에서 바로 바꿔 볼 수 있고, 게임 안에서도 돌릴 수 있다:\n· 마우스 오른쪽 드래그 = 돌리기 · 휠 = 줌 · Q/E = 45° 돌리기 · R/F = 위아래 기울이기 · Home = 처음 각도로\n· 게임패드: 오른쪽 스틱 = 돌리기 · 어깨 버튼 = 45° · 오른쪽 스틱 누르기 = 처음 각도로")]
+    [RSHelp("비워 두면 Main Camera 를 쓴다. 플레이 중에 Pitch · Yaw · Distance 를 인스펙터에서 바로 바꿔 볼 수 있고, 게임 안에서도 돌릴 수 있다:\n· 마우스 오른쪽 드래그 = 돌리기 · 휠 · +/- 키 = 줌 · Q/E = 45° 돌리기 · R/F = 위아래 기울이기 · Home = 처음 각도로\n· 게임패드: 오른쪽 스틱 = 돌리기 · 어깨 버튼 = 45° · 오른쪽 스틱 누르기 = 처음 각도로")]
     [Tooltip("따라올 카메라 (비우면 Main Camera)")]
     public Camera cam;
     [Tooltip("시작할 때 씬에 놓인 카메라의 각도 · 거리를 가져와 아래 Pitch · Yaw · Distance 에 넣는다")]
@@ -83,8 +83,12 @@ public class RSSimpleCharacter : MonoBehaviour
     public Vector2 pitchRange = new Vector2(12f, 75f);
     [Tooltip("Q / E (어깨 버튼) 로 돌리는 각도 (0 = 끔)")]
     public float rotateStep = 45f;
-    [Tooltip("마우스 휠 줌 범위 (Distance 배율)")]
-    public Vector2 zoomRange = new Vector2(0.5f, 1.8f);
+    [Tooltip("줌 범위 (Distance 배율). 0.35 = 거리의 35% 까지 가까이, 2.2 = 2.2배까지 멀리")]
+    public Vector2 zoomRange = new Vector2(0.35f, 2.2f);
+    [Range(0.02f, 0.4f), Tooltip("휠 한 칸에 가까워지는 비율 (0.12 = 12%)")]
+    public float zoomStep = 0.12f;
+    [Tooltip("+ / - 키 · 게임패드 십자키 위아래를 누르고 있을 때 줌 속도 (휠 칸/초)")]
+    public float zoomKeySpeed = 5f;
     [Tooltip("카메라 각도가 따라오는 부드러움 (클수록 빠르게)")]
     public float angleSharpness = 10f;
 
@@ -95,6 +99,8 @@ public class RSSimpleCharacter : MonoBehaviour
     public bool flipSprites = true;
     [Tooltip("플레이할 때 '시야 가림 투명'(RSSeeThrough)이 없으면 붙인다 — 벽 · 건물 · 절벽 뒤로 가도 캐릭터가 보인다")]
     public bool autoSeeThrough = true;
+    [Tooltip("플레이할 때 '풀 눕히기'(RSFoliagePusher)가 없으면 붙인다 — 지나가면 둘레 풀 · 꽃이 눕는다")]
+    public bool autoFoliagePush = true;
 
     // ── 상태 ──
     CharacterController cc;
@@ -134,6 +140,7 @@ public class RSSimpleCharacter : MonoBehaviour
         cc = GetComponent<CharacterController>();
         if (cc.center == Vector3.zero) Reset();
         if (autoSeeThrough && Application.isPlaying && GetComponent<RSSeeThrough>() == null) gameObject.AddComponent<RSSeeThrough>();
+        if (autoFoliagePush && Application.isPlaying && GetComponent<RSFoliagePusher>() == null) gameObject.AddComponent<RSFoliagePusher>();
 
         if (placeholderIfEmpty && GetComponentInChildren<Renderer>() == null) MakePlaceholder();
 
@@ -226,7 +233,9 @@ public class RSSimpleCharacter : MonoBehaviour
         }
         pitch += tilt * rotateSpeed * Time.deltaTime;
         pitch = Mathf.Clamp(pitch, Mathf.Min(pitchRange.x, pitchRange.y), Mathf.Max(pitchRange.x, pitchRange.y));
-        if (Mathf.Abs(scroll) > 0.01f) targetZoom = Mathf.Clamp(targetZoom * (1f - scroll * 0.1f), zoomRange.x, zoomRange.y);
+        if (Mathf.Abs(scroll) > 0.001f)
+            targetZoom = Mathf.Clamp(targetZoom * Mathf.Pow(1f - Mathf.Clamp(zoomStep, 0.01f, 0.9f), scroll),
+                                     Mathf.Min(zoomRange.x, zoomRange.y), Mathf.Max(zoomRange.x, zoomRange.y));
         if (resetCam) { pitch = homePitch; yaw = homeYaw; distance = homeDist; targetZoom = 1f; }
     }
 
@@ -343,6 +352,8 @@ public class RSSimpleCharacter : MonoBehaviour
             if (kb.rKey.isPressed) tilt += 1f;
             if (kb.fKey.isPressed) tilt -= 1f;
             resetCam |= kb.homeKey.wasPressedThisFrame;
+            if (kb.equalsKey.isPressed || kb.numpadPlusKey.isPressed) scroll += zoomKeySpeed * Time.deltaTime;
+            if (kb.minusKey.isPressed || kb.numpadMinusKey.isPressed) scroll -= zoomKeySpeed * Time.deltaTime;
         }
         var gp = Gamepad.current;
         if (gp != null)
@@ -356,11 +367,21 @@ public class RSSimpleCharacter : MonoBehaviour
             Vector2 rs = gp.rightStick.ReadValue();
             if (rs.sqrMagnitude > 0.04f) orbit += rs * (rotateSpeed * Time.deltaTime);
             resetCam |= gp.rightStickButton.wasPressedThisFrame;
+            if (gp.dpad.up.isPressed) scroll += zoomKeySpeed * Time.deltaTime;
+            if (gp.dpad.down.isPressed) scroll -= zoomKeySpeed * Time.deltaTime;
         }
         var ms = Mouse.current;
         if (ms != null)
         {
-            scroll = ms.scroll.ReadValue().y / 120f;
+            // 휠 값 단위가 Input System 버전 · 설정마다 다르다 (한 칸 = 120 또는 1 안팎) → 한 칸 ≈ 1 로 맞춘다.
+            // 예전 코드는 무조건 120 으로 나눠서, 한 칸 = 1 로 오는 환경에선 줌이 전혀 안 먹었다.
+            float wheel = ms.scroll.ReadValue().y;
+            if (Mathf.Abs(wheel) > 0.0001f)
+            {
+                float notches = Mathf.Abs(wheel) >= 10f ? wheel / 120f : wheel;
+                if (Mathf.Abs(notches) < 0.34f) notches = Mathf.Sign(notches) * 0.34f;
+                scroll += Mathf.Clamp(notches, -3f, 3f);
+            }
             if (ms.rightButton.isPressed) orbit += ms.delta.ReadValue() * mouseSensitivity;
         }
 #elif ENABLE_LEGACY_INPUT_MANAGER
@@ -372,7 +393,9 @@ public class RSSimpleCharacter : MonoBehaviour
         if (Input.GetKey(KeyCode.R)) tilt += 1f;
         if (Input.GetKey(KeyCode.F)) tilt -= 1f;
         resetCam = Input.GetKeyDown(KeyCode.Home);
-        scroll = Input.mouseScrollDelta.y;
+        scroll = Mathf.Clamp(Input.mouseScrollDelta.y, -3f, 3f);
+        if (Input.GetKey(KeyCode.Equals) || Input.GetKey(KeyCode.KeypadPlus)) scroll += zoomKeySpeed * Time.deltaTime;
+        if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus)) scroll -= zoomKeySpeed * Time.deltaTime;
         if (Input.GetMouseButton(1))
             orbit += new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y")) * (mouseSensitivity * 20f);
 #endif

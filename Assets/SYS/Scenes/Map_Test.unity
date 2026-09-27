@@ -2179,7 +2179,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 2.5302734, y: 14.125977}
+  m_LightCookieOffset: {x: 15.8828125, y: 11.40625}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -2382,9 +2382,13 @@ MonoBehaviour:
   pitchRange: {x: 12, y: 75}
   rotateStep: 45
   zoomRange: {x: 0.6, y: 1.6}
+  zoomStep: 0.12
+  zoomKeySpeed: 5
   angleSharpness: 10
   placeholderIfEmpty: 1
   flipSprites: 1
+  autoSeeThrough: 1
+  autoFoliagePush: 1
 --- !u!143 &871041233
 CharacterController:
   m_ObjectHideFlags: 0
@@ -3131,6 +3135,7 @@ MonoBehaviour:
   renderShadows: 0
   reflectInSceneView: 1
   clipOffset: 0.03
+  maxDistance: 300
 --- !u!4 &1487227383
 Transform:
   m_ObjectHideFlags: 0
@@ -3392,7 +3397,19 @@ MonoBehaviour:
   waterMaterial: {fileID: 2100000, guid: 1e1ab4852bb0584478bc185a7e45a273, type: 2}
   generateCollider: 1
   castShadows: 1
-  data: {fileID: 0}
+  outerEnabled: 1
+  outerWidth: 20
+  outerCell: 2
+  outerFlat: 1
+  outerRise: 9
+  outerRiseCurve: 1.8
+  outerSkylineVar: 0.45
+  outerNoise: 1.5
+  outerTerrace: 2
+  outerTerraceSharp: 0.6
+  outerJunk: 0.35
+  outerCollider: 1
+  data: {fileID: 11400000, guid: cbe91b8d79befb14bbf5467823885bbe, type: 2}
   autoRebuild: 1
   rebuildWhileDragging: 0
 --- !u!4 &1618061102

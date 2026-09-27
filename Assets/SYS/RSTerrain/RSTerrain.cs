@@ -24,7 +24,7 @@ namespace RealSteel.Terrain
     [ExecuteAlways, SelectionBase, DisallowMultipleComponent]
     [DefaultExecutionOrder(-100)]   // 다른 스크립트의 Start 보다 먼저 지형이 만들어지도록
     [AddComponentMenu("RE_AL STEEL/RS Terrain (지형)")]
-    public class RSTerrain : MonoBehaviour
+    public partial class RSTerrain : MonoBehaviour
     {
         /// <summary>활성화된 지형 목록 (에디터 자동 갱신용)</summary>
         public static readonly List<RSTerrain> All = new List<RSTerrain>();
@@ -84,6 +84,33 @@ namespace RealSteel.Terrain
         [Tooltip("지형이 그림자를 드리운다 (둔덕 · 절벽 그림자)")]
         public bool castShadows = true;
 
+        [Header("외곽 (플레이 구역 밖 배경 지형)")]
+        [RSHelp("플레이 구역을 둘러싸는 배경 지형. 가장자리 높이 · 칠을 그대로 이어받고, 바깥으로 갈수록 솟아올라 지형의 끝을 숨긴다 (분지 모양). 격자가 성겨서 넓어도 가볍다. 켜면 디오라마 옆면(단면)은 안 만든다.")]
+        [Tooltip("외곽 지형을 만든다")]
+        public bool outerEnabled = false;
+        [Tooltip("가장자리에서 바깥으로 뻗는 폭 (m). 카메라에 보이는 만큼 — 보통 25 ~ 40")]
+        public float outerWidth = 30f;
+        [Tooltip("외곽 격자 한 칸 (m). 1 권장 — 멀어서 성겨도 티가 안 난다")]
+        public float outerCell = 1f;
+        [Tooltip("가장자리에서 평평하게 이어지는 폭 (m). 이 뒤부터 솟는다")]
+        public float outerFlat = 3f;
+        [Tooltip("가장 바깥 높이 (m). 8 ~ 12 면 둘러싼 언덕 · 고철 산")]
+        public float outerRise = 9f;
+        [Range(0.5f, 4f), Tooltip("솟는 모양. 1 = 일정한 경사, 2 안팎 = 처음엔 완만하다 바깥에서 가파르게 (분지)")]
+        public float outerRiseCurve = 1.8f;
+        [Range(0f, 1f), Tooltip("둘레를 따라 높낮이가 들쭉날쭉한 정도. 0 = 스카이라인이 평평")]
+        public float outerSkylineVar = 0.45f;
+        [Tooltip("큰 굴곡 높이 (m). 바깥으로 갈수록 커진다")]
+        public float outerNoise = 1.5f;
+        [Tooltip("계단식 단 높이 (m). 0 = 끔. 1.5 ~ 2.5 면 층층이 깎인 절벽 (옥토패스풍). 가파른 면은 셰이더가 절벽 텍스처로 칠한다")]
+        public float outerTerrace = 2f;
+        [Range(0f, 1f), Tooltip("단 모서리 날카로움. 0 = 계단 없이 매끈 / 1 = 거의 수직 절벽")]
+        public float outerTerraceSharp = 0.6f;
+        [Range(0f, 1f), Tooltip("고물(B) 레이어로 덮는 정도 — 폐철 산더미 느낌")]
+        public float outerJunk = 0.35f;
+        [Tooltip("외곽에도 콜라이더를 만든다 (가장자리 밖으로 나가도 받쳐 준다)")]
+        public bool outerCollider = true;
+
         [Header("브러시 데이터 (손으로 깎고 칠한 것)")]
         [RSHelp("브러시로 손질한 높이 · 칠은 이 에셋에 따로 저장된다. 요소를 바꿔도 유지되고, 크기 · 격자를 바꾸면 위치 기준으로 옮겨진다.")]
         [Tooltip("브러시 데이터 에셋 (RSTerrainData). 없으면 브러시를 켤 때 만들 수 있다")]
@@ -110,6 +137,7 @@ namespace RealSteel.Terrain
         [System.NonSerialized] float[] h0, hF;     // 절차 높이 / 최종 높이
         [System.NonSerialized] Vector4[] w0;       // 절차 레이어
         [System.NonSerialized] Color[] wF;         // 최종 레이어 (정점 컬러)
+        [System.NonSerialized] float[] g0, gF;     // 풀 레이어 (절차 / 최종) — 메시 UV2.x
         [System.NonSerialized] float[] px, pz;     // 흔든 정점 XZ
         [System.NonSerialized] float minH, maxH;
 
@@ -184,8 +212,9 @@ namespace RealSteel.Terrain
         void ForgetGenerated()
         {
             if (chunks != null) chunks.Clear();
+            outerPieces.Clear();
             genRoot = null; waterGo = null; waterMesh = null;
-            debrisGos.Clear();
+            debrisGos.Clear(); foliageGos.Clear();
         }
 
         void OnValidate()
@@ -258,8 +287,10 @@ namespace RealSteel.Terrain
             SyncData();
             Compose(0, vx - 1, 0, vz - 1);
             BuildChunks();
+            BuildOuter();
             BuildWater();
             BuildScatter();
+            BuildFoliage();
             dirty = false;
         }
 
@@ -276,6 +307,7 @@ namespace RealSteel.Terrain
             int n = vx * vz;
             h0 = new float[n]; hF = new float[n];
             w0 = new Vector4[n]; wF = new Color[n];
+            g0 = new float[n]; gF = new float[n];
             px = new float[n]; pz = new float[n];
 
             float amp = vertexJitter * Mathf.Min(csx, csz);
@@ -301,18 +333,22 @@ namespace RealSteel.Terrain
 
                     // 레이어 경계 휘기 — 마스크를 옆으로 밀린 위치에서 읽는다
                     Vector4 w = s.w;
+                    float g = s.grass;
                     if (boundaryWarp > 0.0001f && lockv < 0.999f)
                     {
                         float a = boundaryWarp;
                         float wx = RSMath.SNoise(x, z, 0.7f, 19, seed) * 0.6f * a + RSMath.SNoise(x, z, 2.3f, 21, seed) * 0.2f * a;
                         float wz = RSMath.SNoise(x, z, 0.7f, 20, seed) * 0.6f * a + RSMath.SNoise(x, z, 2.3f, 22, seed) * 0.2f * a;
-                        w = Vector4.Lerp(Evaluate(x + wx, z + wz).w, s.w, lockv);
+                        var sw = Evaluate(x + wx, z + wz);
+                        w = Vector4.Lerp(sw.w, s.w, lockv);
+                        g = Mathf.Lerp(sw.grass, s.grass, lockv);
                     }
 
                     int k = Idx(i, j);
                     px[k] = x; pz[k] = z;
                     h0[k] = h;
                     w0[k] = w;
+                    g0[k] = g;
                 }
 
             if (boundaryBlur > 0) BlurWeights(boundaryBlur);
@@ -321,19 +357,20 @@ namespace RealSteel.Terrain
         void BlurWeights(int r)
         {
             var tmp = new Vector4[w0.Length];
+            var tg = new float[g0.Length];
             for (int i = 0; i < vx; i++)
                 for (int j = 0; j < vz; j++)
                 {
-                    Vector4 acc = Vector4.zero; int n = 0;
-                    for (int k = -r; k <= r; k++) { int ii = i + k; if (ii < 0 || ii >= vx) continue; acc += w0[Idx(ii, j)]; n++; }
-                    tmp[Idx(i, j)] = acc / n;
+                    Vector4 acc = Vector4.zero; float ag = 0f; int n = 0;
+                    for (int k = -r; k <= r; k++) { int ii = i + k; if (ii < 0 || ii >= vx) continue; acc += w0[Idx(ii, j)]; ag += g0[Idx(ii, j)]; n++; }
+                    tmp[Idx(i, j)] = acc / n; tg[Idx(i, j)] = ag / n;
                 }
             for (int i = 0; i < vx; i++)
                 for (int j = 0; j < vz; j++)
                 {
-                    Vector4 acc = Vector4.zero; int n = 0;
-                    for (int k = -r; k <= r; k++) { int jj = j + k; if (jj < 0 || jj >= vz) continue; acc += tmp[Idx(i, jj)]; n++; }
-                    w0[Idx(i, j)] = acc / n;
+                    Vector4 acc = Vector4.zero; float ag = 0f; int n = 0;
+                    for (int k = -r; k <= r; k++) { int jj = j + k; if (jj < 0 || jj >= vz) continue; acc += tmp[Idx(i, jj)]; ag += tg[Idx(i, jj)]; n++; }
+                    w0[Idx(i, j)] = acc / n; g0[Idx(i, j)] = ag / n;
                 }
         }
 
@@ -357,6 +394,7 @@ namespace RealSteel.Terrain
                     int k = Idx(i, j);
                     float h = h0[k];
                     Vector4 w = w0[k];
+                    float g = g0[k];
                     if (hasData)
                     {
                         h += data.height[k];
@@ -365,13 +403,16 @@ namespace RealSteel.Terrain
                         {
                             Color c = data.paint[k];
                             w = Vector4.Lerp(w, new Vector4(c.r, c.g, c.b, c.a), a);
+                            g = Mathf.Lerp(g, data.grass[k], a);
                         }
                     }
                     w = new Vector4(Mathf.Clamp01(w.x), Mathf.Clamp01(w.y), Mathf.Clamp01(w.z), Mathf.Clamp01(w.w));
-                    float sum = w.x + w.y + w.z + w.w;
-                    if (sum > 1f) w /= sum;
+                    g = Mathf.Clamp01(g);
+                    float sum = w.x + w.y + w.z + w.w + g;
+                    if (sum > 1f) { w /= sum; g /= sum; }
                     hF[k] = h;
                     wF[k] = new Color(w.x, w.y, w.z, w.w);
+                    gF[k] = g;
                 }
 
             minH = float.MaxValue; maxH = float.MinValue;
@@ -393,7 +434,7 @@ namespace RealSteel.Terrain
                 foreach (var mf in stale.GetComponentsInChildren<MeshFilter>(true)) SafeDestroy(mf.sharedMesh);
                 SafeDestroy(stale.gameObject);
             }
-            chunks.Clear(); waterGo = null; waterMesh = null; debrisGos.Clear();
+            chunks.Clear(); outerPieces.Clear(); waterGo = null; waterMesh = null; debrisGos.Clear(); foliageGos.Clear();
 
             var go = new GameObject(GenName);
             go.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
@@ -409,9 +450,11 @@ namespace RealSteel.Terrain
                 foreach (var c in chunks) { SafeDestroy(c.mesh); SafeDestroy(c.go); }
                 chunks.Clear();
             }
+            DestroyOuter();
             SafeDestroy(waterMesh); waterMesh = null;
             SafeDestroy(waterGo); waterGo = null;
             ClearDebris();
+            ClearFoliage();
             if (genRoot != null) SafeDestroy(genRoot.gameObject);
             else
             {
@@ -470,12 +513,13 @@ namespace RealSteel.Terrain
         static readonly List<Color> sC = new List<Color>();
         static readonly List<Vector2> sU = new List<Vector2>();
         static readonly List<int> sT = new List<int>();
+        static readonly List<Vector2> sG = new List<Vector2>();   // UV2: x = 풀 레이어
 
         Vector3 P(int k) { return new Vector3(px[k], hF[k], pz[k]); }
 
         void BuildChunkMesh(Chunk c)
         {
-            sV.Clear(); sN.Clear(); sC.Clear(); sU.Clear(); sT.Clear();
+            sV.Clear(); sN.Clear(); sC.Clear(); sU.Clear(); sT.Clear(); sG.Clear();
 
             for (int i = c.i0; i < c.i1; i++)
                 for (int j = c.j0; j < c.j1; j++)
@@ -486,21 +530,24 @@ namespace RealSteel.Terrain
                     // 대각선은 높이차가 작은 쪽으로 — 능선·골이 지형을 따라 접힌다
                     if (Mathf.Abs(a.y - cc.y) <= Mathf.Abs(b.y - d.y))
                     {
-                        Tri(a, d, cc, wF[k00], wF[k01], wF[k11]);
-                        Tri(a, cc, b, wF[k00], wF[k11], wF[k10]);
+                        Tri(a, d, cc, wF[k00], wF[k01], wF[k11], gF[k00], gF[k01], gF[k11]);
+                        Tri(a, cc, b, wF[k00], wF[k11], wF[k10], gF[k00], gF[k11], gF[k10]);
                     }
                     else
                     {
-                        Tri(a, d, b, wF[k00], wF[k01], wF[k10]);
-                        Tri(b, d, cc, wF[k10], wF[k01], wF[k11]);
+                        Tri(a, d, b, wF[k00], wF[k01], wF[k10], gF[k00], gF[k01], gF[k10]);
+                        Tri(b, d, cc, wF[k10], wF[k01], wF[k11], gF[k10], gF[k01], gF[k11]);
                     }
                 }
 
-            // 스커트 (디오라마 단면) — 바깥 테두리에 닿는 조각만
-            if (c.j0 == 0)  for (int i = c.i0; i < c.i1; i++) Skirt(P(Idx(i, 0)),  P(Idx(i + 1, 0)),  Vector3.back);
-            if (c.j1 == cz) for (int i = c.i0; i < c.i1; i++) Skirt(P(Idx(i, cz)), P(Idx(i + 1, cz)), Vector3.forward);
-            if (c.i0 == 0)  for (int j = c.j0; j < c.j1; j++) Skirt(P(Idx(0, j)),  P(Idx(0, j + 1)),  Vector3.left);
-            if (c.i1 == cx) for (int j = c.j0; j < c.j1; j++) Skirt(P(Idx(cx, j)), P(Idx(cx, j + 1)), Vector3.right);
+            // 스커트 (디오라마 단면) — 바깥 테두리에 닿는 조각만. 외곽 지형이 있으면 필요 없다.
+            if (!outerEnabled)
+            {
+                if (c.j0 == 0)  for (int i = c.i0; i < c.i1; i++) Skirt(P(Idx(i, 0)),  P(Idx(i + 1, 0)),  Vector3.back);
+                if (c.j1 == cz) for (int i = c.i0; i < c.i1; i++) Skirt(P(Idx(i, cz)), P(Idx(i + 1, cz)), Vector3.forward);
+                if (c.i0 == 0)  for (int j = c.j0; j < c.j1; j++) Skirt(P(Idx(0, j)),  P(Idx(0, j + 1)),  Vector3.left);
+                if (c.i1 == cx) for (int j = c.j0; j < c.j1; j++) Skirt(P(Idx(cx, j)), P(Idx(cx, j + 1)), Vector3.right);
+            }
 
             var m = c.mesh;
             m.Clear();
@@ -509,6 +556,7 @@ namespace RealSteel.Terrain
             m.SetNormals(sN);
             m.SetColors(sC);
             m.SetUVs(0, sU);
+            m.SetUVs(2, sG);
             m.SetTriangles(sT, 0);
             m.RecalculateBounds();
 
@@ -526,6 +574,11 @@ namespace RealSteel.Terrain
 
         static void Tri(Vector3 a, Vector3 b, Vector3 c, Color ca, Color cb, Color cc)
         {
+            Tri(a, b, c, ca, cb, cc, 0f, 0f, 0f);
+        }
+
+        static void Tri(Vector3 a, Vector3 b, Vector3 c, Color ca, Color cb, Color cc, float ga, float gb, float gc)
+        {
             Vector3 n = Vector3.Cross(b - a, c - a).normalized;
             int i0 = sV.Count;
             sV.Add(a); sV.Add(b); sV.Add(c);
@@ -533,6 +586,7 @@ namespace RealSteel.Terrain
             sC.Add(ca); sC.Add(cb); sC.Add(cc);
             sU.Add(new Vector2(a.x, a.z) * 0.5f); sU.Add(new Vector2(b.x, b.z) * 0.5f); sU.Add(new Vector2(c.x, c.z) * 0.5f);
             sT.Add(i0); sT.Add(i0 + 1); sT.Add(i0 + 2);
+            sG.Add(new Vector2(ga, 0f)); sG.Add(new Vector2(gb, 0f)); sG.Add(new Vector2(gc, 0f));
         }
 
         void Skirt(Vector3 p0, Vector3 p1, Vector3 outward)
@@ -626,6 +680,7 @@ namespace RealSteel.Terrain
         {
             if (hF == null) return;
             BuildScatter();
+            BuildFoliage();
         }
 
         void BuildScatter()
@@ -710,6 +765,18 @@ namespace RealSteel.Terrain
             return new Vector4(c.r, c.g, c.b, c.a);
         }
 
+        /// <summary>최종 풀 레이어 가중치 (지형 로컬). 격자 쌍선형 보간.</summary>
+        public float SampleGrass(float x, float z)
+        {
+            if (gF == null) return 0f;
+            float fi = Mathf.Clamp((x + size.x * 0.5f) / csx, 0f, cx);
+            float fj = Mathf.Clamp((z + size.y * 0.5f) / csz, 0f, cz);
+            int i0 = Mathf.Min(cx - 1, Mathf.FloorToInt(fi)), j0 = Mathf.Min(cz - 1, Mathf.FloorToInt(fj));
+            float u = fi - i0, w = fj - j0;
+            return Mathf.Lerp(Mathf.Lerp(gF[Idx(i0, j0)], gF[Idx(i0 + 1, j0)], u),
+                              Mathf.Lerp(gF[Idx(i0, j0 + 1)], gF[Idx(i0 + 1, j0 + 1)], u), w);
+        }
+
         /// <summary>최종 지면 법선 (지형 로컬)</summary>
         public Vector3 SampleNormal(float x, float z)
         {
@@ -773,6 +840,7 @@ namespace RealSteel.Terrain
         /// <summary>정점 (i, j) 최종 위치·색 (ProBuilder 변환용)</summary>
         public Vector3 GetVertex(int i, int j) { return P(Idx(i, j)); }
         public Color GetVertexColor(int i, int j) { return wF[Idx(i, j)]; }
+        public float GetVertexGrass(int i, int j) { return gF[Idx(i, j)]; }
 
         // ─────────────────────────────────────────────────────────────
         // 브러시
@@ -796,6 +864,7 @@ namespace RealSteel.Terrain
 
             float[] snap = op == BrushOp.Smooth ? (float[])hF.Clone() : null;
             Color target = RSMath.LayerColor(layer == RSLayer.None ? RSLayer.Base : layer);
+            float targetGrass = RSMath.LayerGrass(layer);
 
             for (int i = i0; i <= i1; i++)
                 for (int j = j0; j <= j1; j++)
@@ -825,6 +894,7 @@ namespace RealSteel.Terrain
                         {
                             float a = data.amount[k];
                             data.paint[k] = a <= 0.001f ? target : Color.Lerp(data.paint[k], target, Mathf.Clamp01(f * 1.5f));
+                            data.grass[k] = a <= 0.001f ? targetGrass : Mathf.Lerp(data.grass[k], targetGrass, Mathf.Clamp01(f * 1.5f));
                             data.amount[k] = Mathf.Min(1f, a + f);
                             break;
                         }
@@ -843,12 +913,16 @@ namespace RealSteel.Terrain
             SyncData();
             Compose(0, vx - 1, 0, vz - 1);
             foreach (var c in chunks) if (c.go != null) BuildChunkMesh(c);
+            BuildOuter();
             BuildWater();
             BuildScatter();
+            BuildFoliage();
         }
 
         void RebuildChunksTouching(int i0, int i1, int j0, int j1)
         {
+            // 가장자리를 손질했으면 외곽도 이어 붙인다
+            if (outerEnabled && (i0 <= 0 || j0 <= 0 || i1 >= vx - 1 || j1 >= vz - 1)) BuildOuter();
             foreach (var c in chunks)
             {
                 if (c.go == null) continue;

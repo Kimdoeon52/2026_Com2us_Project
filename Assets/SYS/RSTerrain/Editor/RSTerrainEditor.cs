@@ -92,6 +92,7 @@ namespace RealSteel.Terrain.EditorTools
                 if (GUILayout.Button("더미")) RSTerrainMenu.AddFeature<RSHeap>(t, "더미");
                 if (GUILayout.Button("웅덩이")) RSTerrainMenu.AddFeature<RSPit>(t, "웅덩이");
                 if (GUILayout.Button("폐자재")) RSTerrainMenu.AddFeature<RSScatter>(t, "폐자재");
+                if (GUILayout.Button("풀꽃 놓기")) RSPlantPainter.Open();
             }
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -139,6 +140,8 @@ namespace RealSteel.Terrain.EditorTools
             serializedObject.Update();
             DrawPropertiesExcluding(serializedObject, "m_Script");
             serializedObject.ApplyModifiedProperties();
+
+            RSFoliageTools.DrawGrassLayerField(t);
 
             EditorGUILayout.Space(6f);
             if (GUILayout.Button("지금 다시 만들기", GUILayout.Height(26f))) { t.Rebuild(); SceneView.RepaintAll(); }
@@ -296,6 +299,7 @@ namespace RealSteel.Terrain.EditorTools
                 case RSLayer.G: return new Color(0.85f, 0.85f, 0.85f);
                 case RSLayer.B: return new Color(1f, 0.5f, 0.2f);
                 case RSLayer.A: return new Color(0.35f, 0.5f, 1f);
+                case RSLayer.Grass: return new Color(0.4f, 0.95f, 0.3f);
                 default:        return new Color(0.6f, 0.45f, 0.3f);
             }
         }
@@ -453,6 +457,8 @@ namespace RealSteel.Terrain.EditorTools
             f.order = f.DefaultOrder;
             var sc = f as RSScatter;
             if (sc != null) FillScatterMaterials(sc);
+            var fo = f as RSFoliage;
+            if (fo != null) RSFoliageTools.SetupNew(fo);
             Selection.activeGameObject = go;
             t.MarkDirty();
             return f;

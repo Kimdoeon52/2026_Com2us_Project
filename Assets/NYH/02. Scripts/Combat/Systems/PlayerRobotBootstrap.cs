@@ -24,7 +24,9 @@ public class PlayerRobotBootstrap : MonoBehaviour
     // 호출: Unity(오브젝트 생성 시). 같은 오브젝트의 부품들을 찾아 서로 연결한다 — 입력(IInputSource)과 상태(ActionState)를 여기서만 나눠준다
     private void Awake()
     {
-        var input = GetComponent<PlayerInputSource>();
+        // 구체 타입(PlayerInputSource)이 아니라 인터페이스로 찾는다 — 키보드든 AI든 테스트용 허수아비든
+        // 오브젝트에 붙어 있는 입력원 하나를 그대로 쓰게 하기 위함 (§8 "입력만 바꿔 끼운다")
+        var input = GetComponent<IInputSource>();
         executor = GetComponent<ActionExecutor>();
         // mover를 먼저 구해두는 이유: 아래에서 executor.Init에 mover를 넘겨줘야 하고(가드 방향 판정용),
         // mover.Init에는 반대로 executor.State가 필요하다 — 그래서 executor.Init을 먼저 불러서
@@ -32,10 +34,13 @@ public class PlayerRobotBootstrap : MonoBehaviour
         var mover = GetComponent<RobotMover>();
 
         executor.Init(input, fighterId, mover);
-        mover.Init(input, executor.State); // executor.Init이 먼저 끝나서 State가 이미 만들어져 있어야 여기서 null이 안 넘어간다
+        // executor.Init이 먼저 끝나서 State가 이미 만들어져 있어야 여기서 null이 안 넘어간다.
+        // mover가 빠져 있으면 경고만 남기고 넘어간다 — 여기서 예외가 나면 아래 RobotView/BoxDrawer 배선까지 전부 막힌다
+        if (mover != null) mover.Init(input, executor.State);
+        else Debug.LogWarning($"[PlayerRobotBootstrap] {name}에 RobotMover가 없음 — 바라보는 방향을 몰라서 박스 좌우 반전이 틀어짐");
         // ?. 를 쓴 이유: RobotView/BoxDrawer는 디버그·연출용이라 아직 오브젝트에 안 붙어있을 수도 있다.
         // 필수 컴포넌트(executor, mover)가 아니라서 없어도 전투 로직 자체는 돌아가야 하므로, 없으면 그냥 건너뛴다
-        GetComponent<RobotView>()?.Init(executor.State, input);
+        GetComponent<RobotView>()?.Init(executor.State, input, mover);
         GetComponent<BoxDrawer>()?.Init(executor.State, mover);
     }
 

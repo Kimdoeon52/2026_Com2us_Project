@@ -13,21 +13,31 @@ public class RobotView : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     [SerializeField] private string idleStateName = "Idle";
-    [SerializeField] private string walkStateName = "Walk";
+    [SerializeField] private string walkStateName = "Walk";         // 상대 쪽으로 다가갈 때
+    [SerializeField] private string backWalkStateName = "BackWalk"; // 상대에게서 멀어질 때
 
-    // 액션이 끝난 뒤 Idle/Walk 중 뭘 재생할지 고르려면 "지금 이동 입력이 있는지"를 알아야 한다 —
+    // Idle/Walk/BackWalk 중 뭘 재생할지 고르려면 "지금 이동 입력이 있는지"를 알아야 한다 —
     // ActionState는 그 정보를 안 갖고 있어서(순수하게 행동 진행 상태만 담당), 여기서 직접 IInputSource를 참조한다
     private IInputSource inputSource;
+    // 행동 중인지(=걷기 애니메이션을 틀면 안 되는 구간인지) 판단용
+    private ActionState actionState;
+    // 앞으로 걷는지 뒤로 걷는지는 "상대를 바라보는 방향" 기준이라 RobotMover.FacingRight가 필요하다
+    private RobotMover mover;
+    // 지금 틀어둔 이동 계열 스테이트 이름. 같은 스테이트를 매 프레임 Play하면 클립이 0초로 계속 되감기므로,
+    // 바뀔 때만 Play하려고 기억해둔다. 행동(잽 등)이 재생 중일 땐 null
+    private string currentLocomotion;
     private float actionStartTime; // 실제 재생 시간 측정용
 
     /// <summary>
-    /// state: 재생 트리거를 받는 이벤트 소스. input: 액션 끝나고 Idle/Walk 중 뭘 틀지 판단용
-    /// (걷기는 3구간 상태기계 대상이 아니라 이동 입력만 보면 되므로, RobotMover와 별개로 여기서 직접 확인)
+    /// state: 재생 트리거를 받는 이벤트 소스. input: Idle/Walk/BackWalk 중 뭘 틀지 판단용.
+    /// mover: 바라보는 방향(앞/뒤 걷기 구분용). 없으면 이동 방향과 무관하게 전부 Walk로 재생한다
     /// </summary>
-    // 호출: PlayerRobotBootstrap.Awake. 받음: state(이벤트 구독용), input(액션이 끝난 뒤 Walk/Idle을 고르는 용도)
-    public void Init(ActionState state, IInputSource input)
+    // 호출: PlayerRobotBootstrap.Awake. 받음: state(이벤트 구독 + 행동 중 여부), input(이동 입력), mover(바라보는 방향)
+    public void Init(ActionState state, IInputSource input, RobotMover mover)
     {
         inputSource = input;
+        actionState = state;
+        this.mover = mover;
         // 여기서 두 이벤트를 구독하는 것만으로 애니메이션 재생이 자동으로 이루어진다 — ActionState 쪽은
         // "누가 구독하는지" 전혀 모른 채로 이벤트만 쏘고, 반응(애니메이션 재생)은 전부 구독자인 이쪽 책임이다(§13과 같은 패턴)
         state.OnActionBegin += PlayAction;
@@ -38,6 +48,7 @@ public class RobotView : MonoBehaviour
     private void PlayAction(ActionData action)
     {
         actionStartTime = Time.time;
+        currentLocomotion = null; // 행동 클립이 이동 클립을 덮어썼으니, 행동이 끝나면 이동 스테이트를 새로 골라야 한다
         if (animator == null || string.IsNullOrEmpty(action.AnimationClipName))
         {
             // 조용히 그냥 넘어가지 않고 경고를 남기는 이유: 애니메이터 연결을 깜빡했거나
@@ -101,9 +112,42 @@ public class RobotView : MonoBehaviour
         // 같이 빨라지거나 느려져 버린다 — 액션이 끝났으니 원래 속도(1배)로 반드시 되돌려야 한다
         animator.speed = 1f;
 
-        // 지금 이동 입력이 있는지 물어봐서 Walk/Idle 중 자연스러운 쪽을 고른다.
-        // (걷기는 ActionState의 3구간 대상이 아니라서, ActionState 이벤트만으로는 이 판단을 할 수 없다 — 그래서 input을 따로 받아둠)
-        bool isMoving = Mathf.Abs(inputSource?.GetMoveInput() ?? 0f) > 0.01f;
-        animator.Play(isMoving ? walkStateName : idleStateName, 0, 0f);
+        // 끝나는 즉시 Idle/Walk/BackWalk 중 맞는 걸 틀어준다 — 다음 Update까지 기다리면 한 프레임 동안 공격 마지막 장이 남는다
+        currentLocomotion = null;
+        UpdateLocomotion();
+    }
+
+    // 호출: Unity 매 렌더 프레임. 그림만 고르는 일이라 CombatTick 밖에서 주사율대로 돌아도 된다 (§3 "렌더·UI는 틱 바깥")
+    private void Update()
+    {
+        UpdateLocomotion();
+    }
+
+    // 행동 중이 아니면 이동 입력과 바라보는 방향으로 Idle/Walk/BackWalk를 고르고, 바뀌었을 때만 Play한다.
+    // Animator 전이 조건을 쓰지 않고 여기서 직접 Play하는 이유: §2 "전이 조건 금지, Play()로 직접 재생"
+    private void UpdateLocomotion()
+    {
+        if (animator == null) return;
+        // 잽 등 행동 클립이 재생 중일 땐 건드리지 않는다 — 행동이 끝나면 OnActionEnd에서 다시 불린다
+        if (actionState != null && !actionState.CanMove) return;
+
+        float moveInput = inputSource?.GetMoveInput() ?? 0f;
+        string next;
+        if (Mathf.Abs(moveInput) <= 0.01f)
+        {
+            next = idleStateName;
+        }
+        else
+        {
+            // 바라보는 방향(=상대 쪽)으로 누르면 다가가는 것이니 Walk, 반대로 누르면 멀어지는 것이니 BackWalk.
+            // 좌우 반전(localScale.x)은 RobotMover가 이미 해주므로 여기선 스테이트 이름만 고르면 된다
+            bool facingRight = mover == null || mover.FacingRight;
+            bool movingForward = facingRight ? moveInput > 0f : moveInput < 0f;
+            next = movingForward ? walkStateName : backWalkStateName;
+        }
+
+        if (next == currentLocomotion) return;
+        currentLocomotion = next;
+        animator.Play(next, 0, 0f);
     }
 }

@@ -70,6 +70,55 @@ public class CombatDataHub : MonoBehaviour
     }
 
     /// <summary>
+    /// [단일 참가자 스냅샷 등록]
+    /// 특정 파이터 스냅샷만 개별 등록하거나 갱신함
+    /// </summary>
+    public void RegisterCombatant(CombatantSnapshot combatant)
+    {
+        if (combatant == null) return;
+        if (combatant.isPlayer || combatant.fighterID.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            PlayerSnapshot = combatant;
+        }
+        else
+        {
+            EnemySnapshot = combatant;
+        }
+        Debug.Log($"[CombatDataHub] 참가자({combatant.fighterID}) 스냅샷 개별 등록 완료 (HP: {combatant.currentHp}/{combatant.maxHp})");
+    }
+
+    /// <summary>
+    /// [기본 모의(Mock) 스냅샷 자동 생성 및 등록]
+    /// 다른 씬이나 테스트 환경에서 스냅샷이 누락되었을 때 기본 100% 정상 스냅샷을 자동 주입함
+    /// </summary>
+    public CombatantSnapshot RegisterDefaultMockIfMissing(string fighterId, int coreHp = 1000, int partDurability = 100)
+    {
+        var existing = GetSnapshot(fighterId);
+        if (existing != null && existing.maxHp > 0) return existing;
+
+        bool isPlayer = fighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
+        var mock = new CombatantSnapshot
+        {
+            fighterID = fighterId,
+            isPlayer = isPlayer,
+            currentHp = coreHp,
+            maxHp = coreHp,
+            baseDefense = 50,
+            totalAttackPower = 100,
+            finalMoveSpeed = 5f
+        };
+
+        var parts = new[] { BodyPart.Head, BodyPart.Core, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
+        foreach (var p in parts)
+        {
+            mock.partStates[p] = new PartRuntimeState($"MOCK_{p}", p, partDurability);
+        }
+
+        RegisterCombatant(mock);
+        return mock;
+    }
+
+    /// <summary>
     /// 부품 마스터 에셋 룩업 테이블 등록함
     /// </summary>
     public void RegisterMasterData(IEnumerable<PartMasterData> masterDatas)

@@ -141,11 +141,30 @@ public class PartGaugeWidget : MonoBehaviour
     /// <param name="max">최대 내구도 값</param>
     public void UpdateDurability(int cur, int max)
     {
-        //1. 슬라이더 게이지 갱신
+        // 0. 최대치가 0 이하인 경우 (데이터 미초기화 대기 상태)
+        if (max <= 0)
+        {
+            if (durabilitySlider != null)
+            {
+                durabilitySlider.maxValue = 1;
+                durabilitySlider.value = 0;
+            }
+            if (partValueText != null)
+            {
+                partValueText.text = "-";
+            }
+            if (durabilityFillImage != null)
+            {
+                durabilityFillImage.color = brokenColor;
+            }
+            return;
+        }
+
+        // 1. 슬라이더 게이지 갱신
         if (durabilitySlider != null)
         {
             durabilitySlider.maxValue = max;
-            durabilitySlider.value = cur;
+            durabilitySlider.value = Mathf.Clamp(cur, 0, max);
         }
 
         // 2. 텍스트 표시
@@ -164,7 +183,7 @@ public class PartGaugeWidget : MonoBehaviour
         // 3. 잔여 비율에 따른 동적 색상 변화
         if (durabilityFillImage != null)
         {
-            float ratio = max > 0 ? (float)cur / max : 0f;
+            float ratio = (float)cur / max;
             if (cur <= 0f)
             {
                 durabilityFillImage.color = brokenColor;

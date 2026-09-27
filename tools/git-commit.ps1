@@ -65,11 +65,11 @@ foreach ($line in $files) {
     # 파일별 스마트 한글 설명 추론
     $desc = ""
     if ($path -match "FighterStatusHUD\.cs") {
-        $desc = "FighterStatusHUD: 이벤트 구독, 자가 진단 및 자동 위젯 수집 로직 구현"
+        $desc = "FighterStatusHUD: 범용 모의(Mock) 데이터 모드 및 단독 키보드 테스트 로직 구현"
         $hasFeat = $true
     }
     elseif ($path -match "PartGaugeWidget\.cs") {
-        $desc = "PartGaugeWidget: 부위별 기본 라벨(HEAD, CORE 등) 자동 부여 및 내구도 색상 갱신"
+        $desc = "PartGaugeWidget: 데이터 미초기화 시 안전 방어 및 부위별 동적 색상/라벨 갱신"
         $hasFeat = $true
     }
     elseif ($path -match "HUDInteractiveTester\.cs") {
@@ -81,7 +81,7 @@ foreach ($line in $files) {
         $hasTest = $true
     }
     elseif ($path -match "CombatDataHub\.cs") {
-        $desc = "CombatDataHub: 파츠 피격 시 코어 체력 동반 차감(ApplyPartHit) 및 리셋 API 추가"
+        $desc = "CombatDataHub: 단일 참가자 등록 및 기본 모의(Mock) 스냅샷 자동 생성 지원"
         $hasFeat = $true
     }
     elseif ($path -match "CombatCalculator\.cs") {

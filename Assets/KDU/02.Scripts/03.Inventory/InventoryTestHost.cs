@@ -46,6 +46,12 @@ public class InventoryTestHost : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Q))
+            GiveDebugComponents();
+    }
+
     // 지정 파츠를 빈자리에 배치
     public bool GivePart(PartsDefinition definition)
     {

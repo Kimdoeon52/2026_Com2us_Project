@@ -47,7 +47,7 @@ public class TimeSystemManager : MonoBehaviour
         if (Time.unscaledTime >=  nextHourTime)                   // 게임 내 시간 증가
         {
             PassTime(1);
-            nextHourTime += timeToGame;
+            nextHourTime = Time.unscaledTime + timeToGame;
         }
     }
 

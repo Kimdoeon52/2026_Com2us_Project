@@ -2179,7 +2179,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 15.283447, y: 25.888672}
+  m_LightCookieOffset: {x: 5.2834473, y: 10.34314}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -2501,6 +2501,62 @@ MonoBehaviour:
   lockVertices: 0
   water: 1
   waterHeight: 0.38
+--- !u!1 &922658059
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 922658061}
+  - component: {fileID: 922658060}
+  m_Layer: 0
+  m_Name: GameSceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &922658060
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922658059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11240baa579337e4f82dd56ef46ba752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _shortcuts:
+  - Key: 282
+    SceneName: Map_Test
+  - Key: 283
+    SceneName: UiTest
+  - Key: 284
+    SceneName: Auction
+  - Key: 285
+    SceneName: JunkShop
+  - Key: 286
+    SceneName: Battle
+  _shortcutEnabled: 1
+--- !u!4 &922658061
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922658059}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.6301422, y: -6.687681, z: 66.084274}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &936927915
 GameObject:
   m_ObjectHideFlags: 0
@@ -4236,3 +4292,4 @@ SceneRoots:
   - {fileID: 411684201}
   - {fileID: 871041234}
   - {fileID: 1487227383}
+  - {fileID: 922658061}

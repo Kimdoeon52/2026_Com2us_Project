@@ -24,6 +24,7 @@ public class SystemNewsUiManager : MonoBehaviour
 
     private Queue<string> newsQueue = new Queue<string>(); // 이벤트 뉴스 담는 큐
     private bool isShowing = false;
+    private Sequence currentSequence; // DOTween 이벤트용 변수
 
     private void Awake()
     {
@@ -42,6 +43,13 @@ public class SystemNewsUiManager : MonoBehaviour
         OnSystemNews -= EnqueueNews; // 구독 해제
         TimeSystemManager.OnMonthScrapRestore -= ScrapRestoreNews;
         TimeSystemManager.OnWeekMartOpen -= MartOpenNews;
+
+        if (currentSequence != null && currentSequence.IsActive()) // 해당 오브젝트 비활성화시 DOTween Kill
+        {
+            currentSequence.Kill();
+            currentSequence = null;
+        }
+        isShowing = false;
     }
 
     private void ScrapRestoreNews() { EnqueueNews("고물상에 스크랩이 매입되었습니다!"); }
@@ -76,8 +84,8 @@ public class SystemNewsUiManager : MonoBehaviour
         newsText.text = newsQueue.Dequeue(); // 큐 맨 앞의 뉴스를 텍스트로 출력
 
         // DOTween 연출. 깜빡깜빡이
-        Sequence seq = DOTween.Sequence();
-        seq.Append(newsGroup.DOFade(1f, fadeDuration))
+        currentSequence = DOTween.Sequence();
+        currentSequence.Append(newsGroup.DOFade(1f, fadeDuration))
            .AppendInterval(showDuration)
            .Append(newsGroup.DOFade(0f, fadeDuration))
            .OnComplete(ShowNextNews);

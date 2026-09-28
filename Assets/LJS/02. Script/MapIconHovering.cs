@@ -31,6 +31,8 @@ public class MapIconHovering : MonoBehaviour
     {
         MapElement.OnHovered -= ShowTooltip;
         MapElement.OnUnhovered -= HideTooltip;
+        MapElement.OnClicked -= HideTooltipOnPopup;
+        MapSystemManager.OnMapClosed -= HideTooltip;
     }
 
     // 이벤트 발생 시 자동으로 실행될 함수

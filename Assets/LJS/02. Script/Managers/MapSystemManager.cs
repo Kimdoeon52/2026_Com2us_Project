@@ -51,6 +51,12 @@ public class MapSystemManager : MonoBehaviour
         }
 
         confirmButton.SetActive(false);
+
+        if (!isMapOpen) // 맵 닫힐 시 내부상태 초기화
+        {
+            isConfirmOpen = false;
+            selectedElement = null;
+        }
     }
 
     // 마우스를 클릭했을 때 실행되는 함수 (이동 확인창)

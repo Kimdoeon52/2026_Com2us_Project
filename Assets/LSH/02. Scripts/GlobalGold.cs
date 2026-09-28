@@ -53,10 +53,10 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
         //    AddGoldAllNpc(100);
         //}
         //// S: 수동 저장
-        //if (Input.GetKeyDown(KeyCode.S))
-        //{
-        //    SaveGame();
-        //}
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            SaveGame();
+        }
 
         //// L: 수동 불러오기
         //if (Input.GetKeyDown(KeyCode.L))

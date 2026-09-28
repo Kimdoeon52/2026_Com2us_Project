@@ -13,6 +13,13 @@ using UnityEngine.UI;
  AI들은 각각 판단에따라 입찰을 진행한다. (본인 로봇 보다 좋은 부품인가 아닌가, 보유 골드가 얼마인가. 등등)
 
  내가 뜸들이는 동안에도 ai끼리 계속 경매 진행을 해야댐.
+
+ 10/4 해야할꺼.
+ 판매 ui 대충 물건 올리는거 부분 그리기. 기능 필요없음 시각적으로 보이게만.
+
+ AI 성격 5개 기획서 확인하고 만들기.
+ 물건 바꾸기. 장비들로.
+ 
  */
 public class Auction : PersistentSingleton<Auction>
 {
@@ -143,7 +150,10 @@ public class Auction : PersistentSingleton<Auction>
         {
             // 각 AI마다 고민하는 시간을 다르게 부여 (5초~ 20초 사이)
             int thinkDelay = Random.Range(5000, 20000);
-            console.text += $"{ai.NpcName}님이 {thinkDelay/1000}초 동안 고민중.\n";
+            if(!ai.IsReady) //포기 안했으면 고민중 콘솔 출력
+            {
+                console.text += $"{ai.NpcName}님이 {thinkDelay / 1000}초 동안 고민중.\n";
+            }
             await UniTask.Delay(thinkDelay);
 
             if (!isTimeRunning || isAuctioningFin) break;

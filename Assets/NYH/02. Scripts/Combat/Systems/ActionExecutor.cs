@@ -72,8 +72,10 @@ public class ActionExecutor : MonoBehaviour
                 requested = ResolveReplacement(requested); // 최. 추가
                 state.Begin(requested);
                 // 구간별로 프레임 수를 전부 찍어두면, 나중에 "훅이 정말 선딜 3프레임에 나가는지" 같은
-                // 걸 로그만 보고도 검증할 수 있다 (§9 "상태 로그" 규칙)
-                Debug.Log($"[{requested.ActionName}] Startup {requested.StartupFrames}f → Active {requested.ActiveFrames}f → Recovery {requested.RecoveryFrames}f");
+                // 걸 로그만 보고도 검증할 수 있다 (§9 "상태 로그" 규칙).
+                // 원본이 아니라 확정값(Timeline)을 찍는다 — 보정이 걸린 뒤엔 실제로 도는 값이 이쪽이다
+                ResolvedAction timeline = state.Timeline;
+                Debug.Log($"[{requested.ActionName}] Startup {timeline.StartupFrames}f → Active {timeline.ActiveFrames}f → Recovery {timeline.RecoveryFrames}f");
             }
         }
 

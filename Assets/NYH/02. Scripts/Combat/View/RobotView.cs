@@ -69,7 +69,10 @@ public class RobotView : MonoBehaviour
         animator.Update(0f);
 
         float clipLength = animator.GetCurrentAnimatorStateInfo(0).length; // 원본 애니메이션 클립이 실제로 몇 초짜리인지
-        float dataLength = action.TotalFrames / 60f; // 프레임표가 정한 "이 기술은 몇 초여야 하는지" (60fps 기준)
+        // 원본 에셋이 아니라 확정 프레임(Timeline)을 쓴다 — 보정으로 프레임이 줄어든 행동에서 원본 길이에 맞추면
+        // 논리는 이미 끝났는데 그림만 남아서 마지막에 툭 끊긴다
+        int totalFrames = actionState?.Timeline != null ? actionState.Timeline.TotalFrames : action.TotalFrames;
+        float dataLength = totalFrames * CombatClock.TICK; // 프레임표가 정한 "이 기술은 몇 초여야 하는지"
 
         // 데이터가 진실이고 그림이 따라온다(§3, §10 원칙)는 걸 실제로 구현하는 한 줄.
         // 클립 원본 길이가 데이터 길이보다 길면 빠르게(speed>1), 짧으면 느리게(speed<1) 재생해서

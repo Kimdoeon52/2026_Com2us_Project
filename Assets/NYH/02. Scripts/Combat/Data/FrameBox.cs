@@ -25,6 +25,18 @@ public struct FrameBox
     // 그 계산 자체도 BoxResolver라는 한 곳에만 몰아둘 수 있다
     public Rect rect;
 
+    // 이 박스가 어느 구간에 붙는가. Legacy면 아래 startFrame/endFrame 절대값을 그대로 쓴다.
+    // 절대 프레임은 "활성 구간이 언제인지"를 ActionData의 프레임 값에서 손으로 계산해 옮겨적은 사본이라,
+    // 선딜 프레임 하나만 바뀌어도 조용히 어긋난다. 앵커는 그 사본을 없애고 구간을 가리키기만 한다
+    public FrameAnchor anchor;
+
+    // 앵커한 구간에 진입한 뒤 몇 프레임째부터 켜지는지. 0이면 구간 시작과 동시에 켜진다
+    public int startOffset;
+
+    // 몇 프레임 동안 켜져 있는지. 0이면 그 구간이 끝날 때까지 자동으로 따라간다 —
+    // "활성 구간 전체"처럼 길이를 구간에 맡기고 싶은 경우가 대부분이라 이게 기본값이다
+    public int length;
+
     // 이 박스가 몇 번째 프레임부터 활성화되는지 — ActionState.GlobalFrame(행동이 시작된 뒤로
     // Phase(선딜/활성/후딜)가 바뀌어도 리셋되지 않고 계속 올라가는 전체 타임라인 카운터)과 같은 기준값이다.
     // 예: 잽(선딜 4·활성 2·후딜 6)의 Hit박스가 활성 구간에만 나가야 한다면 startFrame=5(선딜이 끝난 다음 프레임)

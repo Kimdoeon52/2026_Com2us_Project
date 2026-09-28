@@ -99,6 +99,13 @@ public class ActionState
     }
     #endregion
 
+    /// <summary>
+    /// 이번에 실행 중인 행동의 확정 프레임·박스 창. Begin()에서 1회 계산되고 행동이 끝날 때까지 안 바뀐다.
+    /// Phase 전환 판단도 박스 조회도 전부 이 값을 본다 — ActionData(원본 SO)를 직접 읽으면
+    /// 보정이 걸린 순간부터 프레임과 박스가 따로 놀게 된다.
+    /// </summary>
+    public ResolvedAction Timeline { get; private set; }
+
     // 호출: ActionExecutor.ExecuteTick. 받음: 시작할 ActionData. 전달: OnActionBegin 이벤트 → RobotView.PlayAction이 애니메이션 재생
     public void Begin(ActionData action)
     {
@@ -110,11 +117,21 @@ public class ActionState
         // 물려받는 버그가 생기므로, 반드시 여기서 한꺼번에 세팅한다
         CurrentAction = action;
         Resolved = modifierResolver != null ? modifierResolver(action) : ResolvedModifiers.Identity; // 최. 추가
+        // 원본 에셋은 그대로 두고 "이번 실행분"만 확정한다 — 프레임과 박스 창이 여기서 같이 정해지므로 둘이 어긋날 수 없다
+        Timeline = ResolvedAction.Resolve(action, BuildAdjustment(Resolved));
         FrameInPhase = 0;
         GlobalFrame = 0;
         HasHitThisAction = false; // 새 행동이 시작됐으니 "이미 맞혔음" 기록도 초기화 — 이번 공격은 아직 아무도 못 맞혔다
         Phase = ActionPhase.Startup;
         OnActionBegin?.Invoke(action);
+    }
+
+    // 장비·스킬의 보정(CSH)을 프레임 보정으로 옮겨 담는 유일한 지점.
+    // 지금 ResolvedModifiers에는 프레임 필드가 없어서 항상 "보정 없음"이 나간다 —
+    // 상희 님 쪽에 StartupFramesAdd 같은 필드가 생기면 여기 몇 줄만 채우면 되고, 나머지 코드는 안 바뀐다
+    private static FrameAdjustment BuildAdjustment(ResolvedModifiers modifiers)
+    {
+        return FrameAdjustment.None;
     }
 
     /// <summary>
@@ -144,7 +161,7 @@ public class ActionState
             case ActionPhase.Startup:
                 // 데이터(ActionData.StartupFrames)에 정해둔 선딜 길이를 다 채웠으면 활성 구간으로 넘어간다.
                 // ">="로 비교하는 이유: 혹시라도 한 틱에 여러 프레임이 밀려도(프레임 드랍 등) 안전하게 넘어가기 위함
-                if (FrameInPhase >= CurrentAction.StartupFrames)
+                if (FrameInPhase >= Timeline.StartupFrames)
                 {
                     Phase = ActionPhase.Active;
                     FrameInPhase = 0; // 새 Phase의 1프레임째부터 다시 세야 하므로 리셋 (GlobalFrame은 리셋 안 함!)
@@ -153,7 +170,7 @@ public class ActionState
                 break;
 
             case ActionPhase.Active:
-                if (FrameInPhase >= CurrentAction.ActiveFrames)
+                if (FrameInPhase >= Timeline.ActiveFrames)
                 {
                     Phase = ActionPhase.Recovery;
                     FrameInPhase = 0;
@@ -161,7 +178,7 @@ public class ActionState
                 break;
 
             case ActionPhase.Recovery:
-                if (FrameInPhase >= CurrentAction.RecoveryFrames)
+                if (FrameInPhase >= Timeline.RecoveryFrames)
                 {
                     // Idle로 돌아가기 전에 "무슨 행동이 끝났는지"를 이벤트로 알려줘야 하는데,
                     // CurrentAction을 먼저 null로 만들어버리면 그 정보가 사라지므로 미리 변수에 빼둔다
@@ -186,10 +203,11 @@ public class ActionState
     /// </summary>
     public IEnumerable<FrameBox> GetActiveBoxes()
     {
-        // 행동 중이면 그 행동이 "지금 전체 타임라인 기준 몇 프레임째인지"(GlobalFrame)에 맞는 박스를 그대로 넘긴다
+        // 행동 중이면 그 행동이 "지금 전체 타임라인 기준 몇 프레임째인지"(GlobalFrame)에 맞는 박스를 그대로 넘긴다.
+        // 원본(CurrentAction)이 아니라 Timeline에서 꺼내는 이유: 앵커로 찍은 박스는 확정 프레임을 알아야
+        // 창이 정해지고, 프레임 보정이 걸리면 박스도 같이 따라가야 하기 때문이다
         if (CurrentAction != null)
-            //return CurrentAction.GetActiveBoxes(GlobalFrame); // 최. 수정
-            return ApplyHitBoxModifiers(CurrentAction.GetActiveBoxes(GlobalFrame)); // 최. 추가
+            return ApplyHitBoxModifiers(Timeline.GetActiveBoxes(GlobalFrame)); // 최. 추가
 
         // 행동이 없으면(=Idle, 걷기 포함) IdleAction의 1번 프레임 박스를 대신 쓴다.
         // 굳이 GlobalFrame이 아니라 고정값 1을 넘기는 이유: 서 있는 자세는 프레임에 따라 박스가

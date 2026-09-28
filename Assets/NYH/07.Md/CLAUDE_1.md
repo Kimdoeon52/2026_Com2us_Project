@@ -307,6 +307,33 @@ GetActiveBoxes ─┤
 
 디버그 표시기가 별도 데이터를 보면 **거짓말하는 표시기**가 된다. 반드시 같은 함수를 통한다.
 
+### 박스 창은 절대 프레임이 아니라 구간 앵커로 찍는다 (2026-09-28 추가)
+
+`FrameBox`에 `startFrame/endFrame` 절대값을 직접 쓰는 것은 **"활성 구간이 언제인가"를 프레임 값에서
+손으로 계산해 옮겨적은 사본**이다. 선딜 하나만 바뀌어도 조용히 어긋나고 에러가 안 난다.
+
+```csharp
+public FrameAnchor anchor;   // WholeAction / Startup / Active / Recovery
+public int startOffset;      // 그 구간 진입 후 몇 프레임째부터 (0 = 구간 시작)
+public int length;           // 몇 프레임. 0 = 구간 끝까지 자동으로 따라감
+```
+
+- **히트박스는 `Active` 앵커에 `length = 0`이 기본이다** — "활성 구간 전체".
+- 몸통 허트·푸시박스는 `WholeAction`.
+- `anchor = Legacy`는 변환 전 기존 에셋용 폴백이다. 새로 찍는 박스에 쓰지 말 것.
+
+절대 창은 `ActionState.Begin()`에서 `ResolvedAction`이 1회 계산한다. 확정 프레임과 박스 창이 같은
+자리에서 같이 정해지므로 둘이 따로 놀 수 없다. 자세한 배경·리스크는 `프레임_타임라인_개편_계획.md`.
+
+### 프레임을 바꾸는 기술은 `FrameAdjustment`로만 (2026-09-28 추가)
+
+선딜·활성·후딜·전체 속도를 바꾸는 장비/스킬은 **`ActionData`를 고치지 않는다**(§2). 보정값을
+`FrameAdjustment`에 담아 `ResolvedAction.Resolve()`에 넘기면 프레임과 박스 창이 같이 확정된다.
+
+- 보정을 옮겨 담는 유일한 지점은 `ActionState.BuildAdjustment()` 하나다.
+- `FrameAdjustment.None`을 쓸 것. `new FrameAdjustment()`는 `SpeedMultiplier`가 0이라 행동 시간이 0이 된다.
+- 원본 활성이 1 이상인 기술은 보정 후에도 **최소 1프레임**이 보장된다 (0이면 판정이 영영 안 켜진다).
+
 ### 대기·이동 중의 박스 (2026-09-21 추가)
 
 `FrameBox`는 원래 `ActionData`에만 있어서, 걷거나 가만히 서 있을 때(`ActionState.CurrentAction == null`)는

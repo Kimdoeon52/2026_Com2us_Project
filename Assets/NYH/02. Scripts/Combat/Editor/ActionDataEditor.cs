@@ -85,6 +85,139 @@ public class ActionDataEditor : Editor
             "Scene 뷰에서 네모 핸들(중심)을 끌면 이동, 점 핸들(모서리)을 끌면 크기 조절됩니다.\n" +
             "좌표는 항상 오른쪽을 본다고 가정하고 편집합니다 — 좌우 반전은 런타임에 자동 처리됩니다.",
             MessageType.Info);
+
+        DrawAnchorSection(action);
+    }
+
+    // 절대 프레임(startFrame/endFrame)으로 찍힌 박스를 구간 앵커로 바꾸는 변환 UI + 검수 경고.
+    // 변환은 startFrame/endFrame을 지우지 않는다 — 앵커만 채운다. 그래서 되돌리려면 anchor를 Legacy로
+    // 돌려놓기만 하면 되고, 값이 날아갈 일이 없다
+    private void DrawAnchorSection(ActionData action)
+    {
+        EditorGUILayout.Space();
+        EditorGUILayout.LabelField("구간 앵커", EditorStyles.boldLabel);
+
+        if (action.TotalFrames <= 0)
+        {
+            EditorGUILayout.HelpBox("프레임이 0이라 앵커를 계산할 수 없습니다. 이 에셋은 Legacy(절대 프레임) 그대로 두세요.", MessageType.None);
+            return;
+        }
+
+        if (GUILayout.Button("절대 프레임 → 앵커 변환 (창은 그대로 유지)"))
+            ConvertToAnchors(action);
+
+        // 변환과 무관하게 항상 확인할 수 있게, 지금 데이터의 이상한 점을 모아서 보여준다.
+        // 이런 건 에러가 안 나고 조용히 틀어지기만 해서, 눈에 띄는 자리에 띄워두지 않으면 영영 안 보인다
+        string report = BuildInspectionReport(action);
+        if (!string.IsNullOrEmpty(report))
+            EditorGUILayout.HelpBox(report, MessageType.Warning);
+    }
+
+    // 박스마다 "지금 창이 어느 구간에 가장 많이 걸치는지"를 보고 앵커를 정한다.
+    // 창 자체는 바꾸지 않는다 — 변환 전후로 판정이 달라지면 변환이 원인인지 원래 틀렸는지 구분할 수 없게 된다
+    private void ConvertToAnchors(ActionData action)
+    {
+        serializedObject.Update();
+        var boxesProp = serializedObject.FindProperty("frameBoxes");
+
+        int startup = action.StartupFrames;
+        int active = action.ActiveFrames;
+        int recovery = action.RecoveryFrames;
+        int total = action.TotalFrames;
+        int converted = 0;
+
+        for (int i = 0; i < boxesProp.arraySize; i++)
+        {
+            var boxProp = boxesProp.GetArrayElementAtIndex(i);
+            var anchorProp = boxProp.FindPropertyRelative("anchor");
+            if (anchorProp.enumValueIndex != (int)FrameAnchor.Legacy)
+                continue; // 이미 변환된 박스는 건드리지 않는다 — 두 번 눌러도 안전하게
+
+            int s = Mathf.Max(1, boxProp.FindPropertyRelative("startFrame").intValue);
+            int e = Mathf.Min(total, boxProp.FindPropertyRelative("endFrame").intValue);
+            if (e < s)
+                continue; // 창이 성립 안 하는 박스는 사람이 보고 고쳐야 한다
+
+            // 앵커는 "창이 시작하는 프레임이 들어있는 구간"으로 정한다.
+            // 겹침이 가장 큰 구간을 고르면, 창이 그 구간보다 앞에서 시작할 때 오프셋이 음수가 되고
+            // 그걸 0으로 자르면서 창이 통째로 뒤로 밀려버린다 (예: 스트레이트 푸시박스 1~33 → 15~34).
+            // 시작 프레임이 속한 구간을 고르면 오프셋이 항상 0 이상이라 원래 창이 그대로 재현된다
+            FrameAnchor anchor;
+            int phaseStart;
+            int phaseLength;
+
+            if (s <= startup)
+            {
+                anchor = FrameAnchor.Startup;
+                phaseStart = 1;
+                phaseLength = startup;
+            }
+            else if (s <= startup + active)
+            {
+                anchor = FrameAnchor.Active;
+                phaseStart = startup + 1;
+                phaseLength = active;
+            }
+            else
+            {
+                anchor = FrameAnchor.Recovery;
+                phaseStart = startup + active + 1;
+                phaseLength = recovery;
+            }
+
+            int offset = s - phaseStart;
+            int length = e - s + 1;
+
+            // 창이 한 구간과 정확히 일치하면 길이를 0(= 구간 끝까지)으로 둔다.
+            // 이게 앵커를 쓰는 진짜 이유다 — 그 구간 프레임이 늘거나 줄면 박스도 같이 따라간다
+            if (offset == 0 && length == phaseLength)
+            {
+                length = 0;
+            }
+            else if (s == 1 && e == total)
+            {
+                // 행동 전체를 덮는 박스(몸통 허트·푸시)는 구간이 아니라 행동 전체를 따라가야 한다
+                anchor = FrameAnchor.WholeAction;
+                offset = 0;
+                length = 0;
+            }
+
+            anchorProp.enumValueIndex = (int)anchor;
+            boxProp.FindPropertyRelative("startOffset").intValue = offset;
+            boxProp.FindPropertyRelative("length").intValue = length;
+            converted++;
+        }
+
+        serializedObject.ApplyModifiedProperties();
+        Debug.Log($"[ActionDataEditor] {action.ActionName} — 박스 {converted}개를 앵커로 변환함 (startFrame/endFrame은 그대로 남겨둠)");
+    }
+
+    // 조용히 틀어지기 쉬운 것들만 모은다 — 컴파일도 되고 게임도 돌아가서 눈으로는 안 보이는 것들
+    private static string BuildInspectionReport(ActionData action)
+    {
+        var lines = new System.Text.StringBuilder();
+        int total = action.TotalFrames;
+        int activeStart = action.StartupFrames + 1;
+        int activeEnd = action.StartupFrames + action.ActiveFrames;
+
+        for (int i = 0; i < action.FrameBoxes.Length; i++)
+        {
+            FrameBox box = action.FrameBoxes[i];
+
+            if (box.rect.width <= 0f || box.rect.height <= 0f)
+                lines.AppendLine($"#{i} {box.type} — 폭/높이가 0 이하라 판정에 절대 안 걸립니다 ({box.rect.width:F2} x {box.rect.height:F2})");
+
+            if (box.anchor != FrameAnchor.Legacy)
+                continue; // 아래 둘은 절대 프레임을 쓰는 박스에만 의미가 있다
+
+            if (box.endFrame > total)
+                lines.AppendLine($"#{i} {box.type} — endFrame({box.endFrame})이 전체 프레임({total})을 넘습니다");
+
+            if (box.type == BoxType.Hit && (box.startFrame != activeStart || box.endFrame != activeEnd))
+                lines.AppendLine($"#{i} Hit — 창({box.startFrame}~{box.endFrame})이 활성 구간({activeStart}~{activeEnd})과 다릅니다");
+        }
+
+        return lines.ToString();
     }
 
     // "Hit/Hurt/Push 추가" 버튼을 눌렀을 때, frameBoxes 배열 끝에 기본값짜리 박스 하나를 더 만들어 넣는다
@@ -104,8 +237,15 @@ public class ActionDataEditor : Editor
         newBox.FindPropertyRelative("type").enumValueIndex = (int)type;
         newBox.FindPropertyRelative("bodyPart").enumValueIndex = (int)BodyPart.Core; // 일단 코어로 기본값. 필요하면 인스펙터에서 바꾸면 됨
         newBox.FindPropertyRelative("rect").rectValue = new Rect(0f, 0f, 1f, 1f); // 피벗 위치에서 오른쪽·위로 1x1 크기 — Scene 뷰에서 바로 보일 정도의 크기
-        newBox.FindPropertyRelative("startFrame").intValue = 1; // 기본은 행동 시작부터
-        newBox.FindPropertyRelative("endFrame").intValue = Mathf.Max(1, action.TotalFrames); // ~끝까지 항상 켜진 걸로 시작(나중에 좁혀서 조정)
+        // 새 박스는 처음부터 앵커로 만든다 — Hit은 활성 구간 전체, Hurt/Push는 행동 전체가 기본값이다 (§4).
+        // Length 0이라 나중에 프레임이 바뀌어도 알아서 따라간다
+        newBox.FindPropertyRelative("anchor").enumValueIndex =
+            (int)(type == BoxType.Hit ? FrameAnchor.Active : FrameAnchor.WholeAction);
+        newBox.FindPropertyRelative("startOffset").intValue = 0;
+        newBox.FindPropertyRelative("length").intValue = 0;
+        // 아래 둘은 Legacy 박스에서만 읽히는 값이라 지금은 안 쓰이지만, 값이 비어 보이지 않게 채워둔다
+        newBox.FindPropertyRelative("startFrame").intValue = 1;
+        newBox.FindPropertyRelative("endFrame").intValue = Mathf.Max(1, action.TotalFrames);
 
         // 지금까지 SerializedProperty로 바꾼 값들을 실제 에셋에 반영(저장)한다 — 이 호출 전까지는 메모리상 값만 바뀐 상태
         serializedObject.ApplyModifiedProperties();
@@ -121,6 +261,9 @@ public class ActionDataEditor : Editor
 
         // 기준 위치가 없으면(아직 로봇 Transform을 안 넣었으면) 월드 원점을 기준으로 그린다
         Vector3 pivot = previewTarget != null ? previewTarget.position : Vector3.zero;
+
+        // 앵커 박스의 실제 창을 계산하려면 이 에셋의 프레임 값이 필요하다
+        var action = (ActionData)target;
 
         serializedObject.Update();
 
@@ -143,15 +286,16 @@ public class ActionDataEditor : Editor
             SerializedProperty boxProp = boxesProp.GetArrayElementAtIndex(i);
             SerializedProperty rectProp = boxProp.FindPropertyRelative("rect");
             SerializedProperty typeProp = boxProp.FindPropertyRelative("type");
-            SerializedProperty startProp = boxProp.FindPropertyRelative("startFrame");
-            SerializedProperty endProp = boxProp.FindPropertyRelative("endFrame");
-
             // "모든 프레임 표시"가 꺼져 있으면, 지금 슬라이더로 고른 프레임 구간 밖의 박스는 건너뛰어서
-            // 화면이 복잡해지지 않게 한다 (특정 프레임 하나만 정밀하게 맞추고 싶을 때 유용)
+            // 화면이 복잡해지지 않게 한다 (특정 프레임 하나만 정밀하게 맞추고 싶을 때 유용).
+            // 창은 startFrame/endFrame을 직접 읽지 않고 런타임과 같은 ResolvedAction.GetWindow로 구한다 —
+            // 앵커를 쓰는 박스는 그 두 칸이 안 읽히므로, 직접 읽으면 Scene 뷰가 실제 판정과 다른 걸 보여준다 (§4)
             if (!showAllFrames)
             {
-                bool inRange = previewFrame >= startProp.intValue && previewFrame <= endProp.intValue;
-                if (!inRange) continue;
+                ResolvedAction.GetWindow(action.FrameBoxes[i], action.StartupFrames, action.ActiveFrames, action.RecoveryFrames,
+                    out int boxStart, out int boxEnd);
+                if (previewFrame < boxStart || previewFrame > boxEnd)
+                    continue;
             }
 
             DrawBoxHandle(i, pivot, rectProp, (BoxType)typeProp.enumValueIndex);

@@ -56,4 +56,10 @@ public class MapElement : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
         OnClicked?.Invoke(this);
     }
+
+    private void OnDisable()
+    {
+        transform.localScale = normalScale; // 크기를 원래대로 복구
+        OnUnhovered?.Invoke(); // 혹시 남아있을지 모를 툴팁도 끄라고 방송
+    }
 }

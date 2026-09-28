@@ -11,7 +11,7 @@ public class FrameStepper : MonoBehaviour
 {
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.F2))
+        if (Input.GetKeyDown(KeyCode.F9))
         {
             // 0이면 1로, 0이 아니면(보통 1) 0으로 — 단순 토글. timeScale=0을 만드는 것만으로
             // CombatClock.Update()의 Time.deltaTime도 같이 0이 되어 전투 로직이 저절로 멈춘다(§3) —
@@ -20,13 +20,13 @@ public class FrameStepper : MonoBehaviour
             Debug.Log(Time.timeScale == 0f ? "[FrameStepper] 일시정지" : "[FrameStepper] 재생");
         }
 
-        if (Input.GetKeyDown(KeyCode.F3))
+        if (Input.GetKeyDown(KeyCode.F10))
         {
-            // 정지 상태가 아니면 F3를 눌러봐야 의미가 없다 — 이미 매 프레임 자동으로 틱이 돌고 있으므로
+            // 정지 상태가 아니면 F10를 눌러봐야 의미가 없다 — 이미 매 프레임 자동으로 틱이 돌고 있으므로
             // "한 프레임만 전진"이라는 개념 자체가 성립하지 않는다. 그래서 먼저 F2로 멈추라고 안내만 하고 리턴
             if (Time.timeScale != 0f)
             {
-                Debug.LogWarning("[FrameStepper] F2로 먼저 정지해야 한 프레임씩 전진할 수 있음");
+                Debug.LogWarning("[FrameStepper] F9로 먼저 정지해야 한 프레임씩 전진할 수 있음");
                 return;
             }
 
@@ -44,7 +44,7 @@ public class FrameStepper : MonoBehaviour
             }
         }
 
-        if (Input.GetKeyDown(KeyCode.F4))
+        if (Input.GetKeyDown(KeyCode.F11))
         {
             // 모든 BoxDrawer가 공유하는 static 스위치 하나만 뒤집으면 된다 — 로봇마다 따로 꺼줄 필요 없음
             BoxDrawer.ShowInGameView = !BoxDrawer.ShowInGameView;

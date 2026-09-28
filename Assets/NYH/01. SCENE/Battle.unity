@@ -323,6 +323,7 @@ MonoBehaviour:
   animator: {fileID: 310224670}
   idleStateName: Idle
   walkStateName: Walk
+  backWalkStateName: BackWalk
 --- !u!95 &310224670
 Animator:
   serializedVersion: 7
@@ -1087,6 +1088,7 @@ MonoBehaviour:
   animator: {fileID: 1270632120}
   idleStateName: Idle
   walkStateName: Walk
+  backWalkStateName: BackWalk
 --- !u!114 &1270632122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1111,8 +1113,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectTable: {fileID: 0}
-  playerParts: []
+  effectTable: {fileID: 11400000, guid: ff8764b4f811c4340bfb84300bfac59d, type: 2}
+  playerParts:
+  - {fileID: 11400000, guid: 0b272ca40ea9d574fa8fb9fb7fd5b74e, type: 2}
   enemyParts: []
 --- !u!1 &1328636925
 GameObject:

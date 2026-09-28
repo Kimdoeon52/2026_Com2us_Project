@@ -105,7 +105,7 @@ public class RobotView : MonoBehaviour
     {
         // 데이터가 의도한 소요시간과 실제로 걸린 시간이 얼마나 차이나는지 매 액션마다 로그로 남겨서,
         // speed 계산식이 제대로 동작하는지(§10 검증 대상) 플레이만 해봐도 확인할 수 있게 한다
-        Debug.Log($"[진단] {finishedAction.ActionName} 실제 소요시간={Time.time - actionStartTime:F3}s (데이터={finishedAction.TotalFrames / 60f:F3}s)");
+        // Debug.Log($"[진단] {finishedAction.ActionName} 실제 소요시간={Time.time - actionStartTime:F3}s (데이터={finishedAction.TotalFrames / 60f:F3}s)");
         if (animator == null) return;
 
         // 액션 재생 중 데이터 길이에 맞추려고 바꿔둔 speed를 그대로 두면, Idle/Walk 애니메이션까지

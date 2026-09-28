@@ -103,8 +103,8 @@ public class HUDInteractiveTester : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha4)) DamagePart(BodyPart.LeftLeg);
         if (Input.GetKeyDown(KeyCode.Alpha5)) DamagePart(BodyPart.RightLeg);
 
-        // 2. Space 키: 코어 체력 유효타 피격
-        if (Input.GetKeyDown(KeyCode.Space))
+        // 2. LeftAlt 키: 코어 체력 유효타 피격
+        if (Input.GetKeyDown(KeyCode.LeftAlt))
         {
             DamageCore(coreDamageStep);
         }

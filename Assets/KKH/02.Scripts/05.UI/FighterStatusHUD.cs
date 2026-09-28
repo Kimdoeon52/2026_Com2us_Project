@@ -154,7 +154,7 @@ public class FighterStatusHUD : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.Alpha3)) HitPart(BodyPart.RightArm, 25);
         else if (Input.GetKeyDown(KeyCode.Alpha4)) HitPart(BodyPart.LeftLeg, 25);
         else if (Input.GetKeyDown(KeyCode.Alpha5)) HitPart(BodyPart.RightLeg, 25);
-        else if (Input.GetKeyDown(KeyCode.Space)) HitCore(100);
+        else if (Input.GetKeyDown(KeyCode.LeftAlt)) HitCore(100);
         else if (Input.GetKeyDown(KeyCode.R)) ResetAllStats();
         else if (Input.GetKeyDown(KeyCode.K)) HitCore(9999);
     }

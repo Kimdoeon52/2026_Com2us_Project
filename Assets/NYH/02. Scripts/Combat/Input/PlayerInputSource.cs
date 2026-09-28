@@ -84,13 +84,13 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
         // GetKeyDown(누른 그 순간 한 프레임만 true)을 쓰는 이유: 공격 키는 GetKey를 쓰면 누르고 있는
         // 내내 계속 true라서, "누른 순간 한 번만" 기술이 나가게 하려면 Down이 맞다.
         // 위에서 아래로 순서대로 검사하다가 하나라도 맞으면 즉시 반환 — 여러 키를 동시에 눌러도
-        // 코드에 먼저 적힌 키가 우선권을 갖는다(D가 최우선)
-        if (Input.GetKeyDown(KeyCode.D)) return jab;
+        // 코드에 먼저 적힌 키가 우선권을 갖는다(A가 최우선)
+        if (Input.GetKeyDown(KeyCode.A)) return jab;
         if (Input.GetKeyDown(KeyCode.Q)) return straight;
-        if (Input.GetKeyDown(KeyCode.A)) return hook;
+        if (Input.GetKeyDown(KeyCode.S)) return hook;
         if (Input.GetKeyDown(KeyCode.W)) return uppercut;
-        if (Input.GetKeyDown(KeyCode.S)) return backspinElbow;
-        if (Input.GetKeyDown(KeyCode.C)) return guard; // 지금은 ActionExecutor.IsGuarding이 방향으로 대신 판정하므로, 여기서 guard가 반환돼도 실질적으로 안 쓰임
+        if (Input.GetKeyDown(KeyCode.T)) return backspinElbow;
+        if (Input.GetKeyDown(KeyCode.Z)) return guard; // 지금은 ActionExecutor.IsGuarding이 방향으로 대신 판정하므로, 여기서 guard가 반환돼도 실질적으로 안 쓰임
         if (Input.GetKeyDown(KeyCode.Space)) return weaving;
 
         return null; // 아무 공격 키도 안 눌림

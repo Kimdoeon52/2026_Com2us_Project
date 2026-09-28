@@ -1262,18 +1262,18 @@ MonoBehaviour:
     serializedVersion: 2
     key0: {r: 1, g: 0.7, b: 0.52, a: 1}
     key1: {r: 1, g: 0.88, b: 0.62, a: 1}
-    key2: {r: 1, g: 0.94, b: 0.78, a: 0}
+    key2: {r: 1, g: 1, b: 1, a: 0}
     key3: {r: 1, g: 0.86, b: 0.58, a: 0}
     key4: {r: 1, g: 0.62, b: 0.34, a: 0}
     key5: {r: 0.95, g: 0.45, b: 0.35, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 15018
-    ctime1: 21845
-    ctime2: 34133
-    ctime3: 43690
-    ctime4: 50244
-    ctime5: 52701
+    ctime0: 5397
+    ctime1: 18311
+    ctime2: 32960
+    ctime3: 45296
+    ctime4: 53392
+    ctime5: 61102
     ctime6: 0
     ctime7: 0
     atime0: 0
@@ -1285,7 +1285,7 @@ MonoBehaviour:
     atime6: 0
     atime7: 0
     m_Mode: 0
-    m_ColorSpace: -1
+    m_ColorSpace: 0
     m_NumColorKeys: 6
     m_NumAlphaKeys: 2
   drivePost: 1
@@ -1766,8 +1766,8 @@ MonoBehaviour:
   m_IsGlobal: 1
   priority: 0
   blendDistance: 0
-  weight: 1
-  sharedProfile: {fileID: 11400000, guid: 7dca124d1c12b9e4c861a497cf9bb40f, type: 2}
+  weight: 0.3
+  sharedProfile: {fileID: 11400000, guid: 0d5b7a98d89e2224d88955fff62bc358, type: 2}
 --- !u!1 &466538021
 GameObject:
   m_ObjectHideFlags: 0
@@ -2179,7 +2179,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 33.208496, y: 31.585205}
+  m_LightCookieOffset: {x: 15.283447, y: 25.888672}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:

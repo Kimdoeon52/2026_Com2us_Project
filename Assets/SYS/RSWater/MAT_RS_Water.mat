@@ -36,10 +36,10 @@ Material:
     - _GlintSharpness: 26
     - _GlintStrength: 7.5
     - _GlintThreshold: 0.35
-    - _PixelDensity: 16
-    - _ReflectionDistort: 0.05
+    - _PixelDensity: 10
+    - _ReflectionDistort: 0.04
     - _ReflectionMin: 0.4
-    - _ReflectionStrength: 0.75
+    - _ReflectionStrength: 0.7
     - _Refraction: 0.04
     - _SkyFromAmbient: 0.7
     - _UseDepth: 1
@@ -51,7 +51,7 @@ Material:
     - _DeepColor: {r: 0, g: 0, b: 0, a: 1}
     - _FlowDir: {r: 0.5, g: 0.5, b: 0, a: 0}
     - _FoamColor: {r: 0.85, g: 0.92, b: 0.88, a: 1}
-    - _ReflectionTint: {r: 0.9, g: 0.95, b: 1, a: 1}
+    - _ReflectionTint: {r: 1, g: 1, b: 1, a: 1}
     - _ShallowColor: {r: 0, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

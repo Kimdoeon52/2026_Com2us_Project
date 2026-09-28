@@ -120,7 +120,7 @@ MonoBehaviour:
     m_Value: 0.1
   contrast:
     m_OverrideState: 1
-    m_Value: 12
+    m_Value: 32
   colorFilter:
     m_OverrideState: 1
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -148,12 +148,12 @@ MonoBehaviour:
     m_Value: 1
   threshold:
     m_OverrideState: 1
-    m_Value: 0.1
+    m_Value: 0
   intensity:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 1.5
   scatter:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value: 0.7
   clamp:
     m_OverrideState: 0
@@ -176,4 +176,4 @@ MonoBehaviour:
     dimension: 1
   dirtIntensity:
     m_OverrideState: 1
-    m_Value: 15
+    m_Value: 5

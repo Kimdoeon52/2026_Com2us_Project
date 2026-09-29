@@ -3,21 +3,25 @@ using DG.Tweening;
 using NUnit.Framework;
 using System.Collections.Generic;
 using TMPro;
+using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.UI;
 /*
+ 
  경매장 시스템.
  처음에 랜덤 물품 5개~10개 정도 준비한다.
  첫 물품부터 경매를 시작하고 플레이어는 포기 혹은 입찰을 진행.
  플레이어는 해당 경매장을 나가기 전까지 경매를 진행할 수 있다.
  AI들은 각각 판단에따라 입찰을 진행한다. (본인 로봇 보다 좋은 부품인가 아닌가, 보유 골드가 얼마인가. 등등)
-
+ 
  내가 뜸들이는 동안에도 ai끼리 계속 경매 진행을 해야댐.
-
+ 
  10/4 해야할꺼.
  판매 ui 대충 물건 올리는거 부분 그리기. 기능 필요없음 시각적으로 보이게만.
-
+ 
  AI 성격 5개 기획서 확인하고 만들기.
+ 보스 세명.
+ 조무레기 다섯명. 골드 상관
  물건 바꾸기. 장비들로.
  
  */
@@ -39,13 +43,23 @@ public class Auction : PersistentSingleton<Auction>
     [SerializeField] public Button giveUpButton;
 
     [Header("참여 Ai 리스트")]
-    [SerializeField] public List<AiBase> aiList; //참여 Ai 리스트
+    [SerializeField] public List<NpcAiBase> npcAiList; //참여 Ai 리스트
+
+    [Header("참여 Boss 리스트")]
+    [SerializeField] public List<BossAiBase> bossAiList; //참여 Boss 리스트
+
+    [Header("참여 Ai + Boss 리스트")]
+    [SerializeField] private List<AllAiBase> auctionAiList; //참여 Ai + Boss 리스트
+    [SerializeField] private int dayOfEnterNpc; //그날 하루 Npc 참여 수
 
     [Header("경매 물품 리스트")]
-    public List<TestStuff> auctionItem; //경매 물품리스트 나중에 TestStuff를 바꿀것
+    public List<PartsDefinition> auctionItem; //경매 물품리스트 나중에 TestStuff를 바꿀것
+
+    [Header("플레이어 이름")]
+    private string playerName; //플레이어 이름
 
     private int currentCost = 0; // 현재 가격
-    private TestStuff stuff;
+    private PartsDefinition stuff;
     private bool isAuctioningFin = true; // 경매가 끝낫는지 확인
     //=======================시간 제한=================================
     [Header("제한 시간 UI")]
@@ -76,9 +90,12 @@ public class Auction : PersistentSingleton<Auction>
 
     private void Start()
     {
+        playerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //플레이어 이름 가져오기
         stuff = auctionItem[Random.Range(0, auctionItem.Count)];
-        currentCost = stuff.cost;
+        currentCost = stuff.Cost;
         UpdateGoldDisplay(); //내 골드 표시 및 업데이트
+        DayOfAuctionEnter();
+        GetAuctionNpc(dayOfEnterNpc);
     }
     private void Update()
     {
@@ -87,16 +104,51 @@ public class Auction : PersistentSingleton<Auction>
            StartAuction().Forget();
         }
     }
+
+    //========================================경매 시작시 참여 npc목록 ========================================
+    private void DayOfAuctionEnter()
+    {
+        dayOfEnterNpc = Random.Range(3, 8); //그날 하루 참여 Npc 수 랜덤 7명까지
+    }
+    private void GetAuctionNpc(int enterNpc)//그날 하루 참여 Npc 목록
+    {
+        // 경매 참가 인원수가 전체 NPC 수보다 많으면 전체 수로 보정
+        
+
+        auctionAiList.Clear(); 
+        bool isBossEnter = Random.value < 0.35f; //35%확률로 보스 참여
+        if (isBossEnter && bossAiList.Count > 0)
+        {
+            int randomBossIndex = Random.Range(0, bossAiList.Count);
+            auctionAiList.Add(bossAiList[randomBossIndex]); //보스 참여
+            console.text += $"{bossAiList[randomBossIndex].NPCName}님이 참가 했습니다.\n";
+        }
+        HashSet<int> selectedIndices = new HashSet<int>();
+        int targetCount = Mathf.Min(enterNpc, auctionAiList.Count);
+        while (selectedIndices.Count < targetCount)
+        {
+            int randomIndex = Random.Range(0, auctionAiList.Count);
+            selectedIndices.Add(randomIndex); // HashSet은 중복된 값이면 자동으로 무시됨
+        }
+
+        foreach (int index in selectedIndices)
+        {
+            auctionAiList.Add(auctionAiList[index]); //auctionAiList에서 랜덤으로 선택된 애들 추가.
+        }
+    }
+
+    //============================================경매시작===========================================================
+
     private async UniTask StartAuction() //경매 시작 부분.
     {
         isAuctioningFin = false;
         isChatting = true;
         ButtonReady(false); //플레이어 선택 버튼 비활성화
-        foreach (var ai in aiList)
+        foreach (var ai in auctionAiList)
         {
             if (ai != null)
             {
-                console.text += $"{ai.NpcName}님이 참가 했습니다.\n";
+                console.text += $"{ai.NPCName}님이 참가 했습니다.\n";
                 ai.ReadyForAction(); //AI 준비
             }
         }
@@ -104,7 +156,7 @@ public class Auction : PersistentSingleton<Auction>
         await StartAuctionChatting();
         await UniTask.Delay(1000);
         // 물품 보여주고
-        auctionName.text = stuff.stuffName; 
+        auctionName.text = stuff.DisplayName; 
         auctionCost.text = currentCost.ToString();
         await WaitInput(); //입력대기
         // 물품 소개 하고
@@ -133,7 +185,7 @@ public class Auction : PersistentSingleton<Auction>
     {
         // 각 AI마다 독립적인 루프를 비동기로 동시 실행
         List<UniTask> aiTasks = new List<UniTask>();
-        foreach (var ai in aiList)
+        foreach (var ai in auctionAiList)
         {
             if (ai != null)
             {
@@ -144,7 +196,7 @@ public class Auction : PersistentSingleton<Auction>
         await UniTask.WhenAll(aiTasks);
     }
     // 개별 AI가 각자의 생각 주기(딜레이)를 갖고 독자적으로 입찰하는 루틴
-    private async UniTask AiRoutine(AiBase ai)
+    private async UniTask AiRoutine(AllAiBase ai)
     {
         while (isTimeRunning && !isAuctioningFin)
         {
@@ -152,16 +204,16 @@ public class Auction : PersistentSingleton<Auction>
             int thinkDelay = Random.Range(5000, 20000);
             if(!ai.IsReady) //포기 안했으면 고민중 콘솔 출력
             {
-                console.text += $"{ai.NpcName}님이 {thinkDelay / 1000}초 동안 고민중.\n";
+                console.text += $"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n";
             }
             await UniTask.Delay(thinkDelay);
 
             if (!isTimeRunning || isAuctioningFin) break;
 
             // 이미 자기가 최고 입찰자면 굳이 자기 돈을 또 올릴 필요 없음
-            if (winnerName == ai.NpcName)
+            if (winnerName == ai.NPCName)
             {
-                console.text += $"{ai.NpcName}은 현재 최고 입찰자라 더이상 레이즈하지 않습니다.\n";
+                console.text += $"{ai.NPCName}은 현재 최고 입찰자라 더이상 레이즈하지 않습니다.\n";
                 continue;
             }
                 
@@ -170,16 +222,16 @@ public class Auction : PersistentSingleton<Auction>
             if (ai.IsReady) continue;
 
             // AI의 고유 판단 실행
-            if (ai.RaiseThink(currentCost, stuff.cost))
+            if (ai.RaiseThink(currentCost, stuff.Cost))
             {
-                console.text += $"{ai.NpcName}판단 끝! 결과 레이즈.\n";
+                console.text += $"{ai.NPCName}판단 끝! 결과 레이즈.\n";
                 // 실시간 입찰 성공!
                 currentCost += 100;
                 auctionCost.text = currentCost.ToString();
-                winnerName = ai.NpcName;
+                winnerName = ai.NPCName;
                 ifPlayerWin = false;
 
-                chat.text = $"{ai.NpcName} 님이 {currentCost}G로 레이즈!";
+                chat.text = $"{ai.NPCName} 님이 {currentCost}G로 레이즈!";
 
                 if (remainingTime < 10f) //10초 미만이면 10초로 초기화
                 {
@@ -188,9 +240,9 @@ public class Auction : PersistentSingleton<Auction>
             }
             else
             {
-                console.text += $"{ai.NpcName}판단 끝! 결과 포기.\n";
+                console.text += $"{ai.NPCName}판단 끝! 결과 포기.\n";
                 // 예산 초과 등으로 포기
-                chat.text = $"{ai.NpcName} 님이 입찰을 포기했습니다.";
+                chat.text = $"{ai.NPCName} 님이 입찰을 포기했습니다.";
             }
 
             // 모든 참가자가 포기했는지 수시로 검사
@@ -221,7 +273,7 @@ public class Auction : PersistentSingleton<Auction>
     ////AI 턴
     //private async UniTask AiTurn()
     //{
-    //    foreach (var ai in aiList)
+    //    foreach (var ai in auctionAiList)
     //    {
     //        if(ai == null || ai.IsReady) continue;
 
@@ -253,7 +305,7 @@ public class Auction : PersistentSingleton<Auction>
     {
         int inGamePlayer = 0;
         if(!isPlayerGiveUp) inGamePlayer++; //플레이어가 포기 안했으면 1더해주고
-        foreach(var ai in aiList)
+        foreach(var ai in auctionAiList)
         {
             if(ai != null && !ai.IsReady) //AI가 포기 안했으면 또 더해주고
             {
@@ -276,17 +328,17 @@ public class Auction : PersistentSingleton<Auction>
 
         if (ifPlayerWin)
         {
-            GlobalGold.Instance.UseGold(1, currentCost); //플레이어 골드 차감
+            GlobalGold.Instance.UseGold(playerName, currentCost); //플레이어 골드 차감
             UpdateGoldDisplay(); //내 골드 표시 및 업데이트
             GlobalGold.Instance.SaveGame(); //할지는 일단 대기
         }
         else
         {
-            foreach (var ai in aiList)
+            foreach (var ai in auctionAiList)
             {
-                if (ai != null && ai.NpcName == winnerName)
+                if (ai != null && ai.NPCName == winnerName)
                 {
-                    GlobalGold.Instance.UseGold(ai.data.ID, currentCost); //AI 골드 차감
+                    GlobalGold.Instance.UseGold(ai.NPCName, currentCost); //AI 골드 차감
                     GlobalGold.Instance.SaveGame(); //AI 골드 저장
                     break;
                 }
@@ -297,7 +349,7 @@ public class Auction : PersistentSingleton<Auction>
     //======================채팅====================================
     private async UniTask StartAuctionChatting() //경매 시작 부분 대사 함수
     {
-        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.stuffName);
+        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.DisplayName);
         if (chatList != null && chatList.Count > 0)
         {
             foreach (var chatMessage in chatList)
@@ -309,7 +361,7 @@ public class Auction : PersistentSingleton<Auction>
     }
     private async UniTask IntroAuction() //물품 소개
     {
-        List<string> chatList = ChatList.Instance.GetChat("물건소개", stuff.stuffName);
+        List<string> chatList = ChatList.Instance.GetChat("물건소개", stuff.DisplayName);
         if (chatList != null && chatList.Count > 0)
         {
             foreach (var chatMessage in chatList)
@@ -321,7 +373,7 @@ public class Auction : PersistentSingleton<Auction>
     }
     private async UniTask ActionFinish() //경매완료
     { 
-        string winerName = ifPlayerWin ? GlobalGold.Instance.data[0].npcName : this.winnerName; //낙찰자 이름 결정
+        string winerName = ifPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterName : this.winnerName; //낙찰자 이름 결정
        
         if (string.IsNullOrEmpty(winerName)) //낙찰자가 없으면
         {
@@ -388,7 +440,7 @@ public class Auction : PersistentSingleton<Auction>
     private void UpdateGoldDisplay()
     {
         if(myGold != null)
-            myGold.text = "보유골드: " + GlobalGold.Instance.data[0].gold.ToString(); //내 골드 가져오기
+            myGold.text = "보유골드: " + GlobalGold.Instance.mainCharacterdata[0].mainCharacterGold.ToString(); //내 골드 가져오기
         //여기서 내 골드 표시 UI 업데이트 코드 추가 가능
     }
     //=============================== 포기 or 레이즈 버튼클릭==================================================
@@ -407,20 +459,20 @@ public class Auction : PersistentSingleton<Auction>
     public void OnRaiseButton() //레이즈 버튼 클릭시
     {
         if (!isTimeRunning || isPlayerGiveUp) return;
-        if(winnerName == GlobalGold.Instance.data[0].npcName) //이미 내가 최고 입찰자면 레이즈 불가
+        if(winnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName) //이미 내가 최고 입찰자면 레이즈 불가
         {
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
         }
         int needGold = currentCost + 100; //다음 입찰 가격
-        if (GlobalGold.Instance.CanUseGold(1, needGold)) //가격비교
+        if (GlobalGold.Instance.CanUseGold(playerName, needGold)) //가격비교
         {
             currentCost = needGold;
             auctionCost.text = currentCost.ToString();
 
-            winnerName = GlobalGold.Instance.data[0].npcName; //입찰자 이름 업데이트
+            winnerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //입찰자 이름 업데이트
             ifPlayerWin = true;
-            chat.text = $"{GlobalGold.Instance.data[0].npcName} 님이 {currentCost}G로 레이즈!";
+            chat.text = $"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {currentCost}G로 레이즈!";
             if (remainingTime < 10f) //10초 미만이면 10초로 초기화
             {
                 remainingTime = 10f;

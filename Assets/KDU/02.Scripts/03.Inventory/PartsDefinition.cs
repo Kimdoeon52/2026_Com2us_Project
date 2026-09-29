@@ -49,6 +49,9 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("내구도")]
     [SerializeField] private int _durability;
 
+    [Tooltip("가격")]
+    [SerializeField] private int cost;
+
     public string Id => _id;
     public string DisplayName => _displayName;
     public string Description => _description;
@@ -59,6 +62,7 @@ public class PartsDefinition : ScriptableObject
     public PartGrade Grade => _grade;
     public DestructiveResistance DestructiveResistance => _destructiveResistance;
     public int Durability => _durability;
+    public int Cost => cost;
 
     // 외곽 크기. 렌더 크기 계산용
     public Vector2Int Size => _shape.Size;

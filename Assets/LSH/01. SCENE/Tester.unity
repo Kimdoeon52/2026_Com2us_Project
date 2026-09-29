@@ -888,22 +888,45 @@ MonoBehaviour:
   myGold: {fileID: 389162651}
   raiseButton: {fileID: 1709811340}
   giveUpButton: {fileID: 1228110433}
-  aiList:
+  npcAiList:
   - {fileID: 7966300344390778085, guid: 5ba687b49e2434342a7948215d9d97ad, type: 3}
-  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
   - {fileID: 3774233451545845227, guid: c58854e1bab55ac408bcc8dc1d637b50, type: 3}
+  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
   - {fileID: 2894846375302795290, guid: 0aa924421c35ec240a6afa487d05956e, type: 3}
   - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  bossAiList:
+  - {fileID: 610435597692966113, guid: d3556229fb6b5954bbee7b0caae9d7ad, type: 3}
+  auctionAiList: []
+  dayOfEnterNpc: 0
   auctionItem:
-  - {fileID: 11400000, guid: 3f76ab18b89153f4d9c207f4b8552538, type: 2}
-  - {fileID: 11400000, guid: ec9d9589f1a21d843ac1ea01ad000660, type: 2}
-  - {fileID: 11400000, guid: 6a2d669d87cd48748a61215412a88a91, type: 2}
-  - {fileID: 11400000, guid: 1a35203254c09e447a562d5b60288b1e, type: 2}
-  - {fileID: 11400000, guid: 5d914aacc398f93459fdb719e0cf6ad4, type: 2}
-  - {fileID: 11400000, guid: 82de2087bd309a64aae59e64795f07ee, type: 2}
-  - {fileID: 11400000, guid: 5f5293cc593746c40b542ebe9203ab59, type: 2}
-  - {fileID: 11400000, guid: 3e12dae1f033c734ba86e86654082676, type: 2}
-  - {fileID: 11400000, guid: 12e670972da4453439659d7bb55b2c2c, type: 2}
+  - {fileID: 11400000, guid: e044d4a915e273448a0f5ce49d101ca7, type: 2}
+  - {fileID: 11400000, guid: 6e887b057c382e74fa427032f167f261, type: 2}
+  - {fileID: 11400000, guid: 6c029f5b49d707c4fb83643bc1bc6aab, type: 2}
+  - {fileID: 11400000, guid: bfaf3e5653c41c84190626fb6004d85b, type: 2}
+  - {fileID: 11400000, guid: ef590dbcadcaf074381d05fcd986c2dc, type: 2}
+  - {fileID: 11400000, guid: 3b96df3462102934691a96ea4d9981ec, type: 2}
+  - {fileID: 11400000, guid: cfaccbfcb7615f940bd66b9eff0e7594, type: 2}
+  - {fileID: 11400000, guid: 51e7a445a5a596e43b41bf8bbcab5c92, type: 2}
+  - {fileID: 11400000, guid: cb6457ed00150e045ac5d1c1e0438c3d, type: 2}
+  - {fileID: 11400000, guid: 610c163e6c0cf094e8ebc4f671cd0940, type: 2}
+  - {fileID: 11400000, guid: d7d199c19ec7a06438db8da42da2bfac, type: 2}
+  - {fileID: 11400000, guid: df01e23faecc235419631c2cf731a4ae, type: 2}
+  - {fileID: 11400000, guid: 0ea623483826282458815df85e21ddf0, type: 2}
+  - {fileID: 11400000, guid: 4e08b1309cbb1764b9828a0f40220c23, type: 2}
+  - {fileID: 11400000, guid: bda7653db8432d44c8f4977bb42a5880, type: 2}
+  - {fileID: 11400000, guid: c7c547d5bb34bfb4bb6518e9007f8d96, type: 2}
+  - {fileID: 11400000, guid: 5365f1ad921297b4da259b969b4c7516, type: 2}
+  - {fileID: 11400000, guid: 60c5dae1e6e2d7e48bda92522095be5d, type: 2}
+  - {fileID: 11400000, guid: ec6eaa7e81d3e1649bc164679613bf21, type: 2}
+  - {fileID: 11400000, guid: db919d395f1dd4d49b60deb2dc24a070, type: 2}
+  - {fileID: 11400000, guid: d3953c5bba5b5a946b71f862a86def2a, type: 2}
+  - {fileID: 11400000, guid: 1385eb72d4fb7b141a5ba1f6ce87ff9f, type: 2}
+  - {fileID: 11400000, guid: 685a672a63e63504c91944ccdeaf0e50, type: 2}
+  - {fileID: 11400000, guid: 5ae51013fd4a76542bb047d859da7cf9, type: 2}
   timeBar: {fileID: 1191147751}
   console: {fileID: 413660742}
 --- !u!4 &609825351
@@ -1814,12 +1837,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a92e1bd2e26bc4a916fba8a37d3a01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data:
+  mainCharacterdata:
   - {fileID: 11400000, guid: 6ccfe10df081c8b41ba46c0870c370d6, type: 2}
-  - {fileID: 11400000, guid: acab5704e4025544f895ba90ca54531d, type: 2}
-  - {fileID: 11400000, guid: 51c7b7e4aaa69004a82009c5026ef949, type: 2}
-  - {fileID: 11400000, guid: e7eb84195eeffdf488521ea117c3e8d8, type: 2}
-  - {fileID: 11400000, guid: f90f667de49a13d4186df6e5fe88d0dd, type: 2}
+  - {fileID: 11400000, guid: d168d23fec062db4d959b7046bd81663, type: 2}
+  - {fileID: 11400000, guid: 5523a9e8e76a1694691c6eefda7348b2, type: 2}
+  - {fileID: 11400000, guid: 0a907598b74e44b4ab5baf6ecae33092, type: 2}
 --- !u!4 &1368561707
 Transform:
   m_ObjectHideFlags: 0

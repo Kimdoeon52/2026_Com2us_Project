@@ -11,26 +11,30 @@ using UnityEngine;
 public class GlobalGold: PersistentSingleton<GlobalGold>
 {
     // 현재 게임 데이터
-    public List<Gold> data;
-    
+    public List<MainCharacterGold> mainCharacterdata;
     // 저장 파일 경로
-    private string savePath;
+    private string mainSavePath; //메인 캐릭터들 세이브 경로
 
     protected override void Awake()
     {
         base.Awake();
         // 저장 파일 경로 설정
-        savePath = Path.Combine(Application.persistentDataPath, "DorajiGold.json");
-        Debug.Log($"[저장 경로] {savePath}");
+#if UNITY_EDITOR
+        mainSavePath = Path.Combine(Application.dataPath, "LSH");
+#else
+        mainSavePath = System.AppDomain.CurrentDomain.BaseDirectory;
+#endif
+        Debug.Log($"[저장 경로] {mainSavePath}");
         LoadGame();
     }
 
     void Start()
     {
+        LoadGame(); //저장하면 로드
         // 게임 시작 시 기존 데이터 불러오기
-        foreach (var goldData in data)
+        foreach (var goldData in mainCharacterdata)
         {
-            Debug.Log($"현재 NPC: {goldData.npcName}, 골드: {goldData.gold}");
+            Debug.Log($"현재 Main캐릭터들: {goldData.mainCharacterName}, 골드: {goldData.mainCharacterGold}");
         }
     }
 
@@ -68,34 +72,34 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
 
     //================================================골드 관련 기능=====================================================
 
-    public void GetGold(int id, int goldplus) //골드 추가하는 함수임
+    public void GetGold(string name, int goldplus) //골드 추가하는 함수임
     {
-        foreach (var goldData in data) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌
+        foreach (var goldData in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌
         {
-            if (goldData.ID == id)
+            if (goldData.mainCharacterName == name)
             {
-                goldData.gold += goldplus;
-                Debug.Log($"NPC {goldData.npcName}의 골드추가했다능~ {goldData.gold}");
+                goldData.mainCharacterGold += goldplus;
+                Debug.Log($"NPC {goldData.mainCharacterName}의 골드추가했다능~ {goldData.mainCharacterGold}");
                 return;
             }
         }
     }
 
-    public bool UseGold(int id, int goldminus) //골드 사용했다는 함수임 일부러 bool을 리턴해서 골드 사용 가능 불가능 여부 전달.
+    public bool UseGold(string name, int goldminus) //골드 사용했다는 함수임 일부러 bool을 리턴해서 골드 사용 가능 불가능 여부 전달.
     {
-        foreach (var goldData in data) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 사용해줌
+        foreach (var goldData in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 사용해줌
         {
-            if (goldData.ID == id)
+            if (goldData.mainCharacterName == name)
             {
-                if (goldData.gold >= goldminus)
+                if (goldData.mainCharacterGold >= goldminus)
                 {
-                    goldData.gold -= goldminus;
-                    Debug.Log($"NPC {goldData.npcName}의 골드사용했다능~ {goldData.gold}");
+                    goldData.mainCharacterGold -= goldminus;
+                    Debug.Log($"NPC {goldData.mainCharacterName}의 골드사용했다능~ {goldData.mainCharacterGold}");
                     return true;
                 }
                 else
                 {
-                    Debug.Log($"NPC {goldData.npcName}의 골드가 부족하다능~ 현재 골드: {goldData.gold}");
+                    Debug.Log($"NPC {goldData.mainCharacterName}의 골드가 부족하다능~ 현재 골드: {goldData.mainCharacterGold}");
                 }
                 return false;
             }
@@ -105,20 +109,20 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
 
     public void AddGoldAllNpc(int goldplus) //모든 npc에게 골드 추가하는 함수임
     {
-        foreach (var goldData in data)
+        foreach (var goldData in mainCharacterdata)
         {
-            goldData.gold += goldplus;
-            Debug.Log($"NPC {goldData.npcName}의 골드추가했다능~ {goldData.gold}");
+            goldData.mainCharacterGold += goldplus;
+            Debug.Log($"NPC {goldData.mainCharacterName}의 골드추가했다능~ {goldData.mainCharacterGold}");
         }
     }
     //====================================골드 사용 가능 불가능 판단 여부===============================================
-    public bool CanUseGold(int id, int requiredGold) //골드 사용 가능 여부 판단하는 함수임
+    public bool CanUseGold(string name, int requiredGold) //골드 사용 가능 여부 판단하는 함수임
     {
-        foreach (var goldData in data)
+        foreach (var goldData in mainCharacterdata)
         {
-            if (goldData.ID == id)
+            if (goldData.mainCharacterName == name)
             {
-                return goldData.gold >= requiredGold;
+                return goldData.mainCharacterGold >= requiredGold;
             }
         }
         return false;
@@ -128,33 +132,35 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
     public void SaveGame()
     {
         string json = "";
-        foreach (var goldData in data)
+        foreach (var goldData in mainCharacterdata)
         {
             json += JsonUtility.ToJson(goldData) + "\n"; //문자열로 번역하는 기능
         }
         //json +=JsonUtility.ToJson(data, true); //문자열로 번역하는 기능
-        File.WriteAllText(savePath, json);
-        Debug.Log($"[저장 완료] 경로: {savePath}\n내용: {json}");
+        File.WriteAllText(mainSavePath, json);
+        Debug.Log($"[저장 완료] 경로: {mainSavePath}\n내용: {json}");
     }
 
     // JSON 파일에서 불러오기
     public void LoadGame()
     {
-        if (File.Exists(savePath))
+        if (File.Exists(mainSavePath))
         {
-            string[] json = File.ReadAllLines(savePath); //savePath에 있는 json파일을 읽어와서 json변수에 저장
-            if (data == null) {
+            string[] mainJson = File.ReadAllLines(mainSavePath); //savePath에 있는 json파일을 읽어와서 json변수에 저장
+            if (mainCharacterdata == null) 
+            {
                 Debug.Log("data is null");
-                //data = ScriptableObject.CreateInstance<Gold>(); 
             }
             //Debug.Log(data.name + " " + json);  
             //data = JsonUtility.FromJson<Gold>(json); //json 문자열을 GameData 객체로 변환 data에는 이제 변경된 골드값이 들어가게 됌! //class는 직접 넣고
             int index = 0;
-            foreach (var goldData in data)
+
+            //===============================main 캐릭터 데이터 불러오기=========================================
+            foreach (var goldData in mainCharacterdata)
             {
-                if (index >= json.Length)
+                if (index >= mainJson.Length)
                     break;
-                JsonUtility.FromJsonOverwrite(json[index], goldData); // 기존 goldData 객체를 유지하면서 json 데이터를 덮어씀
+                JsonUtility.FromJsonOverwrite(mainJson[index], goldData); // 기존 goldData 객체를 유지하면서 json 데이터를 덮어씀
                 index++;
             }
         }

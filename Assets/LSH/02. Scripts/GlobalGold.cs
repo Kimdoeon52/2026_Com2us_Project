@@ -18,12 +18,22 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
     protected override void Awake()
     {
         base.Awake();
-        // 저장 파일 경로 설정
+        // 저장할 디렉터리 경로 및 파일 경로 설정
+        string basePath;
 #if UNITY_EDITOR
-        mainSavePath = Path.Combine(Application.dataPath, "LSH");
+        basePath = Path.Combine(Application.dataPath, "LSH", "06. JSon");
 #else
-        mainSavePath = System.AppDomain.CurrentDomain.BaseDirectory;
+        basePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "JSonGoldData"); //빌드하면 저장경로에 저거 이름으로 만들어짐
 #endif
+        // 해당 디렉터리(폴더)가 없으면 생성임. 그냥 호오오오옥시 모를때
+        if (!Directory.Exists(basePath))
+        {
+            Directory.CreateDirectory(basePath);
+        }
+
+        // 최종 파일 경로: LSH/06.JSon/mainGold.json
+        mainSavePath = Path.GetFullPath(Path.Combine(basePath, "mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
+
         Debug.Log($"[저장 경로] {mainSavePath}");
         LoadGame();
     }

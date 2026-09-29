@@ -888,12 +888,16 @@ MonoBehaviour:
   myGold: {fileID: 389162651}
   raiseButton: {fileID: 1709811340}
   giveUpButton: {fileID: 1228110433}
-  aiList:
+  npcAiList:
   - {fileID: 7966300344390778085, guid: 5ba687b49e2434342a7948215d9d97ad, type: 3}
-  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
   - {fileID: 3774233451545845227, guid: c58854e1bab55ac408bcc8dc1d637b50, type: 3}
+  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
   - {fileID: 2894846375302795290, guid: 0aa924421c35ec240a6afa487d05956e, type: 3}
   - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  bossAiList:
+  - {fileID: 610435597692966113, guid: d3556229fb6b5954bbee7b0caae9d7ad, type: 3}
+  auctionAiList: []
+  dayOfEnterNpc: 0
   auctionItem:
   - {fileID: 11400000, guid: 3f76ab18b89153f4d9c207f4b8552538, type: 2}
   - {fileID: 11400000, guid: ec9d9589f1a21d843ac1ea01ad000660, type: 2}
@@ -1814,12 +1818,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78a92e1bd2e26bc4a916fba8a37d3a01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data:
-  - {fileID: 11400000, guid: 6ccfe10df081c8b41ba46c0870c370d6, type: 2}
-  - {fileID: 11400000, guid: acab5704e4025544f895ba90ca54531d, type: 2}
-  - {fileID: 11400000, guid: 51c7b7e4aaa69004a82009c5026ef949, type: 2}
-  - {fileID: 11400000, guid: e7eb84195eeffdf488521ea117c3e8d8, type: 2}
-  - {fileID: 11400000, guid: f90f667de49a13d4186df6e5fe88d0dd, type: 2}
+  mainCharacterdata: []
 --- !u!4 &1368561707
 Transform:
   m_ObjectHideFlags: 0

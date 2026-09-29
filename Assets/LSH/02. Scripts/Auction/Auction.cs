@@ -90,10 +90,28 @@ public class Auction : PersistentSingleton<Auction>
 
     private void Start()
     {
-        playerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //플레이어 이름 가져오기
-        stuff = auctionItem[Random.Range(0, auctionItem.Count)];
-        currentCost = stuff.Cost;
-        UpdateGoldDisplay(); //내 골드 표시 및 업데이트
+        // 1. 플레이어 데이터 리스트 체크
+        if (GlobalGold.Instance.mainCharacterdata != null && GlobalGold.Instance.mainCharacterdata.Count > 0)
+        {
+            playerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName;
+        }
+        else
+        {
+            Debug.LogError("GlobalGold에 mainCharacterdata가 읍다");
+            playerName = "Player";
+        }
+        if (auctionItem != null && auctionItem.Count > 0)
+        {
+            stuff = auctionItem[Random.Range(0, auctionItem.Count)];
+            currentCost = stuff.Cost;
+        }
+        else
+        {
+            Debug.LogError("경매 물품 리스트가 읍다");
+            return;
+        }
+
+        UpdateGoldDisplay();
         DayOfAuctionEnter();
         GetAuctionNpc(dayOfEnterNpc);
     }
@@ -113,8 +131,6 @@ public class Auction : PersistentSingleton<Auction>
     private void GetAuctionNpc(int enterNpc)//그날 하루 참여 Npc 목록
     {
         // 경매 참가 인원수가 전체 NPC 수보다 많으면 전체 수로 보정
-        
-
         auctionAiList.Clear(); 
         bool isBossEnter = Random.value < 0.35f; //35%확률로 보스 참여
         if (isBossEnter && bossAiList.Count > 0)
@@ -124,16 +140,17 @@ public class Auction : PersistentSingleton<Auction>
             console.text += $"{bossAiList[randomBossIndex].NPCName}님이 참가 했습니다.\n";
         }
         HashSet<int> selectedIndices = new HashSet<int>();
-        int targetCount = Mathf.Min(enterNpc, auctionAiList.Count);
+        int targetCount = Mathf.Min(enterNpc, npcAiList.Count); // npcAiList 기준으로 제한
+
         while (selectedIndices.Count < targetCount)
         {
-            int randomIndex = Random.Range(0, auctionAiList.Count);
-            selectedIndices.Add(randomIndex); // HashSet은 중복된 값이면 자동으로 무시됨
+            int randomIndex = Random.Range(0, npcAiList.Count);
+            selectedIndices.Add(randomIndex);
         }
 
         foreach (int index in selectedIndices)
         {
-            auctionAiList.Add(auctionAiList[index]); //auctionAiList에서 랜덤으로 선택된 애들 추가.
+            auctionAiList.Add(npcAiList[index]); //auctionAiList에서 랜덤으로 선택된 애들 추가.
         }
     }
 

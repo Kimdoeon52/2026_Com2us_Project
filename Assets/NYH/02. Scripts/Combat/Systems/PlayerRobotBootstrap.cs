@@ -28,12 +28,12 @@ public class PlayerRobotBootstrap : MonoBehaviour
         // 오브젝트에 붙어 있는 입력원 하나를 그대로 쓰게 하기 위함 (§8 "입력만 바꿔 끼운다")
         var input = GetComponent<IInputSource>();
         executor = GetComponent<ActionExecutor>();
-        // mover를 먼저 구해두는 이유: 아래에서 executor.Init에 mover를 넘겨줘야 하고(가드 방향 판정용),
-        // mover.Init에는 반대로 executor.State가 필요하다 — 그래서 executor.Init을 먼저 불러서
-        // State가 만들어지게 한 다음에 mover.Init을 부르는 순서가 되어야 한다 (아래 두 줄의 순서가 중요함)
+        // mover.Init에는 executor.State가 필요하다 — 그래서 executor.Init을 먼저 불러서 State가
+        // 만들어지게 한 다음에 mover.Init을 부르는 순서가 되어야 한다 (아래 두 줄의 순서가 중요함)
+        // (2026-09-29: 가드가 기동 행동에서 삭제되면서 executor.Init에는 더 이상 mover를 안 넘긴다 — §5·§15)
         var mover = GetComponent<RobotMover>();
 
-        executor.Init(input, fighterId, mover);
+        executor.Init(input, fighterId);
         // executor.Init이 먼저 끝나서 State가 이미 만들어져 있어야 여기서 null이 안 넘어간다.
         // mover가 빠져 있으면 경고만 남기고 넘어간다 — 여기서 예외가 나면 아래 RobotView/BoxDrawer 배선까지 전부 막힌다
         if (mover != null) mover.Init(input, executor.State);

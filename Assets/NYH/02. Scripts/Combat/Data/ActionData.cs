@@ -35,11 +35,11 @@ using UnityEngine;
 // ============================================================================
 
 /// <summary>
-/// 모든 행동(기본기, 방어, 스킬, 보스 전용 기술 포함)을 표현하는 단일 데이터 에셋.
-/// 잽이든 백스핀 엘보우든 이 클래스 하나의 인스턴스(에셋)일 뿐이다.
+/// 모든 행동(기본공격, 파츠 액티브, 회피, 보스 전용 기술 포함)을 표현하는 단일 데이터 에셋.
+/// D든 파츠 액티브(Q/W/E/R)든 이 클래스 하나의 인스턴스(에셋)일 뿐이다.
 /// 불변 데이터만 담는다 — 런타임 중 값이 깎이거나 바뀌는 상태는 절대 여기 두지 않는다 (CLAUDE.md §2).
 ///
-/// 에셋 파일 이름은 전투 프레임표 [기술] 칸과 1:1로 같게 만든다. (예: 잽.asset, 훅.asset)
+/// 에셋 파일 이름은 전투 프레임표 [기술] 칸과 1:1로 같게 만든다.
 /// 수치는 전투 프레임표 v3가 최종 근거 — 여기 기본값은 전부 임시값이며 확정 전까지 TODO로 표시한다.
 /// </summary>
 // CreateAssetMenu를 붙이면 프로젝트 창 우클릭 메뉴에 "NYH/Combat/Action Data"가 생겨서
@@ -76,7 +76,11 @@ public class ActionData : ScriptableObject
     [SerializeField] private bool isInvincibleDuringActive;
 
     [Header("판정 성질")]
-    [Tooltip("false면 가드로 막을 수 없음 (백스핀 엘보우)")]
+    // 2026-09-29: 가드가 기동 행동에서 삭제되면서 HitDetection은 isGuarding을 항상 false로만 넘긴다(§5·§15).
+    // 그 결과 이 필드는 지금 실질적으로 아무 효과가 없다 — 하지만 KKH의 CombatCalculator.EvaluateHit이
+    // ActionData.IsGuardable을 직접 읽는 계약이라(§0·§14) 필드 자체를 지우면 KKH 쪽 컴파일이 깨진다.
+    // 가드가 스킬로 재도입되거나 필드를 완전히 정리하기로 하면 KKH와 먼저 확인할 것.
+    [Tooltip("2026-09-29 기준 사실상 미사용 — 가드 기동 행동 삭제로 무의미해짐. KKH 쪽 계약이라 필드는 남겨둠 (§15)")]
     [SerializeField] private bool isGuardable = true;
 
     [Tooltip("맞으면 그 자리에서 콤보가 끊기고 다운 처리 (어퍼컷, 백스핀 엘보우)")]
@@ -85,7 +89,10 @@ public class ActionData : ScriptableObject
     // 아래 세 값은 기획이 프레임표를 아직 확정 안 해서 전부 임시값(0)이다. 코드에서 하드코딩하지 않고
     // 여기 필드로 빼둔 이유는 §2 원칙(밸런스 수치는 에셋에서) — 값이 확정되면 코드 수정 없이 인스펙터만 바꾸면 됨
     [Header("경직도 / 넉백 — 값 전부 임시 (기획 확정 전, 설계 결정서 §8·§9 신뢰도 0%)")]
-    [Tooltip("경직도 게이지 누적량. 잽은 반드시 0 (기획서: 잽은 경직도 안 쌓임)")]
+    // 2026-09-29: 경직 시스템 자체가 완전히 삭제됐다(CLAUDE_1.md §7·§15) — 이 필드는 이제 항상 0으로 둔다.
+    // KKH의 CombatCalculator.EvaluateHit이 ActionData.StaggerValue를 직접 읽는 계약이라(§0·§14)
+    // 필드를 지우면 KKH 쪽 컴파일이 깨진다. 완전히 정리하려면 KKH와 먼저 확인할 것.
+    [Tooltip("2026-09-29 경직 시스템 삭제로 무효화됨 — 항상 0. KKH 쪽 계약이라 필드는 남겨둠 (§15)")]
     [Min(0)] [SerializeField] private int staggerValue;
 
     [Tooltip("TODO: 임시값. 맞은 순간 양쪽 x좌표에 이 값만큼 더한다 (§6, SF2 방식 — 콤보 카운터 없음)")]

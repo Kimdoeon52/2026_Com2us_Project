@@ -4,10 +4,10 @@ using UnityEngine;
 /// 플레이어 키보드 입력을 ActionData로 변환하는 IInputSource 구현체 (CLAUDE.md §8, §11-9).
 /// ActionExecutor는 이 클래스가 무엇인지 몰라도 된다 — IInputSource 인터페이스로만 다룬다.
 ///
-/// 키 배치는 기획서 494~511행 기준 (CLAUDE.md §8):
-///   이동 ←→ / 잽 D / 스트레이트 Q / 훅 A / 어퍼컷 W / 백스핀 엘보우 S / 가드 C / 위닝 Space
-/// (가드는 2026-09-18 방식 변경으로 지금은 C키가 아니라 방향 입력으로 자동 판정됨 —
-///  아래 guard 필드와 ReadKeyDown의 C키 매핑은 그 변경 전 남은 죽은 코드. 정리는 §15 다음 할 일 참고)
+/// 키 배치는 0929 기획서 682~696행 기준 (CLAUDE.md §8, 2026-09-29 전면 교체):
+///   이동 ←→ / D 고정 기본공격 / Q 왼팔 액티브 / W 오른팔 액티브 / E 왼다리 액티브 / R 오른다리 액티브 / 회피 Space
+/// 잽/스트레이트/훅/어퍼컷/백스핀 엘보우/가드 키 배치는 전부 폐기됐다 — 이 파일이 그 교체본이다.
+/// 점프(↑)·대시(←←/→→)는 아직 설계가 안 끝나서(CLAUDE.md §15) 여기서 다루지 않는다.
 /// </summary>
 public class PlayerInputSource : MonoBehaviour, IInputSource
 {
@@ -19,16 +19,26 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
     // 입력이 살아남고, 너무 길게 주면(예: 10틱) 이미 지나간 오래된 입력이 뒤늦게 실행되는 이상한 느낌이 든다
     private const float INPUT_BUFFER_SECONDS = CombatClock.TICK * 2f;
 
-    // 인스펙터에서 프레임표와 이름이 같은 .asset을 직접 드래그해서 연결한다 — 코드에 "잽이면 이 데미지"처럼
+    // 인스펙터에서 프레임표와 이름이 같은 .asset을 직접 드래그해서 연결한다 — 코드에 "D면 이 데미지"처럼
     // 하드코딩하지 않고, 어떤 키에 어떤 ActionData를 연결할지 자체를 데이터(인스펙터 값)로 뺀 것
     [Header("행동 에셋 연결 (인스펙터에서 프레임표와 이름이 같은 .asset 드래그)")]
-    [SerializeField] private ActionData jab;             // D
-    [SerializeField] private ActionData straight;        // Q
-    [SerializeField] private ActionData hook;            // A
-    [SerializeField] private ActionData uppercut;        // W
-    [SerializeField] private ActionData backspinElbow;   // S
-    [SerializeField] private ActionData guard;           // C — 지금은 안 쓰임(가드가 방향 판정으로 바뀜)
-    [SerializeField] private ActionData weaving;         // Space
+    [Tooltip("D — 파츠 무관 고정 기본공격. 부위가 전부 파괴돼도 항상 사용 가능 (§5 ActionSource.CoreFixed)")]
+    [SerializeField] private ActionData basicAttack;
+
+    [Tooltip("Q — 왼팔 액티브. 수치·에셋 전부 미정 (CLAUDE.md §15)")]
+    [SerializeField] private ActionData leftArmSkill;
+
+    [Tooltip("W — 오른팔 액티브. 수치·에셋 전부 미정 (CLAUDE.md §15)")]
+    [SerializeField] private ActionData rightArmSkill;
+
+    [Tooltip("E — 왼다리 액티브. 수치·에셋 전부 미정 (CLAUDE.md §15)")]
+    [SerializeField] private ActionData leftLegSkill;
+
+    [Tooltip("R — 오른다리 액티브. 수치·에셋 전부 미정 (CLAUDE.md §15)")]
+    [SerializeField] private ActionData rightLegSkill;
+
+    [Tooltip("Space — 회피(구 위닝). 무적 판정은 ActionData.IsInvincibleDuringActive로 처리한다 (§5)")]
+    [SerializeField] private ActionData dodge;
 
     // 키를 누른 "그 렌더 프레임"과, ActionExecutor가 실제로 그 값을 "가져가는 틱"의 타이밍이 다를 수 있어서
     // 즉시 반환하지 않고 일단 여기 잡아둔다 (자세한 이유는 위 INPUT_BUFFER_SECONDS 설명 참고)
@@ -57,7 +67,7 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
         if (pendingAction == null) return null; // 대기 중인 입력이 없으면 그냥 null — "이번 틱엔 하고 싶은 게 없다"는 뜻
 
         // 꺼내주기 전에 미리 비워둔다("1회성 소비") — 안 비우면 다음 틱에도 같은 행동이 계속 나가버려서
-        // 한 번 키를 눌렀는데 잽이 연속으로 계속 나가는 버그가 생긴다
+        // 한 번 키를 눌렀는데 같은 기술이 연속으로 계속 나가는 버그가 생긴다
         ActionData action = pendingAction;
         pendingAction = null;
 
@@ -84,14 +94,13 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
         // GetKeyDown(누른 그 순간 한 프레임만 true)을 쓰는 이유: 공격 키는 GetKey를 쓰면 누르고 있는
         // 내내 계속 true라서, "누른 순간 한 번만" 기술이 나가게 하려면 Down이 맞다.
         // 위에서 아래로 순서대로 검사하다가 하나라도 맞으면 즉시 반환 — 여러 키를 동시에 눌러도
-        // 코드에 먼저 적힌 키가 우선권을 갖는다(A가 최우선)
-        if (Input.GetKeyDown(KeyCode.A)) return jab;
-        if (Input.GetKeyDown(KeyCode.Q)) return straight;
-        if (Input.GetKeyDown(KeyCode.S)) return hook;
-        if (Input.GetKeyDown(KeyCode.W)) return uppercut;
-        if (Input.GetKeyDown(KeyCode.T)) return backspinElbow;
-        if (Input.GetKeyDown(KeyCode.Z)) return guard; // 지금은 ActionExecutor.IsGuarding이 방향으로 대신 판정하므로, 여기서 guard가 반환돼도 실질적으로 안 쓰임
-        if (Input.GetKeyDown(KeyCode.Space)) return weaving;
+        // 코드에 먼저 적힌 키가 우선권을 갖는다(D가 최우선)
+        if (Input.GetKeyDown(KeyCode.D)) return basicAttack;
+        if (Input.GetKeyDown(KeyCode.Q)) return leftArmSkill;
+        if (Input.GetKeyDown(KeyCode.W)) return rightArmSkill;
+        if (Input.GetKeyDown(KeyCode.E)) return leftLegSkill;
+        if (Input.GetKeyDown(KeyCode.R)) return rightLegSkill;
+        if (Input.GetKeyDown(KeyCode.Space)) return dodge;
 
         return null; // 아무 공격 키도 안 눌림
     }

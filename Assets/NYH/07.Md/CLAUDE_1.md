@@ -8,15 +8,16 @@
 ## 0. 프로젝트 컨텍스트
 
 - **엔진**: Unity 6 / C#
-- **장르**: 로봇 커스터마이징 RPG. 전투는 **실시간 사이드뷰 격투 게임** (스트리트 파이터 2~4 참고)
+- **장르**: 로봇 커스터마이징 RPG. 전투는 **실시간 사이드뷰 PvE 보스전** (할로우나이트·스컬 참고. 2026-09-29 확정 — 이전의 "격투 게임 미러매치"(스트리트 파이터 2~4) 전제는 폐기됐다. 플레이어와 보스는 서로 다른 기술 풀을 가진다. 자세한 배경은 §15)
 - **표현**: 3D 공간 위 2D 픽셀아트 스프라이트 (2.5D, 옥토패스 트래블러 형식)
-- **이동**: 좌우 2방향만. 점프 없음. 근거리 교전만
+- **이동**: 좌우 이동 + **점프·대시 포함** (2026-09-29 변경 — "점프 없음" 결정 폐기). 공중 상태를 상태기계에 어떻게 반영할지는 미정, §15 참고
 - **담당 범위**: 이 지침이 다루는 것은 전투의 실행 엔진 — 행동(상태기계), 부위 파괴 판정/로직, 히트 판정, 넉백, 장비 연결(조립 로직)
 - **인접 담당**: 스킬 데이터(최상희), 전투 결과·데이터 관리(김관현/KKH), 그래픽(심예성)
 - **데이터 소유 경계 (2026-09-18 논의, 팀 확인 필요)**:
   - `ActionData`(행동/프레임 데이터) — **NYH 소유**. `ActionState`/`ActionExecutor`가 직접 읽는 실행 계약이라 다른 담당에게 넘기지 않는다.
   - `PartData`/`CoreData`(파츠·코어 원장 스탯) — **NYH가 별도로 만들지 않는다.** KKH가 `PartMasterData`(SO)로 4개 파트 공용 데이터를 이미 만들어뒀으므로, NYH의 `DurabilitySystem`/`RuntimePart`/`RobotAssembler`는 이 데이터를 **참조만** 한다. 로직(부위 파괴 판정 등)은 여전히 NYH 소유, 데이터 정의만 KKH 소유.
   - 데미지 계산식(ActionData.Damage와 PartMasterData의 팔 스탯을 어떻게 합산할지)은 아직 미확정 — KKH·CSH와 확인 전까지 `HitDetection`/`DurabilitySystem` 쪽 계산 로직을 확정하지 말 것.
+  - **플레이어 vs 보스 비대칭 (2026-09-29 확인, 설계 미정)**: 보스의 "파츠"는 경매장 구매로 보스가 쓰는 스킬 풀을 결정하는 전투 시작 전 고정 세팅이다. 전투 중 플레이어가 보스 파츠를 파괴하는 것은 **불가능**하다 — 부위 내구도/파괴 시스템은 **플레이어 로봇에만** 적용된다. `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별 플래그로 끌지는 미정. §15 참고.
 - **수정 폴더 범위** NYH(남윤호)외 폴더는 사용자의 요청 전까진 보고 어떤게 있는지만 파악하고 수정은 절대 금지
 
 ### 이 문서의 상위 소스
@@ -44,15 +45,16 @@
 ├──────────────────────────────────────────────────────────┤
 │ 3층 · 시스템 (MonoBehaviour)      — 규칙. 개수 고정         │
 │     ActionExecutor  HitDetection  DurabilitySystem        │
-│     KnockbackSystem StunSystem    RobotAssembler          │
+│     KnockbackSystem RobotAssembler                        │
 └──────────────────────────────────────────────────────────┘
+(StunSystem은 2026-09-29 경직 시스템 삭제로 제외, §7)
 ```
 
 ### 핵심 원칙
 
 > **기술이 몇 개로 늘어나도 클래스는 늘어나지 않는다. 에셋만 늘어난다.**
 
-잽이든 백스핀 엘보우든 보스 전용 기술이든 전부 `ActionData` 에셋 하나다.
+D든 파츠 액티브(Q/W/E/R)든 보스 전용 기술이든 전부 `ActionData` 에셋 하나다.
 `ActionExecutor`는 그것이 무슨 기술인지 몰라도 선딜 → 판정 → 후딜을 돌릴 수 있어야 한다.
 
 ### 폴더 구조
@@ -65,12 +67,12 @@ Assets/NYH/02. Scripts/Combat/
                 (PartData.cs / CoreData.cs는 만들지 않음 — KKH의 PartMasterData 참조)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
-                KnockbackSystem.cs  StunSystem.cs  RobotAssembler.cs
+                KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
     Input/      IInputSource.cs ✅  PlayerInputSource.cs ✅  AIInputSource.cs
     View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs  RobotMover.cs ✅(임시)
 
 Assets/NYH/04. SO/Combat/
-    Actions/    잽.asset  훅.asset  스트레이트.asset  ...
+    Actions/    D.asset  왼팔액티브.asset  오른팔액티브.asset  왼다리액티브.asset  오른다리액티브.asset  회피.asset  ... (2026-09-29 기준. 이름은 파츠 스킬 확정 후 갱신)
     (Parts/, Cores/ 폴더는 만들지 않음 — Assets/KKH/03.SOData/의 PartMasterData 참조)
 ```
 
@@ -209,7 +211,7 @@ QualitySettings.vSyncCount  = 0;
 
 ### 행동의 3구간
 
-모든 행동 — 잽, 가드, 위닝, 보스 기술까지 전부 — 이 구조를 공유한다.
+모든 행동 — D, 파츠 액티브(Q/W/E/R), 회피, 보스 기술까지 전부 — 이 구조를 공유한다.
 
 ```
 [시작(선딜)] ──▶ [활성(판정 ON)] ──▶ [회수(후딜)]
@@ -224,19 +226,24 @@ public enum ActionPhase { Idle, Startup, Active, Recovery, Stagger, Down, Dead }
 캐릭터는 **항상 정확히 하나의 상태**에 있다.
 `bool isAttacking`, `bool isGuarding` 같은 플래그를 늘려가는 방식은 금지 — 조합 폭발로 반드시 깨진다.
 
-### 현재 확정 프레임 (프레임표 v3)
+### 현재 확정 프레임 — 0929 기획서로 전면 교체 (2026-09-29)
 
-| 기술 | 시작 | 활성 | 회수 | 전체 | 비고 |
+잽/훅/스트레이트/어퍼컷/백스핀 엘보우/가드/위닝 7개는 **전부 폐기됐다.** 아래가 새 구조다.
+
+| 행동 | 시작 | 활성 | 회수 | 전체 | 비고 |
 |---|---|---|---|---|---|
-| 잽 | 4 | 2 | 6 | 12 | 경직도 0 (기획서: 잽은 경직도 안 쌓임) |
-| 훅 | 3 | 3 | 14 | 20 | 선딜 최단. 기습기 |
-| 스트레이트 | 10 | 4 | 20 | 34 | |
-| 어퍼컷 | 13 | 3 | 18 | 34 | 다운 유발 |
-| 백스핀 엘보우 | 20 | 4 | 26 | 50 | 다운 유발, **가드 불가** |
-| 가드 | 2 | 유지 | 10 | — | 백스핀 엘보우는 못 막음 |
-| 위닝 | 3 | 6(무적) | 28 | 37 | 성공 시 스킬 5~8번으로 반격 |
+| D (고정 기본공격) | 미환산 | 미환산 | 미환산 | 미환산 | 쿨타임 0.5초 / 데미지 10 / 사거리 1.2 (기획서 확정값. 프레임 단위로는 아직 안 쪼갬) |
+| Q (왼팔 액티브) | 미정 | 미정 | 미정 | 미정 | 파츠 소속. 수치·설계 일정 전부 미정 |
+| W (오른팔 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
+| E (왼다리 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
+| R (오른다리 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
+| 머리 패시브 | — | — | — | — | 입력 없음, 자동 적용 |
+| 회피 (구 위닝) | — | 무적 0.3초 | — | 0.5초 | 전체 0.5초 / 무적 0.05~0.35초 / 자원 소모 없음 / 쿨타임 1.0초 / 공중 사용 불가 |
 
-값이 바뀌면 프레임표가 먼저 바뀌고 에셋이 따라간다. 코드는 건드리지 않는다.
+- **가드는 기동 행동에서 삭제됐다.** 나중에 스킬로 재도입될 수 있다 (§15).
+- **경직 시스템은 완전히 삭제됐다** (§7).
+- Q/W/E/R 수치가 나오기 전까지 `ActionExecutor`/`ResolvedAction` 등 엔진 코드는 **더미 값으로 구조만 먼저 검증**한다 — "기술이 늘어나도 클래스는 안 늘어난다"(§2) 원칙대로, 수치 미정이 구조 작업을 막지 않는다.
+- 값이 바뀌면 프레임표가 먼저 바뀌고 에셋이 따라간다. 코드는 건드리지 않는다.
 
 ---
 
@@ -350,28 +357,40 @@ Hit/Hurt/Push 박스가 전부 없었다 — 서 있는 상대를 때려도 판�
 
 ---
 
-## 5. 히트 처리 규칙 (기획서 근거)
+## 5. 히트 처리 규칙 (2026-09-29 전면 재설계 — 기존 방식 폐기)
 
-맞은 쪽의 대응 방식에 따라 **방어자의** 부위 내구도가 깎인다. (기획서 583~588행)
+### 기존 방식은 폐기됐다
 
-| 대응 | 깎이는 부위 | 비고 |
-|---|---|---|
-| 가드 | 팔 | 백스핀 엘보우는 가드 불가 |
-| 위닝(회피) | 다리 | |
-| 치명타 피격 | 머리 | 머리 **허트박스**에 맞았을 때만 |
-| 못 막은 유효타 | 코어 HP | |
+"가드=팔 / 위닝=다리 / 치명타=머리" — **방어자의 대응 방식**으로 어느 부위가 깎일지 정하던 기존
+로직은 0929 기획서로 완전히 뒤집혔다. 새 기준은 다음과 같다.
 
-내구도 감소량은 **공격자의 `ActionData`**가 들고 있다. 스킬 쪽에서 "팔 내구도를 깎는다"를 처리하지 않는다 —
-어느 부위가 깎일지는 방어자의 대응이 결정하므로, 판정은 `DurabilitySystem` 한 곳에서만 한다.
+| 판정 | 기준 |
+|---|---|
+| 파츠 내구도 감소 | **보스의 특정 스킬**에 맞았을 때만. 그 스킬이 지정한 부위가 깎인다 (기획서 736~739행) |
+| 일반 피격 | 코어 HP만 감소, 파츠 내구도는 그대로 |
+| 적용 대상 | **플레이어 로봇에만 적용.** 보스는 파츠 내구도/파괴 개념이 없다 (아래 "플레이어 vs 보스 비대칭" 참고) |
 
-### 부위 파괴 (기획서 575~582행)
+→ `ActionData`(또는 보스 전용 스킬 데이터)에 "이 스킬이 맞았을 때 상대의 어느 부위를 깎는지" 필드가
+새로 필요하다. 필드명·소유 위치 전부 미정 — **이번 재설계에서 가장 먼저 설계해야 할 자리다** (§15).
 
-- 내구도 0 → 해당 부위의 스킬 사용 불가
-- 다리 1개 파괴 → 회피 확률 50% / 양다리 파괴 → 회피 불가
-- 팔 1개 파괴 → 가드 확률 50% / 양팔 파괴 → 가드 불가
-- 파괴된 부위는 반투명 처리 + **그 부위의 허트박스도 제거**
+### 플레이어 vs 보스 비대칭 (2026-09-29 확인)
 
-### 행동 잠금은 `RuntimeRobot`이 목록으로 관리
+보스의 "파츠"는 경매장 구매로 보스가 어떤 스킬을 쓰는지 결정하는 **전투 시작 전 고정 세팅**이다.
+전투 중 플레이어가 보스의 파츠를 파괴하는 행동은 **불가능**하다. 즉:
+
+- 부위 파괴 판정(`RuntimeRobot.availableActions`, 내구도 0 → 스킬 봉인)은 **플레이어 로봇에만** 돈다.
+- 보스는 스킬 풀이 전투 중 안 바뀐다 — 내구도 추적 자체가 필요 없을 가능성이 높다.
+- `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별 플래그로 끌지는
+  **미정** — 결정 전까지 "로봇 본체는 하나, 입력만 다르다"(§8) 원칙을 내구도 시스템에까지
+  그대로 확장하지 말 것.
+
+### 부위 파괴 (기획서 743~749행 — 페널티 단순화됨)
+
+- 내구도 0 → 해당 부위의 스킬(Q/W/E/R 중 하나)만 사용 불가
+- **회피·가드 확률에 페널티를 주는 로직은 삭제됐다** (기존 "다리 1개 파괴 → 회피 50%" 등은 폐기)
+- 파괴된 부위는 반투명 처리 + **그 부위의 허트박스도 제거** (이 부분은 유지)
+
+### 행동 잠금은 `RuntimeRobot`이 목록으로 관리 (변경 없음)
 
 ```csharp
 class RuntimeRobot
@@ -386,32 +405,24 @@ class RuntimeRobot
 - **매 프레임 검사하지 않는다.** 부위 상태가 바뀌는 이벤트에서만 1회 갱신한다.
 - 입력·UI·AI가 전부 이 목록 하나를 본다. 실행 직전에 검사하면 UI가 버튼을 회색 처리할 수 없고 AI가 못 쓰는 기술을 고른다.
 
-### 출처 구분 — 코어 고정 vs 파츠
+### 출처 구분 — 코어 고정 vs 파츠 (갱신)
 
 | 출처 | 부위 파괴 시 |
 |---|---|
-| 코어 고정 (잽, 가드, 위닝, 이동) | 사라지지 않음. 성능만 하향 |
-| 파츠 (훅, 스트레이트, 어퍼컷, 백스핀, 스킬 5~8) | 해당 부위 파괴 시 사용 불가 |
+| 코어 고정 (D 기본공격, 회피, 이동) | 사라지지 않음 |
+| 파츠 (Q/W/E/R) | 해당 부위 파괴 시 사용 불가 |
 
-양팔이 파괴돼도 잽은 나가야 한다. 안 그러면 공격 수단이 0이 되어 전투가 성립하지 않는다.
+파츠가 전부 파괴돼도 D는 나가야 한다. 안 그러면 공격 수단이 0이 되어 전투가 성립하지 않는다.
 
-### 가드·위닝 판정 방법 (2026-09-21 확정 — HitDetection이 참조할 값)
+### 가드·위닝 판정 방법 — 삭제됨 (2026-09-29)
 
-기술 이름으로 분기하지 않는다 (§13 원칙과 동일하게 적용). `HitDetection`은 아래 두 값만 계산해서
-`CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)`에 그대로 넘긴다.
+가드는 기동 행동에서 완전히 빠졌다 (나중에 스킬로 재도입될 수 있음, §15). `ActionExecutor.IsGuarding`은
+걷어낼 후보다. `CombatDataHub.ProcessHit`의 `isGuarding` 인자도 마찬가지인데, 이건 **KKH 소유 API**라
+시그니처를 바꾸기 전에 먼저 확인할 것 (§0, §14).
 
-```csharp
-// 가드 — 버튼이 아니라 방향 입력으로 매 틱 계산됨 (§8). ActionState를 안 거친다
-bool isGuarding = defender.GetComponent<ActionExecutor>().IsGuarding;
-
-// 위닝(무적) — 특정 기술 이름이 아니라 "지금 활성 구간에 무적인 행동 중인가"로 판정
-bool isWeaving = defender.State.CurrentAction != null
-              && defender.State.CurrentAction.IsInvincibleDuringActive
-              && defender.State.Phase == ActionPhase.Active;
-```
-
-`IsInvincibleDuringActive`는 위닝 전용이 아니다 — 나중에 생길 다른 무적기(필살기 등)도
-이 플래그 하나로 자동 인식된다. 새 무적기를 추가해도 `HitDetection` 코드는 안 고쳐도 된다.
+"위닝"은 "회피"로 이름이 바뀌었을 뿐, 무적 판정 방식(`IsInvincibleDuringActive` 플래그 — "지금 활성
+구간에 무적인 행동 중인가"로 판정하고 기술 이름으로 분기하지 않는다, §13 원칙과 동일)은 그대로 재사용
+가능하다.
 
 ---
 
@@ -432,18 +443,14 @@ bool isWeaving = defender.State.CurrentAction != null
 
 ---
 
-## 7. 경직도 (기획서 562~574행)
+## 7. 경직도 — 삭제됨 (2026-09-29)
 
-**히트 스턴과 다른 값이다. 섞지 말 것.**
+0929 기획서에서 "경직 시스템 없음"이 명시되면서 **경직도 게이지 전체가 완전히 삭제됐다.**
+`ActionData.staggerValue` 필드, "잽은 경직도 안 쌓임" 같은 서술, `StunSystem` 작업(구 작업순서
+§11-7)은 전부 무효다 — 관련 코드가 남아있으면 제거 대상.
 
-| | 단위 | 성질 |
-|---|---|---|
-| 히트 스턴 | 프레임 | 한 대 맞고 굳는 시간. 매번 초기화 |
-| 경직도 | 포인트 | 누적 게이지. 안 맞으면 감소 |
-
-- **잽은 경직도를 쌓지 않는다.** 잽 외의 공격만 누적한다.
-- 게이지가 한계치(100)에 도달하면 **2초(120프레임) 정지**. 피격 이미지 1장으로 멈춘다.
-- 정지 중에만 **필살기** 사용 가능.
+히트 스턴(한 대 맞고 굳는 시간, 프레임 단위)이 별도로 필요한지는 이번 재설계에서 다시 정해야 한다 —
+경직도 게이지와 묶여있던 개념이라 자동으로 남는 게 아니다. 필요 여부는 미정 (§15).
 
 ---
 
@@ -464,27 +471,26 @@ class AIInputSource     : IInputSource { }   // 보스 패턴
 
 적 전용 `EnemyRobot` 클래스를 만들지 말 것. 입력만 바꿔 끼운다.
 
-### 입력 키 (기획서 494~511행 — 가드는 2026-09-21 방식 변경, 아래 참고)
+### 입력 키 (0929 기획서 682~696행 기준, 2026-09-29 전면 교체)
 
-| 행동 | 키 |
-|---|---|
-| 이동 | ← → |
-| 잽 | D |
-| 스트레이트 | Q |
-| 훅 | A |
-| 어퍼컷 | W |
-| 백스핀 엘보우 | S |
-| 가드 | **없음 — 방향으로 자동 판정** (아래 참고) |
-| 위닝 | Space |
+기존 잽(D)/스트레이트(Q)/훅(A)/어퍼컷(W)/백스핀 엘보우(S)/가드/위닝(Space) 키 배치는 **전부 폐기됐다.**
 
-**가드는 버튼이 아니다 (2026-09-21 결정, SF2 방식).**
-상대를 바라보는 방향의 반대쪽(← →)을 누르고 있으면 자동으로 가드가 성립한다.
-계기: `Guard.asset`(ActionData)의 프레임표 값이 "선딜 2 / 활성 **유지** / 후딜 10"인데,
-"유지"는 고정 프레임 수로 셀 수 있는 값이 아니라서 §3의 3구간(선딜→활성→후딜) 상태기계에
-안 들어간다. 그래서 가드를 아예 `ActionData`/`ActionState` 밖으로 빼서, 매 틱 방향 입력만으로
-판정하는 방식으로 바꿨다 — 자세한 판정식은 §5 "가드·위닝 판정 방법" 참조.
-`Guard.asset`은 더 이상 실행 경로에서 쓰이지 않는다 (애니메이션 클립 이름 참고용으로만 남겨둠).
-기획서 494~511행의 "가드 C" 표기는 이 문서가 우선이므로 따르지 않는다 — 기획 쪽에 반영 필요.
+| 행동 | 키 | 비고 |
+|---|---|---|
+| 좌우 이동 | ← → | |
+| 대시(달리기) | ←← / →→ | 방향키 두 번. 더블탭 인식 방식은 미정 |
+| 점프 | ↑ | 공중 상태를 상태기계에 어떻게 반영할지 미정 — §5·§15 참고 |
+| 회피 (구 위닝) | Space | 무적 0.3초 / 전체 0.5초 / 자원 소모 없음 / 쿨타임 1초 / 공중 불가 |
+| D (고정 기본공격) | D | 파츠 무관, 부위 파괴돼도 항상 사용 가능 |
+| 왼팔 액티브 | Q | 파츠 소속. 수치 미정 |
+| 오른팔 액티브 | W | 파츠 소속. 수치 미정 |
+| 왼다리 액티브 | E | 파츠 소속. 수치 미정 |
+| 오른다리 액티브 | R | 파츠 소속. 수치 미정 |
+| 머리 패시브 | (자동 적용) | 입력 없음 |
+| 가드 | **삭제됨** | 기동 행동에서 완전히 빠짐. 나중에 스킬로 재도입될 수 있음 (2026-09-29 확인, §15) |
+
+`PlayerInputSource`의 기존 5개 액션 필드(`jab`/`straight`/`hook`/`uppercut`/`backspinElbow`)와
+`guard`/`weaving` 필드, `ActionExecutor.IsGuarding`은 이 표 기준으로 다시 짜야 한다.
 
 ---
 
@@ -554,20 +560,23 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 1. ✅ 프레임표 확정 (v3)
 2. ✅ 좌우 이동 + 키 입력 시 디버그 로그
 3. ✅ `CombatClock` — 1/60초 고정 틱 (§3)
-4. 🔶 `ActionData` / `ActionState` / `ActionExecutor` — 잽 하나가 3구간으로 도는 것
+4. 🔶 `ActionData` / `ActionState` / `ActionExecutor` — 행동 하나가 3구간으로 도는 것 (검증 당시엔 잽으로 만들었으나, 잽 자체는 2026-09-29 폐기 — §11-11에서 D/Q/W/E/R로 전환)
    - ✅ `ActionData` (SO), `ActionState`, `ActionExecutor`, `IInputSource` 초안 작성 완료
    - ✅ `ActionState`에 스킬 연동용 이벤트 훅(`OnActionBegin`/`OnActionActiveStart`/`OnActionEnd`) 포함 — §13 참조
    - ✅ `CombatClock`과 배선 (`PlayerRobotBootstrap.OnEnable`에서 `ExecuteTick` 구독)
    - ✅ `fighterId` 배선 (`ActionExecutor.FighterId`) — KKH `CombatDataHub` 조회 키로 씀 (§14)
-   - ✅ 가드 판정 (`ActionExecutor.IsGuarding`, 방향 기반) — §5 "가드·위닝 판정 방법"
+   - 🗑️ (2026-09-29) ~~가드 판정 (`ActionExecutor.IsGuarding`, 방향 기반)~~ — 가드 자체가 기동 행동에서 삭제되어 이 항목 폐기. 코드 제거 대상 (§5·§8)
    - ⬜ 후딜 중 재입력이 무시되는지 실제 플레이로 반드시 확인 (`CanAcceptNewAction` 로직 자체는 구현됨)
    - ⬜ `CombatDataHub.CanExecuteAction` 게이트 — 지금은 부위 파손 여부와 무관하게 기술이 나감 (§14)
 5. ✅ `BoxDrawer` (Gizmos) + `FrameStepper` — 판정 없이 네모만. `ActionDataEditor`(박스 드래그 편집기)도 추가 제작
-6. ⬜ `HitDetection` — AABB 겹침. 선행 조건(`FrameBox`, `GetActiveBoxes`, `IsGuarding`, `IsInvincibleDuringActive`)은 준비됨 — 다음 단계
-7. ⬜ `KnockbackSystem` / `StunSystem`
-8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴. KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음 — NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14)
+6. 🔶 `HitDetection` — AABB 겹침. 선행 조건(`FrameBox`, `GetActiveBoxes`, `IsInvincibleDuringActive`)은 준비됨. `isGuarding` 관련 부분은 §5·§8 갱신에 맞춰 재검토 필요
+7. 🔶 `KnockbackSystem` (`StunSystem`은 2026-09-29 경직 시스템 삭제로 작업 목록에서 제외, §7)
+8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴. KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음 — NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14). **단 §5 "플레이어 vs 보스 비대칭"이 정해지기 전까지 보스 쪽 내구도 조립 로직은 보류**
 9. ⬜ `AIInputSource` — 보스 패턴
 10. ⬜ `IUsable` 인터페이스 확정 + 상희(CSH) 스킬 연동 지점 배선 (§13) — CSH `SkillBase` 쪽이 어느 정도 채워진 뒤 진행
+11. ⬜ (2026-09-29 신규) D/Q/W/E/R 액션 구조 전환 — 기존 5종 기본기 에셋·키매핑 제거 + D `ActionData` 신규 + Q/W/E/R 슬롯 구조 (수치는 더미로 시작, §3·§8)
+12. ⬜ (2026-09-29 신규) 점프·대시를 `RobotMover`/`ActionPhase`에 반영하는 설계 (§15)
+13. ⬜ (2026-09-29 신규) 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15)
 
 ---
 
@@ -604,8 +613,8 @@ public event Action<ActionData> OnActionEnd;           // Recovery 끝나고 Idl
 // 예시 — CSH 쪽에서 구독하는 코드 (NYH 폴더에는 절대 이런 분기를 넣지 않는다)
 actionState.OnActionActiveStart += (action) =>
 {
-    if (action.ActionName != "훅") return;       // 어떤 기술인지 판단은 구독자 몫
-    if (!내스킬이켜져있음) return;                 // 켜져있는지 판단도 구독자 몫
+    if (action.ActionName != "왼팔 액티브") return;  // 어떤 기술인지 판단은 구독자 몫 (예시 이름, 실제 명칭 미정)
+    if (!내스킬이켜져있음) return;                     // 켜져있는지 판단도 구독자 몫
     이펙트재생();
 };
 ```
@@ -662,10 +671,10 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
 |---|---|---|
 | `CombatDataHub`(싱글톤) | 스탯 조회 + 판정 연산 창구 | `CombatDataHub.Instance` |
 | `CombatDataHub.CanExecuteAction(fighterId, action)` | 부위 파손 시 기술 시전 차단 | ⬜ 아직 `ActionExecutor`가 안 부름 — §11-4 다음 작업 |
-| `CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)` | 데미지·가드분산·크리티컬 계산 + 이벤트 발행 | ⬜ `HitDetection`이 만들어지면 여기서 호출 (§11-6) |
+| `CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)` | 데미지·가드분산·크리티컬 계산 + 이벤트 발행 | ⬜ `HitDetection`이 만들어지면 여기서 호출 (§11-6). **`isGuarding` 인자는 가드 삭제(§5·§15)로 재확인 필요 — 시그니처는 KKH 소유라 임의로 못 바꿈** |
 | `CombatDataHub.GetFinalMoveSpeed(fighterId)` 등 스탯 조회 | 실시간 스탯 공급 | ⬜ `RobotMover`가 아직 하드코딩값(`moveSpeed`) 씀 — 연결 안 함 |
 | `BattleManager.InitializeBattle(playerSnapshot, enemySnapshot)` | `CombatDataHub`에 두 파이터 스탯 등록 | ⬜ 아직 아무도 안 부름 (테스터의 더미 데이터로만 검증됨) — `RobotAssembler`가 할 일 |
-| `BodyPart`, `ActionSource`, `ActionData`의 필드들(`Damage`/`IsGuardable`/`StaggerValue`/`CausesKnockdown`/`KnockbackDistance`) | 계산에 그대로 씀 | NYH가 이미 정의한 것 그대로 KKH가 읽음 — 필드명 바꾸면 KKH 쪽도 깨짐, 바꾸기 전 확인 필수 |
+| `BodyPart`, `ActionSource`, `ActionData`의 필드들(`Damage`/`IsGuardable`/`StaggerValue`/`CausesKnockdown`/`KnockbackDistance`) | 계산에 그대로 씀 | NYH가 이미 정의한 것 그대로 KKH가 읽음 — 필드명 바꾸면 KKH 쪽도 깨짐, 바꾸기 전 확인 필수. **`StaggerValue`는 경직 삭제(§7)로 무효 — KKH 쪽에서 이 필드를 읽고 있다면 같이 정리 필요** |
 
 각 로봇은 `fighterId`("Player"/"Enemy")를 들고 있어야 위 API들이 어느 쪽인지 구분한다 —
 `ActionExecutor.FighterId`, `PlayerRobotBootstrap`의 인스펙터 필드로 배선됨 (§11-4).
@@ -676,7 +685,44 @@ KKH가 이미 코드로 구현해뒀지만, §0에 적힌 대로 **아직 팀 �
 
 ---
 
-## 15. 작업 로그 (포트폴리오용)
+## 15. 2026-09-29 재설계 — 확정 사항과 미정 사항
+
+0929기획서(`Assets/NYH/07.Md/0929기획서.md`, 특히 674~770행) 반영 후 남윤호가 직접 확인한 내용을
+정리한다. 이 문서 여기저기 흩어진 "2026-09-29" 표시는 전부 이 절을 가리킨다.
+
+### 확정된 것
+
+| 항목 | 확정 내용 |
+|---|---|
+| 5종 기본기 | 잽/훅/스트레이트/어퍼컷/백스핀 엘보우 전부 폐기 |
+| 경직 시스템 | 완전 삭제 (§7) |
+| 장르 | PvE 보스전 (할로우나이트·스컬 참고). 미러매치 대전격투 아님 |
+| 이동 | 점프·대시가 실제 전투에 포함됨 |
+| 가드 | 기동 행동에서 삭제. 나중에 스킬로 재도입 가능성 있음 |
+| 보스 파츠 | 경매장 구매로 보스 스킬 풀만 결정. 전투 중 플레이어가 보스 파츠를 파괴하는 것은 불가능 — 내구도 시스템은 플레이어 전용 |
+
+### 아직 미정 — 임의로 정하지 말고 확인할 것
+
+- Q/W/E/R 파츠 액티브 스킬의 프레임·데미지·쿨타임 수치와 설계 일정
+- 점프·공중 상태를 `ActionPhase`/`RobotMover`에 어떻게 반영할지 (공중에서 피격 시 처리 포함)
+- 보스 스킬이 "타격 부위"를 어떤 필드로 표현할지, 어느 쪽(NYH/KKH) 소유인지
+- `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별로 끌지
+- `CombatDataHub.ProcessHit`의 `isGuarding` 인자 처리 — KKH와 협의 필요 (§0, §14)
+- 히트 스턴(프레임 단위 경직)이 경직 게이지 삭제 후에도 별도로 필요한지
+
+### 걷어낸 코드 (2026-09-29 완료)
+
+- ✅ 잽/훅/스트레이트/어퍼컷/백스핀 엘보우/가드 `ActionData` 에셋 삭제 (`Jap`/`Hook`/`Straight`/`Uppercut`/`BackspinElbow`/`Guard.asset`)
+- ✅ `PlayerInputSource`를 D/Q/W/E/R/회피 키 매핑으로 전면 교체 (구 필드 `jab`/`straight`/`hook`/`uppercut`/`backspinElbow`/`guard` 제거)
+- ✅ `ActionExecutor.IsGuarding`/`UpdateGuardState()` 제거, `Init()`에서 `mover` 파라미터 제거 (`PlayerRobotBootstrap` 호출부도 갱신)
+- ✅ `HitDetection`의 `isGuarding`은 이제 항상 `false` 고정 (KKH `ProcessHit` 시그니처는 안 건드림)
+- ✅ `ActionPhase.Stagger` 제거 (참조 0건 확인 후 삭제)
+- ⚠️ `ActionData.staggerValue`/`isGuardable` 필드는 **삭제하지 않고 남겨둠** — KKH의 `CombatCalculator.EvaluateHit`이 이 두 필드를 직접 읽는 계약이라(§0·§14) 지우면 KKH 쪽 컴파일이 깨진다. 완전히 정리하려면 KKH와 먼저 확인할 것. 코드에는 "2026-09-29 기준 무효화됨" 주석을 남겨둠
+- 남은 것: `Weaving.asset`(회피로 개명 예정, 프레임 수치는 §3 표대로 갱신 필요), Battle.unity 씬의 `PlayerInputSource` 인스펙터 필드 재연결(스크립트 필드명이 바뀌어서 기존 연결이 끊어짐 — D 에셋은 아직 없으므로 프레임 수치가 나온 뒤에 연결할 것)
+
+---
+
+## 16. 작업 로그 (포트폴리오용)
 
 날짜별 진행 상황·문제/해결 과정을 **여기 말고** `Assets/NYH/07.Md/개발일지.md`에 자세히 적는다.
 이 문서(CLAUDE.md)는 "지금 지켜야 할 규칙" 중심으로 짧게 유지하고, 서사(무엇을 시도했고 왜 이렇게

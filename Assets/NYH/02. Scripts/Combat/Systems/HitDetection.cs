@@ -97,10 +97,11 @@ public class HitDetection : MonoBehaviour
             return;
         }
 
-        // 가드는 ActionExecutor가 매 틱 이미 계산해둔 값을 그대로 읽기만 하면 된다 (§5 "가드·위닝 판정 방법")
-        bool isGuarding = defender.IsGuarding;
+        // 가드는 2026-09-29 기동 행동에서 삭제됐다 (CLAUDE_1.md §5·§15) — 항상 false만 전달한다.
+        // KKH의 CombatDataHub.ProcessHit 시그니처는 그대로 유지되므로(§0·§14) 값만 고정하고 파라미터는 안 건드린다.
+        bool isGuarding = false;
 
-        // 위닝(무적)도 마찬가지로 기술 이름이 아니라 플래그로 판정한다 — 나중에 다른 무적기가 생겨도 이 코드는 안 바뀐다
+        // 회피(구 위닝) 무적도 마찬가지로 기술 이름이 아니라 플래그로 판정한다 — 나중에 다른 무적기가 생겨도 이 코드는 안 바뀐다
         bool isWeaving = defender.State.CurrentAction != null
                        && defender.State.CurrentAction.IsInvincibleDuringActive
                        && defender.State.Phase == ActionPhase.Active;

@@ -15,7 +15,7 @@ public class RobotMover : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 3f; // TODO: 임시값. 프레임표/기획 확정 전
     // 상대 로봇의 Transform. 이게 있어야 "상대를 바라보는 방향"을 정확히 계산할 수 있다
-    // (가드 판정(ActionExecutor.IsGuarding)과 좌우 반전 판정(BoxResolver)이 전부 이 방향값에 의존함)
+    // (좌우 반전 판정(BoxResolver)이 이 방향값에 의존함. 가드는 2026-09-29 삭제됨 — §5·§15)
     [SerializeField] private Transform opponent;
     [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
 

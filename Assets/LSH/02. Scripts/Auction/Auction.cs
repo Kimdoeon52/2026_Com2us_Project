@@ -21,8 +21,10 @@ using UnityEngine.UI;
  
  AI 성격 5개 기획서 확인하고 만들기.
  보스 세명.
- 조무레기 다섯명. 골드 상관
+ 조무레기 다섯명. 골드 상관x
  물건 바꾸기. 장비들로.
+
+ 보스 일정 조건에 달성하면서 큰 레이즈하면 컷씬 연출하기.
  
  */
 public class Auction : PersistentSingleton<Auction>
@@ -58,6 +60,14 @@ public class Auction : PersistentSingleton<Auction>
     [Header("플레이어 이름")]
     private string playerName; //플레이어 이름
 
+
+    //=====================================컷씬 용도======================================================
+    [Header("컷씬 매니저")]
+    [SerializeField] private AuctionCutsceneManager cutsceneManager; //컷씬 매니저
+
+    private bool isCutscenePlaying = false; //컷씬 진행중인지 확인
+
+    //=================================경매진행변수==============================================
     private int currentCost = 0; // 현재 가격
     private PartsDefinition stuff;
     private bool isAuctioningFin = true; // 경매가 끝낫는지 확인
@@ -79,6 +89,29 @@ public class Auction : PersistentSingleton<Auction>
     //===========================임시 콘솔창================================
     [Header("임시 콘솔창")]
     public TextMeshProUGUI console;
+
+    //=============================컷씬용 이벤트 ================================
+    private void OnEnable()
+    {
+        BossAiBase.OnBossBigRaiseCutscene += HandleBossBigRaiseCutscene;
+    }
+    private void OnDisable()
+    {
+        BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene;
+    }
+
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, int bigAmount)
+    {
+        isCutscenePlaying = true;
+
+        if (cutsceneManager != null)
+        {
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, bigAmount); //컷씬 재생 동안 대기
+        }
+
+        isCutscenePlaying = false;
+    }
+    //===================================================================================
     protected override void Awake()
     {
         base.Awake();
@@ -225,6 +258,8 @@ public class Auction : PersistentSingleton<Auction>
             }
             await UniTask.Delay(thinkDelay);
 
+            await UniTask.WaitWhile(() => isCutscenePlaying); //보스 컷씬 진행중이면 대기
+
             if (!isTimeRunning || isAuctioningFin) break;
 
             // 이미 자기가 최고 입찰자면 굳이 자기 돈을 또 올릴 필요 없음
@@ -241,9 +276,29 @@ public class Auction : PersistentSingleton<Auction>
             // AI의 고유 판단 실행
             if (ai.RaiseThink(currentCost, stuff.Cost))
             {
-                console.text += $"{ai.NPCName}판단 끝! 결과 레이즈.\n";
-                // 실시간 입찰 성공!
-                currentCost += 100;
+                int raiseStep = 100; //기본 입찰 단위
+                // 보스인지 확인 후 큰 레이즈 조건 체크
+                if (ai is BossAiBase boss)
+                {
+                    // 필요 시 특정 조건에서 금액을 대폭 증액 (예: 500G)
+                    if (boss.IsBigRaiseThink(currentCost, stuff.Cost, 500))
+                    {//임시임 현재 물건이 400원이고 원래 가격이 200원이라면 1.5배 이상이므로 컷씬 연출
+                        raiseStep = 500;
+                        currentCost += raiseStep; //조건 성립시 컷씬과 함꼐 500원증가
+
+                        // 옵저버 이벤트 발동 -> 모든 보스 공통 컷씬 실행 및 대기
+                        await boss.TriggerCutscene(boss.NPCName, currentCost);
+                    }
+                    else
+                    {
+                        currentCost += raiseStep; //조건 미성립시 100원증가
+                    }
+                }
+                else
+                {
+                    currentCost += raiseStep; //일반 잡몹은 100원증가
+                }
+
                 auctionCost.text = currentCost.ToString();
                 winnerName = ai.NPCName;
                 ifPlayerWin = false;
@@ -270,53 +325,6 @@ public class Auction : PersistentSingleton<Auction>
             }
         }
     }
-    ////플레이어 턴
-    //private async UniTask PlayerTurn()
-    //{
-    //    isPlayerTurn = false;
-    //    ButtonReady(true); //플레이어 선택 버튼 활성화
-    //    AuctioningChatting(); //대사 진행
-    //    await UniTask.WaitUntil(() => isPlayerTurn || isPlayerGiveUp || !isTimeRunning); //플레이어 턴이 끝날때까지 대기
-
-    //    if(!isTimeRunning) //시간초과
-    //    {
-    //        isPlayerGiveUp = true;
-    //        ShowErrorMessage("시간초과로 포기 처리되었습니다.").Forget();
-    //        await UniTask.Delay(2000);
-    //    }
-    //    ButtonReady(false);
-    //}
-
-    ////AI 턴
-    //private async UniTask AiTurn()
-    //{
-    //    foreach (var ai in auctionAiList)
-    //    {
-    //        if(ai == null || ai.IsReady) continue;
-
-    //        chat.text = $"{ai.NpcName}님이 입찰을 고민중입니다.";
-    //        await UniTask.Delay(Random.Range(2000, 4000));
-
-    //        if(ai.RaiseThink(currentCost, stuff.cost)) //레이즈 판단
-    //        {
-    //            currentCost += 100;
-    //            auctionCost.text = currentCost.ToString();
-    //            winnerName = ai.NpcName; //입찰자 이름 업데이트
-    //            ifPlayerWin = false;
-    //            chat.text = $"{ai.NpcName}님이 {currentCost}골드로 입찰하셨습니다.";
-    //            await UniTask.Delay(2000);
-    //            if (remainingTime < 10f) //10초 미만이면 10초로 초기화
-    //            {
-    //                remainingTime = 10f;
-    //            }
-    //        }
-    //        else
-    //        {
-    //            chat.text = $"{ai.NpcName}님이 포기하셨습니다.";
-    //            await UniTask.Delay(2000);
-    //        }
-    //    }
-    //}
 
     private bool CheckAllGiveUp() //모두 포기했는지 확인
     {
@@ -432,18 +440,21 @@ public class Auction : PersistentSingleton<Auction>
         }
         while (remainingTime > 0f && isTimeRunning)
         {
-            remainingTime -= Time.deltaTime; //남은시간 감소
-            if (timeBar != null)
+            if (!isCutscenePlaying)
             {
-                timeBar.fillAmount = Mathf.Clamp01(remainingTime / auctionTime); //시간바 업데이트
+                remainingTime -= Time.deltaTime; //남은시간 감소
+                if (timeBar != null)
+                {
+                    timeBar.fillAmount = Mathf.Clamp01(remainingTime / auctionTime); //시간바 업데이트
+                }
             }
             await UniTask.Yield(); //다음 프레임까지 대기
         }
         isTimeRunning = false; //시간 진행중 아님
-        if(timeBar != null)
-        {
-            timeBar.gameObject.SetActive(false); //시간바 비활성화
-        }
+        //if(timeBar != null)
+        //{
+        //    timeBar.gameObject.SetActive(false); //시간바 비활성화
+        //}
     }
     //============================== 버튼 활성화/비활성화 ============================================================
     private void ButtonReady(bool active)

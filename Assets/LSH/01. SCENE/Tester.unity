@@ -119,6 +119,54 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &286680223
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 286680224}
+  - component: {fileID: 286680225}
+  m_Layer: 0
+  m_Name: CutSceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &286680224
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286680223}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -6.119417, y: -23.110958, z: 14.262773}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &286680225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 286680223}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c791f941ac1c13148ab2c23214f3b381, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cutsceneCanvasGroup: {fileID: 0}
+  bossNameText: {fileID: 0}
+  raiseAmountText: {fileID: 0}
+  cutsceneBanner: {fileID: 0}
 --- !u!1 &389162649
 GameObject:
   m_ObjectHideFlags: 0
@@ -927,6 +975,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1385eb72d4fb7b141a5ba1f6ce87ff9f, type: 2}
   - {fileID: 11400000, guid: 685a672a63e63504c91944ccdeaf0e50, type: 2}
   - {fileID: 11400000, guid: 5ae51013fd4a76542bb047d859da7cf9, type: 2}
+  cutsceneManager: {fileID: 0}
   timeBar: {fileID: 1191147751}
   console: {fileID: 413660742}
 --- !u!4 &609825351
@@ -2382,3 +2431,4 @@ SceneRoots:
   - {fileID: 2045641845}
   - {fileID: 1368561707}
   - {fileID: 609825351}
+  - {fileID: 286680224}

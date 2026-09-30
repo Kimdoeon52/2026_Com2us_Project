@@ -1,4 +1,6 @@
+using System;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
 
 public class BossAiBase : AllAiBase
 {
@@ -10,6 +12,10 @@ public class BossAiBase : AllAiBase
     public override int Gold => data != null ? data.mainCharacterGold : 0;
 
     public override bool IsReady { get; set; } = false;
+
+    public static event Func<string, int, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
+
+    [SerializeField] private int bigRaiseThreshold = 1000; // 큰 금액 인상 기준
 
     public override void ReadyForAction()
     {
@@ -39,5 +45,16 @@ public class BossAiBase : AllAiBase
             data.mainCharacterGold -= finalPrise;
             Debug.Log($"{NPCName} : {finalPrise} 골드로 낙찰 받음. 남은 골드 : {data.mainCharacterGold}");
         }
+    }
+    public bool IsBigRaiseThink(int currentPrice, int baseCost, int raiseAmount) //큰레이즈 조건 판단
+    {
+        return raiseAmount >= bigRaiseThreshold || currentPrice >= (int)(baseCost * 1.5f);
+    }
+    public async UniTask TriggerCutscene(string bossName, int amount)
+    {
+       if (OnBossBigRaiseCutscene != null)
+       {
+           await OnBossBigRaiseCutscene.Invoke(bossName, amount);
+       }
     }
 }

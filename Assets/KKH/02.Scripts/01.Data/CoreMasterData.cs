@@ -40,6 +40,35 @@ public class CoreMasterData : ScriptableObject
     [Tooltip("레벨당 필요 경험치임")]
     public int[] requiredEXPTable = new int[10] {100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000 };
 
+    #region 스탯 연산 헬퍼 메서드
+    /// <summary>
+    /// 코어 레벨을 반영한 최종 최대 체력(Max HP) 산출함
+    /// 레벨 미지정(음수) 시 현재 coreLevel 기준임
+    /// 공식: baseHp + (level - 1) * hpGrowthPerLevel
+    /// </summary>
+    public int GetMaxHp(int level = -1)
+    {
+        int targetLevel = level > 0 ? level : coreLevel;
+        return baseHp + Mathf.Max(0, targetLevel - 1) * hpGrowthPerLevel;
+    }
 
+    /// <summary>
+    /// 코어 레벨을 반영한 최종 본체 방어력(Defense) 산출함
+    /// 레벨 미지정(음수) 시 현재 coreLevel 기준임
+    /// 공식: baseDefense + (level - 1) * defenseGrowthPerLevel
+    /// </summary>
+    public int GetDefense(int level = -1)
+    {
+        int targetLevel = level > 0 ? level : coreLevel;
+        return baseDefense + Mathf.Max(0, targetLevel - 1) * defenseGrowthPerLevel;
+    }
 
+    /// <summary>
+    /// 코어 기본 공격력(Base Attack Power) 반환함
+    /// </summary>
+    public int GetBaseAttackPower()
+    {
+        return baseAttackPower;
+    }
+    #endregion
 }

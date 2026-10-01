@@ -51,6 +51,10 @@ public class TimeSystemManager : MonoBehaviour
         }
     }
 
+    // 시간이 소모되는 행동용 함수. begin은 행동 시작시 시간 멈춤. End는 시간 소모(passtime)후 시간 다시 흐름
+    public void BeginAction() { ChangeTimeState(TimeState.UIOpen); }
+    public void EndAction(int inputHours) { PassTime(inputHours); ChangeTimeState(TimeState.Running); }
+
     public void PassTime(int inputHours)                             // 시간 증가용
     {
         hour += inputHours;
@@ -60,6 +64,18 @@ public class TimeSystemManager : MonoBehaviour
             PassDay();
         }
         UpdateTimeUI();
+    }
+
+    public void SkipTime(int targetDay) // 시간 스킵용
+    {
+        int dayAdd = targetDay - day; // 목표날짜까지 계산
+
+        if (dayAdd < 0 || (dayAdd == 0 && hour >= 9)) dayAdd += 28; // 누른게 과거의 시간이라면 다음달로 이동
+
+        int targetHour = 9;
+        int totalHoursSkip = (dayAdd * 24) + (targetHour - hour); // 더할 총 시간 계산 (더할 일자 * 하루 시간) + (목표 시간 - 현재 시간)
+
+        PassTime(totalHoursSkip); // 시간 경과
     }
 
     public void PassDay() // 저장 및 로드에 대해서 추가 수정 필요함. // 날짜 증가용
@@ -88,10 +104,6 @@ public class TimeSystemManager : MonoBehaviour
     {
         timeText.text = $"{year}년 {month:D2}월 {day:D2}일 {hour:D2}시";
     }
-
-    // 시간이 소모되는 행동용 함수. begin은 행동 시작시 시간 멈춤. End는 시간 소모(passtime)후 시간 다시 흐름
-    public void BeginAction() { ChangeTimeState(TimeState.UIOpen); }
-    public void EndAction(int inputHours) { PassTime(inputHours); ChangeTimeState(TimeState.Running); }
 
     public void ChangeTimeState(TimeState newState) // 시간 시스템의 상태 변화함수
     {
@@ -126,4 +138,5 @@ public class TimeSystemManager : MonoBehaviour
                 break;
         }
     }
+
 }

@@ -1,11 +1,11 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// 전반적인 UI의 온오프 담당하는 매니저. 현재는 맵과 달력뿐임
 /// </summary>
 public class SystemUiOnOffManager : MonoBehaviour
 {
-
     private void Update()
     {
         if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Combat)

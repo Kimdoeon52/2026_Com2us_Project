@@ -563,4 +563,68 @@ flowchart TD
     P1 --> P2 --> P3 --> P4
 ```
 
+---
+
+## 10. KKH 실무 작업 TODO 리스트 (Checklist)
+
+아래 체크리스트는 최신 기획 전환에 따라 KKH가 실제로 코드를 수정/구현해야 하는 작업 목록입니다.
+
+### [Phase 1] 레거시 청소 및 수치 연산/DTO 슬림화
+- [ ] **`HitResolutionResult.cs` DTO 정리**
+  - [ ] 레거시 필드 삭제 (`isGuarded`, `staggerAdded`, `leftArmDurabilityDamage`, `rightArmDurabilityDamage`, `causesKnockdown` 등)
+  - [ ] 신규 필드 확정 (`coreHpDamage`, `targetBodyPart`, `partDurabilityDamage`, `isPartDestroyed`, `isEvaded`)
+- [ ] **`CombatCalculator.cs` 연산 로직 리팩토링**
+  - [ ] 복싱 레거시 제거 (가드 시 양팔 5:5 분산 로직, 위빙 시 다리 5 소모 및 50% 실패 확률 판정 삭제)
+  - [ ] 방어력 감쇄 공식 적용: $\text{피해량} = \text{원시 피해} \times \frac{100}{\text{방어력} + 100}$
+  - [ ] 일반 공격(코어 HP만 차감) vs 보스 특수 스킬(지정 부위 내구도 차감) 분기 구현
+  - [ ] 스킬 봉인 게이트(`CanExecuteAction`) 구현: D 기본기는 항상 허용, Q·W·E·R 스킬은 해당 부위 내구도 0 시 차단
+- [ ] **단위 테스트 검증**
+  - [ ] 더미 피격 호출 시 일반 공격은 코어 체력만 깎이고 파츠 내구도는 보존되는지 확인
+
+### [Phase 2] 보스 시스템 모델링 및 기믹 파훼 엔진 구축
+- [ ] **`BossMasterData.cs` (ScriptableObject) 신규 생성**
+  - [ ] 보스 기본 스탯 (이름, maxHp, baseDefense)
+  - [ ] 페이즈 목록 (`BossPhaseData`: 체력 임계 비율, 추가 방어력, 사용 패턴 스킬 목록)
+  - [ ] 기믹/부위 목록 (`BossGimmickPartData`: 기믹ID, maxDurability, 파괴 시 봉인될 스킬ID `targetSkillIDToSeal`)
+  - [ ] 토벌 보상 (골드, 코어 경험치, 전용 파츠 드랍 테이블)
+- [ ] **`BossSnapshot.cs` (런타임 DTO) 신규 생성**
+  - [ ] 실시간 보스 체력, 현재 페이즈, 그로기 여부(`isGroggy`)
+  - [ ] 기믹 실시간 내구도 및 파괴 상태 딕셔너리 (`gimmickStates`)
+  - [ ] 봉인된 스킬 패턴 목록 (`HashSet<string> sealedSkills`)
+- [ ] **기믹 파훼 & 패턴 봉인 연산 구현 (`CombatCalculator` / `CombatDataHub`)**
+  - [ ] 플레이어가 기믹 부위 타격 시 기믹 내구도 차감
+  - [ ] 기믹 내구도 0 도달 시 `sealedSkills`에 등록 및 `OnBossGimmickBroken` 이벤트 발행
+  - [ ] 보스 상태를 3초간 `Groggy`로 전환하고 받는 피해 증폭 계수 적용
+
+### [Phase 3] 코어 경험치 성장 및 하드코어 승패 정산 고도화
+- [ ] **`CoreMasterData.cs` 스펙 확장**
+  - [ ] 레벨업 시 체력 성장치(`hpGrowthPerLevel = 100`), 방어력 성장치(`defGrowthPerLevel = 5`) 추가
+  - [ ] 1~10레벨 구간별 누적 필요 경험치 테이블(`requiredExpTable`) 반영
+- [ ] **`BattleSettlementProcessor.cs` 승패 정산 로직 고도화**
+  - [ ] 승리 시: 판돈 전액 지급 (`GlobalGold.Instance.AddGold`)
+  - [ ] 승리 시: 코어 경험치 지급 및 레벨업 판정 (`ProcessCoreExp`)
+  - [ ] 승리 시: 내구도 0 파손 부품 내구도 1로 응급 복구 처리
+  - [ ] 승리 시: 보스 전용 파츠 정수 가중치 드랍 롤링
+  - [ ] 패배 시: 판돈 전액 몰수
+  - [ ] 패배 시: 장착 파츠 내구도 0 전환 및 등급별 영구 파괴 확률 롤링(일반 70% ~ 프로토 1%)
+  - [ ] 패배 시: 코어 상태를 '불안정한 코어'로 강등 통보
+
+### [Phase 4] 중앙 관제 허브(CombatDataHub) API 재정비 & HUD 연동
+- [ ] **`CombatDataHub.cs` API 리팩토링**
+  - [ ] `InitializeBattle(CombatantSnapshot player, BossSnapshot boss)` 연동
+  - [ ] `ProcessPlayerHit(targetPart, rawDamage, partDamage)` 구현 및 이벤트 발행
+  - [ ] `ProcessBossHit(gimmickPartId, rawDamage)` 구현 및 이벤트 발행
+  - [ ] `CanExecutePlayerAction(source, requiredPart)` 게이트 열기
+- [ ] **UI 계층 (HUD) 정리 및 신규 제작**
+  - [ ] 기존 `FighterStatusHUD.cs`: 플레이어 전용 HUD(가슴 CORE 및 하단 440/440 + 5개 부위 게이지)로 바인딩 확인
+  - [ ] `BossStatusHUD.cs` 신규 구현: 상단 대형 보스 체력바 + 기믹 슬롯 미니 게이지 표출
+  - [ ] 기믹 파괴 시 붉은 `DESTROYED` 텍스트 연출 및 슬롯 소멸 연계
+- [ ] **통합 검증 (Mock Battle Test)**
+  - [ ] 테스트 씬에서 가상 보스 공격 $\rightarrow$ 플레이어 코어 HP / 특정 파츠 내구도 감소 검증
+  - [ ] 플레이어 공격으로 보스 기믹 파괴 $\rightarrow$ 보스 패턴 봉인 및 그로기 전환 검증
+  - [ ] 코어 체력 0 도달 시 패배 처리 및 결과창 팝업 연동 검증
+
+---
+
 본 설계서는 기획서의 최신 방향성을 완벽히 반영하며, KKH가 보스 시스템을 독립적이고 강력하게 통제할 수 있는 모듈화된 기반을 제공합니다.
+

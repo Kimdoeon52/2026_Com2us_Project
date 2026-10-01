@@ -10,10 +10,10 @@ public class CoreMasterData : ScriptableObject
 {
     [Header("1. 기본 식별 정보")]
     [Tooltip("코어 고유 식별 번호임")]
-    public string coreID = "CORE_01";
+    public string coreID;
 
     [Tooltip("코어 명칭임")]
-    public string coreName = "표준형 티타늄 코어";
+    public string coreName;
 
     [Tooltip("코어 강화 레벨임")]
     [Range(1, 10)]
@@ -29,31 +29,17 @@ public class CoreMasterData : ScriptableObject
     [Tooltip("기본 공격력 (Base Atk) - 양팔 공격력 평균과 합산됨")]
     public int baseAttackPower = 20;
 
-    [Header("3. 런타임/세이브 상태")]
-    [Tooltip("전투 패배 등으로 코어가 손상된 불안정 상태인지 여부임 (출격 제한 연동됨)")]
-    public bool isUnstable = false;
+    [Header("3. 레벨당 성장치")]
+    [Tooltip("레벨당 최대 체력 증가량임")]
+    public int hpGrowthPerLevel = 100;
 
-    /// <summary>
-    /// 레벨에 따른 유효 최대 체력 반환함
-    /// </summary>
-    public int GetMaxHp()
-    {
-        return baseHp + (coreLevel - 1) * 100;
-    }
+    [Tooltip("레벨당 방어력 증가량임")]
+    public int defenseGrowthPerLevel = 5;
 
-    /// <summary>
-    /// 레벨에 따른 유효 본체 방어력 반환함
-    /// </summary>
-    public int GetDefense()
-    {
-        return baseDefense + (coreLevel - 1) * 5;
-    }
+    [Header("4. 경험치 테이블")]
+    [Tooltip("레벨당 필요 경험치임")]
+    public int[] requiredEXPTable = new int[10] {100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000 };
 
-    /// <summary>
-    /// 레벨에 따른 기본 공격력 반환함
-    /// </summary>
-    public int GetBaseAttackPower()
-    {
-        return baseAttackPower + (coreLevel - 1) * 3;
-    }
+
+
 }

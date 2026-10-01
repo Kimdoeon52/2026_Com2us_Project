@@ -12,6 +12,7 @@ public class BattleSettlementResult
     public bool PlayerWon;
     public int GoldDelta;
     public List<string> DestroyedPartIDs = new List<string>();
+    public Dictionary<string, int> FinalPartDurabilities = new Dictionary<string, int>(); // [YJW 연동] 부품별 최종 잔여 내구도
     public bool CoreUnstable;
     public int CoreExpGained;
     public string SummaryMessage;
@@ -98,6 +99,7 @@ public static class BattleSettlementProcessor
                         partState.Repair(1);
                         Debug.Log($"[정산기] 승리 응급복구 완료: {kvp.Key} (ID: {partState.partID}) 내구도 1로 복구됨");
                     }
+                    result.FinalPartDurabilities[partState.partID] = partState.currentDurability;
                 }
             }
 
@@ -122,6 +124,7 @@ public static class BattleSettlementProcessor
                 {
                     var partState = kvp.Value;
                     partState.currentDurability = 0; // 전 부품 내구도 0 강제 세팅함
+                    result.FinalPartDurabilities[partState.partID] = 0;
 
                     // 등급별 영구 파괴 롤링함
                     PartGrade grade = PartGrade.Common;

@@ -13,9 +13,13 @@ public class RecipeData : ScriptableObject
     [Tooltip("조합법")]
     [SerializeField] string[] _combination = new string[9];
 
+    [Tooltip("소요 시간")]
+    [SerializeField] private int _requiredTime;
+
     public string RecipeID => _recipeID;
     public string PartID => _partID;
     public string[] Combination => _combination;
+    public int RequiredTime => _requiredTime;
 
     private void OnValidate()
     {

@@ -1,7 +1,6 @@
 using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using System.Numerics;
 
 public class BossAiBase : AllAiBase
 {
@@ -11,12 +10,13 @@ public class BossAiBase : AllAiBase
     //람다식으로 삽입.
     public override string NPCName => data != null ? data.mainCharacterName : "No Name";
     public override int Gold => data != null ? data.mainCharacterGold : 0;
+    public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
 
     public override bool IsReady { get; set; } = false;
 
     public static event Func<string, string, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 
-    [SerializeField] private int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
+    [SerializeField] public int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
     public override void ReadyForAction()
     {
         IsReady = false;

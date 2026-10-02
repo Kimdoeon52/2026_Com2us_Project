@@ -8,7 +8,7 @@ public class AuctionCutsceneManager : MonoBehaviour
     [Header("컷씬UI들")]
     [SerializeField] private CanvasGroup cutsceneCanvasGroup; //덩어리
     [SerializeField] private TextMeshProUGUI bossNameText; //보스 이름
-    [SerializeField] private TextMeshProUGUI raiseAmountText; //얼만큼 레이즈 했는지
+    [SerializeField] private TextMeshProUGUI bossSkillName; //보스 스킬이름
     [SerializeField] private RectTransform cutsceneBanner; //배너
 
     private void Awake()
@@ -20,17 +20,18 @@ public class AuctionCutsceneManager : MonoBehaviour
         }
     }
 
-    public async UniTask PlayBossCutsceneAsync(string bossName, int raiseAmount)
+    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName)
     {
-        if (cutsceneCanvasGroup == null || bossNameText == null || raiseAmountText == null || cutsceneBanner == null)
+        if (cutsceneCanvasGroup == null || bossNameText == null || bossSkillName == null || cutsceneBanner == null)
         {
             Debug.LogWarning("컷씬 뭐 빠진게 있다 인스펙터 확인해라.");
             return;
         }
         //======================컷씬 시작===================================
+        Debug.Log("컷씬 시작: " + bossName + " - " + skillName);
         cutsceneCanvasGroup.gameObject.SetActive(true);
-        bossNameText.text = bossName; 
-        raiseAmountText.text = $"+{raiseAmount} 골드 레이즈";
+        bossNameText.text = bossName;
+        bossSkillName.text = skillName;
 
         //연출 시작
         cutsceneBanner.anchoredPosition = new Vector2(-1000f, 0f);

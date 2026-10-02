@@ -100,13 +100,13 @@ public class Auction : PersistentSingleton<Auction>
         BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene;
     }
 
-    private async UniTask HandleBossBigRaiseCutscene(string bossName, int bigAmount)
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName)
     {
         isCutscenePlaying = true;
 
         if (cutsceneManager != null)
         {
-            await cutsceneManager.PlayBossCutsceneAsync(bossName, bigAmount); //컷씬 재생 동안 대기
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName); //컷씬 재생 동안 대기
         }
 
         isCutscenePlaying = false;
@@ -159,18 +159,17 @@ public class Auction : PersistentSingleton<Auction>
     //========================================경매 시작시 참여 npc목록 ========================================
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(3, 8); //그날 하루 참여 Npc 수 랜덤 7명까지
+        dayOfEnterNpc = Random.Range(3, 5); //그날 하루 참여 Npc 수 랜덤 7명까지 현재 임시로 4명까지
     }
     private void GetAuctionNpc(int enterNpc)//그날 하루 참여 Npc 목록
     {
         // 경매 참가 인원수가 전체 NPC 수보다 많으면 전체 수로 보정
         auctionAiList.Clear(); 
-        bool isBossEnter = Random.value < 0.35f; //35%확률로 보스 참여
+        bool isBossEnter = Random.value < 1f; //35%확률로 보스 참여 임시로 100%로 설정
         if (isBossEnter && bossAiList.Count > 0)
         {
             int randomBossIndex = Random.Range(0, bossAiList.Count);
             auctionAiList.Add(bossAiList[randomBossIndex]); //보스 참여
-            console.text += $"{bossAiList[randomBossIndex].NPCName}님이 참가 했습니다.\n";
         }
         HashSet<int> selectedIndices = new HashSet<int>();
         int targetCount = Mathf.Min(enterNpc, npcAiList.Count); // npcAiList 기준으로 제한
@@ -281,13 +280,13 @@ public class Auction : PersistentSingleton<Auction>
                 if (ai is BossAiBase boss)
                 {
                     // 필요 시 특정 조건에서 금액을 대폭 증액 (예: 500G)
-                    if (boss.IsBigRaiseThink(currentCost, stuff.Cost, 500))
+                    if (boss.IsBigRaiseThink(currentCost, stuff.Cost))
                     {//임시임 현재 물건이 400원이고 원래 가격이 200원이라면 1.5배 이상이므로 컷씬 연출
-                        raiseStep = 500;
+                        raiseStep = boss.BigRaiseGold();
                         currentCost += raiseStep; //조건 성립시 컷씬과 함꼐 500원증가
 
                         // 옵저버 이벤트 발동 -> 모든 보스 공통 컷씬 실행 및 대기
-                        await boss.TriggerCutscene(boss.NPCName, currentCost);
+                        await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
                     }
                     else
                     {

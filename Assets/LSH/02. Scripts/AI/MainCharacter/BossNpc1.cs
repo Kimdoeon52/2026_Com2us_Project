@@ -26,4 +26,8 @@ public class BossNpc1 : BossAiBase
         }
         return true; //만약 허용범위면 레이즈 승인
     }
+    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
+    {
+        return currentPrice >= (int)(baseCost * 3f); //3배 이상이면 큰 레이즈.
+    }
 }

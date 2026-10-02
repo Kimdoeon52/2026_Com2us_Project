@@ -14,17 +14,29 @@ using UnityEngine;
 public class RobotMover : MonoBehaviour
 {
     [SerializeField] private float moveSpeed = 3f; // TODO: 임시값. 프레임표/기획 확정 전
-    // 상대 로봇의 Transform. 이게 있어야 "상대를 바라보는 방향"을 정확히 계산할 수 있다
-    // (좌우 반전 판정(BoxResolver)이 이 방향값에 의존함. 가드는 2026-09-29 삭제됨 — §5·§15)
+
+    [Header("대시 — 수치 임시 (기획서에 배율 없음, CLAUDE.md §12)")]
+    [Tooltip("←←/→→ 더블탭(IInputSource.GetDashInput()) 중일 때 moveSpeed에 곱하는 배율")]
+    [SerializeField] private float dashSpeedMultiplier = 1.8f; // TODO: 임시값
+
+    [Header("점프 — 수치 임시 (기획서에 물리값 없음, 애니메이션 묘사만 있음)")]
+    [SerializeField] private float jumpVelocity = 6f;  // TODO: 임시값
+    [SerializeField] private float gravity = -20f;      // TODO: 임시값
+
+    // 상대 로봇의 Transform. 방향 전환에는 더 이상 안 쓴다(아래 참고) — Push박스 겹침 계산(ResolvePushOverlap)에만 쓰인다
     [SerializeField] private Transform opponent;
     [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
 
-    //
     private IInputSource inputSource;
     private ActionState actionState;
-    // 지금 오른쪽을 보고 있는지. Update()에서 매 프레임 갱신되고, 다른 시스템(BoxDrawer, ActionExecutor의
-    // 가드 판정)은 이 필드를 직접 못 건드리고 아래 FacingRight 프로퍼티로 읽기만 한다
+    // 지금 오른쪽을 보고 있는지. Update()에서 매 프레임 갱신되고, 다른 시스템(BoxDrawer, HitDetection)은
+    // 이 필드를 직접 못 건드리고 아래 FacingRight 프로퍼티로 읽기만 한다
     private bool facingRight = true;
+
+    // 점프 물리 상태. groundY는 Init 시점의 발밑 높이를 바닥으로 고정한다 — 지형 높낮이가 없는 평지 전제
+    private float groundY;
+    private float verticalVelocity;
+    private bool isGrounded = true;
 
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
@@ -36,20 +48,28 @@ public class RobotMover : MonoBehaviour
     {
         inputSource = source;
         actionState = state;
+        groundY = transform.position.y;
         // 인스펙터에서 안 넣어줬으면 씬에서 직접 찾는다 — 카메라는 씬에 보통 하나뿐이라 자동 검색이 안전함
         if (combatCamera == null) combatCamera = FindFirstObjectByType<CombatCamera>();
     }
 
-    // 호출: Unity 매 렌더 프레임. 순서: 이동 입력(잠금 확인) → 이동 → CombatCamera.ClampFighterX로 화면 밖 보정 → 상대 방향으로 좌우 반전
+    // 호출: Unity 매 렌더 프레임. 순서: 좌우 이동(대시 배율 포함) → 점프(Y축) → 화면 밖 보정 → 입력 방향으로 좌우 반전 → Push박스 겹침 보정
     private void Update()
     {
-        // 공격·가드·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
+        // 공격·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
         // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
         bool canMove = actionState == null || actionState.CanMove;
         float moveInput = canMove ? (inputSource?.GetMoveInput() ?? 0f) : 0f;
+
+        // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
+        bool isDashing = canMove && (inputSource?.GetDashInput() ?? false);
+        float speedMultiplier = isDashing ? dashSpeedMultiplier : 1f;
+
         // Time.deltaTime을 곱해서 프레임 속도와 무관하게 "초당 moveSpeed만큼" 이동하게 한다.
-        // (이동 자체는 아직 CombatTick으로 안 옮겨서, 위 클래스 주석대로 §3 원칙을 완전히 지키진 못한 임시 상태)
-        transform.Translate(Vector3.right * moveInput * moveSpeed * Time.deltaTime, Space.World);
+        // (이동 자체는 아직 CombatTick으로 안 옮겨서, 클래스 주석대로 §3 원칙을 완전히 지키진 못한 임시 상태)
+        transform.Translate(Vector3.right * moveInput * moveSpeed * speedMultiplier * Time.deltaTime, Space.World);
+
+        UpdateJump(canMove);
 
         // 화면 밖으로 못 나가게 스테이지 벽 / 최대 거리로 보정
         if (combatCamera != null)
@@ -59,24 +79,16 @@ public class RobotMover : MonoBehaviour
             transform.position = pos;
         }
 
-        if (opponent != null)
-        {
-            // 정식 방식 — 상대 위치 기준 (§ 격겜 컨벤션: 뒤로 물러나도 상대를 계속 바라봄)
-            // 격투 게임에서 캐릭터는 이동 방향과 무관하게 항상 상대를 마주보는 게 표준이다 —
-            // 뒷걸음질을 쳐도(가드를 위해 뒤로 물러나도) 등을 보이지 않고 계속 상대를 바라봐야
-            // 애니메이션도 자연스럽고, 가드 판정(뒤로 버티기)도 방향이 헷갈리지 않는다
-            facingRight = opponent.position.x > transform.position.x;
-        }
-        else if (Mathf.Abs(moveInput) > 0.01f)
-        {
-            // [임시 폴백] 상대가 아직 씬에 없을 때(혼자 테스트)만 이동 방향 기준으로 뒤집음.
-            // opponent 연결되는 순간 이 분기는 안 타고 위쪽(정식 방식)으로 넘어간다.
-            facingRight = moveInput > 0f;
-        }
-        // (moveInput이 거의 0이고 opponent도 없으면 마지막 방향을 그대로 유지 — 멈춰있는데 방향이 갑자기 바뀌면 부자연스러움)
+        // 2026-10-02: 방향 전환 기준을 "상대 위치"에서 "이동 입력 방향"으로 교체했다.
+        // 리얼스틸 기획서(1) 그래픽 §7-1 "전투 캐릭터 동작"의 "방향 전환 | 반대 방향 입력"이 근거 —
+        // 할로우나이트/스컬류 보스전은 미러매치 대전격투가 아니라서, 뒷걸음질쳐도 상대를 계속
+        // 바라보는 옛 SF2식 가정이 더 이상 안 맞는다. 입력이 없으면(제자리 정지) 마지막 방향을 유지한다
+        if (Mathf.Abs(moveInput) > 0.01f) facingRight = moveInput > 0f;
 
         // 상대의 Push박스와 겹치면 그만큼 뒤로 밀어낸다 — 이게 없으면 Push박스는 그냥 Scene 뷰에
         // 그려지기만 할 뿐 아무 역할도 안 해서, 서로 그냥 뚫고 지나가 버린다 (§4 "몸끼리 겹쳐 지나가지 못하게")
+        // TODO: 지금은 X축만 보고 미는데, 점프로 Y가 달라지는 상황(보스 위로 뛰어넘기 등)에서
+        // 공중에 떠 있어도 수평으로 막히는 게 맞는지는 실제 플레이로 확인 필요 — 보스 크기 확정 전까지 보류
         ResolvePushOverlap();
 
         // localScale.x의 부호만 뒤집어서 스프라이트를 좌우 반전시킨다. Mathf.Abs로 감싼 이유는
@@ -84,6 +96,36 @@ public class RobotMover : MonoBehaviour
         // 가져와서 새로 부호를 매기기 위함 — 그냥 sign을 곱하기만 하면 반복 실행 시 계속 반전되는 버그가 생김
         float sign = facingRight ? 1f : -1f;
         transform.localScale = new Vector3(sign * Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
+    }
+
+    // 호출: Update. 단순 포물선 점프 — 지상에서만 발동, 체공 중엔 중력만 적용하다 바닥(groundY)에 닿으면 착지.
+    // GetJumpInput()은 조건과 무관하게 매 프레임 반드시 한 번 호출해서 소비해야 한다 — 안 그러면
+    // PlayerInputSource의 버퍼링 플래그가 안 비워져서 나중에 엉뚱한 타이밍에 점프가 터질 수 있다
+    private void UpdateJump(bool canMove)
+    {
+        bool jumpPressed = inputSource?.GetJumpInput() ?? false;
+
+        if (jumpPressed && canMove && isGrounded)
+        {
+            verticalVelocity = jumpVelocity;
+            isGrounded = false;
+        }
+
+        if (isGrounded) return;
+
+        verticalVelocity += gravity * Time.deltaTime;
+
+        Vector3 pos = transform.position;
+        pos.y += verticalVelocity * Time.deltaTime;
+
+        if (pos.y <= groundY)
+        {
+            pos.y = groundY;
+            verticalVelocity = 0f;
+            isGrounded = true;
+        }
+
+        transform.position = pos;
     }
 
     // 호출: Update(이동·방향 계산 끝난 뒤). 내 Push박스가 상대 Push박스와 겹치면, 겹친 만큼 나만 뒤로 물러난다.

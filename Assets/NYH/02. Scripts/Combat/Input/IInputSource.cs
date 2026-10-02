@@ -22,4 +22,14 @@ public interface IInputSource
     // bool 두 개(MoveLeft/MoveRight) 대신 float 하나로 만든 이유: 나중에 아날로그 입력(게임패드 스틱 등)이
     // 생겨도 인터페이스를 안 바꿔도 되고, 왼쪽·오른쪽을 동시에 누른 경우의 애매한 처리(둘 다 true?)도 애초에 안 생긴다
     float GetMoveInput();
+
+    // 2026-10-02 추가 (리얼스틸 기획서(1) §6-12·그래픽 §7-1 기준) — 점프/대시 "입력 수신"만 추가한다.
+    // 점프 물리, 공중 상태, 대시 이동속도 반영 등 "연결" 쪽(RobotMover/ActionPhase)은 아직 설계가 안 끝나서
+    // 손 안 댔다 (CLAUDE_1.md §15). 지금은 이 신호를 누가 어떻게 소비할지도 정해지지 않았다.
+
+    /// <summary>점프(↑) 요청. 공격 입력과 같은 1회성 펄스 — 눌린 틱에 한 번만 true</summary>
+    bool GetJumpInput();
+
+    /// <summary>대시(←←/→→) 상태. 더블탭으로 들어가서 같은 방향을 계속 누르는 동안 유지되는 연속 상태</summary>
+    bool GetDashInput();
 }

@@ -39,4 +39,8 @@ public class DummyJabInputSource : MonoBehaviour, IInputSource
 
     // 호출: RobotMover / RobotView. 테스트용 허수아비라 움직이지 않는다
     public float GetMoveInput() => 0f;
+
+    // 테스트용 허수아비라 점프·대시는 안 한다 (2026-10-02 IInputSource 확장, CLAUDE_1.md §8·§15)
+    public bool GetJumpInput() => false;
+    public bool GetDashInput() => false;
 }

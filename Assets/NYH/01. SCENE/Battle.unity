@@ -501,6 +501,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 3
+  dashSpeedMultiplier: 1.8
+  jumpVelocity: 6
+  gravity: -20
   opponent: {fileID: 1270632114}
   combatCamera: {fileID: 0}
 --- !u!114 &310224678
@@ -515,8 +518,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 78861b762697cfe4b83bf1a819707b96, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jab: {fileID: 11400000, guid: e26e6c4488b6a2543ad4997426a9f6d3, type: 2}
-  idleTicksBetweenJabs: 10
+  repeatAction: {fileID: 0}
+  idleTicksBetweenActions: 0
 --- !u!1001 &533916007
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -787,7 +790,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9052228febe450343bfaa1c03526b747, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  maxFPS: 60
+  maxFPS: 144
 --- !u!114 &860313877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1003,13 +1006,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6e2e509e0b16fa43b600b3fd7436e47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  jab: {fileID: 11400000, guid: e26e6c4488b6a2543ad4997426a9f6d3, type: 2}
-  straight: {fileID: 11400000, guid: cacf7e27a67a8604a86b3f49f3fa41ae, type: 2}
-  hook: {fileID: 11400000, guid: a3255ecc244e0d140979311a513e4c3e, type: 2}
-  uppercut: {fileID: 11400000, guid: 126485fd237b82d4eb28aa02381ef250, type: 2}
-  backspinElbow: {fileID: 11400000, guid: a570473fe0d73b14492187f4d66b6e3a, type: 2}
-  guard: {fileID: 11400000, guid: 16c202cf4295a1642b7d5ff73075e6f1, type: 2}
-  weaving: {fileID: 11400000, guid: 7082bb52b41adbd48a1cae793e5a85a4, type: 2}
+  basicAttack: {fileID: 0}
+  leftArmSkill: {fileID: 0}
+  leftArmSkillCharged: {fileID: 0}
+  rightArmSkill: {fileID: 0}
+  rightArmSkillCharged: {fileID: 0}
+  leftLegSkill: {fileID: 0}
+  rightLegSkill: {fileID: 0}
+  dodge: {fileID: 0}
 --- !u!114 &1270632117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1036,6 +1040,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 2
+  dashSpeedMultiplier: 1.8
+  jumpVelocity: 6
+  gravity: -20
   opponent: {fileID: 310224676}
   combatCamera: {fileID: 1538470577}
 --- !u!114 &1270632119

@@ -1,6 +1,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+// 공통 Enum 참조 안내:
+// - BodyPart: NYH 파트(Assets/NYH/02. Scripts/Combat/Data/CombatEnums.cs) 공통 enum 사용
+// - PartGrade: KDU 파트(Assets/KDU/02.Scripts/02.Scrapyard/PartGrade.cs) 공통 enum 사용
+
 /// <summary>
 /// [부품 마스터 데이터 SO (ScriptableObject)]
 /// 부품 원형(Master) 스탯 및 속성을 정의하는 불변 데이터 에셋임

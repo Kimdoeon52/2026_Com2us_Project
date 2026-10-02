@@ -1,53 +1,60 @@
 # 전투 데이터 & 보스 시스템(Battle & Boss System) 상세 아키텍처 설계서
 
-- **문서 버전**: v5.4 (내구도 영구 원본 데이터 관리 주체 확정: YJW 인벤토리 인스턴스 전담 및 KKH 정산 연동 반영)
+- **문서 버전**: v5.6 (1:1 대전 규칙에 기반한 대전 모드 이원화 [Robot vs Robot / Robot vs Boss] 및 보스 다변화 범용 기믹 아키텍처 반영)
 - **담당 파트**: **KKH (전투 데이터 매니지먼트 & 보스 시스템 총괄)**
 - **협력 파트**:
-  - **전투 행동/프레임 & 실린더 파트 (NYH)**: 2.5D 사이드뷰 실시간 액션 물리 엔진 (4방향 이동, ←←/→→ 달리기, ↑ 점프, Space 회피 무적 0.3초, D 기본기, 히트/허트박스 충돌 판정), **실린더 시스템 구현 (최대 3발, D 기본기 적중 시 충전, 스킬 소모/장전 로직 관리)**
+  - **전투 행동 & 실린더 파트 (NYH)**: 2.5D 사이드뷰 실시간 액션 물리 엔진 (4방향 이동, ←←/→→ 달리기, ↑ 점프, Space 회피 무적 0.3초, D 기본기, 콜라이더/트리거 충돌 판정), **실린더 시스템 구현 (최대 3발, D 기본기 적중 시 충전, 스킬 소모/장전 로직 관리)**
   - **일반 적 AI 파트 (LJS)**: 경기장 상주 일반 적 NPC(A, B, C) AI 로직, 기물/부위 파괴 기믹 1개 보유 일반 적 행동 패턴 구현 및 지역 메타 파츠 연동
   - **스킬 파트 (CSH)**: 파츠별 Q·W·E·R 스킬, 머리 패시브, 기믹 태그(ID) 매핑, 주먹 발사 이펙트/연출, 보스 패턴 스킬
   - **크래프팅/인벤토리 & 내구도 원본 파트 (YJW)**: 부품 제작, **인벤토리 파츠 인스턴스 및 내구도 영구 데이터 원본 관리**, 거점 정비소 수리/복구, 전투 종료 후 KKH 정산 결과(`BattleSettlementResult`) 수신에 따른 인벤토리 내구도 최신화 및 영구 파괴 부품 잔해 처리/삭제
   - **골드/판돈 파트 (LSH)**: 지역별 기준가(500G~3000G), 판돈 협상, 경기 결과 골드 정산 (`GlobalGold`)
   - **고물상/코어 파트 (KDU)**: 고철 수집, 인벤토리 파츠 장착, 패배 시 '불안정한 코어' 정비시설 복구(`100G + Lv * 50G`)
-- **기준 기획서**: `D:\3학년\리얼스틸 기획서.md` (2026-10-01 최신 기획 완전 일치)
-- **최종 수정일**: 2026-10-01
+- **기준 기획서**: `리얼스틸 기획서.md` (2026-10-02 최신 기획 완전 일치)
+- **최종 수정일**: 2026-10-02
 
 ---
 
 ## 1. 개요 및 파트별 역할 분담 (R&R)
 
 ### 1.1 기획 정합성 요약 (최신 기획서 핵심 룰)
-1. **사이드뷰 실시간 액션 기믹 파훼형 보스전 (Blasphemous 레퍼런스)**:
-   - 전투는 1:1 복싱이 아닌 **사이드뷰 실시간 액션 보스 전투**입니다.
-   - **경직 시스템은 완전히 배제**하며, 무적 프레임은 회피(Space)와 일부 특정 스킬에만 존재합니다.
-2. **조작 및 기본기 체계**:
+1. **1:1 대전 규칙 및 상대방(Opponent) 2원화 체계 (핵심 룰)**:
+   - 전장 링 위에는 **언제나 1:1 대전(플레이어 1명 vs 상대방 1명)**만 성립합니다.
+   - 상대방(Opponent)의 정체는 대전 모드에 따라 2가지로 나뉩니다:
+     - **[모드 1] 일반 적 대전 (Robot vs Robot)**: 경기장 상주 NPC(A, B, C). 플레이어와 동일한 규격의 **'코어 + 5개 조립 파츠' 로봇**이며, `CombatantSnapshot`을 공용합니다.
+     - **[모드 2] 보스전 (Robot vs Boss)**: 지역 1 폐타이어/폐엔진 보스 및 향후 추가될 지역별 고유 보스들. 5개 파츠 로봇이 아닌 **'본체 HP + 페이즈 + 고유 기믹/기물'** 구조이며, `BossSnapshot`이 전담합니다.
+2. **사이드뷰 실시간 액션 기믹 파훼형 보스전 (Blasphemous 레퍼런스)**:
+   - 전투는 1:1 복싱이 아닌 **사이드뷰 실시간 액션 전투**입니다.
+   - 복잡한 60fps 격투 프레임 엔진(`CombatClock`) 및 **경직 시스템은 완전히 폐기**되었으며, 유니티 표준 실시간 액션 물리(Update/FixedUpdate, 콜라이더/트리거, 초(Second) 단위 타이머)로 동작합니다.
+   - 무적 시간은 회피(Space, 0.3초)와 일부 특정 스킬에만 존재합니다.
+3. **조작 및 기본기 체계**:
    - 이동: `←` / `→` 좌우 이동, `←←` / `→→` 달리기, `↑` 점프
    - 회피 (`Space`): 쿨타임 1.0초, 전체 동작 0.5초, **무적 구간 0.05s ~ 0.35s (0.3초)**, 이동 거리 2.0, 공중 사용 불가, 자원 소모 없음
    - 일반 공격 (`D`): 파츠와 무관한 **고정 기본기** (파츠 파괴 시에도 항시 사용 가능), 쿨타임 0.5초, 기본 피해량 10, 사거리 1.2, **적중 시 실린더 탄 +1**
-3. **실린더 시스템 (Cylinder System) — [NYH 전담]**:
+4. **실린더 시스템 (Cylinder System) — [NYH 전담]**:
    - 블래스터를 모티브로 스킬 사용 시 실린더 탄환을 소모하는 시스템으로 **NYH(전투 행동) 파트에서 전담 구현**합니다.
    - **최대 탄수 3발 (양팔 공용)**, **전투 시작 시 1발 기본 장전**
    - 장전: `D` 기본기 적중 시 +1, 일부 다리 스킬(스톰프, 백 부스트) 및 머리 패시브(자동 장전 장치: 6초마다 +1)로 충전
    - KKH 파트는 런타임 DTO 스냅샷 및 HUD 실린더 UI 동기화 인터페이스를 지원합니다.
-4. **일반 적 AI 시스템 (Common Enemy AI) — [LJS 전담]**:
+5. **일반 적 AI 시스템 (Common Enemy AI) — [LJS 전담]**:
    - 경기장 맵 상주 NPC A, B, C의 전투 AI를 **LJS 파트에서 전담 구현**합니다.
    - **NPC A**: 판돈 0원 구제 경기 가능, 기물 파괴 기믹 1개 보유, 일반 등급 파츠
    - **NPC B**: 기준가 × 2.5 재산, 기물 파괴 기믹 1개 보유, 일반+레어 파츠
    - **NPC C**: 기준가 × 4 재산, 부위 파괴 기믹 1개 보유, 에픽급 지역 메타 파츠 사용
    - KKH 파트는 NPC 프리셋 스탯 공급(`CombatantBuilder`) 및 타격/피격 수치 연산 파이프라인을 지원합니다.
-5. **내구도 및 부위 파괴 메카닉 [기획 확정 기준 & YJW 관리 방향 확정]**:
+6. **내구도 및 부위 파괴 메카닉 [기획 확정 기준 & YJW 관리 방향 확정]**:
    - **체력(HP)은 오직 코어(Core)만 소유**: 코어 HP가 0이 되면 즉시 패배(K.O)합니다. 파츠에는 체력 개념이 없습니다.
    - **일반 피격 시**: **코어 체력(HP)만 감소**하며 파츠 내구도는 일체 감소하지 않습니다.
-   - **보스 특정 스킬 피격 시**: **오직 보스의 특정 스킬에 피격될 때만 파츠 내구도가 감소**합니다. 보스 스킬마다 타격 부위(Head, LeftArm, RightArm, LeftLeg, RightLeg)가 정해져 있으며, 피격 시 해당 부위 파츠의 내구도가 감소합니다.
+   - **보스/특정 부위 타격 스킬 피격 시**: **오직 부위 타격 속성을 가진 스킬에 피격될 때만 파츠 내구도가 감소**합니다. 피격 부위(Head, LeftArm, RightArm, LeftLeg, RightLeg)의 내구도가 감소합니다.
    - **부위 파괴(내구도 0)의 효과는 '해당 파츠 스킬 봉인뿐'**: 내구도가 0이 된 파츠는 파괴 판정을 받으며, 오직 해당 파츠에 할당된 스킬만 즉시 봉인됩니다 (머리: 패시브 해제, 왼팔: Q 봉인, 오른팔: W 봉인, 왼다리: E 봉인, 오른다리: R 봉인). 이동·달리기·점프·회피·공격력 등 다른 수치에는 일체 페널티가 없습니다.
    - **기본기 보존**: 코어 고정 기본기인 `D` 일반 공격은 모든 파츠가 파괴되어도 항상 사용 가능합니다.
    - **내구도 영구 원본 데이터 관리 주체 (YJW 파트 확정)**: 인벤토리 내 개별 장착 파츠의 잔여 내구도 영구 인스턴스는 **윤지우(YJW) 파트에서 전담 관리**합니다. 전투 진입 시 YJW 인벤토리에서 스탯을 주입받아 KKH 런타임 스냅샷을 생성하고, 전투 종료 시 KKH의 `BattleSettlementProcessor`가 최종 내구도 및 영구 파괴 목록을 YJW에게 이벤트로 전달하여 인벤토리에 일괄 동기화합니다.
-6. **기본 파츠(Default Parts) 시스템**:
+7. **기본 파츠(Default Parts) 시스템**:
    - 슬롯이 비어 있는 부위마다 전투 입장 시 일반 등급 70% 스탯의 기본 파츠가 자동 장착되며, 전투 종료 시 소멸합니다.
-7. **보스 시스템 & 기믹 파훼**:
-   - 보스 기믹은 **1) 특정 기물 파괴**, **2) 보스 부위 파괴**로 구성됩니다.
-   - 지역 1 보스(폐타이어+폐엔진): 못판 유도를 통한 타이어 펑크(그로기 4초, 받는 피해 1.5배, 2회 누적 시 부위 파괴), 돌진 예고 2초 중 피해 누적 스턴(3초), 모든 패턴 종료 후 1초 딜타임.
-8. **하드코어 승패 정산 및 코어 30레벨 성장**:
+8. **보스 시스템 & 기믹 파훼 (보스 다변화 대비 범용 기믹 아키텍처)**:
+   - 보스 기믹은 **1) 전장 설치형 기물 파괴**, **2) 보스 본체 부위/약점 파괴**로 구성됩니다.
+   - 기믹 상태를 하드코딩하지 않고, `Dictionary<string, BossGimmickRuntimeState>`로 추상화하여 **지역 1 보스(폐타이어/폐엔진)뿐 아니라 향후 추가될 지역 2, 3의 다양한 보스들도 동일한 아키텍처로 수용**합니다.
+   - 지역 1 보스: 못판 유도를 통한 타이어 펑크(그로기 4초, 받는 피해 1.5배, 2회 누적 시 부위 파괴), 돌진 예고 2초 중 피해 누적 스턴(3초), 모든 패턴 종료 후 1초 딜타임.
+9. **하드코어 승패 정산 및 코어 30레벨 성장**:
    - 코어는 1~30레벨까지 성장하며, 구간별 HP/DEF 성장률과 필요 EXP 공식(`230 * 1.085^(Lv-1)`)을 가집니다.
    - 패배 시 판돈 전액 상실, 모든 장착 파츠 내구도 0 전환 및 등급별 영구 파괴 롤링(일반 70% ~ 프로토타입 1%), 코어는 '불안정한 코어'로 강등.
 
@@ -55,23 +62,26 @@
 %%{init: {'themeVariables': { 'fontSize': '12px' }}}%%
 flowchart TD
     %% [1. 상단] 전투 런타임 실행 및 AI 계층
-    subgraph Top["[상단] 1. 전투 런타임 물리/프레임 & AI 실행 (NYH / LJS)"]
-        Movement["4방향 이동 / 달리기 / 점프 / 회피(Space) (NYH)"]
+    subgraph Top["[상단] 1. 전투 런타임 물리 액션 & AI 실행 (NYH / LJS)"]
+        Movement["4방향 이동 / 달리기 / 점프 / 회피(Space 0.3s) (NYH)"]
         CylinderSys["실린더 시스템<br/>(3발 탄환 장전/소모 로직) (NYH)"]
         EnemyAI["일반 적 AI (LJS)<br/>(NPC A·B·C FSM / 기믹 1개)"]
         ActionExec["ActionExecutor<br/>(D 기본기 / Q·W·E·R 스킬 실행)"]
-        Collision["HitDetection<br/>(히트박스/허트박스 충돌 판정)"]
+        Collision["HitDetection<br/>(실시간 콜라이더/트리거 충돌 판정)"]
     end
 
     %% [2. 중앙] 전투 데이터 & 보스 시스템 계층
     subgraph Mid["[중앙] 2. 전투 데이터 & 보스 시스템 (KKH 총괄)"]
         Builder["CombatantBuilder<br/>(인벤토리 파츠 주입받아 스냅샷 조립)"]
         Calculator["CombatCalculator<br/>(수치 연산 / 방어 감쇄 / 스킬 봉인 게이트)"]
-        DataHub["CombatDataHub<br/>(중앙 관제 허브 & 상태 브로드캐스팅)"]
-        BossSnap["BossSnapshot<br/>(보스 상태 / 페이즈 / 못판·기믹 상태)"]
-        BossGimmick["BossGimmick<br/>(기물 파괴 / 펑크 / 패턴 영구 봉인)"]
-        PlayerHUD["FighterStatusHUD<br/>(코어 HP / 실린더 / 5부위 내구도)"]
-        BossHUD["BossStatusHUD<br/>(상단 보스 HP / 기믹 슬롯 UI)"]
+        DataHub["CombatDataHub<br/>(1:1 대전 관제 허브 & 상태 브로드캐스팅)"]
+        ModeCheck{"대전 모드 분기<br/>(BattleMode)"}
+        RobotSnap["CombatantSnapshot<br/>(Player & NPC A·B·C 로봇 공용)"]
+        BossSnap["BossSnapshot<br/>(다양한 보스 범용 기믹/페이즈)"]
+        BossGimmick["BossGimmick<br/>(기물 파괴 / 약점 / 패턴 봉인)"]
+        PlayerHUD["FighterStatusHUD<br/>(플레이어 코어 HP / 실린더 / 5부위 내구도)"]
+        EnemyHUD["EnemyStatusHUD<br/>(일반 적 로봇 코어 HP / 5부위)"]
+        BossHUD["BossStatusHUD<br/>(상단 보스 대형 HP / 기믹 슬롯 UI)"]
     end
 
     %% [3. 하단] 결과 정산 & 외부 파트 연동 계층
@@ -86,6 +96,10 @@ flowchart TD
     %% 상호 작용
     CraftPart -->|"장착 파츠 내구도 원본 주입"| Builder
     Builder --> DataHub
+    DataHub --> ModeCheck
+    ModeCheck -->|"일반전 (Robot vs Robot)"| RobotSnap
+    ModeCheck -->|"보스전 (Robot vs Boss)"| BossSnap
+
     ActionExec <-->|"스킬 봉인/실린더 질의"| Calculator
     EnemyAI -->|"공격 행동 발동"| ActionExec
     Collision -->|"대미지 전달"| DataHub
@@ -95,6 +109,7 @@ flowchart TD
     DataHub <--> BossSnap
     BossSnap --> BossHUD
     DataHub --> PlayerHUD
+    DataHub --> EnemyHUD
     BossGimmick --> BossSnap
 
     DataHub -->|"전투 종료"| Settlement
@@ -106,10 +121,10 @@ flowchart TD
 
 ### 1.2 상세 파트 R&R 매트릭스
 
-| 구분 | 전투 DB & 보스 시스템 (본인 - KKH) | 전투 행동/프레임 & 실린더 (NYH) | 일반 적 AI (LJS) | 크래프팅/인벤토리 & 내구도 원본 (YJW) | 스킬 파트 (CSH) |
+| 구분 | 전투 DB & 보스 시스템 (본인 - KKH) | 전투 행동 & 실린더 (NYH) | 일반 적 AI (LJS) | 크래프팅/인벤토리 & 내구도 원본 (YJW) | 스킬 파트 (CSH) |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **핵심 성격** | **수치 연산 허브, 정산 및 보스 시스템 총괄** | **2.5D 실시간 액션 물리 & 탄환 관리** | **일반 적 NPC AI & 행동 패턴** | **인벤토리 및 파츠 내구도 원본 관리** | **개별 스킬 액션 리소스 및 연출** |
-| **담당 범위** | • 런타임 스냅샷(`CombatantSnapshot`) 관리<br>• 코어 HP 대미지 감쇄 및 부위 피격 수치 연산<br>• D 기본기 항상 허용 / Q·W·E·R 스킬 봉인 게이트<br>• 기본 파츠(일반 70% 스탯) 자동 채움<br>• **보스 데이터 모델 및 기믹 파훼 총괄**<br>• **보스 상단 대형 HUD 제작**<br>• 코어 EXP(Lv 1~30) 및 승패 정산<br>• **전투 종료 시 최종 내구도/파괴 목록 YJW 전달** | • 60fps Tick 프레임 엔진 (`CombatClock`)<br>• 이동, 달리기, 점프, 회피(Space 0.3s)<br>• **실린더 시스템 구현 (최대 3발, D 적중 +1 장전, 스킬 소모 연계)**<br>• 충돌 판정 및 피격 애니메이션 | • 경기장 NPC A, B, C AI FSM 구현<br>• NPC A: 구제 경기, 기물 파괴 1개<br>• NPC B: 일반+레어, 기물 파괴 1개<br>• NPC C: 에픽급 지역 메타, 부위 파괴 1개<br>• KKH 스냅샷 기반 행동 트리거 | • **인벤토리 파츠 인스턴스 및 내구도 영구 저장/관리**<br>• 거점 정비소 수리(1h) 및 복구(4h)<br>• 전투 진입 시 KKH로 장착 파츠 스탯 주입<br>• **전투 정산 결과 수신 후 내구도 최신화 & 파괴 부품 잔해 처리/삭제** | • 파츠별 액티브 스킬 SO 작성<br>• Q·W·E·R 스킬 & 머리 패시브 구현<br>• 기믹 태그 ID 매핑<br>• 주먹 발사 이펙트/연출 (불독 스타일)<br>• 투사체 리소스 연동 |
+| **담당 범위** | • **1:1 대전 모드 이원화 관제 (`BattleMode`)**<br>• 런타임 스냅샷(`CombatantSnapshot`: 플레이어 & NPC 공용 / `BossSnapshot`: 보스 전담) 관리<br>• 코어 HP 대미지 감쇄 및 부위 피격 수치 연산<br>• D 기본기 항상 허용 / Q·W·E·R 스킬 봉인 게이트<br>• 기본 파츠(일반 70% 스탯) 자동 채움<br>• **보스 데이터 모델 및 기믹 파훼 총괄 (보스 다변화 대응)**<br>• **보스 상단 대형 HUD & 파이터 HUD 제작**<br>• 코어 EXP(Lv 1~30) 및 승패 정산<br>• **전투 종료 시 최종 내구도/파괴 목록 YJW 전달** | • 실시간 2.5D 액션 물리 실행 엔진<br>• 이동, 달리기, 점프, 회피(Space 0.3s 무적)<br>• **실린더 시스템 구현 (최대 3발, D 적중 +1 장전, 롱탭 강화 스킬)**<br>• 콜라이더 충돌 감지 및 피격 애니메이션 | • 경기장 NPC A, B, C AI FSM 구현<br>• NPC A: 구제 경기, 기물 파괴 1개<br>• NPC B: 일반+레어, 기물 파괴 1개<br>• NPC C: 에픽급 지역 메타, 부위 파괴 1개<br>• KKH 스냅샷 기반 행동 트리거 | • **인벤토리 파츠 인스턴스 및 내구도 영구 저장/관리**<br>• 거점 정비소 수리(1h) 및 복구(4h)<br>• 전투 진입 시 KKH로 장착 파츠 스탯 주입<br>• **전투 정산 결과 수신 후 내구도 최신화 & 파괴 부품 잔해 처리/삭제** | • 파츠별 액티브 스킬 SO 작성<br>• Q·W·E·R 스킬 & 머리 패시브 구현<br>• 기믹 태그 ID 매핑<br>• 주먹 발사 이펙트/연출 (불독 스타일)<br>• 투사체 리소스 연동 |
 
 ---
 
@@ -125,20 +140,21 @@ flowchart LR
     subgraph Layer1["1계층: 정적 원장 (ScriptableObject)"]
         PartSO["PartMasterData<br/>(부위별 기본 내구도/스탯/스킬)"]
         CoreSO["CoreMasterData<br/>(Lv 1~30 성장/EXP/복구비)"]
-        BossSO["BossMasterData<br/>(보스 스탯/페이즈/기믹)"]
+        BossSO["BossMasterData<br/>(보스 기본 스탯/페이즈/기믹 원장)"]
     end
 
     subgraph Layer2["2계층: 런타임 상태 (인메모리 DTO - KKH)"]
-        CombatantSnap["CombatantSnapshot<br/>(HP/실린더/5부위 런타임 내구도)"]
-        BossSnap["BossSnapshot<br/>(보스 HP/기믹 내구도/봉인 패턴)"]
+        CombatantSnap["CombatantSnapshot<br/>(플레이어 & 일반 적 로봇 공용<br/>HP/실린더/5부위 런타임 내구도)"]
+        BossSnap["BossSnapshot<br/>(다양한 보스 범용 기믹 DTO<br/>HP/기믹 딕셔너리/페이즈/상태이상)"]
         HitResult["HitResolutionResult<br/>(피격/무적회피/부위파손 판정)"]
     end
 
     subgraph Layer3["3계층: 뷰 및 정산 매니저 (KKH)"]
-        Hub["CombatDataHub<br/>(중앙 관제 Façade)"]
+        Hub["CombatDataHub<br/>(1:1 대전 중앙 관제 Façade)"]
         Settlement["BattleSettlementProcessor<br/>(하드코어 정산기)"]
-        PlayerHUD["FighterStatusHUD<br/>(코어 HP/실린더/부위 상태)"]
-        BossHUD["BossStatusHUD<br/>(보스 HP/기믹 슬롯/파괴 연출)"]
+        PlayerHUD["FighterStatusHUD<br/>(플레이어 코어 HP/실린더/부위 상태)"]
+        EnemyHUD["EnemyStatusHUD<br/>(일반 적 로봇 체력/부위 게이지)"]
+        BossHUD["BossStatusHUD<br/>(상단 보스 HP/기믹 슬롯/파괴 연출)"]
     end
 
     PartSO -->|"원형 스탯 참조"| CombatantSnap
@@ -151,6 +167,7 @@ flowchart LR
     HitResult -->|"판정 통보"| Hub
 
     Hub -->|"C# Action 이벤트"| PlayerHUD
+    Hub -->|"C# Action 이벤트"| EnemyHUD
     Hub -->|"C# Action 이벤트"| BossHUD
     Hub -->|"전투 종료 판정"| Settlement
     Settlement -->|"최종 내구도 갱신 & 영구 파괴 목록 통보"| YJW_Inv
@@ -359,23 +376,24 @@ public class BossMasterData : ScriptableObject
 
 ## 4. 런타임 상태 모델 계층 (인메모리 DTO)
 
-### 4.1 플레이어 런타임 스냅샷 (`CombatantSnapshot.cs`)
-**체력(HP)은 오직 코어만 단독 보유**하며, **5개 파츠는 스킬 시전 시 소모되는 런타임 내구도(Durability)**만 독립적으로 관리합니다.
+### 4.1 로봇 런타임 스냅샷 (`CombatantSnapshot.cs`) — 플레이어 & 일반 적(NPC A·B·C) 공용
+1:1 대전에서 **플레이어와 일반 적(NPC A, B, C)은 모두 '코어 + 5개 조립 파츠' 규격의 로봇**이므로 본 스냅샷을 100% 공용(재사용)합니다.
+**체력(HP)은 오직 코어만 단독 보유**하며, **5개 파츠는 런타임 내구도(Durability)**만 독립적으로 관리합니다.
 
 ```csharp
 [Serializable]
 public class CombatantSnapshot
 {
     // 1. 기본 식별 정보
-    public string fighterID = "Player";
-    public bool isPlayer = true;
+    public string fighterID = "Player";    // "Player" 또는 "NPC_A", "NPC_B", "NPC_C"
+    public bool isPlayer = true;           // true: 플레이어, false: 적 로봇(NPC)
 
-    // 2. 코어 실시간 스탯 (체력은 코어만 소유! 0 도달 시 패배)
+    // 2. 코어 실시간 스탯 (체력은 코어만 소유! 0 도달 시 K.O 패배)
     public int currentHp;                  // 코어 현재 체력
     public int maxHp;                      // 코어 최대 체력
     public int baseDefense;                // 코어 본체 방어력
-    public int coreLevel;
-    public int currentCoreExp;
+    public int coreLevel = 1;              // 코어 레벨 (1~30)
+    public int currentCoreExp;             // 누적 경험치 (플레이어 전용)
 
     // 3. 실린더 시스템 (기획서 §6.11 / NYH 전담)
     public int currentCylinder = 1;        // 전투 시작 시 1발 장전
@@ -385,10 +403,15 @@ public class CombatantSnapshot
     public int totalAttackPower;           // 기본Atk + (왼팔Atk + 오른팔Atk) / 2
     public float finalMoveSpeed;           // (왼다리Speed + 오른다리Speed) / 2
 
-    // 5. 5개 파츠 실시간 내구도 맵 (보스 특정 스킬 피격 시에만 차감)
+    // 5. 5개 파츠 실시간 내구도 맵 (부위 타격 스킬 피격 시에만 차감)
     public Dictionary<BodyPart, PartRuntimeState> partStates = new();
 
     // 6. 스킬 봉인 및 내구도/실린더 헬퍼
+    /// <summary>
+    /// 생존 여부 (코어 HP > 0)
+    /// </summary>
+    public bool IsAlive => currentHp > 0;
+
     /// <summary>
     /// 내구도가 0 이하(파손)인지 검사 (스킬 봉인 판정)
     /// </summary>
@@ -398,7 +421,7 @@ public class CombatantSnapshot
     }
 
     /// <summary>
-    /// 보스 특정 부위 타격 스킬 피격 시 해당 부위의 내구도 차감
+    /// 특정 부위 타격 스킬 피격 시 해당 부위의 내구도 차감
     /// 내구도 0 도달 시 true 반환 (부위 파손 및 스킬 봉인 발생)
     /// </summary>
     public bool ConsumePartDurability(BodyPart part, int amount)
@@ -417,46 +440,83 @@ public class CombatantSnapshot
 }
 ```
 
-### 4.2 보스 런타임 스냅샷 (`BossSnapshot.cs`) — KKH 전담
+### 4.2 보스 런타임 스냅샷 (`BossSnapshot.cs`) — 보스 다변화 대비 범용 기믹 DTO (KKH 전담)
+보스는 5파츠 조립 로봇이 아니며, **보스마다 고유 기믹/약점 부위/페이즈가 상이(지역 1: 타이어/못판, 지역 2: 쉴드/발전기 등)**합니다.
+따라서 특정 보스용 변수를 하드코딩하지 않고, **`gimmickStates` 딕셔너리를 활용한 범용 기믹 아키텍처**로 설계되어 향후 어떤 보스가 추가되어도 본 DTO를 그대로 재사용합니다.
+
 ```csharp
+[Serializable]
+public class BossGimmickRuntimeState
+{
+    public string gimmickID;               // 예: "GIMMICK_NAIL_BOARD", "TIRE_PART", "SHIELD_GENERATOR"
+    public string gimmickName;
+    public bool isPhysicalBossPart;        // true: 보스 본체 부위, false: 전장 설치형 기물
+    public int currentDurability;
+    public int maxDurability;
+    public bool isBroken => currentDurability <= 0;
+    public int triggerCount = 0;           // 누적 파훼/발동 횟수 (예: 펑크 2회 누적 카운트)
+}
+
 [Serializable]
 public class BossSnapshot
 {
-    public string bossID;
-    public string bossName;
+    // 1. 보스 기본 식별 및 본체 스탯
+    public string bossID;                  // 예: "BOSS_REGION_01"
+    public string bossName;                // 예: "정크 휠러"
     public int currentHp;
     public int maxHp;
     public int baseDefense;
     public int currentPhase = 1;
+    public bool IsAlive => currentHp > 0;
 
-    // 상태 플래그
-    public bool isGroggy = false;          // 기믹 파훼 시 4초 무력화 (받는 피해 1.5배)
+    // 2. 상태 이상 및 피해 배율 플래그
+    public bool isGroggy = false;          // 기믹 파훼 시 무력화 (받는 피해 1.5배)
     public float currentDamageMultiplier = 1.0f;
-    public int tirePunctureCount = 0;      // 못판 펑크 누적 횟수 (2회 시 타이어 영구 파괴)
 
-    // 기믹 실시간 상태 및 봉인된 패턴 목록
+    // 3. 보스 다변화 대비 범용 기믹 런타임 맵 (어떤 보스든 기믹 ID로 유연하게 수용)
     public Dictionary<string, BossGimmickRuntimeState> gimmickStates = new();
+
+    // 4. 기믹 파훼로 인해 영구 봉인된 보스 스킬 패턴 목록
     public HashSet<string> sealedSkills = new();
+
+    #region 범용 기믹 헬퍼 메서드
+    public BossGimmickRuntimeState GetGimmick(string gimmickId)
+    {
+        gimmickStates.TryGetValue(gimmickId, out var state);
+        return state;
+    }
+
+    public bool DamageGimmick(string gimmickId, int amount)
+    {
+        if (gimmickStates.TryGetValue(gimmickId, out var state) && !state.isBroken)
+        {
+            state.currentDurability = Mathf.Max(0, state.currentDurability - amount);
+            return state.isBroken;
+        }
+        return false;
+    }
+
+    public void SealSkill(string skillId)
+    {
+        if (!string.IsNullOrEmpty(skillId))
+            sealedSkills.Add(skillId);
+    }
+
+    public bool IsSkillSealed(string skillId) => sealedSkills.Contains(skillId);
+    #endregion
 }
 ```
 
 ### 4.3 타격 판정 결과 DTO (`HitResolutionResult.cs`)
-기획서 표준에 따라 일반 피격은 코어 HP만 차감하고, 보스 특정 스킬 피격 시에만 해당 부위 내구도가 차감됩니다.
+1:1 대전의 상대방 유형(일반 로봇 적 vs 보스)에 따라 타격 판정 결과가 단일 DTO로 표준화되어 반환됩니다.
 
 ```csharp
 public class HitResolutionResult
 {
     public bool isEvaded;                  // Space 회피 무적(0.3s) 회피 성공 여부
-    public int coreHpDamage;               // 코어 체력 피해량 (모든 피격 시 코어 HP 차감)
-    public BodyPart targetBodyPart;        // 보스 스킬에 의해 지정된 타격 부위 (일반 공격은 Core)
-    public int partDurabilityDamage;       // 보스 특정 스킬로 인한 파츠 내구도 피해량 (일반 공격 시 0)
-    public bool isPartDestroyed;           // 이번 피격으로 해당 부위가 파손(스킬 봉인)되었는지 여부
-    public bool cylinderGained;            // D 기본기 적중으로 탄환 +1 획득 여부
-
-    // 보스 피격 전용
-    public string hitGimmickID;
-    public bool isGimmickTriggered;        // 못판 착지 펑크 / 스턴 저지 성공 여부
-    public bool isBossGroggyStarted;       // 4초 그로기 진입 여부
+    public int coreHpDamage;               // 코어/보스 체력 피해량 (모든 유효 피격 시 체력 차감)
+    public BodyPart targetBodyPart;        // 특정 부위 타격 스킬에 의해 지정된 부위 (일반 공격은 Core)
+    public int partDurabilityDamage;       // 부위 타격 스킬로 인한 파츠 내구도 피해량 (일반 공격 시 0)
 }
 ```
 
@@ -468,34 +528,35 @@ public class HitResolutionResult
 기획서 §6.5 및 §6.20 조항에 따른 최종 피해 공식:
 
 $$
-\text{실제 피해} = \text{기본 피해량} \times \left( \frac{\text{팔 공격력}}{100} \right)
+\text{실제 피해} = \text{기본 피해량} \times \left( \frac{\text{공격자 총 공격력}}{100} \right)
 $$
 
 $$
-\text{최종 피해} = \text{실제 피해} \times \left( \frac{100}{\text{방어력} + 100} \right)
+\text{최종 피해} = \text{실제 피해} \times \left( \frac{100}{\text{피격자 방어력} + 100} \right)
 $$
 
 ```mermaid
 %%{init: {'themeVariables': { 'fontSize': '12px' }}}%%
 flowchart TD
     subgraph Step1["1. 공격력 및 계수 산출"]
-        D_Atk["D 기본기: 고정 피해 10"]
-        Skill_Atk["스킬: 기본 피해 × (팔 공격력 / 100)"]
+        D_Atk["D 기본기: 고정 피해 10 (적중 시 탄환 +1)"]
+        Skill_Atk["스킬: 기본 피해 × (공격자 총 공격력 / 100)"]
     end
 
     subgraph Step2["2. 방어력 감쇄 연산"]
         Def["방어력 계수 = 100 / (방어력 + 100)"]
-        Dmg["최종 피해 = RoundToInt(원시 피해 × 계수)"]
+        Dmg["최종 피해 = RoundToInt(실제 피해 × 계수)"]
         MinDmg["최소 1 대미지 보정"]
     end
 
-    subgraph Step3["3. 피격 대상별 피해 분기 (기획 확정 기준)"]
-        TypeCheck{"피격 성격"}
-        TypeCheck -->|"일반 피격"| OnlyCore["코어 HP만 감소<br/>(파츠 내구도 100% 보존)"]
-        TypeCheck -->|"보스 부위 타격 스킬"| PartDmg["코어 HP 감소 + 지정 부위 내구도 차감"]
-        PartDmg --> BreakCheck{"해당 부위 내구도 0?"}
-        BreakCheck -->|"Yes"| Seal["해당 부위 파손 판정<br/>할당된 스킬 즉시 봉인 (Q·W·E·R 비활성화)<br/>※ 이동/달리기/점프/회피 등 다른 스탯 영향 없음"]
-        BreakCheck -->|"No"| Alive["스킬 사용 가능 유지"]
+    subgraph Step3["3. 1:1 대전 모드별 피해 분기"]
+        ModeCheck{"대전 모드"}
+        
+        ModeCheck -->|"일반전 (Robot vs Robot)"| RobotVsRobot["[플레이어 vs NPC 로봇]<br/>• 일반 공격: 상대 코어 HP만 감소<br/>• 부위 타격 스킬: 코어 HP + 해당 부위 내구도 차감<br/>• 부위 파손 시 해당 스킬(Q·W·E·R) 즉시 봉인"]
+        
+        ModeCheck -->|"보스전 (Robot vs Boss)"| BossFight{"공격 주체"}
+        BossFight -->|"보스 -> 플레이어"| BossToPlayer["• 일반 공격: 코어 HP만 감소<br/>• 보스 특정 스킬: 코어 HP + 지정 부위 내구도 차감<br/>• 파손 시 플레이어 스킬 봉인"]
+        BossFight -->|"플레이어 -> 보스"| PlayerToBoss["• 보스 본체 HP 감쇄 차감<br/>• 그로기 시 1.5배 피해 배율<br/>• 기믹 타격 시 기물 내구도 차감 & 파훼 판정"]
     end
 
     Step1 --> Step2
@@ -506,16 +567,66 @@ flowchart TD
 ```csharp
 public static class CombatCalculator
 {
-    // 방어력 감쇄 계산
+    // 방어력 감쇄 공통 계산
     public static int CalculateDamage(float rawDamage, int defense)
     {
         float multiplier = 100f / (Mathf.Max(0, defense) + 100f);
         return Mathf.Max(1, Mathf.RoundToInt(rawDamage * multiplier));
     }
 
-    // 보스/적 -> 플레이어 공격 판정 [기획 확정 기준]
-    // 1) 일반 피격: 코어 HP만 감소 (targetPart == BodyPart.Core)
-    // 2) 보스 부위 타격 스킬: 코어 HP 차감 + 해당 지정 부위 내구도 차감
+    // ========================================================================
+    // 1. [모드 1] 로봇 vs 로봇 1:1 대전 판정 (플레이어 vs 일반 적 NPC A·B·C)
+    // ========================================================================
+    public static HitResolutionResult EvaluateRobotAttack(
+        CombatantSnapshot attacker,
+        CombatantSnapshot defender,
+        float rawSkillDamage,
+        BodyPart targetPart,
+        int partDamageAmount,
+        bool isDefenderInvincible,
+        bool isBasicAttackD)
+    {
+        var result = new HitResolutionResult();
+
+        // 1) Space 회피(0.3초) 무적 회피 판정
+        if (isDefenderInvincible)
+        {
+            result.isEvaded = true;
+            return result;
+        }
+
+        // 2) D 기본기 적중 시 공격자 실린더 탄환 +1 장전
+        if (isBasicAttackD)
+        {
+            attacker.AddCylinder(1);
+            result.cylinderGained = true;
+        }
+
+        // 3) 대미지 계산 및 방어자 코어 HP 차감 (모든 공격 공통)
+        float actualDamage = isBasicAttackD ? 10f : rawSkillDamage * (attacker.totalAttackPower / 100f);
+        result.coreHpDamage = CalculateDamage(actualDamage, defender.baseDefense);
+        defender.currentHp = Mathf.Max(0, defender.currentHp - result.coreHpDamage);
+
+        // 4) 특정 부위 타격 스킬인 경우에만 해당 부위 내구도 차감
+        if (targetPart != BodyPart.Core && defender.partStates.TryGetValue(targetPart, out var partState))
+        {
+            result.targetBodyPart = targetPart;
+            result.partDurabilityDamage = partDamageAmount;
+            result.isPartDestroyed = defender.ConsumePartDurability(targetPart, partDamageAmount);
+
+            if (result.isPartDestroyed)
+            {
+                // 부위 파손 및 스킬 봉인 이벤트 브로드캐스팅
+                CombatDataHub.Instance?.BroadcastPartBroken(defender.fighterID, targetPart);
+            }
+        }
+
+        return result;
+    }
+
+    // ========================================================================
+    // 2. [모드 2-A] 보스 -> 플레이어 공격 판정 (보스전)
+    // ========================================================================
     public static HitResolutionResult EvaluateBossAttack(
         BossSnapshot boss,
         CombatantSnapshot player,
@@ -537,7 +648,7 @@ public static class CombatCalculator
         result.coreHpDamage = CalculateDamage(skillRawDamage, player.baseDefense);
         player.currentHp = Mathf.Max(0, player.currentHp - result.coreHpDamage);
 
-        // 3) 보스 특정 스킬인 경우에만 지정 부위 내구도 차감
+        // 3) 보스 특정 부위 타격 스킬인 경우에만 지정 부위 내구도 차감
         if (targetPart != BodyPart.Core && player.partStates.TryGetValue(targetPart, out var partState))
         {
             result.targetBodyPart = targetPart;
@@ -546,16 +657,17 @@ public static class CombatCalculator
 
             if (result.isPartDestroyed)
             {
-                // 부위 파손 및 스킬 봉인 이벤트 브로드캐스팅
-                CombatDataHub.Instance?.BroadcastPlayerPartBroken(targetPart);
+                CombatDataHub.Instance?.BroadcastPartBroken(player.fighterID, targetPart);
             }
         }
 
         return result;
     }
 
-    // 플레이어 -> 보스 공격 판정 (기믹 파훼 포함)
-    public static HitResolutionResult EvaluatePlayerAttack(
+    // ========================================================================
+    // 3. [모드 2-B] 플레이어 -> 보스 공격 판정 (보스전 및 기믹 파훼)
+    // ========================================================================
+    public static HitResolutionResult EvaluatePlayerAttackOnBoss(
         CombatantSnapshot player,
         BossSnapshot boss,
         float skillBaseDamage,
@@ -756,32 +868,80 @@ public static class BattleSettlementProcessor
 ## 8. 중앙 관제 허브 (`CombatDataHub.cs`) API 및 이벤트 계약
 
 ```csharp
-// 1. 전투 초기화
-public void InitializeBattle(CombatantSnapshot player, BossSnapshot boss);
+public enum BattleMode
+{
+    RobotVsRobot, // 일반 적(NPC A·B·C) 1:1 대전
+    RobotVsBoss   // 보스 1:1 토벌전
+}
 
-// 2. 피격 및 연산 질의 (NYH 실행부 호출)
-public HitResolutionResult ProcessBossHit(string targetGimmickId, float rawDamage, GimmickTag tag);
-public HitResolutionResult ProcessPlayerHit(BodyPart targetPart, float rawDamage, int partDamage);
-public bool CanExecutePlayerAction(ActionSource source, BodyPart requiredPart, int cylinderCost);
+public class CombatDataHub : MonoBehaviour
+{
+    // ========================================================================
+    // 1. 대전 모드 및 1:1 참가자 상태 프로퍼티
+    // ========================================================================
+    public BattleMode CurrentBattleMode { get; private set; }
 
-// 3. 상태 질의 (HUD 바인딩용)
-public CombatantSnapshot PlayerSnapshot { get; }
-public BossSnapshot BossSnapshot { get; }
+    /// <summary>플레이어 로봇 스냅샷 (언제나 필수 활성화)</summary>
+    public CombatantSnapshot PlayerSnapshot { get; private set; }
+
+    /// <summary>[모드 1 전용] 일반 적(NPC A·B·C) 로봇 스냅샷</summary>
+    public CombatantSnapshot EnemyRobotSnapshot { get; private set; }
+
+    /// <summary>[모드 2 전용] 보스 스냅샷 (범용 기믹 DTO)</summary>
+    public BossSnapshot BossSnapshot { get; private set; }
+
+    /// <summary>1:1 상대방(Opponent)의 생존 여부 (상대가 누구든 단일 질의 가능)</summary>
+    public bool IsOpponentDead => CurrentBattleMode == BattleMode.RobotVsRobot
+        ? (EnemyRobotSnapshot == null || !EnemyRobotSnapshot.IsAlive)
+        : (BossSnapshot == null || !BossSnapshot.IsAlive);
+
+    // ========================================================================
+    // 2. 전투 초기화 (모드별 1:1 대전 진입)
+    // ========================================================================
+    /// <summary>일반 적(NPC A·B·C)과의 1:1 로봇 대전 초기화</summary>
+    public void InitializeRobotBattle(CombatantSnapshot player, CombatantSnapshot enemyRobot);
+
+    /// <summary>보스와의 1:1 토벌전 초기화 (다양한 보스 수용 가능)</summary>
+    public void InitializeBossBattle(CombatantSnapshot player, BossSnapshot boss);
+
+    // ========================================================================
+    // 3. 실시간 피격 및 연산 질의 (NYH 실행부 & LJS AI 호출 Façade)
+    // ========================================================================
+    /// <summary>
+    /// [1:1 대전 통합 타격 처리]
+    /// 공격자(Attacker)가 방어자(Defender)를 타격했을 때 대전 모드에 맞추어 적절한 연산기를 호출함
+    /// </summary>
+    public HitResolutionResult ProcessHit(
+        string attackerId,
+        string defenderId,
+        float rawDamage,
+        BodyPart targetPart = BodyPart.Core,
+        int partDamage = 0,
+        bool isBasicAttackD = false,
+        GimmickTag tag = GimmickTag.None,
+        string targetGimmickId = null);
+
+    /// <summary>스킬 봉인 및 실린더 잔여량 검사 (플레이어 & AI 공용)</summary>
+    public bool CanExecuteAction(string fighterId, ActionSource source, BodyPart requiredPart, int cylinderCost = 0);
+}
 ```
 
-### 브로드캐스팅 이벤트 목록
+### 브로드캐스팅 이벤트 목록 (1:1 대전 관제용)
 
 | 이벤트 명 | 매개변수 | 용도 |
 | :--- | :--- | :--- |
-| `OnPlayerHpChanged` | `(int curHp, int maxHp)` | 플레이어 하단 체력바 갱신 |
-| `OnPlayerCylinderChanged` | `(int curCylinder, int maxCylinder)` | 3발 실린더 탄창 UI 표출 |
-| `OnPlayerPartDurabilityChanged` | `(BodyPart part, int cur, int max)` | 5부위 내구도 슬라이더 갱신 |
-| `OnPlayerPartBroken` | `(BodyPart brokenPart)` | 해당 스킬 Q·W·E·R X 아이콘 봉인 표출 |
-| `OnBossHpChanged` | `(int curHp, int maxHp, int phase)` | 상단 보스 체력바 갱신 |
-| `OnBossGimmickTriggered` | `(string gimmickId, bool isGroggy)` | 못판 펑크 / 스턴 / 4초 그로기 연출 |
-| `OnBossTireDestroyed` | `(int punctureCount)` | 타이어 영구 파괴 연출 |
-| `OnCoreLevelUp` | `(int newLv, int newHp, int newDef)` | 전투 종료 코어 레벨업 팝업 |
-| `OnBattleEnded` | `(BattleSettlementResult result)` | 하드코어 결과 정산 팝업 |
+| **`OnPlayerHpChanged`** | `(int curHp, int maxHp)` | 플레이어 하단 코어 체력바 갱신 |
+| **`OnPlayerCylinderChanged`** | `(int curCylinder, int maxCylinder)` | 플레이어 3발 실린더 탄창 UI 표출 |
+| **`OnPlayerPartDurabilityChanged`**| `(BodyPart part, int cur, int max)` | 플레이어 5부위 내구도 슬라이더 갱신 |
+| **`OnPlayerPartBroken`** | `(BodyPart brokenPart)` | 플레이어 Q·W·E·R 스킬 봉인(X 아이콘) 표출 |
+| **`OnEnemyHpChanged`** | `(int curHp, int maxHp)` | [일반전] 상대 NPC 로봇 체력바 갱신 |
+| **`OnEnemyPartDurabilityChanged`** | `(BodyPart part, int cur, int max)` | [일반전] 상대 NPC 로봇 부위 게이지 갱신 |
+| **`OnEnemyPartBroken`** | `(BodyPart brokenPart)` | [일반전] 상대 NPC 부위 파손 알림 |
+| **`OnBossHpChanged`** | `(int curHp, int maxHp, int phase)` | [보스전] 상단 보스 대형 체력바 갱신 |
+| **`OnBossGimmickTriggered`** | `(string gimmickId, bool isGroggy)` | [보스전] 못판 착지 펑크 / 기물 파훼 / 4초 그로기 연출 |
+| **`OnBossGimmickBroken`** | `(string gimmickId)` | [보스전] 특정 부위/기물 영구 파괴 및 패턴 봉인 연출 |
+| **`OnCoreLevelUp`** | `(int newLv, int newHp, int newDef)` | 전투 종료 시 코어 레벨업 팝업 |
+| **`OnBattleEnded`** | `(BattleSettlementResult result)` | 하드코어 결과 정산 팝업 및 YJW 인벤토리 동기화 |
 
 ---
 
@@ -789,41 +949,43 @@ public BossSnapshot BossSnapshot { get; }
 
 ### [Phase 1] 코어 & 파츠 데이터 모델 최신화 (완료/진행)
 - [x] **`CoreMasterData.cs` 헬퍼 메서드 추가**: `GetMaxHp()`, `GetDefense()`, `GetBaseAttackPower()` 구현 완료
-- [ ] **`CoreMasterData.cs` 기획서 공식 전면 반영**:
-  - [ ] Lv 1~30 레벨 성장 공식 적용 (Lv.1: HP 300, DEF 20 / 구간별 +15/+3, +20/+4, +25/+5)
-  - [ ] 기획서 공식 30레벨 누적 경험치 테이블 및 복구비 공식(`100G + Lv * 50G`) 반영
-- [ ] **`PartMasterData.cs` 스펙 반영**:
-  - [ ] 부위별 기본 내구도 (머리: 60, 팔: 100, 다리: 80)
-  - [ ] 기획서 기믹 태그(`GimmickTag`) 열거형 연동
+- [x] **`CoreMasterData.cs` 기획서 공식 전면 반영**:
+  - [x] Lv 1~30 레벨 성장 공식 적용 (Lv.1: HP 300, DEF 20 / 구간별 +15/+3, +20/+4, +25/+5)
+  - [x] 기획서 공식 30레벨 누적 경험치 테이블 및 복구비 공식(`100G + Lv * 50G`) 반영
+- [x] **`PartMasterData.cs` 스펙 정리 및 중복 열거형 제거**:
+  - [x] KDU 원본 `PartGrade` 및 NYH 원본 `BodyPart` 연동, 중복 선언 제거 완료
+  - [ ] 부위별 기본 내구도 (머리: 60, 팔: 100, 다리: 80) 및 기믹 태그(`GimmickTag`) 연동
 
-### [Phase 2] 실린더(NYH) & 일반 적 AI(LJS) 연동 및 수치 연산
-- [ ] **실린더 시스템 연동 (NYH 파트 협업)**:
-  - [ ] `CombatantSnapshot.cs`에 실린더 상태(`currentCylinder = 1`, `MaxCylinder = 3`) 반영
-  - [ ] NYH 실행부의 D 기본기 적중 / 탄환 소모에 따른 실시간 HUD 브로드캐스팅 이벤트 연계
-- [ ] **일반 적 AI 스탯 연동 (LJS 파트 협업)**:
-  - [ ] `CombatantBuilder.cs`: NPC A, B, C 전용 프리셋 스냅샷 생성기 지원 (기물/부위 파괴 기믹 1개 연동)
-  - [ ] LJS AI가 KKH `CombatDataHub`를 통해 공격 액션 및 스킬 판정을 질의할 수 있도록 인터페이스 개방
-- [ ] **`CombatCalculator.cs` 연산 리팩토링**:
-  - [ ] 일반 피격 시 코어 HP만 감쇄 차감 (파츠 내구도 100% 보존)
-  - [ ] 보스 특정 스킬 피격 시 코어 HP 감쇄 차감 + 해당 지정 부위 내구도 차감(`ConsumePartDurability`)
-  - [ ] 피격으로 내구도 0 도달 시 해당 부위 파손 판정 및 `OnPlayerPartBroken` 이벤트 브로드캐스팅
+### [Phase 2] 1:1 대전 스냅샷 리팩토링 & 실린더(NYH) / 일반 적 AI(LJS) 연동
+- [ ] **`CombatantSnapshot.cs` 로봇 공용화 리팩토링**:
+  - [ ] 가드/위빙 레거시 필드 완전 삭제
+  - [ ] 실린더 탄환 필드(`currentCylinder = 1`, `MaxCylinder = 3`) 추가
+  - [ ] 플레이어 및 일반 적(NPC A·B·C) 로봇 1:1 대전 공용 지원
+- [ ] **`CombatantBuilder.cs` 일반 적 NPC 프리셋 지원 (LJS 파트 협업)**:
+  - [ ] NPC A, B, C 전용 프리셋 스냅샷 생성 로직 구축 (기물/부위 파괴 기믹 1개 연동)
+- [ ] **`CombatCalculator.cs` 1:1 대전 모드별 연산 지원**:
+  - [ ] `EvaluateRobotAttack`: 로봇 vs 로봇 1:1 대전 피격 연산 (코어 HP 차감, D 기본기 탄환 +1, 부위 스킬 시 내구도 차감)
+  - [ ] `EvaluateBossAttack` & `EvaluatePlayerAttackOnBoss`: 보스 대전 연산 분기
   - [ ] `CanExecuteAction`: 부위 내구도가 0(파손)이면 해당 Q·W·E·R 스킬 실행 차단 (스킬 봉인, D 기본기는 항상 허용)
   - [ ] Space 회피 무적(0.3s) 회피 판정
 
-### [Phase 3] 지역 1 보스 시스템 및 기믹 파훼 구현
-- [ ] **`BossMasterData.cs` & `BossSnapshot.cs` 생성**:
-  - [ ] 보스 기본 스탯 (체력 4000, 방어력 40, 딜타임 1.0s)
-  - [ ] 고철 못판 유도 착지 펑크 기믹 (4초 그로기 1.5배 피해, 못판 소멸)
-  - [ ] 펑크 2회 누적 시 타이어 부위 파괴 판정
-  - [ ] 돌진 예고 2초 중 피해 누적 스턴(3초) 판정
+### [Phase 3] 보스 다변화 대비 `BossMasterData` / `BossSnapshot` 및 기믹 구현
+- [ ] **`BossSnapshot.cs` 생성 (보스 다변화 범용 기믹 DTO)**:
+  - [ ] 하드코딩 필드 없이 `gimmickStates` 딕셔너리 기반의 범용 기믹 관리 구조 구현
+  - [ ] 기믹 파훼 시 패턴 봉인(`sealedSkills`) 처리
+- [ ] **`BossMasterData.cs` 생성**:
+  - [ ] 지역 1 보스(폐타이어 & 폐엔진: 체력 4000, 방어력 40, 딜타임 1.0s, 못판 펑크/타이어 파괴 기믹) 원장 구현
+  - [ ] 향후 지역 2, 3 보스 추가 시 SO 에셋 생성만으로 즉시 연동되는 확장성 확보
 - [ ] **`BossStatusHUD.cs` 상단 UI 제작**:
-  - [ ] 상단 대형 보스 체력바 + 기믹 슬롯(못판/타이어) 위젯
+  - [ ] 상단 대형 보스 체력바 + 기믹 슬롯 위젯
 
-### [Phase 4] 승패 정산 및 통합 검증
+### [Phase 4] 1:1 대전 통합 관제 (`CombatDataHub.cs`) & 승패 정산
+- [ ] **`CombatDataHub.cs` 1:1 대전 모드(`BattleMode`) 도입**:
+  - [ ] `InitializeRobotBattle` (Player vs NPC 로봇) 및 `InitializeBossBattle` (Player vs Boss) 이원화
+  - [ ] 모드에 따른 통합 타격 처리(`ProcessHit`) 제공
 - [ ] **`BattleSettlementProcessor.cs` 고도화**:
   - [ ] 지역 기준가 기반 코어 경험치 획득 공식 적용
-  - [ ] 패배 시 불안정한 코어 강등 및 등급별 영구 파괴 롤링
-- [ ] **테스트 씬 (`Battle_Test_KKH`) 검증**:
-  - [ ] D 기본기 타격 -> 실린더 충전 확인
-  - [ ] 보스 공격 -> 일반 공격은 코어 HP만 감소, 특수 공격만 파츠 내구도 감소 확인
-  - [ ] 못판 기믹 유도 -> 보스 4초 그로기 및 1.5배 피해 적용 확인
+  - [ ] 패배 시 불안정한 코어 강등 및 등급별 영구 파괴 롤링, YJW 인벤토리 동기화 DTO 발행
+- [ ] **테스트 씬 (`Battle_Test_KKH`) 1:1 대전 검증**:
+  - [ ] 로봇 vs 로봇(NPC) 1:1 대전 검증 (D 기본기 실린더 충전, 부위 파괴 시 스킬 봉인)
+  - [ ] 로봇 vs 보스 1:1 토벌전 검증 (못판 기믹 유도 4초 그로기, 1.5배 피해, 패턴 봉인)

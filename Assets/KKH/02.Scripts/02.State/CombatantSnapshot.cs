@@ -55,107 +55,40 @@ public class PartRuntimeState
 [Serializable]public class CombatantSnapshot
 {
     // 1. 기본 식별 정보
-    public string fighterID;          // 전투 참가자 고유 식별 번호 (DB 및 인벤토리 연동 키)
-    public bool isPlayer;                // 플레이어 소속 여부 (true: 플레이어, false: AI)
+    public string fighterID = "Player";          // 전투 참가자 고유 식별 번호 (DB 및 인벤토리 연동 키)
+    public bool isPlayer = true;                // 플레이어 소속 여부 (true: 플레이어, false: AI)
 
     // 2. 코어 스탯(기본 체력 및 본체 방어력)
     public int currentHp; // 현재 체력 (0 ~ maxHp)
     public int maxHp; // 최대 체력 (기본 체력 + 강화치)
     public int baseDefense; // 본체 방어력 (기본 방어력 + 강화치)
+    public int coreLevel = 1; // 코어 레벨 (1 ~ 30)
+    public int currentCoreExp; // 현재 누적 코어 경험치 (플레이어 전용)
 
-    // 3.기획서 복합 연산 스탯
+    // 3. 실린더 시스템
+    public int currentCylinderCount = 1; // 현재 실린더 수 (0 ~ maxCylinderCount)
+    public int maxCylinderCount = 3; // 최대 실린더 수 (양팔 공용)
 
-      /// <summary>
-      /// 기본 공격력 + (왼팔 공격력 + 오른팔 공격력) / 2
-      /// </summary>
-    public int totalAttackPower;
-    /// <summary>(왼다리 속도 + 오른다리 속도) / 2</summary>
-    public float finalMoveSpeed;
-    /// <summary>머리 파츠: 상대 치명타 확률 합연산 감소 (0.0 ~ 1.0)</summary>
-    public float critResistance;
-    /// <summary>머리 파츠: 치명타 피격 시 추가 대미지 삭감 배율 (0.0 ~ 1.0)</summary>
-    public float critDamageReduction;
-    /// <summary>팔 파츠: 가드 성공 시 코어 방어력에 추가 합산되는 보정치</summary>
-    public int guardDefBonus;
-    /// <summary>다리 파츠: 위빙 성공 시 제공되는 추가 무적 시간 보정치</summary>
-    public float invincibleBonus;
+    // 4. 복합 연산 스탯
+    public int totalAttackPower; // 총 공격력 (기본 Atk + (왼팔Atk + 오른팔Atk)/2)
+    public int finalMovementSpeed; // 최종 이동속도 (기본 MoveSpeed + (왼다리MoveSpeed + 오른다리MoveSpeed)/2)
 
-    // 4. 실시간 부위별 내구도 맵
-    public Dictionary<BodyPart, PartRuntimeState> partStates = new Dictionary<BodyPart, PartRuntimeState>();
+    // 5. 5개 파츠 실시간 내구도 맵 (부위 타격 스킬 피격시에만 차감)
+    public Dictionary<BodyPart, PartRuntimeState> partStates = new();
 
-    //5. 헬퍼 및 판정 메서드
     /// <summary>
-    /// 해당 부위가 파손이 되었거나 미장착 상태인지 검사함
-    /// 전트 행동 파트에서 ActionSource.Part 기술 시전시 호출됨
+    /// 내구도가 0 이하(파손)인지 검사(스킬 봉인 판정)
     /// </summary>
     
-    public bool IsPartBrokenOrNotEquipped(BodyPart partType)
-    {
-        if (!partStates.TryGetValue(partType, out var partState))
-            return true; // 미장착 상태임
-        return partStates[partType].isBroken; // 파손 여부 반환함
-    }
-
-    /// <summary>
-    /// 설계서 및 전투 행동 파트용 alias: 부위 파손 여부 검사함
-    /// </summary>
     public bool IsPartBroken(BodyPart partType)
     {
-        return IsPartBrokenOrNotEquipped(partType);
+        return !partStates.TryGetValue(partType, out var partState) || partState.isBroken;
     }
 
     /// <summary>
-    /// 생존 여부 (현재 코어 HP > 0) 반환함
+    /// 특정 부위 타격 스킬 피격 시 해당 부위의 내구도 차감
+    /// 내구도 0 도달 시 true 반환 (부품 파손 및 스킬 봉인 판정)
     /// </summary>
-    public bool IsAlive => currentHp > 0;
-
-    /// <summary>
-    /// 지정된 부위의 내구도를 차감함
-    /// </summary>
-    public void ConsumePartDurability(BodyPart partType, int amount)
-    {
-        if (partStates.TryGetValue(partType, out var partState))
-        {
-            partState.Consume(amount);
-        }
-    }
-
-    /// <summary>
-    /// 설계서 및 연산 엔진용 alias: 지정된 부위의 내구도를 차감함
-    /// </summary>
-    public void ConsumeDurability(BodyPart partType, int amount)
-    {
-        ConsumePartDurability(partType, amount);
-    }
-
-    /// <summary>
-    /// 지정된 부위의 런타임 상태를 반환함
-    /// </summary>
-    public PartRuntimeState GetPartRuntimeState(BodyPart partType)
-    {
-        partStates.TryGetValue(partType, out var partState);
-        return partState;
-    }
-
-    /// <summary>
-    /// 다리 1개만 파괴된 상태인지 확인함 (위빙 50% 실패 대상임)
-    /// </summary>
-    public bool IsOneLegBroken()
-    {
-        bool leftLegBroken = IsPartBrokenOrNotEquipped(BodyPart.LeftLeg);
-        bool rightLegBroken = IsPartBrokenOrNotEquipped(BodyPart.RightLeg);
-
-        return (leftLegBroken ^ rightLegBroken); // XOR 연산으로 한쪽만 파손된 경우 true 반환함
-    }
-
-    /// <summary>
-    /// 다리 2개 모두 파괴된 상태인지 확인함 (위빙 100% 실패 대상임)
-    /// </summary>
-    public bool IsBothLegsBroken()
-    {
-        bool leftLegBroken = IsPartBrokenOrNotEquipped(BodyPart.LeftLeg);
-        bool rightLegBroken = IsPartBrokenOrNotEquipped(BodyPart.RightLeg);
-
-        return (leftLegBroken && rightLegBroken); // AND 연산으로 양쪽 모두 파손된 경우 true 반환함
-    }
+    
+   // public bool ConsumePart
 }

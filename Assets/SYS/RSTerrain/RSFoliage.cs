@@ -39,9 +39,10 @@ namespace RealSteel.Terrain
             public float weight = 1f;
         }
 
-        [Header("스프라이트")]
+        [RSGroup("스프라이트")]
         [RSHelp("스프라이트 시트 한 장. [시트 자르기] 가 투명한 틈을 기준으로 하나씩 잘라 목록에 넣는다. 머티리얼은 비워 두면 버튼으로 만든다.")]
         [Tooltip("풀 · 꽃을 그린 시트 (배경 투명). 가져오기 설정: 필터 Point · 압축 없음 · 밉맵 끔 권장")]
+        [RSKey]
         public Texture2D sheet;
         [Tooltip("시트에서 잘라낸 풀 · 꽃 (시트 자르기 버튼이 채운다)")]
         public List<Item> items = new List<Item>();
@@ -50,9 +51,10 @@ namespace RealSteel.Terrain
         [Tooltip("RE_AL STEEL/Foliage Sprite 머티리얼")]
         public Material material;
 
-        [Header("심는 곳")]
+        [RSGroup("심는 곳")]
         [RSHelp("칠한 레이어 따라 = 풀을 칠한 곳에 저절로 난다. 원 / 지형 전체 = 칠과 상관없이 흩뿌린다 (길 · 콘크리트 · 진흙은 피함).")]
         [Tooltip("칠한 레이어 따라 / 원 / 지형 전체")]
+        [RSKey]
         public Area area = Area.Layer;
         [Tooltip("'칠한 레이어 따라' 에서 따라갈 레이어")]
         public RSLayer layer = RSLayer.Grass;
@@ -67,9 +69,10 @@ namespace RealSteel.Terrain
         [Tooltip("원 · 전체 모드: 길(R) · 콘크리트(G) · 진흙(A) 위는 피한다")]
         public bool avoidPaths = true;
 
-        [Header("밀도 · 모양")]
+        [RSGroup("밀도 · 모양")]
         [RSHelp("몇 포기를 어떻게 심을지. 밀도를 바꿔도 이미 있던 자리는 그대로 남는다.")]
         [Range(0.2f, 30f), Tooltip("1㎡ 당 포기 수. 풀밭은 4 ~ 10")]
+        [RSKey]
         public float density = 6f;
         [Range(0f, 1f), Tooltip("뭉치기 — 클수록 무더기 · 빈터가 뚜렷하다")]
         public float clumping = 0.45f;
@@ -82,7 +85,7 @@ namespace RealSteel.Terrain
         [Tooltip("밑동을 땅에 묻는 깊이 (m). 경사에서 뜨지 않게")]
         public float sink = 0.04f;
 
-        [Header("렌더")]
+        [RSGroup("렌더")]
         [Tooltip("메시 조각 크기 (m). 작을수록 화면 밖 조각이 잘 빠지지만 드로우콜이 는다")]
         public float tileSize = 10f;
 

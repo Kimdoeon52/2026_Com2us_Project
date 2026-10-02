@@ -30,11 +30,13 @@ using RealSteel.Terrain;
 [AddComponentMenu("RE_AL STEEL/Character/간단 캐릭터 (이동 + 카메라)")]
 public class RSSimpleCharacter : MonoBehaviour
 {
-    [Header("이동")]
+    [RSGroup("이동")]
     [RSHelp("걷기 · 달리기 속도와 반응. 가속이 클수록 딱딱 끊기고, 작을수록 미끄러지듯 움직인다.")]
     [Tooltip("걷기 속도 (m/s)")]
+    [RSKey]
     public float walkSpeed = 4f;
     [Tooltip("달리기 속도 (m/s) — Shift / 왼쪽 트리거")]
+    [RSKey]
     public float runSpeed = 7.5f;
     [Tooltip("가속 (m/s²). 클수록 바로 최고 속도")]
     public float acceleration = 40f;
@@ -43,25 +45,28 @@ public class RSSimpleCharacter : MonoBehaviour
     [Tooltip("카메라 기준으로 움직인다 (끄면 월드 기준: W = +Z)")]
     public bool cameraRelative = true;
 
-    [Header("점프 · 중력")]
+    [RSGroup("점프 · 중력")]
     [Tooltip("점프 높이 (m). 0 = 점프 없음")]
+    [RSKey]
     public float jumpHeight = 1.1f;
     [Tooltip("중력 (m/s², 음수)")]
     public float gravity = -25f;
     [Tooltip("RS 지형 위라면 콜라이더가 없어도 지면에 붙인다")]
     public bool snapToRSTerrain = true;
 
-    [Header("카메라")]
+    [RSGroup("카메라")]
     [RSHelp("비워 두면 Main Camera 를 쓴다. 플레이 중에 Pitch · Yaw · Distance 를 인스펙터에서 바로 바꿔 볼 수 있고, 게임 안에서도 돌릴 수 있다:\n· 마우스 오른쪽 드래그 = 돌리기 · 휠 · +/- 키 = 줌 · Q/E = 45° 돌리기 · R/F = 위아래 기울이기 · Home = 처음 각도로\n· 게임패드: 오른쪽 스틱 = 돌리기 · 어깨 버튼 = 45° · 오른쪽 스틱 누르기 = 처음 각도로")]
     [Tooltip("따라올 카메라 (비우면 Main Camera)")]
     public Camera cam;
     [Tooltip("시작할 때 씬에 놓인 카메라의 각도 · 거리를 가져와 아래 Pitch · Yaw · Distance 에 넣는다")]
     public bool keepCurrentAngle = true;
     [Range(5f, 89f), Tooltip("내려다보는 각도 (도). 옥토패스 느낌은 30 ~ 45")]
+    [RSKey]
     public float pitch = 35f;
     [Tooltip("카메라 방향 (Y 회전, 도)")]
     public float yaw = 0f;
     [Tooltip("캐릭터와의 거리 (m)")]
+    [RSKey]
     public float distance = 12f;
     [Tooltip("원근 카메라의 시야각 (도). 0 = 카메라 설정 그대로. 좁을수록 망원 느낌 (옥토패스는 좁은 편 20 ~ 30)")]
     public float fieldOfView = 0f;
@@ -72,7 +77,7 @@ public class RSSimpleCharacter : MonoBehaviour
     [Tooltip("움직이는 방향으로 카메라가 조금 앞서 간다 (m)")]
     public float lookAhead = 1.2f;
 
-    [Header("카메라 조작 (게임 중)")]
+    [RSGroup("카메라 조작 (게임 중)")]
     [Tooltip("마우스 오른쪽 드래그 · 게임패드 오른쪽 스틱으로 카메라를 돌린다")]
     public bool allowOrbit = true;
     [Tooltip("마우스 드래그 감도 (도/픽셀)")]
@@ -92,7 +97,7 @@ public class RSSimpleCharacter : MonoBehaviour
     [Tooltip("카메라 각도가 따라오는 부드러움 (클수록 빠르게)")]
     public float angleSharpness = 10f;
 
-    [Header("모양")]
+    [RSGroup("모양")]
     [Tooltip("자식에 보이는 모델이 없으면 플레이할 때 임시 캡슐을 만든다")]
     public bool placeholderIfEmpty = true;
     [Tooltip("SpriteRenderer 가 있으면 몸을 돌리는 대신 좌우로 뒤집는다 (2D 스프라이트 캐릭터)")]

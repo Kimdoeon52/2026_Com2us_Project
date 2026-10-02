@@ -9,7 +9,6 @@ namespace RealSteel.Common.EditorTools
     public static class RSHelpGUI
     {
         const string Key = "RS_ShowInspectorHelp";
-        const string MenuPath = "Tools/RE_AL STEEL/Stage/인스펙터 설명 보이기 · 숨기기";
 
         public static bool Show
         {
@@ -17,20 +16,6 @@ namespace RealSteel.Common.EditorTools
             set { EditorPrefs.SetBool(Key, value); }
         }
 
-        [MenuItem(MenuPath, false, 90)]
-        static void Toggle()
-        {
-            Show = !Show;
-            Menu.SetChecked(MenuPath, Show);
-            InternalEditorUtility.RepaintAllViews();
-        }
-
-        [MenuItem(MenuPath, true)]
-        static bool ToggleValidate()
-        {
-            Menu.SetChecked(MenuPath, Show);
-            return true;
-        }
 
         static GUIStyle box, title;
 

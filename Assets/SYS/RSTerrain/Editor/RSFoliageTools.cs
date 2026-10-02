@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using RealSteel.Common.EditorTools;
 
 namespace RealSteel.Terrain.EditorTools
 {
@@ -212,7 +213,7 @@ namespace RealSteel.Terrain.EditorTools
                     if (!n.Contains(k.ToLowerInvariant())) continue;
                     var t = AssetDatabase.LoadAssetAtPath<Texture2D>(p);
                     if (t == null) continue;
-                    if (p.StartsWith("Assets/SYS/")) return t;
+                    if (p.StartsWith(RSPaths.Root + "/")) return t;
                     if (best == null) best = t;
                 }
             }
@@ -231,7 +232,7 @@ namespace RealSteel.Terrain.EditorTools
             if (sh == null) { Debug.LogWarning("[풀 · 꽃] 셰이더 '" + FoliageShader + "' 를 못 찾았습니다."); return null; }
 
             string texPath = AssetDatabase.GetAssetPath(sheet);
-            string dir = string.IsNullOrEmpty(texPath) ? "Assets/SYS/Materials" : System.IO.Path.GetDirectoryName(texPath).Replace('\\', '/');
+            string dir = string.IsNullOrEmpty(texPath) ? RSPaths.Materials : System.IO.Path.GetDirectoryName(texPath).Replace('\\', '/');
             string path = dir + "/MAT_RS_Foliage_" + sheet.name + ".mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (m == null)

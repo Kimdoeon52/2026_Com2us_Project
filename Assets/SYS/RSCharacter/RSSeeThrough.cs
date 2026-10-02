@@ -42,7 +42,7 @@ public class RSSeeThrough : MonoBehaviour
     [Range(1, 8), Tooltip("점무늬 한 칸 크기 (화면 픽셀). 픽셀아트 느낌은 2~3")]
     public int ditherPixel = 2;
 
-    [Header("범위")]
+    [RSGroup("범위")]
     [RSHelp("무엇을 뚫지 않을지. 발밑 바닥과 캐릭터 바로 옆 물체는 남긴다.")]
     [Tooltip("캐릭터보다 이만큼 이상 카메라 쪽에 있어야 뚫린다 (m). 캐릭터 바로 옆 난간까지 뚫리면 키운다")]
     public float frontMargin = 0.6f;
@@ -51,7 +51,7 @@ public class RSSeeThrough : MonoBehaviour
     [Tooltip("구멍 가운데를 옮긴다 (몸 가운데 기준, 월드)")]
     public Vector3 centerOffset = Vector3.zero;
 
-    [Header("가려질 때만 모드")]
+    [RSGroup("가려질 때만 모드")]
     [Tooltip("비워 두면 캐릭터의 카메라 → Main Camera")]
     public Camera viewCamera;
     [Tooltip("가림으로 칠 콜라이더 레이어")]
@@ -61,7 +61,7 @@ public class RSSeeThrough : MonoBehaviour
     [Tooltip("켜지고 꺼지는 속도 (초당)")]
     public float fadeSpeed = 5f;
 
-    [Header("어디서 보일지")]
+    [RSGroup("어디서 보일지")]
     [Tooltip("편집 중(플레이 아닐 때)에도 뚫어서 미리 보기")]
     public bool previewInEditMode = false;
     [Tooltip("씬 뷰 카메라에도 적용 (끄면 게임 카메라만)")]

@@ -30,7 +30,7 @@ namespace RealSteel.Terrain
         [Tooltip("이 영역 정점은 옆으로 흔들지 않는다 (다리 받침처럼 모서리가 반듯해야 할 곳)")]
         public bool lockVertices = false;
 
-        [Header("깨진 슬래브")]
+        [RSGroup("깨진 슬래브")]
         [RSHelp("윗면을 조각(보로노이)으로 나눠 조각마다 높이 · 기울기를 달리하고 금을 낸다. 조각은 작업장 기준이라 옮겨도 모양이 따라다닌다.")]
         [Tooltip("깨진 콘크리트 조각으로 만든다")]
         public bool brokenSlabs = true;

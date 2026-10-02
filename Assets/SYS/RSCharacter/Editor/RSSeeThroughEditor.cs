@@ -11,7 +11,7 @@ public class RSSeeThroughEditor : Editor
     public override void OnInspectorGUI()
     {
         RSHelpGUI.DrawSummary(target);
-        DrawDefaultInspector();
+        RSInspector.Draw(serializedObject);
 
         EditorGUILayout.Space(4f);
         if (GUILayout.Button("이 기능을 못 받는 머티리얼 찾기 (콘솔에 목록)"))

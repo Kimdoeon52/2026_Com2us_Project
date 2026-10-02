@@ -27,7 +27,7 @@ namespace RealSteel.Terrain
         [Tooltip("RE_AL STEEL/Foliage Sprite 머티리얼 (시트마다 하나 — 여러 포기가 같이 쓴다)")]
         public Material material;
 
-        [Header("모양")]
+        [RSGroup("모양")]
         [Tooltip("크기 배율")]
         public float scale = 1f;
         [Tooltip("좌우 뒤집기")]

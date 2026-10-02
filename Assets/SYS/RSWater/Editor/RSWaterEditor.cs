@@ -15,7 +15,7 @@ namespace RealSteel.Water.EditorTools
         const string ShaderName = "RE_AL STEEL/Water Pixel Lit";
         const string MatName = "MAT_RS_Water";
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/물 (반사 · 굴절 · 거품) 설치", false, 34)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/물 (반사 · 굴절 · 거품) 설치", false, 2)]
         public static void Setup()
         {
             var mat = FindOrCreateMaterial();
@@ -91,7 +91,7 @@ namespace RealSteel.Water.EditorTools
             }
             var sh = Shader.Find(ShaderName);
             if (sh == null) { Debug.LogWarning("[물] 셰이더 '" + ShaderName + "' 를 찾지 못했습니다. 콘솔에 셰이더 에러가 없는지 확인하세요."); return null; }
-            string dir = System.IO.Path.GetDirectoryName(AssetDatabase.GetAssetPath(sh)).Replace('\\', '/');
+            string dir = RSPaths.Ensure(RSPaths.Materials);
             var m = new Material(sh) { name = MatName };
             m.EnableKeyword("_REFRACTION");
             m.EnableKeyword("_DEPTH_EFFECTS");
@@ -107,7 +107,13 @@ namespace RealSteel.Water.EditorTools
         public override void OnInspectorGUI()
         {
             RSHelpGUI.DrawSummary(target);
-            DrawDefaultInspector();
+            RSInspector.Draw(serializedObject);
+            var rr = (RSWaterReflection)target;
+            if (rr.mode == RSWaterReflection.Mode.Planar && rr.PlanarFailed)
+                EditorGUILayout.HelpBox("평면 반사가 이 프로젝트 설정에서 렌더 오류를 내서 화면 반사로 대신하고 있습니다. 모드를 '화면 반사' 로 바꾸면 경고가 다시 안 뜹니다.", MessageType.Warning);
+            var urp = UnityEngine.Rendering.Universal.UniversalRenderPipeline.asset;
+            if (urp != null && (!urp.supportsCameraOpaqueTexture || !urp.supportsCameraDepthTexture))
+                EditorGUILayout.HelpBox("화면 반사는 URP 에셋의 Opaque Texture · Depth Texture 가 켜져 있어야 보입니다.", MessageType.Warning);
             EditorGUILayout.Space(4f);
             if (GUILayout.Button("RS 지형 수면 높이에 맞추기"))
             {

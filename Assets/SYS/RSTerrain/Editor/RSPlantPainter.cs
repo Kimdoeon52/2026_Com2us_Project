@@ -8,7 +8,7 @@ namespace RealSteel.Terrain.EditorTools
 {
     public class RSPlantPainter : EditorWindow
     {
-        [MenuItem("Tools/RE_AL STEEL/Stage/풀꽃 배치 (하나씩 찍기)", false, 24)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/풀꽃 배치 (하나씩 찍기)", false, 23)]
         public static void Open()
         {
             var w = GetWindow<RSPlantPainter>(false, "풀꽃 배치", true);
@@ -306,9 +306,7 @@ namespace RealSteel.Terrain.EditorTools
         public override void OnInspectorGUI()
         {
             RSHelpGUI.DrawSummary(target);
-            serializedObject.Update();
-            DrawPropertiesExcluding(serializedObject, "m_Script");
-            serializedObject.ApplyModifiedProperties();
+            RSInspector.Draw(serializedObject);
 
             var pl = (RSPlant)target;
             if (pl.sheet != null)

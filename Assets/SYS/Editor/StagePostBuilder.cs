@@ -40,7 +40,15 @@ namespace RealSteel.EditorTools
 
         static readonly Vector3 LookTarget = new Vector3(1.5f, 1.5f, 2f);
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/카메라 + 조명 + 포스트 (HD-2D 룩)", false, 31)]
+        /// <summary>카메라 리그(STAGE_Look)가 없을 때만 만든다. 만들었으면 true ('스테이지 연출 한 번에 설치' 가 부름)</summary>
+        public static bool EnsureLook()
+        {
+            if (GameObject.Find(RigName) != null) return false;
+            BuildLook();
+            return true;
+        }
+
+        /// <summary>카메라 리그를 새로 만든다 (있으면 지우고 다시)</summary>
         public static void BuildLook()
         {
             var old = GameObject.Find(RigName);
@@ -66,7 +74,6 @@ namespace RealSteel.EditorTools
         /// 씬의 모든 카메라에 near/far 를 다시 잡아준다.
         /// 면이 깜빡일 때(Z-fighting) 지오메트리를 건드리기 전에 먼저 눌러볼 레버.
         /// </summary>
-        [MenuItem("Tools/RE_AL STEEL/Stage/Z-fighting 완화 - 카메라 클립 거리 최적화", false, 32)]
         public static void FixClipPlanes()
         {
             var cams = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None);

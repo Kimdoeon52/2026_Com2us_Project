@@ -25,7 +25,7 @@ namespace RealSteel.Terrain
         [Tooltip("점 사이를 곡선으로 잇는다 (끄면 직선 — 수로 · 경사로)")]
         public bool smooth = true;
 
-        [Header("길")]
+        [RSGroup("길")]
         [RSHelp("종류가 '길' 일 때만 쓰인다. 경사로는 높이 모드를 '점 높이로' 로 두고 점의 Y 를 올린다.")]
         [Tooltip("길 반폭 (m). 전체 폭은 2배")]
         public float halfWidth = 0.9f;
@@ -46,7 +46,7 @@ namespace RealSteel.Terrain
         [Tooltip("길에 칠할 레이어 (기본 R 길, 없음 = 칠 안 함)")]
         public RSLayer pathPaint = RSLayer.R;
 
-        [Header("배수로")]
+        [RSGroup("배수로")]
         [RSHelp("종류가 '배수로' 일 때만 쓰인다.\n흙 도랑: 벽 경사 1 · 둑 깎임 0.3 · 바닥 칠 A\n콘크리트 수로: 벽 경사 3 · 둑 좁게 · 벽 칠 G · 정점 고정 · 곡선 끔")]
         [Tooltip("바닥 반폭 (m)")]
         public float bottomHalfWidth = 0.75f;

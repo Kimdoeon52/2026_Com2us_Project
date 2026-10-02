@@ -33,18 +33,20 @@ namespace RealSteel.Terrain
         // 설정
         // ─────────────────────────────────────────────────────────────
 
-        [Header("크기")]
+        [RSGroup("크기")]
         [RSHelp("격자가 촘촘할수록 디테일이 살고 무거워진다. 40×40 · 칸 0.25 ≈ 삼각형 5만 개, 드로우콜 10 안팎.")]
         [Tooltip("지형 전체 크기 X, Z (m). 이 오브젝트 위치가 가운데")]
+        [RSKey]
         public Vector2 size = new Vector2(40f, 40f);
         [Tooltip("격자 한 칸 (m). 0.25 = 디테일 (권장), 0.5 = 가벼움 (삼각형 1/4)")]
+        [RSKey]
         public float cellSize = 0.25f;
         [Tooltip("메시 조각 크기 (m). 브러시는 닿은 조각만 다시 만든다. 보통 20")]
         public float chunkSize = 20f;
         [Tooltip("지형 가장자리 단면(디오라마 옆면)이 내려가는 깊이 (m, 음수)")]
         public float skirtBottom = -3f;
 
-        [Header("바탕 노이즈")]
+        [RSGroup("바탕 노이즈")]
         [RSHelp("요소가 없는 곳의 기본 울퉁불퉁함. 굴곡 · 요철 · 자갈 세 겹을 더한다. Amp = 높이(m), Freq = 촘촘함(클수록 잘다).")]
         [Tooltip("무작위 시드. 바꾸면 바탕 요철 · 요소의 불규칙함 · 폐자재 배치가 전부 새로 나온다")]
         public int seed = 1004;
@@ -67,15 +69,16 @@ namespace RealSteel.Terrain
         [Range(0f, 0.4f), Tooltip("격자 정점을 옆으로 흔드는 정도 (칸 대비). 0 = 반듯한 격자, 0.3 = 불규칙한 삼각형 (권장)")]
         public float vertexJitter = 0.3f;
 
-        [Header("레이어 경계 (정점 컬러)")]
+        [RSGroup("레이어 경계 (정점 컬러)")]
         [RSHelp("칠 레이어(길 · 콘크리트 등) 경계의 모양. 여기서 크게 휘고, 셰이더가 텍셀 단위 톱니를 한 번 더 넣는다 (머티리얼의 경계 흐트러짐).")]
         [Range(0f, 1f), Tooltip("경계선을 노이즈로 크게 휜다 (0 = 요소 모양 그대로)")]
         public float boundaryWarp = 0.6f;
         [Range(0, 3), Tooltip("경계를 주변 칸과 섞는 폭 (칸). 클수록 톱니가 깊게 파고든다. 1 권장")]
         public int boundaryBlur = 1;
 
-        [Header("렌더")]
+        [RSGroup("렌더")]
         [Tooltip("지형 머티리얼 (RE_AL STEEL/Terrain Splat Pixel Lit). 레이어별 텍스처 · 경계 흐트러짐 · 픽셀 밀도는 머티리얼에서 바꾼다")]
+        [RSKey]
         public Material material;
         [Tooltip("배수로 · 웅덩이 수면 머티리얼. 비우면 수면이 안 보인다")]
         public Material waterMaterial;
@@ -84,7 +87,7 @@ namespace RealSteel.Terrain
         [Tooltip("지형이 그림자를 드리운다 (둔덕 · 절벽 그림자)")]
         public bool castShadows = true;
 
-        [Header("외곽 (플레이 구역 밖 배경 지형)")]
+        [RSGroup("외곽 (플레이 구역 밖 배경 지형)")]
         [RSHelp("플레이 구역을 둘러싸는 배경 지형. 가장자리 높이 · 칠을 그대로 이어받고, 바깥으로 갈수록 솟아올라 지형의 끝을 숨긴다 (분지 모양). 격자가 성겨서 넓어도 가볍다. 켜면 디오라마 옆면(단면)은 안 만든다.")]
         [Tooltip("외곽 지형을 만든다")]
         public bool outerEnabled = false;
@@ -111,12 +114,13 @@ namespace RealSteel.Terrain
         [Tooltip("외곽에도 콜라이더를 만든다 (가장자리 밖으로 나가도 받쳐 준다)")]
         public bool outerCollider = true;
 
-        [Header("브러시 데이터 (손으로 깎고 칠한 것)")]
+        [RSGroup("브러시 데이터 (손으로 깎고 칠한 것)")]
         [RSHelp("브러시로 손질한 높이 · 칠은 이 에셋에 따로 저장된다. 요소를 바꿔도 유지되고, 크기 · 격자를 바꾸면 위치 기준으로 옮겨진다.")]
         [Tooltip("브러시 데이터 에셋 (RSTerrainData). 없으면 브러시를 켤 때 만들 수 있다")]
+        [RSKey]
         public RSTerrainData data;
 
-        [Header("편집")]
+        [RSGroup("편집")]
         [Tooltip("요소를 옮기거나 값을 바꾸면 자동으로 다시 만든다")]
         public bool autoRebuild = true;
         [Tooltip("드래그하는 동안에도 계속 다시 만든다 (무거움). 끄면 마우스를 놓을 때 한 번")]
@@ -126,7 +130,7 @@ namespace RealSteel.Terrain
         // 상태
         // ─────────────────────────────────────────────────────────────
 
-        public enum BrushOp { Raise, Lower, Flatten, Smooth, ResetHeight, Paint, ErasePaint }
+        public enum BrushOp { Raise, Lower, Flatten, Smooth, ResetHeight, Paint, ErasePaint, Wet, Dry }
 
         [System.NonSerialized] public bool dirty = true;
         [System.NonSerialized] public float dirtyTime;
@@ -138,6 +142,13 @@ namespace RealSteel.Terrain
         [System.NonSerialized] Vector4[] w0;       // 절차 레이어
         [System.NonSerialized] Color[] wF;         // 최종 레이어 (정점 컬러)
         [System.NonSerialized] float[] g0, gF;     // 풀 레이어 (절차 / 최종) — 메시 UV2.x
+        [System.NonSerialized] float[] wetF;       // 젖음 (최종, 브러시만) — 메시 UV2.y + 젖음 텍스처
+        [System.NonSerialized] Texture2D wetTex;   // 젖음 칠을 격자 텍스처로 (반사 겹이 월드 위치로 읽음 → 삼각형 모양이 안 드러남)
+        [System.NonSerialized] byte[] wetBytes;
+        [System.NonSerialized] bool wetTexDirty = true;
+        static MaterialPropertyBlock wetMpb;
+        static readonly int IdWetMap = Shader.PropertyToID("_RSWetMap");
+        static readonly int IdWetMapST = Shader.PropertyToID("_RSWetMapST");
         [System.NonSerialized] float[] px, pz;     // 흔든 정점 XZ
         [System.NonSerialized] float minH, maxH;
 
@@ -156,6 +167,7 @@ namespace RealSteel.Terrain
             public MeshFilter mf;
             public MeshRenderer mr;
             public MeshCollider mc;
+            public bool hasWet;
         }
 
         const string GenName = "__RST_Generated (자동 생성 · 저장 안 됨)";
@@ -174,6 +186,7 @@ namespace RealSteel.Terrain
         void OnEnable()
         {
             if (!All.Contains(this)) All.Add(this);
+            RSWetState.Changed += RefreshWetOverlay;
             MarkDirty();
             // 플레이 모드에서는 여기서 바로 만들지 않는다 — 씬을 불러오는 중엔 자식 요소가 아직 안 켜졌을 수 있다.
             // 모든 OnEnable 이 끝난 뒤 Start 에서 한 번 만든다.
@@ -203,6 +216,8 @@ namespace RealSteel.Terrain
         void OnDisable()
         {
             All.Remove(this);
+            RSWetState.Changed -= RefreshWetOverlay;
+            if (wetTex != null) { SafeDestroy(wetTex); wetTex = null; }
             // 오브젝트가 꺼지는 중에는 자식을 즉시 지울 수 없다 (유니티 제약).
             // 그땐 참조만 놓고, 다음에 만들 때 남은 것을 정리한다 (EnsureGenRoot).
             if (Application.isPlaying || gameObject.activeInHierarchy) DestroyGenerated();
@@ -308,6 +323,7 @@ namespace RealSteel.Terrain
             h0 = new float[n]; hF = new float[n];
             w0 = new Vector4[n]; wF = new Color[n];
             g0 = new float[n]; gF = new float[n];
+            wetF = new float[n];
             px = new float[n]; pz = new float[n];
 
             float amp = vertexJitter * Mathf.Min(csx, csz);
@@ -384,6 +400,7 @@ namespace RealSteel.Terrain
         /// <summary>절차 결과 + 브러시 데이터 → 최종 높이·색 (범위만)</summary>
         void Compose(int i0, int i1, int j0, int j1)
         {
+            wetTexDirty = true;
             bool hasData = data != null && data.Matches(vx, vz, size);
             i0 = Mathf.Max(0, i0); j0 = Mathf.Max(0, j0);
             i1 = Mathf.Min(vx - 1, i1); j1 = Mathf.Min(vz - 1, j1);
@@ -413,6 +430,7 @@ namespace RealSteel.Terrain
                     hF[k] = h;
                     wF[k] = new Color(w.x, w.y, w.z, w.w);
                     gF[k] = g;
+                    wetF[k] = hasData && data.wet != null && k < data.wet.Length ? Mathf.Clamp01(data.wet[k]) : 0f;
                 }
 
             minH = float.MaxValue; maxH = float.MinValue;
@@ -520,6 +538,7 @@ namespace RealSteel.Terrain
         void BuildChunkMesh(Chunk c)
         {
             sV.Clear(); sN.Clear(); sC.Clear(); sU.Clear(); sT.Clear(); sG.Clear();
+            bool anyWet = false;
 
             for (int i = c.i0; i < c.i1; i++)
                 for (int j = c.j0; j < c.j1; j++)
@@ -530,14 +549,15 @@ namespace RealSteel.Terrain
                     // 대각선은 높이차가 작은 쪽으로 — 능선·골이 지형을 따라 접힌다
                     if (Mathf.Abs(a.y - cc.y) <= Mathf.Abs(b.y - d.y))
                     {
-                        Tri(a, d, cc, wF[k00], wF[k01], wF[k11], gF[k00], gF[k01], gF[k11]);
-                        Tri(a, cc, b, wF[k00], wF[k11], wF[k10], gF[k00], gF[k11], gF[k10]);
+                        Tri(a, d, cc, wF[k00], wF[k01], wF[k11], GW(k00), GW(k01), GW(k11));
+                        Tri(a, cc, b, wF[k00], wF[k11], wF[k10], GW(k00), GW(k11), GW(k10));
                     }
                     else
                     {
-                        Tri(a, d, b, wF[k00], wF[k01], wF[k10], gF[k00], gF[k01], gF[k10]);
-                        Tri(b, d, cc, wF[k10], wF[k01], wF[k11], gF[k10], gF[k01], gF[k11]);
+                        Tri(a, d, b, wF[k00], wF[k01], wF[k10], GW(k00), GW(k01), GW(k10));
+                        Tri(b, d, cc, wF[k10], wF[k01], wF[k11], GW(k10), GW(k01), GW(k11));
                     }
+                    if (!anyWet && (wetF[k00] > 0.01f || wetF[k10] > 0.01f || wetF[k11] > 0.01f || wetF[k01] > 0.01f)) anyWet = true;
                 }
 
             // 스커트 (디오라마 단면) — 바깥 테두리에 닿는 조각만. 외곽 지형이 있으면 필요 없다.
@@ -560,7 +580,9 @@ namespace RealSteel.Terrain
             m.SetTriangles(sT, 0);
             m.RecalculateBounds();
 
-            c.mr.sharedMaterial = material;
+            c.hasWet = anyWet;
+            SetSurfaceMaterials(c.mr, anyWet);
+            ApplyWetMap(c.mr);
             c.mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
             if (generateCollider)
@@ -577,7 +599,15 @@ namespace RealSteel.Terrain
             Tri(a, b, c, ca, cb, cc, 0f, 0f, 0f);
         }
 
+        /// <summary>UV2 = (풀, 젖음)</summary>
+        Vector2 GW(int k) { return new Vector2(gF[k], wetF != null ? wetF[k] : 0f); }
+
         static void Tri(Vector3 a, Vector3 b, Vector3 c, Color ca, Color cb, Color cc, float ga, float gb, float gc)
+        {
+            Tri(a, b, c, ca, cb, cc, new Vector2(ga, 0f), new Vector2(gb, 0f), new Vector2(gc, 0f));
+        }
+
+        static void Tri(Vector3 a, Vector3 b, Vector3 c, Color ca, Color cb, Color cc, Vector2 ga, Vector2 gb, Vector2 gc)
         {
             Vector3 n = Vector3.Cross(b - a, c - a).normalized;
             int i0 = sV.Count;
@@ -586,7 +616,7 @@ namespace RealSteel.Terrain
             sC.Add(ca); sC.Add(cb); sC.Add(cc);
             sU.Add(new Vector2(a.x, a.z) * 0.5f); sU.Add(new Vector2(b.x, b.z) * 0.5f); sU.Add(new Vector2(c.x, c.z) * 0.5f);
             sT.Add(i0); sT.Add(i0 + 1); sT.Add(i0 + 2);
-            sG.Add(new Vector2(ga, 0f)); sG.Add(new Vector2(gb, 0f)); sG.Add(new Vector2(gc, 0f));
+            sG.Add(ga); sG.Add(gb); sG.Add(gc);
         }
 
         void Skirt(Vector3 p0, Vector3 p1, Vector3 outward)
@@ -842,6 +872,93 @@ namespace RealSteel.Terrain
         public Color GetVertexColor(int i, int j) { return wF[Idx(i, j)]; }
         public float GetVertexGrass(int i, int j) { return gF[Idx(i, j)]; }
 
+        /// <summary>젖음 칠 (지형 로컬, 0 ~ 1) — 발소리 · 물 튀김 같은 게임 쪽에서 쓸 수 있다. 비(전역)는 안 들어감</summary>
+        public float SampleWet(float x, float z)
+        {
+            if (wetF == null) return 0f;
+            float fi = Mathf.Clamp((x + size.x * 0.5f) / csx, 0f, cx);
+            float fj = Mathf.Clamp((z + size.y * 0.5f) / csz, 0f, cz);
+            int i0 = Mathf.Min(cx - 1, Mathf.FloorToInt(fi)), j0 = Mathf.Min(cz - 1, Mathf.FloorToInt(fj));
+            float u = fi - i0, w = fj - j0;
+            return Mathf.Lerp(Mathf.Lerp(wetF[Idx(i0, j0)], wetF[Idx(i0 + 1, j0)], u),
+                              Mathf.Lerp(wetF[Idx(i0, j0 + 1)], wetF[Idx(i0 + 1, j0 + 1)], u), w);
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 젖은 바닥 반사 겹 (젖음 칠이 있거나 비가 오면 지형 머티리얼 뒤에 반사 겹 머티리얼을 하나 더 단다)
+        // ─────────────────────────────────────────────────────────────
+
+        static readonly Material[] mats1 = new Material[1];
+        static readonly Material[] mats2 = new Material[2];
+
+        void SetSurfaceMaterials(MeshRenderer mr, bool hasWet)
+        {
+            if (mr == null) return;
+            var overlay = RSWetState.OverlayMaterial;
+            bool want = overlay != null && (hasWet || RSWetState.Rain > 0.001f);
+            var cur = mr.sharedMaterials;
+            if (want)
+            {
+                if (cur.Length == 2 && cur[0] == material && cur[1] == overlay) return;
+                mats2[0] = material; mats2[1] = overlay;
+                mr.sharedMaterials = mats2;
+            }
+            else
+            {
+                if (cur.Length == 1 && cur[0] == material) return;
+                mats1[0] = material;
+                mr.sharedMaterials = mats1;
+            }
+        }
+
+        /// <summary>
+        /// 젖음 칠을 격자 크기 텍스처(정점 하나 = 텍셀 하나)로 만들어 반사 겹에 넘긴다.
+        /// 정점 값(UV2.y)은 삼각형 안에서 섞여서 경계가 삼각형 모양으로 보였다 — 텍스처는 네 모서리를 고르게 섞는다.
+        /// </summary>
+        void ApplyWetMap(MeshRenderer mr)
+        {
+            if (mr == null || wetF == null) return;
+            if (mr.sharedMaterials.Length < 2) return;   // 반사 겹이 없으면 할 일 없음
+
+            if (wetTexDirty || wetTex == null)
+            {
+                if (wetTex == null || wetTex.width != vx || wetTex.height != vz)
+                {
+                    if (wetTex != null) SafeDestroy(wetTex);
+                    wetTex = new Texture2D(vx, vz, TextureFormat.R8, false, true)
+                    {
+                        name = "RS_WetMap (자동)", hideFlags = HideFlags.DontSave,
+                        wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear,
+                    };
+                }
+                int n = vx * vz;
+                if (wetBytes == null || wetBytes.Length != n) wetBytes = new byte[n];
+                for (int i = 0; i < vx; i++)
+                    for (int j = 0; j < vz; j++)
+                        wetBytes[j * vx + i] = (byte)(Mathf.Clamp01(wetF[Idx(i, j)]) * 255f + 0.5f);
+                wetTex.SetPixelData(wetBytes, 0);
+                wetTex.Apply(false, false);
+                wetTexDirty = false;
+            }
+
+            // 지형 로컬 xz → 텍셀 중심 uv. 조각 메시는 지형과 같은 로컬 공간이다.
+            if (wetMpb == null) wetMpb = new MaterialPropertyBlock();
+            wetMpb.Clear();
+            wetMpb.SetTexture(IdWetMap, wetTex);
+            wetMpb.SetVector(IdWetMapST, new Vector4(
+                1f / (csx * vx), 1f / (csz * vz),
+                (size.x * 0.5f / csx + 0.5f) / vx, (size.y * 0.5f / csz + 0.5f) / vz));
+            mr.SetPropertyBlock(wetMpb, 1);
+        }
+
+        /// <summary>비가 오기 시작 · 그치거나 반사 겹 머티리얼이 바뀌면 (RSWetState.Changed)</summary>
+        void RefreshWetOverlay()
+        {
+            if (this == null) return;
+            foreach (var c in chunks) if (c.mr != null) { SetSurfaceMaterials(c.mr, c.hasWet); ApplyWetMap(c.mr); }
+            foreach (var p in outerPieces) if (p.mr != null) SetSurfaceMaterials(p.mr, false);
+        }
+
         // ─────────────────────────────────────────────────────────────
         // 브러시
         // ─────────────────────────────────────────────────────────────
@@ -899,6 +1016,8 @@ namespace RealSteel.Terrain
                             break;
                         }
                         case BrushOp.ErasePaint:  data.amount[k] *= 1f - f; break;
+                        case BrushOp.Wet:         data.wet[k] = Mathf.Min(1f, data.wet[k] + f); break;
+                        case BrushOp.Dry:         data.wet[k] *= 1f - f; break;
                     }
                 }
 

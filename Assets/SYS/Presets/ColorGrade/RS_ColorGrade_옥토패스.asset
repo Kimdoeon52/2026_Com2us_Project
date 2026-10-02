@@ -1,0 +1,105 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da8959d9a2e30f5448c5b53a1930a135, type: 3}
+  m_Name: "RS_ColorGrade_\uC625\uD1A0\uD328\uC2A4"
+  m_EditorClassIdentifier: 
+  keys:
+  - name: "\uC0C8\uBCBD"
+    hour: 5.9
+    shadowTint: {r: 0.4, g: 0.44, b: 0.64, a: 1}
+    highlightTint: {r: 0.64, g: 0.54, b: 0.56, a: 1}
+    balance: -10
+    shadows: {r: 0.95, g: 0.97, b: 1.08, a: 1}
+    shadowsBrightness: -0.02
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: -18
+    tint: 6
+    lut: {fileID: 0}
+    lutAmount: 1
+  - name: "\uC544\uCE68"
+    hour: 8
+    shadowTint: {r: 0.46, g: 0.49, b: 0.57, a: 1}
+    highlightTint: {r: 0.62, g: 0.55, b: 0.44, a: 1}
+    balance: 0
+    shadows: {r: 1, g: 1, b: 1, a: 1}
+    shadowsBrightness: 0
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: 6
+    tint: 0
+    lut: {fileID: 0}
+    lutAmount: 1
+  - name: "\uD55C\uB0AE"
+    hour: 12.5
+    shadowTint: {r: 0.48, g: 0.5, b: 0.54, a: 1}
+    highlightTint: {r: 0.54, g: 0.52, b: 0.47, a: 1}
+    balance: 0
+    shadows: {r: 1, g: 1, b: 1, a: 1}
+    shadowsBrightness: 0
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: 2
+    tint: 0
+    lut: {fileID: 0}
+    lutAmount: 1
+  - name: "\uC624\uD6C4"
+    hour: 15.5
+    shadowTint: {r: 0.46, g: 0.48, b: 0.56, a: 1}
+    highlightTint: {r: 0.62, g: 0.54, b: 0.44, a: 1}
+    balance: 5
+    shadows: {r: 1, g: 1, b: 1, a: 1}
+    shadowsBrightness: 0
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: 8
+    tint: 0
+    lut: {fileID: 0}
+    lutAmount: 1
+  - name: "\uB178\uC744"
+    hour: 18.4
+    shadowTint: {r: 0.38, g: 0.5, b: 0.6, a: 1}
+    highlightTint: {r: 0.74, g: 0.52, b: 0.36, a: 1}
+    balance: 12
+    shadows: {r: 0.97, g: 0.97, b: 1.05, a: 1}
+    shadowsBrightness: 0
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: 25
+    tint: 6
+    lut: {fileID: 0}
+    lutAmount: 1
+  - name: "\uBC24"
+    hour: 22
+    shadowTint: {r: 0.44, g: 0.38, b: 0.64, a: 1}
+    highlightTint: {r: 0.68, g: 0.55, b: 0.4, a: 1}
+    balance: -20
+    shadows: {r: 0.92, g: 0.9, b: 1.1, a: 1}
+    shadowsBrightness: -0.05
+    midtones: {r: 1, g: 1, b: 1, a: 1}
+    midtonesBrightness: 0
+    highlights: {r: 1, g: 1, b: 1, a: 1}
+    highlightsBrightness: 0
+    temperature: -18
+    tint: 8
+    lut: {fileID: 0}
+    lutAmount: 1

@@ -23,7 +23,7 @@ namespace RealSteel.Terrain
         [Tooltip("원 모드의 반경 (m). 원 핸들로도 조절")]
         public float radius = 6f;
 
-        [Header("개수")]
+        [RSGroup("개수")]
         [RSHelp("종류별 개수. 놓을 자리가 모자라면 일부는 빠진다.")]
         [Tooltip("콘크리트 파편 — 비스듬히 박힌 깨진 슬래브")]
         public int slabs = 4;
@@ -36,7 +36,7 @@ namespace RealSteel.Terrain
         [Tooltip("드럼통 — 넘어지거나 비스듬히 박힘")]
         public int drums = 1;
 
-        [Header("배치 규칙")]
+        [RSGroup("배치 규칙")]
         [RSHelp("어디에 놓을지 정하는 규칙. 경사가 급한 곳 · 길 · 콘크리트 · 진흙 위는 피한다.")]
         [Tooltip("폐자재끼리 최소 간격 (m)")]
         public float minGap = 1.1f;
@@ -53,7 +53,7 @@ namespace RealSteel.Terrain
         [Tooltip("원래 자리에 못 놓을 때 옆으로 비켜 설 수 있는 최대 거리 (m). 이 안에 놓을 곳이 없으면 그 폐자재는 빠진다")]
         public float searchReach = 4f;
 
-        [Header("머티리얼")]
+        [RSGroup("머티리얼")]
         [RSHelp("비어 있으면 아래 [기본 머티리얼] 버튼으로 MAT_Stage_* 를 채울 수 있다.")]
         [Tooltip("콘크리트 파편 머티리얼")]
         public Material concrete;

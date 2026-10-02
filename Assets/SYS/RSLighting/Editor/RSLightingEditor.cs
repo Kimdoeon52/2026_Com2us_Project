@@ -11,7 +11,6 @@ namespace RealSteel.Lighting.EditorTools
         const string ShaftShader = "RE_AL STEEL/Light Shaft";
         const string ShaftMatName = "MAT_RS_LightShaft";
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/옥토패스 조명 (시간대 · 구름 그림자 · 햇살)", false, 33)]
         public static void Setup()
         {
             // 1) 태양 찾기: RenderSettings.sun → LIGHT_Key_Sun → 아무 Directional → 새로
@@ -62,6 +61,8 @@ namespace RealSteel.Lighting.EditorTools
             if (shafts.material == null) shafts.material = FindOrCreateShaftMaterial();
             tod.shafts = shafts;
 
+            RSLookInspector.EnsureBinding(tod.gameObject);   // 스테이지 룩 (프로필은 비워 둠 — 인스펙터에서 만든다)
+
             tod.Apply();
             EditorUtility.SetDirty(tod);
             Selection.activeGameObject = tod.gameObject;
@@ -82,10 +83,7 @@ namespace RealSteel.Lighting.EditorTools
             var sh = Shader.Find(ShaftShader);
             if (sh == null) { Debug.LogWarning("[RS 조명] 셰이더 '" + ShaftShader + "' 를 찾지 못했습니다."); return null; }
 
-            // 셰이더 옆에 저장
-            string dir = "Assets";
-            var shPath = AssetDatabase.GetAssetPath(sh);
-            if (!string.IsNullOrEmpty(shPath)) dir = System.IO.Path.GetDirectoryName(shPath).Replace('\\', '/');
+            string dir = RSPaths.Ensure(RSPaths.Materials);
             var m = new Material(sh) { name = ShaftMatName };
             AssetDatabase.CreateAsset(m, dir + "/" + ShaftMatName + ".mat");
             AssetDatabase.SaveAssets();
@@ -141,18 +139,16 @@ namespace RealSteel.Lighting.EditorTools
             }
 
             EditorGUILayout.Space(4f);
-            DrawPropertiesExcluding(serializedObject, "m_Script", "time");
-
-            if (serializedObject.ApplyModifiedProperties()) t.Apply();
+            if (RSLookInspector.Draw(this, "time")) t.Apply();
 
             EditorGUILayout.Space(6f);
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("지금 적용")) { t.Apply(); SceneView.RepaintAll(); }
             if (GUILayout.Button("색 · 커브 기본값으로"))
             {
-                Undo.RecordObject(t, "시간대 기본값");
+                RSLookEdit.RecordBoth(t, t.UsesStageLook, "시간대 기본값");
                 t.ResetLook();
-                EditorUtility.SetDirty(t);
+                RSLookEdit.DirtyBoth(t, t.UsesStageLook);
                 SceneView.RepaintAll();
             }
             EditorGUILayout.EndHorizontal();
@@ -161,16 +157,19 @@ namespace RealSteel.Lighting.EditorTools
                 var objs = new System.Collections.Generic.List<Object> { t };
                 if (t.clouds != null) objs.Add(t.clouds);
                 if (t.shafts != null) objs.Add(t.shafts);
+                if (t.UsesStageLook) objs.Add(RSStageLook.Current);
                 Undo.RecordObjects(objs.ToArray(), "옥토패스 권장값");
                 t.ResetLook();
-                if (t.clouds != null) { t.clouds.ResetLook(); EditorUtility.SetDirty(t.clouds); }
-                if (t.shafts != null) { t.shafts.ResetLook(); EditorUtility.SetDirty(t.shafts); }
+                if (t.clouds != null) { t.clouds.ResetLook(); RSLookEdit.DirtyBoth(t.clouds, t.clouds.UsesStageLook); }
+                if (t.shafts != null) { t.shafts.ResetLook(); RSLookEdit.DirtyBoth(t.shafts, t.shafts.UsesStageLook); }
                 t.Apply();
-                EditorUtility.SetDirty(t);
+                RSLookEdit.DirtyBoth(t, t.UsesStageLook);
                 SceneView.RepaintAll();
             }
             if (t.clouds == null || t.shafts == null)
-                EditorGUILayout.HelpBox("구름 그림자 · 햇살이 연결되지 않았습니다. 메뉴 Tools → RE_AL STEEL → Stage → 옥토패스 조명 을 실행하면 자동으로 연결됩니다.", MessageType.Info);
+                EditorGUILayout.HelpBox("구름 그림자 · 햇살이 연결되지 않았습니다. 메뉴 Tools → RE_AL STEEL → Stage → 스테이지 연출 한 번에 설치 을 실행하면 자동으로 연결됩니다.", MessageType.Info);
+            EditorGUILayout.Space(4f);
+            RSVolumeReport.DrawOwned(t);
         }
 
         static string Describe(RSTimeOfDay t)
@@ -195,14 +194,14 @@ namespace RealSteel.Lighting.EditorTools
         public override void OnInspectorGUI()
         {
             RSHelpGUI.DrawSummary(target);
-            DrawDefaultInspector();
+            RSLookInspector.Draw(this);
             EditorGUILayout.Space(6f);
             if (GUILayout.Button("옥토패스 권장값으로"))
             {
                 var c = (RSCloudShadow)target;
-                Undo.RecordObject(c, "구름 권장값");
+                RSLookEdit.RecordBoth(c, c.UsesStageLook, "구름 권장값");
                 c.ResetLook();
-                EditorUtility.SetDirty(c);
+                RSLookEdit.DirtyBoth(c, c.UsesStageLook);
                 SceneView.RepaintAll();
             }
         }
@@ -214,14 +213,14 @@ namespace RealSteel.Lighting.EditorTools
         public override void OnInspectorGUI()
         {
             RSHelpGUI.DrawSummary(target);
-            DrawDefaultInspector();
+            RSLookInspector.Draw(this);
             EditorGUILayout.Space(6f);
             if (GUILayout.Button("옥토패스 권장값으로"))
             {
                 var c = (RSLightShafts)target;
-                Undo.RecordObject(c, "햇살 권장값");
+                RSLookEdit.RecordBoth(c, c.UsesStageLook, "햇살 권장값");
                 c.ResetLook();
-                EditorUtility.SetDirty(c);
+                RSLookEdit.DirtyBoth(c, c.UsesStageLook);
                 SceneView.RepaintAll();
             }
             EditorGUILayout.HelpBox("세기 · 색은 시간대(LIGHTING_TimeOfDay)의 '햇살 빛줄기 (시각별)' 커브 · 그라데이션이 정합니다.", MessageType.None);

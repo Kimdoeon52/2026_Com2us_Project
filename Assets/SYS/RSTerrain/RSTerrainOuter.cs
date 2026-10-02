@@ -242,7 +242,7 @@ namespace RealSteel.Terrain
                 m.SetUVs(2, sG);
                 m.SetTriangles(sT, 0);
                 m.RecalculateBounds();
-                pc.mr.sharedMaterial = material;
+                SetSurfaceMaterials(pc.mr, false);   // 외곽은 젖음 칠이 없다 — 비가 오면 반사 겹
                 pc.mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
 
                 if (generateCollider && outerCollider)

@@ -10,7 +10,7 @@ public class RSSimpleCharacterEditor : Editor
     public override void OnInspectorGUI()
     {
         RSHelpGUI.DrawSummary(target);
-        DrawDefaultInspector();
+        RSInspector.Draw(serializedObject);
         if (Application.isPlaying)
         {
             EditorGUILayout.Space(4f);
@@ -25,9 +25,6 @@ public class RSSimpleCharacterEditor : Editor
             Repaint();   // 게임 중 바뀌는 각도가 인스펙터에 바로 보이게
         }
     }
-
-    [MenuItem("Tools/RE_AL STEEL/Stage/테스트 캐릭터 놓기 (씬 뷰 가운데)", false, 23)]
-    static void CreateFromTools() { Create(); }
 
     [MenuItem("GameObject/RE_AL STEEL/테스트 캐릭터", false, 11)]
     static void CreateFromGameObject() { Create(); }
@@ -58,3 +55,6 @@ public class RSSimpleCharacterEditor : Editor
                   "모델을 자식으로 넣으면 임시 캡슐 대신 그 모델을 씁니다.");
     }
 }
+
+[CustomEditor(typeof(RealSteel.Lighting.RSTimeHotkeys))]
+public class RSTimeHotkeysEditor : RealSteel.Common.EditorTools.RSGroupedEditor { }

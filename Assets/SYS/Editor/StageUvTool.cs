@@ -38,7 +38,7 @@ namespace RealSteel.EditorTools
         Vector2 scroll;
         string report = "";
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/UV 밀도 맞추기 (텍스처 크기 자동)", false, 43)]
+        [MenuItem("Tools/RE_AL STEEL/Stage/UV 밀도 맞추기 (텍스처 크기 자동)", false, 24)]
         static void Open()
         {
             var w = GetWindow<StageUvTool>("UV 밀도");

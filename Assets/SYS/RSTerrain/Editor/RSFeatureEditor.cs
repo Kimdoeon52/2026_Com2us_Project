@@ -23,7 +23,7 @@ namespace RealSteel.Terrain.EditorTools
             if (f.Owner == null)
                 EditorGUILayout.HelpBox("RS 지형(RSTerrain) 오브젝트의 자식이어야 적용됩니다.", MessageType.Warning);
 
-            DrawDefaultInspector();
+            RSInspector.Draw(serializedObject);
 
             var sp = f as RSSpline;
             if (sp != null)

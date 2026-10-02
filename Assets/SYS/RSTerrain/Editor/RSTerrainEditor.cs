@@ -58,12 +58,13 @@ namespace RealSteel.Terrain.EditorTools
     [CustomEditor(typeof(RSTerrain))]
     public class RSTerrainEditor : Editor
     {
-        enum Tool { Off, Raise, Lower, Flatten, Smooth, ResetHeight, Paint, ErasePaint }
+        enum Tool { Off, Raise, Lower, Flatten, Smooth, ResetHeight, Paint, ErasePaint, Wet, Dry }
 
         static readonly string[] ToolLabels =
         {
             "끄기", "올리기", "내리기", "평탄화",
             "부드럽게", "높이 되돌리기", "칠하기", "칠 지우기",
+            "젖음 칠", "젖음 지우기",
         };
 
         static Tool tool = Tool.Off;
@@ -122,6 +123,8 @@ namespace RealSteel.Terrain.EditorTools
                 }
                 if (tool == Tool.Paint)
                     brushLayer = (RSLayer)EditorGUILayout.EnumPopup("칠할 레이어", brushLayer);
+                if ((tool == Tool.Wet || tool == Tool.Dry) && RealSteel.Common.RSWetState.OverlayMaterial == null)
+                    EditorGUILayout.HelpBox("씬에 '젖은 바닥 · 반사' 가 없어서 칠해도 안 보입니다.\nTools → RE_AL STEEL → Stage → 스테이지 연출 한 번에 설치", MessageType.Warning);
                 if (tool == Tool.Flatten)
                     flattenHeight = EditorGUILayout.FloatField(new GUIContent("평탄화 높이", "Ctrl+클릭으로 지면에서 찍어 올 수 있다"), flattenHeight);
                 radius   = EditorGUILayout.Slider("반경", radius, 0.2f, 12f);
@@ -131,15 +134,14 @@ namespace RealSteel.Terrain.EditorTools
                     "Shift = 반대로 (올리기↔내리기, 칠하기→칠 지우기)\n" +
                     "[ ] = 반경 줄이기 / 늘리기\n" +
                     "평탄화: Ctrl+클릭으로 높이 찍기\n" +
-                    "칠하기 '바탕' = 요소가 칠한 레이어를 흙으로 덮기", MessageType.None);
+                    "칠하기 '바탕' = 요소가 칠한 레이어를 흙으로 덮기\n" +
+                    "젖음 칠 = 어떤 레이어 위든 젖은 바닥 (반사 · 어둡게). Shift = 말리기", MessageType.None);
             }
 
             EditorGUILayout.Space(6f);
 
             // ── 설정 ──
-            serializedObject.Update();
-            DrawPropertiesExcluding(serializedObject, "m_Script");
-            serializedObject.ApplyModifiedProperties();
+            RSInspector.Draw(serializedObject);
 
             RSFoliageTools.DrawGrassLayerField(t);
 
@@ -159,6 +161,12 @@ namespace RealSteel.Terrain.EditorTools
                     {
                         Undo.RecordObject(t.data, "RS Terrain 높이 지우기");
                         t.data.ClearHeight(); EditorUtility.SetDirty(t.data); t.RecomposeAll();
+                    }
+                    if (GUILayout.Button("젖음 전부 지우기") &&
+                        EditorUtility.DisplayDialog("젖음 지우기", "브러시로 칠한 젖음을 전부 지웁니다. (Ctrl+Z 가능)", "지우기", "취소"))
+                    {
+                        Undo.RecordObject(t.data, "RS Terrain 젖음 지우기");
+                        t.data.ClearWet(); EditorUtility.SetDirty(t.data); t.RecomposeAll();
                     }
                     if (GUILayout.Button("칠 전부 지우기") &&
                         EditorUtility.DisplayDialog("칠 지우기", "브러시로 칠한 레이어를 전부 지웁니다. (Ctrl+Z 가능)", "지우기", "취소"))
@@ -219,12 +227,16 @@ namespace RealSteel.Terrain.EditorTools
                 if (tool == Tool.Raise) active = Tool.Lower;
                 else if (tool == Tool.Lower) active = Tool.Raise;
                 else if (tool == Tool.Paint) active = Tool.ErasePaint;
+                else if (tool == Tool.Wet) active = Tool.Dry;
+                else if (tool == Tool.Dry) active = Tool.Wet;
             }
 
             // 원 그리기
             Color col = active == Tool.Lower || active == Tool.ErasePaint || active == Tool.ResetHeight
                 ? new Color(1f, 0.45f, 0.35f) : new Color(0.4f, 0.9f, 1f);
             if (active == Tool.Paint) col = LayerGizmoColor(brushLayer);
+            if (active == Tool.Wet) col = new Color(0.35f, 0.65f, 1f);
+            if (active == Tool.Dry) col = new Color(0.85f, 0.7f, 0.45f);
             Handles.color = col;
             float scale = t.transform.lossyScale.x;
             Handles.DrawWireDisc(hit, t.transform.up, radius * scale);
@@ -269,7 +281,8 @@ namespace RealSteel.Terrain.EditorTools
                 stroking = false;
                 if (GUIUtility.hotControl == id) GUIUtility.hotControl = 0;
                 EditorUtility.SetDirty(t.data);
-                t.RebuildScatter();   // 고친 지면에 폐자재를 다시 앉힌다
+                if (active != Tool.Wet && active != Tool.Dry)
+                    t.RebuildScatter();   // 고친 지면에 폐자재를 다시 앉힌다 (젖음은 모양이 안 바뀌어 건너뜀)
                 e.Use();
             }
         }
@@ -286,6 +299,8 @@ namespace RealSteel.Terrain.EditorTools
                 case Tool.ResetHeight: op = RSTerrain.BrushOp.ResetHeight; break;
                 case Tool.Paint:       op = RSTerrain.BrushOp.Paint; break;
                 case Tool.ErasePaint:  op = RSTerrain.BrushOp.ErasePaint; break;
+                case Tool.Wet:         op = RSTerrain.BrushOp.Wet; break;
+                case Tool.Dry:         op = RSTerrain.BrushOp.Dry; break;
                 default: return;
             }
             t.ApplyBrush(op, local, radius, strength, hardness, brushLayer, flattenHeight);
@@ -316,7 +331,6 @@ namespace RealSteel.Terrain.EditorTools
         [MenuItem("GameObject/RE_AL STEEL/RS 지형", false, 10)]
         static void CreateTerrainFromHierarchy() { CreateTerrain(); }
 
-        [MenuItem("Tools/RE_AL STEEL/Stage/RS 지형 만들기 (범용)", false, 16)]
         public static void CreateTerrain()
         {
             var go = new GameObject("RS_Terrain");
@@ -360,8 +374,7 @@ namespace RealSteel.Terrain.EditorTools
             FillLayer(m, "_LayerG",   "_ColorG",        FindMaterial("MAT_Stage_Concrete"), 1f);
             FillLayer(m, "_LayerB",   "_ColorB",        FindMaterial("MAT_Stage_Rust"),     1f);
             FillLayer(m, "_LayerA",   "_ColorA",        FindMaterial("MAT_Stage_Ground"),   0.55f);
-            string dir = "Assets/SYS/RSTerrain";
-            if (!AssetDatabase.IsValidFolder(dir)) dir = "Assets";
+            string dir = RSPaths.Ensure(RSPaths.Materials);
             string path = AssetDatabase.GenerateUniqueAssetPath(dir + "/MAT_RSTerrain_Splat.mat");
             AssetDatabase.CreateAsset(m, path);
             AssetDatabase.SaveAssets();

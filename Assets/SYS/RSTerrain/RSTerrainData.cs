@@ -6,6 +6,7 @@
 //   height[k]  : 높이 보정 (절차 높이에 더한다)
 //   paint[k]   : 칠한 레이어 (R G B A, 0 = 바탕)
 //   grass[k]   : 칠한 레이어의 풀 성분 (다섯 번째 레이어, 0 ~ 1). paint 와 함께 amount 만큼 덮는다
+//   wet[k]     : 젖음 칠 (0 ~ 1). 레이어와 따로 — 흙이든 콘크리트든 젖을 수 있다 (메시 UV2.y)
 //   amount[k]  : 칠한 정도 (0 = 절차 결과 그대로, 1 = 칠한 레이어로 완전히 덮음)
 //
 // 지형 크기나 격자가 바뀌면 위치 기준으로 다시 샘플링한다.
@@ -22,6 +23,7 @@ namespace RealSteel.Terrain
         public Color[] paint  = new Color[0];
         public float[] amount = new float[0];
         public float[] grass  = new float[0];
+        public float[] wet    = new float[0];
 
         public bool Matches(int vx, int vz, Vector2 sz)
         {
@@ -30,7 +32,8 @@ namespace RealSteel.Terrain
                    height != null && height.Length == n &&
                    paint  != null && paint.Length  == n &&
                    amount != null && amount.Length == n &&
-                   grass  != null && grass.Length  == n;
+                   grass  != null && grass.Length  == n &&
+                   wet    != null && wet.Length    == n;
         }
 
         public bool IsEmpty
@@ -52,12 +55,14 @@ namespace RealSteel.Terrain
             var np = new Color[n];
             var na = new float[n];
             var ng = new float[n];
+            var nw = new float[n];
 
             bool hasOld = nx >= 2 && nz >= 2 && size.x > 0f && size.y > 0f &&
                           height != null && height.Length == nx * nz &&
                           paint  != null && paint.Length  == nx * nz &&
                           amount != null && amount.Length == nx * nz;
             bool oldGrass = hasOld && grass != null && grass.Length == nx * nz;   // 풀 레이어 이전 에셋은 없음 → 0
+            bool oldWet = hasOld && wet != null && wet.Length == nx * nz;         // 젖음 칠 이전 에셋은 없음 → 0
 
             if (hasOld)
             {
@@ -77,14 +82,16 @@ namespace RealSteel.Terrain
                         na[k] = Mathf.Lerp(Mathf.Lerp(amount[a], amount[b], u), Mathf.Lerp(amount[c], amount[d], u), v);
                         np[k] = Color.Lerp(Color.Lerp(paint[a], paint[b], u), Color.Lerp(paint[c], paint[d], u), v);
                         if (oldGrass) ng[k] = Mathf.Lerp(Mathf.Lerp(grass[a], grass[b], u), Mathf.Lerp(grass[c], grass[d], u), v);
+                        if (oldWet) nw[k] = Mathf.Lerp(Mathf.Lerp(wet[a], wet[b], u), Mathf.Lerp(wet[c], wet[d], u), v);
                     }
             }
 
             nx = vx; nz = vz; size = sz;
-            height = nh; paint = np; amount = na; grass = ng;
+            height = nh; paint = np; amount = na; grass = ng; wet = nw;
         }
 
         public void ClearHeight() { if (height != null) System.Array.Clear(height, 0, height.Length); }
         public void ClearPaint()  { if (amount != null) System.Array.Clear(amount, 0, amount.Length); }
+        public void ClearWet()    { if (wet != null) System.Array.Clear(wet, 0, wet.Length); }
     }
 }

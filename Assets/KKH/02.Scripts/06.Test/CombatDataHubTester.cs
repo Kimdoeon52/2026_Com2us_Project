@@ -142,7 +142,7 @@ public class CombatDataHubTester : MonoBehaviour
 
         // 플레이어의 오른팔 내구도를 0(파손)으로 만듦
         var player = hub.GetSnapshot("Player");
-        player.ConsumeDurability(BodyPart.RightArm, 9999);
+        // player.ConsumeDurability(BodyPart.RightArm, 9999);
 
         bool isRightArmBroken = hub.IsPartBroken("Player", BodyPart.RightArm);
         Debug.Log($"오른팔 파손 여부: {isRightArmBroken} (현재 내구도: {hub.GetPartDurability("Player", BodyPart.RightArm)})");
@@ -213,7 +213,7 @@ public class CombatDataHubTester : MonoBehaviour
         Debug.Log($"위빙 1회 성공 여부: {weaveSuccess}, 다리 내구도 총 소모량: {totalDurConsumed} (기대값: 5)");
 
         // 다리 1개 파괴 후 100회 시뮬레이션 돌림
-        player.ConsumeDurability(BodyPart.LeftLeg, 9999);
+        // player.ConsumeDurability(BodyPart.LeftLeg, 9999);
         int failCount = 0;
         for (int i = 0; i < 100; i++)
         {

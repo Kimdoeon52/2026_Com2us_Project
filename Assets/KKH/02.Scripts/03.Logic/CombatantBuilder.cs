@@ -77,24 +77,24 @@ public static class CombatantBuilder
         // 2. 이동 속도: (왼다리Speed + 오른다리Speed) / 2
         float leftSpeed = leftLeg != null ? leftLeg.legStatData.moveSpeedBonus : 0f;
         float rightSpeed = rightLeg != null ? rightLeg.legStatData.moveSpeedBonus : 0f;
-        snapshot.finalMoveSpeed = (leftSpeed + rightSpeed) / 2f;
+        // snapshot.finalMoveSpeed = (leftSpeed + rightSpeed) / 2f;
 
         // 3. 머리 파츠: 치명타 저항 및 치명타 피해 삭감
         if (head != null)
         {
-            snapshot.critResistance = head.headStatData.critResistance;
-            snapshot.critDamageReduction = head.headStatData.critDamageReduction;
+            // snapshot.critResistance = head.headStatData.critResistance;
+            // snapshot.critDamageReduction = head.headStatData.critDamageReduction;
         }
 
         // 4. 팔 파츠: 가드 시 방어력 추가 보정 합산함
         int leftGuard = leftArm != null ? leftArm.armStatData.guardDefBonus : 0;
         int rightGuard = rightArm != null ? rightArm.armStatData.guardDefBonus : 0;
-        snapshot.guardDefBonus = leftGuard + rightGuard;
+        // snapshot.guardDefBonus = leftGuard + rightGuard;
 
         // 5. 다리 파츠: 위빙(회피) 무적 시간 추가 보정 합산함
         float leftInv = leftLeg != null ? leftLeg.legStatData.invincibleFramesBonus : 0f;
         float rightInv = rightLeg != null ? rightLeg.legStatData.invincibleFramesBonus : 0f;
-        snapshot.invincibleBonus = leftInv + rightInv;
+        // snapshot.invincibleBonus = leftInv + rightInv;
 
         return snapshot;
     }
@@ -122,11 +122,11 @@ public static class CombatantBuilder
             maxHp = maxHp,
             baseDefense = baseDefense,
             totalAttackPower = baseAtk + Mathf.RoundToInt((leftArmAtk + rightArmAtk) / 2f),
-            finalMoveSpeed = (leftLegSpd + rightLegSpd) / 2f,
-            critResistance = 0.1f,
-            critDamageReduction = 0.2f,
-            guardDefBonus = 50,
-            invincibleBonus = 0.1f
+            // finalMoveSpeed = (leftLegSpd + rightLegSpd) / 2f,
+            // critResistance = 0.1f,
+            // critDamageReduction = 0.2f,
+            // guardDefBonus = 50,
+            // invincibleBonus = 0.1f
         };
 
         // 5부위 기본 런타임 상태 등록함

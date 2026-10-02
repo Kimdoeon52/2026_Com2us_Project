@@ -66,13 +66,14 @@ public static class CombatCalculator
         if (isGuarding && attackAction.IsGuardable)
         {
             result.IsGuarded = true;
-            int totalDef = defender.baseDefense + defender.guardDefBonus;
+            // int totalDef = defender.baseDefense + defender.guardDefBonus;
+            int totalDef = defender.baseDefense;
             float finalDmg = rawAtk * (100f / (totalDef + 100f));
 
             // 가드 성공 시 잔여 피해를 양팔 내구도에 5:5 분산 차감함 (코어 HP 피해 0임)
             int armDmg = Mathf.RoundToInt(finalDmg * 0.5f);
-            defender.ConsumeDurability(BodyPart.LeftArm, armDmg);
-            defender.ConsumeDurability(BodyPart.RightArm, armDmg);
+            // defender.ConsumeDurability(BodyPart.LeftArm, armDmg);
+            // defender.ConsumeDurability(BodyPart.RightArm, armDmg);
 
             result.LeftArmDurabilityDamage = armDmg;
             result.RightArmDurabilityDamage = armDmg;
@@ -85,23 +86,25 @@ public static class CombatCalculator
 
             // 머리 파츠 피격 또는 치명타 발생 판정
             float baseCritChance = 0.15f;
-            float effectiveCritChance = Mathf.Max(0f, baseCritChance - defender.critResistance);
+            // float effectiveCritChance = Mathf.Max(0f, baseCritChance - defender.critResistance);
+            float effectiveCritChance = baseCritChance;
 
             if (hitPart == BodyPart.Head || Random.value < effectiveCritChance)
             {
                 result.IsCritical = true;
-                float critMultiplier = Mathf.Max(1.0f, 1.5f - defender.critDamageReduction);
+                // float critMultiplier = Mathf.Max(1.0f, 1.5f - defender.critDamageReduction);
+                float critMultiplier = 1.5f;
                 finalDmg *= critMultiplier;
 
                 // 머리 피격 시 머리 내구도 차감
                 int headDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
-                defender.ConsumeDurability(BodyPart.Head, headDmg);
+                // defender.ConsumeDurability(BodyPart.Head, headDmg);
             }
             else if (hitPart != BodyPart.Core)
             {
                 // 팔 또는 다리 부위 피격 시 해당 파츠 내구도 차감
                 int partDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
-                defender.ConsumeDurability(hitPart, partDmg);
+                // defender.ConsumeDurability(hitPart, partDmg);
 
                 if (hitPart == BodyPart.LeftArm) result.LeftArmDurabilityDamage = partDmg;
                 else if (hitPart == BodyPart.RightArm) result.RightArmDurabilityDamage = partDmg;
@@ -132,11 +135,11 @@ public static class CombatCalculator
         if (actor == null) return false;
 
         // 1. 양다리 모두 파손 시 회피 완전 불가임
-        if (actor.IsBothLegsBroken())
-        {
-            Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 양다리 모두 파괴된 상태임");
-            return false;
-        }
+        // if (actor.IsBothLegsBroken())
+        // {
+        //     Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 양다리 모두 파괴된 상태임");
+        //     return false;
+        // }
 
         // 2. 다리 내구도 5 소모함 (좌/우 다리 중 무작위 1개, 파괴되지 않은 쪽 우선 차감)
         BodyPart legToConsume;
@@ -156,18 +159,18 @@ public static class CombatCalculator
             legToConsume = (Random.value < 0.5f) ? BodyPart.LeftLeg : BodyPart.RightLeg;
         }
 
-        actor.ConsumeDurability(legToConsume, 5);
+        // actor.ConsumeDurability(legToConsume, 5);
 
         // 3. 다리 1개 파괴 상태: 50% 확률로 실패 반환함
-        if (actor.IsOneLegBroken())
-        {
-            bool isSuccess = Random.value >= 0.5f;
-            if (!isSuccess)
-            {
-                Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 다리 한쪽 파손 페널티 (50% 확률 미달임)");
-            }
-            return isSuccess;
-        }
+        // if (actor.IsOneLegBroken())
+        // {
+        //     bool isSuccess = Random.value >= 0.5f;
+        //     if (!isSuccess)
+        //     {
+        //         Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 다리 한쪽 파손 페널티 (50% 확률 미달임)");
+        //     }
+        //     return isSuccess;
+        // }
 
         // 4. 정상 상태: 100% 성공함
         return true;

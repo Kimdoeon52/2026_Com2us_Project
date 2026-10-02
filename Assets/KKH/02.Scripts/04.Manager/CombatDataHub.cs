@@ -113,8 +113,8 @@ public class CombatDataHub : MonoBehaviour
         EnemySnapshot = enemy;
 
         Debug.Log($"[CombatDataHub] 참가자 스냅샷 등록 완료 - " +
-                  $"Player({player?.fighterID}): HP={player?.currentHp}, Atk={player?.totalAttackPower}, Spd={player?.finalMoveSpeed} | " +
-                  $"Enemy({enemy?.fighterID}): HP={enemy?.currentHp}, Atk={enemy?.totalAttackPower}, Spd={enemy?.finalMoveSpeed}");
+                  $"Player({player?.fighterID}): HP={player?.currentHp}, Atk={player?.totalAttackPower} | " +
+                  $"Enemy({enemy?.fighterID}): HP={enemy?.currentHp}, Atk={enemy?.totalAttackPower}");
     }
 
     /// <summary>
@@ -153,7 +153,7 @@ public class CombatDataHub : MonoBehaviour
             maxHp = coreHp,
             baseDefense = 50,
             totalAttackPower = 100,
-            finalMoveSpeed = 5f
+            // finalMoveSpeed = 5f
         };
 
         var parts = new[] { BodyPart.Head, BodyPart.Core, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
@@ -215,7 +215,8 @@ public class CombatDataHub : MonoBehaviour
     public float GetFinalMoveSpeed(string fighterId)
     {
         var s = GetSnapshot(fighterId);
-        return s != null ? s.finalMoveSpeed : 3f;
+        // return s != null ? s.finalMoveSpeed : 3f;
+        return 3f;
     }
 
     /// <summary>기획서 공식으로 계산된 총 공격력 반환: 기본Atk + (왼팔 + 오른팔) / 2</summary>
@@ -250,30 +251,34 @@ public class CombatDataHub : MonoBehaviour
     public int GetGuardDefBonus(string fighterId)
     {
         var s = GetSnapshot(fighterId);
-        return s != null ? s.guardDefBonus : 0;
+        // return s != null ? s.guardDefBonus : 0;
+        return 0;
     }
 
     /// <summary>위빙 성공 시 다리 파츠가 제공하는 추가 무적 보정 반환함</summary>
     public float GetInvincibleBonus(string fighterId)
     {
         var s = GetSnapshot(fighterId);
-        return s != null ? s.invincibleBonus : 0f;
+        // return s != null ? s.invincibleBonus : 0f;
+        return 0f;
     }
 
     /// <summary>특정 부위의 현재 실시간 내구도 반환함</summary>
     public int GetPartDurability(string fighterId, BodyPart part)
     {
         var s = GetSnapshot(fighterId);
-        var p = s?.GetPartRuntimeState(part);
-        return p != null ? p.currentDurability : 0;
+        // var p = s?.GetPartRuntimeState(part);
+        // return p != null ? p.currentDurability : 0;
+        return 0;
     }
 
     /// <summary>특정 부위의 최대 내구도 반환함</summary>
     public int GetPartMaxDurability(string fighterId, BodyPart part)
     {
         var s = GetSnapshot(fighterId);
-        var p = s?.GetPartRuntimeState(part);
-        return p != null ? p.maxDurability : 0;
+        // var p = s?.GetPartRuntimeState(part);
+        // return p != null ? p.maxDurability : 0;
+        return 0;
     }
 
     /// <summary>특정 부위가 파손(내구도 0)되었거나 미장착 상태인지 확인함</summary>
@@ -334,6 +339,7 @@ public class CombatDataHub : MonoBehaviour
         }
 
         // 가드로 인한 양팔 내구도 차감 이벤트
+        /*
         if (result.LeftArmDurabilityDamage > 0)
         {
             var arm = defender.GetPartRuntimeState(BodyPart.LeftArm);
@@ -355,6 +361,7 @@ public class CombatDataHub : MonoBehaviour
             if (state != null)
                 OnPartDurabilityChanged?.Invoke(defender.fighterID, hitPart, state.currentDurability, state.maxDurability);
         }
+        */
 
         OnHitResolved?.Invoke(result);
 
@@ -380,6 +387,7 @@ public class CombatDataHub : MonoBehaviour
         bool success = CombatCalculator.EvaluateWeavingAttempt(actor);
 
         // 다리 내구도 변경 이벤트 알림 처리함
+        /*
         var leftLeg = actor.GetPartRuntimeState(BodyPart.LeftLeg);
         if (leftLeg != null)
             OnPartDurabilityChanged?.Invoke(actor.fighterID, BodyPart.LeftLeg, leftLeg.currentDurability, leftLeg.maxDurability);
@@ -387,6 +395,7 @@ public class CombatDataHub : MonoBehaviour
         var rightLeg = actor.GetPartRuntimeState(BodyPart.RightLeg);
         if (rightLeg != null)
             OnPartDurabilityChanged?.Invoke(actor.fighterID, BodyPart.RightLeg, rightLeg.currentDurability, rightLeg.maxDurability);
+        */
 
         return success;
     }
@@ -422,12 +431,12 @@ public class CombatDataHub : MonoBehaviour
         var s = GetSnapshot(fighterId);
         if (s == null) return;
 
-        s.ConsumePartDurability(part, amount);
-        var state = s.GetPartRuntimeState(part);
-        if (state != null)
-        {
-            OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
-        }
+        // s.ConsumePartDurability(part, amount);
+        // var state = s.GetPartRuntimeState(part);
+        // if (state != null)
+        // {
+        //     OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
+        // }
     }
 
     /// <summary>
@@ -440,6 +449,7 @@ public class CombatDataHub : MonoBehaviour
         if (s == null) return;
 
         // 1. 파츠 내구도 차감
+        /*
         if (partDamage > 0)
         {
             s.ConsumePartDurability(part, partDamage);
@@ -449,6 +459,7 @@ public class CombatDataHub : MonoBehaviour
                 OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
             }
         }
+        */
 
         // 2. 코어 체력 동시 차감 (기획서: 파츠 피격 시 본체 생명력 동반 감소)
         if (coreDamage > 0)

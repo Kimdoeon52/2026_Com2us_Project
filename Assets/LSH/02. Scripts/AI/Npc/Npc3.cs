@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public class Npc3 : NpcAiBase
-{
+{ //추격형
     [Range(0.1f, 1f)]
     [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
     public float actionRate = 0.7f;

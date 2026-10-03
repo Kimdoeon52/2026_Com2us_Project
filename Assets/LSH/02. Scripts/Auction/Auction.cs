@@ -309,7 +309,7 @@ public class Auction : PersistentSingleton<Auction>
             // AI의 고유 판단 실행
             if (ai.RaiseThink(currentCost, stuff.Cost))
             {
-                int raiseStep = 100; //기본 입찰 단위
+                int raiseStep = ai.RaiseGold; //각 Ai별 기본 입찰 단위
                 // 보스인지 확인 후 큰 레이즈 조건 체크
                 if (ai is BossAiBase boss)
                 {

@@ -1,10 +1,15 @@
 using UnityEngine;
 
 public class Npc2: NpcAiBase
-{
+{ //초반형
     [Range(0.1f, 1f)]
     [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.7f;
+    public float actionRate = 0.7f; // 초반형은 70%까지만 배팅 시도
+
+    public override void Start()
+    {
+        RaiseGold = 150; // 초기 레이즈 금액 설정
+    }
 
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     {

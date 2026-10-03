@@ -1,12 +1,14 @@
 using NUnit.Framework;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PushRecipeData : MonoBehaviour
 {
     [SerializeField] private GameObject[] slots;
     [SerializeField] private RecipeData[] recipes;
-    private List<string> Parts;
+    private List<RecipeData> correctRecipes = new List<RecipeData>();
+    [SerializeField] private PartsCatalog allParts;
 
     public void CategoryBT(int n)
     {
@@ -17,17 +19,17 @@ public class PushRecipeData : MonoBehaviour
     {
         for(int i = 0; i < recipes.Length; i++)
         {
-            string partID = recipes[i].PartID;
-            int categoryNum = CraftingManager.Instance.SortParts(partID);
+            RecipeData recipe = recipes[i];
+            int categoryNum = CraftingManager.Instance.SortParts(recipe.PartID);
             if (categoryNum == _n)
-                Parts.Add(partID);
+                correctRecipes.Add(recipe);
         }
 
-        if (Parts.Count <= 0) return;
-
-        for(int i = 0; i < Parts.Count; i++)
+        if (correctRecipes.Count <= 0) return;
+        
+        for(int i = 0; i < correctRecipes.Count; i++)
         {
-            //slots[i].GetComponent<RecipeSlot>().data 
+            slots[i].GetComponent<RecipeSlot>().PushData(correctRecipes[i], allParts.Find(correctRecipes[i].PartID).Sprite); 
         }
     }
 

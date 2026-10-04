@@ -13,6 +13,7 @@
 | `Textures/` | 텍스처 | 그래픽 |
 | `Presets/ColorGrade/` | 시간대별 색감 프리셋 — 스테이지별로 복제해서 바꿔 끼우기 | 기획 · 그래픽 |
 | `Presets/LUT/` | LUT 이미지 (색감 인스펙터가 만들고 읽음) | 그래픽 |
+| `Prefabs/Examples/` | 확인용 예제 프리팹 (RS_GodRayTestRoom: 창문 · 천창 있는 방 + 방 안 안개 — 갓레이 확인) | 모두 |
 | `Data/Terrain/` | 지형 브러시로 깎고 칠한 결과 | 기획 · 그래픽 |
 | `RSCommon/` | 공용 코드 (인스펙터 설명 표기, 폴더 경로 `RSPaths`, 젖음 상태) | 프로그래머 |
 | `RSLighting/` | 시간대 · 안개 · 빛줄기 · 구름 그림자 · 초점 · 색감 · 간접광 · 젖은 바닥 | 프로그래머 |

@@ -1,0 +1,20 @@
+{
+    "name": "RSBuild.Editor",
+    "rootNamespace": "RealSteel.Build.EditorTools",
+    "references": [
+        "RSBuild.Runtime",
+        "RSCommon.Runtime",
+        "RSCommon.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

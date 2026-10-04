@@ -171,6 +171,10 @@ namespace RealSteel.Lighting
         public bool IsMoon { get; private set; }
         public bool IsNight { get { return IsMoon; } }
         public float Hour { get { return Mathf.Repeat(time, 24f); } }
+        /// <summary>지금 시각의 햇살 세기 배율 ('햇살 빛줄기 (시각별)' 커브). 밤(달빛)이면 0. 갓레이가 따른다</summary>
+        public float ShaftFactor { get { return IsMoon ? 0f : Mathf.Max(0f, L.shaftIntensity.Evaluate(Hour)); } }
+        /// <summary>지금 시각의 햇살 색 ('햇살 빛줄기 (시각별)' 그라데이션)</summary>
+        public Color ShaftColor { get { return L.shaftColor.Evaluate(Hour / 24f); } }
 
         float transFrom, transTo, transDur, transT = -1f;
         float appliedTime = -1f;

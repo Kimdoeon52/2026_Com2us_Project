@@ -29,6 +29,7 @@ namespace RealSteel.Lighting
         [RSLook] public RSWetness.Look wetness = new RSWetness.Look();
         [RSLook] public RSIndirectLight.Look indirect = new RSIndirectLight.Look();
         [RSLook] public RSCharacterGlow.Look characterGlow = new RSCharacterGlow.Look();
+        [RSLook] public RSGodRays.Look godRays = new RSGodRays.Look();
 
         // ─────────────────────────────────────────────────────────────
 

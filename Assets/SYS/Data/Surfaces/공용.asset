@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 00b71914a18642178d0b4ebc12d77828, type: 3}
+  m_Name: 공용
+  m_EditorClassIdentifier: 
+  note: 예제 재질 세트 (나무 · 돌 · 천 · 쇠 · 모래 · 울타리 살). 내 텍스처를 끌어다 놓아 늘리세요
+  surfaces:
+  - {fileID: 11400000, guid: 250becc758cd46bbb8861e41d0182782, type: 2}
+  - {fileID: 11400000, guid: 8669ba4738d2405faee16c6eeb96e1b1, type: 2}
+  - {fileID: 11400000, guid: 1a7845b791e744d6bdb7fe3b1bbf8865, type: 2}
+  - {fileID: 11400000, guid: aad928d77758439f854fb9074ae2bc9b, type: 2}
+  - {fileID: 11400000, guid: faf84be3360642cc9a07d3ffeb514935, type: 2}
+  - {fileID: 11400000, guid: 6c2cb8b0bf654b4f9337d2dd7202d311, type: 2}
+  - {fileID: 11400000, guid: 076819087a184fdfb69103d7746f6a87, type: 2}
+  - {fileID: 11400000, guid: 7b5172fe74f94bbfb7a90194c14e520f, type: 2}

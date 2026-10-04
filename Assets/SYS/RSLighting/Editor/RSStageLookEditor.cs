@@ -27,6 +27,7 @@ namespace RealSteel.Lighting.EditorTools
             if (t is RSWetness) return "wetness";
             if (t is RSIndirectLight) return "indirect";
             if (t is RSCharacterGlow) return "characterGlow";
+            if (t is RSGodRays) return "godRays";
             return null;
         }
 
@@ -65,6 +66,7 @@ namespace RealSteel.Lighting.EditorTools
             var w = Object.FindAnyObjectByType<RSWetness>();          if (w != null) { Copy(w.LocalLook, p.wetness); n++; }
             var i = Object.FindAnyObjectByType<RSIndirectLight>();    if (i != null) { Copy(i.LocalLook, p.indirect); n++; }
             var h = Object.FindAnyObjectByType<RSCharacterGlow>();    if (h != null) { Copy(h.LocalLook, p.characterGlow); n++; }
+            var gr = Object.FindAnyObjectByType<RSGodRays>();         if (gr != null) { Copy(gr.LocalLook, p.godRays); n++; }
             EditorUtility.SetDirty(p);
             p.NotifyChanged();
             return n;
@@ -83,6 +85,7 @@ namespace RealSteel.Lighting.EditorTools
             var w = Object.FindAnyObjectByType<RSWetness>(); Rec(w);
             var i = Object.FindAnyObjectByType<RSIndirectLight>(); Rec(i);
             var h = Object.FindAnyObjectByType<RSCharacterGlow>(); Rec(h);
+            var gr = Object.FindAnyObjectByType<RSGodRays>(); Rec(gr);
             if (objs.Count == 0) return;
             Undo.RecordObjects(objs.ToArray(), "스테이지 룩 → 씬 값");
             if (t != null) Copy(p.timeOfDay, t.LocalLook);
@@ -93,6 +96,7 @@ namespace RealSteel.Lighting.EditorTools
             if (w != null) Copy(p.wetness, w.LocalLook);
             if (i != null) Copy(p.indirect, i.LocalLook);
             if (h != null) Copy(p.characterGlow, h.LocalLook);
+            if (gr != null) Copy(p.godRays, gr.LocalLook);
             foreach (var o in objs) EditorUtility.SetDirty(o);
         }
 
@@ -232,6 +236,7 @@ namespace RealSteel.Lighting.EditorTools
             ("wetness", "젖은 바닥 · 반사", typeof(RSWetness.Look)),
             ("indirect", "간접광", typeof(RSIndirectLight.Look)),
             ("characterGlow", "캐릭터 밤 빛", typeof(RSCharacterGlow.Look)),
+            ("godRays", "갓레이 (화면)", typeof(RSGodRays.Look)),
         };
 
         public override void OnInspectorGUI()

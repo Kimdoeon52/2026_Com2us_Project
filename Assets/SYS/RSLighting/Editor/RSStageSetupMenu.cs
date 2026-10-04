@@ -23,6 +23,12 @@ namespace RealSteel.Lighting.EditorTools
             RSLightingMenu.Setup();       // 시간대 · 구름 그림자 · 햇살
             RSAtmosphereMenu.Setup();     // 볼류메트릭 안개 · 캐릭터 밤 빛 · 자동 초점
             RSSurfaceLookMenu.Setup();    // 색감 · 간접광 · 젖은 바닥 (+ URP Opaque · Depth 확인)
+            var todHost = Object.FindAnyObjectByType<RSTimeOfDay>();
+            if (todHost != null && Object.FindAnyObjectByType<RSGodRays>() == null)
+            {
+                Undo.AddComponent<RSGodRays>(todHost.gameObject);   // 갓레이 (화면)
+                log.Append("갓레이 (화면) 붙임 · ");
+            }
             RSStageLookMenu.Setup();      // 스테이지 룩 (프로필 없으면 지금 씬 값으로 만듦)
 
             Undo.CollapseUndoOperations(group);
@@ -30,7 +36,7 @@ namespace RealSteel.Lighting.EditorTools
 
             var tod = Object.FindAnyObjectByType<RSTimeOfDay>();
             if (tod != null) Selection.activeGameObject = tod.gameObject;
-            log.Append("시간대 · 구름 그림자 · 햇살 · 안개 · 캐릭터 밤 빛 · 자동 초점 · 색감 · 간접광 · 젖은 바닥 · 스테이지 룩 확인 완료.\n" +
+            log.Append("시간대 · 구름 그림자 · 햇살 · 안개 · 캐릭터 밤 빛 · 자동 초점 · 색감 · 간접광 · 젖은 바닥 · 갓레이 · 스테이지 룩 확인 완료.\n" +
                        "· 값은 LIGHTING_TimeOfDay 의 각 컴포넌트에서 고친다 (저장은 스테이지 룩 프로필 에셋)\n" +
                        "· 물이 있는 스테이지면: Tools → RE_AL STEEL → Stage → 물 (반사 · 굴절 · 거품) 설치\n" +
                        "· 씬을 저장하세요.");

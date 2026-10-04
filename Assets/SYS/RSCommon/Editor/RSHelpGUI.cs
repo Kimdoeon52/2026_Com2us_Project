@@ -77,7 +77,23 @@ namespace RealSteel.Common.EditorTools
             if (!RSHelpGUI.Show) return 0f;
             var a = (RSHelpAttribute)attribute;
             float w = Mathf.Max(120f, EditorGUIUtility.currentViewWidth - 28f);
+            // 인스펙터가 GUI 밖에서(UI Toolkit 레이아웃 계산 등) 높이를 물을 때는 에디터 스킨이 없어서
+            // 이름 있는 스타일(EditorStyles.helpBox)을 만들 수 없다 → 글자 수로 어림한다
+            if (Event.current == null) return Estimate(a.text, w);
             return RSHelpGUI.Box.CalcHeight(new GUIContent(a.text), w) + 6f;
+        }
+
+        static float Estimate(string text, float width)
+        {
+            float inner = Mathf.Max(40f, width - 16f);
+            int lines = 0;
+            foreach (var line in text.Split('\n'))
+            {
+                float px = 0f;
+                foreach (char c in line) px += c < 128 ? 6.5f : 11f;
+                lines += Mathf.Max(1, Mathf.CeilToInt(px / inner));
+            }
+            return lines * 14f + 10f + 6f;
         }
 
         public override void OnGUI(Rect position)

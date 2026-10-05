@@ -334,7 +334,7 @@ Animator:
   m_GameObject: {fileID: 310224667}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 884bf1c5d13e881488ff814033e3d13c, type: 2}
+  m_Controller: {fileID: 9100000, guid: 0126602081e043241807a52ad4e7b97f, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -371,7 +371,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e606a1c8ba26aa84a972c4c8c4b6bbaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  idleAction: {fileID: 11400000, guid: 3d9dcea5d6753044eb45f1aed4becebf, type: 2}
+  idleAction: {fileID: 11400000, guid: df81135a42246114ebe59fe9705e34ed, type: 2}
 --- !u!61 &310224674
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -409,8 +409,8 @@ BoxCollider2D:
   m_Offset: {x: 0.041116893, y: 0.26215622}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
-    pivot: {x: 0.5, y: 0}
-    oldSize: {x: 0.64, y: 0.64}
+    pivot: {x: 0.5, y: 0.25}
+    oldSize: {x: 1.44, y: 1.44}
     newSize: {x: 1, y: 1}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
@@ -462,7 +462,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 996352825, guid: 2096e0663ecd44e4491d9cf48910600d, type: 3}
+  m_Sprite: {fileID: -1681993324, guid: be70177378ef0a9449ecc50311a4221a, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -482,7 +482,7 @@ Transform:
   m_GameObject: {fileID: 310224667}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: 1.483, y: -0, z: 0}
+  m_LocalPosition: {x: 1.491, y: 0.244, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -668,24 +668,24 @@ MonoBehaviour:
     currentHp: 1000
     maxHp: 200
     baseDefense: 10
+    coreLevel: 1
+    currentCoreExp: 0
+    currentCylinderCount: 1
+    maxCylinderCount: 3
     totalAttackPower: 40
-    finalMoveSpeed: 2
-    critResistance: 3
-    critDamageReduction: 3
-    guardDefBonus: 4
-    invincibleBonus: 5
+    finalMovementSpeed: 0
   EnemySnapshot:
     fighterID: Enemy
     isPlayer: 0
     currentHp: 1000
     maxHp: 200
     baseDefense: 10
+    coreLevel: 1
+    currentCoreExp: 0
+    currentCylinderCount: 1
+    maxCylinderCount: 3
     totalAttackPower: 40
-    finalMoveSpeed: 2
-    critResistance: 3
-    critDamageReduction: 3
-    guardDefBonus: 4
-    invincibleBonus: 5
+    finalMovementSpeed: 0
 --- !u!4 &776998634
 Transform:
   m_ObjectHideFlags: 0

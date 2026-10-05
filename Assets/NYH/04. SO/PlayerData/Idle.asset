@@ -34,15 +34,8 @@ MonoBehaviour:
       y: 0
       width: 0.25
       height: 0.5
-    startFrame: 1
-    endFrame: 1
-  - type: 2
-    bodyPart: 5
-    rect:
-      serializedVersion: 2
-      x: -0.15
-      y: 0.01
-      width: 0.23
-      height: 0.45
+    anchor: 0
+    startOffset: 0
+    length: 0
     startFrame: 1
     endFrame: 1

@@ -8,7 +8,7 @@ public class ScrapyardFieldHost : MonoBehaviour
     [SerializeField] private ScrapyardDatabase _database;
 
     [Tooltip("수집 결과를 넣을 인벤토리. 부품 목록도 여기서 가져온다")]
-    [SerializeField] private InventoryTestHost _inventory;
+    [SerializeField] private InventoryHost _inventory;
 
     [Tooltip("난수 시드")]
     [SerializeField] private int _seed = 1;

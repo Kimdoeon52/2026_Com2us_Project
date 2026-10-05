@@ -17,6 +17,7 @@ public class PushRecipeData : MonoBehaviour
 
     private void PushData(int _n)
     {
+        correctRecipes.Clear();
         for(int i = 0; i < recipes.Length; i++)
         {
             RecipeData recipe = recipes[i];

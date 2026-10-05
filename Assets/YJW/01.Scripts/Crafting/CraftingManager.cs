@@ -2,7 +2,9 @@ using UnityEngine;
 
 public class CraftingManager : PersistentSingleton<CraftingManager>
 {
-    [SerializeField] private CombinationSlotDragController[] slots;
+    public CombinationSlotDragController[] slots;
+    public PartsCatalog catalog;
+    public ComponentCatalog components;
 
     public void AllComponentReturn()
     {

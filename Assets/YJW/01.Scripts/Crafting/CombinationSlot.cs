@@ -26,5 +26,4 @@ public class CombinationSlot : MonoBehaviour
     {
         SetComponent(null);
     }
-
 }

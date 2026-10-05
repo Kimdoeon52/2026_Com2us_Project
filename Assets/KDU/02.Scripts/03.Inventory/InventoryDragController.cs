@@ -8,7 +8,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     private const int None = -1;
 
     [Tooltip("데이터 보유")]
-    [SerializeField] private InventoryTestHost _host;
+    [SerializeField] private InventoryHost _host;
 
     [Tooltip("좌표 변환·렌더")]
     [SerializeField] private InventoryView _view;
@@ -42,7 +42,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     private void Reset()
     {
         if (_host == null)
-            _host = FindAnyObjectByType<InventoryTestHost>();
+            _host = FindAnyObjectByType<InventoryHost>();
 
         if (_view == null)
             _view = FindAnyObjectByType<InventoryView>();

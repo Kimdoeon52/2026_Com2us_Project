@@ -19,7 +19,7 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
     [Tooltip("슬롯 내용이 바뀐 뒤 레시피를 다시 검사시키기 위한 참조")]
     [SerializeField] private CorrectRecipe _recipe;
 
-    [SerializeField] private InventoryTestHost _host;
+    [SerializeField] private InventoryHost _host;
     [SerializeField] private InventoryView _view;
 
     // 실제로 화면에 떠 있는 고스트. 슬롯당 하나만 만들고 재사용한다 (드래그마다 새로 Instantiate하지 않음)

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class InventoryView : MonoBehaviour
 {
     [Tooltip("데이터 보유")]
-    [SerializeField] private InventoryTestHost _host;
+    [SerializeField] private InventoryHost _host;
 
     [Header("루트")]
     [SerializeField] private RectTransform _gridRoot;

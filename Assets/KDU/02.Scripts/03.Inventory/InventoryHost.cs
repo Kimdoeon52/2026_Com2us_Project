@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 // 인벤토리 단독 테스트용 데이터 보유. UI는 여기서 Grid/Save를 읽어간다
-public class InventoryTestHost : MonoBehaviour
+public class InventoryHost : Singleton<InventoryHost>
 {
     [Tooltip("그리드 규격")]
     [SerializeField] private InventoryDefinition _inventoryDefinition;
@@ -36,6 +36,7 @@ public class InventoryTestHost : MonoBehaviour
 
     private void Awake()
     {
+        base.Awake();
         _rng = new Rng(_seed);
         _save = new InventorySaveData();
         _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);

@@ -14,7 +14,7 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
     [SerializeField] private ResultSlot _resultSlot;
 
     [Tooltip("인벤토리 데이터. 실제 배치(GivePart)를 요청하는 대상")]
-    [SerializeField] private InventoryTestHost _host;
+    [SerializeField] private InventoryHost _host;
 
     [Tooltip("인벤토리 좌표·레이어 참조. 드롭 위치가 인벤토리 패널인지 판단하는 데 씀")]
     [SerializeField] private InventoryView _view;

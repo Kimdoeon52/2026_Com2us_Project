@@ -7,7 +7,7 @@ public class BossNpc1 : BossAiBase
     [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
     public float actionRate = 0.7f;
 
-    public void Start()
+    public override void Start()
     {
         bigRaiseGold = 2000;
     }

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1825667044474889162}
   - component: {fileID: 2894846375302795290}
   m_Layer: 0
-  m_Name: Npc4
+  m_Name: NPC4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -44,5 +44,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5ec38611024556458d3169033153aa5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  thinkChatList:
+  - thinkChat: "\uC74C..."
+  - thinkChat: "\uD760..."
   data: {fileID: 11400000, guid: f7f4ae6c2c4efc44396026a6303a58e6, type: 2}
   actionRate: 0.8

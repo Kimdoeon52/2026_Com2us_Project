@@ -59,18 +59,28 @@ NPC가 입찰할수있는 최대 자금
 
 
  */
+
+public enum AuctionType
+{
+    Normal, // 일반 경매 (실시간 레이즈)
+    Fist,   // 주먹 경매 (서면 동시 입찰)
+    Bidding // 입찰 경매 (가격 제시 후 순차 응찰)
+}
 public class Auction : PersistentSingleton<Auction>
 {
     [Header("물건 이름 나올 곳")]
     [SerializeField] public TextMeshProUGUI auctionName; // 이름 나오는 Text공간
     [Header("물건 가격 나올 곳")]
     [SerializeField] public TextMeshProUGUI auctionCost; // 가격 나오는 Text공간
+    [Header("물건 등급 나올 곳")]
+    [SerializeField] private TextMeshProUGUI auctionGrade; // 등급 나오는 Text공간
     [Header("경매 대사 나올 곳")]
     [SerializeField] public TextMeshProUGUI chat; // 채팅 나오는 Text공간
     [Header("오류 메시지 출력")]
     [SerializeField] public TextMeshProUGUI errorMessage; // 오류 메시지 출력 공간
     [Header("내 골드 나올 곳")]
     [SerializeField] public TextMeshProUGUI myGold; // 채팅 나오는 Text공간
+    
 
     [Header("조작 버튼")]
     [SerializeField] public Button raiseButton;
@@ -103,6 +113,7 @@ public class Auction : PersistentSingleton<Auction>
     private int currentCost = 0; // 현재 가격
     private PartsDefinition stuff;
     private bool isAuctioningFin = true; // 경매가 끝낫는지 확인
+    public PartGrade stuffGrade;
     //=======================시간 제한=================================
     [Header("제한 시간 UI")]
     [SerializeField] public Image timeBar; // 제한 시간 UI
@@ -169,6 +180,8 @@ public class Auction : PersistentSingleton<Auction>
         {
             stuff = auctionItem[Random.Range(0, auctionItem.Count)];
             currentCost = stuff.Cost / 2;//반값 부터 시작
+            stuffGrade = stuff.Grade;
+            auctionGrade.text = stuffGrade.ToString();
         }
         else
         {

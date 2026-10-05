@@ -8,6 +8,7 @@ public class Npc1 : NpcAiBase //후반형
 
     public override void Start()
     {
+        base.Start();
         RaiseGold = 200; // 초기 레이즈 금액 설정
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise)

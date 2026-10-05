@@ -1,20 +1,19 @@
-using UnityEngine;
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
-/// [부위별 런타임 상태 클래스]
-/// 전투중 각 부위의 실시간 내구도 및 파손여부를 관리하는 클래스임
+/// [부위별 런타임 상태 클래스 (PartRuntimeState)]
+/// 전투 중 각 부위의 실시간 내구도 및 파손 여부를 관리하는 클래스임.
 /// </summary>
-
+[Serializable]
 public class PartRuntimeState
 {
     public string partID;           // 부품 고유 식별 번호 (DB 및 인벤토리 연동 키)
-
-    public BodyPart partType;       // 장착 대상 부위 (전투 행동 파트의 BodyPart 공통 enum 사용)
+    public BodyPart partType;       // 장착 대상 부위 (NYH CombatEnums.BodyPart 공통 enum 사용)
     public int currentDurability;   // 현재 내구도 (0 ~ maxDurability)
     public int maxDurability;       // 최대 내구도 (baseDurability + 강화치)
-    public bool isBroken => currentDurability <= 0;          // 부품 파손 여부 (true: 파손, false: 정상)
+    public bool isBroken => currentDurability <= 0; // 부품 파손 여부 (true: 파손 및 스킬 봉인)
 
     public PartRuntimeState(string partID, BodyPart partType, int maxDurability)
     {
@@ -24,62 +23,89 @@ public class PartRuntimeState
         this.currentDurability = maxDurability;
     }
 
-/// <summary>
-/// 부품 내구도 소모 처리 (0 이하로 내려가지 않도록 제한)
-/// </summary>
-/// <param name="amount"></param>
+    /// <summary>부품 내구도 소모 처리 (0 이하로 내려가지 않도록 제한)</summary>
     public void Consume(int amount)
     {
         currentDurability = Mathf.Max(0, currentDurability - amount);
     }
 
-/// <summary>
-/// 부품 내구도 회복 처리 (maxDurability 이상으로 올라가지 않도록 제한)
-/// </summary>
-/// <param name="amount"></param>
+    /// <summary>부품 내구도 회복 처리 (maxDurability 이상으로 올라가지 않도록 제한)</summary>
     public void Repair(int amount)
     {
         currentDurability = Mathf.Min(maxDurability, currentDurability + amount);
     }
-
 }
 
-
 /// <summary>
-/// [전투중 로봇 상태 스냅샷 클래스]
-/// 전투중 각 부위의 실시간 내구도 및 파손여부를 관리하는 클래스임
-/// 조립된 로봇 1대의 모든 부위 상태를 스냅샷으로 저장하고, 전투 종료 후 결과를 기록하는 용도로 사용됨
-/// 전투 행동 파트와 DB 파트간의 수치 교환 및 참조를 위해, 부품 고유 식별 번호(partID)와 장착 대상 부위(partType)를 함께 저장함
+/// [로봇 런타임 스냅샷 클래스 (CombatantSnapshot)]
+/// 플레이어 및 일반 적 로봇(NPC A, B, C)의 1:1 대전 상태를 표현하는 공용 DTO임.
+/// 체력(HP)은 오직 코어(Core)만 소유하며, 5개 파츠는 런타임 내구도(Durability)만 독립 관리함.
 /// </summary>
-
-[Serializable]public class CombatantSnapshot
+[Serializable]
+public class CombatantSnapshot
 {
+    // ========================================================================
     // 1. 기본 식별 정보
-    public string fighterID = "Player";          // 전투 참가자 고유 식별 번호 (DB 및 인벤토리 연동 키)
-    public bool isPlayer = true;                // 플레이어 소속 여부 (true: 플레이어, false: AI)
+    // ========================================================================
+    public string fighterID = "Player"; // "Player" 또는 "NPC_A", "NPC_B", "NPC_C"
+    public bool isPlayer = true;        // true: 플레이어, false: AI 적 로봇
 
-    // 2. 코어 스탯(기본 체력 및 본체 방어력)
-    public int currentHp; // 현재 체력 (0 ~ maxHp)
-    public int maxHp; // 최대 체력 (기본 체력 + 강화치)
-    public int baseDefense; // 본체 방어력 (기본 방어력 + 강화치)
-    public int coreLevel = 1; // 코어 레벨 (1 ~ 30)
-    public int currentCoreExp; // 현재 누적 코어 경험치 (플레이어 전용)
+    // ========================================================================
+    // 2. 코어 실시간 스탯 (체력은 코어만 소유, 0 도달 시 즉시 K.O 패배)
+    // ========================================================================
+    public int currentHp;               // 코어 현재 체력
+    public int maxHp;                   // 코어 최대 체력
+    public int baseDefense;             // 코어 본체 방어력
+    public int coreLevel = 1;           // 코어 레벨 (1 ~ 30)
+    public int currentCoreExp;          // 현재 누적 코어 경험치 (플레이어 전용)
 
-    // 3. 실린더 시스템
-    public int currentCylinderCount = 1; // 현재 실린더 수 (0 ~ maxCylinderCount)
-    public int maxCylinderCount = 3; // 최대 실린더 수 (양팔 공용)
+    /// <summary>생존 여부 (코어 HP > 0)</summary>
+    public bool IsAlive => currentHp > 0;
 
-    // 4. 복합 연산 스탯
-    public int totalAttackPower; // 총 공격력 (기본 Atk + (왼팔Atk + 오른팔Atk)/2)
-    public int finalMovementSpeed; // 최종 이동속도 (기본 MoveSpeed + (왼다리MoveSpeed + 오른다리MoveSpeed)/2)
+    // ========================================================================
+    // 3. 실린더 시스템 (기획서 §6.11 / NYH 연동)
+    // ========================================================================
+    public int currentCylinder = 1;     // 전투 시작 시 1발 기본 장전
+    public const int MaxCylinder = 3;   // 최대 3발 (양팔 공용)
 
-    // 5. 5개 파츠 실시간 내구도 맵 (부위 타격 스킬 피격시에만 차감)
+    // 하위 호환 프로퍼티
+    public int currentCylinderCount
+    {
+        get => currentCylinder;
+        set => currentCylinder = value;
+    }
+    public int maxCylinderCount => MaxCylinder;
+
+    // ========================================================================
+    // 4. 복합 연산 스탯 (기획서 §6.12.3)
+    // ========================================================================
+    public int totalAttackPower;        // 기본Atk + (왼팔Atk + 오른팔Atk) / 2
+    public float finalMoveSpeed = 3f;   // (왼다리Speed + 오른다리Speed) / 2
+    public int finalMovementSpeed       // 정수형 호환
+    {
+        get => Mathf.RoundToInt(finalMoveSpeed);
+        set => finalMoveSpeed = value;
+    }
+
+    // ========================================================================
+    // 5. 5개 파츠 실시간 내구도 맵 (부위 타격 스킬 피격 시에만 차감)
+    // ========================================================================
     public Dictionary<BodyPart, PartRuntimeState> partStates = new();
 
+    #region 헬퍼 메서드
     /// <summary>
-    /// 내구도가 0 이하(파손)인지 검사(스킬 봉인 판정)
+    /// 특정 부위 파츠의 상태 객체 조회
     /// </summary>
-    
+    public PartRuntimeState GetPartRuntimeState(BodyPart partType)
+    {
+        partStates.TryGetValue(partType, out var state);
+        return state;
+    }
+
+
+    /// <summary>
+    /// 내구도가 0 이하(파손)인지 검사 (스킬 봉인 판정)
+    /// </summary>
     public bool IsPartBroken(BodyPart partType)
     {
         return !partStates.TryGetValue(partType, out var partState) || partState.isBroken;
@@ -89,6 +115,46 @@ public class PartRuntimeState
     /// 특정 부위 타격 스킬 피격 시 해당 부위의 내구도 차감
     /// 내구도 0 도달 시 true 반환 (부품 파손 및 스킬 봉인 판정)
     /// </summary>
-    
-   // public bool ConsumePart
+    public bool ConsumePartDurability(BodyPart part, int amount)
+    {
+        if (partStates.TryGetValue(part, out var state))
+        {
+            state.Consume(amount);
+            return state.isBroken;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 특정 부위 내구도 회복
+    /// </summary>
+    public void RepairPartDurability(BodyPart part, int amount)
+    {
+        if (partStates.TryGetValue(part, out var state))
+        {
+            state.Repair(amount);
+        }
+    }
+
+    // ========================================================================
+    // 실린더 헬퍼 메서드 (NYH 스킬 액션 연동)
+    // ========================================================================
+    public bool CanSpendCylinder(int cost) => currentCylinder >= cost;
+
+    public void SpendCylinder(int cost)
+    {
+        currentCylinder = Mathf.Max(0, currentCylinder - cost);
+    }
+
+    public void AddCylinder(int count = 1)
+    {
+        currentCylinder = Mathf.Min(MaxCylinder, currentCylinder + count);
+    }
+
+    // ========================================================================
+    // 레거시 호환 헬퍼 (기존 테스터 및 구버전 메서드)
+    // ========================================================================
+    public bool IsBothLegsBroken() => IsPartBroken(BodyPart.LeftLeg) && IsPartBroken(BodyPart.RightLeg);
+    public bool IsOneLegBroken() => IsPartBroken(BodyPart.LeftLeg) ^ IsPartBroken(BodyPart.RightLeg);
+    #endregion
 }

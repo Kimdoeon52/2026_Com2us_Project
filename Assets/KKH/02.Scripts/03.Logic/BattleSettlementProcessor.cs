@@ -168,9 +168,9 @@ public static class BattleSettlementProcessor
         if (GlobalGold.Instance != null && result.GoldDelta != 0)
         {
             if (result.GoldDelta > 0)
-                GlobalGold.Instance.GetGold("윤지우", result.GoldDelta);
+                GlobalGold.Instance.GetGold("골드 정산", result.GoldDelta);
             else
-                GlobalGold.Instance.UseGold("윤지우", Mathf.Abs(result.GoldDelta));
+                GlobalGold.Instance.UseGold("골드 정산", Mathf.Abs(result.GoldDelta));
         }
 
         return result;

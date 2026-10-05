@@ -25,6 +25,19 @@ using System.Collections.Generic;
 ///      - 부품 장착 시 활성화되는 고유 액티브 스킬(activeSkillId) 및 부위별 패시브 ID 목록(passiveSkillIds) 참조.
 /// ─────────────────────────────────────────────────────────────────────────────
 /// </summary>
+/// <summary>
+/// 기획서 §6.20.4 기믹 태그 (보스 및 기물 파훼 속성)
+/// </summary>
+public enum GimmickTag
+{
+    None,
+    ObjectBreak,      // 기물 파괴: 지상 기물에 추가 피해
+    RangedObject,     // 원거리 기물: 멀리 있거나 높은 기물 타격
+    HighPart,         // 상단 부위: 보스 머리·어깨 높이 판정
+    MidPart,          // 중단 부위: 몸통 높이 판정
+    LowPart           // 하단 부위: 다리·바닥 높이 판정
+}
+
 [CreateAssetMenu(fileName = "PartMasterData", menuName = "RealSteel/DB/PartMasterData", order = 1)]
 public class PartMasterData : ScriptableObject
 {
@@ -42,8 +55,8 @@ public class PartMasterData : ScriptableObject
     public PartGrade partGrade;
 
 
-    [Header("2. 내구도 및 파괴 리스크 (기획서 §5.6)")]
-    [Tooltip("부품의 기본 최대 내구도")]
+    [Header("2. 내구도 및 파괴 리스크 (기획서 §6.6, §6.7)")]
+    [Tooltip("부품의 기본 최대 내구도 (머리: 60, 팔: 100, 다리: 80)")]
     public int baseDurability;
 
     [Tooltip("전투 패배 시 부품 영구 파괴 확률 (0.0 ~ 1.0)\n" +
@@ -52,22 +65,25 @@ public class PartMasterData : ScriptableObject
     public float destructionResistance;
 
 
-    [Header("3. 부위별 특화 스탯 (해당 슬롯에 맞는 항목만 기입)")]
-    [Tooltip("머리 파츠 전용: 치명타 저항 및 치명타 피해 감쇄 스탯")]
-    public HeadStatData headStatData;
-
-    [Tooltip("팔 파츠 전용: 공격력(양팔 평균 반영) 및 가드 방어력 보정 스탯")]
-    public ArmStatData armStatData;
-
-    [Tooltip("다리 파츠 전용: 이동 속도(양다리 평균 반영) 및 위빙(저스트 회피) 무적 시간 보정 스탯")]
-    public LegStatData legStatData;
+     [Header("3. 부위별 특화 스탯 (전투 6종 스탯 연동)")]
+    public int attackPower;        // 팔 파츠: 공격력 기여치
+    public float moveSpeedBonus;   // 다리 파츠: 이동속도 보정
+    public float critResistance;   // 머리 파츠: 치명타 저항
+    public float critDamageReduction;
 
 
-    [Header("4. 스킬 연동 (전투 스킬 파트 매핑)")]
+
+    [Header("4. 스킬 연동 (스킬 파트 CSH 및 실린더 NYH 매핑)")]
     [Tooltip("파츠 장착 시 부여되는 고유 액티브 스킬 ID (스킬 없을 시 -1)")]
     public int activeSkillId = -1;
 
-    [Tooltip("기획서 §5.2.6 부위별 고유 패시브 스킬 ID 목록 (예: 충격 흡수 프레임, 반발 장갑, 잔상 회로 등)")]
+    [Tooltip("기획서 §6.20.4 기믹 파훼 태그")]
+    public GimmickTag gimmickTag = GimmickTag.None;
+
+    [Tooltip("스킬 시전 시 소모 실린더 탄수 (양팔 Q/W 차지 시 1발 소모 등)")]
+    public int cylinderCost = 1;
+
+    [Tooltip("기획서 부위별 고유 패시브 스킬 ID 목록 (머리 자동 장전 장치 등)")]
     public List<int> passiveSkillIds = new List<int>();
 }
 

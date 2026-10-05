@@ -2,177 +2,238 @@ using UnityEngine;
 
 /// <summary>
 /// [순수 C# 전투 수치 판정기 (CombatCalculator)]
-/// 기획서 공식에 입각해서 유니티 물리/애니메이션과 독립적으로
-/// 대미지 감쇄, 가드 분산 소모, 위빙 페널티, 부위 파손에 따른 행동 가능 여부를 연산하는 순수 엔진 클래스임.
+/// 기획서 공식에 입각하여 유니티 물리와 독립적으로 동작하는 순수 수치 연산 코어임.
+/// 1:1 대전 모드 이원화(Robot vs Robot / Robot vs Boss), 방어력 감쇄, D 기본기 실린더 충전,
+/// 부위 피격 시 스킬 봉인 및 보스 기믹 파훼를 총괄 연산함.
 /// </summary>
 public static class CombatCalculator
 {
     /// <summary>
-    /// 기술 시전 가능 여부 검사함 (전투 행동 파트 ActionExecutor 연동용)
-    /// - CoreFixed(잽, 가드, 위빙, 이동): 항상 시전 가능함
-    /// - Part(훅, 스트레이트, 어퍼컷, 백스핀 등): 해당 부위 파손 시 시전 차단함
+    /// 방어력 감쇄 공통 계산식:
+    /// FinalDamage = RawDamage * (100 / (Defense + 100))
+    /// 최소 1 대미지 보장함.
     /// </summary>
-    public static bool CanExecuteAction(CombatantSnapshot actor, ActionData action)
+    public static int CalculateDamage(float rawDamage, int defense)
     {
-        if (actor == null || action == null)
-            return false;
-
-        // 1. 코어 고정 기술은 부위 파손과 무관하게 항상 실행 가능함
-        if (action.Source == ActionSource.CoreFixed)
-            return true;
-
-        // 2. 파츠 소속 기술인 경우 해당 요구 부위 파손 여부 검사함
-        if (actor.IsPartBroken(action.RequiredPart))
-        {
-            Debug.Log($"[CombatCalculator] '{action.ActionName}' 시전 불가: 요구 부위({action.RequiredPart}) 파손 또는 미장착 상태임");
-            return false;
-        }
-
-        return true;
+        float multiplier = 100f / (Mathf.Max(0, defense) + 100f);
+        return Mathf.Max(1, Mathf.RoundToInt(rawDamage * multiplier));
     }
 
-    /// <summary>
-    /// 타격 적중 시 대미지 감쇄 및 부위 피격 처리함
-    /// 기획서 공식: FinalDamage = RawDamage * (100 / (Defense + 100))
-    /// </summary>
-    public static HitResolutionResult EvaluateHit(
+    // ========================================================================
+    // 1. [모드 1] 로봇 vs 로봇 1:1 대전 판정 (플레이어 vs 일반 적 NPC A·B·C)
+    // ========================================================================
+    public static HitResolutionResult EvaluateRobotAttack(
         CombatantSnapshot attacker,
         CombatantSnapshot defender,
-        ActionData attackAction,
-        bool isGuarding,
-        bool isWeaving,
-        BodyPart hitPart = BodyPart.Core)
+        float rawSkillDamage,
+        BodyPart targetPart,
+        int partDamageAmount,
+        bool isDefenderInvincible,
+        bool isBasicAttackD)
     {
         var result = new HitResolutionResult();
 
-        if (attacker == null || defender == null || attackAction == null)
+        if (attacker == null || defender == null)
             return result;
 
-        // 1. 위빙(회피) 성공 시 완전 무적: 대미지 0임
-        if (isWeaving)
+        // 1) Space 회피(0.3초) 무적 회피 판정
+        if (isDefenderInvincible)
         {
-            result.IsEvaded = true;
-            result.DamageToHp = 0;
-            result.StaggerAdded = 0;
+            result.isEvaded = true;
             return result;
         }
 
-        // 2. 공격력 연산함 (RawDamage = TotalAttackPower * (Damage 계수 / 100))
-        float damageRatio = attackAction.Damage > 0f ? attackAction.Damage / 100f : 1f;
-        float rawAtk = attacker.totalAttackPower * damageRatio;
-
-        // 3. 가드 판정함
-        // - 백스핀 엘보우 등 IsGuardable == false 인 기술은 가드를 무시하고 코어에 직격함
-        if (isGuarding && attackAction.IsGuardable)
+        // 2) D 기본기 적중 시 공격자 실린더 탄환 +1 장전 (NYH 실린더 연동)
+        if (isBasicAttackD)
         {
-            result.IsGuarded = true;
-            // int totalDef = defender.baseDefense + defender.guardDefBonus;
-            int totalDef = defender.baseDefense;
-            float finalDmg = rawAtk * (100f / (totalDef + 100f));
-
-            // 가드 성공 시 잔여 피해를 양팔 내구도에 5:5 분산 차감함 (코어 HP 피해 0임)
-            int armDmg = Mathf.RoundToInt(finalDmg * 0.5f);
-            // defender.ConsumeDurability(BodyPart.LeftArm, armDmg);
-            // defender.ConsumeDurability(BodyPart.RightArm, armDmg);
-
-            result.LeftArmDurabilityDamage = armDmg;
-            result.RightArmDurabilityDamage = armDmg;
-            result.DamageToHp = 0;
-        }
-        else
-        {
-            // 4. 유효타 피격 (코어 본체 HP + 피격 파츠 내구도 동시 감쇄)
-            float finalDmg = rawAtk * (100f / (defender.baseDefense + 100f));
-
-            // 머리 파츠 피격 또는 치명타 발생 판정
-            float baseCritChance = 0.15f;
-            // float effectiveCritChance = Mathf.Max(0f, baseCritChance - defender.critResistance);
-            float effectiveCritChance = baseCritChance;
-
-            if (hitPart == BodyPart.Head || Random.value < effectiveCritChance)
-            {
-                result.IsCritical = true;
-                // float critMultiplier = Mathf.Max(1.0f, 1.5f - defender.critDamageReduction);
-                float critMultiplier = 1.5f;
-                finalDmg *= critMultiplier;
-
-                // 머리 피격 시 머리 내구도 차감
-                int headDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
-                // defender.ConsumeDurability(BodyPart.Head, headDmg);
-            }
-            else if (hitPart != BodyPart.Core)
-            {
-                // 팔 또는 다리 부위 피격 시 해당 파츠 내구도 차감
-                int partDmg = Mathf.Max(5, Mathf.RoundToInt(finalDmg * 0.25f));
-                // defender.ConsumeDurability(hitPart, partDmg);
-
-                if (hitPart == BodyPart.LeftArm) result.LeftArmDurabilityDamage = partDmg;
-                else if (hitPart == BodyPart.RightArm) result.RightArmDurabilityDamage = partDmg;
-            }
-
-            // [핵심] 기체 본체(코어) 체력 차감 (파츠 피격 시에도 본체 생명력에 피해가 반영됨)
-            result.DamageToHp = Mathf.Max(1, Mathf.RoundToInt(finalDmg));
-            defender.currentHp = Mathf.Max(0, defender.currentHp - result.DamageToHp);
+            attacker.AddCylinder(1);
+            result.cylinderGained = true;
         }
 
-        // 5. 경직도 및 다운/넉백 수치 세팅함
-        result.StaggerAdded = attackAction.StaggerValue;
-        result.CausesKnockdown = attackAction.CausesKnockdown;
-        result.KnockbackDistance = attackAction.KnockbackDistance;
+        // 3) 대미지 계산 및 방어자 코어 HP 차감 (모든 유효 공격 공통)
+        // D 기본기는 고정 피해 10, 스킬은 기본 피해 * (공격자 총 공격력 / 100)
+        float actualDamage = isBasicAttackD ? 10f : rawSkillDamage * (attacker.totalAttackPower / 100f);
+        result.coreHpDamage = CalculateDamage(actualDamage, defender.baseDefense);
+        defender.currentHp = Mathf.Max(0, defender.currentHp - result.coreHpDamage);
+
+        // 4) 특정 부위 타격 스킬인 경우에만 해당 부위 내구도 차감 (기획서 확정)
+        if (targetPart != BodyPart.Core && defender.partStates.TryGetValue(targetPart, out var partState))
+        {
+            result.targetBodyPart = targetPart;
+            result.partDurabilityDamage = partDamageAmount;
+            result.isPartDestroyed = defender.ConsumePartDurability(targetPart, partDamageAmount);
+
+            if (result.isPartDestroyed)
+            {
+                CombatDataHub.Instance?.BroadcastPartBroken(defender.fighterID, targetPart);
+            }
+        }
 
         return result;
     }
 
-    /// <summary>
-    /// 위빙(회피) 시도 시 다리 내구도 소모 및 상태별 성공/실패 판정함 (기획서 §5.7.4)
-    /// - 시도 시 좌/우 다리 중 무작위 1개 내구도 5 고정 차감함
-    /// - 양다리 모두 파괴 상태: 100% 회피 불가임
-    /// - 다리 1개 파괴 상태: 50% 확률로 회피 실패함
-    /// - 정상 상태: 100% 회피 성공함
-    /// </summary>
-    public static bool EvaluateWeavingAttempt(CombatantSnapshot actor)
+    // ========================================================================
+    // 1-1. [NYH HitDetection 전용 연동 오버로드]
+    // ========================================================================
+    public static HitResolutionResult EvaluateRobotAttack(
+        CombatantSnapshot attacker,
+        CombatantSnapshot defender,
+        ActionData attackAction,
+        bool isGuarding,
+        bool isDefenderInvincible,
+        BodyPart targetPart = BodyPart.Core)
     {
-        if (actor == null) return false;
+        if (attackAction == null) return new HitResolutionResult();
 
-        // 1. 양다리 모두 파손 시 회피 완전 불가임
-        // if (actor.IsBothLegsBroken())
-        // {
-        //     Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 양다리 모두 파괴된 상태임");
-        //     return false;
-        // }
+        bool isBasicAttackD = attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed;
+        float rawDamage = attackAction.Damage > 0f ? attackAction.Damage : 10f;
 
-        // 2. 다리 내구도 5 소모함 (좌/우 다리 중 무작위 1개, 파괴되지 않은 쪽 우선 차감)
-        BodyPart legToConsume;
-        bool leftBroken = actor.IsPartBroken(BodyPart.LeftLeg);
-        bool rightBroken = actor.IsPartBroken(BodyPart.RightLeg);
+        var result = EvaluateRobotAttack(
+            attacker,
+            defender,
+            rawDamage,
+            targetPart,
+            partDamageAmount: (targetPart != BodyPart.Core) ? 15 : 0,
+            isDefenderInvincible: isDefenderInvincible,
+            isBasicAttackD: isBasicAttackD
+        );
 
-        if (leftBroken)
+        result.KnockbackDistance = attackAction.KnockbackDistance;
+        result.isGuarded = isGuarding;
+        return result;
+    }
+
+    // ========================================================================
+    // 2. [모드 2-A] 보스 -> 플레이어 공격 판정 (보스전)
+    // ========================================================================
+    public static HitResolutionResult EvaluateBossAttack(
+        BossSnapshot boss,
+        CombatantSnapshot player,
+        float skillRawDamage,
+        BodyPart targetPart,
+        int partDamageAmount,
+        bool isPlayerInvincible)
+    {
+        var result = new HitResolutionResult();
+
+        if (boss == null || player == null)
+            return result;
+
+        // 1) Space 회피(0.3초) 무적 판정
+        if (isPlayerInvincible)
         {
-            legToConsume = BodyPart.RightLeg;
+            result.isEvaded = true;
+            return result;
         }
-        else if (rightBroken)
+
+        // 2) 코어 HP 차감 (모든 공격 공통 방어력 감쇄 적용)
+        result.coreHpDamage = CalculateDamage(skillRawDamage, player.baseDefense);
+        player.currentHp = Mathf.Max(0, player.currentHp - result.coreHpDamage);
+
+        // 3) 보스 특정 부위 타격 스킬인 경우에만 지정 부위 내구도 차감
+        if (targetPart != BodyPart.Core && player.partStates.TryGetValue(targetPart, out var partState))
         {
-            legToConsume = BodyPart.LeftLeg;
+            result.targetBodyPart = targetPart;
+            result.partDurabilityDamage = partDamageAmount;
+            result.isPartDestroyed = player.ConsumePartDurability(targetPart, partDamageAmount);
+
+            if (result.isPartDestroyed)
+            {
+                CombatDataHub.Instance?.BroadcastPartBroken(player.fighterID, targetPart);
+            }
         }
-        else
+
+        return result;
+    }
+
+    // ========================================================================
+    // 3. [모드 2-B] 플레이어 -> 보스 공격 판정 (보스전 및 기믹 파훼)
+    // ========================================================================
+    public static HitResolutionResult EvaluatePlayerAttackOnBoss(
+        CombatantSnapshot player,
+        BossSnapshot boss,
+        float skillBaseDamage,
+        bool isBasicAttackD,
+        GimmickTag attackTag = GimmickTag.None,
+        string targetGimmickID = null)
+    {
+        var result = new HitResolutionResult();
+
+        if (player == null || boss == null)
+            return result;
+
+        // 1) D 기본기 적중 시 실린더 탄환 +1 장전
+        if (isBasicAttackD)
         {
-            legToConsume = (Random.value < 0.5f) ? BodyPart.LeftLeg : BodyPart.RightLeg;
+            player.AddCylinder(1);
+            result.cylinderGained = true;
         }
 
-        // actor.ConsumeDurability(legToConsume, 5);
+        // 2) 그로기 상태 1.5배 피해 배율 적용
+        float damageMultiplier = boss.isGroggy ? 1.5f : 1.0f;
+        float actualDamage = isBasicAttackD ? 10f : skillBaseDamage * (player.totalAttackPower / 100f);
+        result.coreHpDamage = CalculateDamage(actualDamage * damageMultiplier, boss.baseDefense);
+        boss.currentHp = Mathf.Max(0, boss.currentHp - result.coreHpDamage);
 
-        // 3. 다리 1개 파괴 상태: 50% 확률로 실패 반환함
-        // if (actor.IsOneLegBroken())
-        // {
-        //     bool isSuccess = Random.value >= 0.5f;
-        //     if (!isSuccess)
-        //     {
-        //         Debug.Log($"[CombatCalculator] {actor.fighterID} 위빙 실패: 다리 한쪽 파손 페널티 (50% 확률 미달임)");
-        //     }
-        //     return isSuccess;
-        // }
+        // 3) 기믹 타격 처리
+        if (!string.IsNullOrEmpty(targetGimmickID) && boss.gimmickStates.TryGetValue(targetGimmickID, out var gimmick))
+        {
+            bool wasBroken = gimmick.isBroken;
+            gimmick.currentDurability = Mathf.Max(0, gimmick.currentDurability - Mathf.RoundToInt(actualDamage));
+        
+            if (!wasBroken && gimmick.isBroken)
+            {
+                result.isGimmickTriggered = true;
+                gimmick.triggerCount++;
+            }
+        }
 
-        // 4. 정상 상태: 100% 성공함
+        return result;
+    }
+
+    // ========================================================================
+    // 행동 실행 가능 게이트 (기획서 §6.12.4, §6.12.9 & NYH ActionExecutor 연동)
+    // ========================================================================
+    /// <summary>
+    /// ActionData 기반 행동 가능 여부 검사 (NYH ActionExecutor 호출용)
+    /// </summary>
+    public static bool CanExecuteAction(CombatantSnapshot actor, ActionData action)
+    {
+        if (actor == null || action == null)
+            return true;
+
+        // 1. 코어 고정 기본기(D, 회피, 이동)는 항상 시전 가능
+        if (action.Source == ActionSource.CoreFixed)
+            return true;
+
+        // 2. 파츠 스킬: 해당 부위 파손 여부 검사 (부위 파괴 시 스킬 봉인)
+        if (actor.IsPartBroken(action.RequiredPart))
+        {
+            Debug.Log($"[CombatCalculator] '{action.ActionName}' 시전 불가: 요구 부위({action.RequiredPart}) 파손 상태임 (스킬 봉인)");
+            return false;
+        }
+
         return true;
     }
+
+    /// <summary>
+    /// 원시 파라미터 기반 행동 가능 여부 검사 (실린더 소모량 포함)
+    /// </summary>
+    public static bool CanExecuteAction(CombatantSnapshot player, ActionSource source, BodyPart requiredPart, int cylinderCost = 0)
+    {
+        if (player == null) return true;
+
+        if (source == ActionSource.CoreFixed)
+            return true;
+
+        if (source == ActionSource.Part)
+        {
+            if (player.IsPartBroken(requiredPart)) return false;
+            if (cylinderCost > 0 && !player.CanSpendCylinder(cylinderCost)) return false;
+        }
+
+        return true;
+    }
+
+   
 }

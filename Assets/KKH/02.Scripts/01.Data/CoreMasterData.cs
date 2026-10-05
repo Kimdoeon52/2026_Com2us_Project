@@ -113,7 +113,7 @@ public class CoreMasterData : ScriptableObject
     /// </summary>
     public int GetRecoveryCost(int level = -1)
     {
-        int lv = Mathf.Clamp(level > 0 ? level : coreLevel, 1, MaxLevel);
+        int lv = level > 0 ? level : coreLevel;
         return 100 + (lv * 50);
     }
     #endregion

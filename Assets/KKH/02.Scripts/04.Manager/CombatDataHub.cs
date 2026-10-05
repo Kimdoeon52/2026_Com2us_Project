@@ -3,9 +3,18 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
+/// 1:1 대전 모드 열거형
+/// </summary>
+public enum BattleMode
+{
+    RobotVsRobot, // 일반 적(NPC A·B·C) 1:1 로봇 대전
+    RobotVsBoss   // 보스(정크 휠러 등) 1:1 토벌전
+}
+
+/// <summary>
 /// [전투 데이터 허브 (CombatDataHub)]
-/// 전투 행동 파트(NYH)에 로봇의 종합 스탯(이동속도, 공격력, 체력 등)을 공급하고,
-/// 실시간 대미지 감쇄, 가드 내구도 소모, 위빙 페널티를 계산해주는 중앙 데이터 허브임.
+/// 전투 행동 파트(NYH), 일반 적 AI(LJS), 스킬 파트(CSH) 및 UI 간의 중앙 데이터 관제 허브임.
+/// 1:1 대전 모드(Robot vs Robot / Robot vs Boss)를 통합 관제하고, 실시간 피격 연산 및 브로드캐스팅을 수행함.
 /// </summary>
 public class CombatDataHub : MonoBehaviour
 {
@@ -22,26 +31,51 @@ public class CombatDataHub : MonoBehaviour
         }
     }
 
-    [Header("전투 참가자 런타임 스냅샷")]
-    [Tooltip("플레이어 로봇 스냅샷 (스탯 및 부위 내구도)")]
+    [Header("1. 대전 모드 및 1:1 참가자 스냅샷")]
+    [SerializeField] private BattleMode currentBattleMode = BattleMode.RobotVsRobot;
+    public BattleMode CurrentBattleMode => currentBattleMode;
+
+    [Tooltip("플레이어 로봇 스냅샷")]
     public CombatantSnapshot PlayerSnapshot;
 
-    [Tooltip("적/상대 로봇 스냅샷 (스탯 및 부위 내구도)")]
+    [Tooltip("[모드 1 전용] 일반 적(NPC A·B·C) 로봇 스냅샷")]
     public CombatantSnapshot EnemySnapshot;
+    public CombatantSnapshot EnemyRobotSnapshot => EnemySnapshot;
+
+    [Tooltip("[모드 2 전용] 보스 스냅샷 (범용 기믹 DTO)")]
+    public BossSnapshot BossSnapshot;
+
+    /// <summary>상대방(Opponent)의 사망 여부 (모드에 따라 적 로봇 또는 보스 생존 판정)</summary>
+    public bool IsOpponentDead => currentBattleMode == BattleMode.RobotVsRobot
+        ? (EnemySnapshot == null || !EnemySnapshot.IsAlive)
+        : (BossSnapshot == null || !BossSnapshot.IsAlive);
 
     // 부품 마스터 데이터 룩업 캐시 (ID -> PartMasterData)
     private Dictionary<string, PartMasterData> partMasterLookup = new Dictionary<string, PartMasterData>();
 
     // ========================================================================
-    // 실시간 이벤트 (UI, 사운드, 연출, 타 파트 구독용)
+    // 브로드캐스팅 이벤트 (UI, 사운드, 연출, 타 파트 구독용)
     // ========================================================================
-    /// <summary>체력 변경 통보 이벤트: (fighterId, currentHp, maxHp)</summary>
+    // [플레이어 UI 이벤트]
+    public event Action<int, int> OnPlayerHpChanged;
+    public event Action<int, int> OnPlayerCylinderChanged;
+    public event Action<BodyPart, int, int> OnPlayerPartDurabilityChanged;
+    public event Action<BodyPart> OnPlayerPartBroken;
+
+    // [일반전 상대 로봇 이벤트]
+    public event Action<int, int> OnEnemyHpChanged;
+    public event Action<BodyPart, int, int> OnEnemyPartDurabilityChanged;
+    public event Action<BodyPart> OnEnemyPartBroken;
+
+    // [보스전 전용 이벤트]
+    public event Action<int, int, int> OnBossHpChanged; // curHp, maxHp, phase
+    public event Action<string, bool> OnBossGimmickTriggered; // gimmickId, isGroggy
+    public event Action<string> OnBossGimmickBroken;          // gimmickId
+    public event Action<int, int, int> OnCoreLevelUp;         // newLv, newHp, newDef
+
+    // [레거시 호환 이벤트]
     public event Action<string, int, int> OnHpChanged;
-
-    /// <summary>부위 내구도 변경 통보 이벤트: (fighterId, BodyPart, curDurability, maxDurability)</summary>
     public event Action<string, BodyPart, int, int> OnPartDurabilityChanged;
-
-    /// <summary>타격 판정 연산 완료 통보 이벤트임</summary>
     public event Action<HitResolutionResult> OnHitResolved;
 
     private void Awake()
@@ -56,15 +90,9 @@ public class CombatDataHub : MonoBehaviour
             return;
         }
 
-        // 인스펙터 직렬화 데이터 검증 및 자가 복구 (체력 0 또는 파츠 내구도 누락 방어)
         ValidateAndRepairSnapshots();
     }
 
-    /// <summary>
-    /// [인스펙터 스냅샷 자가 복구 (Self-Healing)]
-    /// 씬 인스펙터에 직렬화된 PlayerSnapshot/EnemySnapshot의 체력이 0이거나
-    /// 딕셔너리(partStates)가 비어있는 경우 정상 수치(100%)로 자동 복구함
-    /// </summary>
     private void ValidateAndRepairSnapshots()
     {
         RepairSnapshot(PlayerSnapshot, "Player", true);
@@ -78,239 +106,70 @@ public class CombatDataHub : MonoBehaviour
         s.isPlayer = isPlayer;
 
         if (s.maxHp <= 0) s.maxHp = 1000;
-        if (s.currentHp <= 0)
-        {
-            s.currentHp = s.maxHp;
-            Debug.Log($"<color=cyan>[CombatDataHub] 인스펙터 스냅샷({s.fighterID})의 체력이 0이어서 maxHp({s.maxHp})로 자동 복구했습니다.</color>");
-        }
+        if (s.currentHp <= 0) s.currentHp = s.maxHp;
 
         if (s.partStates == null)
         {
             s.partStates = new Dictionary<BodyPart, PartRuntimeState>();
         }
 
-        var parts = new[] { BodyPart.Head, BodyPart.Core, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
+        var parts = new[] { BodyPart.Head, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
         foreach (var p in parts)
         {
             if (!s.partStates.ContainsKey(p) || s.partStates[p] == null)
             {
                 s.partStates[p] = new PartRuntimeState($"DEFAULT_{p}", p, 100);
             }
-            else if (s.partStates[p].maxDurability <= 0)
-            {
-                s.partStates[p].maxDurability = 100;
-                s.partStates[p].currentDurability = 100;
-            }
         }
     }
 
-    /// <summary>
-    /// 허브에 전투 참가자 스냅샷 등록함
-    /// </summary>
-    public void RegisterCombatants(CombatantSnapshot player, CombatantSnapshot enemy)
+    // ========================================================================
+    // 전투 초기화 (모드별 1:1 대전 진입)
+    // ========================================================================
+    /// <summary>일반 적(NPC A·B·C)과의 1:1 로봇 대전 초기화</summary>
+    public void InitializeRobotBattle(CombatantSnapshot player, CombatantSnapshot enemyRobot)
     {
+        currentBattleMode = BattleMode.RobotVsRobot;
         PlayerSnapshot = player;
-        EnemySnapshot = enemy;
+        EnemySnapshot = enemyRobot;
+        BossSnapshot = null;
 
-        Debug.Log($"[CombatDataHub] 참가자 스냅샷 등록 완료 - " +
-                  $"Player({player?.fighterID}): HP={player?.currentHp}, Atk={player?.totalAttackPower} | " +
-                  $"Enemy({enemy?.fighterID}): HP={enemy?.currentHp}, Atk={enemy?.totalAttackPower}");
+        Debug.Log($"[CombatDataHub] 1:1 로봇 대전 초기화 완료 - Player({player?.fighterID}) vs Enemy({enemyRobot?.fighterID})");
+        BroadcastFullState();
     }
 
-    /// <summary>
-    /// [단일 참가자 스냅샷 등록]
-    /// 특정 파이터 스냅샷만 개별 등록하거나 갱신함
-    /// </summary>
+    /// <summary>보스와의 1:1 토벌전 초기화</summary>
+    public void InitializeBossBattle(CombatantSnapshot player, BossSnapshot boss)
+    {
+        currentBattleMode = BattleMode.RobotVsBoss;
+        PlayerSnapshot = player;
+        BossSnapshot = boss;
+        EnemySnapshot = null;
+
+        Debug.Log($"[CombatDataHub] 1:1 보스 토벌전 초기화 완료 - Player({player?.fighterID}) vs Boss({boss?.bossName})");
+        BroadcastFullState();
+    }
+
+    /// <summary>기존 레거시 등록 함수 호환</summary>
+    public void RegisterCombatants(CombatantSnapshot player, CombatantSnapshot enemy)
+    {
+        InitializeRobotBattle(player, enemy);
+    }
+
     public void RegisterCombatant(CombatantSnapshot combatant)
     {
         if (combatant == null) return;
         if (combatant.isPlayer || combatant.fighterID.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0)
-        {
             PlayerSnapshot = combatant;
-        }
         else
-        {
             EnemySnapshot = combatant;
-        }
-        Debug.Log($"[CombatDataHub] 참가자({combatant.fighterID}) 스냅샷 개별 등록 완료 (HP: {combatant.currentHp}/{combatant.maxHp})");
-    }
-
-    /// <summary>
-    /// [기본 모의(Mock) 스냅샷 자동 생성 및 등록]
-    /// 다른 씬이나 테스트 환경에서 스냅샷이 누락되었을 때 기본 100% 정상 스냅샷을 자동 주입함
-    /// </summary>
-    public CombatantSnapshot RegisterDefaultMockIfMissing(string fighterId, int coreHp = 1000, int partDurability = 100)
-    {
-        var existing = GetSnapshot(fighterId);
-        if (existing != null && existing.maxHp > 0) return existing;
-
-        bool isPlayer = fighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
-        var mock = new CombatantSnapshot
-        {
-            fighterID = fighterId,
-            isPlayer = isPlayer,
-            currentHp = coreHp,
-            maxHp = coreHp,
-            baseDefense = 50,
-            totalAttackPower = 100,
-            // finalMoveSpeed = 5f
-        };
-
-        var parts = new[] { BodyPart.Head, BodyPart.Core, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
-        foreach (var p in parts)
-        {
-            mock.partStates[p] = new PartRuntimeState($"MOCK_{p}", p, partDurability);
-        }
-
-        RegisterCombatant(mock);
-        return mock;
-    }
-
-    /// <summary>
-    /// 부품 마스터 에셋 룩업 테이블 등록함
-    /// </summary>
-    public void RegisterMasterData(IEnumerable<PartMasterData> masterDatas)
-    {
-        if (masterDatas == null) return;
-        foreach (var data in masterDatas)
-        {
-            if (data != null && !string.IsNullOrEmpty(data.partID))
-            {
-                partMasterLookup[data.partID] = data;
-            }
-        }
-    }
-
-    public PartMasterData GetMasterData(string partId)
-    {
-        if (partMasterLookup.TryGetValue(partId, out var data))
-            return data;
-        return null;
-    }
-
-    /// <summary>
-    /// 식별자("Player", "Enemy" 등)를 통한 스냅샷 조회함
-    /// </summary>
-    public CombatantSnapshot GetSnapshot(string fighterId)
-    {
-        if (PlayerSnapshot != null && PlayerSnapshot.fighterID.Equals(fighterId, StringComparison.OrdinalIgnoreCase))
-            return PlayerSnapshot;
-        if (EnemySnapshot != null && EnemySnapshot.fighterID.Equals(fighterId, StringComparison.OrdinalIgnoreCase))
-            return EnemySnapshot;
-
-        // 기본 매핑 폴백: 대소문자 무관 검색함
-        if (fighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0)
-            return PlayerSnapshot;
-        if (fighterId.IndexOf("Enemy", StringComparison.OrdinalIgnoreCase) >= 0)
-            return EnemySnapshot;
-
-        return null;
     }
 
     // ========================================================================
-    // 1. 남윤호(NYH) 파트 스탯 조회 API
+    // 실시간 피격 및 연산 질의 (NYH HitDetection 호출 Façade)
     // ========================================================================
-
-    /// <summary>기획서 공식으로 계산된 최종 이동속도 반환: (왼다리 + 오른다리) / 2</summary>
-    public float GetFinalMoveSpeed(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        // return s != null ? s.finalMoveSpeed : 3f;
-        return 3f;
-    }
-
-    /// <summary>기획서 공식으로 계산된 총 공격력 반환: 기본Atk + (왼팔 + 오른팔) / 2</summary>
-    public int GetTotalAttackPower(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        return s != null ? s.totalAttackPower : 100;
-    }
-
-    /// <summary>현재 코어 체력(HP) 반환함</summary>
-    public int GetCurrentHp(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        return s != null ? s.currentHp : 0;
-    }
-
-    /// <summary>최대 코어 체력(HP) 반환함</summary>
-    public int GetMaxHp(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        return s != null ? s.maxHp : 1000;
-    }
-
-    /// <summary>코어 본체 방어력 반환함</summary>
-    public int GetBaseDefense(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        return s != null ? s.baseDefense : 50;
-    }
-
-    /// <summary>가드 시 팔 파츠가 제공하는 추가 방어력 보정치 반환함</summary>
-    public int GetGuardDefBonus(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        // return s != null ? s.guardDefBonus : 0;
-        return 0;
-    }
-
-    /// <summary>위빙 성공 시 다리 파츠가 제공하는 추가 무적 보정 반환함</summary>
-    public float GetInvincibleBonus(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        // return s != null ? s.invincibleBonus : 0f;
-        return 0f;
-    }
-
-    /// <summary>특정 부위의 현재 실시간 내구도 반환함</summary>
-    public int GetPartDurability(string fighterId, BodyPart part)
-    {
-        var s = GetSnapshot(fighterId);
-        // var p = s?.GetPartRuntimeState(part);
-        // return p != null ? p.currentDurability : 0;
-        return 0;
-    }
-
-    /// <summary>특정 부위의 최대 내구도 반환함</summary>
-    public int GetPartMaxDurability(string fighterId, BodyPart part)
-    {
-        var s = GetSnapshot(fighterId);
-        // var p = s?.GetPartRuntimeState(part);
-        // return p != null ? p.maxDurability : 0;
-        return 0;
-    }
-
-    /// <summary>특정 부위가 파손(내구도 0)되었거나 미장착 상태인지 확인함</summary>
-    public bool IsPartBroken(string fighterId, BodyPart part)
-    {
-        var s = GetSnapshot(fighterId);
-        return s == null || s.IsPartBroken(part);
-    }
-
-    // ========================================================================
-    // 2. 남윤호(NYH) 파트 실시간 전투 연동 인터페이스
-    // ========================================================================
-
     /// <summary>
-    /// [행동 가능 여부 질의 - CanExecuteAction]
-    /// ActionExecutor에서 틱마다 입력을 받아 기술을 시작하기 직전에 호출함.
-    /// - CoreFixed(잽, 가드, 위빙, 이동): 항상 true임
-    /// - Part(훅, 스트레이트, 어퍼컷, 백스핀 등): 요구 부위 파손 시 false 반환해서 시전 차단함
-    /// </summary>
-    public bool CanExecuteAction(string fighterId, ActionData action)
-    {
-        var actor = GetSnapshot(fighterId);
-        if (actor == null)
-            return true; // 스냅샷이 없으면 기본 허용함
-
-        return CombatCalculator.CanExecuteAction(actor, action);
-    }
-
-    /// <summary>
-    /// [타격 적중 시 대미지 감쇄 연산 - ProcessHit]
-    /// 공격 히트박스가 상대 허트박스에 닿았을 때 호출함.
-    /// 기획서 방어 감쇄 공식, 가드 시 양팔 내구도 5:5 분산 소모, 위빙 무적 회피, 크리티컬 등을 연산해서 반환함.
+    /// [NYH HitDetection 전용 1:1 대전 통합 타격 처리]
     /// </summary>
     public HitResolutionResult ProcessHit(
         string attackerId,
@@ -323,174 +182,333 @@ public class CombatDataHub : MonoBehaviour
         var attacker = GetSnapshot(attackerId);
         var defender = GetSnapshot(defenderId);
 
-        if (attacker == null || defender == null)
+        HitResolutionResult result = null;
+
+        // 1. 일반 적 로봇 vs 로봇 1:1 대전
+        if (currentBattleMode == BattleMode.RobotVsRobot && attacker != null && defender != null)
         {
-            Debug.LogWarning($"[CombatDataHub] ProcessHit 실패: 참가자 스냅샷을 찾을 수 없음 (Attacker: {attackerId}, Defender: {defenderId})");
-            return new HitResolutionResult();
+            result = CombatCalculator.EvaluateRobotAttack(
+                attacker, defender, attackAction, isGuarding, isWeaving, hitPart);
+
+            // 상태 변경 브로드캐스팅
+            NotifyHpAndCylinder(attacker, defender);
+        }
+        // 2. 보스전 (Robot vs Boss)
+        else if (currentBattleMode == BattleMode.RobotVsBoss)
+        {
+            bool isAttackerPlayer = attackerId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (isAttackerPlayer && PlayerSnapshot != null && BossSnapshot != null)
+            {
+                // 플레이어 -> 보스 타격
+                bool isD = attackAction != null && (attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed);
+                float dmg = attackAction != null ? attackAction.Damage : 10f;
+                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD);
+                result.KnockbackDistance = attackAction != null ? attackAction.KnockbackDistance : 0f;
+
+                OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
+                OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+                OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
+            }
+            else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
+            {
+                // 보스 -> 플레이어 타격
+                float dmg = attackAction != null ? attackAction.Damage : 30f;
+                result = CombatCalculator.EvaluateBossAttack(BossSnapshot, PlayerSnapshot, dmg, hitPart, 15, isWeaving);
+                result.KnockbackDistance = attackAction != null ? attackAction.KnockbackDistance : 0f;
+
+                OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+                OnHpChanged?.Invoke(PlayerSnapshot.fighterID, PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+            }
         }
 
-        // 순수 수치 판정기 호출함 (피격 부위 전달)
-        var result = CombatCalculator.EvaluateHit(attacker, defender, attackAction, isGuarding, isWeaving, hitPart);
-
-        // 이벤트 알림 처리함
-        if (result.DamageToHp > 0)
-        {
-            OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
-        }
-
-        // 가드로 인한 양팔 내구도 차감 이벤트
-        /*
-        if (result.LeftArmDurabilityDamage > 0)
-        {
-            var arm = defender.GetPartRuntimeState(BodyPart.LeftArm);
-            if (arm != null)
-                OnPartDurabilityChanged?.Invoke(defender.fighterID, BodyPart.LeftArm, arm.currentDurability, arm.maxDurability);
-        }
-
-        if (result.RightArmDurabilityDamage > 0)
-        {
-            var arm = defender.GetPartRuntimeState(BodyPart.RightArm);
-            if (arm != null)
-                OnPartDurabilityChanged?.Invoke(defender.fighterID, BodyPart.RightArm, arm.currentDurability, arm.maxDurability);
-        }
-
-        // 직접 피격된 파츠(머리, 다리 등) 내구도 차감 이벤트
-        if (hitPart != BodyPart.Core && hitPart != BodyPart.LeftArm && hitPart != BodyPart.RightArm)
-        {
-            var state = defender.GetPartRuntimeState(hitPart);
-            if (state != null)
-                OnPartDurabilityChanged?.Invoke(defender.fighterID, hitPart, state.currentDurability, state.maxDurability);
-        }
-        */
+        if (result == null)
+            result = new HitResolutionResult();
 
         OnHitResolved?.Invoke(result);
 
-        // 코어 HP가 0 이하로 떨어지면 BattleManager에 통보함
-        if (defender.currentHp <= 0 && BattleManager.Instance != null)
-        {
-            BattleManager.Instance.OnFighterKilled(defender.fighterID);
-        }
+        // 사망 판정 통보
+        CheckAndNotifyDeath();
 
         return result;
     }
 
     /// <summary>
-    /// [위빙(회피) 시도 처리 - ProcessWeavingAttempt]
-    /// 플레이어 또는 AI가 위빙을 시도할 때 호출함.
-    /// 좌/우 다리 중 무작위 1개 내구도 5를 차감하며, 다리 1개 파손 시 50% 확률로 실패를 반환함.
+    /// [수치 직접 전달형 1:1 대전 통합 타격 처리]
     /// </summary>
-    public bool ProcessWeavingAttempt(string fighterId)
+    public HitResolutionResult ProcessHit(
+        string attackerId,
+        string defenderId,
+        float rawDamage,
+        BodyPart targetPart = BodyPart.Core,
+        int partDamage = 0,
+        bool isBasicAttackD = false,
+        GimmickTag tag = GimmickTag.None,
+        string targetGimmickId = null)
     {
-        var actor = GetSnapshot(fighterId);
-        if (actor == null) return true;
+        var attacker = GetSnapshot(attackerId);
+        var defender = GetSnapshot(defenderId);
 
-        bool success = CombatCalculator.EvaluateWeavingAttempt(actor);
+        HitResolutionResult result = null;
 
-        // 다리 내구도 변경 이벤트 알림 처리함
-        /*
-        var leftLeg = actor.GetPartRuntimeState(BodyPart.LeftLeg);
-        if (leftLeg != null)
-            OnPartDurabilityChanged?.Invoke(actor.fighterID, BodyPart.LeftLeg, leftLeg.currentDurability, leftLeg.maxDurability);
+        if (currentBattleMode == BattleMode.RobotVsRobot && attacker != null && defender != null)
+        {
+            result = CombatCalculator.EvaluateRobotAttack(
+                attacker, defender, rawDamage, targetPart, partDamage, false, isBasicAttackD);
+            NotifyHpAndCylinder(attacker, defender);
+        }
+        else if (currentBattleMode == BattleMode.RobotVsBoss)
+        {
+            bool isAttackerPlayer = attackerId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
+            if (isAttackerPlayer && PlayerSnapshot != null && BossSnapshot != null)
+            {
+                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, rawDamage, isBasicAttackD, tag, targetGimmickId);
+                OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
+                OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+            }
+            else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
+            {
+                result = CombatCalculator.EvaluateBossAttack(BossSnapshot, PlayerSnapshot, rawDamage, targetPart, partDamage, false);
+                OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+            }
+        }
 
-        var rightLeg = actor.GetPartRuntimeState(BodyPart.RightLeg);
-        if (rightLeg != null)
-            OnPartDurabilityChanged?.Invoke(actor.fighterID, BodyPart.RightLeg, rightLeg.currentDurability, rightLeg.maxDurability);
-        */
+        if (result == null)
+            result = new HitResolutionResult();
 
-        return success;
+        OnHitResolved?.Invoke(result);
+        CheckAndNotifyDeath();
+        return result;
     }
 
-    // ========================================================================
-    // 3. 직접 수치 조작 및 실시간 이벤트 발생 API (테스트 및 특수 피격용)
-    // ========================================================================
-
-    /// <summary>
-    /// [코어 체력 직접 차감]
-    /// 유효타 피격, 크리티컬 추가타 또는 HUD 테스트 시 코어 체력을 직접 삭감하고 OnHpChanged 이벤트를 호출함.
-    /// </summary>
-    public void ApplyCoreDamage(string fighterId, int damage)
+    private void NotifyHpAndCylinder(CombatantSnapshot attacker, CombatantSnapshot defender)
     {
-        var s = GetSnapshot(fighterId);
-        if (s == null) return;
-
-        s.currentHp = Mathf.Max(0, s.currentHp - damage);
-        OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
-
-        if (s.currentHp <= 0 && BattleManager.Instance != null)
+        if (attacker.isPlayer)
         {
-            BattleManager.Instance.OnFighterKilled(s.fighterID);
+            OnPlayerCylinderChanged?.Invoke(attacker.currentCylinder, CombatantSnapshot.MaxCylinder);
+        }
+
+        if (defender.isPlayer)
+        {
+            OnPlayerHpChanged?.Invoke(defender.currentHp, defender.maxHp);
+            OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
+        }
+        else
+        {
+            OnEnemyHpChanged?.Invoke(defender.currentHp, defender.maxHp);
+            OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
         }
     }
 
-    /// <summary>
-    /// [특정 부위 내구도 직접 차감]
-    /// 가드/치명타/특수 상태이상 또는 HUD 테스트 시 해당 부위 내구도를 차감하고 OnPartDurabilityChanged 이벤트를 호출함.
-    /// </summary>
-    public void ConsumePartDurability(string fighterId, BodyPart part, int amount)
+    private void CheckAndNotifyDeath()
     {
-        var s = GetSnapshot(fighterId);
-        if (s == null) return;
-
-        // s.ConsumePartDurability(part, amount);
-        // var state = s.GetPartRuntimeState(part);
-        // if (state != null)
-        // {
-        //     OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
-        // }
+        if (PlayerSnapshot != null && PlayerSnapshot.currentHp <= 0)
+        {
+            BattleManager.Instance?.OnFighterKilled(PlayerSnapshot.fighterID);
+        }
+        else if (currentBattleMode == BattleMode.RobotVsRobot && EnemySnapshot != null && EnemySnapshot.currentHp <= 0)
+        {
+            BattleManager.Instance?.OnFighterKilled(EnemySnapshot.fighterID);
+        }
+        else if (currentBattleMode == BattleMode.RobotVsBoss && BossSnapshot != null && BossSnapshot.currentHp <= 0)
+        {
+            BattleManager.Instance?.OnFighterKilled(BossSnapshot.bossID);
+        }
     }
 
-    /// <summary>
-    /// [파츠 유효타 피격 처리: 파츠 내구도 + 코어 체력 동시 차감]
-    /// 특정 부위 피격 시 해당 파츠 내구도를 깎음과 동시에, 기체 본체인 코어 체력(HP)에도 피해를 전달함.
-    /// </summary>
+    // ========================================================================
+    // 행동 실행 가능 게이트 (NYH ActionExecutor 연동)
+    // ========================================================================
+    public bool CanExecuteAction(string fighterId, ActionData action)
+    {
+        var actor = GetSnapshot(fighterId);
+        return CombatCalculator.CanExecuteAction(actor, action);
+    }
+
+    public bool CanExecuteAction(string fighterId, ActionSource source, BodyPart requiredPart, int cylinderCost = 0)
+    {
+        var actor = GetSnapshot(fighterId);
+        return CombatCalculator.CanExecuteAction(actor, source, requiredPart, cylinderCost);
+    }
+
+    // ========================================================================
+    // 브로드캐스팅 헬퍼 메서드
+    // ========================================================================
+    public void BroadcastPartBroken(string fighterId, BodyPart brokenPart)
+    {
+        bool isPlayer = fighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
+        if (isPlayer)
+            OnPlayerPartBroken?.Invoke(brokenPart);
+        else
+            OnEnemyPartBroken?.Invoke(brokenPart);
+
+        Debug.Log($"<color=red>[CombatDataHub] {fighterId} {brokenPart} 파손 및 스킬 봉인 브로드캐스팅!</color>");
+    }
+
+    public void BroadcastCoreLevelUp(int newLv, int newHp, int newDef)
+    {
+        OnCoreLevelUp?.Invoke(newLv, newHp, newDef);
+    }
+
+    public void BroadcastFullState()
+    {
+        if (PlayerSnapshot != null)
+        {
+            OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+            OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
+            foreach (var kvp in PlayerSnapshot.partStates)
+            {
+                OnPlayerPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
+            }
+        }
+
+        if (currentBattleMode == BattleMode.RobotVsRobot && EnemySnapshot != null)
+        {
+            OnEnemyHpChanged?.Invoke(EnemySnapshot.currentHp, EnemySnapshot.maxHp);
+            foreach (var kvp in EnemySnapshot.partStates)
+            {
+                OnEnemyPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
+            }
+        }
+        else if (currentBattleMode == BattleMode.RobotVsBoss && BossSnapshot != null)
+        {
+            OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+        }
+    }
+
+    // ========================================================================
+    // 참가자 조회 및 스탯 헬퍼
+    // ========================================================================
+    public CombatantSnapshot GetSnapshot(string fighterId)
+    {
+        if (PlayerSnapshot != null && (PlayerSnapshot.fighterID.Equals(fighterId, StringComparison.OrdinalIgnoreCase) || fighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0))
+            return PlayerSnapshot;
+        if (EnemySnapshot != null && (EnemySnapshot.fighterID.Equals(fighterId, StringComparison.OrdinalIgnoreCase) || fighterId.IndexOf("Enemy", StringComparison.OrdinalIgnoreCase) >= 0 || fighterId.IndexOf("NPC", StringComparison.OrdinalIgnoreCase) >= 0))
+            return EnemySnapshot;
+
+        return null;
+    }
+
+    public float GetFinalMoveSpeed(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        return s != null ? s.finalMoveSpeed : 3f;
+    }
+
+    public int GetTotalAttackPower(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        return s != null ? s.totalAttackPower : 20;
+    }
+
+    public int GetCurrentHp(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s != null) return s.currentHp;
+        if (BossSnapshot != null && fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
+            return BossSnapshot.currentHp;
+        return 0;
+    }
+
+    public int GetMaxHp(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s != null) return s.maxHp;
+        if (BossSnapshot != null && fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
+            return BossSnapshot.maxHp;
+        return 1000;
+    }
+
+    public int GetPartDurability(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        var p = s?.GetPartRuntimeState(part);
+        return p != null ? p.currentDurability : 0;
+    }
+
+    public int GetPartMaxDurability(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        var p = s?.GetPartRuntimeState(part);
+        return p != null ? p.maxDurability : 0;
+    }
+
+    public bool IsPartBroken(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        return s == null || s.IsPartBroken(part);
+    }
+
+    // ========================================================================
+    // 직접 조작 헬퍼 (테스트 및 HUD용)
+    // ========================================================================
+    public void ApplyCoreDamage(string fighterId, int damage)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s != null)
+        {
+            s.currentHp = Mathf.Max(0, s.currentHp - damage);
+            OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
+            if (s.isPlayer) OnPlayerHpChanged?.Invoke(s.currentHp, s.maxHp);
+            else OnEnemyHpChanged?.Invoke(s.currentHp, s.maxHp);
+
+            if (s.currentHp <= 0) BattleManager.Instance?.OnFighterKilled(s.fighterID);
+        }
+        else if (BossSnapshot != null && fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            BossSnapshot.currentHp = Mathf.Max(0, BossSnapshot.currentHp - damage);
+            OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+            if (BossSnapshot.currentHp <= 0) BattleManager.Instance?.OnFighterKilled(BossSnapshot.bossID);
+        }
+    }
+
     public void ApplyPartHit(string fighterId, BodyPart part, int partDamage, int coreDamage)
     {
         var s = GetSnapshot(fighterId);
         if (s == null) return;
 
-        // 1. 파츠 내구도 차감
-        /*
         if (partDamage > 0)
         {
-            s.ConsumePartDurability(part, partDamage);
+            bool isBroken = s.ConsumePartDurability(part, partDamage);
             var state = s.GetPartRuntimeState(part);
             if (state != null)
             {
                 OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
+                if (s.isPlayer) OnPlayerPartDurabilityChanged?.Invoke(part, state.currentDurability, state.maxDurability);
+                else OnEnemyPartDurabilityChanged?.Invoke(part, state.currentDurability, state.maxDurability);
             }
+            if (isBroken) BroadcastPartBroken(s.fighterID, part);
         }
-        */
 
-        // 2. 코어 체력 동시 차감 (기획서: 파츠 피격 시 본체 생명력 동반 감소)
         if (coreDamage > 0)
         {
-            s.currentHp = Mathf.Max(0, s.currentHp - coreDamage);
-            OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
-
-            if (s.currentHp <= 0 && BattleManager.Instance != null)
-            {
-                BattleManager.Instance.OnFighterKilled(s.fighterID);
-            }
+            ApplyCoreDamage(fighterId, coreDamage);
         }
     }
 
-    /// <summary>
-    /// [전투 참가자 상태 전체 초기화]
-    /// 코어 체력 및 5개 파츠 내구도를 최대치로 완전 복구하고 UI를 갱신함.
-    /// </summary>
     public void ResetFighter(string fighterId)
     {
         var s = GetSnapshot(fighterId);
         if (s == null) return;
 
         s.currentHp = s.maxHp;
-        OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
+        s.currentCylinder = 1;
+        if (s.isPlayer)
+        {
+            OnPlayerHpChanged?.Invoke(s.currentHp, s.maxHp);
+            OnPlayerCylinderChanged?.Invoke(s.currentCylinder, CombatantSnapshot.MaxCylinder);
+        }
+        else
+        {
+            OnEnemyHpChanged?.Invoke(s.currentHp, s.maxHp);
+        }
 
         foreach (var kvp in s.partStates)
         {
             kvp.Value.currentDurability = kvp.Value.maxDurability;
-            OnPartDurabilityChanged?.Invoke(s.fighterID, kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
+            if (s.isPlayer)
+                OnPlayerPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
+            else
+                OnEnemyPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
         }
     }
 }
-

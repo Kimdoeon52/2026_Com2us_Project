@@ -57,7 +57,6 @@ public class CombatDataHubTester : MonoBehaviour
         Test_1_StatBuildAndInjection(hub, battleMgr);
         Test_2_ActionExecutionCheck(hub);
         Test_3_DamageAndGuardCalculation(hub);
-        Test_4_WeavingAttempt(hub);
         Test_5_BattleLifecycleAndKO(battleMgr, hub);
 
         // [테스트 후처리(Clean-up)]
@@ -195,45 +194,7 @@ public class CombatDataHubTester : MonoBehaviour
     /// <summary>
     /// [검증 4] 위빙 시도 시 다리 내구도 5 소모 및 50% 실패 페널티 (ProcessWeavingAttempt) 검증함
     /// </summary>
-    private void Test_4_WeavingAttempt(CombatDataHub hub)
-    {
-        Debug.Log("<color=yellow><b>[Test 4] 위빙(회피) 다리 내구도 소모(5) 및 한쪽 다리 파괴 시 50% 실패 검증함</b></color>");
-
-        var player = hub.GetSnapshot("Player");
-        // 다리 내구도 확인함
-        int leftLegDurBefore = hub.GetPartDurability("Player", BodyPart.LeftLeg);
-        int rightLegDurBefore = hub.GetPartDurability("Player", BodyPart.RightLeg);
-
-        // 정상 상태에서 위빙 1회 수행함
-        bool weaveSuccess = hub.ProcessWeavingAttempt("Player");
-        int leftLegDurAfter = hub.GetPartDurability("Player", BodyPart.LeftLeg);
-        int rightLegDurAfter = hub.GetPartDurability("Player", BodyPart.RightLeg);
-
-        int totalDurConsumed = (leftLegDurBefore - leftLegDurAfter) + (rightLegDurBefore - rightLegDurAfter);
-        Debug.Log($"위빙 1회 성공 여부: {weaveSuccess}, 다리 내구도 총 소모량: {totalDurConsumed} (기대값: 5)");
-
-        // 다리 1개 파괴 후 100회 시뮬레이션 돌림
-        // player.ConsumeDurability(BodyPart.LeftLeg, 9999);
-        int failCount = 0;
-        for (int i = 0; i < 100; i++)
-        {
-            if (!hub.ProcessWeavingAttempt("Player"))
-            {
-                failCount++;
-            }
-        }
-        Debug.Log($"다리 한쪽 파손 후 100회 위빙 시도 중 실패 횟수: {failCount}회 (50% 확률 수렴 검증됨)");
-
-        if (totalDurConsumed == 5 && failCount >= 30 && failCount <= 70)
-        {
-            Debug.Log("<color=green>▶ [Test 4 PASS] 위빙 내구도 소모 및 한쪽 다리 파괴 페널티 정상 통과함!</color>");
-        }
-        else
-        {
-            Debug.LogError("▶ [Test 4 FAIL] 위빙 페널티 검증 실패함!");
-        }
-    }
-
+ 
     /// <summary>
     /// [검증 5] 배틀 라이프사이클 및 KO 발생 시 배틀매니저의 전투 종료 처리 검증함
     /// </summary>

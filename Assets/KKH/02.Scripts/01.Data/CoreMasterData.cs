@@ -116,5 +116,10 @@ public class CoreMasterData : ScriptableObject
         int lv = level > 0 ? level : coreLevel;
         return 100 + (lv * 50);
     }
+
+    /// <summary>
+    /// 설계서 및 테스터 호환용 alias: 패배 시 코어 복구 비용 반환함
+    /// </summary>
+    public int GetRestoreCost(int level = -1) => GetRecoveryCost(level);
     #endregion
 }

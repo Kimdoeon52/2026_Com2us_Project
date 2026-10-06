@@ -40,6 +40,53 @@ public static class BattleSettlementProcessor
     public static event Action<bool> OnCoreStateChanged;
 
     /// <summary>
+    /// 기획서 §6.5.6 경험치 획득 공식:
+    /// 획득 EXP = 지역 기준가 * 0.2 * 경기 배율 * 레벨차 보정 (패배 시 20% 위로금)
+    /// </summary>
+    public static int CalculateGainedEXP
+    (int regionBasePrice, float matchMultiplier = 1.0f, float levelDiffMultiplier = 1.0f, bool isWin = true)
+    {
+        float baseExp = regionBasePrice * 0.2f * matchMultiplier * levelDiffMultiplier;
+        return isWin ? Mathf.RoundToInt(baseExp) : Mathf.RoundToInt(baseExp * 0.2f);
+    }
+
+/// <summary>
+/// 코어 경험치 누적 및 레벨업 처리 (최대 30레벨)
+/// </summary> 
+public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreMasterData coreMaster)
+    {
+        if(player ==  null || coreMaster == null)
+        {
+            Debug.LogError("[정산기] 코어 경험치 처리 실패: player 또는 coreMaster가 null임");
+            return;
+        }
+        if (player.coreLevel >= CoreMasterData.MaxLevel)
+        {
+            Debug.Log("[정산기] 코어 경험치 처리: 이미 최대 레벨 도달함");
+            return;
+        }
+
+        player.currentCoreExp += gainedExp;
+        int reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
+
+        while (player.currentCoreExp >= reqExp && player.coreLevel < CoreMasterData.MaxLevel)
+        {
+            player.currentCoreExp -= reqExp;
+            player.coreLevel++;
+            player.maxHp = coreMaster.GetMaxHp(player.coreLevel);
+            player.baseDefense = coreMaster.GetDefense(player.coreLevel);
+            player.currentHp = player.maxHp; // 레벨업 시 체력 회복 처리함
+            Debug.Log($"[정산기] 코어 레벨업! 현재 레벨: {player.coreLevel}, 남은 EXP: {player.currentCoreExp}");
+            CombatDataHub.Instance?.BroadcastCoreLevelUp(player.coreLevel, player.maxHp, player.baseDefense);
+            if (player.coreLevel < CoreMasterData.MaxLevel)
+            {
+                reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
+            }
+        }
+
+    }
+
+    /// <summary>
     /// 기획서 공식: 등급별 영구 파괴 확률 반환함
     /// 일반(70%), 레어(45%), 에픽(20%), 전설(5%), 프로토타입(1%)
     /// </summary>
@@ -70,6 +117,8 @@ public static class BattleSettlementProcessor
         CombatantSnapshot player,
         CombatantSnapshot enemy,
         int betGold = 0,
+        int regionBasePrice = 1000, //(500G ~ 3000G)
+        CoreMasterData coreMaster = null,
         Dictionary<string, PartMasterData> partMasterLookup = null)
     {
         var result = new BattleSettlementResult
@@ -86,9 +135,15 @@ public static class BattleSettlementProcessor
             // 3. 파손된(내구도 0) 부품은 긴급 응급복구 (내구도 1로 복구함)
             // ────────────────────────────────────────────────────────────────
             result.GoldDelta = betGold * 2;
-            result.CoreExpGained = 100;
+            result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
             result.CoreUnstable = false;
+            if (coreMaster != null)
+            {
+                ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+            }
 
+
+            // 코어 경험치 반영 및 레벨업 처리
             if (player != null)
             {
                 foreach (var kvp in player.partStates)
@@ -115,14 +170,24 @@ public static class BattleSettlementProcessor
             // 4. 등급별 확률 롤링으로 영구 파괴(삭제) 목록 결정함
             // ────────────────────────────────────────────────────────────────
             result.GoldDelta = -betGold;
-            result.CoreExpGained = 0;
+            result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: false);
             result.CoreUnstable = true;
+
+            if (coreMaster != null)
+            {
+                ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+            }
 
             if (player != null)
             {
                 foreach (var kvp in player.partStates)
                 {
                     var partState = kvp.Value;
+                    if(partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
+                    {
+                         Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
+                        continue;
+                    }
                     partState.currentDurability = 0; // 전 부품 내구도 0 강제 세팅함
                     result.FinalPartDurabilities[partState.partID] = 0;
 

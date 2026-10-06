@@ -38,6 +38,11 @@ public class RobotMover : MonoBehaviour
     private float verticalVelocity;
     private bool isGrounded = true;
 
+    // 현재 수평 이동 속도(부호 있음). verticalVelocity와 같은 이유로 필드로 들고 있는다 — 공중에서
+    // 공격(canMove=false) 중에도 이 값을 그대로 유지해야 "점프 중 공격하면 관성이 뚝 끊기는" 문제가
+    // 안 생긴다. 지상에서는 매 프레임 입력으로 덮어쓰므로 평소엔 그냥 "지금 입력" 그대로다
+    private float moveVelocity;
+
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
@@ -59,15 +64,29 @@ public class RobotMover : MonoBehaviour
         // 공격·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
         // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
         bool canMove = actionState == null || actionState.CanMove;
-        float moveInput = canMove ? (inputSource?.GetMoveInput() ?? 0f) : 0f;
+        float moveInput = 0f;
 
-        // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
-        bool isDashing = canMove && (inputSource?.GetDashInput() ?? false);
-        float speedMultiplier = isDashing ? dashSpeedMultiplier : 1f;
+        if (canMove)
+        {
+            moveInput = inputSource?.GetMoveInput() ?? 0f;
+            // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
+            bool isDashing = inputSource?.GetDashInput() ?? false;
+            float speedMultiplier = isDashing ? dashSpeedMultiplier : 1f;
+            moveVelocity = moveInput * moveSpeed * speedMultiplier;
+        }
+        else if (isGrounded)
+        {
+            // 지상에서 행동(공격 등) 중이면 그 자리에 멈춘다 — 기존 동작과 동일
+            moveVelocity = 0f;
+        }
+        // 공중에서 행동 중이면(canMove=false && !isGrounded) moveVelocity를 아무도 안 건드린다 —
+        // 점프 직전/직후 마지막으로 읽은 속도가 그대로 유지되어 수평 관성이 끊기지 않는다.
+        // 공중에서 입력으로 궤적을 바꾸고 싶어지면(에어 컨트롤) 이 분기를 다시 설계해야 함 — 지금은
+        // "공중 상태를 어떻게 다룰지"가 §15 미정 항목이라 최소한의 수정만 했다
 
-        // Time.deltaTime을 곱해서 프레임 속도와 무관하게 "초당 moveSpeed만큼" 이동하게 한다.
+        // Time.deltaTime을 곱해서 프레임 속도와 무관하게 "초당 moveVelocity만큼" 이동하게 한다.
         // (이동 자체는 아직 CombatTick으로 안 옮겨서, 클래스 주석대로 §3 원칙을 완전히 지키진 못한 임시 상태)
-        transform.Translate(Vector3.right * moveInput * moveSpeed * speedMultiplier * Time.deltaTime, Space.World);
+        transform.Translate(Vector3.right * moveVelocity * Time.deltaTime, Space.World);
 
         UpdateJump(canMove);
 

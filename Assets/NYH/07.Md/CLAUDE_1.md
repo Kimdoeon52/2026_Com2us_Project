@@ -11,8 +11,8 @@
 - **장르**: 로봇 커스터마이징 RPG. 전투는 **실시간 사이드뷰 PvE 보스전** (할로우나이트·스컬 참고. 2026-09-29 확정 — 이전의 "격투 게임 미러매치"(스트리트 파이터 2~4) 전제는 폐기됐다. 플레이어와 보스는 서로 다른 기술 풀을 가진다. 자세한 배경은 §15)
 - **표현**: 3D 공간 위 2D 픽셀아트 스프라이트 (2.5D, 옥토패스 트래블러 형식)
 - **이동**: 좌우 이동 + **점프·대시 포함** (2026-09-29 변경 — "점프 없음" 결정 폐기). 공중 상태를 상태기계에 어떻게 반영할지는 미정, §15 참고
-- **담당 범위**: 이 지침이 다루는 것은 전투의 실행 엔진 — 행동(상태기계), 부위 파괴 판정/로직, 히트 판정, 넉백, 장비 연결(조립 로직)
-- **인접 담당**: 스킬 데이터(최상희), 전투 결과·데이터 관리(김관현/KKH), 그래픽(심예성)
+- **담당 범위** (2026-10-06 재확인): 플레이어 이동·조작, 기본 공격(D)과 판정(히트/허트/푸시박스), 행동 상태기계, 부위 파괴 판정/로직, 장비 연결(조립 로직), **그리고 일반 적(몹) AI·일반 적 제작**. 보스 자체의 기믹/스킬 데이터는 범위 밖(§15), 보스가 쓰는 입력원(`IInputSource` 구현체) 자체는 일반 적 AI와 같은 자리에서 다룰 가능성 있음 — 확정 전까지 임의로 합치지 말 것
+- **인접 담당**: 스킬 데이터(최상희/CSH), 전투 결과·데이터 관리(김관현/KKH), 그래픽(심예성). 각 폴더와의 실제 연동 현황(공개 API, 문서-코드 불일치, 미해결 지점)은 `KKH_CSH_연동_현황.md`에 기록 — 거기 "미정" 항목들이 §13·§14보다 더 최신 사실 확인본이다
 - **데이터 소유 경계 (2026-09-18 논의, 팀 확인 필요)**:
   - `ActionData`(행동/프레임 데이터) — **NYH 소유**. `ActionState`/`ActionExecutor`가 직접 읽는 실행 계약이라 다른 담당에게 넘기지 않는다.
   - `PartData`/`CoreData`(파츠·코어 원장 스탯) — **NYH가 별도로 만들지 않는다.** KKH가 `PartMasterData`(SO)로 4개 파트 공용 데이터를 이미 만들어뒀으므로, NYH의 `DurabilitySystem`/`RuntimePart`/`RobotAssembler`는 이 데이터를 **참조만** 한다. 로직(부위 파괴 판정 등)은 여전히 NYH 소유, 데이터 정의만 KKH 소유.
@@ -232,7 +232,7 @@ public enum ActionPhase { Idle, Startup, Active, Recovery, Stagger, Down, Dead }
 
 | 행동 | 시작 | 활성 | 회수 | 전체 | 비고 |
 |---|---|---|---|---|---|
-| D (고정 기본공격) | 미환산 | 미환산 | 미환산 | 미환산 | 쿨타임 0.5초 / 데미지 10 / 사거리 1.2 (기획서 확정값. 프레임 단위로는 아직 안 쪼갬) |
+| D (고정 기본공격) | 6(임시) | 2(임시) | 10(임시) | 18(임시) | 쿨타임 0.5초 / 데미지 10 / 사거리 1.2 (기획서 확정값. 프레임 분배는 아직 기획 미확정 — `Assets/NYH/04. SO/Combat/Actions/D.asset`에 2026-10-06 **임시값**으로 뼈대만 만들어둠, 개발일지 2026-10-06 참고. `animationClipName`은 신규 클립이 없어 씬 Player가 이미 쓰는 구 컨트롤러(`08-999.OldPlayerAnim/AnimatorControlle.controller`)의 `Jap` 상태를 임시로 재사용 — 진짜 D 클립이 나오면 교체. 쿨타임 필드는 `ActionData`에 아직 없음 — 별도 과제) |
 | Q (왼팔 액티브) | 미정 | 미정 | 미정 | 미정 | 파츠 소속. 수치·설계 일정 전부 미정 |
 | W (오른팔 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
 | E (왼다리 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
@@ -366,7 +366,7 @@ Hit/Hurt/Push 박스가 전부 없었다 — 서 있는 상대를 때려도 판�
 
 | 판정 | 기준 |
 |---|---|
-| 파츠 내구도 감소 | **보스의 특정 스킬**에 맞았을 때만. 그 스킬이 지정한 부위가 깎인다 (기획서 736~739행) |
+| 파츠 내구도 감소 | **보스의 특정 스킬**에 맞았을 때만. 그 스킬이 지정한 부위가 깎인다 (기획서 977~980행) |
 | 일반 피격 | 코어 HP만 감소, 파츠 내구도는 그대로 |
 | 적용 대상 | **플레이어 로봇에만 적용.** 보스는 파츠 내구도/파괴 개념이 없다 (아래 "플레이어 vs 보스 비대칭" 참고) |
 
@@ -384,26 +384,42 @@ Hit/Hurt/Push 박스가 전부 없었다 — 서 있는 상대를 때려도 판�
   **미정** — 결정 전까지 "로봇 본체는 하나, 입력만 다르다"(§8) 원칙을 내구도 시스템에까지
   그대로 확장하지 말 것.
 
-### 부위 파괴 (기획서 743~749행 — 페널티 단순화됨)
+### 부위 파괴 (기획서 981~990행 — 페널티 단순화됨)
 
 - 내구도 0 → 해당 부위의 스킬(Q/W/E/R 중 하나)만 사용 불가
 - **회피·가드 확률에 페널티를 주는 로직은 삭제됐다** (기존 "다리 1개 파괴 → 회피 50%" 등은 폐기)
 - 파괴된 부위는 반투명 처리 + **그 부위의 허트박스도 제거** (이 부분은 유지)
 
-### 행동 잠금은 `RuntimeRobot`이 목록으로 관리 (변경 없음)
+### 행동 잠금은 `RuntimeRobot`이 목록으로 관리 (✅ 2026-10-06 구현)
+
+`Assets/NYH/02. Scripts/Combat/Runtime/RuntimeRobot.cs`. `ActionExecutor.Init()`에서 생성되어
+`ActionExecutor.Robot`으로 노출된다 — `OnPartEquipped`은 아직 안 만듦(장비 교체가 전투 중 안 생기므로
+우선순위 낮음), `OnPartBroken`은 KKH `CombatDataHub.OnPlayerPartBroken`/`OnEnemyPartBroken` 이벤트를
+그대로 구독해서 돈다.
 
 ```csharp
 class RuntimeRobot
 {
-    List<ActionData> availableActions;
+    IReadOnlyList<ActionData> AvailableActions;
+    bool IsAvailable(ActionData action);
 
     void OnPartBroken(BodyPart part) => RebuildAvailableActions();
-    void OnPartEquipped(...)         => RebuildAvailableActions();
 }
 ```
 
 - **매 프레임 검사하지 않는다.** 부위 상태가 바뀌는 이벤트에서만 1회 갱신한다.
 - 입력·UI·AI가 전부 이 목록 하나를 본다. 실행 직전에 검사하면 UI가 버튼을 회색 처리할 수 없고 AI가 못 쓰는 기술을 고른다.
+  `AIInputSource.GetDesiredAction()`이 이미 이 경로로 물어보게 연결됨.
+- **구독 타이밍 주의**: `CombatDataHub`는 씬에 없으면 자동 생성이 안 돼서(§14), `PlayerRobotBootstrap.Awake`
+  시점(생성자가 도는 시점)엔 아직 `CombatDataHub`가 없는 게 오히려 정상이다. 그래서 생성자에서 한 번에
+  구독을 끝내지 않고 `EnsureSubscribed()`를 `ActionExecutor.ExecuteTick()`마다 가볍게 재시도한다
+  (이미 구독됐으면 bool 체크 한 줄로 끝남).
+- **지금은 실전 테스트가 안 됨**: `ActionData`에 "이 공격이 상대의 어느 부위를 깎는지" 필드가 아직 없고
+  (§15 "보스 스킬 타격 부위" 미정 항목), `HitDetection.ResolveHit`도 `ProcessHit`에 `hitPart`를 항상
+  기본값(`Core`)으로 보내서, 지금 플레이로는 부위 내구도가 절대 안 깎인다 — `RuntimeRobot`이 목록을
+  갱신할 일 자체가 생기지 않는다. 확인하려면 `CombatDataHub.Instance.ApplyPartHit(fighterId, part,
+  partDamage, 0)`을 테스트 코드로 직접 불러서 강제로 깨뜨려봐야 한다. "타격 부위" 필드 설계가 끝나야
+  정식으로 검증 가능 — §11-13 참고.
 
 ### 출처 구분 — 코어 고정 vs 파츠 (갱신)
 
@@ -426,20 +442,14 @@ class RuntimeRobot
 
 ---
 
-## 6. 넉백 — SF2 방식
+## 6. 넉백 — 삭제됨 (2026-10-06)
 
-콤보 제한 카운터를 **만들지 않는다.** 콤보를 끊는 것은 거리다.
+구 "SF2 방식"(거리로 콤보를 끊는 설계 — 1타 0.9/2타 1.3/3타 1.7/4타 사거리 밖)은 **삭제됐다.**
+미러매치 격투 게임 전제 시절 설계였고, 근거로 들었던 다운 유발 기술(`어퍼컷`/`백스핀 엘보우`)도
+이미 폐기된 기술이다. 기획서 전체에 "넉백"이라는 단어 자체가 없어 0929 보스전 전환 이후
+재검토된 적 없이 방치돼 있던 것으로 확인됨 — 코드에 이 설계로 만들어진 부분이 있으면 제거 대상.
 
-```
-1타 ▸ 거리 0.9 → 2타 ▸ 1.3 → 3타 ▸ 1.7 → 4타 ▸ 사거리 밖, 헛침
-```
-
-구현은 이것뿐:
-
-> 공격이 맞은 순간, 양쪽 x 좌표에 `ActionData`의 넉백 값을 더한다.
-
-`comboCount`, `maxComboHits` 같은 변수를 도입하지 말 것. 콤보 길이는 넉백 값과 사거리가 정한다.
-다운 유발 기술(`어퍼컷`, `백스핀 엘보우`)이 맞으면 그 자리에서 콤보가 끝난다.
+넉백 자체(피격 시 밀려나는 것)를 PvE 보스전에서 어떤 수치/규칙으로 다시 넣을지는 **미정** — §15 참고.
 
 ---
 
@@ -581,17 +591,17 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
    - ✅ `fighterId` 배선 (`ActionExecutor.FighterId`) — KKH `CombatDataHub` 조회 키로 씀 (§14)
    - 🗑️ (2026-09-29) ~~가드 판정 (`ActionExecutor.IsGuarding`, 방향 기반)~~ — 가드 자체가 기동 행동에서 삭제되어 이 항목 폐기. 코드 제거 대상 (§5·§8)
    - ⬜ 후딜 중 재입력이 무시되는지 실제 플레이로 반드시 확인 (`CanAcceptNewAction` 로직 자체는 구현됨)
-   - ⬜ `CombatDataHub.CanExecuteAction` 게이트 — 지금은 부위 파손 여부와 무관하게 기술이 나감 (§14)
+   - ✅ (2026-10-06) `CombatDataHub.CanExecuteAction` 게이트 — `ActionExecutor.GateByPartBroken()` 추가해서 대체 여부와 무관하게 **최종적으로 Begin()에 넘어가는 모든 행동**이 이 체크를 거치게 함. CSH의 `ResolveReplacement`는 "대체된 행동"만 따로 한 번 더 체크하지만(대체 실패 시 원본으로 폴백), 그 원본도 이제 `GateByPartBroken`을 거치므로 구멍이 막힘
 5. ✅ `BoxDrawer` (Gizmos) + `FrameStepper` — 판정 없이 네모만. `ActionDataEditor`(박스 드래그 편집기)도 추가 제작
 6. 🔶 `HitDetection` — AABB 겹침. 선행 조건(`FrameBox`, `GetActiveBoxes`, `IsInvincibleDuringActive`)은 준비됨. `isGuarding` 관련 부분은 §5·§8 갱신에 맞춰 재검토 필요
 7. 🔶 `KnockbackSystem` (`StunSystem`은 2026-09-29 경직 시스템 삭제로 작업 목록에서 제외, §7)
-8. ⬜ `RobotAssembler` / `RuntimePart` / `DurabilitySystem` — 부위 파괴. KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음 — NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14). **단 §5 "플레이어 vs 보스 비대칭"이 정해지기 전까지 보스 쪽 내구도 조립 로직은 보류**
-9. ⬜ `AIInputSource` — 보스 패턴
-10. ⬜ `IUsable` 인터페이스 확정 + 상희(CSH) 스킬 연동 지점 배선 (§13) — CSH `SkillBase` 쪽이 어느 정도 채워진 뒤 진행
+8. 🔶 (2026-10-06) `RuntimeRobot`(행동 잠금 목록, §5) 완성. `RobotAssembler`/`RuntimePart`/`DurabilitySystem`은 아직 ⬜ — KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음, NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14). **단 §5 "플레이어 vs 보스 비대칭"이 정해지기 전까지 보스 쪽 내구도 조립 로직은 보류**
+9. 🔶 (2026-10-06) `AIInputSource` 1차 버전 작성 완료(`Combat/Input/AIInputSource.cs`) — "사거리 밖이면 접근, 안이면 공격"만 하는 최소 규칙. 보스 기믹 같은 복잡한 패턴은 아직 없음. 보스용과 일반 적용을 같은 클래스로 계속 묶을지는 여전히 미정 — 지금은 구조 검증용 하나로 공용. ⬜ 씬에서 `DummyJabInputSource` → `AIInputSource` 교체 아직 안 함(사용자가 Unity에서 직접)
+10. ✅ (2026-10-06 결정) CSH 연동 방식 확정 — `IUsable`/`SkillBase`는 CSH가 이미 폐기하고 "장비 효과"(`EquipmentEffectSet`/`ResolvedModifiers`) + 리졸버 주입(`SetModifierResolver`/`SetEffects`, 이미 `ActionState.cs`/`ActionExecutor.cs`에 병합됨) 체계로 교체함. §13 원안(이벤트 구독)으로 되돌리지 않고 **CSH가 만든 방식을 그대로 따라간다.** 프레임 보정 필드·`ActionTag` 매칭·`KnockbackMultiplier` 등 CSH 쪽 빈 자리는 CSH 책임 — NYH가 먼저 요구하지 않음
 11. ✅ (2026-09-29) D/Q/W/E/R 액션 구조 전환 — 기존 5종 기본기 에셋·키매핑 제거 + D 슬롯 신설 + Q/W/E/R 슬롯 구조 (§3·§8). 2026-10-02: Q/W 짧게·길게(차지) 입력 수신 + 대시·점프 입력 수신까지 추가 — 전부 `PlayerInputSource`의 "입력 수신"만 완료고, 실제 물리/실린더 연결은 미완료(아래 참고)
 12. ✅ (2026-10-02) 점프·대시를 `RobotMover`에 실제로 반영 — Y축 포물선 점프(`jumpVelocity`/`gravity`, 수치 전부 임시) + 대시 중 `moveSpeed` 배율(`dashSpeedMultiplier`, 수치 임시). **같은 작업 중 발견: 방향 전환이 "상대 위치 기준"(옛 SF2 미러매치 가정)으로 박혀 있던 걸 "이동 입력 방향 기준"(기획서 그래픽 §7-1 "방향 전환 | 반대 방향 입력")으로 교체함 — 할로우나이트/스컬류 보스전엔 전자가 안 맞음.** 이동 로직 자체는 여전히 `Update()`에서 돈다(`CombatTick` 이관은 별도 확인 필요 — §15).
 13. ⬜ 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15)
-14. ⬜ (2026-10-02 신규) 실린더 시스템 — `CombatDataHub`에 실린더 필드/게이트가 생기면 Q/W 차지 판정과 연결. 그 전까지 차지 강화판정은 "에셋 있으면 무조건 나감" 상태(진짜 실린더 체크 아님)
+14. ⏸️ (2026-10-06 결정) 실린더 시스템 — `CombatDataHub.CanExecuteAction(fighterId, source, requiredPart, cylinderCost)` 오버로드는 이미 존재하지만, 이걸 Q/W 강화판정에 실제로 연결하는 작업은 **KKH·CSH 쪽이 알아서 진행** — NYH가 먼저 나서서 연결하지 않는다. 요청이 오면 그때 배선
 15. ⬜ (2026-10-02 신규) 투사체(발사체) 스킬 아키텍처 — 로켓/앵커 너클 등 "원거리 기물" 태그 스킬은 지금 구조(캐릭터에 고정된 로컬 `FrameBox`)로 못 만듦. 설계 먼저 논의 (§15)
 
 ---
@@ -614,7 +624,26 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 "맞았을 때 이펙트가 나온다", "스킬이 프레임을 늘리거나 줄인다", "추가 스킬이 발동한다" 같은
 효과의 **유무·타이밍 판단은 전부 스킬 담당(최상희/CSH) 몫**이다. NYH 코드는 그 판단을 몰라도 된다.
 
-### 접촉 지점은 이벤트 3개뿐
+### 2026-10-06 갱신 — 아래 "이벤트 3개로만" 계획은 실제 코드와 다르다
+
+이 절은 원래 계획(이벤트 구독 방식)을 적어둔 것이고, **실제로 CSH가 이미 구현해서 2026-09-21에
+NYH 파일에 직접 병합한 방식은 이것과 다르다** — 상세 조사 결과는 `KKH_CSH_연동_현황.md` 참고.
+요약: `SkillBase`(MonoBehaviour)는 이미 삭제됐고 `IUsable`은 만들어진 적이 없다. CSH는 "스킬"이 아니라
+"장비 효과(Equipment Effect, SO 기반)" 체계로 선회했고, `ActionState.cs`/`ActionExecutor.cs`에
+`#region 최. 추가`로 `SetModifierResolver`/`SetEffects`를 직접 추가해서 **이벤트 구독이 아니라
+함수(Func) 직접 호출(pull) 방식**으로 1차 연동을 끝냈다. 아래 "이벤트 3개" 자체는 코드에 그대로
+남아있고 여전히 발행되지만, **지금 구독자가 없다.**
+
+### 결정 (2026-10-06, 남윤호) — CSH가 만든 방식 그대로 탄다
+
+NYH 쪽에서 이벤트 구독 원안으로 되돌리자고 요구하지 않는다. CSH가 이미 넣어놓은
+`SetModifierResolver`/`SetEffects`(리졸버 직접 호출) 방식을 **그대로 전제로 작업한다.** 아래
+"접촉 지점 (원안 — 이벤트 3개)"과 `IUsable` 초안은 실행된 적 없는 옛 계획이므로 참고만 하고,
+새 코드를 짤 때 그 모양으로 다시 맞추려 하지 않는다. `ResolvedModifiers`에 프레임 보정 필드가
+없는 것, `ActionTag` 매칭이 비활성인 것, `KnockbackMultiplier`가 안 쓰이는 것 등은 CSH 쪽 작업
+범위이므로 NYH가 먼저 나서서 고치거나 요구하지 않는다 — 필요해지면 CSH가 알아서 채울 자리다.
+
+### 접촉 지점 (원안 — 이벤트 3개)
 
 `ActionState`(2층)가 아래 이벤트를 노출한다. 전투 실행 엔진은 이 이벤트를 **모든 `ActionData`에 대해
 무조건 발생**시키고, "이게 무슨 기술인지, 지금 반응해야 하는지"는 구독하는 쪽이 판단한다.
@@ -643,11 +672,15 @@ if (action.ActionName == "훅") { ... }
 ```
 
 이런 분기가 필요해지는 순간, 그건 스킬 쪽 구독자 코드에 들어가야 할 로직이 엔진에 새어 들어온 것이다.
+(참고: 지금 CSH의 `ActionModifierData.Matches`도 `ActionTag` 매칭을 주석처리해두고 `requiredPart`만
+보고 있어서, 이 원칙 자체는 지켜지고 있다 — `KKH_CSH_연동_현황.md` 참고.)
 
-### 서로 다른 구현 방식이어도 된다 — 접점은 `IUsable` 하나
+### 서로 다른 구현 방식이어도 된다 — 접점은 `IUsable` 하나 (원안, 미착수)
 
-NYH는 `ActionData`(SO)로, CSH는 `SkillBase`(MonoBehaviour 상속)로 — 서로 다른 방식을 써도 된다.
-어느 쪽이 "옳다"를 강요하지 않는다. 대신 둘 다 만족하는 최소 계약만 인터페이스로 둔다.
+NYH는 `ActionData`(SO)로, CSH는 `SkillBase`(MonoBehaviour 상속)로 — 서로 다른 방식을 써도 된다는
+것이 원래 계획이었다. 그런데 **CSH의 `SkillBase`는 2026-09-21에 삭제됐고, `IUsable`은 양쪽 다
+구현한 적이 없다.** 아래 인터페이스 초안은 참고용으로만 남겨둔다 — 지금 실제로 쓰이는 접점은
+`EquipmentEffectSet`/`ResolvedModifiers`(CSH)와 `ActionState.SetModifierResolver`(NYH)다.
 
 ```csharp
 public interface IUsable
@@ -658,53 +691,66 @@ public interface IUsable
 }
 ```
 
-`ActionExecutor`는 구체 타입이 아니라 이 인터페이스로만 다뤄야 한다 (실제 배선은 §11-10, CSH 쪽이
-어느 정도 채워진 뒤 진행 — 지금은 빈 껍데기라 연동해도 얻을 게 없다).
-
 ### 프레임 값 자체를 스킬이 바꿔야 할 때
 
 `ActionData`는 불변 SO라 스킬이 직접 `startupFrames` 등을 고치면 안 된다 (§2 원칙 재확인).
-대신 `RuntimeRobot`(2층, 가변)에 보정치를 두고 거기서만 조정한다.
-
-```csharp
-// RuntimeRobot 쪽 — 원본 에셋은 절대 안 건드림
-public float FrameSpeedModifier { get; set; } = 1f;
-```
+**실제로는** `RuntimeRobot`이 아니라 CSH의 `ResolvedModifiers`(struct)가 이 역할을 하도록
+이미 연결돼 있다 — `ActionState.Begin()`이 `modifierResolver(action)`로 매번 새로 받아서
+`ResolvedAction.Resolve()`에 넘긴다. 단 `ResolvedModifiers`에는 아직 **프레임(선딜/활성/후딜) 보정
+필드가 없어서**, 지금은 `BuildAdjustment()`가 항상 `FrameAdjustment.None`을 반환한다 — "선딜을
+줄이는 스킬"은 CSH 쪽에 필드가 추가되기 전까지 구현 불가능하다 (`KKH_CSH_연동_현황.md` 참고).
 
 ### 구독 배선
 
 스킬 쪽이 특정 로봇의 이벤트를 구독하려면 `ActionExecutor.State`(또는 `RuntimeRobot`을 경유한 참조)로
-접근한다. 이 참조 경로는 상희 님과 합의 후 고정하고, 합의 전까지 CSH 폴더 코드를 NYH 쪽에서 직접
-참조하지 않는다 (수정 금지 범위와 별개로, 결합 방지 차원).
+접근한다는 것이 원안이었다. **실제로는 CSH가 `EffectContext.State`로 이미 같은 경로를 뚫어뒀지만,
+현재 유일한 구현체(`ActionModifierData.Instance`)는 `OnEquip()`에서 아무것도 구독하지 않는다** —
+이벤트 구독 자체가 지금 코드베이스 어디에도 없는 상태. **(2026-10-06 결정) 통일을 NYH가 요구하지
+않는다** — 리졸버 주입이 CSH가 택한 방식이므로 그대로 두고, 이벤트 3개가 나중에 다른 용도(예:
+`RobotView`의 애니메이션 재생처럼 NYH 자체 구독자)로 쓰이는 건 상관없다.
 
 ---
 
-## 14. KKH 데이터 연동 지점 (2026-09-21 확인)
+## 14. KKH 데이터 연동 지점 (2026-09-21 작성 / 2026-10-06 전면 재확인)
 
 KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약을 **참조만** 하고 KKH 폴더는 건드리지 않는다 (§0).
+아래 표는 2026-10-06에 실제 코드(`CombatDataHub.cs`/`BattleManager.cs`/`CombatCalculator.cs`)를 grep해서
+재확인한 내용이다 — 이전 버전은 `BattleManager.InitializeBattle`을 "아직 아무도 안 부름"이라고 적어뒀는데
+**이미 `DummyBattleBootstrap.cs`가 부르고 있어 사실이 바뀌어 있었다.** 더 자세한 조사 과정·불일치 목록은
+`KKH_CSH_연동_현황.md` 참고.
 
 | KKH 쪽 | 하는 일 | NYH가 호출/참조하는 지점 |
 |---|---|---|
-| `CombatDataHub`(싱글톤) | 스탯 조회 + 판정 연산 창구 | `CombatDataHub.Instance` |
-| `CombatDataHub.CanExecuteAction(fighterId, action)` | 부위 파손 시 기술 시전 차단 | ⬜ 아직 `ActionExecutor`가 안 부름 — §11-4 다음 작업 |
-| `CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving)` | 데미지·가드분산·크리티컬 계산 + 이벤트 발행 | ⬜ `HitDetection`이 만들어지면 여기서 호출 (§11-6). **`isGuarding` 인자는 가드 삭제(§5·§15)로 재확인 필요 — 시그니처는 KKH 소유라 임의로 못 바꿈** |
+| `CombatDataHub.Instance`(싱글톤) | 스탯 조회 + 판정 연산 창구 | 사용 중 |
+| `CombatDataHub.CanExecuteAction(fighterId, action)` | 부위 파손 시 기술 시전 차단 | ✅ (2026-10-06) `ActionExecutor.GateByPartBroken()`이 `Begin()`에 넘어가는 모든 행동에 대해 호출 — CSH의 `ResolveReplacement`(대체 행동만 체크)와 별개로 공통 게이트 완성 |
+| `CombatDataHub.ProcessHit(attackerId, defenderId, action, isGuarding, isWeaving, hitPart)` | 데미지 계산 + 이벤트 발행 | ✅ `HitDetection.cs`가 호출 중. `isGuarding`은 항상 `false` 고정(가드 삭제, §5·§15). **단, 코드상 가드 분산/치명타/경직/다운 결과 필드(`IsCritical`/`StaggerAdded`/`CausesKnockdown`)는 KKH 쪽이 대입하는 곳이 없어 항상 기본값 — 믿고 읽으면 안 됨** |
+| `CombatDataHub.ProcessWeavingAttempt(fighterId)` | (문서에만 있음) 위빙 시도 처리 | ❌ **코드에 존재하지 않음.** `KKH_Integration_Guide.md`가 구버전 기준으로 적어둔 것 — 호출하면 컴파일 에러 |
+| `CombatDataHub.InitializeBossBattle(player, bossSnapshot)` | 보스전 모드로 전투 등록 | ⏸️ (2026-10-06 결정) NYH 쪽에서 호출하는 곳 없음 — **KKH·CSH가 알아서 연결하도록 둔다, NYH가 먼저 나서서 부르지 않음** |
+| `CombatDataHub.CanExecuteAction(fighterId, source, requiredPart, cylinderCost)` (실린더 체크 포함 오버로드) | 실린더(탄) 소모 게이트 | ⏸️ (2026-10-06 결정) NYH는 `ActionData` 오버로드(실린더 체크 없음)만 씀 — **실제 연결은 KKH·CSH 책임, NYH가 먼저 배선하지 않음** |
 | `CombatDataHub.GetFinalMoveSpeed(fighterId)` 등 스탯 조회 | 실시간 스탯 공급 | ⬜ `RobotMover`가 아직 하드코딩값(`moveSpeed`) 씀 — 연결 안 함 |
-| `BattleManager.InitializeBattle(playerSnapshot, enemySnapshot)` | `CombatDataHub`에 두 파이터 스탯 등록 | ⬜ 아직 아무도 안 부름 (테스터의 더미 데이터로만 검증됨) — `RobotAssembler`가 할 일 |
-| `BodyPart`, `ActionSource`, `ActionData`의 필드들(`Damage`/`IsGuardable`/`StaggerValue`/`CausesKnockdown`/`KnockbackDistance`) | 계산에 그대로 씀 | NYH가 이미 정의한 것 그대로 KKH가 읽음 — 필드명 바꾸면 KKH 쪽도 깨짐, 바꾸기 전 확인 필수. **`StaggerValue`는 경직 삭제(§7)로 무효 — KKH 쪽에서 이 필드를 읽고 있다면 같이 정리 필요** |
+| `BattleManager.InitializeBattle(playerSnapshot, enemySnapshot, ...)` / `StartBattle()` | `CombatDataHub`에 두 파이터 스탯 등록 | ✅ `DummyBattleBootstrap.cs`가 호출 중(더미 스냅샷). **단 일반 적(로봇 vs 로봇) 모드만 지원 — 보스 오버로드 없음** |
+| `ActionData`의 필드 중 KKH가 실제로 읽는 것: `ActionName`/`Source`/`RequiredPart`/`Damage`/`KnockbackDistance` (딱 5개, `CombatCalculator.cs`/`CombatDataHub.cs` grep 재확인) | 계산에 그대로 씀 | 필드명 바꾸면 KKH 쪽도 깨짐, 바꾸기 전 확인 필수 |
+| `IsGuardable`/`StaggerValue`/`CausesKnockdown` | (예전엔 "KKH 계약"이라 적어뒀음) | **실제로는 KKH 코드 어디서도 안 읽음 — 2026-10-06 grep으로 확인.** `ActionData.cs` 주석의 "계약" 서술은 틀렸다. 그래도 지우기 전에 KKH(김관현)에게 한 번 확인은 할 것(문서가 틀렸을 뿐 실수로 의존하는 다른 코드가 있을 가능성은 낮지만 0은 아님) |
 
 각 로봇은 `fighterId`("Player"/"Enemy")를 들고 있어야 위 API들이 어느 쪽인지 구분한다 —
 `ActionExecutor.FighterId`, `PlayerRobotBootstrap`의 인스펙터 필드로 배선됨 (§11-4).
 
-**주의**: `CombatCalculator.EvaluateHit`의 데미지 계산식(`ActionData.Damage`와 팔 스탯을 어떻게 합산할지)은
-KKH가 이미 코드로 구현해뒀지만, §0에 적힌 대로 **아직 팀 합의로 확정된 값이 아니다.** 그대로 믿고
-연동만 하되, 실제 수치가 이상하면 "우리가 고칠 문제"가 아니라 "확인해야 할 문제"로 다룰 것.
+**주의**: `CombatCalculator`의 데미지 계산식은 KKH가 이미 코드로 구현해뒀지만, §0에 적힌 대로
+**아직 팀 합의로 확정된 값이 아니다.** 그대로 믿고 연동만 하되, 실제 수치가 이상하면 "우리가 고칠
+문제"가 아니라 "확인해야 할 문제"로 다룰 것.
+
+**주의 2**: KKH 쪽 연동 가이드 문서(`NYH_Integration_Guide.md`)는 2026-09-19 작성 후 갱신된 적이 없어
+2026-09-29 PvE 보스전 전환 이전 버전(가드/위빙/경직 전제) 그대로다. **그 문서의 API 설명보다 이 표와
+`KKH_CSH_연동_현황.md`를 우선시할 것.**
 
 ---
 
 ## 15. 2026-09-29 재설계 — 확정 사항과 미정 사항
 
-0929기획서(`Assets/NYH/07.Md/0929기획서.md`, 특히 674~770행) 반영 후 남윤호가 직접 확인한 내용을
-정리한다. 이 문서 여기저기 흩어진 "2026-09-29" 표시는 전부 이 절을 가리킨다.
+0929 전투 시스템 개편(현재는 `Assets/NYH/07.Md/리얼스틸 기획서 (1).md` 1000.3v, 특히 901~995행
+"실시간 전투 시스템" 절에 반영됨 — 과거 작업 당시 참조했던 `0929기획서.md`는 이후 삭제되고 이 파일로
+통합됐다) 반영 후 남윤호가 직접 확인한 내용을 정리한다. 이 문서 여기저기 흩어진 "2026-09-29" 표시는
+전부 이 절을 가리킨다.
 
 ### 확정된 것
 
@@ -726,6 +772,9 @@ KKH가 이미 코드로 구현해뒀지만, §0에 적힌 대로 **아직 팀 �
 - `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별로 끌지
 - `CombatDataHub.ProcessHit`의 `isGuarding` 인자 처리 — KKH와 협의 필요 (§0, §14)
 - 히트 스턴(프레임 단위 경직)이 경직 게이지 삭제 후에도 별도로 필요한지
+- 넉백 수치·규칙 (§6에서 구 SF2 방식 삭제, 2026-10-06) — PvE 보스전에서 피격 시 밀려나는 거리·조건을
+  어떻게 다시 정할지 기획 확인 필요. `KnockbackSystem`(코드)은 `ActionData.KnockbackDistance`를
+  그대로 적용하는 범용 로직이라 당장 깨지지 않지만, 주석이 삭제된 §6을 근거로 들고 있어 정리 필요
 
 ### 걷어낸 코드 (2026-09-29 완료)
 

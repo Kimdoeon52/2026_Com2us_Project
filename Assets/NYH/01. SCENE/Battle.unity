@@ -321,9 +321,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   animator: {fileID: 310224670}
-  idleStateName: Idle
-  walkStateName: Walk
-  backWalkStateName: BackWalk
+  idleStateName: Enemy1_Idle
+  walkStateName: Enemy1_Move
+  backWalkStateName: Enemy1_Move
 --- !u!95 &310224670
 Animator:
   serializedVersion: 7
@@ -515,11 +515,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 310224667}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78861b762697cfe4b83bf1a819707b96, type: 3}
+  m_Script: {fileID: 11500000, guid: fdc31b9cda9ecaa4e9f7758f2df2cfa0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  repeatAction: {fileID: 0}
-  idleTicksBetweenActions: 0
+  opponent: {fileID: 1270632114}
+  attackRange: 1.2
+  attackAction: {fileID: 11400000, guid: a205ddbf7ae449ae861b4f02ffa04e79, type: 2}
 --- !u!1001 &533916007
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -662,6 +663,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccdea861e1db0c94c9bfe4b57ab3ab85, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentBattleMode: 0
   PlayerSnapshot:
     fighterID: Player
     isPlayer: 1
@@ -670,10 +672,9 @@ MonoBehaviour:
     baseDefense: 10
     coreLevel: 1
     currentCoreExp: 0
-    currentCylinderCount: 1
-    maxCylinderCount: 3
+    currentCylinder: 1
     totalAttackPower: 40
-    finalMovementSpeed: 0
+    finalMoveSpeed: 3
   EnemySnapshot:
     fighterID: Enemy
     isPlayer: 0
@@ -682,10 +683,18 @@ MonoBehaviour:
     baseDefense: 10
     coreLevel: 1
     currentCoreExp: 0
-    currentCylinderCount: 1
-    maxCylinderCount: 3
+    currentCylinder: 1
     totalAttackPower: 40
-    finalMovementSpeed: 0
+    finalMoveSpeed: 3
+  BossSnapshot:
+    bossID: BOSS_REGION_01
+    bossName: "\uC815\uD06C \uD720\uB7EC"
+    currentHp: 0
+    maxHp: 0
+    baseDefense: 0
+    currentPhase: 1
+    isGroggy: 0
+    currentDamageMultiplier: 1
 --- !u!4 &776998634
 Transform:
   m_ObjectHideFlags: 0
@@ -1006,7 +1015,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f6e2e509e0b16fa43b600b3fd7436e47, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  basicAttack: {fileID: 0}
+  basicAttack: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
   leftArmSkill: {fileID: 0}
   leftArmSkillCharged: {fileID: 0}
   rightArmSkill: {fileID: 0}
@@ -1120,9 +1129,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectTable: {fileID: 11400000, guid: ff8764b4f811c4340bfb84300bfac59d, type: 2}
-  playerParts:
-  - {fileID: 11400000, guid: 0b272ca40ea9d574fa8fb9fb7fd5b74e, type: 2}
+  effectTable: {fileID: 0}
+  playerParts: []
   enemyParts: []
 --- !u!1 &1328636925
 GameObject:

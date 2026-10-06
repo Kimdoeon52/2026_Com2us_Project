@@ -26,9 +26,10 @@ public class EquipmentEffectTable : ScriptableObject
 
     // 매번 리스트를 순회하지 않도록 첫 조회 때 딕셔너리로 만들어둔다. 직렬화하지 않는 캐시다
     private Dictionary<string, EquipmentEffect[]> lookup;
+    private Dictionary<int, EquipmentEffect> skillLookup; // partID용 lookup과 분리
 
-    private void OnEnable() => lookup = null;
-    private void OnValidate() => lookup = null; // 인스펙터에서 값을 고치면 캐시를 다시 만든다
+    private void OnEnable() { lookup = null; skillLookup = null; }
+    private void OnValidate() { lookup = null; skillLookup = null; }
 
     /// <summary>partID에 연결된 효과 목록. 없으면 빈 배열</summary>
     public IReadOnlyList<EquipmentEffect> GetEffects(string partID)
@@ -51,5 +52,24 @@ public class EquipmentEffectTable : ScriptableObject
 
             lookup[entry.partID] = entry.effects ?? Empty;
         }
+    }
+
+    public EquipmentEffect Get(int skillId)
+    {
+        if (skillLookup == null)
+        {
+            skillLookup = new Dictionary<int, EquipmentEffect>();
+            foreach (var entry in entries)
+            {
+                if (entry?.effects == null) continue;
+                foreach (var e in entry.effects)
+                {
+                    if (e == null) continue;
+                    if (!skillLookup.TryAdd(e.SkillId, e))
+                        Debug.LogWarning($"[EquipmentEffectTable] skillId {e.SkillId} 중복", this);
+                }
+            }
+        }
+        return skillLookup.TryGetValue(skillId, out var r) ? r : null;
     }
 }

@@ -29,12 +29,20 @@ public static class EquipmentEffectApplier
             {
                 if (part == null) continue;
 
-                // 같은 partID의 효과는 이 부위의 장비에서 온 것으로 기록한다 (그 부위가 파손되면 효과가 꺼짐)
-                var ctx = new EffectContext(executor, part.slotType);
-                foreach (var effect in table.GetEffects(part.partID))
+                var ids = new List<int>();
+                if (part.activeSkillId >= 0) ids.Add(part.activeSkillId);
+                if (part.passiveSkillIds != null) ids.AddRange(part.passiveSkillIds);
+
+                foreach (int skillid in ids)
                 {
-                    if (effect == null) continue;
-                    set.Add(effect.CreateInstance(ctx), part.slotType);
+                    var skill = table.Get(skillid);
+                    if (skill == null) continue;
+
+                    var overrides = BuildOverrides(part, skillid);
+                    var ps = new SkillParamSet(skill.BaseParams, overrides);
+                    var ctx = new EffectContext(executor, part.slotType, ps);
+
+                    set.Add(skill.CreateInstance(ctx), part.slotType);
                 }
             }
         }
@@ -42,5 +50,9 @@ public static class EquipmentEffectApplier
         // SetEffects 안에서 이전 효과 해제(OnUnequip) -> 교체 -> 새 효과 OnEquip 순서로 처리된다
         executor.SetEffects(set);
         Debug.Log($"[EquipmentEffectApplier] {executor.FighterId}: 장비 효과 {set.Count}개 등록");
+    }
+    private static List<SkillParamOverride> BuildOverrides(PartMasterData part, int skillId)
+    {
+        return null;
     }
 }

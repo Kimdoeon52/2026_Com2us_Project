@@ -18,15 +18,11 @@ MonoBehaviour:
   partGrade: 0
   baseDurability: 20
   destructionResistance: 1
-  headStatData:
-    critResistance: 0
-    critDamageReduction: 0
-  armStatData:
-    armAttackPower: 1
-    atkMultiplier: 1
-    guardDefBonus: 100
-  legStatData:
-    moveSpeedBonus: 0
-    invincibleFramesBonus: 0
-  activeSkillId: 1
+  attackPower: 0
+  moveSpeedBonus: 0
+  critResistance: 0
+  critDamageReduction: 0
+  activeSkillId: 0
+  gimmickTag: 0
+  cylinderCost: 1
   passiveSkillIds: 

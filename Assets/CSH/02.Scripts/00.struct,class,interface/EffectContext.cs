@@ -5,13 +5,12 @@ public readonly struct EffectContext
 {
     public readonly ActionExecutor Executor;
     public readonly BodyPart SourcePart;
+    public readonly SkillParamSet Params;
 
-    public EffectContext(ActionExecutor executor, BodyPart sourcePart)
+    public EffectContext(ActionExecutor executor, BodyPart sourcePart, SkillParamSet p = null)
     {
         Executor = executor;
         SourcePart = sourcePart;
+        Params = p ?? SkillParamSet.Empty;
     }
-
-    public ActionState State => Executor.State;
-    public string FighterId => Executor.FighterId;
 }

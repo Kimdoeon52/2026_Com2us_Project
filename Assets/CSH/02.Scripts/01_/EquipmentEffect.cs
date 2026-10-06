@@ -10,6 +10,11 @@ using UnityEngine;
 /// </summary>
 public abstract class EquipmentEffect : ScriptableObject
 {
+    [SerializeField] private int skillId;
+    [SerializeField] private SkillParamEntry[] baseParams = new SkillParamEntry[0];
+
+    public int SkillId => skillId;
+    public SkillParamEntry[] BaseParams => baseParams;
     /// <summary>전투 시작 시 로봇마다 1번 호출된다. 그 로봇 전용 런타임 인스턴스를 만들어 반환한다 (null 가능)</summary>
     public abstract EffectInstance CreateInstance(EffectContext ctx);
 }

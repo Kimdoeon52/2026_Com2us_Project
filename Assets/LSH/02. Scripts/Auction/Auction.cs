@@ -117,7 +117,7 @@ public class Auction : PersistentSingleton<Auction>
     public bool IfPlayerWin { get; set; } = false; //플레이어가 이겼는지 체크하는 변수
 
     private PartsDefinition stuff; //현재 경매 물품을 저장할 용도
-    private PartGrade stuffGrade; //경매 물품 등급을 저장할 용도
+    public PartGrade stuffGrade; //경매 물품 등급을 저장할 용도
     private Vector2 errorMessagePos; //에러 메시지가 나올 초기 위치
     private bool isChatting = false; //채팅 중인지 체크하는 용도
     private bool isPlayerGiveUp = false; //플레이가 포기했는지 체크하는 용도
@@ -142,7 +142,23 @@ public class Auction : PersistentSingleton<Auction>
     await tcs.Task: 완료 신호가 올 때까지 기다리는 곳
 
     tcs.TrySetResult(값): 신호를 보내면서 결과값을 전달하고 기다리던 코드를 다시 가동시키는 곳 
-     
+     */
+
+
+    /*
+     WaitUntil이 좋은 경우
+
+    키보드/마우스의 단순 입력 (Input.GetKeyDown, Input.GetMouseButtonDown)
+
+    단순히 "스페이스바 누르면 다음 대사 넘어가기" 같은 연출 로직
+
+    UniTaskCompletionSource가 좋은 경우
+
+    Unity UI 버튼 (Button.onClick)
+
+    UI InputField로 숫자를 받아야 할 때 ("주먹 경매 금액 입력")
+
+    버튼이 여러 개라서 "수락(true)을 눌렀는지 / 거절(false)을 눌렀는지" 결과를 받아야 할 때 ("입찰 경매 수락/거절")
      */
     private void OnEnable()
     {
@@ -171,15 +187,17 @@ public class Auction : PersistentSingleton<Auction>
         // 전략 등록
         nowAuctionMode = new Dictionary<AuctionType, IAuctionMode> // noewAuctionMode에 현재 모드 넣기
         {
-            { AuctionType.Normal, new NormalAuctionStrategy() },
-            { AuctionType.Fist, new FistAuctionStrategy() },
-            { AuctionType.Bidding, new BiddingAuctionStrategy() }
+            { AuctionType.Normal, new NormalAuctionMode() },
+            { AuctionType.Fist, new FistAuctionMode() },
+            { AuctionType.Bidding, new BiddingAuctionMode() }
         };
 
         if (errorMessage != null)
             errorMessagePos = errorMessage.rectTransform.anchoredPosition; //첫 위치 저장
 
-        ButtonReady(false); // 레이즈/포기   버튼 비활
+        NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
+        FistAuctionButtonReady(false); 
+        BiddingAuctionButtonReady(false);
         EnableFistAuctionUI(false); // 등록/포기 버튼 비활
         EnableBiddingAcceptUI(false); // 입찰/포기 버튼 비활
     }
@@ -199,7 +217,7 @@ public class Auction : PersistentSingleton<Auction>
         if (auctionItem != null && auctionItem.Count > 0)
         {
             stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
-            CurrentCost = stuff.Cost / 2; // 가격 반띵
+            CurrentCost = stuff.Cost / 2;
             stuffGrade = stuff.Grade; // 등급 넣기
             if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
         }
@@ -224,58 +242,59 @@ public class Auction : PersistentSingleton<Auction>
 
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(3, 5); // 
+        dayOfEnterNpc = Random.Range(3, 5); // 경매 인원 3~4 (임시)
     }
 
-    private void GetAuctionNpc(int enterNpc)
+    private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
     {
-        auctionAiList.Clear();
-        bool isBossEnter = Random.value < 1f;
+        auctionAiList.Clear(); //옥션 리스트 비우고
+        bool isBossEnter = Random.value < 1f; //지금은 1f로 실험용인데 나중에 확률 30%로 바꾸기
         if (isBossEnter && bossAiList.Count > 0)
         {
-            int randomBossIndex = Random.Range(0, bossAiList.Count);
-            auctionAiList.Add(bossAiList[randomBossIndex]);
+            int randomBossIndex = Random.Range(0, bossAiList.Count); // 어떤 보스 넣을지
+            auctionAiList.Add(bossAiList[randomBossIndex]); // auctionAiList에 보스 하나 쑤셔넣기
         }
 
-        HashSet<int> selectedIndices = new HashSet<int>();
-        int targetCount = Mathf.Min(enterNpc, npcAiList.Count);
+        HashSet<int> selectedIndices = new HashSet<int>(); // 중첩되면 안되니까 hash
+        int targetCount = Mathf.Min(enterNpc, npcAiList.Count); // enterNpc값이 안들어가면 안되니까 그냥 유효성 검사용임.
 
-        while (selectedIndices.Count < targetCount)
+        while (selectedIndices.Count < targetCount) //
         {
-            selectedIndices.Add(Random.Range(0, npcAiList.Count));
+            selectedIndices.Add(Random.Range(0, npcAiList.Count)); //npc리스트에 그날 하루 인원 수 만큼 삽입
         }
 
-        foreach (int index in selectedIndices)
+        foreach (int index in selectedIndices) //중첩 안된 랜덤한 Npc를 auctionAiList에 넣기
         {
             auctionAiList.Add(npcAiList[index]);
         }
-    }
+    } // 총원은 enterNpc + 1(보스) 명
 
     private async UniTask StartAuction()
     {
-        IsAuctioningFin = false;
-        isChatting = true;
-        ButtonReady(false);
-
-        foreach (var ai in auctionAiList)
+        IsAuctioningFin = false; // 아직 경매 안끝남
+        isChatting = true; // 채팅 시작
+        NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
+        FistAuctionButtonReady(false);
+        BiddingAuctionButtonReady(false);
+        foreach (var ai in auctionAiList) // 경매 참여하는 ai들 만큼
         {
             if (ai != null)
             {
-                AppendConsoleLog($"{ai.NPCName}님이 참가 했습니다.");
-                ai.ReadyForAction();
+                AppendConsoleLog($"{ai.NPCName}님이 참가 했습니다."); // Console에 참가 보여주기
+                ai.ReadyForAction(); // ai들 준비완료
             }
         }
 
-        await StartAuctionChatting();
-        await UniTask.Delay(1000);
+        await StartAuctionChatting(); //경매 아저씨 대사 출력
+        await UniTask.Delay(1000); //1초 대기
 
-        auctionName.text = stuff.DisplayName;
-        UpdateAuctionCostUI();
-        await WaitInput();
+        auctionName.text = stuff.DisplayName; // 경매 물품 이름 출력
+        UpdateAuctionCostUI(); // 가격표 보여주기
+        await WaitInput(); //스페이스 바 입력 대기
 
-        await IntroAuction();
+        await IntroAuction(); // 경매 아저씨 경매 물품 소개
 
-        IsAuctioningFin = false;
+        IsAuctioningFin = false; 
         isPlayerGiveUp = false;
         WinnerName = "";
         IfPlayerWin = false;
@@ -286,13 +305,13 @@ public class Auction : PersistentSingleton<Auction>
         // 일반 경매일 때만 기본 버튼 활성화
         if (currentAuctionType == AuctionType.Normal)
         {
-            ButtonReady(true);
+            NormalAuctionButtonReady(true); // 버튼 활성화
         }
 
         // 전략 패턴 실행
-        if (strategies.TryGetValue(currentAuctionType, out var strategy))
+        if (nowAuctionMode.TryGetValue(currentAuctionType, out var mode))
         {
-            await strategy.ExecuteAuctionAsync(this, stuff, auctionAiList);
+            await mode.DoingAuctionAsync(this, stuff, auctionAiList);
         }
 
         await EndAuction();
@@ -300,22 +319,22 @@ public class Auction : PersistentSingleton<Auction>
     }
 
     // --- 공통 헬퍼 및 UI 제어 메서드 ---
-    public void UpdateAuctionCostUI()
+    public void UpdateAuctionCostUI() // 물건 가격 표시 업데이트
     {
-        if (auctionCost != null) auctionCost.text = CurrentCost.ToString();
+        if (auctionCost != null) auctionCost.text = CurrentCost.ToString(); 
     }
 
-    public void SetChat(string text)
+    public void SetChat(string text) // 경매 아저씨 채팅
     {
         if (chat != null) chat.text = text;
     }
 
-    public void AppendConsoleLog(string log)
+    public void AppendConsoleLog(string log) // 콘솔 로그 채팅
     {
         if (console != null) console.text += log + "\n";
     }
 
-    public bool CheckAllGiveUp()
+    public bool CheckAllGiveUp() // 전부 항복했는지 체크
     {
         int inGamePlayer = 0;
         if (!isPlayerGiveUp) inGamePlayer++;
@@ -327,7 +346,7 @@ public class Auction : PersistentSingleton<Auction>
         return inGamePlayer <= 1 && !string.IsNullOrEmpty(WinnerName);
     }
 
-    public async UniTask StartAuctionTimer()
+    public async UniTask StartAuctionTimer() // 제한 시간 시작
     {
         RemainingTime = auctionTime;
         IsTimeRunning = true;
@@ -356,72 +375,73 @@ public class Auction : PersistentSingleton<Auction>
     }
 
     // --- 주먹 경매 UI 입출력 ---
-    public void EnableFistAuctionUI(bool active)
+    public void EnableFistAuctionUI(bool active) // 주먹 경매용 버튼
     {
         if (fistBidInputField != null) fistBidInputField.gameObject.SetActive(active);
         if (fistSubmitButton != null) fistSubmitButton.gameObject.SetActive(active);
     }
 
-    public async UniTask<int> WaitPlayerFistBidAsync()
+    public async UniTask<int> WaitPlayerFistBidAsync() //플레이어 입력 대기
     {
         fistBidTcs = new UniTaskCompletionSource<int>();
         return await fistBidTcs.Task;
     }
 
-    public void OnSubmitFistBid()
+    public void OnSubmitFistBid() // 주먹 경매용
     {
-        if (fistBidInputField != null && int.TryParse(fistBidInputField.text, out int bid))
+        if (fistBidInputField != null && int.TryParse(fistBidInputField.text, out int bid)) // 값 입력을 제대로 했다면
         {
-            fistBidTcs?.TrySetResult(bid);
+            fistBidTcs?.TrySetResult(bid); // bid값 삽입
         }
         else
         {
-            fistBidTcs?.TrySetResult(0);
+            fistBidTcs?.TrySetResult(0); //입력 제대로 못할 시 0원 삽입
         }
     }
 
     // --- 입찰 경매 UI 입출력 ---
-    public void EnableBiddingAcceptUI(bool active)
+    public void EnableBiddingAcceptUI(bool active) // 입찰 경매 버튼 활성화
     {
-        if (biddingAcceptButton != null) biddingAcceptButton.gameObject.SetActive(active);
-        if (biddingRejectButton != null) biddingRejectButton.gameObject.SetActive(active);
+        if (biddingAcceptButton != null) biddingAcceptButton.gameObject.SetActive(active); //입찰 경매 확인 버튼 활성화
+        if (biddingRejectButton != null) biddingRejectButton.gameObject.SetActive(active); //입찰 경매 포기 버튼 활성화
     }
 
-    public async UniTask<bool> WaitPlayerBiddingDecisionAsync()
+    public async UniTask<bool> WaitPlayerBiddingDecisionAsync()  //플레이어 선택 대기
     {
         biddingDecisionTcs = new UniTaskCompletionSource<bool>();
         return await biddingDecisionTcs.Task;
     }
 
-    public void OnBiddingAccept() => biddingDecisionTcs?.TrySetResult(true);
-    public void OnBiddingReject() => biddingDecisionTcs?.TrySetResult(false);
+    public void OnBiddingAccept() => biddingDecisionTcs?.TrySetResult(true); // 입찰 대기
+    public void OnBiddingReject() => biddingDecisionTcs?.TrySetResult(false); // 거절 대기
 
     // --- 경매 마감 및 차감 로직 ---
-    private async UniTask EndAuction()
+    private async UniTask EndAuction() //경매 종료시
     {
-        IsAuctioningFin = true;
-        isChatting = true;
-        IsTimeRunning = false;
-        ButtonReady(false);
+        IsAuctioningFin = true; //끝났음 true
+        isChatting = true; // 채팅 true
+        IsTimeRunning = false; // 시간끝
+        //버튼 전체 false
+        NormalAuctionButtonReady(false);
         EnableFistAuctionUI(false);
         EnableBiddingAcceptUI(false);
 
-        await ActionFinish();
+        await ActionFinish(); // 경매 아저씨 대사 출력
 
-        if (IfPlayerWin)
+        if (IfPlayerWin) //플레이어가 이겼을 경우
         {
-            GlobalGold.Instance.UseGold(PlayerName, CurrentCost);
-            UpdateGoldDisplay();
-            GlobalGold.Instance.SaveGame();
+            GlobalGold.Instance.UseGold(PlayerName, CurrentCost); // 플레이어 골드 소모
+            UpdateGoldDisplay(); // 골드 시각적으로 보이기
+            GlobalGold.Instance.SaveGame(); // 저장
         }
         else
         {
-            foreach (var ai in auctionAiList)
+            foreach (var ai in auctionAiList) // ai싹다 돌아보기
             {
-                if (ai != null && ai.NPCName == WinnerName)
+                if (ai != null && ai.NPCName == WinnerName) // ai이름과 이긴 ai의 이름을 체크
                 {
-                    GlobalGold.Instance.UseGold(ai.NPCName, CurrentCost);
-                    GlobalGold.Instance.SaveGame();
+                    GlobalGold.Instance.UseGold(ai.NPCName, CurrentCost); //이긴 ai 골드차감
+                    GlobalGold.Instance.SaveGame(); // 저장
                     break;
                 }
             }
@@ -430,12 +450,12 @@ public class Auction : PersistentSingleton<Auction>
 
     private async UniTask StartAuctionChatting()
     {
-        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.DisplayName);
-        if (chatList != null && chatList.Count > 0)
+        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.DisplayName); // 경매 시작에 잇는 대사들 출력
+        if (chatList != null && chatList.Count > 0) // 
         {
             foreach (var chatMessage in chatList)
             {
-                SetChat(chatMessage);
+                SetChat(chatMessage); //대사 출력
                 await WaitInput();
             }
         }
@@ -476,34 +496,43 @@ public class Auction : PersistentSingleton<Auction>
         }
     }
 
-    private async UniTask WaitInput()
+    private async UniTask WaitInput() // 입력대기
     {
         await UniTask.Yield();
         await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
     }
 
-    private void ButtonReady(bool active)
+    private void NormalAuctionButtonReady(bool active) // 일반 경매 버튼 활성화
     {
         if (raiseButton != null) raiseButton.gameObject.SetActive(active);
         if (giveUpButton != null) giveUpButton.gameObject.SetActive(active);
     }
-
-    private void UpdateGoldDisplay()
+    private void FistAuctionButtonReady(bool active)
+    {
+        if (fistBidInputField != null) raiseButton.gameObject.SetActive(active);
+        if (fistSubmitButton != null) raiseButton.gameObject.SetActive(active);
+    }
+    private void BiddingAuctionButtonReady(bool active)
+    {
+        if(biddingAcceptButton != null) biddingAcceptButton.gameObject.SetActive(active);
+        if (biddingRejectButton != null) biddingRejectButton.gameObject.SetActive(active);
+    }
+    private void UpdateGoldDisplay() // 보유 골드 시각적 업데이트 
     {
         if (myGold != null)
             myGold.text = "보유골드: " + GlobalGold.Instance.mainCharacterdata[0].mainCharacterGold.ToString();
     }
 
-    public void GiveUpButton()
+    public void GiveUpButton() // 포기 버튼
     {
         if (!IsTimeRunning || isPlayerGiveUp) return;
         isPlayerGiveUp = true;
-        ButtonReady(false);
+        NormalAuctionButtonReady(false);
         ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
         if (CheckAllGiveUp()) IsTimeRunning = false;
     }
 
-    public void OnRaiseButton()
+    public void OnRaiseButton() // 레이즈 버튼
     {
         if (!IsTimeRunning || isPlayerGiveUp) return;
         if (WinnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName)
@@ -529,7 +558,7 @@ public class Auction : PersistentSingleton<Auction>
         }
     }
 
-    public async UniTask ShowErrorMessage(string message)
+    public async UniTask ShowErrorMessage(string message) //에러 메시지 출력 (중앙부 부터 쭉 올라가면서 메시지 출력)
     {
         if (errorMessage == null) return;
 

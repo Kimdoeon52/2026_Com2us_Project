@@ -13,7 +13,7 @@ public class Npc1 : NpcAiBase //후반형
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     {
-        if(Auction.Instance.remainingTime > 10f) //10초 남았을 때만 시작.
+        if(Auction.Instance.RemainingTime > 10f) //10초 남았을 때만 시작.
         {
            return false;
         }

@@ -20,8 +20,9 @@ public class BossAiBase : AllAiBase
 
     [SerializeField] public int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
     //================================기본 세팅=================================
-    public virtual void Start()
+    public override void Start()
     {
+        base.Start();
         RaiseGold = 200; // 초기 레이즈 금액 설정
     }
 

@@ -39,4 +39,23 @@ public class ComponentDefinition
 
         return Mathf.Max(0, _maxCount - current);
     }
+
+    public string GetTooltip()
+    {
+        Color color = _grade switch
+        {
+            PartGrade.Rare => Color.yellow,
+            PartGrade.Epic => Color.blue,
+            PartGrade.Legendary => Color.magenta,
+            PartGrade.Prototype => Color.cyan,
+            _ => Color.white
+        };
+
+        string hex = ColorUtility.ToHtmlStringRGB(color);
+
+        return $"이름: {_displayName}\n" + 
+            "------------------------------\n" +
+            $"설명: {_description}\n" +
+            $"등급: <color=#{hex}>{_grade}</color>";
+    }
 }

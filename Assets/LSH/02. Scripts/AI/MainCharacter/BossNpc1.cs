@@ -9,7 +9,8 @@ public class BossNpc1 : BossAiBase
 
     public override void Start()
     {
-        bigRaiseGold = 2000;
+        base.Start();
+        RaiseGold = 200; 
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     {

@@ -12,8 +12,6 @@ public class BossAiBase : AllAiBase
     public override string NPCName => data != null ? data.mainCharacterName : "No Name";
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
-    public override int RaiseGold { get; set; } = 0;
-
     public override bool IsReady { get; set; } = false;
 
     public static event Func<string, string, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
@@ -23,12 +21,12 @@ public class BossAiBase : AllAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 200; // 초기 레이즈 금액 설정
     }
 
     public override void ReadyForAction()
     {
         IsReady = false;
+        RaiseGold = 200;
     }
 
     //==================================판단===================================

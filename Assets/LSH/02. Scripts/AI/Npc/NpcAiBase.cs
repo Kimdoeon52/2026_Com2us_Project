@@ -17,13 +17,12 @@ public class NpcAiBase : AllAiBase
     public override int ThinkDelay => Random.Range(5000, 10000);
 
     public override bool IsReady { get; set; } = false;
-    public override int RaiseGold { get; set; } = 0;
 
     //================================기본 세팅=================================
-    
     public override void ReadyForAction()
     {
         IsReady = false;
+        RaiseGold = 100;
         ResetThinkBubble();
     }
 

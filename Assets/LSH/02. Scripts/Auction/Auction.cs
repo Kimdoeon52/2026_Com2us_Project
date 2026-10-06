@@ -231,7 +231,6 @@ public class Auction : PersistentSingleton<Auction>
         DayOfAuctionEnter(); // 그날 하루 경매할 인원 정하기
         GetAuctionNpc(dayOfEnterNpc); // ai 정하기
     }
-
     private void Update()
     {
         if (IsAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
@@ -321,7 +320,15 @@ public class Auction : PersistentSingleton<Auction>
     // --- 공통 헬퍼 및 UI 제어 메서드 ---
     public void UpdateAuctionCostUI() // 물건 가격 표시 업데이트
     {
-        if (auctionCost != null) auctionCost.text = CurrentCost.ToString(); 
+        if (auctionCost != null)
+        {
+            auctionCost.text = CurrentCost.ToString();
+            Debug.Log($"[UI 갱신 성공] 현재 텍스트에 적용된 값: {CurrentCost}");
+        }
+        else
+        {
+            Debug.LogError("🔴 [오류] auctionCost 변수가 인스펙터에 연결되어 있지 않습니다!");
+        }
     }
 
     public void SetChat(string text) // 경매 아저씨 채팅
@@ -509,8 +516,8 @@ public class Auction : PersistentSingleton<Auction>
     }
     private void FistAuctionButtonReady(bool active)
     {
-        if (fistBidInputField != null) raiseButton.gameObject.SetActive(active);
-        if (fistSubmitButton != null) raiseButton.gameObject.SetActive(active);
+        if (fistBidInputField != null) fistBidInputField.gameObject.SetActive(active);
+        if (fistSubmitButton != null) fistSubmitButton.gameObject.SetActive(active);
     }
     private void BiddingAuctionButtonReady(bool active)
     {

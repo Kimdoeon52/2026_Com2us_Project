@@ -55,7 +55,9 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
             if (ai.IsReady) continue;
 
-            if (ai.RaiseThink(manager.CurrentCost, stuff.Cost)) //레이즈 판단 로직
+            Debug.Log($"[AI 루틴 체크] {ai.NPCName} | 현재가: {manager.CurrentCost} | AI 보유 RaiseGold: {ai.RaiseGold}");
+
+            if (ai.RaiseThink(manager.CurrentCost, stuff.Cost))
             {
                 int raiseStep = ai.RaiseGold;
 
@@ -65,18 +67,23 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                     {
                         raiseStep = boss.BigRaiseGold();
                         manager.CurrentCost += raiseStep;
+                        manager.UpdateAuctionCostUI(); 
                         await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
                     }
                     else
                     {
                         manager.CurrentCost += raiseStep;
+                        manager.UpdateAuctionCostUI();
                     }
                 }
                 else
                 {
                     manager.CurrentCost += raiseStep;
+                    manager.UpdateAuctionCostUI(); 
                 }
-                manager.UpdateAuctionCostUI();
+
+                Debug.Log($"[AI 레이즈 성공] {ai.NPCName} | 올린 금액(raiseStep): {raiseStep} | 변경 후 CurrentCost: {manager.CurrentCost}");
+
                 manager.WinnerName = ai.NPCName;
                 manager.IfPlayerWin = false;
 
@@ -89,6 +96,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             }
             else
             {
+                Debug.Log($"[AI 레이즈 실패/포기] {ai.NPCName} | RaiseThink 결과: false");
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
                 manager.SetChat($"{ai.NPCName} 님이 입찰을 포기했습니다.");
             }

@@ -1,8 +1,9 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 // 인벤토리 단독 테스트용 데이터 보유. UI는 여기서 Grid/Save를 읽어간다
-public class InventoryHost : Singleton<InventoryHost>
+public class InventoryHost : Singleton<InventoryHost>, IEquipmentSource
 {
     [Tooltip("그리드 규격")]
     [SerializeField] private InventoryDefinition _inventoryDefinition;
@@ -107,6 +108,98 @@ public class InventoryHost : Singleton<InventoryHost>
         return added;
     }
 
+    // 그리드의 파츠를 부위에 장착. 이미 끼워진 파츠는 그리드로 돌려보낸다
+    public bool Equip(int index, Slot slot)
+    {
+        if (_grid == null || !_grid.TryGetEntry(index, out InventoryGrid.Entry entry))
+            return false;
+
+        if (entry.IsComponent || entry.Definition == null || entry.Definition.Slot != slot)
+            return false;
+
+        PartsDefinition previous = GetEquipped(slot);
+        _grid.Remove(index);
+
+        // 기존 파츠를 둘 자리가 없으면 되돌린다
+        if (previous != null && !_grid.TryPlaceParts(previous, entry.Origin, out int _) && !_grid.TryAutoPlaceParts(previous, out int _))
+        {
+            _grid.TryPlaceParts(entry.Definition, entry.Origin, out int _);
+            return false;
+        }
+
+        _save.Equipment.Set(slot, entry.Definition.Id);
+        Changed?.Invoke();
+        return true;
+    }
+
+    // 장착 해제. 그리드에 빈자리가 없으면 실패
+    public bool Unequip(Slot slot) => ReturnToGrid(slot, null);
+
+    // 지정 칸으로 장착 해제. 막혀 있으면 실패
+    public bool UnequipAt(Slot slot, Vector2Int origin) => ReturnToGrid(slot, origin);
+
+    private bool ReturnToGrid(Slot slot, Vector2Int? origin)
+    {
+        PartsDefinition equipped = GetEquipped(slot);
+        if (equipped == null || _grid == null)
+            return false;
+
+        bool placed = origin.HasValue ? _grid.TryPlaceParts(equipped, origin.Value, out int _) : _grid.TryAutoPlaceParts(equipped, out int _);
+        if (!placed)
+            return false;
+
+        _save.Equipment.Set(slot, null);
+        Changed?.Invoke();
+        return true;
+    }
+
+    public PartsDefinition GetEquipped(Slot slot)
+    {
+        return _catalog != null ? _catalog.Find(_save.Equipment.Get(slot)) : null;
+    }
+
+    public IReadOnlyList<string> GetEquippedPartIds()
+    {
+        var ids = new List<string>(EquipmentSaveData.SlotCount);
+        for (int i = 0; i < EquipmentSaveData.SlotCount; i++)
+        {
+            string id = _save.Equipment.Get((Slot)i);
+            if (id != null)
+                ids.Add(id);
+        }
+
+        return ids;
+    }
+
+    public void RemoveDestroyed(IEnumerable<string> partIds)
+    {
+        if (partIds == null)
+            return;
+
+        bool removed = false;
+        foreach (string partId in partIds)
+        {
+            for (int i = 0; i < EquipmentSaveData.SlotCount; i++)
+            {
+                if (_save.Equipment.Get((Slot)i) != partId)
+                    continue;
+
+                _save.Equipment.Set((Slot)i, null);
+                removed = true;
+                break;
+            }
+        }
+
+        if (removed)
+            Changed?.Invoke();
+    }
+
+    [ContextMenu("장착 ID 출력")]
+    public void LogEquipped()
+    {
+        Debug.Log($"장착: [{string.Join(", ", GetEquippedPartIds())}]");
+    }
+
     [ContextMenu("부품 지급")]
     public void GiveSampleComponents()
     {
@@ -154,6 +247,7 @@ public class InventoryHost : Singleton<InventoryHost>
     public void ClearAll()
     {
         _save.Components.Clear();
+        _save.Equipment.Clear();
         _grid.Clear();
         Changed?.Invoke();
     }

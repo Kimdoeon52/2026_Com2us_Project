@@ -10,9 +10,11 @@ public enum DestructiveResistance  // 파괴 저항력
 public enum Slot
 {
     LeftArm,
-    rightArm,
+    RightArm,
     LeftLeg,
-    RightLeg
+    RightLeg,
+    Head,
+    Core
 }
 
 // 파츠 정의. 인벤토리 배치에 필요한 최소 필드만 둔다

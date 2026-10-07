@@ -37,6 +37,10 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     private int _index = None;
     private PartsShape _shape;
     private Vector2Int _grabOffset;
+    private PartsDefinition _definition;
+    private EquipmentSlotView _equipSource;
+
+    private bool IsDragging => _index != None || _equipSource != null;
 
     // 컴포넌트를 붙일 때 씬에서 찾아 채운다
     private void Reset()
@@ -70,25 +74,50 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         _index = index;
         _shape = entry.Shape;
         _grabOffset = cell - entry.Origin;
+        _definition = entry.Definition;
 
-        FadeSource(index);
-        ShowGhost(local);
+        FadeSource(_view.GetEntryRect(index));
+        ShowGhost(local, eventData);
+    }
+
+    // 장착 칸에서 시작한 드래그. EquipmentSlotView가 넘겨준다
+    public void BeginFromEquipment(EquipmentSlotView slot, PointerEventData eventData)
+    {
+        _index = None;
+        _equipSource = null;
+
+        PartsDefinition definition = IsReady() ? _host.GetEquipped(slot.Slot) : null;
+        if (definition == null || !TryGetLocal(eventData, out Vector2 local))
+            return;
+
+        _equipSource = slot;
+        _definition = definition;
+        _shape = definition.Shape;
+        _grabOffset = definition.Size / 2;
+
+        FadeSource(slot.Icon != null ? slot.Icon.rectTransform : null);
+        ShowGhost(local, eventData);
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (_index == None || !TryGetLocal(eventData, out Vector2 local))
+        if (!IsDragging || !TryGetLocal(eventData, out Vector2 local))
             return;
 
-        MoveGhost(local);
+        MoveGhost(local, eventData);
     }
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        if (_index == None)
+        if (!IsDragging)
             return;
 
-        if (_host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
+        if (_equipSource != null)
+        {
+            if (TryGetLocal(eventData, out Vector2 dropLocal))
+                _host.UnequipAt(_equipSource.Slot, ToOrigin(dropLocal));
+        }
+        else if (_host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
         && entry.IsComponent
         && TryGetCombinationSlot(eventData, out CombinationSlot slot)
         && slot.Component == null                              // 이미 차 있으면 대상에서 제외. 아래 else로 빠져서 그냥 격자 이동 처리
@@ -96,6 +125,10 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         {
             slot.SetComponent(entry.Component);
             slot.GetComponentInParent<CorrectRecipe>().PushPartData();
+        }
+        else if (TryGetEquipmentSlot(eventData, out EquipmentSlotView equipmentSlot))
+        {
+            _host.Equip(_index, equipmentSlot.Slot);
         }
         else if (TryGetLocal(eventData, out Vector2 local))
         {
@@ -105,6 +138,8 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         RestoreSource();
         HideGhost();
         _index = None;
+        _equipSource = null;
+        _definition = null;
     }
 
     // 크래프팅 용
@@ -117,6 +152,14 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
             return false;
 
         slot = hit.GetComponentInParent<CombinationSlot>();
+        return slot != null;
+    }
+
+    // 부위가 안 맞으면 Equip에서 거절된다
+    private bool TryGetEquipmentSlot(PointerEventData eventData, out EquipmentSlotView slot)
+    {
+        GameObject hit = eventData.pointerCurrentRaycast.gameObject;
+        slot = hit != null ? hit.GetComponentInParent<EquipmentSlotView>() : null;
         return slot != null;
     }
 
@@ -143,7 +186,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         return ToCell(local) - _grabOffset;
     }
 
-    private void ShowGhost(Vector2 local)
+    private void ShowGhost(Vector2 local, PointerEventData eventData)
     {
         EnsureGhost();
 
@@ -157,14 +200,22 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         if (_ghostShape != null)
             _ghostShape.Draw(_shape, null, _view.CellSize, _validColor);
 
-        MoveGhost(local);
+        MoveGhost(local, eventData);
     }
 
     // 포인터를 따라가지 않고 배치될 칸에 스냅한다
-    private void MoveGhost(Vector2 local)
+    private void MoveGhost(Vector2 local, PointerEventData eventData)
     {
         if(_ghost == null)
         return;
+
+        // 장착 칸 위: 포인터를 따라가며 부위가 맞는지 표시
+        if (TryGetEquipmentSlot(eventData, out EquipmentSlotView hover))
+        {
+            _ghost.anchoredPosition = local - (Vector2)_grabOffset * _view.CellSize;
+            TintGhost(_definition != null && _definition.Slot == hover.Slot ? _validColor : _invalidColor);
+            return;
+        }
 
         Vector2Int origin = ToOrigin(local);
         bool insideGrid = origin.x >= 0 && origin.y >= 0
@@ -175,8 +226,11 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
             ? _view.CellToAnchored(origin)                       // 격자 안: 칸에 스냅
             : local - (Vector2)_grabOffset * _view.CellSize;     // 격자 밖: 포인터를 그대로 따라감
 
-        Color color = insideGrid && _host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor;
+        TintGhost(insideGrid && _host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor);
+    }
 
+    private void TintGhost(Color color)
+    {
         if (_ghostShape != null)
             _ghostShape.Tint(color);
         else if (_ghostImage != null)
@@ -204,10 +258,8 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     }
 
     // 드래그 중 원본은 반투명으로 남는다
-    private void FadeSource(int index)
+    private void FadeSource(RectTransform rect)
     {
-        RectTransform rect = _view.GetEntryRect(index);
-
         if (rect == null)
             return;
 

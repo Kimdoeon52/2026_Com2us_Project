@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // 장착 부위 칸 1개. 인벤토리 드롭 대상이고, 드래그나 우클릭으로 해제한다
-public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [Tooltip("부위")]
     [SerializeField] private Slot _slot;
@@ -13,6 +13,9 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IBeginDrag
 
     [Tooltip("해제 드래그를 처리할 인벤토리 드래그")]
     [SerializeField] private InventoryDragController _drag;
+
+    [Tooltip("툴팁")]
+    [SerializeField] private InventoryTooltip _tooltip;
 
     private Sprite _emptySprite;
     private Color _emptyColor;
@@ -25,6 +28,9 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IBeginDrag
     {
         if (_drag == null)
             _drag = FindAnyObjectByType<InventoryDragController>();
+
+        if (_tooltip == null)
+            _tooltip = FindAnyObjectByType<InventoryTooltip>();
     }
 
     private void Awake()
@@ -55,8 +61,27 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IBeginDrag
         InventoryHost.Instance.Unequip(_slot);
     }
 
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        if (_tooltip == null || eventData.dragging || InventoryHost.Instance == null)
+            return;
+
+        PartsDefinition parts = InventoryHost.Instance.GetEquipped(_slot);
+        if (parts != null)
+            _tooltip.Show(parts.GetTooltip());
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        if (_tooltip != null)
+            _tooltip.Hide();
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (_tooltip != null)
+            _tooltip.Hide();
+
         if (_drag != null)
             _drag.BeginFromEquipment(this, eventData);
     }

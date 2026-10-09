@@ -15,14 +15,14 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 0
-  m_FogColor: {r: 1, g: 0.88057184, b: 0.63142955, a: 1}
+  m_FogColor: {r: 1, g: 0.7, b: 0.52, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.5878304, g: 0.62700003, b: 0.72316957, a: 0.95}
-  m_AmbientEquatorColor: {r: 0.4928304, g: 0.475, b: 0.45833912, a: 0.95}
-  m_AmbientGroundColor: {r: 0.2939152, g: 0.2565, b: 0.21908478, a: 0.95}
+  m_AmbientSkyColor: {r: 0.201875, g: 0.24343748, b: 0.4334375, a: 0.95}
+  m_AmbientEquatorColor: {r: 0.1294375, g: 0.1484375, b: 0.2909375, a: 0.95}
+  m_AmbientGroundColor: {r: 0.0724375, g: 0.0724375, b: 0.1389375, a: 0.95}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
@@ -1147,6 +1147,10 @@ PrefabInstance:
       value: RS_GodRayTestRoom
       objectReference: {fileID: 0}
     - target: {fileID: 703149695088724425, guid: 902405e655f646878150a2e79c7eb124, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 703149695088724425, guid: 902405e655f646878150a2e79c7eb124, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 2147483647
       objectReference: {fileID: 0}
@@ -1687,7 +1691,7 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   fillDay: NaN
   fillNight: NaN
-  time: 15.1
+  time: 3
   dayLengthMinutes: 0
   flowInEditMode: 0
   sun: {fileID: 789245354}
@@ -3058,11 +3062,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 740487518}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 1.5
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -3143,7 +3147,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 789245351}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.39745125, y: -0.015196178, z: 0.006583011, w: 0.91747385}
+  m_LocalRotation: {x: 0.027984967, y: 0.9581659, z: -0.26647624, w: 0.10062527}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3171,7 +3175,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 0.74137723, y: 0.30329067}
+  m_LightCookieOffset: {x: 11.0271, y: 25.783813}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -3183,8 +3187,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 1, g: 0.9005718, b: 0.74628663, a: 1}
-  m_Intensity: 1.10635
+  m_Color: {r: 0.55, g: 0.66, b: 1, a: 1}
+  m_Intensity: 1.25
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -3193,7 +3197,7 @@ Light:
     m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 0.85
+    m_Strength: 0.6
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -5270,8 +5274,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.6187689, g: 0.66, b: 0.7612311, a: 1}
-  m_Intensity: 0.25
+  m_Color: {r: 0.2125, g: 0.25625, b: 0.45625, a: 1}
+  m_Intensity: 0.08
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -5473,6 +5477,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 027ea9a2b0884afd8772e2c6b05e7e27, type: 3}
       propertyPath: m_Name
       value: Chair_RS
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 027ea9a2b0884afd8772e2c6b05e7e27, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -40,7 +40,7 @@ public class PlayerRobotBootstrap : MonoBehaviour
         else Debug.LogWarning($"[PlayerRobotBootstrap] {name}에 RobotMover가 없음 — 바라보는 방향을 몰라서 박스 좌우 반전이 틀어짐");
         // ?. 를 쓴 이유: RobotView/BoxDrawer는 디버그·연출용이라 아직 오브젝트에 안 붙어있을 수도 있다.
         // 필수 컴포넌트(executor, mover)가 아니라서 없어도 전투 로직 자체는 돌아가야 하므로, 없으면 그냥 건너뛴다
-        GetComponent<RobotView>()?.Init(executor.State, input, mover);
+        GetComponent<RobotView>()?.Init(executor.State, input, mover, executor);
         GetComponent<BoxDrawer>()?.Init(executor.State, mover);
     }
 

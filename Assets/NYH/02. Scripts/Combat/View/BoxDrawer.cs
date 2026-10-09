@@ -60,6 +60,30 @@ public class BoxDrawer : MonoBehaviour
             // 일부 환경에서 와이어프레임이 제대로 안 그려질 수 있어서 아주 살짝 두께를 준 것뿐 (판정에는 영향 없음)
             Gizmos.DrawWireCube(worldRect.center, new Vector3(worldRect.width, worldRect.height, 0.01f));
         }
+
+        if (TryGetMuzzle(facingRight, out Vector3 muzzle))
+        {
+            Gizmos.color = MuzzleColor;
+            Gizmos.DrawLine(muzzle + Vector3.left * MuzzleSize, muzzle + Vector3.right * MuzzleSize);
+            Gizmos.DrawLine(muzzle + Vector3.down * MuzzleSize, muzzle + Vector3.up * MuzzleSize);
+        }
+    }
+
+    // 2026-10-09 추가: 총구 표시 (노란 십자). 투사체가 달린 행동이 진행 중일 때만 — 선딜(변신) 중에 멈춰도 보이게
+    // 행동 전체에서 그린다. 위치 계산은 ActionExecutor.EmitProjectiles와 똑같이 BoxResolver.ToWorldPoint 하나만 거친다 —
+    // 표시와 실제 발사 위치가 다르면 "거짓말하는 표시기"가 된다 (§4)
+    private static readonly Color MuzzleColor = Color.yellow;
+    private const float MuzzleSize = 0.08f;
+
+    private bool TryGetMuzzle(bool facingRight, out Vector3 muzzle)
+    {
+        muzzle = default;
+        ActionData action = state.CurrentAction;
+        if (action == null || action.Projectile == null) return false;
+
+        // 원본 SO에서 매번 읽으므로 일시정지 중 인스펙터에서 Projectile Muzzle을 바꾸면 바로 따라 움직인다
+        muzzle = BoxResolver.ToWorldPoint(transform.position, action.ProjectileMuzzle, facingRight);
+        return true;
     }
 
     // 유니티가 각 카메라로 씬을 다 그린 뒤 호출해주는 콜백 — 여기서 그린 GL 내용은 Game 뷰(플레이 화면)에
@@ -86,6 +110,13 @@ public class BoxDrawer : MonoBehaviour
             Rect worldRect = BoxResolver.ToWorldRect(transform.position, box.rect, facingRight);
             GL.Color(ColorFor(box.type));
             DrawRectOutline(worldRect);
+        }
+
+        if (TryGetMuzzle(facingRight, out Vector3 muzzle))
+        {
+            GL.Color(MuzzleColor);
+            GL.Vertex(muzzle + Vector3.left * MuzzleSize); GL.Vertex(muzzle + Vector3.right * MuzzleSize);
+            GL.Vertex(muzzle + Vector3.down * MuzzleSize); GL.Vertex(muzzle + Vector3.up * MuzzleSize);
         }
 
         GL.End();

@@ -51,7 +51,70 @@ public class HitDetection : MonoBehaviour
 
         CheckDirectional(fighterA, moverA, fighterB, moverB);
         CheckDirectional(fighterB, moverB, fighterA, moverA);
+        CheckProjectiles();
     }
+
+    // 2026-10-09 추가 (§11-15): 날아가는 투사체 각각의 Hit박스 vs 쏜 쪽이 아닌 로봇의 Hurt박스.
+    // 근접과 달리 "행동 1회당 1히트"(HasHitThisAction)를 쓰지 않는다 — 총알마다 따로 한 번씩 맞혀야 하므로
+    // 히트 여부는 총알 자신이 들고 있다(맞으면 Explode()로 Live에서 빠짐)
+    private void CheckProjectiles()
+    {
+        var projectiles = Projectile.Live;
+        // 뒤에서부터 도는 이유: 맞으면 Explode()가 목록에서 자기를 빼므로, 앞에서부터 돌면 다음 원소를 건너뛴다
+        for (int i = projectiles.Count - 1; i >= 0; i--)
+        {
+            Projectile projectile = projectiles[i];
+            if (projectile.Owner == fighterA) TryProjectileHit(projectile, fighterB, moverB);
+            else if (projectile.Owner == fighterB) TryProjectileHit(projectile, fighterA, moverA);
+        }
+    }
+
+    private void TryProjectileHit(Projectile projectile, ActionExecutor defender, RobotMover defenderMover)
+    {
+        // 회피 무적 중이면 총알이 그냥 통과한다 — 근접처럼 ProcessHit(isWeaving=true)으로 넘기면
+        // 겹쳐 있는 내내 매 틱 "회피 성공"이 들어가고 총알도 터져버려서, 무적의 의미가 없어진다
+        if (IsInvincibleNow(defender)) return;
+
+        Rect worldHit = projectile.GetWorldHitBox();
+        bool defenderFacingRight = defenderMover == null || defenderMover.FacingRight;
+
+        foreach (var hurtBox in defender.State.GetActiveBoxes())
+        {
+            if (hurtBox.type != BoxType.Hurt) continue;
+            Rect worldHurt = BoxResolver.ToWorldRect(defender.transform.position, hurtBox.rect, defenderFacingRight);
+            if (!Overlap(worldHit, worldHurt)) continue;
+
+            if (CombatDataHub.Instance == null)
+            {
+                Debug.LogWarning("[HitDetection] CombatDataHub가 씬에 없어서 투사체 히트 처리를 건너뜀");
+                return;
+            }
+
+            var result = CombatDataHub.Instance.ProcessHit(
+                projectile.Owner.FighterId, defender.FighterId, projectile.SourceAction, false, false);
+
+            projectile.Explode(); // 한 발 = 한 번. 같은 틱에 다른 박스와 또 겹쳐도 더 안 맞는다
+            ApplyHitConsequences(projectile.transform.position.x, projectile.SourceAction, defender, result);
+
+            Debug.Log($"[HitDetection] {projectile.Owner.FighterId}의 투사체 → {defender.FighterId} : 데미지={result.DamageToHp}");
+            return;
+        }
+    }
+
+    // 맞은 뒤의 후속 처리 순서를 근접·투사체가 똑같이 따르도록 한 곳에 모은다.
+    // 경직 → 넉백 순서인 이유는 HitReactionSystem.Apply 주석 참고(띄우기가 먼저면 공중 판정으로 경직이 빠짐)
+    private static void ApplyHitConsequences(float sourceX, ActionData sourceAction, ActionExecutor defender, HitResolutionResult result)
+    {
+        HitReactionSystem.Apply(defender, result);
+        KnockbackSystem.Apply(sourceX, sourceAction, defender, result);
+        defender.NotifyDamaged(result); // 점멸 등 연출 — 판정에는 영향 없음
+    }
+
+    // 회피(구 위닝) 무적 — 기술 이름이 아니라 플래그로 판정한다 (§13)
+    private static bool IsInvincibleNow(ActionExecutor defender) =>
+        defender.State.CurrentAction != null
+        && defender.State.CurrentAction.IsInvincibleDuringActive
+        && defender.State.Phase == ActionPhase.Active;
 
     // attacker의 Hit박스 전부 vs defender의 Hurt박스 전부를 비교해서, 하나라도 겹치면 그 순간 히트 처리하고 끝낸다
     private void CheckDirectional(ActionExecutor attacker, RobotMover attackerMover, ActionExecutor defender, RobotMover defenderMover)
@@ -102,18 +165,16 @@ public class HitDetection : MonoBehaviour
         bool isGuarding = false;
 
         // 회피(구 위닝) 무적도 마찬가지로 기술 이름이 아니라 플래그로 판정한다 — 나중에 다른 무적기가 생겨도 이 코드는 안 바뀐다
-        bool isWeaving = defender.State.CurrentAction != null
-                       && defender.State.CurrentAction.IsInvincibleDuringActive
-                       && defender.State.Phase == ActionPhase.Active;
+        bool isWeaving = IsInvincibleNow(defender);
 
+        ActionData attackAction = attacker.State.CurrentAction;
         var result = CombatDataHub.Instance.ProcessHit(
-            attacker.FighterId, defender.FighterId, attacker.State.CurrentAction, isGuarding, isWeaving);
+            attacker.FighterId, defender.FighterId, attackAction, isGuarding, isWeaving);
 
         attacker.State.MarkHit(); // 이번 행동으로 이 상대를 다시는 못 맞히게 표시 (중복 데미지 방지)
 
-        // 데미지 계산은 KKH가 끝냈지만, 그 결과로 "얼마나 밀려나는지"를 실제로 반영하는 건 아직
-        // 아무도 안 하고 있었다 — result.KnockbackDistance를 실제 이동으로 옮기는 건 이 호출이 전부다
-        KnockbackSystem.Apply(attacker, defender, result);
+        // 데미지 계산은 KKH가 끝냈고, 몸이 어떻게 반응하는지(경직·밀려남·띄우기·점멸)는 여기서 처리한다
+        ApplyHitConsequences(attacker.transform.position.x, attackAction, defender, result);
 
         // 결과를 바로 눈으로 확인할 수 있게 로그로 남긴다 — 나중에 UI가 생기면 CombatDataHub.OnHitResolved
         // 이벤트를 구독해서 이 정보로 화면에 데미지 숫자를 띄우면 된다 (지금은 그 UI가 없어서 로그로 대체)

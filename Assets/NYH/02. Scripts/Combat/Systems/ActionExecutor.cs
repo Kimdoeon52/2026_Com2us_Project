@@ -22,6 +22,15 @@ public class ActionExecutor : MonoBehaviour
     [Tooltip("이 로봇이 가진 모든 행동(D/Q/W/E/R 등). RuntimeRobot이 부위 파손 여부로 이 중 못 쓰는 걸 거른다")]
     [SerializeField] private ActionData[] allActions;
 
+    // 2026-10-09 추가: 맞았을 때 경직에 들어가는 규칙(기획서1009 §6-12-10). 비우면 경직 없이 점멸만 한다
+    [Tooltip("피격 시 경직 규칙. 비우면 이 로봇은 맞아도 움찔하지 않는다")]
+    [SerializeField] private HitReactionData hitReaction;
+
+    // 2026-10-09 추가: 착지 순간 자동으로 실행할 행동(Hit박스 없음). 착지 동안 이동·공격이 멈춰서
+    // "무거운 로봇이 쿵 하고 내려앉는" 느낌이 난다. 그림만 바꾸면 착지 모션 중에도 미끄러지듯 걷거나 바로 때릴 수 있다
+    [Tooltip("착지 순간 실행할 행동. 비우면 착지하자마자 바로 움직일 수 있다")]
+    [SerializeField] private ActionData landAction;
+
     // 사람이 조작하는지 AI가 조작하는지 몰라도 되도록 인터페이스로만 들고 있는다 (§8)
     private IInputSource inputSource;
     // 이 로봇의 "지금 뭘 하고 있는가" 전체를 담는 상태 객체. Init()에서 idleAction과 함께 생성된다
@@ -43,12 +52,27 @@ public class ActionExecutor : MonoBehaviour
     // 로봇을 구분하도록 이미 만들어져 있어서(§14), NYH 쪽도 같은 키를 그대로 들고 있어야 서로 연결된다
     public string FighterId { get; private set; }
 
+    /// <summary>경직 규칙. HitReactionSystem이 읽는다 (null이면 경직 없음)</summary>
+    public HitReactionData HitReaction => hitReaction;
+
+    /// <summary>같은 오브젝트의 RobotMover. 넉백의 띄우기·경직의 공중 판정·총구 방향이 이걸 본다. 없으면 null</summary>
+    public RobotMover Mover { get; private set; }
+
+    /// <summary>
+    /// 맞아서 데미지 판정이 끝난 순간(회피 성공 포함). RobotView가 점멸 이펙트를 여기서 건다.
+    /// 나중에 데미지 숫자 UI도 이 이벤트나 KKH의 OnHitResolved를 구독하면 된다
+    /// </summary>
+    public event Action<HitResolutionResult> OnDamaged;
+
     // 호출: PlayerRobotBootstrap.Awake. 받음: 입력원(사람인지 AI인지 몰라도 되게 인터페이스로 받는다), fighterId(CombatDataHub 조회 키)
     // (2026-09-29: 가드가 기동 행동에서 삭제되면서 방향 기반 가드 판정용으로 받던 mover 파라미터는 더 이상 필요 없어 제거함 — CLAUDE_1.md §5·§15)
     public void Init(IInputSource source, string fighterId)
     {
         inputSource = source;
         FighterId = fighterId;
+        // 파라미터로 받지 않고 직접 찾는 이유: 여기서 하는 일은 "같은 몸에 붙은 다리가 있으면 쓴다" 수준이고,
+        // Init 시그니처를 바꾸면 CSH가 병합한 코드·부트스트랩 호출부까지 같이 고쳐야 해서 영향 범위만 커진다
+        Mover = GetComponent<RobotMover>();
         // 여기서 처음으로 state를 만든다 — idleAction(인스펙터 값)이 이 시점엔 이미 확정돼 있으므로 안전하게 넘길 수 있다
         state = new ActionState(idleAction);
         // RuntimeRobot 생성자가 CombatDataHub의 부위 파손 이벤트를 구독한다 — PlayerRobotBootstrap.Awake가
@@ -63,6 +87,12 @@ public class ActionExecutor : MonoBehaviour
         // CombatDataHub가 생성자 시점엔 없었을 수 있어서(초기화 순서, RuntimeRobot.cs 주석 참고)
         // 매 틱 가볍게 재시도한다 — 이미 구독됐으면 bool 체크 한 줄로 끝난다
         Robot?.EnsureSubscribed();
+
+        // 죽었으면 더 할 일이 없다 — 입력도 프레임 전진도 안 한다 (사망 연출은 RobotView가 OnDead로 따로 돌림)
+        CheckDeath();
+        if (state.IsDead) return;
+
+        CheckLanding();
 
         // Idle일 때만 새 행동을 받아들인다 — 공격 도중(선딜/활성/후딜)에 입력이 들어와도 씹히는 게
         // 정상 동작이고, 그 판단 기준(CanAcceptNewAction)은 ActionState가 Phase로 이미 갖고 있으므로 여기선 그냥 물어보기만 한다
@@ -89,6 +119,57 @@ public class ActionExecutor : MonoBehaviour
 
         // 입력을 받았든 안 받았든 매 틱 반드시 한 번은 프레임을 전진시켜야 한다 (안 그러면 시간이 안 흐름)
         state.Advance();
+
+        // 프레임을 전진시킨 "뒤"에 쏘는 이유: Startup → Active로 넘어가는 바로 그 틱에 첫 발이 나가야
+        // 박스 앵커(Active 구간 시작 = 첫 히트 가능 프레임)와 타이밍이 같아진다
+        EmitProjectiles();
+    }
+
+    /// <summary>
+    /// 판정이 끝난 뒤 HitDetection이 맞은 쪽에 알려주는 통로. 이벤트를 밖에서 직접 Invoke할 수 없어서 함수로 연다
+    /// </summary>
+    // 호출: HitDetection(근접·투사체 공통). 전달: OnDamaged → RobotView 점멸
+    public void NotifyDamaged(HitResolutionResult result) => OnDamaged?.Invoke(result);
+
+    // 코어 HP가 0이 됐는지 매 틱 확인해서 Dead로 보낸다. 피격 지점(HitDetection)에서만 확인하지 않는 이유:
+    // 데미지가 들어오는 길이 근접·투사체·(나중의) 기믹·지속 피해 등 여러 갈래라, HP를 직접 보는 쪽이 빠뜨릴 일이 없다.
+    // KKH의 BattleManager.OnFighterKilled도 같은 순간을 알지만 그쪽은 "전투 종료 처리"라 역할이 다르다
+    private void CheckDeath()
+    {
+        if (state.IsDead) return;
+        var hub = CombatDataHub.Instance;
+        var snapshot = hub != null ? hub.GetSnapshot(FighterId) : null;
+        if (snapshot != null && !snapshot.IsAlive) state.Kill();
+    }
+
+    // 지난 틱엔 공중이었는데 이번 틱에 땅이면 = 방금 착지. 그때 아무것도 안 하고 있으면 착지 행동을 시작한다.
+    // 공중 공격 중에 착지했으면(행동 중) 건너뛴다 — 하던 행동이 우선이다.
+    // RobotMover의 착지는 Update에서 일어나지만, 행동 시작은 반드시 틱 안에서 해야 프레임이 정확히 세어진다(§3)
+    private bool wasGrounded = true;
+
+    private void CheckLanding()
+    {
+        bool grounded = Mover == null || Mover.IsGrounded;
+        bool justLanded = grounded && !wasGrounded;
+        wasGrounded = grounded;
+
+        if (justLanded && landAction != null && state.CanAcceptNewAction)
+            state.Begin(landAction);
+    }
+
+    // 활성 구간 동안 ActionData.ProjectileIntervalFrames마다 한 발씩 쏜다 (§11-15).
+    // 기술 이름을 보지 않고 "이 행동에 투사체가 달려 있는가"만 본다 — 총을 쏘는 기술이 몇 개로 늘어도 이 코드는 그대로다
+    private void EmitProjectiles()
+    {
+        ActionData action = state.CurrentAction;
+        if (action == null || action.Projectile == null || state.Phase != ActionPhase.Active) return;
+
+        // Active 구간에서 FrameInPhase는 0부터 센다(진입 틱 = 0) — 0, interval, 2×interval ... 에 발사
+        if (state.FrameInPhase % action.ProjectileIntervalFrames != 0) return;
+
+        bool facingRight = Mover == null || Mover.FacingRight;
+        Vector3 muzzle = BoxResolver.ToWorldPoint(transform.position, action.ProjectileMuzzle, facingRight);
+        Projectile.Spawn(action.Projectile, action, this, muzzle, facingRight);
     }
 
     // 호출: ExecuteTick(새 행동을 받아들이는 자리). 부위가 파괴된 상태에서 그 부위 소속 기술을 내면

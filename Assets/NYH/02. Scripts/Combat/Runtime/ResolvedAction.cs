@@ -25,10 +25,10 @@ public class ResolvedAction
 
     public int TotalFrames => StartupFrames + ActiveFrames + RecoveryFrames;
 
-    // 앵커를 풀어서 절대 프레임 창(startFrame/endFrame)을 채워 넣은 복사본.
-    // 원본 FrameBox 배열을 그대로 두고 복사본을 만드는 이유는 SO를 건드리지 않기 위해서다(§2).
-    // 타입을 FrameBox 그대로 유지한 덕분에 BoxDrawer/HitDetection/RobotMover는 한 줄도 안 바뀐다
-    private FrameBox[] boxes;
+    // 2026-10-09: 예전엔 Begin() 순간 박스 배열을 통째로 복사해 들고 있었다. 그러면 F9로 멈춘 채 인스펙터에서
+    // 박스 좌표를 고쳐도 그 행동이 끝날 때까지 화면·판정에 반영이 안 돼서, 스프라이트 보며 박스를 맞추는 작업이 안 됐다.
+    // 지금은 확정하는 건 "프레임 3개"뿐이고, 박스(좌표·종류·앵커)는 GetActiveBoxes가 부를 때마다 원본 SO에서 읽는다.
+    // SO는 런타임에 아무도 안 고치므로(§2) 플레이 중 값이 바뀌는 경우는 사람이 인스펙터에서 고칠 때뿐이다
 
     // 호출: ActionState.Begin. 받음: 원본 에셋, 적용할 보정. 반환: 확정된 실행 정보
     public static ResolvedAction Resolve(ActionData action, FrameAdjustment adjustment)
@@ -47,18 +47,21 @@ public class ResolvedAction
         if (action.ActiveFrames > 0 && resolved.ActiveFrames <= 0)
             resolved.ActiveFrames = 1;
 
-        resolved.boxes = ResolveBoxes(action, resolved);
         return resolved;
     }
 
     /// <summary>
     /// 지금 이 순간 활성화된 박스. ActionState.GetActiveBoxes()를 거쳐 BoxDrawer(표시)와
     /// HitDetection(판정)이 둘 다 이 결과 하나만 본다 (§4).
+    /// 박스는 매번 원본 SO에서 읽고, 켜지는 창만 이번 실행의 확정 프레임으로 계산한다 — 그래서
+    /// 일시정지 중에 인스펙터에서 좌표를 바꾸면 빨간 박스가 바로 따라 움직인다.
     /// </summary>
     public IEnumerable<FrameBox> GetActiveBoxes(int globalFrame)
     {
-        foreach (var box in boxes)
+        foreach (var source in Source.FrameBoxes)
         {
+            FrameBox box = source; // 구조체 복사 — 아래에서 창을 채워도 SO 원본은 안 바뀐다(§2)
+            GetWindow(box, StartupFrames, ActiveFrames, RecoveryFrames, out box.startFrame, out box.endFrame);
             if (globalFrame >= box.startFrame && globalFrame <= box.endFrame)
                 yield return box;
         }
@@ -77,7 +80,7 @@ public class ResolvedAction
     /// 박스 하나가 실제로 켜지는 절대 프레임 창. 런타임 판정과 에디터 표시가 **반드시 이 함수 하나만** 쓴다 —
     /// 에디터가 따로 계산하면 인스펙터에 적힌 창과 실제 판정이 달라지는 "거짓말하는 표시기"가 된다 (§4).
     /// </summary>
-    // 호출: ResolveBoxes(런타임) / FrameBoxDrawer·ActionDataEditor(에디터 표시). 반환: endFrame < startFrame이면 "안 켜짐"
+    // 호출: GetActiveBoxes(런타임) / FrameBoxDrawer·ActionDataEditor(에디터 표시). 반환: endFrame < startFrame이면 "안 켜짐"
     public static void GetWindow(FrameBox box, int startup, int active, int recovery, out int startFrame, out int endFrame)
     {
         // 아직 변환 안 한 박스는 예전처럼 절대 프레임을 그대로 쓴다 — 변환 전후로 동작이 안 바뀌게 하기 위함.
@@ -110,22 +113,6 @@ public class ResolvedAction
         // 창 전체가 행동 밖으로 밀려나면 begin > endFrame이 되어 자연스럽게 안 켜진다
         startFrame = begin;
         endFrame = Mathf.Min(end, total);
-    }
-
-    // 앵커 + 오프셋/길이를 확정 프레임 기준의 절대 창으로 바꾼다
-    private static FrameBox[] ResolveBoxes(ActionData action, ResolvedAction resolved)
-    {
-        FrameBox[] source = action.FrameBoxes;
-        var result = new FrameBox[source.Length];
-
-        for (int i = 0; i < source.Length; i++)
-        {
-            FrameBox box = source[i];
-            GetWindow(box, resolved.StartupFrames, resolved.ActiveFrames, resolved.RecoveryFrames,
-                out box.startFrame, out box.endFrame);
-            result[i] = box;
-        }
-        return result;
     }
 
     // 앵커가 가리키는 구간의 시작 프레임(1부터)과 길이

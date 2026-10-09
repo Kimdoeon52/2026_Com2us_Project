@@ -324,6 +324,16 @@ MonoBehaviour:
   idleStateName: Enemy1_Idle
   walkStateName: Enemy1_Move
   backWalkStateName: Enemy1_Move
+  jumpStartStateName: Enemy1_Attack_Jump
+  jumpStartFrames: 20
+  jumpLoopStateName: Enemy1_Jump_Loop
+  deathStateName: Enemy1_Hurt
+  deathDurationFrames: 90
+  explosionController: {fileID: 9100000, guid: d15ce1e6840dc95459de765a2a80c401, type: 2}
+  explosionStateName: Enemy_Explosion
+  explosionIntervalFrames: 10
+  explosionCenter: {x: 0, y: 0.2}
+  explosionRadius: 0.4
 --- !u!95 &310224670
 Animator:
   serializedVersion: 7
@@ -372,6 +382,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   idleAction: {fileID: 11400000, guid: df81135a42246114ebe59fe9705e34ed, type: 2}
+  allActions:
+  - {fileID: 11400000, guid: a205ddbf7ae449ae861b4f02ffa04e79, type: 2}
+  - {fileID: 11400000, guid: cc640c4b7c4643beab9200c800eb05f0, type: 2}
+  - {fileID: 11400000, guid: affd720bc1944d7fa95e42ded840e7f1, type: 2}
+  - {fileID: 11400000, guid: 6b2e03e0cab74c0681c2c71799896a6f, type: 2}
+  hitReaction: {fileID: 11400000, guid: 7a39250c88e444d6852f83c7a50d6b89, type: 2}
+  landAction: {fileID: 11400000, guid: ffe3bee38a9247f69acb397e2409163f, type: 2}
 --- !u!61 &310224674
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -500,7 +517,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f40009842f5a5547ac842f67bc342e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 3
+  moveSpeed: 2
   dashSpeedMultiplier: 1.8
   jumpVelocity: 6
   gravity: -20
@@ -519,8 +536,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   opponent: {fileID: 1270632114}
-  attackRange: 1.2
-  attackAction: {fileID: 11400000, guid: a205ddbf7ae449ae861b4f02ffa04e79, type: 2}
+  profile: {fileID: 11400000, guid: 1667958e2767467aae53edd54642c6de, type: 2}
+  randomSeed: 0
 --- !u!1001 &533916007
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -812,6 +829,116 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17aa980fba1250b4eacc6f52574df870, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!1 &1088690997
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1088691000}
+  - component: {fileID: 1088690999}
+  - component: {fileID: 1088690998}
+  m_Layer: 0
+  m_Name: Bullet
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!95 &1088690998
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1088690997}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: ba5c30d72b3c0b14280aaa7fcf2f1fcd, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
+--- !u!212 &1088690999
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1088690997}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: -886734559, guid: c7b1ad07c1e705e4db6aac67c4716ae9, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.16, y: 0.16}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!4 &1088691000
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1088690997}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.5315413, y: 0.6807422, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1214054389
 GameObject:
   m_ObjectHideFlags: 0
@@ -1067,6 +1194,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   idleAction: {fileID: 11400000, guid: 3d9dcea5d6753044eb45f1aed4becebf, type: 2}
+  allActions: []
+  hitReaction: {fileID: 0}
+  landAction: {fileID: 0}
 --- !u!95 &1270632120
 Animator:
   serializedVersion: 7
@@ -1105,6 +1235,16 @@ MonoBehaviour:
   idleStateName: Idle
   walkStateName: Walk
   backWalkStateName: BackWalk
+  jumpStartStateName: 
+  jumpStartFrames: 20
+  jumpLoopStateName: 
+  deathStateName: 
+  deathDurationFrames: 90
+  explosionController: {fileID: 0}
+  explosionStateName: 
+  explosionIntervalFrames: 10
+  explosionCenter: {x: 0, y: 0.2}
+  explosionRadius: 0.4
 --- !u!114 &1270632122
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1418,3 +1558,4 @@ SceneRoots:
   - {fileID: 1328636929}
   - {fileID: 1270632114}
   - {fileID: 310224676}
+  - {fileID: 1088691000}

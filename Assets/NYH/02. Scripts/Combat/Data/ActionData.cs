@@ -105,6 +105,28 @@ public class ActionData : ScriptableObject
     [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다.")]
     [SerializeField] private string animationClipName;
 
+    // 2026-10-09 추가: "변신 → 루프" 처럼 활성 구간에서 그림이 바뀌는 행동용 (적 Skill4 총 모션 등).
+    // 기술 이름으로 분기하지 않고 데이터 하나로 처리하려고 필드로 뺐다 — 비워두면 행동 내내 위 클립 하나만 쓴다
+    [Tooltip("활성 구간에 들어서는 순간 바꿔 재생할 Animator 스테이트 이름. 비우면 animationClipName을 계속 재생")]
+    [SerializeField] private string activeClipName;
+
+    [Header("피격 효과 — 값 전부 임시 (기획 확정 전)")]
+    // 2026-10-09 추가: 어퍼컷처럼 맞은 상대를 위로 띄우는 기술용. 0이면 안 띄운다
+    [Tooltip("TODO: 임시값. 맞은 상대에게 주는 위쪽 초기 속도(RobotMover.Launch). 0이면 띄우지 않음")]
+    [Min(0)] [SerializeField] private float launchVelocity;
+
+    [Header("투사체 — 비우면 일반 근접 행동")]
+    // 2026-10-09 추가 (§11-15 투사체 구조): 활성 구간 동안 projectileIntervalFrames마다 한 발씩 쏜다.
+    // 투사체의 데미지는 이 ActionData의 damage를 그대로 쓴다 — 한 발 = ProcessHit 한 번
+    [Tooltip("활성 구간에 발사할 투사체. 비우면 발사 안 함")]
+    [SerializeField] private ProjectileData projectile;
+
+    [Tooltip("TODO: 임시값. 활성 구간 진입 프레임에 1발, 그 뒤 이 간격(프레임)마다 1발")]
+    [Min(1)] [SerializeField] private int projectileIntervalFrames = 15;
+
+    [Tooltip("총구 위치. 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
+    [SerializeField] private Vector2 projectileMuzzle;
+
     [Header("판정 박스")]
     // 이 배열 안의 각 FrameBox가 "이 행동 도중 어느 프레임에 어떤 판정 상자가 있는지"를 전부 담는다.
     // 빈 배열(new FrameBox[0])을 기본값으로 둔 이유: 아직 아무 좌표도 안 채워진 상태에서도
@@ -141,6 +163,13 @@ public class ActionData : ScriptableObject
     public float Damage => damage;
 
     public string AnimationClipName => animationClipName;
+    public string ActiveClipName => activeClipName;
+
+    public float LaunchVelocity => launchVelocity;
+
+    public ProjectileData Projectile => projectile;
+    public int ProjectileIntervalFrames => projectileIntervalFrames;
+    public Vector2 ProjectileMuzzle => projectileMuzzle;
 
     public FrameBox[] FrameBoxes => frameBoxes;
 

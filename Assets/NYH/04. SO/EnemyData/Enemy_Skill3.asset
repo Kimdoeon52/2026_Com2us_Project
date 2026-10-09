@@ -10,21 +10,26 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
-  m_Name: Enemy_Attack_1a
+  m_Name: Enemy_Skill3
   m_EditorClassIdentifier: 
-  actionName: Enemy_Attack_1a
+  actionName: Enemy_Skill3
   source: 0
   requiredPart: 5
-  startupFrames: 10
-  activeFrames: 3
-  recoveryFrames: 15
+  startupFrames: 12
+  activeFrames: 5
+  recoveryFrames: 18
   isInvincibleDuringActive: 0
   isGuardable: 0
   causesKnockdown: 0
   staggerValue: 0
   knockbackDistance: 0
-  damage: 8
-  animationClipName: Enemy1_Attack_1a
+  damage: 12
+  animationClipName: Skill3
+  activeClipName: 
+  launchVelocity: 5
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
   frameBoxes:
   - type: 1
     bodyPart: 5
@@ -56,10 +61,10 @@ MonoBehaviour:
     bodyPart: 5
     rect:
       serializedVersion: 2
-      x: 0.2
+      x: 0.15
       y: 0.1
-      width: 0.5
-      height: 0.4
+      width: 0.45
+      height: 0.88
     anchor: 3
     startOffset: 0
     length: 0

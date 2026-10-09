@@ -21,7 +21,7 @@ public enum ActionPhase
     Recovery, // 후딜 — 행동을 회수하는 구간. 이 동안 재입력은 무시된다(§11-4)
     // Stagger(경직)는 2026-09-29 경직 시스템 전체 삭제로 제거됨 — CLAUDE_1.md §7·§15
     Down,     // 다운 — 다운 유발 기술(CausesKnockdown)에 맞아 쓰러진 상태 (아직 진입 코드 없음)
-    Dead      // 사망 — 코어 HP 0. 다음 전투까지 조작 불가 상태로 쓰일 예정
+    Dead      // 사망 — 코어 HP 0. ActionState.Kill()로만 진입하고 되돌아오지 않는다. 판정·이동·입력 전부 정지
 }
 
 /// <summary>
@@ -61,6 +61,16 @@ public enum BoxType
     Hit,  // 활성 구간당 1개가 보통 — 그 프레임 동안만 존재하는 공격의 "칼날" 부분
     Hurt, // 도트 1장당 1세트 — 팔을 뻗으면 맞는 범위도 같이 늘어나야 하므로 그림이 바뀔 때마다 새로 등록
     Push  // 액션당 1개 — 몸통 크기는 기술 내내 거의 안 바뀌므로 하나만 두면 충분
+}
+
+/// <summary>
+/// AI가 기술을 고를 때 "상대가 어디 있을 때만 쓸지" 제한 (EnemyAIProfile.SkillEntry).
+/// </summary>
+public enum AITargetCondition
+{
+    Any,      // 상대 상태와 무관
+    Grounded, // 상대가 땅에 있을 때만
+    Airborne  // 상대가 공중에 있을 때만
 }
 
 /// <summary>

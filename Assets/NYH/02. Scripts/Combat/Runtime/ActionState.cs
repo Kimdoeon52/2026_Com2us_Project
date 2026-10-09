@@ -87,7 +87,13 @@ public class ActionState
 
     /// <summary>회수까지 끝나고 Idle로 돌아가는 순간</summary>
     public event Action<ActionData> OnActionEnd;
-    
+
+    /// <summary>코어 HP 0으로 Dead에 들어가는 순간. RobotView가 사망 연출을 여기서 시작한다</summary>
+    public event Action OnDead;
+
+    /// <summary>사망 상태인지. Dead는 되돌아오지 않는다 — 판정·이동·입력이 전부 멈춘다</summary>
+    public bool IsDead => Phase == ActionPhase.Dead;
+
     #region 최. 추가
     private Func<ActionData, ResolvedModifiers> modifierResolver;
 
@@ -124,6 +130,37 @@ public class ActionState
         HasHitThisAction = false; // 새 행동이 시작됐으니 "이미 맞혔음" 기록도 초기화 — 이번 공격은 아직 아무도 못 맞혔다
         Phase = ActionPhase.Startup;
         OnActionBegin?.Invoke(action);
+    }
+
+    /// <summary>
+    /// 지금 하던 행동을 그 자리에서 끊고 action을 시작한다. 경직(HitReactionSystem)처럼 "맞아서 강제로
+    /// 바뀌는" 경우 전용 — 평소 입력은 반드시 Begin()을 거쳐야 후딜 중 재입력 무시(§11-4)가 지켜진다.
+    /// 끊긴 행동의 OnActionEnd는 일부러 안 보낸다: "끝까지 나간 행동"과 "끊긴 행동"을 구독자가 헷갈리지 않게.
+    /// </summary>
+    // 호출: HitReactionSystem.Apply. 받음: 대신 시작할 행동(보통 피격 행동). 사망 중이면 무시
+    public void Interrupt(ActionData action)
+    {
+        if (action == null || IsDead) return;
+
+        CurrentAction = null;
+        Phase = ActionPhase.Idle;
+        FrameInPhase = 0;
+        Begin(action);
+    }
+
+    /// <summary>
+    /// 코어 HP 0 — Dead로 들어간다. 진행 중이던 행동은 버리고(OnActionEnd 안 보냄), 이후로는
+    /// Begin/Interrupt/Advance가 전부 무시되고 GetActiveBoxes()가 빈 목록을 돌려준다(죽은 로봇은 안 맞는다).
+    /// </summary>
+    // 호출: ActionExecutor.CheckDeath. 전달: OnDead → RobotView 사망 연출
+    public void Kill()
+    {
+        if (IsDead) return;
+
+        CurrentAction = null;
+        FrameInPhase = 0;
+        Phase = ActionPhase.Dead;
+        OnDead?.Invoke();
     }
 
     // 장비·스킬의 보정(CSH)을 프레임 보정으로 옮겨 담는 유일한 지점.
@@ -203,6 +240,9 @@ public class ActionState
     /// </summary>
     public IEnumerable<FrameBox> GetActiveBoxes()
     {
+        // 죽은 로봇은 맞지도, 밀지도 않는다 — 사망 연출 중에 시체를 때려 데미지가 또 들어가는 걸 막는다
+        if (IsDead) return Array.Empty<FrameBox>();
+
         // 행동 중이면 그 행동이 "지금 전체 타임라인 기준 몇 프레임째인지"(GlobalFrame)에 맞는 박스를 그대로 넘긴다.
         // 원본(CurrentAction)이 아니라 Timeline에서 꺼내는 이유: 앵커로 찍은 박스는 확정 프레임을 알아야
         // 창이 정해지고, 프레임 보정이 걸리면 박스도 같이 따라가야 하기 때문이다

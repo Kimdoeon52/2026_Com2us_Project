@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
+  m_Name: Enemy_Skill4
+  m_EditorClassIdentifier: 
+  actionName: Enemy_Skill4
+  source: 0
+  requiredPart: 5
+  startupFrames: 30
+  activeFrames: 90
+  recoveryFrames: 10
+  isInvincibleDuringActive: 0
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 5
+  animationClipName: Skill4
+  activeClipName: Skill4_loop
+  launchVelocity: 0
+  projectile: {fileID: 11400000, guid: ae84abd4584144498123201a4c31020b, type: 2}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0.25, y: 0.05}
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.4
+      y: -0.24
+      width: 0.7
+      height: 0.83
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.4
+      y: -0.24
+      width: 0.7
+      height: 0.83
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0

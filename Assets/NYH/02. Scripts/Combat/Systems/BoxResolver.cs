@@ -29,4 +29,12 @@ public static class BoxResolver
         // width/height(박스 크기)는 반전 여부와 무관하게 항상 그대로 유지된다 — 뒤집혀도 박스 자체가 커지거나 작아지진 않으니까
         return new Rect(worldX, worldY, localRect.width, localRect.height);
     }
+
+    // 2026-10-09 추가: 박스가 아니라 "점"(총구 위치 등)을 같은 규칙으로 뒤집는다.
+    // 총구 반전을 ActionExecutor 쪽에서 따로 계산하면 박스와 총구가 서로 다른 반전 규칙을 갖게 될 수 있어서 여기 모았다
+    public static Vector3 ToWorldPoint(Vector3 pivotWorldPos, Vector2 localPoint, bool facingRight)
+    {
+        float worldX = facingRight ? pivotWorldPos.x + localPoint.x : pivotWorldPos.x - localPoint.x;
+        return new Vector3(worldX, pivotWorldPos.y + localPoint.y, pivotWorldPos.z);
+    }
 }

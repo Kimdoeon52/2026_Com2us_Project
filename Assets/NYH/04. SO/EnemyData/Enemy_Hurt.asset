@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
+  m_Name: Enemy_Hurt
+  m_EditorClassIdentifier: 
+  actionName: Enemy_Hurt
+  source: 0
+  requiredPart: 5
+  startupFrames: 0
+  activeFrames: 0
+  recoveryFrames: 20
+  isInvincibleDuringActive: 0
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 0
+  animationClipName: Enemy1_Hurt
+  activeClipName: 
+  launchVelocity: 0
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.4
+      y: -0.24
+      width: 0.7
+      height: 0.83
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.4
+      y: -0.24
+      width: 0.7
+      height: 0.83
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0

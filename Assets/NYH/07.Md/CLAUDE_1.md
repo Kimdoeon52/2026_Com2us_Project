@@ -64,7 +64,10 @@ D든 파츠 액티브(Q/W/E/R)든 보스 전용 기술이든 전부 `ActionData`
 ```
 Assets/NYH/02. Scripts/Combat/
     Data/       ActionData.cs ✅  FrameBox.cs  CombatEnums.cs ✅
+                ProjectileData.cs  HitReactionData.cs  EnemyAIProfile.cs (2026-10-09)
                 (PartData.cs / CoreData.cs는 만들지 않음 — KKH의 PartMasterData 참조)
+    Systems/ 추가 (2026-10-09): Projectile.cs(날아가는 판정체)  HitReactionSystem.cs(static, 경직 판단)
+    View/ 추가 (2026-10-09): SpriteEffect.cs(static, 총알·폭발 스프라이트 생성)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
@@ -451,6 +454,10 @@ class RuntimeRobot
 
 넉백 자체(피격 시 밀려나는 것)를 PvE 보스전에서 어떤 수치/규칙으로 다시 넣을지는 **미정** — §15 참고.
 
+**2026-10-09 갱신**: 기획서1009 §6-12-10 "피격시 약간의 밀려남"으로 근거가 다시 생겼다. `KnockbackSystem`은
+`ActionData.KnockbackDistance`만큼 "공격 기준점에서 멀어지는 방향"으로 민다(근접=공격자 위치, 투사체=총알 위치).
+같은 자리에서 `ActionData.LaunchVelocity`(어퍼컷류 띄우기 → `RobotMover.Launch`)도 처리한다. **밀리는 거리는 기획서에 수치가 없으므로 기획이 정하기 전까지 0으로 둔다**(§12).
+
 ---
 
 ## 7. 경직도 — 삭제됨 (2026-09-29)
@@ -461,6 +468,17 @@ class RuntimeRobot
 
 히트 스턴(한 대 맞고 굳는 시간, 프레임 단위)이 별도로 필요한지는 이번 재설계에서 다시 정해야 한다 —
 경직도 게이지와 묶여있던 개념이라 자동으로 남는 게 아니다. 필요 여부는 미정 (§15).
+
+### 2026-10-09 — 경직이 "피격 리액션"으로 다시 생김
+
+기획서1009 §6-12-1이 "경직 시스템 없음" → **"경직 시스템 존재"**로 바뀌었고, §6-12-10에 "약간의 경직도가
+존재 / 피격시 약간의 밀려남과 피격 애니메이션, 점멸 이펙트"가 추가됐다. 위의 **경직도 게이지(누적 100,
+지속 120F)를 되살린 게 아니다** — 게이지 없이 "맞으면 짧게 움찔"하는 규칙만 있다. `staggerValue`·`StunSystem`은 여전히 무효.
+
+- 규칙 데이터: `HitReactionData`(SO, 로봇마다 하나 — 비우면 경직 없음). 판단: `HitReactionSystem`(static) 한 곳.
+- 경직 = **피격 `ActionData`(Hit박스 없음)를 `ActionState.Interrupt()`로 강제 시작**하는 것. 별도 Stagger 상태값을 만들지 않는다.
+- 대기·걷기 중 → 확률로 경직(강한 공격이면 무조건) / 행동 중 → 기준 데미지 이상일 때만 끊김 / 공중·사망 → 경직 없음.
+- 확률·기준 데미지·점멸 프레임은 전부 임시값 — 기획 확인 필요 (§15).
 
 ---
 
@@ -596,13 +614,15 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 6. 🔶 `HitDetection` — AABB 겹침. 선행 조건(`FrameBox`, `GetActiveBoxes`, `IsInvincibleDuringActive`)은 준비됨. `isGuarding` 관련 부분은 §5·§8 갱신에 맞춰 재검토 필요
 7. 🔶 `KnockbackSystem` (`StunSystem`은 2026-09-29 경직 시스템 삭제로 작업 목록에서 제외, §7)
 8. 🔶 (2026-10-06) `RuntimeRobot`(행동 잠금 목록, §5) 완성. `RobotAssembler`/`RuntimePart`/`DurabilitySystem`은 아직 ⬜ — KKH 쪽 동급 데이터(`CombatantSnapshot`/`PartRuntimeState`/`CombatantBuilder`)는 이미 있음, NYH가 할 일은 실제 장착 파츠로 조립해서 `BattleManager.InitializeBattle`에 등록하는 것 (§14). **단 §5 "플레이어 vs 보스 비대칭"이 정해지기 전까지 보스 쪽 내구도 조립 로직은 보류**
-9. 🔶 (2026-10-06) `AIInputSource` 1차 버전 작성 완료(`Combat/Input/AIInputSource.cs`) — "사거리 밖이면 접근, 안이면 공격"만 하는 최소 규칙. 보스 기믹 같은 복잡한 패턴은 아직 없음. 보스용과 일반 적용을 같은 클래스로 계속 묶을지는 여전히 미정 — 지금은 구조 검증용 하나로 공용. ⬜ 씬에서 `DummyJabInputSource` → `AIInputSource` 교체 아직 안 함(사용자가 Unity에서 직접)
+9. 🔶 (2026-10-09) 일반 적 AI 2차 — `AIInputSource`를 `EnemyAIProfile`(SO) 기반 **가중치 선택**으로 교체. 선택지 = 기술(사거리·쿨타임·부위 파손·상대 지상/공중 조건) + 접근 + 대기 + 점프. AI 자체 상태기계는 두지 않고 `ActionState`/`RobotMover`에 매번 묻는다. 판단·쿨타임은 `CombatClock` 틱에서만 센다. 적 Skill1~4·피격·총알 에셋은 `Assets/NYH/04. SO/EnemyData/`. 보스용과 계속 묶을지는 여전히 미정. ⬜ 씬 인스펙터 연결과 실제 플레이 검증은 아직(개발일지 2026-10-09)
 10. ✅ (2026-10-06 결정) CSH 연동 방식 확정 — `IUsable`/`SkillBase`는 CSH가 이미 폐기하고 "장비 효과"(`EquipmentEffectSet`/`ResolvedModifiers`) + 리졸버 주입(`SetModifierResolver`/`SetEffects`, 이미 `ActionState.cs`/`ActionExecutor.cs`에 병합됨) 체계로 교체함. §13 원안(이벤트 구독)으로 되돌리지 않고 **CSH가 만든 방식을 그대로 따라간다.** 프레임 보정 필드·`ActionTag` 매칭·`KnockbackMultiplier` 등 CSH 쪽 빈 자리는 CSH 책임 — NYH가 먼저 요구하지 않음
 11. ✅ (2026-09-29) D/Q/W/E/R 액션 구조 전환 — 기존 5종 기본기 에셋·키매핑 제거 + D 슬롯 신설 + Q/W/E/R 슬롯 구조 (§3·§8). 2026-10-02: Q/W 짧게·길게(차지) 입력 수신 + 대시·점프 입력 수신까지 추가 — 전부 `PlayerInputSource`의 "입력 수신"만 완료고, 실제 물리/실린더 연결은 미완료(아래 참고)
 12. ✅ (2026-10-02) 점프·대시를 `RobotMover`에 실제로 반영 — Y축 포물선 점프(`jumpVelocity`/`gravity`, 수치 전부 임시) + 대시 중 `moveSpeed` 배율(`dashSpeedMultiplier`, 수치 임시). **같은 작업 중 발견: 방향 전환이 "상대 위치 기준"(옛 SF2 미러매치 가정)으로 박혀 있던 걸 "이동 입력 방향 기준"(기획서 그래픽 §7-1 "방향 전환 | 반대 방향 입력")으로 교체함 — 할로우나이트/스컬류 보스전엔 전자가 안 맞음.** 이동 로직 자체는 여전히 `Update()`에서 돈다(`CombatTick` 이관은 별도 확인 필요 — §15).
 13. ⬜ 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15)
 14. ⏸️ (2026-10-06 결정) 실린더 시스템 — `CombatDataHub.CanExecuteAction(fighterId, source, requiredPart, cylinderCost)` 오버로드는 이미 존재하지만, 이걸 Q/W 강화판정에 실제로 연결하는 작업은 **KKH·CSH 쪽이 알아서 진행** — NYH가 먼저 나서서 연결하지 않는다. 요청이 오면 그때 배선
-15. ⬜ (2026-10-02 신규) 투사체(발사체) 스킬 아키텍처 — 로켓/앵커 너클 등 "원거리 기물" 태그 스킬은 지금 구조(캐릭터에 고정된 로컬 `FrameBox`)로 못 만듦. 설계 먼저 논의 (§15)
+15. 🔶 (2026-10-09) 투사체 1차 구조 — `ProjectileData`(SO) + `Projectile`(날아가는 객체, `CombatClock` 틱으로 이동·수명) + `HitDetection.CheckProjectiles`. `ActionData.projectile`이 있으면 활성 구간 동안 `projectileIntervalFrames`마다 `ActionExecutor`가 발사. 총알마다 1회 히트(근접의 `HasHitThisAction`과 별개), 회피 무적이면 통과. 데미지는 쏜 `ActionData.Damage`. 플레이어 팔 스킬(로켓/붐버 등)의 폭발 반경·기물 파괴는 아직 없음
+16. 🔶 (2026-10-09) 사망 — `ActionExecutor`가 매 틱 코어 HP를 보고 `ActionState.Kill()` → `ActionPhase.Dead`(판정·이동·입력 정지, 박스 없음). `RobotView`가 피격 모션 유지 + 몸 주변 폭발 → 스프라이트 끔. 카메라 연출용 이벤트(`OnDeathStarted`/`OnDeathExplosion`/`OnDeathFinished`)는 자리만 있고 구독자 없음
+17. 🔶 (2026-10-09) 점프 그림 3단(시작 → 공중 루프 → 착지)·활성 구간 클립 전환(`ActionData.activeClipName`)·피격 점멸 — 전부 `RobotView`(그림만, 판정 무관)
 
 ---
 
@@ -771,10 +791,13 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
 - 보스 스킬이 "타격 부위"를 어떤 필드로 표현할지, 어느 쪽(NYH/KKH) 소유인지
 - `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별로 끌지
 - `CombatDataHub.ProcessHit`의 `isGuarding` 인자 처리 — KKH와 협의 필요 (§0, §14)
-- 히트 스턴(프레임 단위 경직)이 경직 게이지 삭제 후에도 별도로 필요한지
-- 넉백 수치·규칙 (§6에서 구 SF2 방식 삭제, 2026-10-06) — PvE 보스전에서 피격 시 밀려나는 거리·조건을
-  어떻게 다시 정할지 기획 확인 필요. `KnockbackSystem`(코드)은 `ActionData.KnockbackDistance`를
-  그대로 적용하는 범용 로직이라 당장 깨지지 않지만, 주석이 삭제된 §6을 근거로 들고 있어 정리 필요
+- ~~히트 스턴이 별도로 필요한지~~ → 2026-10-09 기획서1009로 "피격 리액션" 형태로 확정(§7). 남은 건 수치:
+  대기 중 경직 확률, 공격을 끊는 기준 데미지, 경직 길이, 점멸 길이 — 전부 임시값
+- 넉백 수치 — 근거(기획서1009 "약간의 밀려남")는 생겼지만 기술별 거리는 미정. 어퍼컷 띄우기 높이도 임시값
+- 적 Skill1~4 프레임·데미지·쿨타임, 총알 속도·연사 간격·사거리 — 클립 길이 기준 임시값 (개발일지 2026-10-09)
+
+> 2026-10-09: 기준 기획서가 `리얼스틸 기획서1009.md`로 바뀌었다(`리얼스틸 기획서 (1).md`는 삭제됨).
+> 전투 절은 896~980행. 이 문서의 "기획서(1) §6-12" 표기는 같은 절을 가리킨다.
 
 ### 걷어낸 코드 (2026-09-29 완료)
 

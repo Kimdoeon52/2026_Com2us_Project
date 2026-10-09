@@ -46,6 +46,24 @@ public class RobotMover : MonoBehaviour
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
+    /// <summary>땅에 있는지. RobotView(점프/착지 그림), AI(상대가 공중인지), HitReactionSystem(공중 경직 여부)이 읽는다</summary>
+    public bool IsGrounded => isGrounded;
+
+    /// <summary>현재 위아래 속도. 양수면 올라가는 중</summary>
+    public float VerticalVelocity => verticalVelocity;
+
+    /// <summary>
+    /// 맞아서 위로 뜨게 만든다 (어퍼컷 등 ActionData.LaunchVelocity). 점프와 같은 물리를 그대로 쓴다 —
+    /// 행동 중이든 아니든 무조건 뜬다. 이미 떠 있으면 위쪽 속도만 새로 덮어쓴다(공중 추가타)
+    /// </summary>
+    // 호출: KnockbackSystem.Apply. 받음: 위쪽 초기 속도
+    public void Launch(float upwardVelocity)
+    {
+        if (upwardVelocity <= 0f) return;
+        verticalVelocity = upwardVelocity;
+        isGrounded = false;
+    }
+
     /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 —
     /// 지금은 "키 누르면 움직인다"를 눈으로 확인하기 위한 최소 스캐폴드</summary>
     // 호출: PlayerRobotBootstrap.Awake. 받음: source(이동 키 읽기), state(공격 중 이동 잠금 판단)

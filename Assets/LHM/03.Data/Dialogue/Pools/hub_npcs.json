@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "pools": [
+    {
+      "poolId": "hub.junkshop.talk",
+      "category": "Hub",
+      "mode": "Blocking",
+      "desc": "고물상 주인에게 말 걸기",
+      "entries": [
+        {
+          "id": "junk.first_meet",
+          "band": "Story",
+          "once": true,
+          "lines": [
+            { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.first_meet.0" },
+            { "speaker": "junk_owner", "portrait": "grin",    "textKey": "junk.first_meet.1" }
+          ],
+          "effects": [ { "op": "Add", "key": "dlg.junkTrust", "value": 1 } ]
+        },
+        {
+          "id": "junk.loss.boss_wheel01",
+          "band": "Reactive",
+          "oncePer": "battle.count",
+          "subPriority": 10,
+          "maxPlays": 2,
+          "note": "바퀴 보스에게 진 직후. 일반 패배보다 구체적이라 우선",
+          "conditions": { "all": [
+            { "key": "battle.lastResult",   "op": "eq", "value": "Lose" },
+            { "key": "battle.lastOpponent", "op": "eq", "value": "boss_wheel01" }
+          ]},
+          "lines": [
+            { "speaker": "junk_owner", "portrait": "worried", "textKey": "junk.loss.wheel.0" },
+            { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.loss.wheel.1" }
+          ]
+        },
+        {
+          "id": "junk.loss.basic_parts",
+          "band": "Reactive",
+          "oncePer": "battle.count",
+          "subPriority": 10,
+          "conditions": { "all": [
+            { "key": "battle.lastResult",      "op": "eq", "value": "Lose" },
+            { "key": "player.usingBasicParts", "op": "eq", "value": true }
+          ]},
+          "lines": [ { "speaker": "junk_owner", "portrait": "worried", "textKey": "junk.loss.basic.0" } ]
+        },
+        {
+          "id": "junk.loss.generic",
+          "band": "Reactive",
+          "oncePer": "battle.count",
+          "conditions": { "key": "battle.lastResult", "op": "eq", "value": "Lose" },
+          "lines": [ { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.loss.generic.0" } ]
+        },
+        {
+          "id": "junk.win.generic",
+          "band": "Reactive",
+          "oncePer": "battle.count",
+          "conditions": { "key": "battle.lastResult", "op": "eq", "value": "Win" },
+          "lines": [ { "speaker": "junk_owner", "portrait": "grin", "textKey": "junk.win.generic.0" } ]
+        },
+        {
+          "id": "junk.wins5",
+          "band": "Progress",
+          "once": true,
+          "conditions": { "all": [
+            { "key": "record.wins", "op": "gte", "value": 5 },
+            { "op": "seen", "value": "junk.first_meet" }
+          ]},
+          "lines": [ { "speaker": "junk_owner", "portrait": "grin", "textKey": "junk.wins5.0" } ],
+          "effects": [ { "op": "Add", "key": "dlg.junkTrust", "value": 1 } ]
+        },
+        {
+          "id": "junk.tournament_week",
+          "band": "Progress",
+          "conditions": { "key": "tournament.isTournamentWeek", "op": "eq", "value": true },
+          "lines": [ { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.tourweek.0" } ]
+        },
+        {
+          "id": "junk.idle.a",
+          "band": "Fallback",
+          "lines": [ { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.idle.a" } ]
+        },
+        {
+          "id": "junk.idle.b",
+          "band": "Fallback",
+          "lines": [ { "speaker": "junk_owner", "portrait": "neutral", "textKey": "junk.idle.b" } ]
+        }
+      ]
+    },
+    {
+      "poolId": "hub.auction.talk",
+      "category": "Hub",
+      "mode": "Blocking",
+      "desc": "경매장 직원에게 말 걸기",
+      "entries": [
+        {
+          "id": "auction.first_meet",
+          "band": "Story",
+          "once": true,
+          "lines": [
+            { "speaker": "auctioneer", "portrait": "smile",   "textKey": "auction.first.0" },
+            { "speaker": "auctioneer", "portrait": "neutral", "textKey": "auction.first.1" }
+          ],
+          "effects": [ { "op": "Set", "key": "dlg.metAuctioneer", "value": true } ]
+        },
+        {
+          "id": "auction.settle.sold",
+          "band": "Reactive",
+          "oncePer": "auction.settleCount",
+          "conditions": { "key": "auction.lastSettlement", "op": "eq", "value": "Sold" },
+          "lines": [ { "speaker": "auctioneer", "portrait": "smile", "textKey": "auction.sold.0" } ]
+        },
+        {
+          "id": "auction.settle.unsold",
+          "band": "Reactive",
+          "oncePer": "auction.settleCount",
+          "conditions": { "key": "auction.lastSettlement", "op": "eq", "value": "Unsold" },
+          "lines": [ { "speaker": "auctioneer", "portrait": "neutral", "textKey": "auction.unsold.0" } ]
+        },
+        {
+          "id": "auction.idle",
+          "band": "Fallback",
+          "lines": [ { "speaker": "auctioneer", "portrait": "neutral", "textKey": "auction.idle.0" } ]
+        }
+      ]
+    }
+  ]
+}

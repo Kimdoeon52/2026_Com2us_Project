@@ -1,0 +1,9 @@
+<!--
+  IL2CPP 코드 스트리핑 방지.
+  대화 데이터 모델(DialogueEntry, ConditionNode, EntryRecord 등)은 Newtonsoft가 리플렉션으로 생성하므로
+  코드에서 new로 직접 만들지 않는 타입의 생성자가 빌드에서 제거될 수 있다.
+  → 에디터에선 되는데 모바일/콘솔 빌드에서만 대사가 안 나오는 사고 방지.
+-->
+<linker>
+  <assembly fullname="RealSteel.Dialogue.Core" preserve="all" />
+</linker>

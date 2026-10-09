@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "pools": [
+    {
+      "poolId": "story.scrapyard.enter",
+      "category": "MainStory",
+      "mode": "Blocking",
+      "desc": "고철장 씬 진입 시 호출. 챕터별 메인 스토리.",
+      "entries": [
+        {
+          "id": "story.prologue",
+          "band": "Critical",
+          "once": true,
+          "conditions": { "key": "story.chapter", "op": "eq", "value": 0 },
+          "lines": [
+            { "lineId": "ms.prologue.001", "speaker": "player",     "portrait": "tired",   "textKey": "ms.prologue.001" },
+            { "lineId": "ms.prologue.002", "speaker": "junk_owner", "portrait": "worried", "textKey": "ms.prologue.002" },
+            { "lineId": "ms.prologue.003", "speaker": "player",     "portrait": "angry",   "textKey": "ms.prologue.003" }
+          ],
+          "effects": [ { "op": "Set", "key": "story.chapter", "value": 1 } ]
+        },
+        {
+          "id": "story.ch1.first_tournament",
+          "band": "Story",
+          "once": true,
+          "conditions": { "all": [
+            { "key": "story.chapter", "op": "eq", "value": 1 },
+            { "key": "tournament.isTournamentWeek", "op": "eq", "value": true }
+          ]},
+          "lines": [
+            { "lineId": "ms.ch1.tour.001", "speaker": "junk_owner", "portrait": "grin", "textKey": "ms.ch1.tour.001" },
+            { "lineId": "ms.ch1.tour.002", "speaker": "player",     "portrait": "neutral", "textKey": "ms.ch1.tour.002" }
+          ],
+          "effects": [ { "op": "Set", "key": "story.chapter", "value": 2 } ]
+        }
+      ]
+    }
+  ]
+}

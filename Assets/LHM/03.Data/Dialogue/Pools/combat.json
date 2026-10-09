@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "pools": [
+    {
+      "poolId": "combat.part_break",
+      "category": "PartBreak",
+      "mode": "Bark",
+      "desc": "파츠 내구도 0 도달 시. 입력 잠금 없음.",
+      "entries": [
+        {
+          "id": "bark.part.last_standing",
+          "band": "Reactive",
+          "subPriority": 50,
+          "cooldownSec": 8,
+          "conditions": { "key": "player.brokenPartCount", "op": "gte", "value": 4 },
+          "lines": [ { "speaker": "robot_ai", "textKey": "bark.part.last" } ]
+        },
+        {
+          "id": "bark.part.head",
+          "band": "Reactive",
+          "cooldownSec": 4,
+          "conditions": { "key": "event.partBroken", "op": "eq", "value": "Head" },
+          "lines": [ { "speaker": "robot_ai", "textKey": "bark.part.head" } ]
+        },
+        {
+          "id": "bark.part.arm",
+          "band": "Reactive",
+          "cooldownSec": 4,
+          "conditions": { "key": "event.partBroken", "op": "in", "value": ["LeftArm", "RightArm"] },
+          "lines": [ { "speaker": "robot_ai", "textKey": "bark.part.arm" } ]
+        },
+        {
+          "id": "bark.part.leg",
+          "band": "Reactive",
+          "cooldownSec": 4,
+          "conditions": { "key": "event.partBroken", "op": "in", "value": ["LeftLeg", "RightLeg"] },
+          "lines": [ { "speaker": "robot_ai", "textKey": "bark.part.leg" } ]
+        },
+        {
+          "id": "bark.part.generic",
+          "band": "Fallback",
+          "cooldownSec": 3,
+          "lines": [ { "speaker": "robot_ai", "textKey": "bark.part.generic" } ]
+        }
+      ]
+    },
+    {
+      "poolId": "boss.wheel01.intro",
+      "category": "BossIntro",
+      "mode": "Blocking",
+      "desc": "지역1 바퀴형 보스 아레나 진입",
+      "entries": [
+        {
+          "id": "boss.wheel01.hint",
+          "band": "Critical",
+          "subPriority": 10,
+          "once": true,
+          "note": "3회 이상 패배 시 돌진 스턴 기믹 힌트 (1회)",
+          "conditions": { "key": "boss.attemptCount", "op": "gte", "value": 3 },
+          "lines": [
+            { "speaker": "announcer", "portrait": "neutral", "textKey": "boss.wheel01.hint.0" }
+          ]
+        },
+        {
+          "id": "boss.wheel01.intro",
+          "band": "Critical",
+          "repeatPolicy": "ShortOnRepeat",
+          "lines": [
+            { "speaker": "announcer",    "portrait": "neutral", "textKey": "boss.wheel01.intro.0" },
+            { "speaker": "boss_wheel01", "portrait": "taunt",   "textKey": "boss.wheel01.intro.1" },
+            { "speaker": "player",       "portrait": "angry",   "textKey": "boss.wheel01.intro.2" }
+          ],
+          "shortLines": [
+            { "speaker": "boss_wheel01", "portrait": "taunt", "textKey": "boss.wheel01.short.0" }
+          ]
+        }
+      ]
+    },
+    {
+      "poolId": "crowd.arena01",
+      "category": "Crowd",
+      "mode": "Bubble",
+      "desc": "지역1 경기장 관중 말풍선 (비강제)",
+      "entries": [
+        { "id": "crowd.stun",      "band": "Reactive", "cooldownSec": 5,
+          "conditions": { "key": "event.crowdMoment", "op": "eq", "value": "BossStunned" },
+          "lines": [ { "textKey": "crowd.stun.0" } ] },
+        { "id": "crowd.partbreak", "band": "Reactive", "cooldownSec": 5,
+          "conditions": { "key": "event.crowdMoment", "op": "eq", "value": "PartBroken" },
+          "lines": [ { "textKey": "crowd.partbreak.0" } ] },
+        { "id": "crowd.lowhp",     "band": "Progress", "cooldownSec": 10,
+          "conditions": { "key": "event.bossHpRatio", "op": "lte", "value": 0.2 },
+          "lines": [ { "textKey": "crowd.lowhp.0" } ] },
+        { "id": "crowd.hit",       "band": "Ambient", "cooldownSec": 6,
+          "conditions": { "key": "event.crowdMoment", "op": "eq", "value": "PlayerHit" },
+          "lines": [ { "textKey": "crowd.hit.0" } ] },
+        { "id": "crowd.idle.a",    "band": "Fallback", "cooldownSec": 8, "lines": [ { "textKey": "crowd.idle.a" } ] },
+        { "id": "crowd.idle.b",    "band": "Fallback", "cooldownSec": 8, "lines": [ { "textKey": "crowd.idle.b" } ] },
+        { "id": "crowd.idle.c",    "band": "Fallback", "cooldownSec": 8, "lines": [ { "textKey": "crowd.idle.c" } ] }
+      ]
+    }
+  ]
+}

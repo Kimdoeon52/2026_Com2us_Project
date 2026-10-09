@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "variables": [
+    { "key": "event.partBroken",   "type": "String", "scope": "Event", "default": "None",
+      "allowed": ["None", "Head", "LeftArm", "RightArm", "LeftLeg", "RightLeg"],
+      "desc": "파츠 파괴 바크 트리거가 넘기는 부위" },
+    { "key": "event.crowdMoment",  "type": "String", "scope": "Event", "default": "Idle",
+      "allowed": ["Idle", "RoundStart", "BossStunned", "PlayerHit", "PartBroken", "BossLowHp"],
+      "desc": "관중 말풍선 트리거 순간" },
+    { "key": "event.bossHpRatio",  "type": "Float",  "scope": "Event", "default": 1.0, "desc": "보스 체력 비율 0~1" },
+
+    { "key": "battle.lastResult",   "type": "String", "scope": "Game", "default": "None",
+      "allowed": ["None", "Win", "Lose"], "desc": "직전 경기 결과 (허브 반응용)" },
+    { "key": "battle.count",        "type": "Int",    "scope": "Game", "default": 0,
+      "desc": "경기 종료마다 +1. 허브 반응 대사의 oncePer 에포크" },
+    { "key": "battle.lastOpponent", "type": "String", "scope": "Game", "default": "", "desc": "직전 경기 상대 보스 ID" },
+    { "key": "boss.attemptCount",   "type": "Int",    "scope": "Game", "default": 0,  "desc": "현재 보스 누적 도전 횟수" },
+    { "key": "player.usingBasicParts", "type": "Bool", "scope": "Game", "default": false, "desc": "기본 파츠로 싸우는 중 (회생 루트)" },
+    { "key": "player.brokenPartCount", "type": "Int",  "scope": "Game", "default": 0, "desc": "현재 전투에서 파괴된 파츠 수" },
+    { "key": "player.gold",         "type": "Int",    "scope": "Game", "default": 0 },
+    { "key": "record.wins",         "type": "Int",    "scope": "Game", "default": 0 },
+    { "key": "record.losses",       "type": "Int",    "scope": "Game", "default": 0 },
+    { "key": "tournament.isTournamentWeek", "type": "Bool", "scope": "Game", "default": false, "desc": "매월 마지막 주 여부" },
+    { "key": "auction.lastSettlement", "type": "String", "scope": "Game", "default": "None",
+      "allowed": ["None", "Sold", "Unsold"], "desc": "월요일 00시 정산 결과" },
+    { "key": "auction.settleCount", "type": "Int",    "scope": "Game", "default": 0, "desc": "정산 회차. 정산 반응 대사의 oncePer 에포크" },
+
+    { "key": "story.chapter",       "type": "Int",    "scope": "Dialogue", "default": 0, "desc": "메인 스토리 챕터" },
+    { "key": "dlg.junkTrust",       "type": "Int",    "scope": "Dialogue", "default": 0, "desc": "고물상 친밀도 (대사 분기용)" },
+    { "key": "dlg.metAuctioneer",   "type": "Bool",   "scope": "Dialogue", "default": false }
+  ]
+}

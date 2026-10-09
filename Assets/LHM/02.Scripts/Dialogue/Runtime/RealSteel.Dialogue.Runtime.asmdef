@@ -1,0 +1,20 @@
+{
+    "name": "RealSteel.Dialogue.Runtime",
+    "rootNamespace": "RealSteel.Dialogue.Unity",
+    "references": [
+        "RealSteel.Dialogue.Core",
+        "Unity.InputSystem",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

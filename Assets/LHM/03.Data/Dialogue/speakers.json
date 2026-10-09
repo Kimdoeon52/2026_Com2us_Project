@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "speakers": [
+    { "id": "player",      "nameKey": "spk.player",      "portraits": ["neutral", "angry", "tired"] },
+    { "id": "junk_owner",  "nameKey": "spk.junk_owner",  "portraits": ["neutral", "grin", "worried"] },
+    { "id": "auctioneer",  "nameKey": "spk.auctioneer",  "portraits": ["neutral", "smile"] },
+    { "id": "announcer",   "nameKey": "spk.announcer",   "portraits": ["neutral"] },
+    { "id": "boss_wheel01","nameKey": "spk.boss_wheel01","portraits": ["neutral", "taunt"] },
+    { "id": "robot_ai",    "nameKey": "spk.robot_ai",    "portraits": [] }
+  ]
+}

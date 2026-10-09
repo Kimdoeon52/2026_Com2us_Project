@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac123b38dd96f054db6f07be96f5898c, type: 3}
+  m_Name: DialogueDataManifest
+  m_EditorClassIdentifier: 
+  variables: {fileID: 4900000, guid: 026c7a03f67200e4d91190ec48cd4897, type: 3}
+  speakers: {fileID: 4900000, guid: 7c2dd6a2ab2b9d046be15afeb755e039, type: 3}
+  dialogueFiles: []
+  stringTables:
+  - lang: ko
+    table: {fileID: 4900000, guid: ff232605156d48349b7d6b2e03f0caf3, type: 3}

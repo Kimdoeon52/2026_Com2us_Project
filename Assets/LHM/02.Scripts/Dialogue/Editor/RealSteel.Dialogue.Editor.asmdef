@@ -1,0 +1,21 @@
+{
+    "name": "RealSteel.Dialogue.Editor",
+    "rootNamespace": "RealSteel.Dialogue.EditorTools",
+    "references": [
+        "RealSteel.Dialogue.Core",
+        "RealSteel.Dialogue.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

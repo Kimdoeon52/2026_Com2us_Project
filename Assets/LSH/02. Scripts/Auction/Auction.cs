@@ -55,7 +55,6 @@ NPC가 입찰할수있는 최대 자금
  경매 종류를 늘리기.
  일반 경매
  주먹 경매
- 입찰 경매
 
 
  */
@@ -83,10 +82,6 @@ public class Auction : PersistentSingleton<Auction>
     [SerializeField] public TMP_InputField fistBidInputField; // 값입력할 곳
     [SerializeField] public Button fistSubmitButton; // 확인 버튼
 
-    [Header("입찰 경매 수락/거절 UI")] //살래? 말래? 결정 하는 곳
-    [SerializeField] public Button biddingAcceptButton; //수락 버튼
-    [SerializeField] public Button biddingRejectButton; //거절 버튼
-
     [Header("참여 AI 리스트")]
     [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록
     [SerializeField] public List<BossAiBase> bossAiList; //참여Boss목록
@@ -108,6 +103,17 @@ public class Auction : PersistentSingleton<Auction>
     [Header("임시 콘솔창")]
     public TextMeshProUGUI console; //임시로 쓰는 거
 
+    //=================================모드 선택=========================
+    [Header("모드 선택 UI")]
+    [SerializeField] public GameObject modeSelectPanel;
+    [SerializeField] public Button normalModeButton;
+    [SerializeField] public Button fistModeButton;
+
+    private UniTaskCompletionSource<AuctionType> modeSelectTcs;
+    //===============================AI 위치 시키는 용도====================
+    [Header("AI 슬롯 위치 (8칸)")]
+    [SerializeField] private List<RectTransform> aiSlots;
+    private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
     // --- 프로퍼티 & 캡슐화 변수 ---
     public string PlayerName { get; private set; } // 플레이어 이름 받아올 용도의 변수
     public int CurrentCost { get; set; } = 0; //현재 물건 가격을 나타낼 변수
@@ -127,7 +133,6 @@ public class Auction : PersistentSingleton<Auction>
 
     // 비동기 UI 입력 수신용 CS
     private UniTaskCompletionSource<int> fistBidTcs;
-    private UniTaskCompletionSource<bool> biddingDecisionTcs;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -188,19 +193,29 @@ public class Auction : PersistentSingleton<Auction>
         nowAuctionMode = new Dictionary<AuctionType, IAuctionMode> // noewAuctionMode에 현재 모드 넣기
         {
             { AuctionType.Normal, new NormalAuctionMode() },
-            { AuctionType.Fist, new FistAuctionMode() },
-            { AuctionType.Bidding, new BiddingAuctionMode() }
+            { AuctionType.Fist, new FistAuctionMode() }
         };
 
         if (errorMessage != null)
             errorMessagePos = errorMessage.rectTransform.anchoredPosition; //첫 위치 저장
 
+        // UI 버튼 이벤트 바인딩
+        if (normalModeButton != null)
+            normalModeButton.onClick.AddListener(OnSelectNormalMode);
+        if (fistModeButton != null)
+            fistModeButton.onClick.AddListener(OnSelectFistMode);
+        if (fistSubmitButton != null)
+            fistSubmitButton.onClick.AddListener(OnSubmitFistBid);
+        if (raiseButton != null)
+            raiseButton.onClick.AddListener(OnRaiseButton);
+        if (giveUpButton != null)
+            giveUpButton.onClick.AddListener(GiveUpButton);
+
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
-        FistAuctionButtonReady(false); 
-        BiddingAuctionButtonReady(false);
-        EnableFistAuctionUI(false); // 등록/포기 버튼 비활
-        EnableBiddingAcceptUI(false); // 입찰/포기 버튼 비활
+        EnableFistAuctionUI(false); 
+        EnableModeSelectUI(false); // 버튼 비활
     }
+    
 
     private void Start()
     {
@@ -230,14 +245,16 @@ public class Auction : PersistentSingleton<Auction>
         UpdateGoldDisplay(); // 골드 업데이트
         DayOfAuctionEnter(); // 그날 하루 경매할 인원 정하기
         GetAuctionNpc(dayOfEnterNpc); // ai 정하기
+
+        StartAuction().Forget(); //옥션 시작
     }
-    private void Update()
-    {
-        if (IsAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
-        {
-            StartAuction().Forget(); //딱 한번 실행.옥션 시작
-        }
-    }
+    //private void Update()
+    //{
+    //    if (IsAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
+    //    {
+    //        StartAuction().Forget(); //딱 한번 실행.옥션 시작
+    //    }
+    //}
 
     private void DayOfAuctionEnter()
     {
@@ -246,6 +263,8 @@ public class Auction : PersistentSingleton<Auction>
 
     private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
     {
+        ClearSpawnedAi(); // 이전 회차 AI UI오브 젝트 제거
+
         auctionAiList.Clear(); //옥션 리스트 비우고
         bool isBossEnter = Random.value < 1f; //지금은 1f로 실험용인데 나중에 확률 30%로 바꾸기
         if (isBossEnter && bossAiList.Count > 0)
@@ -266,15 +285,18 @@ public class Auction : PersistentSingleton<Auction>
         {
             auctionAiList.Add(npcAiList[index]);
         }
+
+        SpawnAndPositionAi(); //Canvas 위치에 AI UI 푸리팹 생성 및 배치하는거임
     } // 총원은 enterNpc + 1(보스) 명
 
     private async UniTask StartAuction()
     {
         IsAuctioningFin = false; // 아직 경매 안끝남
+        // 시작하자마자 유저 모드 선택부터 대기(스페이스바 입력 영향 안 받음)
+        currentAuctionType = await WaitPlayerSelectModeAsync();
+        AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
         isChatting = true; // 채팅 시작
-        NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
-        FistAuctionButtonReady(false);
-        BiddingAuctionButtonReady(false);
+
         foreach (var ai in auctionAiList) // 경매 참여하는 ai들 만큼
         {
             if (ai != null)
@@ -301,10 +323,16 @@ public class Auction : PersistentSingleton<Auction>
 
         isChatting = false;
 
-        // 일반 경매일 때만 기본 버튼 활성화
+        // 선택된 모드에 맞는 조작 UI 전용 활성화
         if (currentAuctionType == AuctionType.Normal)
         {
-            NormalAuctionButtonReady(true); // 버튼 활성화
+            NormalAuctionButtonReady(true);
+            EnableFistAuctionUI(false);
+        }
+        else if (currentAuctionType == AuctionType.Fist)
+        {
+            NormalAuctionButtonReady(false);
+            EnableFistAuctionUI(true);
         }
 
         // 전략 패턴 실행
@@ -405,22 +433,33 @@ public class Auction : PersistentSingleton<Auction>
             fistBidTcs?.TrySetResult(0); //입력 제대로 못할 시 0원 삽입
         }
     }
-
-    // --- 입찰 경매 UI 입출력 ---
-    public void EnableBiddingAcceptUI(bool active) // 입찰 경매 버튼 활성화
+    //=========================모드 선택 관련 함수들===================
+    public void EnableModeSelectUI(bool active)
     {
-        if (biddingAcceptButton != null) biddingAcceptButton.gameObject.SetActive(active); //입찰 경매 확인 버튼 활성화
-        if (biddingRejectButton != null) biddingRejectButton.gameObject.SetActive(active); //입찰 경매 포기 버튼 활성화
+        if (modeSelectPanel != null) modeSelectPanel.SetActive(active);
     }
 
-    public async UniTask<bool> WaitPlayerBiddingDecisionAsync()  //플레이어 선택 대기
-    {
-        biddingDecisionTcs = new UniTaskCompletionSource<bool>();
-        return await biddingDecisionTcs.Task;
-    }
+    public void OnSelectNormalMode() => modeSelectTcs?.TrySetResult(AuctionType.Normal);
+    public void OnSelectFistMode() => modeSelectTcs?.TrySetResult(AuctionType.Fist);
 
-    public void OnBiddingAccept() => biddingDecisionTcs?.TrySetResult(true); // 입찰 대기
-    public void OnBiddingReject() => biddingDecisionTcs?.TrySetResult(false); // 거절 대기
+    public async UniTask<AuctionType> WaitPlayerSelectModeAsync()
+    {
+        // 이전 대사 넘기기용 스페이스바/마우스 클릭 신호가 씹히도록 1프레임 대기
+        await UniTask.Yield();
+
+        // 모드 선택 패널 활성화
+        EnableModeSelectUI(true);
+
+        modeSelectTcs = new UniTaskCompletionSource<AuctionType>();
+
+        // 유저가 모드 선택 버튼을 누를 때까지 대기
+        AuctionType selectedType = await modeSelectTcs.Task;
+
+        // 선택 완료 후 패널 비활성화
+        EnableModeSelectUI(false);
+
+        return selectedType;
+    }
 
     // --- 경매 마감 및 차감 로직 ---
     private async UniTask EndAuction() //경매 종료시
@@ -431,7 +470,6 @@ public class Auction : PersistentSingleton<Auction>
         //버튼 전체 false
         NormalAuctionButtonReady(false);
         EnableFistAuctionUI(false);
-        EnableBiddingAcceptUI(false);
 
         await ActionFinish(); // 경매 아저씨 대사 출력
 
@@ -514,16 +552,6 @@ public class Auction : PersistentSingleton<Auction>
         if (raiseButton != null) raiseButton.gameObject.SetActive(active);
         if (giveUpButton != null) giveUpButton.gameObject.SetActive(active);
     }
-    private void FistAuctionButtonReady(bool active)
-    {
-        if (fistBidInputField != null) fistBidInputField.gameObject.SetActive(active);
-        if (fistSubmitButton != null) fistSubmitButton.gameObject.SetActive(active);
-    }
-    private void BiddingAuctionButtonReady(bool active)
-    {
-        if(biddingAcceptButton != null) biddingAcceptButton.gameObject.SetActive(active);
-        if (biddingRejectButton != null) biddingRejectButton.gameObject.SetActive(active);
-    }
     private void UpdateGoldDisplay() // 보유 골드 시각적 업데이트 
     {
         if (myGold != null)
@@ -564,7 +592,55 @@ public class Auction : PersistentSingleton<Auction>
             ShowErrorMessage("골드가 부족합니다.").Forget();
         }
     }
+    //================================Canvas에 AI 설치 =======================
+    private void SpawnAndPositionAi()
+    {
+        for (int i = 0; i < auctionAiList.Count; i++)
+        {
+            if (i >= aiSlots.Count) break; // 슬롯 개수 초과 방지
 
+            AllAiBase aiPrefab = auctionAiList[i];
+            RectTransform slotTransform = aiSlots[i];
+
+            if (aiPrefab != null && slotTransform != null)
+            {
+                // Canvas 슬롯의 자식으로 프리팹 생성
+                AllAiBase spawnedAi = Instantiate(aiPrefab, slotTransform);
+
+                // UI RectTransform 좌표 및 스케일 초기화 (슬롯 중앙 고정)
+                RectTransform aiRect = spawnedAi.GetComponent<RectTransform>();
+                if (aiRect != null)
+                {
+                    aiRect.anchoredPosition = Vector2.zero; // 슬롯 정중앙 위치
+                    aiRect.localScale = Vector3.one;       // 크기 보정
+                }
+                else
+                {
+                    spawnedAi.transform.localPosition = Vector3.zero;
+                    spawnedAi.transform.localScale = Vector3.one;
+                }
+
+                // 생성된 AI 스폰 리스트에 등록
+                spawnedAiList.Add(spawnedAi);
+            }
+        }
+
+        // 실제 씬에 생성되어 가동 중인 AI 리스트로 교체
+        auctionAiList = new List<AllAiBase>(spawnedAiList);
+    }
+
+    private void ClearSpawnedAi()
+    {
+        foreach (var ai in spawnedAiList)
+        {
+            if (ai != null)
+            {
+                Destroy(ai.gameObject);
+            }
+        }
+        spawnedAiList.Clear();
+    }
+    // ==============================에러 메시지==========================
     public async UniTask ShowErrorMessage(string message) //에러 메시지 출력 (중앙부 부터 쭉 올라가면서 메시지 출력)
     {
         if (errorMessage == null) return;
@@ -589,552 +665,6 @@ public class Auction : PersistentSingleton<Auction>
 
         errorMessage.gameObject.SetActive(false);
     }
+
+
 }
-
-
-
-
-//public class Auction : PersistentSingleton<Auction>
-//{
-//    [Header("물건 이름 나올 곳")]
-//    [SerializeField] public TextMeshProUGUI auctionName; // 이름 나오는 Text공간
-//    [Header("물건 가격 나올 곳")]
-//    [SerializeField] public TextMeshProUGUI auctionCost; // 가격 나오는 Text공간
-//    [Header("물건 등급 나올 곳")]
-//    [SerializeField] private TextMeshProUGUI auctionGrade; // 등급 나오는 Text공간
-//    [Header("경매 대사 나올 곳")]
-//    [SerializeField] public TextMeshProUGUI chat; // 채팅 나오는 Text공간
-//    [Header("오류 메시지 출력")]
-//    [SerializeField] public TextMeshProUGUI errorMessage; // 오류 메시지 출력 공간
-//    [Header("내 골드 나올 곳")]
-//    [SerializeField] public TextMeshProUGUI myGold; // 채팅 나오는 Text공간
-
-
-//    [Header("조작 버튼")]
-//    [SerializeField] public Button raiseButton;
-//    [SerializeField] public Button giveUpButton;
-
-//    [Header("참여 Ai 리스트")]
-//    [SerializeField] public List<NpcAiBase> npcAiList; //참여 Ai 리스트
-
-//    [Header("참여 Boss 리스트")]
-//    [SerializeField] public List<BossAiBase> bossAiList; //참여 Boss 리스트
-
-//    [Header("참여 Ai + Boss 리스트")]
-//    [SerializeField] private List<AllAiBase> auctionAiList; //참여 Ai + Boss 리스트
-//    [SerializeField] private int dayOfEnterNpc; //그날 하루 Npc 참여 수
-
-//    [Header("경매 물품 리스트")]
-//    public List<PartsDefinition> auctionItem; //경매 물품리스트 나중에 TestStuff를 바꿀것
-
-//    [Header("플레이어 이름")]
-//    private string playerName; //플레이어 이름
-
-
-//    //=====================================컷씬 용도======================================================
-//    [Header("컷씬 매니저")]
-//    [SerializeField] private AuctionCutsceneManager cutsceneManager; //컷씬 매니저
-
-//    private bool isCutscenePlaying = false; //컷씬 진행중인지 확인
-
-//    //=================================경매진행변수==============================================
-//    public int currentCost = 0; // 현재 가격
-//    private PartsDefinition stuff;
-//    private bool isAuctioningFin = true; // 경매가 끝낫는지 확인
-//    public PartGrade stuffGrade;
-//    //=======================시간 제한=================================
-//    [Header("제한 시간 UI")]
-//    [SerializeField] public Image timeBar; // 제한 시간 UI
-
-//    private float auctionTime = 60f; // 경매 제한 시간
-//    public float remainingTime = 0f; // 남은 시간
-//    public bool isTimeRunning = false; // 시간 진행중인지 확인
-//    //=======================대사 & 턴 제어================================
-//    bool isChatting = false; // 대사 진행중인지 확인
-//    private Vector2 errorMessagePos;
-
-//    private bool isPlayerGiveUp = false;
-//    private string winnerName = "";
-//    private bool ifPlayerWin = false;
-
-//    //===========================임시 콘솔창================================
-//    [Header("임시 콘솔창")]
-//    public TextMeshProUGUI console;
-
-//    //=============================컷씬용 이벤트 ================================
-//    private void OnEnable()
-//    {
-//        BossAiBase.OnBossBigRaiseCutscene += HandleBossBigRaiseCutscene;
-//    }
-//    private void OnDisable()
-//    {
-//        BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene;
-//    }
-
-//    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName)
-//    {
-//        isCutscenePlaying = true;
-
-//        if (cutsceneManager != null)
-//        {
-//            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName); //컷씬 재생 동안 대기
-//        }
-
-//        isCutscenePlaying = false;
-//    }
-//    //===================================================================================
-//    protected override void Awake()
-//    {
-//        base.Awake();
-//        if (errorMessage != null)
-//            errorMessagePos = errorMessage.rectTransform.anchoredPosition;
-
-//        ButtonReady(false);//내 턴에 나타나는 버튼 비활성화
-//    }
-
-//    private void Start()
-//    {
-//        // 1. 플레이어 데이터 리스트 체크
-//        if (GlobalGold.Instance.mainCharacterdata != null && GlobalGold.Instance.mainCharacterdata.Count > 0)
-//        {
-//            playerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName;
-//        }
-//        else
-//        {
-//            Debug.LogError("GlobalGold에 mainCharacterdata가 읍다");
-//            playerName = "Player";
-//        }
-//        if (auctionItem != null && auctionItem.Count > 0)
-//        {
-//            stuff = auctionItem[Random.Range(0, auctionItem.Count)];
-//            currentCost = stuff.Cost / 2;//반값 부터 시작
-//            stuffGrade = stuff.Grade;
-//            auctionGrade.text = stuffGrade.ToString();
-//        }
-//        else
-//        {
-//            Debug.LogError("경매 물품 리스트가 읍다");
-//            return;
-//        }
-
-//        UpdateGoldDisplay();
-//        DayOfAuctionEnter();
-//        GetAuctionNpc(dayOfEnterNpc);
-//    }
-//    private void Update()
-//    {
-//        if (isAuctioningFin && !isChatting && (Input.GetKeyDown(KeyCode.Space) || Input.GetMouseButtonDown(0)))
-//        {
-//            StartAuction().Forget();
-//        }
-//    }
-
-//    //========================================경매 시작시 참여 npc목록 ========================================
-//    private void DayOfAuctionEnter()
-//    {
-//        dayOfEnterNpc = Random.Range(3, 5); //그날 하루 참여 Npc 수 랜덤 7명까지 현재 임시로 4명까지
-//    }
-//    private void GetAuctionNpc(int enterNpc)//그날 하루 참여 Npc 목록
-//    {
-//        // 경매 참가 인원수가 전체 NPC 수보다 많으면 전체 수로 보정
-//        auctionAiList.Clear();
-//        bool isBossEnter = Random.value < 1f; //35%확률로 보스 참여 임시로 100%로 설정
-//        if (isBossEnter && bossAiList.Count > 0)
-//        {
-//            int randomBossIndex = Random.Range(0, bossAiList.Count);
-//            auctionAiList.Add(bossAiList[randomBossIndex]); //보스 참여
-//        }
-//        HashSet<int> selectedIndices = new HashSet<int>();
-//        int targetCount = Mathf.Min(enterNpc, npcAiList.Count); // npcAiList 기준으로 제한
-
-//        while (selectedIndices.Count < targetCount)
-//        {
-//            int randomIndex = Random.Range(0, npcAiList.Count);
-//            selectedIndices.Add(randomIndex);
-//        }
-
-//        foreach (int index in selectedIndices)
-//        {
-//            auctionAiList.Add(npcAiList[index]); //auctionAiList에서 랜덤으로 선택된 애들 추가.
-//        }
-//    }
-
-//    //============================================경매시작===========================================================
-
-//    private async UniTask StartAuction() //경매 시작 부분.
-//    {
-//        isAuctioningFin = false;
-//        isChatting = true;
-//        ButtonReady(false); //플레이어 선택 버튼 비활성화
-//        foreach (var ai in auctionAiList)
-//        {
-//            if (ai != null)
-//            {
-//                console.text += $"{ai.NPCName}님이 참가 했습니다.\n";
-//                ai.ReadyForAction(); //AI 준비
-//            }
-//        }
-//        // 첫 대사 하고
-//        await StartAuctionChatting();
-//        await UniTask.Delay(1000);
-//        // 물품 보여주고
-//        auctionName.text = stuff.DisplayName;
-//        auctionCost.text = currentCost.ToString();
-//        await WaitInput(); //입력대기
-//        // 물품 소개 하고
-//        await IntroAuction();
-
-//        isAuctioningFin = false;
-//        isPlayerGiveUp = false; //포기 초기화
-//        winnerName = "";
-//        ifPlayerWin = false;
-//        auctionTime = 60f; // 첫 경매 시작 제한시간 재설정
-
-
-//        isChatting = false;
-//        ButtonReady(true); //플레이어 선택 버튼 활성화
-
-//        isTimeRunning = true; //이거 해놔야 정상적으로 ai가 돌아감;; 진짜 조건부 힘들다
-//        RunAllAiAsync().Forget();  // AI들의 독립 입찰 루프 가동
-//        await StartAuctionTimer(); // 타이머 카운트다운 (시간 다 되면 자동으로 루프 통과)
-
-//        //타이머 종료 후 낙찰 처리
-//        await EndAuction();
-//        isAuctioningFin = true;
-//    }
-//    //================================AI들의 실시간 루프========================================
-//    private async UniTask RunAllAiAsync()
-//    {
-//        // 각 AI마다 독립적인 루프를 비동기로 동시 실행
-//        List<UniTask> aiTasks = new List<UniTask>();
-//        foreach (var ai in auctionAiList)
-//        {
-//            if (ai != null)
-//            {
-//                aiTasks.Add(AiRoutine(ai));
-//            }
-//        }
-
-//        await UniTask.WhenAll(aiTasks);
-//    }
-//    // 개별 AI가 각자의 생각 주기(딜레이)를 갖고 독자적으로 입찰하는 루틴
-//    private async UniTask AiRoutine(AllAiBase ai)
-//    {
-//        while (isTimeRunning && !isAuctioningFin)
-//        {
-//            // 각 AI마다 고민하는 시간을 다르게 부여 (5초~ 20초 사이)
-//            int thinkDelay = ai.ThinkDelay;
-
-//            if (!ai.IsReady)
-//            {
-//                console.text += $"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n";
-//            }
-
-//            await UniTask.Delay(thinkDelay);
-
-//            await UniTask.WaitWhile(() => isCutscenePlaying); //보스 컷씬 진행중이면 대기
-
-//            if (!isTimeRunning || isAuctioningFin) break;
-
-//            // 이미 자기가 최고 입찰자면 굳이 자기 돈을 또 올릴 필요 없음
-//            if (winnerName == ai.NPCName)
-//            {
-//                console.text += $"{ai.NPCName}은 현재 최고 입찰자라 더이상 레이즈하지 않습니다.\n";
-//                continue;
-//            }
-
-
-//            // AI가 포기 상태면 제외 (IsReady 혹은 IsGiveUp 플래그 확인)
-//            if (ai.IsReady) continue;
-
-//            // AI의 고유 판단 실행
-//            if (ai.RaiseThink(currentCost, stuff.Cost))
-//            {
-//                int raiseStep = ai.RaiseGold; //각 Ai별 기본 입찰 단위
-//                // 보스인지 확인 후 큰 레이즈 조건 체크
-//                if (ai is BossAiBase boss)
-//                {
-//                    // 필요 시 특정 조건에서 금액을 대폭 증액
-//                    if (boss.IsBigRaiseThink(currentCost, stuff.Cost))
-//                    {//임시임 현재 물건이 400원이고 원래 가격이 200원이라면 1.5배 이상이므로 컷씬 연출
-//                        raiseStep = boss.BigRaiseGold();
-//                        currentCost += raiseStep; //조건 성립시 컷씬과 함꼐 500원증가
-
-//                        // 옵저버 이벤트 발동 -> 모든 보스 공통 컷씬 실행 및 대기
-//                        await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
-//                    }
-//                    else
-//                    {
-//                        currentCost += raiseStep; //조건 미성립시 100원증가
-//                    }
-//                }
-//                else
-//                {
-//                    currentCost += raiseStep; //일반 잡몹은 100원증가
-//                }
-
-//                auctionCost.text = currentCost.ToString();
-//                winnerName = ai.NPCName;
-//                ifPlayerWin = false;
-
-//                chat.text = $"{ai.NPCName} 님이 {currentCost}G로 레이즈!";
-
-//                if (remainingTime < 10f) //10초 미만이면 10초로 초기화
-//                {
-//                    remainingTime = 10f;
-//                }
-//            }
-//            else
-//            {
-//                console.text += $"{ai.NPCName}판단 끝! 결과 포기.\n";
-//                // 예산 초과 등으로 포기
-//                chat.text = $"{ai.NPCName} 님이 입찰을 포기했습니다.";
-//            }
-
-//            // 모든 참가자가 포기했는지 수시로 검사
-//            if (CheckAllGiveUp())
-//            {
-//                isTimeRunning = false; // 타이머를 즉시 종료시켜 경매 마감
-//                break;
-//            }
-//        }
-//    }
-
-//    private bool CheckAllGiveUp() //모두 포기했는지 확인
-//    {
-//        int inGamePlayer = 0;
-//        if (!isPlayerGiveUp) inGamePlayer++; //플레이어가 포기 안했으면 1더해주고
-//        foreach (var ai in auctionAiList)
-//        {
-//            if (ai != null && !ai.IsReady) //AI가 포기 안했으면 또 더해주고
-//            {
-//                inGamePlayer++;
-//            }
-//        }
-//        if (inGamePlayer == 0) return true;
-//        return inGamePlayer <= 1 && !string.IsNullOrEmpty(winnerName); //1명 이하이면 경매 종료
-//    }
-//    //==============================경매 종료========================================
-
-//    private async UniTask EndAuction()
-//    {
-//        isAuctioningFin = true;
-//        isChatting = true;
-//        isTimeRunning = false;
-//        ButtonReady(false);
-
-//        await ActionFinish();
-
-//        if (ifPlayerWin)
-//        {
-//            GlobalGold.Instance.UseGold(playerName, currentCost); //플레이어 골드 차감
-//            UpdateGoldDisplay(); //내 골드 표시 및 업데이트
-//            GlobalGold.Instance.SaveGame(); //할지는 일단 대기
-//        }
-//        else
-//        {
-//            foreach (var ai in auctionAiList)
-//            {
-//                if (ai != null && ai.NPCName == winnerName)
-//                {
-//                    GlobalGold.Instance.UseGold(ai.NPCName, currentCost); //AI 골드 차감
-//                    GlobalGold.Instance.SaveGame(); //AI 골드 저장
-//                    break;
-//                }
-//            }
-//        }
-
-//    }
-//    //======================채팅====================================
-//    private async UniTask StartAuctionChatting() //경매 시작 부분 대사 함수
-//    {
-//        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.DisplayName);
-//        if (chatList != null && chatList.Count > 0)
-//        {
-//            foreach (var chatMessage in chatList)
-//            {
-//                chat.text = chatMessage;
-//                await WaitInput(); //입력대기
-//            }
-//        }
-//    }
-//    private async UniTask IntroAuction() //물품 소개
-//    {
-//        List<string> chatList = ChatList.Instance.GetChat("물건소개", stuff.DisplayName);
-//        if (chatList != null && chatList.Count > 0)
-//        {
-//            foreach (var chatMessage in chatList)
-//            {
-//                chat.text = chatMessage;
-//                await WaitInput(); //입력대기
-//            }
-//        }
-//    }
-//    private async UniTask ActionFinish() //경매완료
-//    {
-//        string winerName = ifPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterName : this.winnerName; //낙찰자 이름 결정
-
-//        if (string.IsNullOrEmpty(winerName)) //낙찰자가 없으면
-//        {
-//            chat.text = "낙찰자가 없습니다.";
-//            await WaitInput();
-//            return;
-//        }
-//        List<string> chatList = ChatList.Instance.GetChat("경매완료", winerName);
-//        if (chatList != null && chatList.Count > 0)
-//        {
-//            foreach (var chatMessage in chatList)
-//            {
-//                chat.text = chatMessage;
-//                await WaitInput(); //입력대기
-//            }
-//        }
-//    }
-//    //============================================================================
-
-//    private async UniTask WaitInput() //입력 대기
-//    {
-//        // 다음 대사까지 즉시 스킵되는 현상 방지
-//        await UniTask.Yield();
-
-//        // Space 키 눌릴 때까지 대기
-//        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
-//    }
-//    //=============================== 제한 시간 ============================================================
-
-//    private async UniTask StartAuctionTimer()
-//    {
-//        remainingTime = auctionTime; //남은시간초기화
-//        isTimeRunning = true; //시간 진행중
-
-//        if (timeBar != null) //시간바가 있으면(있겠지.)
-//        {
-//            timeBar.gameObject.SetActive(true); //시간바 활성화
-//            timeBar.fillAmount = 1f; //시간바 초기화
-//        }
-//        while (remainingTime > 0f && isTimeRunning)
-//        {
-//            if (!isCutscenePlaying)
-//            {
-//                remainingTime -= Time.deltaTime; //남은시간 감소
-//                if (timeBar != null)
-//                {
-//                    timeBar.fillAmount = Mathf.Clamp01(remainingTime / auctionTime); //시간바 업데이트
-//                }
-//            }
-//            await UniTask.Yield(); //다음 프레임까지 대기
-//        }
-//        isTimeRunning = false; //시간 진행중 아님
-//        //if(timeBar != null)
-//        //{
-//        //    timeBar.gameObject.SetActive(false); //시간바 비활성화
-//        //}
-//    }
-//    //============================== 버튼 활성화/비활성화 ============================================================
-//    private void ButtonReady(bool active)
-//    {
-//        if (raiseButton != null)
-//            raiseButton.gameObject.SetActive(active);
-//        if (giveUpButton != null)
-//            giveUpButton.gameObject.SetActive(active);
-//    }
-//    //=============================== 내 보유 골드 표시 및 업데이트 ===========================================
-//    private void UpdateGoldDisplay()
-//    {
-//        if (myGold != null)
-//            myGold.text = "보유골드: " + GlobalGold.Instance.mainCharacterdata[0].mainCharacterGold.ToString(); //내 골드 가져오기
-//        //여기서 내 골드 표시 UI 업데이트 코드 추가 가능
-//    }
-//    //=============================== 포기 or 레이즈 버튼클릭==================================================
-//    public void GiveUpButton() //포기 버튼 클릭시
-//    {
-//        if (!isTimeRunning || isPlayerGiveUp) return;
-//        isPlayerGiveUp = true;
-//        ButtonReady(false); //버튼 비활성화
-//        ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
-//        //isAuctioningFin = true;
-//        if (CheckAllGiveUp())
-//        {
-//            isTimeRunning = false;
-//        }
-//    }
-//    public void OnBigRaiseButton() //큰 레이즈 버튼 클릭
-//    {
-//        if (!isTimeRunning || isPlayerGiveUp) return;
-//        if (winnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName) //이미 내가 최고 입찰자면 레이즈 불가
-//        {
-//            ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
-//            return;
-//        }
-//        int needGold = currentCost + 1000; //다음 입찰 가격
-//        if (GlobalGold.Instance.CanUseGold(playerName, needGold)) //가격비교
-//        {
-//            currentCost = needGold;
-//            auctionCost.text = currentCost.ToString();
-
-//            winnerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //입찰자 이름 업데이트
-//            ifPlayerWin = true;
-//            chat.text = $"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {currentCost}G로 레이즈!";
-//            if (remainingTime < 10f) //10초 미만이면 10초로 초기화
-//            {
-//                remainingTime = 10f;
-//            }
-//        }
-//        else
-//        {
-//            ShowErrorMessage("골드가 부족합니다.").Forget();
-//        }
-//    }
-//    public void OnRaiseButton() //일반 레이즈 버튼 클릭
-//    {
-//        if (!isTimeRunning || isPlayerGiveUp) return;
-//        if (winnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName) //이미 내가 최고 입찰자면 레이즈 불가
-//        {
-//            ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
-//            return;
-//        }
-//        int needGold = currentCost + 100; //다음 입찰 가격
-//        if (GlobalGold.Instance.CanUseGold(playerName, needGold)) //가격비교
-//        {
-//            currentCost = needGold;
-//            auctionCost.text = currentCost.ToString();
-
-//            winnerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //입찰자 이름 업데이트
-//            ifPlayerWin = true;
-//            chat.text = $"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {currentCost}G로 레이즈!";
-//            if (remainingTime < 10f) //10초 미만이면 10초로 초기화
-//            {
-//                remainingTime = 10f;
-//            }
-//        }
-//        else
-//        {
-//            ShowErrorMessage("골드가 부족합니다.").Forget();
-//        }
-//    }
-//    //========================================오류 메시지 출력==================================================
-//    private async UniTask ShowErrorMessage(string message) //오류 메시지 출력
-//    {
-//        errorMessage.DOKill(); // 이전 애니메이션 중지
-//        errorMessage.rectTransform.DOKill(); // 중지
-//        errorMessage.gameObject.SetActive(true);
-//        errorMessage.text = message;
-
-//        //원래 위치로
-//        Color color = errorMessage.color;
-//        color.a = 1f; // 불투명하게 설정
-//        errorMessage.color = color;
-//        errorMessage.rectTransform.anchoredPosition = errorMessagePos; // 원래 위치로 초기화
-
-//        await UniTask.Delay(500);
-
-//        float floatTime = 1f;
-//        float floatHight = 50f;
-
-//        errorMessage.rectTransform.DOAnchorPosY(errorMessagePos.y + floatHight, floatTime).SetEase(Ease.OutQuad); //Y축으로 올라가유
-
-//        await errorMessage.DOFade(0f, floatTime).SetEase(Ease.OutQuad).AsyncWaitForCompletion();//페이드 아웃 트윈
-
-//        errorMessage.gameObject.SetActive(false);
-//    }
-//}

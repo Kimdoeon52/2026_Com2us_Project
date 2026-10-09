@@ -37,21 +37,24 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
         {
             int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
 
+            // 이미 최고 입찰자라면 고민(ThinkDelay)도 안 하고 연출도 스킵!
+            if (manager.WinnerName == ai.NPCName)
+            {
+                await UniTask.Yield(); // 무한 루프 방지용 최소 대기
+                continue;
+            }
             if (!ai.IsReady)
             {
                 manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
             }
 
+            // ai 고민 말풍선 띄우기
+            ai.ShowThinkChat();
+
             await UniTask.Delay(thinkDelay); // thinkDelay 만큼 
             await UniTask.WaitWhile(() => manager.IsCutscenePlaying);
 
             if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
-
-            if (manager.WinnerName == ai.NPCName)
-            {
-                manager.AppendConsoleLog($"{ai.NPCName}은 현재 최고 입찰자라 더이상 레이즈하지 않습니다.\n");
-                continue;
-            }
 
             if (ai.IsReady) continue;
 
@@ -61,32 +64,27 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             {
                 int raiseStep = ai.RaiseGold;
 
-                if (ai is BossAiBase boss)
+                if (ai is BossAiBase boss && boss.IsBigRaiseThink(manager.CurrentCost, stuff.Cost))
                 {
-                    if (boss.IsBigRaiseThink(manager.CurrentCost, stuff.Cost))
-                    {
-                        raiseStep = boss.BigRaiseGold();
-                        manager.CurrentCost += raiseStep;
-                        manager.UpdateAuctionCostUI(); 
-                        await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
-                    }
-                    else
-                    {
-                        manager.CurrentCost += raiseStep;
-                        manager.UpdateAuctionCostUI();
-                    }
+                    raiseStep = boss.BigRaiseGold();
+                    manager.CurrentCost += raiseStep;
+                    manager.UpdateAuctionCostUI();
+
+                    // 빅 레이즈 성공 말풍선 연출
+                    ai.ShowThinkChatWithText($"{manager.CurrentCost}G! 확 올려버리지!");
+                    await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
                 }
                 else
                 {
                     manager.CurrentCost += raiseStep;
-                    manager.UpdateAuctionCostUI(); 
-                }
+                    manager.UpdateAuctionCostUI();
 
-                Debug.Log($"[AI 레이즈 성공] {ai.NPCName} | 올린 금액(raiseStep): {raiseStep} | 변경 후 CurrentCost: {manager.CurrentCost}");
+                    // 일반 레이즈 성공 말풍선 연출 (금액 외치기)
+                    ai.ShowThinkChatWithText($"{manager.CurrentCost}G 가본다!");
+                }
 
                 manager.WinnerName = ai.NPCName;
                 manager.IfPlayerWin = false;
-
                 manager.SetChat($"{ai.NPCName} 님이 {manager.CurrentCost}G로 레이즈!");
 
                 if (manager.RemainingTime < 10f)

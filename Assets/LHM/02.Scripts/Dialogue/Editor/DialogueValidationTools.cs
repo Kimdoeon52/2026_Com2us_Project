@@ -18,7 +18,7 @@ namespace RealSteel.Dialogue.EditorTools
     /// </summary>
     public static class DialogueValidationTools
     {
-        public const string DataFolder = "Assets / LHM / 03.Data / Dialogue";
+        public const string DataFolder = "Assets/LHM/03.Data/Dialogue";
 
         [MenuItem("Tools/Dialogue/Validate All")]
         public static void ValidateAllMenu()

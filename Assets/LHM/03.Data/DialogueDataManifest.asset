@@ -14,7 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   variables: {fileID: 4900000, guid: 026c7a03f67200e4d91190ec48cd4897, type: 3}
   speakers: {fileID: 4900000, guid: 7c2dd6a2ab2b9d046be15afeb755e039, type: 3}
-  dialogueFiles: []
+  dialogueFiles:
+  - {fileID: 4900000, guid: 22bd17a35ef61744784cb826aebcbd11, type: 3}
+  - {fileID: 4900000, guid: a0ac291a5ad31de41a9048010a0e7f5f, type: 3}
+  - {fileID: 4900000, guid: 2ab5a0cfb135e0646a8ecf0960b50f8d, type: 3}
   stringTables:
   - lang: ko
     table: {fileID: 4900000, guid: ff232605156d48349b7d6b2e03f0caf3, type: 3}

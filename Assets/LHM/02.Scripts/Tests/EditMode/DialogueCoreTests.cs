@@ -19,7 +19,7 @@ namespace RealSteel.Dialogue.Tests
         private static string DataRoot()
         {
 #if UNITY_5_3_OR_NEWER
-            return Path.Combine(UnityEngine.Application.dataPath, "Data/Dialogue");
+            return Path.Combine(UnityEngine.Application.dataPath, "LHM/03.Data/Dialogue");
 #else
             var env = System.Environment.GetEnvironmentVariable("DIALOGUE_DATA_ROOT"); // Unity 밖(dotnet)에서 돌릴 때
             if (!string.IsNullOrEmpty(env)) return env;

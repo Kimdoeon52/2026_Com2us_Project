@@ -65,10 +65,13 @@ public class BossMasterData : ScriptableObject
     [Header("3. 보스 전용 기믹 목록 (기물 및 부위)")]
     public List<BossGimmickPartData> gimmickParts = new List<BossGimmickPartData>();
 
-    [Header("4. 페이즈 구성")]
+    [Header("4. 공격 패턴 목록 (BossPatternData)")]
+    public List<BossPatternData> patterns = new List<BossPatternData>();
+
+    [Header("5. 페이즈 구성")]
     public List<BossPhaseData> phases = new List<BossPhaseData>();
 
-    [Header("5. 토벌 승리 보상")]
+    [Header("6. 토벌 승리 보상")]
     public int rewardGold = 1500;
     public int rewardCoreExp = 500;
 }

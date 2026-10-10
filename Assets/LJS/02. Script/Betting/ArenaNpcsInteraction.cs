@@ -18,15 +18,15 @@ public class ArenaNpcsInteraction : MonoBehaviour
     {
         if (npcInteractionSO != null)
         {
-            npcInteractionSO.OnInteractableEntered += ShowInteractButton;
-            npcInteractionSO.OnInteractableExited += HideInteractButton;
+            npcInteractionSO.OnInteractableEntered += OnNpcEntered;
+            npcInteractionSO.OnInteractableExited += OnNpcExited;
         }
     }
 
     private void OnDisable()
     {
-        npcInteractionSO.OnInteractableEntered -= ShowInteractButton;
-        npcInteractionSO.OnInteractableExited -= HideInteractButton;
+        npcInteractionSO.OnInteractableEntered -= OnNpcEntered;
+        npcInteractionSO.OnInteractableExited -= OnNpcExited;
     }
     
     private void Start()
@@ -36,13 +36,40 @@ public class ArenaNpcsInteraction : MonoBehaviour
 
     private void Update()
     {
-        if (interactPanel.activeSelf && Input.GetKeyDown(KeyCode.E) && currentNpc != null) ExecuteInteraction();
+        /*if (interactPanel.activeSelf && Input.GetKeyDown(KeyCode.E) && currentNpc != null) 
+            ExecuteInteraction();*/
+        if (currentNpc != null)
+        {
+            // 1. 패널이 꺼져있을 때 E키를 누르면 패널 등장
+            if (!interactPanel.activeSelf)
+            {
+                if (Input.GetKeyDown(KeyCode.E))
+                {
+                    ShowInteractButton(currentNpc);
+                }
+            }
+            // 2. 패널이 켜져있을 때 E키 또는 엔터키를 누르면 베팅 시작
+            else
+            {
+                if (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+                {
+                    ExecuteInteraction();
+                }
+            }
+        }
+    }
+
+
+    private void OnNpcEntered(ArenaNpcs npc) { currentNpc = npc; }
+    private void OnNpcExited()
+    {
+        currentNpc = null;
+        interactPanel.SetActive(false);
     }
 
     private void ShowInteractButton(ArenaNpcs npc)
     {
-        currentNpc = npc;
-        interactText.text = $"[{npc.npcName}]와(과) 경기 시작 베팅을 하시겠습니까?";
+        interactText.text = $"[{npc.npcName}]\n경기 시작 베팅을 하시겠습니까?";
 
         interactButton.onClick.RemoveAllListeners();
         interactButton.onClick.AddListener(ExecuteInteraction);
@@ -50,18 +77,12 @@ public class ArenaNpcsInteraction : MonoBehaviour
         interactPanel.SetActive(true);
     }
 
-    private void HideInteractButton()
-    {
-        currentNpc = null;
-        interactPanel.SetActive(false);
-    }
-
     private void ExecuteInteraction()
     {
         if (currentNpc != null)
         {
             currentNpc.BettingStart();
-            HideInteractButton();
+            interactPanel.SetActive(false);
         }
     }
 }

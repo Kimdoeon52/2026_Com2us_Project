@@ -24,22 +24,19 @@ MonoBehaviour:
   staggerValue: 0
   knockbackDistance: 0
   damage: 10
+  hitIntervalFrames: 0
   animationClipName: Jap
+  activeClipName: 
+  launchVelocity: 0
+  advanceDistance: 0
+  advanceDuringActiveOnly: 0
+  trailAfterImageInterval: 0
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
+  flame: {fileID: 0}
   frameBoxes:
   - type: 1
-    bodyPart: 5
-    rect:
-      serializedVersion: 2
-      x: -0.16
-      y: 0
-      width: 0.25
-      height: 0.5
-    anchor: 1
-    startOffset: 0
-    length: 0
-    startFrame: 0
-    endFrame: 0
-  - type: 2
     bodyPart: 5
     rect:
       serializedVersion: 2
@@ -56,11 +53,11 @@ MonoBehaviour:
     bodyPart: 5
     rect:
       serializedVersion: 2
-      x: 0.1
-      y: 0.2
-      width: 0.35
-      height: 0.25
-    anchor: 3
+      x: 0.05
+      y: 0.27
+      width: 0.37
+      height: 0.12
+    anchor: 1
     startOffset: 0
     length: 0
     startFrame: 0

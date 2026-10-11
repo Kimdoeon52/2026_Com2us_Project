@@ -11,7 +11,7 @@ using UnityEngine;
 ///
 /// 2026-10-09 추가: 활성 구간 클립 전환(ActionData.ActiveClipName), 점프 그림(시작 → 공중 루프, 기획서1009
 /// 그래픽 §7-1 — 착지는 ActionExecutor.landAction이 행동으로 처리), 피격 점멸(기획서1009 §6-12-10),
-/// 사망 연출(폭발 + 피격 모션 유지 후 사라짐).
+/// 사망 연출(폭발 + 피격 모션 유지 후 잔해 스테이트로 고정, 잔해가 없으면 사라짐).
 /// 전부 "그림"이라 CombatTick 밖(Update)에서 돈다 — 판정·프레임은 하나도 안 건드린다 (§3).
 /// </summary>
 public class RobotView : MonoBehaviour
@@ -34,8 +34,12 @@ public class RobotView : MonoBehaviour
     [Header("사망 연출 — 값 전부 임시")]
     [Tooltip("죽은 뒤 사라질 때까지 계속 재생할 스테이트 (보통 피격 모션)")]
     [SerializeField] private string deathStateName;
-    [Tooltip("TODO: 임시값. 폭발이 이어지는 시간(프레임). 끝나면 스프라이트를 끈다")]
+    [Tooltip("TODO: 임시값. 폭발이 이어지는 시간(프레임). 끝나면 아래 '잔해' 스테이트로 바뀐다(비어 있으면 스프라이트를 끈다)")]
     [Min(0)] [SerializeField] private int deathDurationFrames = 90;
+    // 2026-10-11 추가: 폭발이 끝난 뒤 사라지지 않고 잔해(Enemy1_Die)로 남는다. 클립의 Loop Time이 켜져 있으면 반복,
+    // 꺼져 있으면 마지막 장에서 멈춘다 — "고정" 방식은 클립 설정으로 고른다
+    [Tooltip("폭발이 끝난 뒤 계속 보여줄 스테이트(잔해). 비우면 예전처럼 스프라이트를 끈다")]
+    [SerializeField] private string deadStateName;
     [SerializeField] private RuntimeAnimatorController explosionController;
     [SerializeField] private string explosionStateName;
     [Tooltip("TODO: 임시값. 폭발이 하나씩 터지는 간격(프레임)")]
@@ -51,7 +55,7 @@ public class RobotView : MonoBehaviour
     public event Action OnDeathStarted;
     /// <summary>폭발 하나가 터질 때마다. 받음: 폭발 월드 위치 (흔들림 세기·사운드 위치용)</summary>
     public event Action<Vector3> OnDeathExplosion;
-    /// <summary>폭발이 다 끝나고 로봇이 화면에서 사라지는 순간</summary>
+    /// <summary>폭발이 다 끝나고 잔해로 바뀌는(또는 화면에서 사라지는) 순간</summary>
     public event Action OnDeathFinished;
 
     // Idle/Walk/BackWalk 중 뭘 재생할지 고르려면 "지금 이동 입력이 있는지"를 알아야 한다 —
@@ -103,6 +107,40 @@ public class RobotView : MonoBehaviour
         state.OnActionEnd += OnActionEnd;
         state.OnDead += BeginDeath;
         if (executor != null) executor.OnDamaged += OnDamaged;
+
+        EnsureEffectComponents(executor);
+    }
+
+    // 2026-10-11 추가: 불·꼬리 잔상은 "행동 데이터에 넣으면 나온다"가 약속인데, 그리는 컴포넌트(FlameEmitter/AfterImageEmitter)를
+    // 로봇에 안 붙여두면 에러 없이 조용히 안 보인다 — 실제로 화염 기술이 불 없이 나가는 일이 있었다(FlameEmitter 미부착).
+    // 이 로봇이 가진 행동 중 하나라도 필요로 하면 여기서 자동으로 붙인다. 이미 붙어 있으면(값을 조절해둔 경우) 건드리지 않는다.
+    // 패턴 끝 자세 잔상은 AI 프로필 쪽 설정이라 여기서 알 수 없다 — 그건 AfterImageEmitter를 직접 붙여야 한다
+    private void EnsureEffectComponents(ActionExecutor executor)
+    {
+        if (executor == null || executor.Robot == null) return;
+
+        bool needsFlame = false;
+        bool needsTrail = false;
+        foreach (var action in executor.Robot.AvailableActions)
+        {
+            if (action == null) continue;
+            needsFlame |= action.Flame != null;
+            needsTrail |= action.TrailAfterImageInterval > 0;
+        }
+
+        if (needsFlame && GetComponent<FlameEmitter>() == null)
+        {
+            gameObject.AddComponent<FlameEmitter>();
+            Debug.Log($"[RobotView] {name}: 화염 행동이 있어서 FlameEmitter를 자동으로 붙임 (값을 조절하려면 인스펙터에서 직접 붙여둘 것)");
+        }
+        if (needsTrail && GetComponent<AfterImageEmitter>() == null)
+        {
+            gameObject.AddComponent<AfterImageEmitter>();
+            Debug.Log($"[RobotView] {name}: 꼬리 잔상 행동이 있어서 AfterImageEmitter를 자동으로 붙임");
+        }
+        // 데미지 숫자는 맞을 수 있는 로봇이면 항상 필요하다 (2026-10-11)
+        if (GetComponent<DamageNumberEmitter>() == null)
+            gameObject.AddComponent<DamageNumberEmitter>();
     }
 
     // 호출: ActionState.OnActionBegin 이벤트. 받음: 시작된 ActionData — AnimationClipName 스테이트를 재생하고 속도를 데이터 길이에 맞춘다
@@ -303,8 +341,17 @@ public class RobotView : MonoBehaviour
 
         deathFinished = true;
         // 오브젝트 자체는 끄지 않는다 — HitDetection·KKH BattleManager가 이 로봇을 계속 참조하고 있어서,
-        // SetActive(false)나 Destroy를 하면 그쪽 구독 해제 순서까지 신경 써야 한다. 그림만 끄면 충분하다
-        if (spriteRenderer != null) spriteRenderer.enabled = false;
+        // SetActive(false)나 Destroy를 하면 그쪽 구독 해제 순서까지 신경 써야 한다. 그림만 바꾸거나 끄면 충분하다
+        if (animator != null && !string.IsNullOrEmpty(deadStateName))
+        {
+            // 잔해로 남긴다. 이후로는 isDying이라 UpdateLocomotion이 안 돌아서 다른 그림으로 덮이지 않는다
+            animator.speed = 1f;
+            animator.Play(deadStateName, 0, 0f);
+        }
+        else if (spriteRenderer != null)
+        {
+            spriteRenderer.enabled = false;
+        }
         OnDeathFinished?.Invoke();
     }
 

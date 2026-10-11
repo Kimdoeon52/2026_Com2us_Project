@@ -70,6 +70,24 @@ public class ActionState
     /// </summary>
     public bool HasHitThisAction { get; private set; }
 
+    // 마지막으로 맞힌 GlobalFrame. 다단히트(ActionData.HitIntervalFrames) 간격 계산용
+    private int lastHitFrame;
+
+    /// <summary>
+    /// 지금 이 행동이 상대를 맞힐 수 있는지 (2026-10-11). 아직 안 맞혔으면 항상 참.
+    /// 이미 맞혔으면 다단히트 기술(HitIntervalFrames &gt; 0)만 간격이 지난 뒤 다시 참 — 나머지는 기존대로 1회로 끝.
+    /// HitDetection은 HasHitThisAction 대신 이걸 본다
+    /// </summary>
+    public bool CanHitNow
+    {
+        get
+        {
+            if (!HasHitThisAction) return true;
+            int interval = CurrentAction != null ? CurrentAction.HitIntervalFrames : 0;
+            return interval > 0 && GlobalFrame - lastHitFrame >= interval;
+        }
+    }
+
     // <summary> Idle일 때만 이동 가능 선후딜/경직/다운 중에는 이동 불가능</summary>
     // 매 틱 새로 계산하지 않고 Phase만 보고 판단하는 이유: Phase가 이미 "지금 뭘 하고 있는지"의
     // 유일한 진실이므로, 여기서 별도 조건을 추가하면 Phase와 어긋날 여지가 생긴다
@@ -84,6 +102,9 @@ public class ActionState
 
     /// <summary>판정이 켜지는 순간 (Active 진입). 스킬 이펙트 타점으로 주로 쓰인다</summary>
     public event Action<ActionData> OnActionActiveStart;
+
+    /// <summary>판정이 꺼지고 후딜에 들어가는 순간 (Active → Recovery). 공격을 끝까지 뻗은 자세 — 잔상(AfterImageEmitter)이 여기서 찍힌다</summary>
+    public event Action<ActionData> OnActionRecoveryStart;
 
     /// <summary>회수까지 끝나고 Idle로 돌아가는 순간</summary>
     public event Action<ActionData> OnActionEnd;
@@ -113,7 +134,13 @@ public class ActionState
     public ResolvedAction Timeline { get; private set; }
 
     // 호출: ActionExecutor.ExecuteTick. 받음: 시작할 ActionData. 전달: OnActionBegin 이벤트 → RobotView.PlayAction이 애니메이션 재생
-    public void Begin(ActionData action)
+    public void Begin(ActionData action) => Begin(action, FrameAdjustment.None);
+
+    /// <summary>
+    /// extra: 이번 실행에만 덧붙일 프레임 보정 (2026-10-11 — AI 패턴 속도 등). 장비 보정(BuildAdjustment)과 합쳐진다.
+    /// 원본 ActionData는 그대로고, 애니메이션 속도·박스 창·전진 거리 분배는 전부 확정값(Timeline)을 따라 같이 바뀐다
+    /// </summary>
+    public void Begin(ActionData action, FrameAdjustment extra)
     {
         if (action == null) return;
         if (!CanAcceptNewAction) return;   // Idle이 아니면 무시 — 후딜 중 재입력 씹힘은 여기서 보장됨
@@ -124,7 +151,7 @@ public class ActionState
         CurrentAction = action;
         Resolved = modifierResolver != null ? modifierResolver(action) : ResolvedModifiers.Identity; // 최. 추가
         // 원본 에셋은 그대로 두고 "이번 실행분"만 확정한다 — 프레임과 박스 창이 여기서 같이 정해지므로 둘이 어긋날 수 없다
-        Timeline = ResolvedAction.Resolve(action, BuildAdjustment(Resolved));
+        Timeline = ResolvedAction.Resolve(action, FrameAdjustment.Combine(BuildAdjustment(Resolved), extra));
         FrameInPhase = 0;
         GlobalFrame = 0;
         HasHitThisAction = false; // 새 행동이 시작됐으니 "이미 맞혔음" 기록도 초기화 — 이번 공격은 아직 아무도 못 맞혔다
@@ -178,6 +205,7 @@ public class ActionState
     public void MarkHit()
     {
         HasHitThisAction = true;
+        lastHitFrame = GlobalFrame;
     }
 
     /// <summary>CombatClock.CombatTick()마다 정확히 1번 호출된다. 프레임을 직접 세지, Time.deltaTime을 곱하지 않는다</summary>
@@ -211,6 +239,7 @@ public class ActionState
                 {
                     Phase = ActionPhase.Recovery;
                     FrameInPhase = 0;
+                    OnActionRecoveryStart?.Invoke(CurrentAction);
                 }
                 break;
 

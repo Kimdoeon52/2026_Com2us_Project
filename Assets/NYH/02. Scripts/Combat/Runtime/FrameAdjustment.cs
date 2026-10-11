@@ -23,4 +23,16 @@ public struct FrameAdjustment
 
     /// <summary>보정 없음. new FrameAdjustment()를 직접 쓰면 SpeedMultiplier가 0이 되니 항상 이걸 쓴다</summary>
     public static FrameAdjustment None => new FrameAdjustment { SpeedMultiplier = 1f };
+
+    /// <summary>
+    /// 보정 두 개를 하나로 합친다 (2026-10-11). 가감은 더하고 배율은 곱한다 — 장비 보정(CSH)과
+    /// AI 패턴 속도처럼 출처가 다른 보정이 같은 행동에 동시에 걸릴 때 쓴다
+    /// </summary>
+    public static FrameAdjustment Combine(FrameAdjustment a, FrameAdjustment b) => new FrameAdjustment
+    {
+        StartupAdd = a.StartupAdd + b.StartupAdd,
+        ActiveAdd = a.ActiveAdd + b.ActiveAdd,
+        RecoveryAdd = a.RecoveryAdd + b.RecoveryAdd,
+        SpeedMultiplier = a.SpeedMultiplier * b.SpeedMultiplier,
+    };
 }

@@ -101,6 +101,11 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 프레임표 확정 전까지 자리만 잡아둠")]
     [Min(0)] [SerializeField] private float damage;
 
+    // 2026-10-11 추가: 화염방사기처럼 활성 구간 내내 계속 맞히는 기술용. 0이면 기존대로 "행동 1회당 1히트".
+    // 0이 아니면 한 번 맞힌 뒤 이 프레임이 지나면 다시 맞힐 수 있다 — 맞힐 때마다 damage가 한 번씩 들어간다
+    [Tooltip("TODO: 임시값. 다단히트 간격(프레임). 0 = 1회만 맞힘")]
+    [Min(0)] [SerializeField] private int hitIntervalFrames;
+
     [Header("연출")]
     [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다.")]
     [SerializeField] private string animationClipName;
@@ -115,6 +120,20 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 맞은 상대에게 주는 위쪽 초기 속도(RobotMover.Launch). 0이면 띄우지 않음")]
     [Min(0)] [SerializeField] private float launchVelocity;
 
+    [Header("이동")]
+    // 2026-10-11 추가: 기획서1011 §6-10 "하단 → 어퍼컷 → 중단, 동작 중간마다 앞으로 조금 전진".
+    // 기획서에 거리 수치가 없어서 기본값 0 — 기획이 정하기 전까지 테스트할 때만 인스펙터에서 넣는다(§12)
+    [Tooltip("TODO: 기획 수치 없음. 선딜~활성 동안 바라보는 방향으로 나아가는 총 거리. 0이면 제자리")]
+    [Min(0f)] [SerializeField] private float advanceDistance;
+
+    // 2026-10-11 추가: 돌진처럼 "제자리에서 힘을 모았다가(선딜) 한 번에 튀어나가는(활성)" 기술용
+    [Tooltip("켜면 advanceDistance를 활성 구간에만 나눠서 간다(선딜엔 제자리 = 예비동작). 끄면 선딜~활성 전체")]
+    [SerializeField] private bool advanceDuringActiveOnly;
+
+    // 2026-10-11 추가: 돌진 꼬리 잔상. 패턴 잔상(끝 자세 1장, AI가 켬)과 달리 기술 자체에 붙는다 — 이 기술은 언제 써도 남는다
+    [Tooltip("활성 구간 동안 몇 프레임마다 잔상을 찍을지(AfterImageEmitter 필요). 0이면 꼬리 잔상 없음")]
+    [Min(0)] [SerializeField] private int trailAfterImageInterval;
+
     [Header("투사체 — 비우면 일반 근접 행동")]
     // 2026-10-09 추가 (§11-15 투사체 구조): 활성 구간 동안 projectileIntervalFrames마다 한 발씩 쏜다.
     // 투사체의 데미지는 이 ActionData의 damage를 그대로 쓴다 — 한 발 = ProcessHit 한 번
@@ -124,8 +143,14 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 활성 구간 진입 프레임에 1발, 그 뒤 이 간격(프레임)마다 1발")]
     [Min(1)] [SerializeField] private int projectileIntervalFrames = 15;
 
-    [Tooltip("총구 위치. 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
+    [Tooltip("총구 위치(투사체·화염 공통). 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
     [SerializeField] private Vector2 projectileMuzzle;
+
+    [Header("화염 — 비우면 없음")]
+    // 2026-10-11 추가: 활성 구간 동안 총구(projectileMuzzle)에서 불줄기를 그린다(FlameEmitter). 순수 연출 —
+    // 데미지는 이 행동의 Hit박스 + hitIntervalFrames로 따로 들어간다(§4 판정은 박스가 진실)
+    [Tooltip("활성 구간 동안 총구에서 뿜을 불. 로봇에 FlameEmitter가 있어야 보인다")]
+    [SerializeField] private FlameData flame;
 
     [Header("판정 박스")]
     // 이 배열 안의 각 FrameBox가 "이 행동 도중 어느 프레임에 어떤 판정 상자가 있는지"를 전부 담는다.
@@ -161,15 +186,22 @@ public class ActionData : ScriptableObject
     public int StaggerValue => staggerValue;
     public float KnockbackDistance => knockbackDistance;
     public float Damage => damage;
+    public int HitIntervalFrames => hitIntervalFrames;
 
     public string AnimationClipName => animationClipName;
     public string ActiveClipName => activeClipName;
 
     public float LaunchVelocity => launchVelocity;
 
+    public float AdvanceDistance => advanceDistance;
+    public bool AdvanceDuringActiveOnly => advanceDuringActiveOnly;
+    public int TrailAfterImageInterval => trailAfterImageInterval;
+
     public ProjectileData Projectile => projectile;
     public int ProjectileIntervalFrames => projectileIntervalFrames;
     public Vector2 ProjectileMuzzle => projectileMuzzle;
+
+    public FlameData Flame => flame;
 
     public FrameBox[] FrameBoxes => frameBoxes;
 

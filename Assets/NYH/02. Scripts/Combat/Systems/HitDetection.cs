@@ -120,8 +120,9 @@ public class HitDetection : MonoBehaviour
     private void CheckDirectional(ActionExecutor attacker, RobotMover attackerMover, ActionExecutor defender, RobotMover defenderMover)
     {
         // 이번 행동에서 이미 한 번 맞혔으면 더 검사할 필요가 없다 — 활성 구간 내내 겹쳐 있어도
-        // ProcessHit은 딱 한 번만 불러야 한다 (ActionState.HasHitThisAction 설명 참고)
-        if (attacker.State.HasHitThisAction) return;
+        // ProcessHit은 딱 한 번만 불러야 한다 (ActionState.HasHitThisAction 설명 참고).
+        // 2026-10-11: 다단히트 기술(화염 등)은 HitIntervalFrames가 지나면 다시 맞힐 수 있다 (ActionState.CanHitNow)
+        if (!attacker.State.CanHitNow) return;
 
         // mover가 아직 없으면(배선 전 등) 오른쪽을 본다고 가정 — BoxDrawer와 동일한 안전 기본값
         bool attackerFacingRight = attackerMover == null || attackerMover.FacingRight;

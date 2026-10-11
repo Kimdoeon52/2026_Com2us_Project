@@ -7,6 +7,7 @@ using UnityEngine;
 ///
 /// 하는 일은 딱 하나: 판단할 때가 되면 EnemyAIProfile의 선택지 중 하나를 가중치로 뽑는다.
 ///   · 기술   — 사거리 안 + 쿨타임 끝 + 부위 파손으로 봉인 안 됨(RuntimeRobot) + 상대 위치 조건
+///   · 패턴   — 기술 여러 개를 정해진 순서로 이어 쓰기 (조건은 기술과 같음, 2026-10-11)
 ///   · 접근   — 상대가 preferredRange보다 멀 때
 ///   · 대기   — 한 템포 쉬기
 ///   · 점프   — 상대 쪽으로 뛰기
@@ -16,17 +17,34 @@ using UnityEngine;
 ///
 /// 판단(쿨타임·템포)은 CombatClock 틱에서만 센다(§3). GetMoveInput/GetJumpInput은 RobotMover가
 /// 렌더 프레임마다 부르므로, 틱에서 정해둔 의도를 읽어가기만 한다.
+///
+/// ── 한 판단 주기의 흐름 (2026-10-11 정리) ─────────────────────────────────────────────
+///  1. 매 틱 Think(): 쿨타임 -1
+///  2. 죽었거나 상대가 죽었으면 → 정지
+///  3. 행동 중(공격·경직·착지)이면 → 판단 안 함 + 템포 타이머를 thinkIntervalFrames로 다시 채움
+///     → 행동이 끝난 뒤 thinkIntervalFrames만큼 "멍하니" 있다가 다음 판단 = 반응 속도
+///  4. 공중이면 → 착지까지 판단 안 함
+///  5. 접근 중에 preferredRange 안으로 들어왔으면 → 멈추고 템포 무시하고 바로 판단(붙자마자 때리게)
+///  6. 패턴 진행 중이면 → 다음 단계를 바로 내줌(템포 대기 없음)
+///  7. 템포 타이머가 남았으면 → 대기. 0이 되면 Decide()
+///
+/// ── 거리 기준 ─────────────────────────────────────────────────────────────────────
+///  · "감지 범위"는 따로 없다 — 상대가 맵 어디에 있든 항상 알고 쫓아온다.
+///  · 거리 = 두 로봇 피벗(발밑 중앙)의 x좌표 차이. 몸 크기·Hit박스 길이는 안 본다.
+///    그래서 skill.maxRange를 Hit박스가 실제로 닿는 거리보다 크게 잡으면 "멀리서 허공에 휘두르는" 일이 생긴다.
+///    Scene 뷰에서 이 오브젝트를 선택하면 preferredRange(노랑)와 기술별 maxRange(빨강)가 선으로 보인다.
+///  · preferredRange = 접근을 멈추는 거리. 기술 maxRange보다 작아야 멈춘 자리에서 기술이 후보에 오른다.
 /// </summary>
-public class AIInputSource : MonoBehaviour, IInputSource
+public class AIInputSource : MonoBehaviour, IInputSource, IActionAdjustmentSource
 {
     private enum MoveIntent { Hold, Approach }
 
-    private enum ChoiceKind { Skill, Approach, Wait, Jump }
+    private enum ChoiceKind { Skill, Pattern, Approach, Wait, Jump }
 
     private struct Choice
     {
         public ChoiceKind kind;
-        public int skillIndex;
+        public int index; // Skill이면 skills, Pattern이면 patterns 배열 인덱스. 나머지는 -1
         public float weight;
     }
 
@@ -48,6 +66,7 @@ public class AIInputSource : MonoBehaviour, IInputSource
 
     private System.Random rng;
     private int[] skillCooldowns = new int[0];
+    private int[] patternCooldowns = new int[0];
     private int jumpCooldown;
     private int thinkTimer;
 
@@ -59,10 +78,19 @@ public class AIInputSource : MonoBehaviour, IInputSource
     // 매 판단마다 새로 만들지 않으려고 재사용하는 후보 목록
     private readonly List<Choice> choices = new List<Choice>();
 
+    // 진행 중인 패턴. -1이면 패턴 아님. nextStep = 다음에 내줄 단계, expectedAction = 방금 내준 단계(끼어들기 감지용)
+    private int activePattern = -1;
+    private int nextStep;
+    private ActionData expectedAction;
+
+    // 패턴 잔상. 없으면 잔상 없이 패턴만 돈다
+    private AfterImageEmitter afterImage;
+
     private void Awake()
     {
         executor = GetComponent<ActionExecutor>();
         mover = GetComponent<RobotMover>();
+        afterImage = GetComponent<AfterImageEmitter>();
         if (opponent != null)
         {
             opponentExecutor = opponent.GetComponent<ActionExecutor>();
@@ -70,7 +98,11 @@ public class AIInputSource : MonoBehaviour, IInputSource
         }
 
         rng = randomSeed != 0 ? new System.Random(randomSeed) : new System.Random();
-        if (profile != null) skillCooldowns = new int[profile.Skills.Length];
+        if (profile != null)
+        {
+            skillCooldowns = new int[profile.Skills.Length];
+            patternCooldowns = new int[profile.Patterns.Length];
+        }
         if (profile == null) Debug.LogWarning($"[AIInputSource] {name}에 EnemyAIProfile이 없음 — 아무 판단도 안 함");
     }
 
@@ -79,6 +111,9 @@ public class AIInputSource : MonoBehaviour, IInputSource
     // Start에서 하는 이유: Robot은 PlayerRobotBootstrap.Awake에서 만들어져서, Awake 시점엔 아직 없을 수 있다
     private void Start()
     {
+        // 패턴 도중 다른 행동(경직·착지 등)이 시작되면 패턴을 끊어야 해서 행동 시작을 지켜본다
+        if (executor != null && executor.State != null) executor.State.OnActionBegin += OnActionBegin;
+
         RuntimeRobot robot = executor != null ? executor.Robot : null;
         if (profile == null || robot == null) return;
 
@@ -88,6 +123,18 @@ public class AIInputSource : MonoBehaviour, IInputSource
             if (!robot.IsAvailable(entry.action))
                 Debug.LogWarning($"[AIInputSource] {name}: {entry.action.ActionName}이(가) ActionExecutor.allActions에 없음 — AI가 이 기술을 절대 쓰지 않음");
         }
+        foreach (var pattern in profile.Patterns)
+        {
+            if (pattern?.steps == null) continue;
+            foreach (var step in pattern.steps)
+                if (step != null && !robot.IsAvailable(step))
+                    Debug.LogWarning($"[AIInputSource] {name}: 패턴 {pattern.patternName}의 {step.ActionName}이(가) ActionExecutor.allActions에 없음 — AI가 이 패턴을 절대 쓰지 않음");
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (executor != null && executor.State != null) executor.State.OnActionBegin -= OnActionBegin;
     }
 
     // OnEnable/OnDisable 짝으로 구독하는 이유는 PlayerRobotBootstrap과 같다
@@ -104,6 +151,8 @@ public class AIInputSource : MonoBehaviour, IInputSource
     {
         for (int i = 0; i < skillCooldowns.Length; i++)
             if (skillCooldowns[i] > 0) skillCooldowns[i]--;
+        for (int i = 0; i < patternCooldowns.Length; i++)
+            if (patternCooldowns[i] > 0) patternCooldowns[i]--;
         if (jumpCooldown > 0) jumpCooldown--;
 
         if (profile == null || opponent == null || executor == null || executor.State == null) return;
@@ -111,6 +160,7 @@ public class AIInputSource : MonoBehaviour, IInputSource
         ActionState state = executor.State;
         if (state.IsDead || IsOpponentDead())
         {
+            CancelPattern();
             pendingAction = null;
             moveIntent = MoveIntent.Hold;
             return;
@@ -135,6 +185,13 @@ public class AIInputSource : MonoBehaviour, IInputSource
         }
 
         if (pendingAction != null) return; // 고른 기술을 ActionExecutor가 아직 안 가져감
+
+        // 패턴 중이면 앞 단계가 끝나자마자 다음 단계를 바로 내준다 — 템포(thinkInterval)를 기다리면 연속기가 아니게 된다
+        if (activePattern >= 0)
+        {
+            ContinuePattern();
+            return;
+        }
 
         if (thinkTimer > 0)
         {
@@ -171,10 +228,27 @@ public class AIInputSource : MonoBehaviour, IInputSource
                 float weight = entry.weight * (targetAirborne ? entry.airborneTargetWeightMultiplier : 1f);
                 AddChoice(ChoiceKind.Skill, i, weight);
             }
+
+            var patterns = profile.Patterns;
+            for (int i = 0; i < patterns.Length; i++)
+            {
+                var pattern = patterns[i];
+                if (pattern == null || patternCooldowns[i] > 0 || !HasUsableSteps(pattern, robot)) continue;
+                if (distance < pattern.minRange || distance > pattern.maxRange) continue;
+                if (pattern.targetCondition == AITargetCondition.Grounded && targetAirborne) continue;
+                if (pattern.targetCondition == AITargetCondition.Airborne && !targetAirborne) continue;
+
+                AddChoice(ChoiceKind.Pattern, i, pattern.weight);
+            }
         }
 
         if (distance > profile.PreferredRange) AddChoice(ChoiceKind.Approach, -1, profile.ApproachWeight);
-        AddChoice(ChoiceKind.Wait, -1, profile.WaitWeight);
+
+        // 2026-10-11: 접근 중엔 "대기"를 후보에서 뺀다. 원래는 접근 중에도 thinkIntervalFrames마다 다시 뽑아서
+        // 대기가 걸리면 그 자리에 섰다가 다음 판단에 또 접근 → "멈췄다 이동했다"가 반복됐다.
+        // 접근을 한번 시작하면 도착하거나 기술·점프를 고르기 전까지는 계속 걸어온다
+        if (moveIntent != MoveIntent.Approach)
+            AddChoice(ChoiceKind.Wait, -1, profile.WaitWeight);
         if (jumpCooldown <= 0) AddChoice(ChoiceKind.Jump, -1, profile.JumpWeight);
 
         if (!TryPick(out Choice picked)) return;
@@ -182,10 +256,13 @@ public class AIInputSource : MonoBehaviour, IInputSource
         switch (picked.kind)
         {
             case ChoiceKind.Skill:
-                var entry = profile.Skills[picked.skillIndex];
+                var entry = profile.Skills[picked.index];
                 pendingAction = entry.action;
-                skillCooldowns[picked.skillIndex] = entry.cooldownFrames;
+                skillCooldowns[picked.index] = entry.cooldownFrames;
                 moveIntent = MoveIntent.Hold;
+                break;
+            case ChoiceKind.Pattern:
+                StartPattern(picked.index);
                 break;
             case ChoiceKind.Approach:
                 moveIntent = MoveIntent.Approach;
@@ -201,10 +278,74 @@ public class AIInputSource : MonoBehaviour, IInputSource
         }
     }
 
-    private void AddChoice(ChoiceKind kind, int skillIndex, float weight)
+    private void AddChoice(ChoiceKind kind, int index, float weight)
     {
         if (weight <= 0f) return;
-        choices.Add(new Choice { kind = kind, skillIndex = skillIndex, weight = weight });
+        choices.Add(new Choice { kind = kind, index = index, weight = weight });
+    }
+
+    // 단계 중 하나라도 부위 파손으로 봉인됐으면 패턴 전체를 후보에서 뺀다 — 중간에 구멍 난 연속기는 안 쓴다
+    private static bool HasUsableSteps(EnemyAIProfile.PatternEntry pattern, RuntimeRobot robot)
+    {
+        if (pattern.steps == null || pattern.steps.Length == 0) return false;
+        foreach (var step in pattern.steps)
+        {
+            if (step == null) return false;
+            if (robot != null && !robot.IsAvailable(step)) return false;
+        }
+        return true;
+    }
+
+    // 쿨타임은 시작할 때 건다 — 도중에 끊겨도 바로 다시 쓰지 않게
+    private void StartPattern(int index)
+    {
+        var pattern = profile.Patterns[index];
+        activePattern = index;
+        nextStep = 0;
+        patternCooldowns[index] = pattern.cooldownFrames;
+        moveIntent = MoveIntent.Hold;
+        // Awake에서 못 찾았어도 다시 본다 — RobotView가 나중에 자동으로 붙였을 수 있다(EnsureEffectComponents)
+        if (afterImage == null) afterImage = GetComponent<AfterImageEmitter>();
+        if (afterImage != null) afterImage.SetArmed(pattern.leaveAfterImage);
+        Debug.Log($"[AI 패턴] {name}: {pattern.patternName} 시작 ({pattern.steps.Length}단계)");
+
+        ContinuePattern();
+    }
+
+    // 호출: StartPattern, Think(Idle이고 내줄 기술이 없을 때). 다음 단계를 내주거나, 다 썼으면 패턴을 끝낸다
+    private void ContinuePattern()
+    {
+        var steps = profile.Patterns[activePattern].steps;
+        if (nextStep >= steps.Length)
+        {
+            // 마지막 단계까지 끝남 — 다음 판단은 평소처럼 thinkInterval 뒤에 (행동 중에 이미 채워둠)
+            CancelPattern();
+            return;
+        }
+
+        expectedAction = steps[nextStep];
+        nextStep++;
+        pendingAction = expectedAction;
+    }
+
+    // 패턴을 끝낸다(정상 종료·중단 공통). 이미 찍힌 잔상은 그대로 두고 새로 찍지만 않는다
+    private void CancelPattern()
+    {
+        if (activePattern < 0) return;
+        activePattern = -1;
+        expectedAction = null;
+        if (afterImage != null) afterImage.SetArmed(false);
+    }
+
+    // 호출: ActionState.OnActionBegin. 패턴 중에 내가 내준 단계가 아닌 행동(경직·착지 등)이 시작되면 패턴을 끊는다.
+    // 같은 기술이 패턴에 두 번 들어 있어도 "방금 내준 것"과만 비교하므로 헷갈리지 않는다
+    private void OnActionBegin(ActionData action)
+    {
+        if (activePattern < 0 || action == expectedAction) return;
+
+        Debug.Log($"[AI 패턴] {name}: {profile.Patterns[activePattern].patternName} 중단 — {action.ActionName}이(가) 끼어듦");
+        CancelPattern();
+        pendingAction = null; // 아직 안 가져간 다음 단계가 경직 뒤에 튀어나오지 않게
     }
 
     private bool TryPick(out Choice picked)
@@ -264,6 +405,51 @@ public class AIInputSource : MonoBehaviour, IInputSource
 
     // 일반 적은 달리기를 쓰지 않는다 — 필요해지면 프로필에 성향을 추가하고 여기서 반환
     public bool GetDashInput() => false;
+
+    // 호출: ActionExecutor.ExecuteTick(행동 시작 직전). 패턴에서 내준 단계일 때만 패턴 속도를 건다 —
+    // 같은 기술을 단독으로 쓸 땐 원래 속도. 배율은 "프레임에 곱하는 값"이라 속도의 역수로 넘긴다(1.5배 빠르게 = 프레임 ×2/3)
+    public FrameAdjustment GetAdjustment(ActionData action)
+    {
+        if (activePattern < 0 || action != expectedAction) return FrameAdjustment.None;
+
+        FrameAdjustment adjustment = FrameAdjustment.None;
+        adjustment.SpeedMultiplier = 1f / Mathf.Max(0.1f, profile.Patterns[activePattern].speed);
+        return adjustment;
+    }
+
+    // Scene 뷰에서 이 적을 선택하면 거리 기준을 선으로 보여준다 — 거리는 피벗 x차이라서 발밑 높이에 그린다.
+    // 노랑 = preferredRange(접근을 멈추는 거리), 빨강 = 근접 기술 maxRange, 하늘 = 패턴 maxRange.
+    // 이 선 끝이 상대 Hurt박스(BoxDrawer 하늘색)의 앞 모서리보다 멀면 그 거리에선 Hit박스가 안 닿는다
+    private void OnDrawGizmosSelected()
+    {
+        if (profile == null) return;
+        Vector3 origin = transform.position;
+        float dir = mover == null || mover.FacingRight ? 1f : -1f;
+
+        DrawRange(origin, dir, profile.PreferredRange, 0f, Color.yellow);
+        float y = 0.05f;
+        foreach (var entry in profile.Skills)
+        {
+            if (entry?.action == null || entry.action.Projectile != null) continue; // 총은 원거리라 빼고 본다
+            DrawRange(origin, dir, entry.maxRange, y, Color.red);
+            y += 0.05f;
+        }
+        foreach (var pattern in profile.Patterns)
+        {
+            if (pattern == null) continue;
+            DrawRange(origin, dir, pattern.maxRange, y, Color.cyan);
+            y += 0.05f;
+        }
+    }
+
+    private static void DrawRange(Vector3 origin, float dir, float range, float yOffset, Color color)
+    {
+        Gizmos.color = color;
+        Vector3 from = origin + Vector3.up * yOffset;
+        Vector3 to = from + Vector3.right * dir * range;
+        Gizmos.DrawLine(from, to);
+        Gizmos.DrawLine(to + Vector3.up * 0.05f, to - Vector3.up * 0.05f);
+    }
 
     private float Distance() => Mathf.Abs(opponent.position.x - transform.position.x);
 

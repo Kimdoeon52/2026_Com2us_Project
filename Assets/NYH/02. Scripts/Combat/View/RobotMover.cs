@@ -23,6 +23,12 @@ public class RobotMover : MonoBehaviour
     [SerializeField] private float jumpVelocity = 6f;  // TODO: 임시값
     [SerializeField] private float gravity = -20f;      // TODO: 임시값
 
+    // 2026-10-11 추가: 예전엔 원본 그림이 왼쪽을 보고 있어서 씬에서 로봇을 Y축 -180도 돌려 오른쪽을 보게 맞췄다.
+    // 회전으로 좌우를 맞추면 회전을 복사하는 이펙트(총알·화염·잔상)까지 전부 그 사정을 알아야 해서, 회전은 0으로 두고
+    // "원본 그림이 어느 쪽을 보는지"를 여기 한 곳에서 알려주는 방식으로 바꿨다. 지금 BoxRobot·플레이어 시트는 둘 다 왼쪽
+    [Tooltip("원본 스프라이트(시트 그림)가 오른쪽을 보고 있으면 체크. 지금 BoxRobot·플레이어 그림은 왼쪽이라 끔")]
+    [SerializeField] private bool spriteFacesRight;
+
     // 상대 로봇의 Transform. 방향 전환에는 더 이상 안 쓴다(아래 참고) — Push박스 겹침 계산(ResolvePushOverlap)에만 쓰인다
     [SerializeField] private Transform opponent;
     [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
@@ -45,6 +51,15 @@ public class RobotMover : MonoBehaviour
 
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
+
+    /// <summary>원본 그림이 오른쪽을 보는지. 같은 시트에서 나온 이펙트(총알 등)도 이 규칙으로 뒤집는다</summary>
+    public bool SpriteFacesRight => spriteFacesRight;
+
+    /// <summary>
+    /// facingRight 쪽을 보게 하려면 localScale.x에 곱할 부호. 원본 그림 방향이 같으면 +1, 반대면 -1.
+    /// 좌우 반전 규칙은 이 함수 하나로 모은다 — 로봇·총알이 각자 따로 계산하면 한쪽만 바꾸고 다른 쪽을 빠뜨린다
+    /// </summary>
+    public float ScaleSignFor(bool facingRight) => facingRight == spriteFacesRight ? 1f : -1f;
 
     /// <summary>땅에 있는지. RobotView(점프/착지 그림), AI(상대가 공중인지), HitReactionSystem(공중 경직 여부)이 읽는다</summary>
     public bool IsGrounded => isGrounded;
@@ -74,6 +89,10 @@ public class RobotMover : MonoBehaviour
         groundY = transform.position.y;
         // 인스펙터에서 안 넣어줬으면 씬에서 직접 찾는다 — 카메라는 씬에 보통 하나뿐이라 자동 검색이 안전함
         if (combatCamera == null) combatCamera = FindFirstObjectByType<CombatCamera>();
+
+        // 예전 방식(Y축 -180 회전)이 씬에 남아 있으면 그림이 두 번 뒤집혀 뒤를 보고 걷는다 — 조용히 틀어지지 않게 알려준다
+        if (Quaternion.Angle(transform.rotation, Quaternion.identity) > 1f)
+            Debug.LogWarning($"[RobotMover] {name}: 회전이 {transform.eulerAngles}로 남아 있음 — 좌우는 이제 spriteFacesRight로 맞추므로 Rotation을 0,0,0으로 바꿀 것");
     }
 
     // 호출: Unity 매 렌더 프레임. 순서: 좌우 이동(대시 배율 포함) → 점프(Y축) → 화면 밖 보정 → 입력 방향으로 좌우 반전 → Push박스 겹침 보정
@@ -131,7 +150,7 @@ public class RobotMover : MonoBehaviour
         // localScale.x의 부호만 뒤집어서 스프라이트를 좌우 반전시킨다. Mathf.Abs로 감싼 이유는
         // 이미 한 번 뒤집힌 상태(x가 음수)에서 다시 뒤집으려 할 때 부호가 꼬이지 않게, 항상 "크기"만
         // 가져와서 새로 부호를 매기기 위함 — 그냥 sign을 곱하기만 하면 반복 실행 시 계속 반전되는 버그가 생김
-        float sign = facingRight ? 1f : -1f;
+        float sign = ScaleSignFor(facingRight);
         transform.localScale = new Vector3(sign * Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
     }
 

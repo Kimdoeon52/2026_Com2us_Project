@@ -11,7 +11,7 @@ public static class SpriteEffect
 {
     /// <summary>
     /// styleSource(보통 로봇)와 같은 렌더 설정으로 스프라이트 오브젝트를 만든다. 좌우는 RobotMover와 같은
-    /// 규칙(localScale.x 부호)으로 뒤집는다 — 로봇과 같은 시트에서 나온 그림이라 같은 규칙이 맞다
+    /// 규칙(RobotMover.ScaleSignFor)으로 뒤집는다 — 로봇과 같은 시트에서 나온 그림이라 같은 규칙이 맞다
     /// </summary>
     public static GameObject Create(string name, RuntimeAnimatorController controller, Vector3 position, Transform styleSource, bool facingRight)
     {
@@ -19,12 +19,17 @@ public static class SpriteEffect
         go.transform.position = position;
 
         float scale = 1f;
+        float sign = facingRight ? 1f : -1f;
         var renderer = go.AddComponent<SpriteRenderer>();
         if (styleSource != null)
         {
-            // 로봇이 Y축 180도 돌아간 채로 배치돼 있어도 같은 각도로 보이게 회전까지 복사한다
             go.transform.rotation = styleSource.rotation;
             scale = Mathf.Abs(styleSource.localScale.x);
+
+            // 2026-10-11: 좌우는 회전(예전 Y축 -180)이 아니라 "원본 그림이 어느 쪽을 보는가"로 맞춘다(RobotMover.ScaleSignFor).
+            // 이펙트는 로봇과 같은 시트에서 나온 그림이라 같은 규칙을 따른다
+            var mover = styleSource.GetComponent<RobotMover>();
+            if (mover != null) sign = mover.ScaleSignFor(facingRight);
 
             var sourceRenderer = styleSource.GetComponent<SpriteRenderer>();
             if (sourceRenderer != null)
@@ -35,7 +40,7 @@ public static class SpriteEffect
                 renderer.sortingOrder = sourceRenderer.sortingOrder + 1;
             }
         }
-        go.transform.localScale = new Vector3(facingRight ? scale : -scale, scale, scale);
+        go.transform.localScale = new Vector3(sign * scale, scale, scale);
 
         var animator = go.AddComponent<Animator>();
         animator.runtimeAnimatorController = controller;

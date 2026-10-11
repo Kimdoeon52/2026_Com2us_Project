@@ -108,7 +108,11 @@ public class ActionExecutor : MonoBehaviour
 
             if (requested != null)
             {
-                state.Begin(requested);
+                // 입력원이 이번 실행분 보정을 줄 수 있으면 받는다 (AI 패턴 속도 등 — IActionAdjustmentSource 참고)
+                FrameAdjustment extra = inputSource is IActionAdjustmentSource adjuster
+                    ? adjuster.GetAdjustment(requested)
+                    : FrameAdjustment.None;
+                state.Begin(requested, extra);
                 // 구간별로 프레임 수를 전부 찍어두면, 나중에 "훅이 정말 선딜 3프레임에 나가는지" 같은
                 // 걸 로그만 보고도 검증할 수 있다 (§9 "상태 로그" 규칙).
                 // 원본이 아니라 확정값(Timeline)을 찍는다 — 보정이 걸린 뒤엔 실제로 도는 값이 이쪽이다
@@ -123,6 +127,29 @@ public class ActionExecutor : MonoBehaviour
         // 프레임을 전진시킨 "뒤"에 쏘는 이유: Startup → Active로 넘어가는 바로 그 틱에 첫 발이 나가야
         // 박스 앵커(Active 구간 시작 = 첫 히트 가능 프레임)와 타이밍이 같아진다
         EmitProjectiles();
+
+        ApplyAdvance();
+    }
+
+    // 2026-10-11 추가: ActionData.AdvanceDistance를 선딜~활성 프레임 수로 나눠 틱마다 조금씩 앞으로 민다.
+    // RobotMover(Update)가 아니라 여기서 하는 이유: 거리가 "몇 프레임 동안"에 묶인 값이라 틱에서 세야
+    // 주사율과 무관하게 같은 거리를 간다(§3). 화면 밖 보정·Push박스 밀어내기는 RobotMover.Update가 그대로 처리한다
+    private void ApplyAdvance()
+    {
+        ActionData action = state.CurrentAction;
+        if (action == null || action.AdvanceDistance <= 0f) return;
+
+        // GlobalFrame은 Begin 후 1부터 1씩 오르므로 1 ~ (선딜+활성) 구간에 정확히 그 프레임 수만큼 불린다.
+        // 활성 전용(돌진)이면 (선딜+1) ~ (선딜+활성) — 선딜 동안은 제자리에서 예비동작
+        int firstFrame = action.AdvanceDuringActiveOnly ? state.Timeline.StartupFrames + 1 : 1;
+        int lastFrame = state.Timeline.StartupFrames + state.Timeline.ActiveFrames;
+        int advanceFrames = lastFrame - firstFrame + 1;
+        if (advanceFrames <= 0 || state.GlobalFrame < firstFrame || state.GlobalFrame > lastFrame) return;
+
+        float direction = Mover == null || Mover.FacingRight ? 1f : -1f;
+        Vector3 pos = transform.position;
+        pos.x += direction * action.AdvanceDistance / advanceFrames;
+        transform.position = pos;
     }
 
     /// <summary>

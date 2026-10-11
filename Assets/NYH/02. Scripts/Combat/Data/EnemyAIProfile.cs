@@ -39,8 +39,47 @@ public class EnemyAIProfile : ScriptableObject
         [Min(0f)] public float airborneTargetWeightMultiplier = 1f;
     }
 
+    /// <summary>
+    /// 기술 여러 개를 정해진 순서로 이어 쓰는 패턴 (2026-10-11, 기획서1011 §6-10 "하단 → 어퍼컷 → 중단").
+    /// 후보 조건(사거리·쿨타임·상대 위치)은 첫 판단 때 한 번만 본다 — 한번 시작하면 끝까지 밀어붙이고,
+    /// 맞아서 경직 등으로 다른 행동이 끼어들면 그 자리에서 끊긴다
+    /// </summary>
+    [Serializable]
+    public class PatternEntry
+    {
+        [Tooltip("로그·인스펙터 구분용 이름")]
+        public string patternName;
+
+        [Tooltip("순서대로 이어 쓸 기술. 전부 ActionExecutor.allActions에도 들어 있어야 한다")]
+        public ActionData[] steps = new ActionData[0];
+
+        [Tooltip("상대와의 x거리가 이 범위 안일 때만 후보가 된다")]
+        [Min(0f)] public float minRange;
+        [Min(0f)] public float maxRange = 1.2f;
+
+        [Tooltip("후보들 사이의 상대적인 뽑힐 확률. 단일 기술 weight와 같은 저울에 올라간다")]
+        [Min(0f)] public float weight = 1f;
+
+        [Tooltip("패턴이 끝난 뒤 다시 후보가 되기까지의 프레임(60fps)")]
+        [Min(0)] public int cooldownFrames;
+
+        [Tooltip("상대가 지상/공중일 때만 쓰게 제한")]
+        public AITargetCondition targetCondition = AITargetCondition.Any;
+
+        [Tooltip("각 기술의 활성 구간이 끝나는 자세를 잔상으로 남긴다(AfterImageEmitter 필요). 패턴으로 쓸 때만 남는다")]
+        public bool leaveAfterImage = true;
+
+        // 2026-10-11 추가: 같은 기술이라도 패턴으로 이어 쓸 때만 빠르게. 원본 ActionData는 안 바뀌므로 단독 사용엔 영향 없다.
+        // 선딜·활성·후딜 프레임이 전부 나눠지고 애니메이션 속도·박스 창·전진 분배도 같이 따라간다(ResolvedAction)
+        [Tooltip("TODO: 임시값. 패턴 중 기술 속도 배율. 1 = 원래 속도, 1.5 = 1.5배 빠르게(프레임 2/3), 0.8 = 느리게")]
+        [Min(0.1f)] public float speed = 1f;
+    }
+
     [Header("기술 — 값 전부 임시 (기획 확정 전)")]
     [SerializeField] private SkillEntry[] skills = new SkillEntry[0];
+
+    [Header("패턴 — 기술 연속 사용")]
+    [SerializeField] private PatternEntry[] patterns = new PatternEntry[0];
 
     [Header("판단 템포")]
     [Tooltip("TODO: 임시값. 다음 판단까지 기다리는 프레임. 행동·경직이 끝난 뒤의 반응 속도이기도 하다")]
@@ -64,6 +103,7 @@ public class EnemyAIProfile : ScriptableObject
     [Min(0)] [SerializeField] private int jumpCooldownFrames = 180;
 
     public SkillEntry[] Skills => skills;
+    public PatternEntry[] Patterns => patterns;
     public int ThinkIntervalFrames => thinkIntervalFrames;
     public float PreferredRange => preferredRange;
     public float ApproachWeight => approachWeight;

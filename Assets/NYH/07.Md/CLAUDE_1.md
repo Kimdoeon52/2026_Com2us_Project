@@ -68,6 +68,11 @@ Assets/NYH/02. Scripts/Combat/
                 (PartData.cs / CoreData.cs는 만들지 않음 — KKH의 PartMasterData 참조)
     Systems/ 추가 (2026-10-09): Projectile.cs(날아가는 판정체)  HitReactionSystem.cs(static, 경직 판단)
     View/ 추가 (2026-10-09): SpriteEffect.cs(static, 총알·폭발 스프라이트 생성)
+    View/ 추가 (2026-10-11): AfterImageEmitter.cs(패턴 잔상 — 활성 끝 자세를 반투명으로 남김)
+                             FlameEmitter.cs(화염 — 둠 불꽃 알고리즘으로 그림 없이 불줄기 생성)
+                             DamageNumberEmitter.cs(데미지 숫자)  FighterHpBar.cs(HP 바 ↔ CombatDataHub)
+    Data/ 추가 (2026-10-11): FlameData.cs(불 모양 SO)
+    Input/ 추가 (2026-10-11): IActionAdjustmentSource.cs(입력원이 이번 실행분 프레임 보정을 줄 때 — AI 패턴 속도)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
@@ -391,7 +396,10 @@ Hit/Hurt/Push 박스가 전부 없었다 — 서 있는 상대를 때려도 판�
 
 - 내구도 0 → 해당 부위의 스킬(Q/W/E/R 중 하나)만 사용 불가
 - **회피·가드 확률에 페널티를 주는 로직은 삭제됐다** (기존 "다리 1개 파괴 → 회피 50%" 등은 폐기)
-- 파괴된 부위는 반투명 처리 + **그 부위의 허트박스도 제거** (이 부분은 유지)
+- ~~파괴된 부위는 반투명 처리 + 그 부위의 허트박스도 제거~~ → **2026-10-11 폐기**. 로봇 그림이 부위별로 안 나뉜 통짜 스프라이트라
+  부위만 반투명은 불가능하고(부위별 레이어나 프레임별 마스크가 필요 — 그래픽 작업량 과다), 부위는 맞은 자리가 아니라 **기술이 정하므로**
+  허트박스를 부위별로 나눌 이유도 없다. 대안(결정 대기): HUD 부위 아이콘 회색 처리(KKH `FighterStatusHUD`) / 부위 위치 점 하나에서
+  연기·스파크 지속 이펙트 / 파괴 순간 작은 폭발 + 전체 점멸
 
 ### 행동 잠금은 `RuntimeRobot`이 목록으로 관리 (✅ 2026-10-06 구현)
 
@@ -591,6 +599,9 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 - 모든 클립의 피벗은 **발밑 중앙**으로 통일 (안 맞으면 공격 시 캐릭터가 순간이동)
 - 모든 클립의 캔버스 크기 동일 (다르면 박스 좌표가 전부 어긋남)
 - 스프라이트 정렬은 Z축이 아니라 `sortingOrder`로 (2.5D에서 Z 정렬은 카메라 각도 변화에 깨짐)
+- (2026-10-11) **로봇 Transform 회전은 0,0,0.** 원본 그림이 왼쪽을 봐서 예전엔 Y축 -180으로 돌려 맞췄는데, 회전을 복사하는
+  이펙트(총알·화염·잔상)까지 전부 그 사정을 알아야 해서 폐기. 좌우는 `RobotMover.spriteFacesRight` + `ScaleSignFor()` 한 곳에서만 정한다.
+  회전이 남아 있으면 `RobotMover.Init`이 경고를 띄운다
 - 재생 속도는 `speed = 클립길이 / 데이터길이`로 데이터에 맞춘다
 
 ---
@@ -618,11 +629,19 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 10. ✅ (2026-10-06 결정) CSH 연동 방식 확정 — `IUsable`/`SkillBase`는 CSH가 이미 폐기하고 "장비 효과"(`EquipmentEffectSet`/`ResolvedModifiers`) + 리졸버 주입(`SetModifierResolver`/`SetEffects`, 이미 `ActionState.cs`/`ActionExecutor.cs`에 병합됨) 체계로 교체함. §13 원안(이벤트 구독)으로 되돌리지 않고 **CSH가 만든 방식을 그대로 따라간다.** 프레임 보정 필드·`ActionTag` 매칭·`KnockbackMultiplier` 등 CSH 쪽 빈 자리는 CSH 책임 — NYH가 먼저 요구하지 않음
 11. ✅ (2026-09-29) D/Q/W/E/R 액션 구조 전환 — 기존 5종 기본기 에셋·키매핑 제거 + D 슬롯 신설 + Q/W/E/R 슬롯 구조 (§3·§8). 2026-10-02: Q/W 짧게·길게(차지) 입력 수신 + 대시·점프 입력 수신까지 추가 — 전부 `PlayerInputSource`의 "입력 수신"만 완료고, 실제 물리/실린더 연결은 미완료(아래 참고)
 12. ✅ (2026-10-02) 점프·대시를 `RobotMover`에 실제로 반영 — Y축 포물선 점프(`jumpVelocity`/`gravity`, 수치 전부 임시) + 대시 중 `moveSpeed` 배율(`dashSpeedMultiplier`, 수치 임시). **같은 작업 중 발견: 방향 전환이 "상대 위치 기준"(옛 SF2 미러매치 가정)으로 박혀 있던 걸 "이동 입력 방향 기준"(기획서 그래픽 §7-1 "방향 전환 | 반대 방향 입력")으로 교체함 — 할로우나이트/스컬류 보스전엔 전자가 안 맞음.** 이동 로직 자체는 여전히 `Update()`에서 돈다(`CombatTick` 이관은 별도 확인 필요 — §15).
-13. ⬜ 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15)
+13. ⬜ 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15). **2026-10-11 방향 확정(남윤호)**: 기술마다 깎는 부위 **하나로 고정**,
+    부위 데미지는 코어 HP 데미지와 **별도 수치**. → `ActionData`에 "깎을 부위(없음/머리/양팔/양다리)" + "부위 데미지" 칸 추가,
+    `HitDetection`이 `ProcessHit`에 `Core` 고정 대신 그 값을 넘기면 된다(받는 쪽 KKH `ProcessHit`·`RuntimeRobot` 봉인은 이미 있음).
+    부위 데미지를 KKH 계산식에 어떻게 넣을지는 KKH 확인 필요(§0)
 14. ⏸️ (2026-10-06 결정) 실린더 시스템 — `CombatDataHub.CanExecuteAction(fighterId, source, requiredPart, cylinderCost)` 오버로드는 이미 존재하지만, 이걸 Q/W 강화판정에 실제로 연결하는 작업은 **KKH·CSH 쪽이 알아서 진행** — NYH가 먼저 나서서 연결하지 않는다. 요청이 오면 그때 배선
 15. 🔶 (2026-10-09) 투사체 1차 구조 — `ProjectileData`(SO) + `Projectile`(날아가는 객체, `CombatClock` 틱으로 이동·수명) + `HitDetection.CheckProjectiles`. `ActionData.projectile`이 있으면 활성 구간 동안 `projectileIntervalFrames`마다 `ActionExecutor`가 발사. 총알마다 1회 히트(근접의 `HasHitThisAction`과 별개), 회피 무적이면 통과. 데미지는 쏜 `ActionData.Damage`. 플레이어 팔 스킬(로켓/붐버 등)의 폭발 반경·기물 파괴는 아직 없음
 16. 🔶 (2026-10-09) 사망 — `ActionExecutor`가 매 틱 코어 HP를 보고 `ActionState.Kill()` → `ActionPhase.Dead`(판정·이동·입력 정지, 박스 없음). `RobotView`가 피격 모션 유지 + 몸 주변 폭발 → 스프라이트 끔. 카메라 연출용 이벤트(`OnDeathStarted`/`OnDeathExplosion`/`OnDeathFinished`)는 자리만 있고 구독자 없음
 17. 🔶 (2026-10-09) 점프 그림 3단(시작 → 공중 루프 → 착지)·활성 구간 클립 전환(`ActionData.activeClipName`)·피격 점멸 — 전부 `RobotView`(그림만, 판정 무관)
+18. 🔶 (2026-10-11) 일반 적 연속 공격 패턴 — `EnemyAIProfile.PatternEntry`(기술 순서 목록)를 `AIInputSource`가 단계별로 이어서 내준다. 다른 행동(경직·착지)이 `OnActionBegin`으로 끼어들면 그 자리에서 중단. 동작 중 전진은 `ActionData.advanceDistance`(기본 0, 기획 수치 없음)를 `ActionExecutor.ApplyAdvance`가 틱마다 나눠서 민다. 잔상은 `AfterImageEmitter`가 `ActionState.OnActionRecoveryStart`(활성 → 후딜)에 찍고, **패턴일 때만** AI가 켠다(단독 기술엔 안 남음). 패턴 속도는 `PatternEntry.speed` → `IActionAdjustmentSource` → `FrameAdjustment.SpeedMultiplier`. ⬜ 실제 플레이 검증 아직
+19. 🔶 (2026-10-11) 화염방사기 — 다단히트(`ActionData.hitIntervalFrames`, `ActionState.CanHitNow`) + 불 연출(`FlameData`/`FlameEmitter`, `ActionData.flame`, 총구는 `projectileMuzzle` 공용). 불 모양은 순수 연출이고 데미지는 Hit박스가 낸다(§4) — `FlameData.length`를 Hit박스 폭에 맞춰둘 것. 임시 기술 `Enemy_Skill5_Flame`(Skill5/Skill5_loop 클립, 활성 180f = 기획서 "3초"). 총구는 `ActionDataEditor` Scene 뷰의 주황 원으로 드래그. ⬜ 씬 연결(allActions·FlameEmitter)·플레이 검증 아직
+20. 🔶 (2026-10-11) 돌진 + 사망 잔해 — 돌진 `Enemy_Skill6_Dash`: 선딜(제자리 예비동작) 후 활성 동안만 전진(`ActionData.advanceDuringActiveOnly`), 꼬리 잔상(`ActionData.trailAfterImageInterval` → `AfterImageEmitter`), 클립 `Enemy1_Jump_Loop`(부스터). 사망은 폭발이 끝나면 `RobotView.deadStateName`(Enemy1_Die)으로 고정 — 비우면 예전처럼 사라짐. ⬜ 씬 연결·플레이 검증 아직
+21. 🔶 (2026-10-11) 데미지 숫자(`DamageNumberEmitter`, `ActionExecutor.OnDamaged` 구독, 자동 부착) + HP 바(`FighterHpBar`, 막대 Image에 붙이고 fighterId 지정, `CombatDataHub.GetCurrentHp/GetMaxHp` 매 프레임 조회). 효과 컴포넌트(화염·꼬리 잔상·데미지 숫자)는 `RobotView.EnsureEffectComponents`가 행동 데이터를 보고 자동으로 붙인다 — 패턴 끝 자세 잔상만 예외(AfterImageEmitter 직접 부착). ⬜ 플레이 검증 아직
+22. ⬜ (다음) 기믹 "기물파괴 A: 폭발 화물 상자" — 담당 확인 후 착수. 쪼갠 작업·필요한 신규 구조·확인할 것은 개발일지 2026-10-11 마무리 절. 점프 패턴(후보 2개)도 같은 곳
 
 ---
 
@@ -789,6 +808,8 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
 - 점프 물리 자체는 `RobotMover`에 생겼지만(2026-10-02, 수치 전부 임시) 공중 상태를 `ActionPhase`에
   반영할지(공중에서 피격 시 처리, 공중 중 행동 제약 등)는 여전히 미정
 - 보스 스킬이 "타격 부위"를 어떤 필드로 표현할지, 어느 쪽(NYH/KKH) 소유인지
+  → (2026-10-11) 기술당 부위 1개 고정 + 부위 데미지 별도 수치로 방향 확정. 필드는 `ActionData`(NYH 소유)에 두는 안. 부위 데미지 계산식만 KKH 확인
+- (2026-10-11) 부위 파괴 시각 피드백 — 통짜 스프라이트라 부위 반투명 불가. HUD 아이콘 / 부위 위치 이펙트 / 파괴 순간 연출 중 선택 필요
 - `RuntimeRobot`을 플레이어/보스 공용으로 쓸지, 내구도 추적 여부를 인스턴스별로 끌지
 - `CombatDataHub.ProcessHit`의 `isGuarding` 인자 처리 — KKH와 협의 필요 (§0, §14)
 - ~~히트 스턴이 별도로 필요한지~~ → 2026-10-09 기획서1009로 "피격 리액션" 형태로 확정(§7). 남은 건 수치:
@@ -796,8 +817,17 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
 - 넉백 수치 — 근거(기획서1009 "약간의 밀려남")는 생겼지만 기술별 거리는 미정. 어퍼컷 띄우기 높이도 임시값
 - 적 Skill1~4 프레임·데미지·쿨타임, 총알 속도·연사 간격·사거리 — 클립 길이 기준 임시값 (개발일지 2026-10-09)
 
+- (2026-10-11) 일반 적 패턴의 "동작 중 전진" 거리, 화염방사기 틱 데미지·판정 간격(구조는 생김, 값 2 / 15f는 임시)
+- (2026-10-11) 화염 다단히트가 맞을 때마다 경직 판정을 다시 굴린다 — 화염 속에 갇혀 계속 움찔하는 게 의도인지 기획 확인 필요
+- (2026-10-11) 기믹 "폭발 화물 상자" — 기획서 문장은 "보스가 돌진"인데 위치는 일반 적 AI 절. NYH(일반 적) 담당인지 확인 필요.
+  수치 전부 없음(큰 피해량, 폭발 반경, 상자 낙하 주기, 돌진 속도·데미지, 플레이어 피해). "기본기 3타"가 D 3회인지 내구도인지도 미정
+- (2026-10-11) 기물파괴 B / 부위파괴 A — 기획서에 제목만 있음
+
 > 2026-10-09: 기준 기획서가 `리얼스틸 기획서1009.md`로 바뀌었다(`리얼스틸 기획서 (1).md`는 삭제됨).
 > 전투 절은 896~980행. 이 문서의 "기획서(1) §6-12" 표기는 같은 절을 가리킨다.
+>
+> 2026-10-11: 기준 기획서가 `리얼스틸 기획서1011.md`로 바뀌었다(1009는 삭제됨). 1009 대비 변경은 §6-10 "일반 적 AI"에
+> 공격 패턴(하단→어퍼컷→중단 / 화염방사기 / 탄환)과 기믹 패턴(폭발 화물 상자 등)이 추가된 것뿐 — 전투 절(§6-12)은 동일.
 
 ### 걷어낸 코드 (2026-09-29 완료)
 

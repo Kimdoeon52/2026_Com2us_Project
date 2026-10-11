@@ -83,6 +83,7 @@ public class ActionDataEditor : Editor
 
         EditorGUILayout.HelpBox(
             "Scene 뷰에서 네모 핸들(중심)을 끌면 이동, 점 핸들(모서리)을 끌면 크기 조절됩니다.\n" +
+            "투사체·화염 행동은 주황 원(총구)을 끌어서 발사 위치를 맞춥니다.\n" +
             "좌표는 항상 오른쪽을 본다고 가정하고 편집합니다 — 좌우 반전은 런타임에 자동 처리됩니다.",
             MessageType.Info);
 
@@ -301,6 +302,8 @@ public class ActionDataEditor : Editor
             DrawBoxHandle(i, pivot, rectProp, (BoxType)typeProp.enumValueIndex);
         }
 
+        DrawMuzzleHandle(pivot, action);
+
         // 이 함수 시작할 때 걸어둔 zTest 강제 설정을 원래대로 복구 — 다른 에디터 도구(이동 기즈모 등)가 이후에도 정상 동작하도록
         Handles.zTest = prevZTest;
 
@@ -389,6 +392,32 @@ public class ActionDataEditor : Editor
             r.height = newMax.y - pivot.y - r.y;
             rectProp.rectValue = r;
         }
+    }
+
+    // 2026-10-11 추가: 총구(projectileMuzzle — 투사체·화염 공통)를 박스처럼 Scene 뷰에서 끌어서 맞춘다.
+    // 투사체나 화염이 달린 행동에서만 보인다. 화염이면 FlameData.length만큼 점선을 그어서 Hit박스(빨강)와 길이를 눈으로 대조한다 —
+    // 불 모양은 연출, 판정은 Hit박스라서(§4) 둘이 크게 어긋나지 않게 맞추는 용도
+    private void DrawMuzzleHandle(Vector3 pivot, ActionData action)
+    {
+        if (action.Projectile == null && action.Flame == null) return;
+
+        SerializedProperty muzzleProp = serializedObject.FindProperty("projectileMuzzle");
+        Vector2 local = muzzleProp.vector2Value;
+        // 박스와 같은 규칙 — 항상 오른쪽을 본다고 가정한 로컬 좌표 (BoxResolver.ToWorldPoint의 facingRight=true 분기)
+        Vector3 world = new Vector3(pivot.x + local.x, pivot.y + local.y, pivot.z);
+
+        Color orange = new Color(1f, 0.55f, 0f, 1f);
+        Handles.color = orange;
+        float size = HandleUtility.GetHandleSize(world) * 0.08f;
+
+        if (action.Flame != null)
+            Handles.DrawDottedLine(world, world + Vector3.right * action.Flame.Length, 4f);
+        Handles.Label(world + Vector3.up * size * 2f, action.Flame != null ? "총구 (화염 평균 길이 점선)" : "총구");
+
+        EditorGUI.BeginChangeCheck();
+        Vector3 moved = Handles.FreeMoveHandle(world, size, Vector3.zero, Handles.CircleHandleCap);
+        if (EditorGUI.EndChangeCheck())
+            muzzleProp.vector2Value = new Vector2(moved.x - pivot.x, moved.y - pivot.y);
     }
 
     // 박스 타입 → 색 매핑. BoxDrawer(런타임용)에도 같은 규칙이 따로 있는데, 두 곳이 서로 다른 값을 쓰면

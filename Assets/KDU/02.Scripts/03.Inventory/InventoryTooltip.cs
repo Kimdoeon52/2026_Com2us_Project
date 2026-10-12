@@ -17,6 +17,9 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     [Tooltip("툴팁 텍스트")]
     [SerializeField] private TextMeshProUGUI _text;
 
+    [Tooltip("툴팁 정렬 순서. 다른 캔버스 팝업보다 높게")]
+    [SerializeField] private int _sortingOrder = 100;
+
     // 격자에서 띄운 툴팁인지. 장착 칸이 띄운 건 격자 밖 이동으로 끄지 않는다
     private bool _fromGrid;
 
@@ -48,6 +51,11 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
 
         _box.SetActive(true);
         _fromGrid = false;
+
+        // 장착 팝업 위에 그린다. 켠 뒤에 건다
+        Canvas canvas = _box.GetOrAddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = _sortingOrder;
     }
 
     public void Hide()

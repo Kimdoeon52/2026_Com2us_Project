@@ -35,6 +35,10 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
 
     private void Awake()
     {
+        // 이미 배치된 칸은 Reset이 안 돌아서 비어 있을 수 있다
+        if (_tooltip == null)
+            _tooltip = FindAnyObjectByType<InventoryTooltip>(FindObjectsInactive.Include);
+
         if (_icon == null)
             return;
 

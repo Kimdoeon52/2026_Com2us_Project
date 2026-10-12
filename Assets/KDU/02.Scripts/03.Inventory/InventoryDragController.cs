@@ -19,6 +19,9 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     [Tooltip("고스트를 담을 루트. 비면 파츠 레이어의 부모")]
     [SerializeField] private RectTransform _ghostLayer;
 
+    [Tooltip("고스트 정렬 순서. 다른 캔버스 팝업보다 높게")]
+    [SerializeField] private int _ghostSortingOrder = 100;
+
     [Header("표시")]
     [Tooltip("배치 가능 색")]
     [SerializeField] private Color _validColor = new Color(0.3f, 1f, 0.4f, 0.5f);
@@ -196,6 +199,11 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         _ghost.sizeDelta = (Vector2)_shape.Size * _view.CellSize;
         _ghost.gameObject.SetActive(true);
         _ghost.SetAsLastSibling();
+
+        // 다른 캔버스의 팝업 위에 그린다. 비활성 상태에서 설정하면 풀리므로 켠 뒤에 건다
+        Canvas canvas = _ghost.GetOrAddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = _ghostSortingOrder;
 
         if (_ghostShape != null)
             _ghostShape.Draw(_shape, null, _view.CellSize, _validColor);

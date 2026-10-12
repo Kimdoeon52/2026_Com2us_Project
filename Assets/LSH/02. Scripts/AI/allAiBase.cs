@@ -14,14 +14,17 @@ public abstract class AllAiBase : MonoBehaviour
     public abstract void ReadyForAction();
     public abstract bool RaiseThink(int actionPrise, int actionRealPrise);
 
-    [Header("Npc 생각 나오는 곳")]
+    [Header("Npc UI들 나오는 곳")]
     public Image thinkImage;
     public TextMeshProUGUI npcThinkChat;
+    public Sprite npcImage;
 
     [Header("생각 말풍선 연출 설정")]
     [SerializeField] protected CanvasGroup thinkCanvasGroup; // 말풍선 전체 투명도 제어용
     protected Sequence thinkSequence; // DOTween 트윈 중첩 방지용
     protected Vector3 originalLocalPos; // 원래 말풍선 위치 저장
+
+
 
     [System.Serializable]
     public struct ChatList
@@ -86,11 +89,11 @@ public abstract class AllAiBase : MonoBehaviour
 
         thinkSequence
             // 1. 0.3초 동안 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
-            .Append(thinkImage.transform.DOScale(Vector3.one, 0.3f).SetEase(Ease.OutBack))
+            .Append(thinkImage.transform.DOScale(Vector3.one, 1f).SetEase(Ease.OutBack))
             // 2. 2.5초 동안 대기하면서 말풍선이 둥실둥실 살짝 올라감
-            .Append(thinkImage.transform.DOLocalMoveY(originalLocalPos.y + 15f, 2.5f).SetEase(Ease.OutQuad))
+            .Append(thinkImage.transform.DOLocalMoveY(originalLocalPos.y + 50f, 5f).SetEase(Ease.OutQuad))
             // 3. 서서히 사라지면서(Fade Out) 조금 더 위로 떠오름
-            .Join(thinkCanvasGroup.DOFade(0f, 0.5f))
+            .Join(thinkCanvasGroup.DOFade(0f, 2f))
             .OnComplete(() =>
             {
                 ResetThinkBubble();

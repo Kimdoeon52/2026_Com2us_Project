@@ -263,6 +263,7 @@ GameObject:
   - component: {fileID: 20720474}
   - component: {fileID: 20720476}
   - component: {fileID: 20720475}
+  - component: {fileID: 20720477}
   m_Layer: 5
   m_Name: Npc (3)
   m_TagString: Untagged
@@ -327,6 +328,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 20720473}
   m_CullTransparentMesh: 1
+--- !u!114 &20720477
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 20720473}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.5
 --- !u!1 &114245769
 GameObject:
   m_ObjectHideFlags: 0
@@ -338,6 +353,7 @@ GameObject:
   - component: {fileID: 114245770}
   - component: {fileID: 114245772}
   - component: {fileID: 114245771}
+  - component: {fileID: 114245773}
   m_Layer: 5
   m_Name: Npc (4)
   m_TagString: Untagged
@@ -402,6 +418,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 114245769}
   m_CullTransparentMesh: 1
+--- !u!114 &114245773
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 114245769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.8
 --- !u!1 &212448333
 GameObject:
   m_ObjectHideFlags: 0
@@ -639,6 +669,7 @@ GameObject:
   - component: {fileID: 378219712}
   - component: {fileID: 378219714}
   - component: {fileID: 378219713}
+  - component: {fileID: 378219715}
   m_Layer: 5
   m_Name: Npc (2)
   m_TagString: Untagged
@@ -703,6 +734,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 378219711}
   m_CullTransparentMesh: 1
+--- !u!114 &378219715
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 378219711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.7
 --- !u!1 &389162649
 GameObject:
   m_ObjectHideFlags: 0
@@ -1063,6 +1108,7 @@ GameObject:
   - component: {fileID: 443056644}
   - component: {fileID: 443056646}
   - component: {fileID: 443056645}
+  - component: {fileID: 443056647}
   m_Layer: 5
   m_Name: Npc (5)
   m_TagString: Untagged
@@ -1127,6 +1173,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 443056643}
   m_CullTransparentMesh: 1
+--- !u!114 &443056647
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 443056643}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.5
 --- !u!1 &511616654
 GameObject:
   m_ObjectHideFlags: 0
@@ -1631,13 +1691,14 @@ MonoBehaviour:
   fistBidInputField: {fileID: 212448335}
   fistSubmitButton: {fileID: 1756928814}
   npcAiList:
-  - {fileID: 7966300344390778085, guid: 5ba687b49e2434342a7948215d9d97ad, type: 3}
-  - {fileID: 3774233451545845227, guid: c58854e1bab55ac408bcc8dc1d637b50, type: 3}
-  - {fileID: 2381075818547057101, guid: 0dfc57cf0f23b4141bbec5d5b6cfc592, type: 3}
-  - {fileID: 2894846375302795290, guid: 0aa924421c35ec240a6afa487d05956e, type: 3}
-  - {fileID: 4756204233097985558, guid: 5b180cd26fd84914d844e97bba4fa036, type: 3}
+  - {fileID: 3162918245719010804, guid: 5ba687b49e2434342a7948215d9d97ad, type: 3}
+  - {fileID: -2612944131863187435, guid: 014ea7d78b06e194e945dcff8d59619a, type: 3}
+  - {fileID: -312497279545523541, guid: 8bcf9524f44b0b341a8968e7dbf669f4, type: 3}
+  - {fileID: 4520887827624190518, guid: b93bde6c0495d3d4b93c600ad007211c, type: 3}
+  - {fileID: -2415923482705996154, guid: b4c512bbc7c82db448d04570c53e19bb, type: 3}
+  - {fileID: -68186724714985280, guid: c47ca33824c7ed047b325622c21c3946, type: 3}
   bossAiList:
-  - {fileID: 610435597692966113, guid: d3556229fb6b5954bbee7b0caae9d7ad, type: 3}
+  - {fileID: 5261428147776467939, guid: 7d34446f471d11d4a907c2ecab0688e9, type: 3}
   auctionAiList: []
   dayOfEnterNpc: 0
   auctionItem:
@@ -1672,7 +1733,6 @@ MonoBehaviour:
   normalModeButton: {fileID: 2094143964}
   fistModeButton: {fileID: 3303306}
   aiSlots:
-  - {fileID: 1206711439}
   - {fileID: 1219353848}
   - {fileID: 378219712}
   - {fileID: 20720474}
@@ -1681,6 +1741,14 @@ MonoBehaviour:
   - {fileID: 1872697319}
   - {fileID: 1183330199}
   stuffGrade: 0
+  npcs:
+  - {fileID: 1219353851}
+  - {fileID: 378219713}
+  - {fileID: 20720475}
+  - {fileID: 114245771}
+  - {fileID: 443056645}
+  - {fileID: 1872697320}
+  - {fileID: 1183330200}
 --- !u!4 &609825351
 Transform:
   m_ObjectHideFlags: 0
@@ -2619,7 +2687,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0.55152273, g: 0, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -2655,6 +2723,7 @@ GameObject:
   - component: {fileID: 1183330199}
   - component: {fileID: 1183330201}
   - component: {fileID: 1183330200}
+  - component: {fileID: 1183330202}
   m_Layer: 5
   m_Name: Npc (7)
   m_TagString: Untagged
@@ -2719,6 +2788,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1183330198}
   m_CullTransparentMesh: 1
+--- !u!114 &1183330202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183330198}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.7
 --- !u!1 &1191147750
 GameObject:
   m_ObjectHideFlags: 0
@@ -2805,6 +2888,7 @@ GameObject:
   - component: {fileID: 1206711439}
   - component: {fileID: 1206711441}
   - component: {fileID: 1206711440}
+  - component: {fileID: 1206711442}
   m_Layer: 5
   m_Name: Player
   m_TagString: Untagged
@@ -2869,6 +2953,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1206711438}
   m_CullTransparentMesh: 1
+--- !u!114 &1206711442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1206711438}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.1
 --- !u!1 &1219353847
 GameObject:
   m_ObjectHideFlags: 0
@@ -2879,7 +2977,8 @@ GameObject:
   m_Component:
   - component: {fileID: 1219353848}
   - component: {fileID: 1219353850}
-  - component: {fileID: 1219353849}
+  - component: {fileID: 1219353852}
+  - component: {fileID: 1219353851}
   m_Layer: 5
   m_Name: Npc (1)
   m_TagString: Untagged
@@ -2906,7 +3005,15 @@ RectTransform:
   m_AnchoredPosition: {x: 430.2, y: 125}
   m_SizeDelta: {x: 150, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1219353849
+--- !u!222 &1219353850
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1219353847}
+  m_CullTransparentMesh: 1
+--- !u!114 &1219353851
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2936,14 +3043,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!222 &1219353850
-CanvasRenderer:
+--- !u!114 &1219353852
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1219353847}
-  m_CullTransparentMesh: 1
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.9
 --- !u!1 &1228110431
 GameObject:
   m_ObjectHideFlags: 0
@@ -3842,6 +3955,7 @@ GameObject:
   - component: {fileID: 1472476903}
   - component: {fileID: 1472476902}
   - component: {fileID: 1472476901}
+  - component: {fileID: 1472476904}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -3923,6 +4037,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1472476904
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1472476900}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_Version: 2
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
 --- !u!1 &1479123449
 GameObject:
   m_ObjectHideFlags: 0
@@ -4738,6 +4896,7 @@ GameObject:
   - component: {fileID: 1872697319}
   - component: {fileID: 1872697321}
   - component: {fileID: 1872697320}
+  - component: {fileID: 1872697322}
   m_Layer: 5
   m_Name: Npc (6)
   m_TagString: Untagged
@@ -4802,6 +4961,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1872697318}
   m_CullTransparentMesh: 1
+--- !u!114 &1872697322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1872697318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90223be3b18a79c4998dad084aca9804, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  moveDis: 0.5
+  animeTime: 0.4
 --- !u!1 &1927125954
 GameObject:
   m_ObjectHideFlags: 0

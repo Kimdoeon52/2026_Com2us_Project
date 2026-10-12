@@ -133,6 +133,9 @@ public class Auction : PersistentSingleton<Auction>
 
     // 비동기 UI 입력 수신용 CS
     private UniTaskCompletionSource<int> fistBidTcs;
+
+    //===============================================
+    [SerializeField] private Image[] npcs;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -241,7 +244,7 @@ public class Auction : PersistentSingleton<Auction>
             Debug.LogError("경매 물품 리스트가 읍다");
             return;
         }
-
+        NPCImageOff();
         UpdateGoldDisplay(); // 골드 업데이트
         DayOfAuctionEnter(); // 그날 하루 경매할 인원 정하기
         GetAuctionNpc(dayOfEnterNpc); // ai 정하기
@@ -286,7 +289,7 @@ public class Auction : PersistentSingleton<Auction>
             auctionAiList.Add(npcAiList[index]);
         }
 
-        SpawnAndPositionAi(); //Canvas 위치에 AI UI 푸리팹 생성 및 배치하는거임
+        //Canvas 위치에 AI UI 푸리팹 생성 및 배치하는거임
     } // 총원은 enterNpc + 1(보스) 명
 
     private async UniTask StartAuction()
@@ -296,7 +299,10 @@ public class Auction : PersistentSingleton<Auction>
         currentAuctionType = await WaitPlayerSelectModeAsync();
         AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
         isChatting = true; // 채팅 시작
-
+        //==========Npc UI 활성화 ==========
+        NPCImageOn();
+        SpawnAndPositionAi();
+        //===========================
         foreach (var ai in auctionAiList) // 경매 참여하는 ai들 만큼
         {
             if (ai != null)
@@ -595,17 +601,30 @@ public class Auction : PersistentSingleton<Auction>
     //================================Canvas에 AI 설치 =======================
     private void SpawnAndPositionAi()
     {
-        for (int i = 0; i < auctionAiList.Count; i++)
-        {
-            if (i >= aiSlots.Count) break; // 슬롯 개수 초과 방지
+        // npcs 배열의 인덱스가 중복되지 않게 무작위로 뽑기 위한 HashSet
+        HashSet<int> selectIndex = new HashSet<int>();
 
-            AllAiBase aiPrefab = auctionAiList[i];
-            RectTransform slotTransform = aiSlots[i];
+        // 배치할 개수 결정 (npcs 배열 크기와 auctionAiList 크기 중 작은 쪽 기준)
+        int selectCount = Mathf.Min(npcs.Length, auctionAiList.Count);
+        // npcs 배열 안에서 중복되지 않는 랜덤한 위치(인덱스)를 뽑음
+        while (selectIndex.Count < selectCount)
+        {
+            int ranIndex = Random.Range(0, npcs.Length);
+            selectIndex.Add(ranIndex); // HashSet이므로 중복 자동 방지
+        }
+
+        int count = 0;
+
+        foreach (int index in selectIndex)
+        {
+            AllAiBase aiPrefab = auctionAiList[count];
+            RectTransform slotTransform = aiSlots[index];
 
             if (aiPrefab != null && slotTransform != null)
             {
                 // Canvas 슬롯의 자식으로 프리팹 생성
                 AllAiBase spawnedAi = Instantiate(aiPrefab, slotTransform);
+                Debug.Log($"[NPC 프리팹 삽입] {count}의 프리팹이 npcs[{index + 1}]에 삽입되었습니다.");
 
                 // UI RectTransform 좌표 및 스케일 초기화 (슬롯 중앙 고정)
                 RectTransform aiRect = spawnedAi.GetComponent<RectTransform>();
@@ -623,10 +642,14 @@ public class Auction : PersistentSingleton<Auction>
                 // 생성된 AI 스폰 리스트에 등록
                 spawnedAiList.Add(spawnedAi);
             }
+
+            InsertNPCData(index, count); // NPC 이미지 삽입
+            count++;
         }
 
         // 실제 씬에 생성되어 가동 중인 AI 리스트로 교체
         auctionAiList = new List<AllAiBase>(spawnedAiList);
+
     }
 
     private void ClearSpawnedAi()
@@ -666,5 +689,27 @@ public class Auction : PersistentSingleton<Auction>
         errorMessage.gameObject.SetActive(false);
     }
 
-
+    //=============================NPC 이미지 관련========================== 
+    private void InsertNPCData(int index, int cnt)
+    {
+        // 뽑힌 랜덤한 npcs 위치들에 순서대로 auctionAiList의 데이터를 집어넣음
+        npcs[index].sprite = auctionAiList[cnt].npcImage;
+        Debug.Log($"[NPC 이미지 삽입] {cnt}의 이미지가 npcs[{index}]에 삽입되었습니다.");
+    }
+    
+    private void NPCImageOn()
+    {
+        for (int i = 0; i < npcs.Length; i++)
+        {
+            npcs[i].gameObject.SetActive(true);
+        }
+    }
+    private void NPCImageOff()
+    {
+        for (int i = 0; i < npcs.Length; i++)
+        {
+            Debug.Log("Npc이미지끄기");
+            npcs[i].gameObject.SetActive(false);
+        }
+    }
 }

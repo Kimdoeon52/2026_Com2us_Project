@@ -12,19 +12,19 @@ public class SystemUiOnOffManager : MonoBehaviour
             return;
 
         // 각 캔버스의 활성화 상태 체크
-        bool isMapActive = MapSystemManager.Instance.mapCanvas.activeSelf;
+        bool isMapActive = IsoMapSystemManager.Instance.mapCanvas.activeSelf;
         bool isCalendarActive = CalendarUiManager.Instance.calendarCanvas.activeSelf;
 
         if (Input.GetKeyDown(KeyCode.M))
         {
             if (isMapActive)
             {
-                MapSystemManager.Instance.ToggleMapUI();
+                IsoMapSystemManager.Instance.ToggleMapUI();
             }
             else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isCalendarActive)
             {
                 if (isCalendarActive) CalendarUiManager.Instance.ToggleCalendarUI(); // 켜져있는 달력 강제 종료
-                MapSystemManager.Instance.ToggleMapUI(); // 지도 켜기
+                IsoMapSystemManager.Instance.ToggleMapUI(); // 지도 켜기
             }
         }
 
@@ -36,7 +36,7 @@ public class SystemUiOnOffManager : MonoBehaviour
             }
             else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isMapActive)
             {
-                if (isMapActive) MapSystemManager.Instance.ToggleMapUI(); // 켜져있는 지도 강제 종료
+                if (isMapActive) IsoMapSystemManager.Instance.ToggleMapUI(); // 켜져있는 지도 강제 종료
                 CalendarUiManager.Instance.ToggleCalendarUI(); // 달력 켜기
             }
         }

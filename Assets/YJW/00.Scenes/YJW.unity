@@ -351,7 +351,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   allParts: {fileID: 11400000, guid: 39437a5512cf120419dd0f9072539cd0, type: 2}
   _icon: {fileID: 314683914}
-  _part: {fileID: 0}
 --- !u!114 &25890162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5039,7 +5038,6 @@ GameObject:
   - component: {fileID: 1131344390}
   - component: {fileID: 1131344389}
   - component: {fileID: 1131344391}
-  - component: {fileID: 1131344392}
   m_Layer: 5
   m_Name: Slot
   m_TagString: Untagged
@@ -5119,20 +5117,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   data: {fileID: 0}
   image: {fileID: 1036738925}
---- !u!114 &1131344392
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1131344387}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 936f8e187f1e8f5479d17f2bfc3b770a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  toolTipBox: {fileID: 1738065751}
-  tmp: {fileID: 181767552}
 --- !u!1 &1163968697
 GameObject:
   m_ObjectHideFlags: 0

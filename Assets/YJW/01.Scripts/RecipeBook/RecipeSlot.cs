@@ -11,6 +11,19 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     public RecipeData data;
     [SerializeField] private Image image;
 
+    private Image slotImage;
+
+    private void Awake()
+    {
+        slotImage = GetComponent<Image>();
+    }
+
+    private void Update()
+    {
+        if (HaveAllComponents() == true)
+            slotImage.color = Color.green;
+        else slotImage.color = Color.white;
+    }
 
     public void PushData(RecipeData recipe, Sprite icon)
     {
@@ -53,6 +66,7 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     {
         var need = new Dictionary<ComponentDefinition, int>();
 
+        if (data == null) return false;
         // 레시피 9칸에서 부품별 필요 개수를 센다 (빈 칸은 건너뜀)
         foreach (string id in data.Combination)
         {

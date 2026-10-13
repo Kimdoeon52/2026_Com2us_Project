@@ -1,11 +1,12 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using static ComponentStock;
 
 // 크래프팅 결과 슬롯(ResultSlot)에 뜬 완성 파츠를 인벤토리로 드래그해서 넣는다.
 // 인벤토리 위에 실제로 배치가 성공했을 때만 재료(부품)를 소모(ConfirmCraft)한다 -
 // 그냥 결과창에 떠 있는 것만으로는 재료가 안 없어지고, 인벤토리에 옮겨 담아야 확정된다.
-public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler, IPointerClickHandler
 {
     [Tooltip("레시피 판정/재료 소모(ConfirmCraft)를 갖고 있는 쪽")]
     [SerializeField] private CorrectRecipe _recipe;
@@ -141,5 +142,23 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
     {
         if (_ghost != null)
             _ghost.gameObject.SetActive(false);
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (eventData.button != PointerEventData.InputButton.Right)
+            return;
+
+        ReturnComponent();
+    }
+
+    public void ReturnComponent()
+    {
+        PartsDefinition part = _recipe.resultPart;
+        if (part == null) return;
+
+        _host.GivePart(part);
+        _recipe.ConfirmCraft();
+        _resultSlot.SetPart(null);
     }
 }

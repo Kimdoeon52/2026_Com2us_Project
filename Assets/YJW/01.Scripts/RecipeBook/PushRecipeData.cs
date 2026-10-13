@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using System.Collections.Generic;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,10 +16,11 @@ public class PushRecipeData : MonoBehaviour
         PushData(n);
     }
 
-    private void PushData(int _n)
+    private void PushData(int _n = 0)
     {
         correctRecipes.Clear();
-        for(int i = 0; i < recipes.Length; i++)
+
+        for (int i = 0; i < recipes.Length; i++)
         {
             RecipeData recipe = recipes[i];
             int categoryNum = CraftingManager.Instance.SortParts(recipe.PartID);

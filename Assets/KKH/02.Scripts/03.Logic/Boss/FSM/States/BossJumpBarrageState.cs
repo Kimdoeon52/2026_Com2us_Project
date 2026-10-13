@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Unity.AppUI.Core;
 using UnityEngine;
 
 namespace RealSteel.Boss.FSM
@@ -73,7 +74,7 @@ namespace RealSteel.Boss.FSM
                 {
                     // 상공에서 매 회 탄막 웨이브 발사 (매 회차 15도 오프셋)
                     float angleOffset = wave * 15.0f;
-                    // FireWave(angleOffset);
+                    FireWave(angleOffset, wave);
 
                     // 마지막 발사가 아니면 딜레이 대기
                     if (wave < _waveCount - 1)
@@ -88,21 +89,79 @@ namespace RealSteel.Boss.FSM
                 _currentTween = boss.transform.DOMove(_originalPos, _fallDuration).SetEase(Ease.InQuad);
                 await _currentTween.ToUniTask(cancellationToken: cancellationToken);
                 
-                await boss.transform.DOPunchScale(new Vector3(0.2f, -0.2f, 0f), 0.15f)
-                    .ToUniTask(cancellationToken: cancellationToken);
+                // 3단계 : 착지 후  충격
+                _currentTween = boss.transform.DOPunchScale(new Vector3(0.2f, 0.2f, 0), 0.15f);
+                await _currentTween.ToUniTask(cancellationToken: cancellationToken);
+
+                // 4단계 : 패턴 종료 후 기획서 확정 딜타임 (1.0f초) 후 Idle 상태로 복귀
+                if(!cancellationToken.IsCancellationRequested && boss.Snapshot != null && boss.Snapshot.IsAlive)
+                {
+                    float postDelay = _pattern != null ? _pattern.postDelay : 1.0f;
+                    var nextToken = boss.RenewStateCancellationToken();
+                    boss.StateMachine.ChangeState(new BossIdleState(boss, nextToken, postDelay));
+                }
             }
             catch (OperationCanceledException)
             {
-                // 이미 취소된 경우
+                // 외부 기믹 파훼 (못판 착지 -> 4초 그로기 상태) 또는 스턴 인터럽트 발생 시 안전 종료
             }
             finally
             {
-                // finally
+                KillCurrentTween();
+            }
+        }
+
+
+        private void FireWave(float angleOffset, int waveIndex)
+        {
+            /// <summary>
+            /// 12방향 탄막 발사, 30도 간격 + 회차별 angleOffset 적용
+            /// </summary>
+            Vector3 spawnPosition = boss.transform.position;
+            float stepAngle = 360f / _bulletCountPerWave;
+
+            for (int i = 0; i < _bulletCountPerWave; i++)
+            {
+                float currentAngle = (i * stepAngle) + angleOffset;
+                float radian = currentAngle * Mathf.Deg2Rad;
+                Vector3 direction = new Vector3(Mathf.Cos(radian), Mathf.Sin(radian), 0f).normalized;
+
+                if(_bulletPrefab != null)
+                {
+                    GameObject bullet = UnityEngine.Object.Instantiate(_bulletPrefab, spawnPosition, Quaternion.identity);
+
+                    // 탄환 진행 방향으로 회전 정렬
+                    float rotAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+                    bullet.transform.rotation = Quaternion.Euler(0f, 0f, rotAngle);
+                    if (bullet.TryGetComponent<Rigidbody2D>(out var rb2d))
+                    {
+                        rb2d.linearVelocity = direction * _bulletSpeed;
+                    }
+                    else if (bullet.TryGetComponent<Rigidbody>(out var rb3d))
+                    {
+                        rb3d.linearVelocity = direction * _bulletSpeed;
+                    }
+                    UnityEngine.Object.Destroy(bullet, 5.0f); // 5초 후 자동 제거(메모리 누수 방지)
+                }
+                Debug.DrawRay(spawnPosition, direction * 2.0f, Color.red, 1.0f); // 디버그용 발사 방향 시각화
+            }
+            Debug.Log($"<color=orange>[BossJumpBarrageState] 웨이브 {waveIndex + 1}/{_waveCount}발사 완료! (회전 오프셋 : {angleOffset}도, 탄환 수 : {_bulletCountPerWave}개)</color>");
+        }
+
+        private void KillCurrentTween()
+        {
+            if (_currentTween != null && _currentTween.IsActive())
+            {
+                _currentTween.Kill();
+                _currentTween = null;
             }
         }
     }
 }
 
+/// <summary>
+/// DOTween과 UniTask CancellationToken 간의 생명주기 연결 확장 메서드
+/// </summary>
 public static class TweenAsyncExtensions
 {
     public static async UniTask ToUniTask(this Tween tween, CancellationToken cancellationToken = default)

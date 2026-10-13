@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 /// <summary>
-/// 플레이어와 아레나 Npc의 접촉시 사용할 코드
+/// 플레이어와 아레나 Npc의 접촉 판정을 담당하는 코드
 /// </summary>
+
 // 이벤트 생성용
 [CreateAssetMenu(fileName = "new ArenaNpcInteraction", menuName = "LJS/아레나Npc상호작용")]
 public class ArenaNpcInteractionSO : ScriptableObject

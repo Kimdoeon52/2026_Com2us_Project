@@ -2,6 +2,7 @@ using UnityEngine;
 /// <summary>
 /// 매월 1일 경기장 NPC들의 재화, 성향 갱신 코드
 /// </summary>
+
 public class ArenaRegen : MonoBehaviour
 {
     [Header("격투장 지역 설정")] // 추후 지역 추가됨에 따라서 개선 필요
@@ -29,7 +30,7 @@ public class ArenaRegen : MonoBehaviour
 
     private void RegenerateNPCs()
     {
-        string[] npcNames = { "철갑의 브루투스", "날쌘돌이 잭", "냉혹한 소피아" };
+        string[] npcNames = { "철갑의 베럴드", "잔상의 잭", "간파의 소피아" };
 
         for (int i = 0; i < arenaNpcs.Length; i++)
         {

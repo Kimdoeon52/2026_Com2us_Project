@@ -1,6 +1,9 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+/// <summary>
+/// NPC 접촉시 반응과 UI 부르는 코드
+/// </summary>
 
 public class ArenaNpcsInteraction : MonoBehaviour
 {

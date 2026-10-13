@@ -1,0 +1,89 @@
+{
+  "poolId": "auction_npc",
+  "dialogues": [
+    {
+      "id": "auction_first_meet",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.first_meet.1" },
+        { "speaker": "hero", "textKey": "auction.first_meet.2" },
+        { "speaker": "auctioneer", "textKey": "auction.first_meet.3" }
+      ]
+    },
+    {
+      "id": "auction_greeting",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.greeting.1" },
+        { "speaker": "hero", "textKey": "auction.greeting.2" },
+        { "speaker": "auctioneer", "textKey": "auction.greeting.3" },
+        { "speaker": "", "textKey": "auction.greeting.4" }
+      ]
+    },
+    {
+      "id": "auction_greeting_quiet",
+      "band": "Fallback",
+      "cooldownSec": 20,
+      "conditions": [],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.greeting_quiet.1" }
+      ]
+    },
+    {
+      "id": "auction_after_defeat",
+      "band": "Reactive",
+      "perEvent": "match.count",
+      "eventGroup": "defeat_reaction",
+      "conditions": [
+        { "variable": "match.lastResult", "op": "==", "value": "lose" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.after_defeat.1" },
+        { "speaker": "hero", "textKey": "auction.after_defeat.2" }
+      ]
+    },
+    {
+      "id": "auction_after_defeat_wheel",
+      "band": "Reactive",
+      "maxPlays": 2,
+      "perEvent": "match.count",
+      "eventGroup": "defeat_reaction",
+      "conditions": [
+        { "variable": "match.lastResult", "op": "==", "value": "lose" },
+        { "variable": "match.lastOpponent", "op": "==", "value": "boss.wheel" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.after_defeat_wheel.1" },
+        { "speaker": "hero", "textKey": "auction.after_defeat_wheel.2" }
+      ]
+    },
+    {
+      "id": "auction_after_win",
+      "band": "Reactive",
+      "perEvent": "match.count",
+      "conditions": [
+        { "variable": "match.lastResult", "op": "==", "value": "win" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.after_win.1" },
+        { "speaker": "hero", "textKey": "auction.after_win.2" }
+      ]
+    },
+    {
+      "id": "auction_unsold",
+      "band": "Reactive",
+      "subPriority": 10,
+      "perEvent": "auction.settleCount",
+      "conditions": [
+        { "variable": "auction.lastResult", "op": "==", "value": "unsold" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.unsold.1" },
+        { "speaker": "hero", "textKey": "auction.unsold.2" }
+      ]
+    }
+  ]
+}

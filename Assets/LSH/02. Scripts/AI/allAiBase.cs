@@ -93,7 +93,7 @@ public abstract class AllAiBase : MonoBehaviour
             // 2. 2.5초 동안 대기하면서 말풍선이 둥실둥실 살짝 올라감
             .Append(thinkImage.transform.DOLocalMoveY(originalLocalPos.y + 50f, 5f).SetEase(Ease.OutQuad))
             // 3. 서서히 사라지면서(Fade Out) 조금 더 위로 떠오름
-            .Join(thinkCanvasGroup.DOFade(0f, 2f))
+            .Join(thinkCanvasGroup.DOFade(0f, 3f))
             .OnComplete(() =>
             {
                 ResetThinkBubble();

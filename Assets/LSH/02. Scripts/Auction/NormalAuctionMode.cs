@@ -46,15 +46,16 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                 await UniTask.Yield(); // 무한 루프 방지용 최소 대기
                 continue;
             }
-            if (!ai.IsGiveUp)
-            {
-                manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
-            }
             if (ai.IsGiveUp)
             {
                 await UniTask.Yield(); // 포기 상태에서도 최소 1프레임 대기로 스핀 방지
                 continue;
             }
+            if (!ai.IsGiveUp)
+            {
+                manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
+            }
+            
             // ai 고민 말풍선 띄우기
             ai.ShowThinkChat();
             await UniTask.Delay(thinkDelay); // thinkDelay 만큼 

@@ -128,7 +128,6 @@ public class Auction : PersistentSingleton<Auction>
     private PartsDefinition stuff; //현재 경매 물품을 저장할 용도
     public PartGrade stuffGrade; //경매 물품 등급을 저장할 용도
     private Vector2 errorMessagePos; //에러 메시지가 나올 초기 위치
-    private bool isChatting = false; //채팅 중인지 체크하는 용도
     private bool isPlayerGiveUp = false; //플레이가 포기했는지 체크하는 용도
 
     // 경매 전략 딕셔너리
@@ -207,21 +206,30 @@ public class Auction : PersistentSingleton<Auction>
         if (errorMessage != null)
             errorMessagePos = errorMessage.rectTransform.anchoredPosition; //첫 위치 저장
 
-        // UI 버튼 이벤트 바인딩
-        if (normalModeButton != null)
-            normalModeButton.onClick.AddListener(OnSelectNormalMode);
-        if (fistModeButton != null)
-            fistModeButton.onClick.AddListener(OnSelectFistMode);
-        if (fistSubmitButton != null)
-            fistSubmitButton.onClick.AddListener(OnSubmitFistBid);
-        if (raiseButton != null)
-            raiseButton.onClick.AddListener(OnRaiseButton);
-        if (giveUpButton != null)
-            giveUpButton.onClick.AddListener(GiveUpButton);
+        // UI 버튼 이벤트 바인딩 (인스펙터 중복 등록 방지를 위해 기존 리스너 제거 후 등록)
+        BindButton(normalModeButton, OnSelectNormalMode);
+        BindButton(fistModeButton, OnSelectFistMode);
+        BindButton(fistSubmitButton, OnSubmitFistBid);
+        BindButton(raiseButton, OnRaiseButton);
+        BindButton(giveUpButton, GiveUpButton);
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
-        EnableFistAuctionUI(false); 
+        EnableFistAuctionUI(false);
         EnableModeSelectUI(false); // 버튼 비활
+    }
+
+    private void BindButton(Button button, UnityEngine.Events.UnityAction action)
+    {
+        if (button == null) return;
+
+        // RemoveAllListeners는 코드로 추가한 리스너만 지우고 인스펙터(Persistent) 리스너는 못 지움
+        // 인스펙터에도 같은 함수가 등록돼 있으면 클릭 한 번에 두 번 호출되므로 Persistent 리스너를 꺼버림
+        for (int i = 0; i < button.onClick.GetPersistentEventCount(); i++)
+        {
+            button.onClick.SetPersistentListenerState(i, UnityEngine.Events.UnityEventCallState.Off);
+        }
+        button.onClick.RemoveAllListeners();
+        button.onClick.AddListener(action);
     }
     
 
@@ -303,7 +311,6 @@ public class Auction : PersistentSingleton<Auction>
         // 시작하자마자 유저 모드 선택부터 대기(스페이스바 입력 영향 안 받음)
         currentAuctionType = await WaitPlayerSelectModeAsync();
         AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
-        isChatting = true; // 채팅 시작
         //==========Npc UI 활성화 ==========
         NPCImageOn();
         SpawnAndPositionAi();
@@ -332,7 +339,6 @@ public class Auction : PersistentSingleton<Auction>
         IfPlayerWin = false;
         auctionTime = 60f;
 
-        isChatting = false;
 
         // 선택된 모드에 맞는 조작 UI 전용 활성화
         if (currentAuctionType == AuctionType.Normal)
@@ -476,7 +482,6 @@ public class Auction : PersistentSingleton<Auction>
     private async UniTask EndAuction() //경매 종료시
     {
         IsAuctioningFin = true; //끝났음 true
-        isChatting = true; // 채팅 true
         IsTimeRunning = false; // 시간끝
         //버튼 전체 false
         NormalAuctionButtonReady(false);
@@ -598,7 +603,7 @@ public class Auction : PersistentSingleton<Auction>
             Debug.LogError("[OnRaiseButton] GlobalGold 데이터가 없습니다.");
             return;
         }
-        if (WinnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName)
+        if (!string.IsNullOrEmpty(WinnerName) && WinnerName == PlayerName)
         {
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
@@ -727,7 +732,7 @@ public class Auction : PersistentSingleton<Auction>
         float floatTime = 1f;
         float floatHight = 50f;
 
-        errorMessage.rectTransform.DOAnchorPosY(errorMessagePos.y + floatHight, floatTime).SetEase(Ease.OutQuad);
+        _ = errorMessage.rectTransform.DOAnchorPosY(errorMessagePos.y + floatHight, floatTime).SetEase(Ease.OutQuad);
         await errorMessage.DOFade(0f, floatTime).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
 
         errorMessage.gameObject.SetActive(false);

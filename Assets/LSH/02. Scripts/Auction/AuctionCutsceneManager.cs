@@ -37,7 +37,7 @@ public class AuctionCutsceneManager : MonoBehaviour
         cutsceneBanner.anchoredPosition = new Vector2(-1000f, 0f);
         cutsceneCanvasGroup.alpha = 0f;
         //나중에 맘에 안들면 방식 수정해야지
-        DOTween.Sequence()
+        _ = DOTween.Sequence()
             .Join(cutsceneCanvasGroup.DOFade(1f, 0.25f))
             .Join(cutsceneBanner.DOAnchorPosX(0f, 0.35f).SetEase(Ease.OutBack)); // 배너 슬라이드 인
 

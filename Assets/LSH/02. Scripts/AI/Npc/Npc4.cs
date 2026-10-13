@@ -8,11 +8,11 @@ public class Npc4 : NpcAiBase
 
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     {
-        if (IsReady || data == null) return false;
+        if (IsGiveUp || data == null) return false;
         int NextPrice = actionPrise + 100;
         if (NextPrice > data.npcGold * actionRate)
         {
-            IsReady = true;
+            IsGiveUp = true;
             return false;
         }
 
@@ -20,7 +20,7 @@ public class Npc4 : NpcAiBase
 
         if (NextPrice > maxGold)//자신이 생각한 골드보다 높을 경우 포기
         {
-            IsReady = true;
+            IsGiveUp = true;
             Debug.Log($"쫄려서 퇴장");
             return false;
         }

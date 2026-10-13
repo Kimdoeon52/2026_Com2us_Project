@@ -42,6 +42,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>
     {
         LoadGame(); //저장하면 로드
         // 게임 시작 시 기존 데이터 불러오기
+        if (mainCharacterdata == null || mainCharacterdata.Count == 0)
+        {
+            Debug.LogWarning("[GlobalGold] mainCharacterdata가 비어있습니다. 인스펙터를 확인하세요.");
+            return;
+        }
         foreach (var goldData in mainCharacterdata)
         {
             Debug.Log($"현재 Main캐릭터들: {goldData.mainCharacterName}, 골드: {goldData.mainCharacterGold}");

@@ -65,7 +65,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     {
         _index = None;
 
-        if (!IsReady() || !TryGetLocal(eventData, out Vector2 local))
+        if (!IsGiveUp() || !TryGetLocal(eventData, out Vector2 local))
             return;
 
         Vector2Int cell = ToCell(local);
@@ -89,7 +89,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         _index = None;
         _equipSource = null;
 
-        PartsDefinition definition = IsReady() ? _host.GetEquipped(slot.Slot) : null;
+        PartsDefinition definition = IsGiveUp() ? _host.GetEquipped(slot.Slot) : null;
         if (definition == null || !TryGetLocal(eventData, out Vector2 local))
             return;
 
@@ -166,7 +166,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         return slot != null;
     }
 
-    private bool IsReady()
+    private bool IsGiveUp()
     {
         return _host != null && _host.Grid != null && _view != null && _view.PartsLayer != null;
     }

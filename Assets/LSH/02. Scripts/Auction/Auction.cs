@@ -110,10 +110,13 @@ public class Auction : PersistentSingleton<Auction>
     [SerializeField] public Button fistModeButton;
 
     private UniTaskCompletionSource<AuctionType> modeSelectTcs;
-    //===============================AI 위치 시키는 용도====================
-    [Header("AI 슬롯 위치 (8칸)")]
+    //===============================ai 슬롯 위치====================
+    [Header("AI 슬롯")]
     [SerializeField] private List<RectTransform> aiSlots;
+
     private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
+
+
     // --- 프로퍼티 & 캡슐화 변수 ---
     public string PlayerName { get; private set; } // 플레이어 이름 받아올 용도의 변수
     public int CurrentCost { get; set; } = 0; //현재 물건 가격을 나타낼 변수
@@ -134,8 +137,10 @@ public class Auction : PersistentSingleton<Auction>
     // 비동기 UI 입력 수신용 CS
     private UniTaskCompletionSource<int> fistBidTcs;
 
-    //===============================================
+    //======================슬롯 이미지=====================
+    [Header("플레이어 및 NPC 슬롯")]
     [SerializeField] private Image[] npcs;
+    [SerializeField] private Image playerImage;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -261,7 +266,7 @@ public class Auction : PersistentSingleton<Auction>
 
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(3, 5); // 경매 인원 3~4 (임시)
+        dayOfEnterNpc = Random.Range(5, 9); // 경매 인원 5~8 (임시)
     }
 
     private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
@@ -381,7 +386,7 @@ public class Auction : PersistentSingleton<Auction>
         if (!isPlayerGiveUp) inGamePlayer++;
         foreach (var ai in auctionAiList)
         {
-            if (ai != null && !ai.IsReady) inGamePlayer++;
+            if (ai != null && !ai.IsGiveUp) inGamePlayer++;
         }
         if (inGamePlayer == 0) return true;
         return inGamePlayer <= 1 && !string.IsNullOrEmpty(WinnerName);
@@ -527,6 +532,11 @@ public class Auction : PersistentSingleton<Auction>
 
     private async UniTask ActionFinish()
     {
+        if (GlobalGold.Instance == null || GlobalGold.Instance.mainCharacterdata == null || GlobalGold.Instance.mainCharacterdata.Count == 0)
+        {
+            Debug.LogError("[ActionFinish] GlobalGold 데이터가 없습니다.");
+            return;
+        }
         string finalWinner = IfPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterName : WinnerName;
 
         if (string.IsNullOrEmpty(finalWinner))
@@ -560,8 +570,13 @@ public class Auction : PersistentSingleton<Auction>
     }
     private void UpdateGoldDisplay() // 보유 골드 시각적 업데이트 
     {
-        if (myGold != null)
+        if (myGold != null
+            && GlobalGold.Instance != null
+            && GlobalGold.Instance.mainCharacterdata != null
+            && GlobalGold.Instance.mainCharacterdata.Count > 0)
+        {
             myGold.text = "보유골드: " + GlobalGold.Instance.mainCharacterdata[0].mainCharacterGold.ToString();
+        }
     }
 
     public void GiveUpButton() // 포기 버튼
@@ -569,6 +584,8 @@ public class Auction : PersistentSingleton<Auction>
         if (!IsTimeRunning || isPlayerGiveUp) return;
         isPlayerGiveUp = true;
         NormalAuctionButtonReady(false);
+        if (AuctionPlayer.Instance != null)
+            AuctionPlayer.Instance.ShowThinkChatWithText("못해먹겠네. 안해.");
         ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
         if (CheckAllGiveUp()) IsTimeRunning = false;
     }
@@ -576,22 +593,28 @@ public class Auction : PersistentSingleton<Auction>
     public void OnRaiseButton() // 레이즈 버튼
     {
         if (!IsTimeRunning || isPlayerGiveUp) return;
+        if (GlobalGold.Instance == null || GlobalGold.Instance.mainCharacterdata == null || GlobalGold.Instance.mainCharacterdata.Count == 0)
+        {
+            Debug.LogError("[OnRaiseButton] GlobalGold 데이터가 없습니다.");
+            return;
+        }
         if (WinnerName == GlobalGold.Instance.mainCharacterdata[0].mainCharacterName)
         {
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
         }
-
+        Debug.Log($"[비교 확인] WinnerName: '{WinnerName}' / PlayerName: '{PlayerName}' / 데이터이름: '{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName}'");
         int needGold = CurrentCost + 100;
         if (GlobalGold.Instance.CanUseGold(PlayerName, needGold))
         {
             CurrentCost = needGold;
             UpdateAuctionCostUI();
-
             WinnerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName;
             IfPlayerWin = true;
             SetChat($"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {CurrentCost}G로 레이즈!");
             if (RemainingTime < 10f) RemainingTime = 10f;
+            if (AuctionPlayer.Instance != null)
+                AuctionPlayer.Instance.ShowThinkChatWithText($"{needGold}G 레이즈!");
         }
         else
         {
@@ -601,6 +624,17 @@ public class Auction : PersistentSingleton<Auction>
     //================================Canvas에 AI 설치 =======================
     private void SpawnAndPositionAi()
     {
+        if (npcs == null || npcs.Length == 0)
+        {
+            Debug.LogError("[SpawnAndPositionAi] npcs 배열이 비어있거나 null입니다. 인스펙터를 확인하세요.");
+            return;
+        }
+        if (aiSlots == null || aiSlots.Count == 0)
+        {
+            Debug.LogError("[SpawnAndPositionAi] aiSlots 리스트가 비어있거나 null입니다. 인스펙터를 확인하세요.");
+            return;
+        }
+
         // npcs 배열의 인덱스가 중복되지 않게 무작위로 뽑기 위한 HashSet
         HashSet<int> selectIndex = new HashSet<int>();
 
@@ -617,6 +651,17 @@ public class Auction : PersistentSingleton<Auction>
 
         foreach (int index in selectIndex)
         {
+            if (count >= auctionAiList.Count)
+            {
+                Debug.LogWarning($"[SpawnAndPositionAi] count({count})가 auctionAiList 범위를 벗어났습니다.");
+                break;
+            }
+            if (index >= aiSlots.Count)
+            {
+                Debug.LogWarning($"[SpawnAndPositionAi] index({index})가 aiSlots 범위를 벗어났습니다.");
+                count++;
+                continue;
+            }
             AllAiBase aiPrefab = auctionAiList[count];
             RectTransform slotTransform = aiSlots[index];
 
@@ -624,7 +669,6 @@ public class Auction : PersistentSingleton<Auction>
             {
                 // Canvas 슬롯의 자식으로 프리팹 생성
                 AllAiBase spawnedAi = Instantiate(aiPrefab, slotTransform);
-                Debug.Log($"[NPC 프리팹 삽입] {count}의 프리팹이 npcs[{index + 1}]에 삽입되었습니다.");
 
                 // UI RectTransform 좌표 및 스케일 초기화 (슬롯 중앙 고정)
                 RectTransform aiRect = spawnedAi.GetComponent<RectTransform>();
@@ -692,15 +736,27 @@ public class Auction : PersistentSingleton<Auction>
     //=============================NPC 이미지 관련========================== 
     private void InsertNPCData(int index, int cnt)
     {
+        if (index < 0 || index >= npcs.Length)
+        {
+            Debug.LogWarning($"[InsertNPCData] npcs 인덱스({index})가 범위를 벗어났습니다.");
+            return;
+        }
+        if (cnt < 0 || cnt >= auctionAiList.Count)
+        {
+            Debug.LogWarning($"[InsertNPCData] auctionAiList 인덱스({cnt})가 범위를 벗어났습니다.");
+            return;
+        }
         // 뽑힌 랜덤한 npcs 위치들에 순서대로 auctionAiList의 데이터를 집어넣음
         npcs[index].sprite = auctionAiList[cnt].npcImage;
-        Debug.Log($"[NPC 이미지 삽입] {cnt}의 이미지가 npcs[{index}]에 삽입되었습니다.");
+        if (AuctionPlayer.Instance != null)
+            playerImage.sprite = AuctionPlayer.Instance.playerImage;
     }
     
     private void NPCImageOn()
     {
         for (int i = 0; i < npcs.Length; i++)
         {
+            playerImage.gameObject.SetActive(true);
             npcs[i].gameObject.SetActive(true);
         }
     }
@@ -708,8 +764,9 @@ public class Auction : PersistentSingleton<Auction>
     {
         for (int i = 0; i < npcs.Length; i++)
         {
-            Debug.Log("Npc이미지끄기");
+            playerImage.gameObject.SetActive(false);
             npcs[i].gameObject.SetActive(false);
         }
     }
+    
 }

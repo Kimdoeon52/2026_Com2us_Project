@@ -25,7 +25,7 @@ public class FistAuctionMode : IAuctionMode
         // 3. AI 입찰 계산
         foreach (var ai in participants) // 참가한 Ai들 루틴 
         {
-            if (ai == null || ai.IsReady) continue; // ai 포기 한 상태는 무시
+            if (ai == null || ai.IsGiveUp) continue; // ai 포기 한 상태는 무시
 
             // AI 성격/보유 자금 기반 단 1회 가치 산정
             int aiBid = CalculateAiFistBid(ai, stuff.Cost); // 각 ai가 얼마를 걸엇는지 aiBid에 넣기
@@ -51,6 +51,14 @@ public class FistAuctionMode : IAuctionMode
         }
 
         // 4. 결과 적용
+        if (allBids.Count == 0 || maxBid <= 0)
+        {
+            manager.SetChat("입찰자가 없습니다. 경매가 유찰되었습니다.");
+            manager.WinnerName = "";
+            manager.IfPlayerWin = false;
+            return;
+        }
+
         manager.CurrentCost = maxBid;
         manager.UpdateAuctionCostUI();
         manager.WinnerName = highestBidder;

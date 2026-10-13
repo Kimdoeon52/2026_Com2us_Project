@@ -33,6 +33,9 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
     private async UniTask AiRoutine(Auction manager, AllAiBase ai, PartsDefinition stuff, List<AllAiBase> participants)
     {
+        // 각 AI가 다른 시점에 첫 고민을 시작하도록 랜덤 초기 딜레이 (딱 한 번만 실행)
+        await UniTask.Delay(Random.Range(0, ai.ThinkDelay));
+
         while (manager.IsTimeRunning && !manager.IsAuctioningFin)
         {
             int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
@@ -43,21 +46,21 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                 await UniTask.Yield(); // 무한 루프 방지용 최소 대기
                 continue;
             }
-            if (!ai.IsReady)
+            if (!ai.IsGiveUp)
             {
                 manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
             }
-
+            if (ai.IsGiveUp)
+            {
+                await UniTask.Yield(); // 포기 상태에서도 최소 1프레임 대기로 스핀 방지
+                continue;
+            }
             // ai 고민 말풍선 띄우기
             ai.ShowThinkChat();
-
             await UniTask.Delay(thinkDelay); // thinkDelay 만큼 
             await UniTask.WaitWhile(() => manager.IsCutscenePlaying);
-
+            
             if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
-
-            if (ai.IsReady) continue;
-
             Debug.Log($"[AI 루틴 체크] {ai.NPCName} | 현재가: {manager.CurrentCost} | AI 보유 RaiseGold: {ai.RaiseGold}");
 
             if (ai.RaiseThink(manager.CurrentCost, stuff.Cost))
@@ -94,15 +97,16 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             }
             else
             {
-                Debug.Log($"[AI 레이즈 실패/포기] {ai.NPCName} | RaiseThink 결과: false");
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
                 manager.SetChat($"{ai.NPCName} 님이 입찰을 포기했습니다.");
             }
 
-            if (manager.CheckAllGiveUp()) //모두가 포기하면 플레이어 제한시간 종료
+            if (manager.CheckAllGiveUp()) //모두가 포기하면 낙찰 카운트다운 돌입
             {
-                manager.IsTimeRunning = false;
-                break;
+                manager.SetChat("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
+                if (manager.RemainingTime > 5f)
+                    manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
+                break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
             }
         }
     }

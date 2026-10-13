@@ -12,7 +12,7 @@ public class BossAiBase : AllAiBase
     public override string NPCName => data != null ? data.mainCharacterName : "No Name";
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
-    public override bool IsReady { get; set; } = false;
+    public override bool IsGiveUp { get; set; } = false;
 
     public static event Func<string, string, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 
@@ -25,21 +25,21 @@ public class BossAiBase : AllAiBase
 
     public override void ReadyForAction()
     {
-        IsReady = false;
+        IsGiveUp = false;
         RaiseGold = 200;
     }
 
     //==================================판단===================================
     public override bool RaiseThink(int actionPrise, int actionRealPrise)
     { //현재는 단순히 골드보유로만
-        if (IsReady || data == null) return false;
+        if (IsGiveUp || data == null) return false;
 
         int NextPrice = actionPrise + RaiseGold;
 
         // GlobalGold 매니저를 통해 안전하게 잔고 검사
         if (!GlobalGold.Instance.CanUseGold(NPCName, NextPrice))
         {
-            IsReady = true; // 예산 부족으로 포기
+            IsGiveUp = true; // 예산 부족으로 포기
             return false;
         }
         return true;

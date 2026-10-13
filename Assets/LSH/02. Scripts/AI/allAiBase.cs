@@ -8,7 +8,7 @@ public abstract class AllAiBase : MonoBehaviour
 {
     public abstract string NPCName { get; }
     public abstract int Gold { get; }
-    public abstract bool IsReady { get; set; }
+    public abstract bool IsGiveUp { get; set; }
     public abstract int ThinkDelay { get;} //ai마다 생각하는 시간이 다르게 설정
     public virtual int RaiseGold { get; set; } = 100;
     public abstract void ReadyForAction();
@@ -46,7 +46,7 @@ public abstract class AllAiBase : MonoBehaviour
             {
                 thinkCanvasGroup = thinkImage.gameObject.AddComponent<CanvasGroup>();
             }
-            originalLocalPos = thinkImage.transform.localPosition;
+            originalLocalPos = new Vector3(0f, 200f, 0f);
 
             // 초기 상태 비활성화 및 초기화
             ResetThinkBubble();
@@ -66,7 +66,7 @@ public abstract class AllAiBase : MonoBehaviour
     //==================================생각 말풍선 연출===================================
     public virtual void ShowThinkChat()
     {
-        if (IsReady) return;
+        if (IsGiveUp) return;
         ShowThinkChatWithText(GetRandomThinkChat());
     }
 

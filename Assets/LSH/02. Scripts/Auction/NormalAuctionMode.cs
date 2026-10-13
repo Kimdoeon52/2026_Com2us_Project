@@ -34,7 +34,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
     private async UniTask AiRoutine(Auction manager, AllAiBase ai, PartsDefinition stuff, List<AllAiBase> participants)
     {
         // 각 AI가 다른 시점에 첫 고민을 시작하도록 랜덤 초기 딜레이 (딱 한 번만 실행)
-        await UniTask.Delay(Random.Range(0, ai.ThinkDelay));
+        await UniTask.Delay(Random.Range(500, ai.ThinkDelay));
 
         while (manager.IsTimeRunning && !manager.IsAuctioningFin)
         {

@@ -67,6 +67,26 @@ public class InventoryHost : Singleton<InventoryHost>, IEquipmentSource
         return placed;
     }
 
+    // 인벤토리에서 해당 파츠 1개 제거. 없으면 false
+    public bool RemovePart(PartsDefinition definition)
+    {
+        if (_grid == null || definition == null)
+            return false;
+
+        for (int i = 0; i < _grid.Entries.Count; i++)
+        {
+            var entry = _grid.Entries[i];
+            if (entry.IsComponent || entry.Definition != definition)
+                continue;
+
+            _grid.Remove(i);
+            Changed?.Invoke();   // UI 갱신
+            return true;
+        }
+
+        return false;
+    }
+
     // 지정 파츠를 원하는 칸에 배치. 그 칸이 막혀있거나 범위 밖이면 실패
     public bool TryPlacePartAt(PartsDefinition definition, Vector2Int origin)
     {

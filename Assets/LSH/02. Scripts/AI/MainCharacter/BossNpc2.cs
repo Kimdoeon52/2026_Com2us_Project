@@ -1,16 +1,26 @@
 using UnityEngine;
 
-public class BossNpc2 : MonoBehaviour
+public class BossNpc2 : BossAiBase
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    [Range(0.1f, 1f)]
+    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
+    public float actionRate = 0.4f;
 
-    // Update is called once per frame
-    void Update()
+    public override void Start()
     {
-        
+        base.Start();
+        RaiseGold = 300;
+    }
+    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    {
+        return base.RaiseThink(actionPrise, actionRealPrise);
+    }
+    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
+    {
+        return currentPrice >= (int)(baseCost * 6f); //원가의 6배면 아무도 못잡게 크게 걸어버린다.
+    }
+    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
+    {
+        return "흐응~ 이것도 잡아보시지?";
     }
 }

@@ -1336,7 +1336,7 @@ GameObject:
   - component: {fileID: 554241294}
   - component: {fileID: 554241293}
   m_Layer: 5
-  m_Name: Image
+  m_Name: ImageBar
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1699,6 +1699,8 @@ MonoBehaviour:
   - {fileID: -68186724714985280, guid: c47ca33824c7ed047b325622c21c3946, type: 3}
   bossAiList:
   - {fileID: 5261428147776467939, guid: 7d34446f471d11d4a907c2ecab0688e9, type: 3}
+  - {fileID: 7645104586565370714, guid: c97ee6df542128f4b90b46703562afde, type: 3}
+  - {fileID: 446987677399331782, guid: 47e8c75788c90a4488aa40fa3e148ef5, type: 3}
   auctionAiList: []
   dayOfEnterNpc: 0
   auctionItem:
@@ -2249,7 +2251,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1001889687
 RectTransform:
   m_ObjectHideFlags: 0

@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 namespace RealSteel.Boss.FSM
@@ -111,22 +112,132 @@ namespace RealSteel.Boss.FSM
                 _currentTween = boss.transform.DOMoveX(targetX,duration).SetEase(Ease.Linear);
 
                 bool hitExplosiveBox = false;
+                while(_currentTween != null && _currentTween.IsActive()&&!_currentTween.IsComplete())
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    // 충돌 감지 (폭발 상자 자폭 / 플레이어 피격 및 space 무적 회피)
+                    if(CheckChargeCollisions())
+                    {
+                        hitExplosiveBox = true;
+                        break;
+                    }
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken:cancellationToken);
+                }
+                if(hitExplosiveBox)
+                {
+                    return;
+                }
+                // 5단계 : 반대편 벽 충돌 임팩트 연출
+                _currentTween = boss.transform.DOPunchScale(new Vector3(-0.25f, 0.25f, 0f), 0.2f);
+                await _currentTween.ToUniTask(cancellationToken: cancellationToken);
+                Debug.Log("<color=orange>[BossChargeState] 맵 반대편 벽 충돌! 쿵! (반동 경직)</color>");
+
+                // 짧은 벽 충돌 반동 대기
+                await UniTask.Delay(TimeSpan.FromSeconds(_wallStunDelay), cancellationToken: cancellationToken);
+
+
+                // 6단계 : 기획서 공통규칙 1.0초 확정 딜타임(BossIdleState) 복귀
+                if(!cancellationToken.IsCancellationRequested && boss.Snapshot != null && boss.Snapshot.IsAlive)
+                {
+                    float postDelay = _pattern != null ? _pattern.postDelay : 1.0f;
+                    var nextToken = boss.RenewStateCancellationToken();
+                    boss.StateMachine.ChangeState(new BossIdleState(boss, nextToken, postDelay));
+                }
 
             }
             catch (OperationCanceledException)
             {
+                // 인터럽트 발생 시 안전 종료
                 Debug.Log("[BossChargeState] 돌진 시퀀스 취소됨");
+            }
+            finally
+            {
+                KillCurrentTween();
             }
         }
 
-        private float CalculateTargetWallX(float x, float chargeDirection)
+        /// <summary>
+        ///  돌진 방향으로 맵 끝 벽 좌표를 Raycast로 탐색함 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="chargeDirection"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private float CalculateTargetWallX(float currentX, float directionX)
         {
-            throw new NotImplementedException();
+            RaycastHit2D hit = Physics2D.Raycast
+            (
+                boss.transform.position,
+                Vector2.right * directionX,
+                _maxMapDistance,
+                LayerMask.GetMask("Wall", "Ground", "Default")
+            );
+            if (hit.collider != null && hit.collider.gameObject != boss.gameObject)
+            {
+                return hit.point.x - (directionX * 0.5f);
+            }
+            return currentX +(directionX * _maxMapDistance);
+        }
+        private bool CheckChargeCollisions()
+        {
+            Vector2 center = boss.transform.position;
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, 1.3f);
+
+            foreach (var hit in hits)
+            {
+                if(hit.gameObject == boss.gameObject) 
+                {
+                    continue;
+                }
+
+                // 1. 전장 기물 : 폭발 화물 상자 충돌 (즉시 자폭 및 보스 2초 스턴)
+                if (hit.CompareTag("ExplosiveBox")||hit.name.IndexOf("Explosive", StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    Debug.Log("<color=red>[BossChargeState] ▶ 폭발 화물 상자 충돌! 자폭 발생 및 보스 2초 스턴!</color>");
+                    KillCurrentTween();
+                    UnityEngine.Object.Destroy(hit.gameObject);
+                    boss.InterruptToStun(2.0f);
+                    return true;
+                }
+                // 2. 플레이어 충돌 : space회피 및 무적 체크
+                if (!_hasHitPlayer && hit.CompareTag("Player"))
+                {
+                    _hasHitPlayer = true;
+
+                    // 남윤호 ActionExecuter 연동 : 회피 무적 상태인지 검사
+                    bool isInvincible = false;
+                    var executor = hit.GetComponent<ActionExecutor>() ?? hit.GetComponentInParent<ActionExecutor>();
+                    if(executor != null && executor.State != null && executor.State.CurrentAction!= null)
+                    {
+                        isInvincible = executor.State.CurrentAction.IsInvincibleDuringActive;
+                    }
+                    if (isInvincible)
+                    {
+                        // 기획서 : space회피 무적으로 돌진을 회피함
+                        Debug.Log("<color=cyan>[BossChargeState] ▶ [회피 성공!] 플레이어가 Space 무적 회피로 돌진을 통과했습니다!</color>");
+                    }
+                    else
+                    {
+                        // 무적 회피 실패 시 코어 피해 적용
+                        Debug.Log($"<color=red>[BossChargeState] ▶ [피격!] 플레이어가 돌진에 직격당함! (피해량: {_chargeDamage})</color>");
+                        if (CombatDataHub.Instance != null)
+                        {
+                            CombatDataHub.Instance.ApplyCoreDamage("Player", _chargeDamage);
+                        }
+                    }
+                }    
+            }
+            return false;
         }
 
-        private void KillCurrentTween()
+       private void KillCurrentTween()
         {
-            _currentTween?.Kill();
+            if (_currentTween != null && _currentTween.IsActive())
+            {
+                _currentTween.Kill();
+                _currentTween = null;
+            }
         }
     }
 

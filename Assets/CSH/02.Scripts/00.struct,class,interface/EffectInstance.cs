@@ -14,7 +14,7 @@ public abstract class EffectInstance
     /// 행동이 시작될 때(ActionState.Begin) 호출된다. 그 행동에 해당하면 r에 보정값을 더하거나 곱한다.
     /// 여기서 받는 action은 대체가 끝난 뒤의 최종 행동이다.
     /// </summary>
-    public virtual void Contribute(ActionData action, ref ResolvedModifiers r) { }
+    public virtual void Contribute(ActionData action, ResolvedModifiers r) { }
 
     /// <summary>
     /// 입력원이 요청한 행동을 다른 행동으로 바꾸고 싶으면 대체할 ActionData를 반환하고, 아니면 null.

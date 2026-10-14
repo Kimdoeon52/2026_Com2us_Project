@@ -19,6 +19,7 @@ public enum ParamOption { Add = 0, Multiply = 1, Set = 2}
 public struct SkillParamEntry
 {
     public SkillParamId id;
+    public ParamOption op;
     public float value;
 }
 

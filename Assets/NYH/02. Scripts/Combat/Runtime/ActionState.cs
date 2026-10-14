@@ -116,11 +116,9 @@ public class ActionState
     public bool IsDead => Phase == ActionPhase.Dead;
 
     #region 최. 추가
-    private Func<ActionData, ResolvedModifiers> modifierResolver;
-
-    public ResolvedModifiers Resolved { get; private set; } = ResolvedModifiers.Identity;
-
-    public void SetModifierResolver(Func<ActionData, ResolvedModifiers> resolver)
+    private Action<ActionData, ResolvedModifiers> modifierResolver;
+    public ResolvedModifiers Resolved { get; } = new ResolvedModifiers();
+    public void SetModifierResolver(Action<ActionData, ResolvedModifiers> resolver)
     {
         modifierResolver = resolver;
     }
@@ -149,7 +147,8 @@ public class ActionState
         // (예: CurrentAction만 바꾸고 GlobalFrame을 안 돌리면) 이전 행동의 프레임 카운트를 그대로
         // 물려받는 버그가 생기므로, 반드시 여기서 한꺼번에 세팅한다
         CurrentAction = action;
-        Resolved = modifierResolver != null ? modifierResolver(action) : ResolvedModifiers.Identity; // 최. 추가
+        Resolved.Reset();                       // resolver가 없어도 이전 행동의 보정이 남지 않게 항상 초기화
+        modifierResolver?.Invoke(action, Resolved);// 최. 추가
         // 원본 에셋은 그대로 두고 "이번 실행분"만 확정한다 — 프레임과 박스 창이 여기서 같이 정해지므로 둘이 어긋날 수 없다
         Timeline = ResolvedAction.Resolve(action, FrameAdjustment.Combine(BuildAdjustment(Resolved), extra));
         FrameInPhase = 0;
@@ -286,8 +285,6 @@ public class ActionState
     }
     private IEnumerable<FrameBox> ApplyHitBoxModifiers(IEnumerable<FrameBox> source)
     {
-        if (Resolved.HitBoxWidthAdd == 0f && Resolved.HitBoxHeightAdd == 0f)
-            return source;
         return ApplyHitBoxModifiersIterator(source);
     }
 
@@ -299,8 +296,9 @@ public class ActionState
             if (box.type == BoxType.Hit)
             {
                 var r = box.rect;
-                r.width = Math.Max(0f, r.width + Resolved.HitBoxWidthAdd);
-                r.height = Math.Max(0f, r.height + Resolved.HitBoxHeightAdd);
+                // ActionState.ApplyHitBoxModifiersIterator
+                r.width = Math.Max(0f, Resolved.Apply(SkillParamId.HitBoxWidth, r.width));
+                r.height = Math.Max(0f, Resolved.Apply(SkillParamId.HitBoxHeight, r.height));
                 box.rect = r;
             }
             yield return box;

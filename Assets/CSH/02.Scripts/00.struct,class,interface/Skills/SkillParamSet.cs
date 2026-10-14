@@ -10,13 +10,13 @@ using UnityEngine;
 
 public class SkillParamSet
 {
-    public static readonly SkillParamSet Empty = new SkillParamSet(null, null);
-
     private static int Count = ComputeCount();
+
     private float[] values = new float[Count];
     private bool[] has = new bool[Count];
     public float Get(SkillParamId id) => values[(int)id];
     public bool Has(SkillParamId id) => has[(int)id];
+    public static readonly SkillParamSet Empty = new SkillParamSet(null, null);
     public SkillParamSet(SkillParamEntry[] baseParams, IEnumerable<SkillParamOverride> overrides)
     {
         if (baseParams != null)

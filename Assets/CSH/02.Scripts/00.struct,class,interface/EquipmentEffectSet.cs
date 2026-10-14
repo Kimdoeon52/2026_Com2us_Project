@@ -43,25 +43,23 @@ public class EquipmentEffectSet
     }
 
     /// <summary>
-    /// action에 해당하는 보정만 합산한다. isPartBroken이 true를 반환하는 부위에서 온 효과는 제외한다 (null이면 검사 안 함).
+    /// action에 해당하는 보정을 into에 기록한다. into의 Reset은 호출하는 쪽(ActionState.Begin) 책임이다.
+    /// isPartBroken이 true를 반환하는 부위에서 온 효과는 제외한다 (null이면 검사 안 함).
     /// </summary>
-    public ResolvedModifiers Resolve(ActionData action, Func<BodyPart, bool> isPartBroken)
+    public void Resolve(ActionData action, Func<BodyPart, bool> isPartBroken, ResolvedModifiers into)
     {
-        var r = ResolvedModifiers.Identity;
-        if (action == null) return r;
+        if (action == null || into == null) return;
 
         foreach (var e in entries)
         {
             if (isPartBroken != null && isPartBroken(e.SourcePart)) continue;
-            e.Instance.Contribute(action, ref r);
+            e.Instance.Contribute(action, into);
         }
-        return r;
     }
 
     /// <summary>
     /// 요청된 행동을 대체할 효과가 있으면 대체할 행동을, 없으면 요청된 행동 그대로 반환한다.
     /// 여러 효과가 같은 행동을 대체하려 하면 ReplacePriority가 높은 쪽이 이기고, 같으면 나중에 등록된 쪽이 이긴다.
-    /// </summary>
     public ActionData ResolveReplacement(ActionData requested, Func<BodyPart, bool> isPartBroken)
     {
         if (requested == null) return null;

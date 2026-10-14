@@ -227,7 +227,7 @@ public class ActionExecutor : MonoBehaviour
         effects?.Unequip();
 
         effects = set;
-        state.SetModifierResolver(set != null ? (Func<ActionData, ResolvedModifiers>)ResolveModifiers : null);
+        state.SetModifierResolver(set != null ? (Action<ActionData, ResolvedModifiers>)ResolveModifiers : null);
 
         effects?.Equip();
     }
@@ -239,11 +239,10 @@ public class ActionExecutor : MonoBehaviour
         Robot?.Dispose(); // RuntimeRobot의 부위 파손 이벤트 구독 해제 (NYH 추가)
     }
 
-    private ResolvedModifiers ResolveModifiers(ActionData action)
+    private void ResolveModifiers(ActionData action, ResolvedModifiers into)
     {
-        return effects != null ? effects.Resolve(action, IsPartBroken) : ResolvedModifiers.Identity;
+        effects?.Resolve(action, IsPartBroken, into);
     }
-
     private ActionData ResolveReplacement(ActionData requested)
     {
         if (effects == null) return requested;

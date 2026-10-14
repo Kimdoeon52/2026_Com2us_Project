@@ -1,5 +1,4 @@
 using UnityEngine;
-
 /// <summary>
 /// 장비 하나가 행동에 주는 "정해진 종류의 보정" 1세트 (박스 확대, 전진, 넉백 배율).
 /// "어떤 행동에 적용되는가"는 기술 이름이 아니라 ActionTag / RequiredPart로 고른다 (기술 이름 분기 금지, §13).
@@ -11,7 +10,7 @@ using UnityEngine;
 public class ActionModifierData : EquipmentEffect
 {
     [Header("적용 대상")]
-    [Tooltip("켜면 ActionData.RequiredPart가 아래 부위와 같은 행동에만 적용된다 (예: 오른팔 기술만 강화)")]
+    [Tooltip("끄면 ActionData.RequiredPart가 아래 부위와 같은 행동에만 적용된다 (예: 오른팔 기술만 강화)")]
     [SerializeField] private bool limitToRequiredPart;
 
     [SerializeField] private BodyPart requiredPart;
@@ -20,7 +19,7 @@ public class ActionModifierData : EquipmentEffect
     public bool Matches(ActionData action)
     {
         if (action == null) return false;
-        if (limitToRequiredPart && action.RequiredPart != requiredPart) return false;
+        if (!limitToRequiredPart && action.RequiredPart != requiredPart) return false;
         return true;
     }
 
@@ -33,13 +32,24 @@ public class ActionModifierData : EquipmentEffect
         private readonly SkillParamSet p;
         public Instance(ActionModifierData data, SkillParamSet p) { this.data = data; this.p = p; }
 
-        public override void Contribute(ActionData action, ref ResolvedModifiers r)
+        public override void Contribute(ActionData action, ResolvedModifiers r)
         {
             if (!data.Matches(action)) return;
 
-            
-            
+
+            var list = data.BaseParams;
+            for (int i = 0; i < list.Length; i++)
+            {
+                SkillParamEntry m = list[i];
+                switch (m.op)
+                {
+                    case ParamOption.Set: r.Set(m.id, m.value); break;
+                    case ParamOption.Add: r.Add(m.id, m.value); break;
+                    case ParamOption.Multiply: r.Multiply(m.id, m.value); break;
+                }
+            }
         }
-}
+    }
+
 
 }

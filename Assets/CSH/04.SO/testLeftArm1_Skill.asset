@@ -12,9 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27abb1f71b0542e4bbe2e5ee8d97f2dd, type: 3}
   m_Name: testLeftArm1_Skill
   m_EditorClassIdentifier: 
-  skillId: 0
+  skillId: 1
   baseParams:
-  - id: 4
-    value: 2.81
+  - id: 0
+    op: 0
+    value: 0
   limitToRequiredPart: 1
   requiredPart: 1

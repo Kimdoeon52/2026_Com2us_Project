@@ -17,9 +17,6 @@ public class IsoMapSystemManager : MonoBehaviour
     public GameObject confirmButton;
     public TextMeshProUGUI confirmText;
 
-    [Header("Player & TargetPos")]
-    public Transform playerTransform;
-
     private MapElement3D selectedElement; // 💡 3D 요소로 변경
     private MapElement3D currentHoveredElement; // 현재 마우스가 올라가 있는 요소
 
@@ -133,8 +130,8 @@ public class IsoMapSystemManager : MonoBehaviour
     {
         if (selectedElement != null)
         {
-            playerTransform.position = selectedElement.teleportPoint.position;
-            TimeSystemManager.Instance.PassTime(selectedElement.useHours);
+            LoadingManager.Instance.LoadScene(selectedElement.targetSceneName); // 씬 이동
+            TimeSystemManager.Instance.PassTime(selectedElement.useHours); // 
             ToggleMapUI();
             /*mapCanvas.SetActive(false);
             isMapOpen = false;

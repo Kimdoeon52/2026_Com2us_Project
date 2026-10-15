@@ -64,6 +64,11 @@ public class Auction : PersistentSingleton<Auction>
     [Header("경매 설정")]
     [SerializeField] public AuctionType currentAuctionType = AuctionType.Normal; //현재 경매 모드
 
+    [Header("연속 경매 설정")]
+    [SerializeField] private int totalAuctionRounds = 3; //연속으로 진행할 경매 횟수
+    [SerializeField] private string nextSceneName = ""; //경매 전부 끝난 뒤 이동할 씬 (비워두면 이동 안 함)
+    private int currentRound = 0; //현재 진행 중인 회차
+
     [Header("물건 정보 UI")]
     [SerializeField] public TextMeshProUGUI auctionName; //물건 이름
     [SerializeField] public TextMeshProUGUI auctionCost; //물건 가격
@@ -245,24 +250,64 @@ public class Auction : PersistentSingleton<Auction>
             PlayerName = "Player"; // 플레이어 이름 비우면 그냥 플레이어
         }
 
-        if (auctionItem != null && auctionItem.Count > 0)
+        RunAuctionSessionAsync().Forget(); // 경매 연속 진행 시작
+    }
+
+    // 경매를 totalAuctionRounds번 연속 진행하고, 끝나면 다음 씬으로 이동
+    private async UniTask RunAuctionSessionAsync()
+    {
+        for (currentRound = 1; currentRound <= totalAuctionRounds; currentRound++)
         {
-            stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
-            CurrentCost = stuff.Cost / 2;
-            stuffGrade = stuff.Grade; // 등급 넣기
-            if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
+            if (!PrepareRound()) return; // 물품이 없으면 중단
+
+            AppendConsoleLog($"===== {currentRound}/{totalAuctionRounds} 번째 경매 =====");
+            await StartAuction();
         }
-        else
+
+        await UniTask.Delay(1000);
+        MoveToNextScene();
+    }
+
+    // 회차 시작 전 물품/참가자/상태 초기화
+    private bool PrepareRound()
+    {
+        if (auctionItem == null || auctionItem.Count == 0)
         {
             Debug.LogError("경매 물품 리스트가 읍다");
-            return;
+            return false;
         }
+
+        stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
+        CurrentCost = stuff.Cost / 2;
+        stuffGrade = stuff.Grade; // 등급 넣기
+        if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
+        if (auctionName != null) auctionName.text = "";
+
+        WinnerName = "";
+        IfPlayerWin = false;
+        isPlayerGiveUp = false;
+        IsTimeRunning = false;
+
         NPCImageOff();
         UpdateGoldDisplay(); // 골드 업데이트
-        DayOfAuctionEnter(); // 그날 하루 경매할 인원 정하기
+        DayOfAuctionEnter(); // 그 회차 경매할 인원 정하기
         GetAuctionNpc(dayOfEnterNpc); // ai 정하기
+        return true;
+    }
 
-        StartAuction().Forget(); //옥션 시작
+    // 모든 경매가 끝난 뒤 씬 이동. nextSceneName이 비어 있으면 이동하지 않음
+    private void MoveToNextScene()
+    {
+        if (string.IsNullOrWhiteSpace(nextSceneName))
+        {
+            Debug.Log("[Auction] 모든 경매 종료. 이동할 씬이 지정되지 않아 이동하지 않음.");
+            return;
+        }
+
+        if (GameSceneManager.Instance != null)
+            GameSceneManager.Instance.LoadScene(nextSceneName);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
     }
     //private void Update()
     //{

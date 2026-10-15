@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 
@@ -20,7 +21,7 @@ public class AuctionCutsceneManager : MonoBehaviour
         }
     }
 
-    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName)
+    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName, Sprite bannerSprite = null)
     {
         if (cutsceneCanvasGroup == null || bossNameText == null || bossSkillName == null || cutsceneBanner == null)
         {
@@ -32,6 +33,12 @@ public class AuctionCutsceneManager : MonoBehaviour
         cutsceneCanvasGroup.gameObject.SetActive(true);
         bossNameText.text = bossName;
         bossSkillName.text = skillName;
+
+        //참여 보스에 맞는 배너로 교체 (지정 안 했으면 기존 이미지 유지)
+        if (bannerSprite != null && cutsceneBanner.TryGetComponent(out Image bannerImage))
+        {
+            bannerImage.sprite = bannerSprite;
+        }
 
         //연출 시작
         cutsceneBanner.anchoredPosition = new Vector2(-1000f, 0f);

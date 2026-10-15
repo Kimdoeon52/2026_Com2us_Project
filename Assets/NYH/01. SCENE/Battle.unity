@@ -2191,7 +2191,7 @@ Transform:
   m_GameObject: {fileID: 1538470572}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0.32, y: 1, z: -2.41}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2211,16 +2211,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerA: {fileID: 1270632114}
   playerB: {fileID: 310224676}
-  minX: -5
-  maxX: 5
-  framingPadding: 1
-  closeZ: -3
-  farZ: -7
-  minOrthoSize: 1.5
-  maxOrthoSize: 4
+  minX: -2.5
+  maxX: 2.5
+  framingPadding: 1.5
+  closeZ: -0.5
+  farZ: -2
+  minOrthoSize: 14
+  maxOrthoSize: 1.9
   positionSmoothTime: 0.025
-  zoomInSmoothTime: 0.1
-  fixedY: 2.5
+  zoomInSmoothTime: 0.2
+  fixedY: 1
   fighterEdgeInset: 0.25
 --- !u!1 &1580075003
 GameObject:

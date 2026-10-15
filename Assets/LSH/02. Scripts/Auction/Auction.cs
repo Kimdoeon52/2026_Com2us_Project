@@ -182,12 +182,12 @@ public class Auction : PersistentSingleton<Auction>
         BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene; // 컷씬 옵져버 해제
     }
 
-    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName) //컷씬 대기용 함수
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite) //컷씬 대기용 함수
     {
         IsCutscenePlaying = true; // 컷씬 플레이 시작
         if (cutsceneManager != null)
         {
-            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName); // awiat으로 컷씬 연출 대기
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite); // awiat으로 컷씬 연출 대기
         }
         IsCutscenePlaying = false; // 컷씬 끝
     }
@@ -274,7 +274,7 @@ public class Auction : PersistentSingleton<Auction>
 
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(5, 9); // 경매 인원 5~8 (임시)
+        dayOfEnterNpc = Random.Range(3, 9); // 경매 인원 3~8 (보스 포함)
     }
 
     private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
@@ -290,7 +290,7 @@ public class Auction : PersistentSingleton<Auction>
         }
 
         HashSet<int> selectedIndices = new HashSet<int>(); // 중첩되면 안되니까 hash
-        int targetCount = Mathf.Min(enterNpc, npcAiList.Count); // enterNpc값이 안들어가면 안되니까 그냥 유효성 검사용임.
+        int targetCount = Mathf.Min(enterNpc - auctionAiList.Count, npcAiList.Count); // 보스가 들어갔으면 그만큼 빼서 총원이 enterNpc가 되게 함
 
         while (selectedIndices.Count < targetCount) //
         {
@@ -303,7 +303,7 @@ public class Auction : PersistentSingleton<Auction>
         }
 
         //Canvas 위치에 AI UI 푸리팹 생성 및 배치하는거임
-    } // 총원은 enterNpc + 1(보스) 명
+    } // 총원은 보스 포함 enterNpc 명
 
     private async UniTask StartAuction()
     {
@@ -753,6 +753,7 @@ public class Auction : PersistentSingleton<Auction>
         }
         // 뽑힌 랜덤한 npcs 위치들에 순서대로 auctionAiList의 데이터를 집어넣음
         npcs[index].sprite = auctionAiList[cnt].npcImage;
+        SetImageAlpha(npcs[index], 1f); // 참여하는 칸은 불투명
         if (AuctionPlayer.Instance != null)
             playerImage.sprite = AuctionPlayer.Instance.playerImage;
     }
@@ -763,7 +764,15 @@ public class Auction : PersistentSingleton<Auction>
         {
             playerImage.gameObject.SetActive(true);
             npcs[i].gameObject.SetActive(true);
+            SetImageAlpha(npcs[i], 0f); // 일단 투명, 참여하는 칸만 InsertNPCData에서 불투명 처리
         }
+    }
+
+    private void SetImageAlpha(Image image, float alpha)
+    {
+        Color color = image.color;
+        color.a = alpha;
+        image.color = color;
     }
     private void NPCImageOff()
     {

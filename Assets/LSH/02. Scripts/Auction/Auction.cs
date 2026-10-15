@@ -182,12 +182,12 @@ public class Auction : PersistentSingleton<Auction>
         BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene; // 컷씬 옵져버 해제
     }
 
-    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite) //컷씬 대기용 함수
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite) //컷씬 대기용 함수
     {
         IsCutscenePlaying = true; // 컷씬 플레이 시작
         if (cutsceneManager != null)
         {
-            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite); // awiat으로 컷씬 연출 대기
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite, characterSprite); // awiat으로 컷씬 연출 대기
         }
         IsCutscenePlaying = false; // 컷씬 끝
     }
@@ -494,6 +494,7 @@ public class Auction : PersistentSingleton<Auction>
             GlobalGold.Instance.UseGold(PlayerName, CurrentCost); // 플레이어 골드 소모
             UpdateGoldDisplay(); // 골드 시각적으로 보이기
             GlobalGold.Instance.SaveGame(); // 저장
+            //InventoryHost.Instance.GivePart(stuff);
         }
         else
         {

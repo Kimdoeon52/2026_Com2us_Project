@@ -304,11 +304,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   thinkImage: {fileID: 8703547411300228660}
   npcThinkChat: {fileID: 551133288262341704}
-  npcImage: {fileID: 0}
+  npcImage: {fileID: -666588170, guid: f1453cdcf9ded6a43aec5fffebb80eff, type: 3}
   thinkCanvasGroup: {fileID: 0}
   thinkChatList:
   - thinkChat: "\uC5B4\uBA38"
   - thinkChat: "\uC5B4\uB77C?"
   data: {fileID: 11400000, guid: 5523a9e8e76a1694691c6eefda7348b2, type: 2}
+  cutsceneBannerSprite: {fileID: 21300000, guid: 1175cb2f5419e7d4ab319d0ce92b3c37, type: 3}
+  cutsceneCharacter: {fileID: 21300000, guid: b6f82308a7f3ab5488295cdfecf3efb6, type: 3}
   bigRaiseGold: 1000
   actionRate: 0.4

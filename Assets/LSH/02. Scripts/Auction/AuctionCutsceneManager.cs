@@ -11,6 +11,7 @@ public class AuctionCutsceneManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossNameText; //보스 이름
     [SerializeField] private TextMeshProUGUI bossSkillName; //보스 스킬이름
     [SerializeField] private RectTransform cutsceneBanner; //배너
+    [SerializeField] private Image cutSceneChatacterSprite; //배너
 
     private void Awake()
     {
@@ -21,9 +22,9 @@ public class AuctionCutsceneManager : MonoBehaviour
         }
     }
 
-    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName, Sprite bannerSprite = null)
+    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName, Sprite bannerSprite = null, Sprite characterSprite = null)
     {
-        if (cutsceneCanvasGroup == null || bossNameText == null || bossSkillName == null || cutsceneBanner == null)
+        if (cutsceneCanvasGroup == null || bossNameText == null || bossSkillName == null || cutsceneBanner == null || characterSprite == null)
         {
             Debug.LogWarning("컷씬 뭐 빠진게 있다 인스펙터 확인해라.");
             return;
@@ -39,7 +40,10 @@ public class AuctionCutsceneManager : MonoBehaviour
         {
             bannerImage.sprite = bannerSprite;
         }
-
+        if(characterSprite != null && cutSceneChatacterSprite != null)
+        {
+            cutSceneChatacterSprite.sprite = characterSprite;
+        }
         //연출 시작
         cutsceneBanner.anchoredPosition = new Vector2(-1000f, 0f);
         cutsceneCanvasGroup.alpha = 0f;

@@ -1,16 +1,14 @@
 using UnityEngine;
 
 /// <summary>
-/// [보스 FSM & 인터럽트 인터랙티브 테스터 (BossFSMTester)]
-/// 유니티 에디터 Play 모드에서 키보드 단축키(1, 2, 3, 4, 5)로 보스 상태 전이 및 인터럽트를 검증함.
-/// - [키 1]: 일반 피격 대미지 50 가하기
-/// - [키 2]: DPS 체크 강타 (대미지 300 즉시 가하여 3초 스턴 유도)
-/// - [키 3]: 기믹 파훼 강제 트리거 (못판 펑크 유도: 4초 그로기 & 대미지 1.5배)
-/// - [키 4]: 현재 상태 및 체력 정보 콘솔 출력
+/// [보스 FSM 인터랙티브 통합 테스터 (BossFSMTester)]
+/// HUDInteractiveTester(1~5번)와의 단축키 충돌 방지를 위해 F1~F4 및 숫자패드(Numpad 1~4)로 개편.
+/// 화면 우측 상단 GUI 버튼으로도 마우스 원클릭 조작 가능.
 /// </summary>
 public class BossFSMTester : MonoBehaviour
 {
     [SerializeField] private BossController bossController;
+    [SerializeField] private bool showOnScreenGui = true;
 
     private void Start()
     {
@@ -19,45 +17,86 @@ public class BossFSMTester : MonoBehaviour
             bossController = GetComponent<BossController>();
         }
 
-        Debug.Log("<color=cyan><b>[BossFSMTester 준비 완료]</b>\n" +
-                  "▶ [1번 키]: 일반 공격 (피해 50)\n" +
-                  "▶ [2번 키]: 저지 공격 (피해 300 ➔ 돌진 전조 중이면 3초 스턴)\n" +
-                  "▶ [3번 키]: 기믹 파훼 강제 인터럽트 (4초 그로기 ➔ 피해 1.5배)\n" +
-                  "▶ [4번 키]: 보스 스냅샷 상태 출력</color>");
+        Debug.Log("<color=cyan><b>[BossFSMTester 준비 완료 - 키 충돌 개편]</b>\n" +
+                  "▶ [F1 / Num1]: 보스 일반 피격 (-50 HP)\n" +
+                  "▶ [F2 / Num2]: 300 저지 공격 (돌진 전조 중이면 3초 스턴)\n" +
+                  "▶ [F3 / Num3]: 못판 착지 기믹 파훼 (4초 그로기 & 대미지 1.5배)\n" +
+                  "▶ [F4 / Num4]: 보스 현재 상태 콘솔 출력</color>");
     }
 
     private void Update()
     {
         if (bossController == null) return;
 
-        // 1번: 일반 공격 (50 대미지)
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        // F1 또는 키패드 1: 일반 피격 50
+        if (Input.GetKeyDown(KeyCode.F1) || Input.GetKeyDown(KeyCode.Keypad1))
         {
-            Debug.Log("[Tester] 1번 키 입력 ➔ 일반 공격 (대미지 50)");
-            bossController.TakeDamage(50);
+            AttackNormal();
         }
 
-        // 2번: 저지 공격 (300 대미지: 전조 중 누적 300 달성 시 스턴)
-        if (Input.GetKeyDown(KeyCode.Alpha2))
+        // F2 또는 키패드 2: 300 저지 공격
+        if (Input.GetKeyDown(KeyCode.F2) || Input.GetKeyDown(KeyCode.Keypad2))
         {
-            Debug.Log("[Tester] 2번 키 입력 ➔ 저지 강타 공격 (대미지 300)");
-            bossController.TakeDamage(300);
+            AttackInterrupt300();
         }
 
-        // 3번: 기믹 파훼 강제 인터럽트 (못판 펑크 유도)
-        if (Input.GetKeyDown(KeyCode.Alpha3))
+        // F3 또는 키패드 3: 못판 착지 기믹 파훼
+        if (Input.GetKeyDown(KeyCode.F3) || Input.GetKeyDown(KeyCode.Keypad3))
         {
-            Debug.Log("[Tester] 3번 키 입력 ➔ 못판 유도 착지 기믹 파훼! (4초 그로기 인터럽트)");
-            bossController.InterruptToGroggy(4.0f, 1.5f);
+            TriggerGimmickGroggy();
         }
 
-        // 4번: 상태 정보 출력
-        if (Input.GetKeyDown(KeyCode.Alpha4))
+        // F4 또는 키패드 4: 상태 조회
+        if (Input.GetKeyDown(KeyCode.F4) || Input.GetKeyDown(KeyCode.Keypad4))
         {
-            var s = bossController.Snapshot;
-            Debug.Log($"[Tester] 보스: {s.bossName} | HP: {s.currentHp}/{s.maxHp} | " +
-                      $"상태: {bossController.StateMachine?.CurrentState?.StateName} | " +
-                      $"그로기: {s.isGroggy} (배율: {s.currentDamageMultiplier}배)");
+            PrintBossStatus();
         }
+    }
+
+    public void AttackNormal()
+    {
+        Debug.Log("<color=yellow>[Tester] F1 입력 ➔ 보스 일반 피격 (피해 50)</color>");
+        bossController.TakeDamage(50);
+    }
+
+    public void AttackInterrupt300()
+    {
+        Debug.Log("<color=cyan>[Tester] F2 입력 ➔ 저지 강타 공격 (피해 300! 전조 중이면 3초 스턴)</color>");
+        bossController.TakeDamage(300);
+    }
+
+    public void TriggerGimmickGroggy()
+    {
+        Debug.Log("<color=magenta>[Tester] F3 입력 ➔ 못판 유도 착지 파훼! (4초 그로기 & 대미지 1.5배)</color>");
+        bossController.InterruptToGroggy(4.0f, 1.5f);
+    }
+
+    public void PrintBossStatus()
+    {
+        var s = bossController.Snapshot;
+        if (s == null) return;
+        Debug.Log($"<color=white>[Tester] 보스: {s.bossName} | HP: {s.currentHp}/{s.maxHp} | " +
+                  $"상태: {bossController.StateMachine?.CurrentState?.StateName} | " +
+                  $"그로기: {s.isGroggy} (피해배율: {s.currentDamageMultiplier}배)</color>");
+    }
+
+    private void OnGUI()
+    {
+        if (!showOnScreenGui || bossController == null) return;
+
+        // 화면 우측 상단 조작 GUI 박스
+        GUILayout.BeginArea(new Rect(Screen.width - 240, 20, 220, 230), "<b>[보스 FSM 테스터]</b>", GUI.skin.window);
+        GUILayout.Space(6);
+
+        var curState = bossController.StateMachine?.CurrentState?.StateName ?? "None";
+        GUILayout.Label($"<size=10><b>상태:</b> {curState}</size>");
+        GUILayout.Space(4);
+
+        if (GUILayout.Button("[F1] 일반 공격 (-50)", GUILayout.Height(30))) AttackNormal();
+        if (GUILayout.Button("[F2] 300 저지 공격 (스턴)", GUILayout.Height(30))) AttackInterrupt300();
+        if (GUILayout.Button("[F3] 못판 그로기 (4초 1.5배)", GUILayout.Height(30))) TriggerGimmickGroggy();
+        if (GUILayout.Button("[F4] 보스 스탯 출력", GUILayout.Height(25))) PrintBossStatus();
+
+        GUILayout.EndArea();
     }
 }

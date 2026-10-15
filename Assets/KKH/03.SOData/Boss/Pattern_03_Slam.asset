@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_03_Slam
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_SLAM
+  patternName: "3\uB2E8 \uB0B4\uB824\uCC0D\uAE30 (\uBABB\uD310 \uC720\uB3C4)"
+  description: "\uD50C\uB808\uC774\uC5B4 X\uC88C\uD45C \uCD94\uC801 \uD6C4 \uAE09\uAC15\uD558
+    3\uD68C \uBC18\uBCF5. \uBABB\uD310 \uCC29\uC9C0 \uC720\uB3C4 \uC2DC \uBC14\uD034
+    \uD391\uD06C(4\uCD08 \uADF8\uB85C\uAE30/1.5\uBC30 \uB300\uBBF8\uC9C0). \uD391\uD06C
+    2\uD68C \uC2DC \uD0C0\uC774\uC5B4 \uBD80\uC704 \uD30C\uAD34."
+  tellDuration: 1
+  postDelay: 1
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 3
+  partDurabilityDamage: 30
+  damageRatio: 100
+  actionData: {fileID: 0}

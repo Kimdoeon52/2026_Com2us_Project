@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 505f35b10074bdd43b466f610a48b54a, type: 3}
+  m_Name: BossMasterData_JunkWheeler
+  m_EditorClassIdentifier: 
+  bossID: BOSS_REGION_01
+  bossName: "\uC815\uD06C \uD720\uB7EC (\uD3D0\uD0C0\uC774\uC5B4 & \uD3D0\uC5D4\uC9C4)"
+  maxHp: 4000
+  baseDefense: 40
+  patternPostDelay: 1
+  gimmickParts:
+  - gimmickID: GIMMICK_NAIL_BOARD
+    gimmickName: "\uACE0\uCCA0 \uBABB\uD310"
+    isPhysicalBossPart: 0
+    maxDurability: 1
+    requiredGimmickTag: 0
+    targetSkillIDToSeal: 
+    groggyDuration: 4
+    damageAmplification: 1.5
+  - gimmickID: TIRE_PART
+    gimmickName: "\uD3D0\uD0C0\uC774\uC5B4 \uBD80\uC704"
+    isPhysicalBossPart: 1
+    maxDurability: 2
+    requiredGimmickTag: 0
+    targetSkillIDToSeal: PATTERN_JUMP_BARRAGE
+    groggyDuration: 4
+    damageAmplification: 1.5
+  patterns:
+  - {fileID: 11400000, guid: 4590cf43d031bd74ca1a78b3a4b481a5, type: 2}
+  - {fileID: 11400000, guid: f79329232a4e4454cae6c6f56fd4533e, type: 2}
+  - {fileID: 11400000, guid: a3c486bf9ea12e646abf92087d5e3a30, type: 2}
+  phases: []
+  rewardGold: 1500
+  rewardCoreExp: 500

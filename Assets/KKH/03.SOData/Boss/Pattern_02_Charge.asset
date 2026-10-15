@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_02_Charge
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_CHARGE
+  patternName: "\uB3CC\uC9C4 (DPS \uCCB4\uD06C \uC800\uC9C0)"
+  description: "2\uCD08 \uC804\uC870(\uBC14\uD034 \uD5DB\uB3D4/\uBD89\uC740 \uC810\uBA78)
+    \uB3D9\uC548 300 \uB204\uC801 \uB300\uBBF8\uC9C0 \uC2DC 3\uCD08 \uC2A4\uD134.
+    \uC2E4\uD328 \uC2DC \uB9F5 \uC88C\uC6B0 \uB3CC\uC9C4(\uD68C\uD53C \uBB34\uC801
+    \uD68C\uD53C)."
+  tellDuration: 2
+  postDelay: 1
+  hasDpsCheck: 1
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 5
+  partDurabilityDamage: 0
+  damageRatio: 100
+  actionData: {fileID: 0}

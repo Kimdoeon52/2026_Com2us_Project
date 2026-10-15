@@ -35,7 +35,7 @@ namespace RealSteel.Boss.FSM
             CancellationToken token, 
             BossPatternData pattern, 
             GameObject bulletPrefab = null, 
-            float jumpHeight = 5.0f,
+            float jumpHeight = 1.5f,
             float jumpDuration = 0.6f,
             float fallDuration = 0.4f,
             float waveInterval = 0.35f,

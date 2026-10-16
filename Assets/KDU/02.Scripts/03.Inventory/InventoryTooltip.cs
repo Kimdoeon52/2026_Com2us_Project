@@ -5,8 +5,8 @@ using UnityEngine.EventSystems;
 // 인벤토리·장착 칸 툴팁. 인벤토리 패널 루트에 두고 포인터 아래 칸의 엔트리를 보여준다
 public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExitHandler
 {
-    [Tooltip("데이터 보유")]
-    [SerializeField] private InventoryHost _host;
+    // 씬 전환 유지 싱글톤이라 인스펙터로 연결하지 않는다
+    private static InventoryHost Host => InventoryHost.Instance;
 
     [Tooltip("좌표 변환")]
     [SerializeField] private InventoryView _view;
@@ -26,9 +26,6 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     // 컴포넌트를 붙일 때 씬에서 찾아 채운다
     private void Reset()
     {
-        if (_host == null)
-            _host = FindAnyObjectByType<InventoryHost>();
-
         if (_view == null)
             _view = FindAnyObjectByType<InventoryView>();
     }
@@ -84,7 +81,7 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
             return;
         }
 
-        Show(GetEntryText(_host.Grid.GetIndexAt(cell)));
+        Show(GetEntryText(Host.Grid.GetIndexAt(cell)));
         _fromGrid = true;
     }
 
@@ -96,7 +93,7 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
 
     private string GetEntryText(int index)
     {
-        if (!_host.Grid.TryGetEntry(index, out InventoryGrid.Entry entry))
+        if (!Host.Grid.TryGetEntry(index, out InventoryGrid.Entry entry))
             return null;
 
         if (entry.IsComponent)
@@ -110,7 +107,7 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     {
         cell = default;
 
-        if (_host == null || _host.Grid == null || _view == null || _view.PartsLayer == null)
+        if (Host == null || Host.Grid == null || _view == null || _view.PartsLayer == null)
             return false;
 
         if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(_view.PartsLayer, eventData.position, eventData.enterEventCamera, out Vector2 local))
@@ -118,6 +115,6 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
 
         float size = Mathf.Max(1f, _view.CellSize);
         cell = new Vector2Int(Mathf.FloorToInt(local.x / size), Mathf.FloorToInt(local.y / size));
-        return cell.x >= 0 && cell.y >= 0 && cell.x < _host.Grid.Width && cell.y < _host.Grid.Height;
+        return cell.x >= 0 && cell.y >= 0 && cell.x < Host.Grid.Width && cell.y < Host.Grid.Height;
     }
 }

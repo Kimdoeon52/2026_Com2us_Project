@@ -8,12 +8,14 @@ using UnityEngine;
 //{
 //    public int gold;
 //}
-public class GlobalGold: PersistentSingleton<GlobalGold>
+public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
 {
     // 현재 게임 데이터
     public List<MainCharacterGold> mainCharacterdata;
     // 저장 파일 경로
     private string mainSavePath; //메인 캐릭터들 세이브 경로
+                                 // 플레이어는 0번
+    public int PlayerGold => mainCharacterdata != null && mainCharacterdata.Count > 0 ? mainCharacterdata[0].mainCharacterGold : 0;
 
     protected override void Awake()
     {

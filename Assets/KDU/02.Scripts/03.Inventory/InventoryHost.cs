@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 인벤토리 단독 테스트용 데이터 보유. UI는 여기서 Grid/Save를 읽어간다
-public class InventoryHost : Singleton<InventoryHost>, IEquipmentSource
+// 인벤토리 데이터 보유. 씬 전환에도 유지되며 UI는 Instance로 Grid/Save를 읽어간다
+public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSource
 {
+    // 첫 씬에 없을 때 자동 생성할 Resources 경로
+    private const string ResourcePath = "InventoryHost";
+
     [Tooltip("그리드 규격")]
     [SerializeField] private InventoryDefinition _inventoryDefinition;
 
@@ -35,9 +38,35 @@ public class InventoryHost : Singleton<InventoryHost>, IEquipmentSource
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
 
-    private void Awake()
+    // 첫 씬에 배치된 게 없으면 Resources 프리팹으로 만든다
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Bootstrap()
     {
+        if (Instance != null)
+            return;
+
+        InventoryHost prefab = Resources.Load<InventoryHost>(ResourcePath);
+        if (prefab == null)
+        {
+            Debug.LogWarning($"Resources/{ResourcePath} 프리팹이 없다.");
+            return;
+        }
+
+        Instantiate(prefab).name = prefab.name;
+    }
+
+    protected override void Awake()
+    {
+        // DontDestroyOnLoad는 루트 오브젝트에만 걸린다
+        if (Instance == null && transform.parent != null)
+            transform.SetParent(null);
+
         base.Awake();
+
+        // 중복이면 파괴 예정이라 초기화하지 않는다
+        if (Instance != this)
+            return;
+
         _rng = new Rng(_seed);
         _save = new InventorySaveData();
         _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);

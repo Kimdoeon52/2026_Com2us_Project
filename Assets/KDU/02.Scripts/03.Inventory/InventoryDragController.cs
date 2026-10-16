@@ -7,8 +7,8 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
 {
     private const int None = -1;
 
-    [Tooltip("데이터 보유")]
-    [SerializeField] private InventoryHost _host;
+    // 씬 전환 유지 싱글톤이라 인스펙터로 연결하지 않는다
+    private static InventoryHost Host => InventoryHost.Instance;
 
     [Tooltip("좌표 변환·렌더")]
     [SerializeField] private InventoryView _view;
@@ -48,9 +48,6 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
     // 컴포넌트를 붙일 때 씬에서 찾아 채운다
     private void Reset()
     {
-        if (_host == null)
-            _host = FindAnyObjectByType<InventoryHost>();
-
         if (_view == null)
             _view = FindAnyObjectByType<InventoryView>();
     }
@@ -69,9 +66,9 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
             return;
 
         Vector2Int cell = ToCell(local);
-        int index = _host.Grid.GetIndexAt(cell);
+        int index = Host.Grid.GetIndexAt(cell);
 
-        if (index < 0 || !_host.Grid.TryGetEntry(index, out InventoryGrid.Entry entry))
+        if (index < 0 || !Host.Grid.TryGetEntry(index, out InventoryGrid.Entry entry))
             return;
 
         _index = index;
@@ -89,7 +86,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         _index = None;
         _equipSource = null;
 
-        PartsDefinition definition = IsGiveUp() ? _host.GetEquipped(slot.Slot) : null;
+        PartsDefinition definition = IsGiveUp() ? Host.GetEquipped(slot.Slot) : null;
         if (definition == null || !TryGetLocal(eventData, out Vector2 local))
             return;
 
@@ -118,24 +115,24 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
         if (_equipSource != null)
         {
             if (TryGetLocal(eventData, out Vector2 dropLocal))
-                _host.UnequipAt(_equipSource.Slot, ToOrigin(dropLocal));
+                Host.UnequipAt(_equipSource.Slot, ToOrigin(dropLocal));
         }
-        else if (_host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
+        else if (Host.Grid.TryGetEntry(_index, out InventoryGrid.Entry entry)
         && entry.IsComponent
         && TryGetCombinationSlot(eventData, out CombinationSlot slot)
         && slot.Component == null                              // 이미 차 있으면 대상에서 제외. 아래 else로 빠져서 그냥 격자 이동 처리
-        && _host.ConsumeComponent(entry.Component.Id, 1))       // 놓는 순간 인벤토리에서 실제로 소모
+        && Host.ConsumeComponent(entry.Component.Id, 1))       // 놓는 순간 인벤토리에서 실제로 소모
         {
             slot.SetComponent(entry.Component);
             slot.GetComponentInParent<CorrectRecipe>().PushPartData();
         }
         else if (TryGetEquipmentSlot(eventData, out EquipmentSlotView equipmentSlot))
         {
-            _host.Equip(_index, equipmentSlot.Slot);
+            Host.Equip(_index, equipmentSlot.Slot);
         }
         else if (TryGetLocal(eventData, out Vector2 local))
         {
-            _host.MoveEntry(_index, ToOrigin(local));
+            Host.MoveEntry(_index, ToOrigin(local));
         }
 
         RestoreSource();
@@ -168,7 +165,7 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
 
     private bool IsGiveUp()
     {
-        return _host != null && _host.Grid != null && _view != null && _view.PartsLayer != null;
+        return Host != null && Host.Grid != null && _view != null && _view.PartsLayer != null;
     }
 
     // 파츠 레이어 기준 좌표. 레이어 피벗은 좌하단
@@ -227,14 +224,14 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
 
         Vector2Int origin = ToOrigin(local);
         bool insideGrid = origin.x >= 0 && origin.y >= 0
-            && origin.x + _shape.Size.x <= _host.Grid.Width
-            && origin.y + _shape.Size.y <= _host.Grid.Height;
+            && origin.x + _shape.Size.x <= Host.Grid.Width
+            && origin.y + _shape.Size.y <= Host.Grid.Height;
 
         _ghost.anchoredPosition = insideGrid
             ? _view.CellToAnchored(origin)                       // 격자 안: 칸에 스냅
             : local - (Vector2)_grabOffset * _view.CellSize;     // 격자 밖: 포인터를 그대로 따라감
 
-        TintGhost(insideGrid && _host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor);
+        TintGhost(insideGrid && Host.Grid.CanPlace(_shape, origin, _index) ? _validColor : _invalidColor);
     }
 
     private void TintGhost(Color color)

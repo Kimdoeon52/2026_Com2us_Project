@@ -8,8 +8,6 @@ public class CorrectRecipe : MonoBehaviour
     [SerializeField] private ResultSlot resultSlot;
     public PartsDefinition resultPart;
 
-    [SerializeField] private InventoryHost _host;
-
     private void Awake()
     {
         GetSlotDatas();

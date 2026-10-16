@@ -19,7 +19,8 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
     [Tooltip("슬롯 내용이 바뀐 뒤 레시피를 다시 검사시키기 위한 참조")]
     [SerializeField] private CorrectRecipe _recipe;
 
-    [SerializeField] private InventoryHost _host;
+    // 인벤토리는 씬 전환 유지 싱글톤이라 인스펙터로 연결하지 않고 Instance를 쓴다
+    private static InventoryHost Host => InventoryHost.Instance;
     [SerializeField] private InventoryView _view;
 
     // 실제로 화면에 떠 있는 고스트. 슬롯당 하나만 만들고 재사용한다 (드래그마다 새로 Instantiate하지 않음)
@@ -83,7 +84,7 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
             else if (target == null && IsOverInventory(eventData))
             {
                 // 인벤토리 위에 놓였다 → 수량을 돌려주고 슬롯을 비운다
-                _host.GiveComponent(_dragged, 1);
+                Host.GiveComponent(_dragged, 1);
                 _slot.SetComponent(null);
                 _recipe.PushPartData();
             }
@@ -173,7 +174,7 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
         ComponentDefinition component = _slot.Component;
         if (component == null) return;
 
-        _host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
+        Host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
         _slot.SetComponent(null);           // 슬롯 비움
         _recipe.PushPartData();             // 조합 다시 판정
     }

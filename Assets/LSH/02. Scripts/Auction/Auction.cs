@@ -536,10 +536,17 @@ public class Auction : PersistentSingleton<Auction>
 
         if (IfPlayerWin) //플레이어가 이겼을 경우
         {
-            GlobalGold.Instance.UseGold(PlayerName, CurrentCost); // 플레이어 골드 소모
-            UpdateGoldDisplay(); // 골드 시각적으로 보이기
-            GlobalGold.Instance.SaveGame(); // 저장
-            //InventoryHost.Instance.GivePart(stuff);
+            // 인벤토리에 먼저 넣어보고 성공했을 때만 골드 차감 (칸이 없으면 골드만 빠지는 거 방지)
+            if (InventoryHost.Instance != null && InventoryHost.Instance.GivePart(stuff))
+            {
+                GlobalGold.Instance.UseGold(PlayerName, CurrentCost); // 플레이어 골드 소모
+                UpdateGoldDisplay(); // 골드 시각적으로 보이기
+                GlobalGold.Instance.SaveGame(); // 저장
+            }
+            else
+            {
+                Debug.LogWarning($"[Auction] 인벤토리에 {stuff.DisplayName}을(를) 넣지 못해 낙찰을 취소함 (인벤토리 가득 참 또는 InventoryHost 없음)");
+            }
         }
         else
         {

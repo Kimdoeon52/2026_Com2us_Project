@@ -6,9 +6,6 @@ using UnityEngine.UI;
 // 인벤토리 렌더. 입력은 다루지 않는다
 public class InventoryView : MonoBehaviour
 {
-    [Tooltip("데이터 보유")]
-    [SerializeField] private InventoryHost _host;
-
     [Header("루트")]
     [SerializeField] private RectTransform _gridRoot;
     [SerializeField] private RectTransform _partsLayer;
@@ -31,12 +28,14 @@ public class InventoryView : MonoBehaviour
 
     // 엔트리 인덱스로 그려진 렉트를 찾는다. 드래그가 원본을 집을 때 쓴다
     private readonly List<RectTransform> _entryRects = new List<RectTransform>();
+    private InventoryHost _host;
 
     public float CellSize => _cellSize;
     public RectTransform PartsLayer => _partsLayer;
 
     private void Start()
     {
+        _host = InventoryHost.Instance;
         if (_host == null || _host.Grid == null)
         {
             Debug.LogWarning("Host가 비었다.");
@@ -85,13 +84,15 @@ public class InventoryView : MonoBehaviour
     [ContextMenu("레이아웃 적용")]
     public void ApplyLayout()
     {
-        if (_host == null || _host.Definition == null)
+        // 에디터에서는 Instance가 없어 씬에서 찾는다
+        InventoryHost host = _host != null ? _host : FindAnyObjectByType<InventoryHost>();
+        if (host == null || host.Definition == null)
         {
             Debug.LogWarning("Host나 인벤토리 정의가 비었다.");
             return;
         }
 
-        Vector2Int grid = _host.Definition.GridSize;
+        Vector2Int grid = host.Definition.GridSize;
         Vector2 size = (Vector2)grid * _cellSize;
 
         SetSize(_gridRoot, size);

@@ -14,8 +14,8 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
     [Tooltip("완성 파츠 아이콘을 보여주는 결과 슬롯. 인벤토리에 넣기 성공하면 여기를 비운다")]
     [SerializeField] private ResultSlot _resultSlot;
 
-    [Tooltip("인벤토리 데이터. 실제 배치(GivePart)를 요청하는 대상")]
-    [SerializeField] private InventoryHost _host;
+    // 인벤토리는 씬 전환 유지 싱글톤이라 인스펙터로 연결하지 않고 Instance를 쓴다
+    private static InventoryHost Host => InventoryHost.Instance;
 
     [Tooltip("인벤토리 좌표·레이어 참조. 드롭 위치가 인벤토리 패널인지 판단하는 데 씀")]
     [SerializeField] private InventoryView _view;
@@ -66,7 +66,7 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
         // 자동으로 빈자리를 찾아 넣는 게 아니라, 놓은 위치의 칸에 그대로 배치를 시도한다.
         // 그 칸이 막혀있거나 인벤토리 격자 범위 밖이면 TryPlacePartAt이 false를 반환하고,
         // 이 경우 재료 소모도 안 일어나고 결과 슬롯도 그대로 남는다 (원하는 칸을 다시 골라 드래그하면 됨)
-        if (_dragged != null && TryGetDropOrigin(eventData, out Vector2Int origin) && _host.TryPlacePartAt(_dragged, origin))
+        if (_dragged != null && TryGetDropOrigin(eventData, out Vector2Int origin) && Host.TryPlacePartAt(_dragged, origin))
         {
             _recipe.ConfirmCraft();      // 여기서 실제로 부품 재료가 소모되고 크래프팅 슬롯 9칸이 비워짐
             _resultSlot.SetPart(null);   // 결과 슬롯 아이콘도 비움 (인벤토리로 옮겨졌으니)
@@ -157,7 +157,7 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
         PartsDefinition part = _recipe.resultPart;
         if (part == null) return;
 
-        _host.GivePart(part);
+        Host.GivePart(part);
         _recipe.ConfirmCraft();
         _resultSlot.SetPart(null);
     }

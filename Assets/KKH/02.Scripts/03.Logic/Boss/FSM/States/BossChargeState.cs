@@ -56,9 +56,9 @@ namespace RealSteel.Boss.FSM
             _hasHitPlayer = false;
             _playerTransform = GameObject.FindWithTag("Player")?.transform;
 
-            // 1. 돌진 방향 산출 및 돌진 주행 방향 정면 주시
+            // 1. 돌진 방향(좌: -1, 우: +1) 계산 및 진행 방향을 정면으로 정렬
             DetermineChargeDirection();
-            SetFacingDirection(_chargeDirection);
+            FaceDirection(_chargeDirection);
 
             ExecuteChargeSequenceAsync().Forget();
         }
@@ -77,17 +77,20 @@ namespace RealSteel.Boss.FSM
             }
             else
             {
-                _chargeDirection = boss.transform.localScale.x >= 0 ? 1.0f : -1.0f;
+                _chargeDirection = boss.transform.localScale.x >= 0 ? -1.0f : 1.0f;
             }
         }
 
         /// <summary>
         /// 보스가 dirX 방향(1: 우측, -1: 좌측)을 정면으로 바라보도록 localScale 설정
+        /// (에셋 기준: scale.x > 0 일 때 왼쪽을 바라봄)
         /// </summary>
-        private void SetFacingDirection(float dirX)
+        private void FaceDirection(float dirX)
         {
-            Vector3 localScale = boss.transform.localScale;
-            boss.transform.localScale = new Vector3(Mathf.Abs(localScale.x) * Mathf.Sign(dirX), localScale.y, localScale.z);
+            Vector3 scale = boss.transform.localScale;
+            // 왼쪽(-1)을 봐야 하면 scale.x는 양수(+), 오른쪽(+1)을 봐야 하면 scale.x는 음수(-)
+            float targetSign = dirX < 0 ? 1.0f : -1.0f;
+            boss.transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
         }
 
         private async UniTaskVoid ExecuteChargeSequenceAsync()
@@ -96,7 +99,7 @@ namespace RealSteel.Boss.FSM
             {
                 Vector3 startPosition = boss.transform.position;
 
-                // 1단계: 돌진 전 살짝 뒤로 당기기 (예열 웅크림)
+                // 1단계: 돌진 전 살짝 뒤로 당기기 (예열 웅크림 - 진행 반대 방향으로 후퇴)
                 Vector3 pullBackPosition = startPosition - new Vector3(_chargeDirection * 0.3f, 0f, 0f);
                 _currentTween = boss.transform.DOMoveX(pullBackPosition.x, _anticipatedDuration).SetEase(Ease.OutQuad);
                 await _currentTween.ToUniTask(cancellationToken: cancellationToken);
@@ -120,7 +123,7 @@ namespace RealSteel.Boss.FSM
                 float duration = distance / Mathf.Max(1.0f, finalSpeed);
                 Debug.Log($"<color=red>[BossChargeState] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed}m/s, 거리: {distance:F1}m)</color>");
 
-                // 4단계: 맵 끝까지 등속 고속 주행 (주행 중에는 앞을 보고 전속력 질주)
+                // 4단계: 맵 끝까지 등속 고속 주행 (진행 방향을 정면 주시하며 질주)
                 _currentTween = boss.transform.DOMoveX(targetX, duration).SetEase(Ease.Linear);
 
                 bool hitExplosiveBox = false;
@@ -150,9 +153,7 @@ namespace RealSteel.Boss.FSM
                 // 짧은 벽 충돌 반동 대기
                 await UniTask.Delay(TimeSpan.FromSeconds(_wallStunDelay), cancellationToken: cancellationToken);
 
-                // ⭐ 6단계: [충돌 종료 조건 체크 후 반전]
-                // 벽 충돌 반동이 끝나고 플레이어와의 콜라이더 겹침이 완전히 해제(충돌 종료)되었을 때,
-                // 플레이어를 지나친 상태라면 등 뒤의 플레이어를 향해 홱 몸을 반전!
+                // ⭐ 6단계: [충돌 종료 조건 체크 후 등 뒤의 플레이어를 향해 반전]
                 await WaitForCollisionToEndAsync();
                 TryFlipAfterCollision();
 
@@ -215,8 +216,9 @@ namespace RealSteel.Boss.FSM
 
             if (hasPassedPlayer)
             {
+                // 플레이어가 있는 방향을 향해 스프라이트 정렬
                 float toPlayerDirection = _playerTransform.position.x >= boss.transform.position.x ? 1.0f : -1.0f;
-                SetFacingDirection(toPlayerDirection);
+                FaceDirection(toPlayerDirection);
                 Debug.Log("<color=cyan>[BossChargeState] 충돌 종료 및 플레이어 통과 확인 ➔ 플레이어를 향해 스프라이트 반전 완료!</color>");
             }
         }

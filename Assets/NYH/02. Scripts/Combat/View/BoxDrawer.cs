@@ -28,6 +28,8 @@ public class BoxDrawer : MonoBehaviour
     private ActionState state;
     // 지금 어느 방향을 보고 있는지 알아야 좌우 반전을 적용한 위치에 박스를 그릴 수 있다 (BoxResolver로 넘겨줄 값)
     private RobotMover mover;
+    // 회전 박스의 네 꼭짓점을 담는 임시 버퍼 — 그릴 때마다 새로 할당하지 않으려고 재사용한다 (2026-10-15)
+    private static readonly Vector3[] corners = new Vector3[4];
 
     // 호출: PlayerRobotBootstrap.Awake(플레이 모드 진입 시). 그 전(에디터에서 씬만 열어본 상태)에는
     // 이 함수가 아직 안 불린 상태라 state가 null인 채로 OnDrawGizmos가 먼저 돌 수 있다 — 그래서 거기서 null 체크를 한다
@@ -54,11 +56,13 @@ public class BoxDrawer : MonoBehaviour
         foreach (var box in state.GetActiveBoxes())
         {
             // FrameBox에 저장된 로컬 좌표를, 지금 위치·방향 기준 월드 좌표로 바꾼다 — 이 계산은 반드시 BoxResolver 하나만 거친다
-            Rect worldRect = BoxResolver.ToWorldRect(transform.position, box.rect, facingRight);
+            // 2026-10-15: 회전을 반영한 월드 박스 — HitDetection이 쓰는 것과 같은 함수(ToWorldBox)를 거친다 (§4).
+            // 회전이 없으면 예전의 DrawWireCube와 똑같은 사각형이 그려진다 (2D라 z 두께는 의미 없어서 선 4개로 그린다)
+            WorldBox worldBox = BoxResolver.ToWorldBox(transform.position, box, facingRight);
+            worldBox.GetCorners(corners);
             Gizmos.color = ColorFor(box.type);
-            // z를 0.01로 살짝 띄운 이유: 이 게임은 2D라 z가 실제로 안 쓰이는데, 두께가 완전히 0인 큐브는
-            // 일부 환경에서 와이어프레임이 제대로 안 그려질 수 있어서 아주 살짝 두께를 준 것뿐 (판정에는 영향 없음)
-            Gizmos.DrawWireCube(worldRect.center, new Vector3(worldRect.width, worldRect.height, 0.01f));
+            for (int i = 0; i < 4; i++)
+                Gizmos.DrawLine(corners[i], corners[(i + 1) % 4]);
         }
 
         if (TryGetMuzzle(facingRight, out Vector3 muzzle))
@@ -79,7 +83,8 @@ public class BoxDrawer : MonoBehaviour
     {
         muzzle = default;
         ActionData action = state.CurrentAction;
-        if (action == null || action.Projectile == null) return false;
+        // 박스당 피해(부채꼴) 행동은 총구가 곧 부채꼴 원점이라 투사체가 없어도 표시한다
+        if (action == null || (action.Projectile == null && !action.PerBoxDamage)) return false;
 
         // 원본 SO에서 매번 읽으므로 일시정지 중 인스펙터에서 Projectile Muzzle을 바꾸면 바로 따라 움직인다
         muzzle = BoxResolver.ToWorldPoint(transform.position, action.ProjectileMuzzle, facingRight);
@@ -107,9 +112,15 @@ public class BoxDrawer : MonoBehaviour
         // Game 뷰에서 본 것이 다르면" 이것도 결국 §4 "판정과 표시는 같은 데이터를 본다" 규칙 위반이 된다
         foreach (var box in state.GetActiveBoxes())
         {
-            Rect worldRect = BoxResolver.ToWorldRect(transform.position, box.rect, facingRight);
+            // Gizmos 경로와 같은 WorldBox(회전 반영) — 두 경로가 다른 모양을 그리면 표시기가 거짓말을 한다 (§4)
+            WorldBox worldBox = BoxResolver.ToWorldBox(transform.position, box, facingRight);
+            worldBox.GetCorners(corners);
             GL.Color(ColorFor(box.type));
-            DrawRectOutline(worldRect);
+            for (int i = 0; i < 4; i++)
+            {
+                GL.Vertex(corners[i]);
+                GL.Vertex(corners[(i + 1) % 4]);
+            }
         }
 
         if (TryGetMuzzle(facingRight, out Vector3 muzzle))
@@ -139,20 +150,6 @@ public class BoxDrawer : MonoBehaviour
         // ZTest를 Always로 해서 항상 맨 위에 그려지게 강제한다
         lineMaterial.SetInt("_ZWrite", 0);
         lineMaterial.SetInt("_ZTest", (int)CompareFunction.Always);
-    }
-
-    // 사각형 테두리 4변을 GL.LINES로 그린다 — GL.Begin(GL.LINES) 안에서 호출돼야 한다 (선분 하나당 정점 2개씩)
-    private static void DrawRectOutline(Rect r)
-    {
-        Vector3 bl = new Vector3(r.xMin, r.yMin, 0f); // bottom-left
-        Vector3 br = new Vector3(r.xMax, r.yMin, 0f); // bottom-right
-        Vector3 tr = new Vector3(r.xMax, r.yMax, 0f); // top-right
-        Vector3 tl = new Vector3(r.xMin, r.yMax, 0f); // top-left
-
-        GL.Vertex(bl); GL.Vertex(br); // 아래
-        GL.Vertex(br); GL.Vertex(tr); // 오른쪽
-        GL.Vertex(tr); GL.Vertex(tl); // 위
-        GL.Vertex(tl); GL.Vertex(bl); // 왼쪽
     }
 
     // 박스 타입 → 색 매핑을 한곳에 모아둔 함수. ActionDataEditor에도 같은 색 규칙이 따로 있는데,

@@ -331,6 +331,37 @@ public class CombatDataHub : MonoBehaviour
     }
 
     // ========================================================================
+    // 실린더 소비 (NYH ActionExecutor 연동) 최.추가
+    // ========================================================================
+    /// <summary>탄이 cost발 이상 있는지. 스냅샷이 없으면 막을 근거가 없으므로 true (CanExecuteAction과 같은 정책)</summary>
+    public bool CanSpendCylinder(string fighterId, int cost)
+    {
+        if (cost <= 0) return true;
+        var snapshot = GetSnapshot(fighterId);
+        return snapshot == null || snapshot.CanSpendCylinder(cost);
+    }
+
+    /// <summary>
+    /// 탄을 cost발 소비한다. 모자라면 아무것도 안 하고 false.
+    /// 스냅샷 차감과 UI 이벤트 발행을 여기 한 곳에서만 하도록 모았다 (밖에서 SpendCylinder를 직접 부르면 이벤트가 빠진다)
+    /// </summary>
+    public bool TrySpendCylinder(string fighterId, int cost)
+    {
+        if (cost <= 0) return true;
+
+        var snapshot = GetSnapshot(fighterId);
+        if (snapshot == null) return true;
+        if (!snapshot.CanSpendCylinder(cost)) return false;
+
+        snapshot.SpendCylinder(cost);
+        if (snapshot.isPlayer)
+            OnPlayerCylinderChanged?.Invoke(snapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
+
+        return true;
+    }
+
+
+    // ========================================================================
     // 브로드캐스팅 헬퍼 메서드
     // ========================================================================
     public void BroadcastPartBroken(string fighterId, BodyPart brokenPart)

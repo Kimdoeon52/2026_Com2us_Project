@@ -17,7 +17,7 @@ public class SkillParamSet
     public float Get(SkillParamId id) => values[(int)id];
     public bool Has(SkillParamId id) => has[(int)id];
     public static readonly SkillParamSet Empty = new SkillParamSet(null, null);
-    public SkillParamSet(SkillParamEntry[] baseParams, IEnumerable<SkillParamOverride> overrides)
+    public SkillParamSet(SkillParamEntry[] baseParams, IEnumerable<SkillParamOverride> overrides, int skillid = -1)
     {
         if (baseParams != null)
         {
@@ -31,18 +31,20 @@ public class SkillParamSet
             }
         }
         // Add -> Multiply -> Set 일단 이렇게 진행중
-        Apply(overrides, ParamOption.Add);
-        Apply(overrides, ParamOption.Multiply);
-        Apply(overrides, ParamOption.Set);
+        Apply(overrides, ParamOption.Add, skillid);
+        Apply(overrides, ParamOption.Multiply, skillid);
+        Apply(overrides, ParamOption.Set, skillid);
     }
 
-    private void Apply(IEnumerable<SkillParamOverride> list, ParamOption op)
+    private void Apply(IEnumerable<SkillParamOverride> list, ParamOption op, int skillId)
     {
         if (list == null) return;
+
         foreach (var o in list)
         {
             if (o.op != op) continue;
 
+            if (skillId >= 0 && o.skillId != skillId) continue;
             int i = (int)o.id;
             if (!has[i])
             {

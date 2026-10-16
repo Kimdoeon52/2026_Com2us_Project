@@ -25,6 +25,17 @@ public struct FrameBox
     // 그 계산 자체도 BoxResolver라는 한 곳에만 몰아둘 수 있다
     public Rect rect;
 
+    #region 최. 추가
+    // 박스 회전 값. 박스 중심 기준으로 반시계 방향이 +. 오른쪽을 볼 때 기준으로 편집하고
+    // 좌우 반전(각도 부호 뒤집기)은 BoxResolver가 처리한다.
+    public float rotation;
+    // 이 Hit박스가 맞았을 때 더해지는 "발당 피해 배율".
+    // ActionData.PerBoxDamage가 켜진 행동에서만 읽힌다. 0이면 1로 취급한다 (기존 에셋 호환 — 새 필드는 0으로 로드되므로)
+    public float damageScale;
+    /// <summary>damageScale이 0(미설정)이면 1 — 기존 박스와 새 박스를 같은 식으로 다루기 위한 접근자</summary>
+    public float DamageScaleOrOne => damageScale > 0f ? damageScale : 1f;
+    #endregion
+
     // 이 박스가 어느 구간에 붙는가. Legacy면 아래 startFrame/endFrame 절대값을 그대로 쓴다.
     // 절대 프레임은 "활성 구간이 언제인지"를 ActionData의 프레임 값에서 손으로 계산해 옮겨적은 사본이라,
     // 선딜 프레임 하나만 바뀌어도 조용히 어긋난다. 앵커는 그 사본을 없애고 구간을 가리키기만 한다

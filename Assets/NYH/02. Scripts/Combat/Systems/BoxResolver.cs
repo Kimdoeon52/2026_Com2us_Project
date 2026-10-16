@@ -37,4 +37,44 @@ public static class BoxResolver
         float worldX = facingRight ? pivotWorldPos.x + localPoint.x : pivotWorldPos.x - localPoint.x;
         return new Vector3(worldX, pivotWorldPos.y + localPoint.y, pivotWorldPos.z);
     }
+
+    // 2026-10-15 추가: 회전을 포함한 월드 박스. BoxDrawer(표시)와 HitDetection(판정)은 이 함수만 쓴다.
+    // 좌우 반전 규칙: 박스 중심 x는 ToWorldRect가 이미 뒤집고, 회전은 각도 부호만 뒤집으면 된다
+    // (좌우 거울상은 θ → -θ. 박스는 180도 대칭이라 이 규칙으로 충분하다).
+    // 회전은 Hit박스에서만 읽는다 — Hurt/Push는 AABB를 전제로 한 다른 코드(RobotMover Push 밀어내기)와 어긋나지 않게 항상 0으로 취급
+    public static WorldBox ToWorldBox(Vector3 pivotWorldPos, FrameBox box, bool facingRight)
+    {
+        Rect world = ToWorldRect(pivotWorldPos, box.rect, facingRight);
+        float angle = box.type == BoxType.Hit ? (facingRight ? box.rotation : -box.rotation) : 0f;
+        return new WorldBox(world, angle);
+    }
+
+    /// <summary>
+    /// 두 박스가 겹치는지. 둘 다 회전이 없으면 기존 AABB 검사와 똑같은 식(경계가 닿기만 한 건 겹침 아님)을 쓰고,
+    /// 하나라도 회전이 있으면 4개 축(각 박스의 두 축)으로 분리 여부를 확인한다
+    /// </summary>
+    public static bool Overlap(in WorldBox a, in WorldBox b)
+    {
+        if (!a.IsRotated && !b.IsRotated)
+        {
+            Rect ra = a.Rect;
+            Rect rb = b.Rect;
+            return ra.xMin < rb.xMax && ra.xMax > rb.xMin && ra.yMin < rb.yMax && ra.yMax > rb.yMin;
+        }
+
+        Vector2 d = b.Center - a.Center;
+        return !IsSeparated(a, b, d, a.AxisX)
+            && !IsSeparated(a, b, d, a.AxisY)
+            && !IsSeparated(a, b, d, b.AxisX)
+            && !IsSeparated(a, b, d, b.AxisY);
+    }
+
+    // axis 방향으로 두 박스를 투영했을 때 구간이 안 겹치면(중심 거리 >= 반지름 합) 그 축이 둘을 갈라놓는다.
+    // >= 로 비교하는 이유: AABB 경로의 엄격한 부등호(닿기만 하면 겹침 아님)와 규칙을 맞추기 위함
+    private static bool IsSeparated(in WorldBox a, in WorldBox b, Vector2 d, Vector2 axis)
+    {
+        float ra = a.Half.x * Mathf.Abs(Vector2.Dot(axis, a.AxisX)) + a.Half.y * Mathf.Abs(Vector2.Dot(axis, a.AxisY));
+        float rb = b.Half.x * Mathf.Abs(Vector2.Dot(axis, b.AxisX)) + b.Half.y * Mathf.Abs(Vector2.Dot(axis, b.AxisY));
+        return Mathf.Abs(Vector2.Dot(d, axis)) >= ra + rb;
+    }
 }

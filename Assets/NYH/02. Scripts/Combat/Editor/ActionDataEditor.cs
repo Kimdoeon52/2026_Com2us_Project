@@ -25,9 +25,9 @@ public class ActionDataEditor : Editor
     // 아래 세 필드는 SerializeField가 아니라 그냥 private 필드다 — 즉 이 값들은 ActionData 에셋에
     // 저장되지 않고, 에디터 창을 닫거나 다른 에셋을 선택하면 초기화된다. "박스가 실제로 어디 있는지"가
     // 아니라 "지금 이 에디터를 켜놓고 뭘 보고 있는지"에 대한 값이라 굳이 영구 저장할 필요가 없기 때문
-    private Transform previewTarget; // Scene 뷰에서 박스를 그릴 때 기준으로 삼을 로봇의 위치(피벗)
-    private int previewFrame = 1;    // "모든 프레임 표시"를 끄면, 이 프레임에 활성화된 박스만 걸러서 보여줌
-    private bool showAllFrames = true; // 켜져 있으면 프레임 상관없이 등록된 박스를 전부 보여줌(작업 초반엔 이게 편함)
+    protected Transform previewTarget; // Scene 뷰에서 박스를 그릴 때 기준으로 삼을 로봇의 위치(피벗)
+    protected int previewFrame = 1;    // "모든 프레임 표시"를 끄면, 이 프레임에 활성화된 박스만 걸러서 보여줌
+    protected bool showAllFrames = true; // 켜져 있으면 프레임 상관없이 등록된 박스를 전부 보여줌(작업 초반엔 이게 편함)
 
     // 유니티가 인스펙터 창을 그릴 때마다 호출하는 함수. 여기서 그린 UI가 곧 인스펙터에 보이는 내용이다
     public override void OnInspectorGUI()

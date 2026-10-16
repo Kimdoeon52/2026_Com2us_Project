@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -92,6 +93,9 @@ public class ActionExecutor : MonoBehaviour
         CheckDeath();
         if (state.IsDead) return;
 
+        // 쿨타임은 입력을 받기 "전에" 줄인다 — 그래야 cooldownFrames가 N이면 시작한 틱으로부터 정확히 N틱 뒤에 다시 쓸 수 있다
+        TickCooldowns();
+
         CheckLanding();
 
         // Idle일 때만 새 행동을 받아들인다 — 공격 도중(선딜/활성/후딜)에 입력이 들어와도 씹히는 게
@@ -100,10 +104,15 @@ public class ActionExecutor : MonoBehaviour
         {
             // 입력원한테 "이번 틱에 하고 싶은 행동이 있냐"고 물어본다. 없으면 null이 온다(§8 IInputSource 계약)
             ActionData requested = inputSource?.GetDesiredAction();
+            int cylinderCost = 0;
             if (requested != null)
             {
                 requested = ResolveReplacement(requested); // 최. 추가
                 requested = GateByPartBroken(requested); // 부위 파손 시 기술 시전 차단 (§11-4, §14)
+                // 탄이 모자라면 일반판정(fallbackAction)으로 바꾼다. 쿨타임 검사보다 먼저여야 한다 —
+                // 바뀐 뒤의 행동이 쿨타임 중인지를 봐야 하기 때문 (없으면 null)
+                requested = GateByCylinder(requested, out cylinderCost);
+                requested = GateByCooldown(requested); // 쿨타임 중이면 입력 무시. 막히면 탄도 소모하지 않는다
             }
 
             if (requested != null)
@@ -113,6 +122,10 @@ public class ActionExecutor : MonoBehaviour
                     ? adjuster.GetAdjustment(requested)
                     : FrameAdjustment.None;
                 state.Begin(requested, extra);
+                // Begin 직후에만 쿨타임을 걸고 탄을 깎는다 — state.Resolved(장비 보정)가 이때 확정되기 때문이고,
+                // 게이트를 통과했어도 Begin이 안 됐다면 쿨타임/탄이 새면 안 되기 때문이다
+                StartCooldown(requested);
+                SpendCylinder(requested, cylinderCost);
                 // 구간별로 프레임 수를 전부 찍어두면, 나중에 "훅이 정말 선딜 3프레임에 나가는지" 같은
                 // 걸 로그만 보고도 검증할 수 있다 (§9 "상태 로그" 규칙).
                 // 원본이 아니라 확정값(Timeline)을 찍는다 — 보정이 걸린 뒤엔 실제로 도는 값이 이쪽이다
@@ -137,7 +150,7 @@ public class ActionExecutor : MonoBehaviour
     private void ApplyAdvance()
     {
         ActionData action = state.CurrentAction;
-        if (action == null || action.AdvanceDistance <= 0f) return;
+        if (action == null || action.AdvanceDistance == 0f) return;
 
         // GlobalFrame은 Begin 후 1부터 1씩 오르므로 1 ~ (선딜+활성) 구간에 정확히 그 프레임 수만큼 불린다.
         // 활성 전용(돌진)이면 (선딜+1) ~ (선딜+활성) — 선딜 동안은 제자리에서 예비동작
@@ -262,6 +275,174 @@ public class ActionExecutor : MonoBehaviour
         return hub != null && hub.GetSnapshot(FighterId) != null && hub.IsPartBroken(FighterId, part);
     }
 
+
+    #endregion
+
+    #region 쿨타임 / 실린더 (CSH)
+
+    // ---- 쿨타임 ----
+    // 쿨타임은 "행동"이 아니라 ActionData.CooldownKey 단위로 센다 — 일반/강화판정이 쿨을 공유하려면 같은 키를 가리켜야 한다.
+    // ActionData는 Player와 Enemy가 같이 쓰는 불변 에셋이라 남은 시간은 에셋이 아니라 이 로봇(ActionExecutor)이 들고 있다 (§2)
+    private struct CooldownSlot
+    {
+        public ActionData Key;
+        public int Remaining; // 남은 틱
+        public int Total;     // 시작할 때의 틱 (UI 비율 계산용)
+    }
+
+    private readonly List<CooldownSlot> cooldowns = new List<CooldownSlot>(4);
+
+    /// <summary>쿨타임이 시작된 순간. 인자: 쿨타임 기준 행동, 총 프레임. HUD가 구독해서 게이지를 채운다</summary>
+    public event Action<ActionData, int> OnCooldownStarted;
+
+    /// <summary>action의 남은 쿨타임(프레임). 0이면 사용 가능. null이거나 쿨타임이 없는 행동이어도 0</summary>
+    public int GetCooldownRemaining(ActionData action)
+    {
+        if (action == null) return 0;
+        int index = FindCooldown(action.CooldownKey);
+        return index < 0 ? 0 : cooldowns[index].Remaining;
+    }
+
+    /// <summary>남은 비율 (1 = 방금 시작, 0 = 사용 가능). 게이지 UI용</summary>
+    public float GetCooldownRatio(ActionData action)
+    {
+        if (action == null) return 0f;
+        int index = FindCooldown(action.CooldownKey);
+        if (index < 0) return 0f;
+
+        CooldownSlot slot = cooldowns[index];
+        return slot.Total > 0 ? (float)slot.Remaining / slot.Total : 0f;
+    }
+
+    public bool IsOnCooldown(ActionData action) => GetCooldownRemaining(action) > 0;
+
+    /// <summary>쿨타임을 즉시 끝낸다 (머리 패시브 "쿨 초기화" 등이 부른다)</summary>
+    public void ResetCooldown(ActionData action)
+    {
+        if (action == null) return;
+        int index = FindCooldown(action.CooldownKey);
+        if (index >= 0) cooldowns.RemoveAt(index);
+    }
+
+    private int FindCooldown(ActionData key)
+    {
+        for (int i = 0; i < cooldowns.Count; i++)
+        {
+            if (cooldowns[i].Key == key) return i;
+        }
+        return -1;
+    }
+
+    // 호출: ExecuteTick (틱마다 1회, 입력을 받기 전). 뒤에서부터 도는 이유: 다 끝난 칸을 지우면서 돌기 때문
+    private void TickCooldowns()
+    {
+        for (int i = cooldowns.Count - 1; i >= 0; i--)
+        {
+            CooldownSlot slot = cooldowns[i];
+            slot.Remaining--;
+            if (slot.Remaining <= 0) cooldowns.RemoveAt(i);
+            else cooldowns[i] = slot;
+        }
+    }
+
+    // 쿨타임 중이면 입력을 무시한다 (null 반환). 플레이어 입력은 이미 소비된 뒤라 버퍼에 남지 않는다
+    private ActionData GateByCooldown(ActionData action)
+    {
+        if (action == null) return null;
+
+        int remaining = GetCooldownRemaining(action);
+        if (remaining <= 0) return action;
+
+        Debug.Log($"[ActionExecutor] {FighterId}: '{action.ActionName}' 쿨타임 중 — 남은 {remaining}f ({remaining * CombatClock.TICK:F2}초)");
+        return null;
+    }
+
+    // 호출: ExecuteTick, state.Begin 직후. 장비 보정(SkillParamId.Cooldown)은 기획서 단위인 "초"로 적용한다 —
+    // "쿨타임 -1초" 같은 효과를 그대로 쓸 수 있게. state.Resolved는 Begin에서 확정되므로 Begin 뒤에 불러야 한다
+    private void StartCooldown(ActionData action)
+    {
+        if (action == null || action.CooldownFrames <= 0) return;
+
+        float baseSeconds = action.CooldownFrames * CombatClock.TICK;
+        float seconds = Mathf.Max(0f, state.Resolved.Apply(SkillParamId.Cooldown, baseSeconds));
+        int frames = Mathf.RoundToInt(seconds / CombatClock.TICK);
+        if (frames <= 0) return; // 보정으로 쿨타임이 사라졌다
+
+        ActionData key = action.CooldownKey;
+        var slot = new CooldownSlot { Key = key, Remaining = frames, Total = frames };
+
+        int index = FindCooldown(key);
+        if (index >= 0) cooldowns[index] = slot;
+        else cooldowns.Add(slot);
+
+        OnCooldownStarted?.Invoke(key, frames);
+    }
+
+    // ---- 실린더 ----
+    // 호출: ExecuteTick. 강화판정은 탄이 있어야 나가고, 탄이 없으면 폴백(일반판정)으로 대체한다 (기획서 "실린더 시스템").
+    // 순서: 대체(ResolveReplacement) → 부위 파손 게이트 → 여기. 대체된 행동의 비용을 봐야 하고,
+    // 팔이 파손됐다면 폴백(같은 팔 스킬)도 어차피 막히므로 부위 게이트가 먼저 와야 한다.
+    // 폴백도 부위 게이트를 다시 거치고 비용을 확인한다. 폴백의 폴백은 따라가지 않는다.
+    // CombatDataHub가 없으면 막을 근거가 없으니 그대로 통과 (GateByPartBroken과 같은 정책)
+    private ActionData GateByCylinder(ActionData requested, out int cost)
+    {
+        cost = 0;
+        if (requested == null) return null;
+
+        var hub = CombatDataHub.Instance;
+        if (hub == null) return requested;
+
+        int needed = ResolveCylinderCost(requested);
+        if (needed <= 0 || hub.CanSpendCylinder(FighterId, needed))
+        {
+            cost = needed;
+            return requested;
+        }
+
+        // 탄 부족 — 같은 스킬의 일반판정으로 대체한다
+        int have = hub.GetSnapshot(FighterId)?.currentCylinder ?? 0;
+        ActionData fallback = GateByPartBroken(requested.FallbackAction);
+        if (fallback == null)
+        {
+            Debug.Log($"[ActionExecutor] {FighterId}: '{requested.ActionName}'는 탄 {needed}발 필요(보유 {have}발), 대체 행동이 없어 입력 무시");
+            return null;
+        }
+
+        int fallbackNeeded = ResolveCylinderCost(fallback);
+        if (fallbackNeeded > 0 && !hub.CanSpendCylinder(FighterId, fallbackNeeded)) return null;
+
+        cost = fallbackNeeded;
+        Debug.Log($"[ActionExecutor] {FighterId}: '{requested.ActionName}'는 탄 {needed}발 필요(보유 {have}발) → '{fallback.ActionName}'로 대체");
+        return fallback;
+    }
+
+    // 장비 보정(SkillParamId.CylinderCost)이 반영된 비용. 기본 비용이 0인 행동은 보정으로 비용이 생기지 않게 0으로 고정한다.
+    // 게이트 시점에는 아직 state.Begin 전이라 state.Resolved를 쓸 수 없어서 별도 scratch에 한 번 계산한다
+    // (Contribute를 한 번 더 부르게 되므로 EffectInstance.Contribute는 상태를 안 바꾸는 순수 계산이어야 한다)
+    private readonly ResolvedModifiers costScratch = new ResolvedModifiers();
+
+    private int ResolveCylinderCost(ActionData action)
+    {
+        if (action == null || action.CylinderCost <= 0) return 0;
+
+        costScratch.Reset();
+        effects?.Resolve(action, IsPartBroken, costScratch);
+        return Mathf.Max(0, Mathf.RoundToInt(costScratch.Apply(SkillParamId.CylinderCost, action.CylinderCost)));
+    }
+
+    // 행동 시작 직후 탄을 깎는다. 게이트에서 이미 충분한지 확인했으므로 실패는 정상 상황에선 나오지 않는다
+    private void SpendCylinder(ActionData action, int cost)
+    {
+        if (cost <= 0)
+        {
+            Debug.Log($"[ActionExecutor] {FighterId}: '{action.ActionName}' 실린더 소모 없음");
+            return;
+        }
+
+        var hub = CombatDataHub.Instance;
+        if (hub == null || !hub.TrySpendCylinder(FighterId, cost))
+            Debug.LogWarning($"[ActionExecutor] {FighterId}: '{action.ActionName}' 실린더 {cost}발 소비 실패 — 게이트와 소비 사이에 탄이 줄었을 수 있음");
+    }
 
     #endregion
 }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -15,6 +16,9 @@ public class HitDetection : MonoBehaviour
     // 좌우 반전 계산(BoxResolver)에 각 로봇이 "지금 어느 방향을 보고 있는지"가 필요해서 같이 캐싱해둔다
     private RobotMover moverA;
     private RobotMover moverB;
+
+    // 다중 박스 판정에서 방어자 Hurt박스를 한 번만 월드로 바꿔 담는 임시 버퍼 (틱마다 새로 할당하지 않으려고 재사용) 최.추가
+    private static readonly List<WorldBox> hurtBuffer = new List<WorldBox>(8);
 
     // 호출: Unity(이 컴포넌트가 활성화될 때). 씬에서 로봇 2개를 찾아 캐싱하고 CombatClock에 판정 함수를 등록한다
     private void OnEnable()
@@ -128,17 +132,26 @@ public class HitDetection : MonoBehaviour
         bool attackerFacingRight = attackerMover == null || attackerMover.FacingRight;
         bool defenderFacingRight = defenderMover == null || defenderMover.FacingRight;
 
+        // 2026-10-15: 부채꼴 산탄처럼 "겹친 Hit박스 수만큼 피해가 쌓이는" 행동은 별도 경로로 처리한다  최.추가
+        ActionData action = attacker.State.CurrentAction;
+        if (action != null && action.PerBoxDamage)
+        {
+            CheckMultiBox(attacker, attackerFacingRight, defender, defenderFacingRight);
+            return;
+        }
+
         foreach (var hitBox in attacker.State.GetActiveBoxes())
         {
             if (hitBox.type != BoxType.Hit) continue; // 공격자 쪽에서는 Hit박스만 의미가 있다 — Hurt/Push는 무시
-            Rect worldHit = BoxResolver.ToWorldRect(attacker.transform.position, hitBox.rect, attackerFacingRight);
+            // 2026-10-16: 회전 Hit박스를 쓰는 일반 행동도 BoxDrawer와 같은 WorldBox로 판정한다 (회전이 없으면 예전 AABB 검사와 같은 식)
+            WorldBox worldHit = BoxResolver.ToWorldBox(attacker.transform.position, hitBox, attackerFacingRight);
 
             foreach (var hurtBox in defender.State.GetActiveBoxes())
             {
                 if (hurtBox.type != BoxType.Hurt) continue; // 방어자 쪽에서는 Hurt박스만 의미가 있다
-                Rect worldHurt = BoxResolver.ToWorldRect(defender.transform.position, hurtBox.rect, defenderFacingRight);
+                WorldBox worldHurt = BoxResolver.ToWorldBox(defender.transform.position, hurtBox, defenderFacingRight);
 
-                if (!Overlap(worldHit, worldHurt)) continue;
+                if (!BoxResolver.Overlap(worldHit, worldHurt)) continue;
 
                 // 겹쳤다 — 실제 데미지·가드·크리티컬 계산은 전부 KKH의 CombatDataHub가 담당한다.
                 // 여기서는 "누가 누구를 어떤 상태(가드/회피 여부)로 때렸는지"만 넘겨주고 판단은 그쪽에 맡긴다
@@ -147,9 +160,42 @@ public class HitDetection : MonoBehaviour
             }
         }
     }
+    // 2026-10-15: 박스당 피해 행동. 이번 틱에 Hurt박스와 겹친 Hit박스마다 damageScale을 더해서
+    // ProcessHit을 "1번만" 부른다. 박스 하나는 Hurt박스가 몇 개와 겹쳐도 1발로만 센다.
+    // 하나라도 겹치는 순간 MarkHit으로 행동이 끝나므로, 산탄의 박스는 활성 구간 첫 프레임에만 켜지도록(length=1)
+    // 만드는 걸 권장한다 — 그래야 "발사한 순간의 스냅샷"으로 판정된다  최.추가
+    private void CheckMultiBox(ActionExecutor attacker, bool attackerFacingRight, ActionExecutor defender, bool defenderFacingRight)
+    {
+        hurtBuffer.Clear();
+        foreach (var hurtBox in defender.State.GetActiveBoxes())
+        {
+            if (hurtBox.type == BoxType.Hurt)
+                hurtBuffer.Add(BoxResolver.ToWorldBox(defender.transform.position, hurtBox, defenderFacingRight));
+        }
+        if (hurtBuffer.Count == 0) return;
+
+        float weight = 0f;
+        foreach (var hitBox in attacker.State.GetActiveBoxes())
+        {
+            if (hitBox.type != BoxType.Hit) continue;
+            WorldBox worldHit = BoxResolver.ToWorldBox(attacker.transform.position, hitBox, attackerFacingRight);
+
+            for (int i = 0; i < hurtBuffer.Count; i++)
+            {
+                if (!BoxResolver.Overlap(worldHit, hurtBuffer[i])) continue;
+                weight += hitBox.DamageScaleOrOne;
+                break; // 이 Hit박스(=발)는 한 번만 센다
+            }
+        }
+
+        if (weight <= 0f) return; // 한 발도 안 맞았다 — 이번 틱은 아무 일도 없었던 걸로 (MarkHit도 안 한다)
+
+        ResolveHit(attacker, defender, weight);
+    }
 
     // 실제로 겹침이 확인된 뒤, KKH API에 필요한 값(가드/회피 여부)을 계산해서 ProcessHit을 호출한다
-    private void ResolveHit(ActionExecutor attacker, ActionExecutor defender)
+    // damageWeight: 음수면 기존 경로(ActionData.Damage 그대로), 0 이상이면 "Damage × damageWeight"를 수치 직접 전달형으로 넘긴다  최.추가
+    private void ResolveHit(ActionExecutor attacker, ActionExecutor defender, float damageWeight = -1f)
     {
         // CombatDataHub(KKH)는 CombatClock과 달리 씬에 없으면 Instance가 그냥 null을 반환한다
         // (자동 생성 안 함) — 여기서 막아두지 않으면 이 예외 하나가 CombatClock.Tick()의 나머지
@@ -169,8 +215,25 @@ public class HitDetection : MonoBehaviour
         bool isWeaving = IsInvincibleNow(defender);
 
         ActionData attackAction = attacker.State.CurrentAction;
-        var result = CombatDataHub.Instance.ProcessHit(
-            attacker.FighterId, defender.FighterId, attackAction, isGuarding, isWeaving);
+        /* var result = CombatDataHub.Instance.ProcessHit(
+             attacker.FighterId, defender.FighterId, attackAction, isGuarding, isWeaving);*/
+
+        HitResolutionResult result;
+        if (damageWeight < 0f || isWeaving)
+        {
+            // 기존 경로. 박스당 피해 행동도 회피 무적 중이면 여기로 온다 — 수치 직접 전달형(float) 오버로드는
+            // 무적 여부를 안 받으므로, 회피 판정(isEvaded)은 ActionData 오버로드에 맡긴다
+            result = CombatDataHub.Instance.ProcessHit(
+                attacker.FighterId, defender.FighterId, attackAction, isGuarding, isWeaving);
+        }
+        else
+        {
+            // KKH의 ActionData 오버로드와 똑같이 Damage가 0이면 10으로 본다
+            float perBox = attackAction.Damage > 0f ? attackAction.Damage : 10f;
+            result = CombatDataHub.Instance.ProcessHit(attacker.FighterId, defender.FighterId, perBox * damageWeight);
+            // float 오버로드는 넉백 거리를 채워주지 않는다 (ActionData 오버로드만 채움) — 여기서 같은 값을 넣는다
+            result.KnockbackDistance = attackAction.KnockbackDistance;
+        }
 
         attacker.State.MarkHit(); // 이번 행동으로 이 상대를 다시는 못 맞히게 표시 (중복 데미지 방지)
 

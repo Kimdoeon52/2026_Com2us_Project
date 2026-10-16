@@ -45,6 +45,12 @@ public class FrameBoxDrawer : PropertyDrawer
             var anchorProp = property.FindPropertyRelative("anchor");
             bool isLegacy = anchorProp.enumValueIndex == (int)FrameAnchor.Legacy;
 
+            // 2026-10-15: damageScale은 ActionData.perBoxDamage가 켜진 행동에서만 읽히고,
+            // rotation은 Hit박스에서만 읽힌다 — 안 읽히는 칸은 회색으로 잠가서 "고쳤는데 왜 안 바뀌지"를 없앤다
+            var perBoxProp = property.serializedObject.FindProperty("perBoxDamage");
+            bool perBoxOn = perBoxProp != null && perBoxProp.boolValue;
+            bool isHit = property.FindPropertyRelative("type").enumValueIndex == (int)BoxType.Hit;
+
             foreach (string name in FieldNames)
             {
                 SerializedProperty field = property.FindPropertyRelative(name);
@@ -53,6 +59,8 @@ public class FrameBoxDrawer : PropertyDrawer
                 bool unused = isLegacy
                     ? (name == "startOffset" || name == "length")
                     : (name == "startFrame" || name == "endFrame");
+                if (name == "damageScale" && !(perBoxOn && isHit)) unused = true;
+                if (name == "rotation" && !isHit) unused = true;
 
                 using (new EditorGUI.DisabledScope(unused))
                 {
@@ -112,6 +120,6 @@ public class FrameBoxDrawer : PropertyDrawer
     // 그리는 순서. 앵커 3칸을 먼저, 예전 방식인 startFrame/endFrame을 뒤에 둔다
     private static readonly string[] FieldNames =
     {
-        "type", "bodyPart", "rect", "anchor", "startOffset", "length", "startFrame", "endFrame"
+        "type", "bodyPart", "rect", "rotation", "damageScale", "anchor", "startOffset", "length", "startFrame", "endFrame"
     };
 }

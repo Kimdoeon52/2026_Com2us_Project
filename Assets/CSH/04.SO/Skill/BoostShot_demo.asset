@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f84d1eabd01eb1f46b97de9ac4b9f31e, type: 3}
+  m_Name: BoostShot_demo
+  m_EditorClassIdentifier: 
+  skillId: 1
+  baseParams:
+  - id: 0
+    op: 0
+    value: 0
+  - id: 2
+    op: 0
+    value: 0
+  slotNormal: {fileID: 0}
+  slotCharged: {fileID: 0}
+  normal: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  charged: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  replacePriority: 0

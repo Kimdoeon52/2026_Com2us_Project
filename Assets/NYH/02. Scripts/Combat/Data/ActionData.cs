@@ -124,7 +124,7 @@ public class ActionData : ScriptableObject
     // 2026-10-11 추가: 기획서1011 §6-10 "하단 → 어퍼컷 → 중단, 동작 중간마다 앞으로 조금 전진".
     // 기획서에 거리 수치가 없어서 기본값 0 — 기획이 정하기 전까지 테스트할 때만 인스펙터에서 넣는다(§12)
     [Tooltip("TODO: 기획 수치 없음. 선딜~활성 동안 바라보는 방향으로 나아가는 총 거리. 0이면 제자리")]
-    [Min(0f)] [SerializeField] private float advanceDistance;
+    [SerializeField] private float advanceDistance;
 
     // 2026-10-11 추가: 돌진처럼 "제자리에서 힘을 모았다가(선딜) 한 번에 튀어나가는(활성)" 기술용
     [Tooltip("켜면 advanceDistance를 활성 구간에만 나눠서 간다(선딜엔 제자리 = 예비동작). 끄면 선딜~활성 전체")]
@@ -151,6 +151,36 @@ public class ActionData : ScriptableObject
     // 데미지는 이 행동의 Hit박스 + hitIntervalFrames로 따로 들어간다(§4 판정은 박스가 진실)
     [Tooltip("활성 구간 동안 총구에서 뿜을 불. 로봇에 FlameEmitter가 있어야 보인다")]
     [SerializeField] private FlameData flame;
+
+
+    [Header("박스당 피해")]
+    // 2026-10-15 추가: 부채꼴 산탄처럼 "겹친 Hit박스 수만큼 피해가 쌓이는" 행동용.
+    // 켜면 Damage를 "Hit박스 1개(=1발)당 피해"로 읽는다. HitDetection이 한 틱에 Hurt박스와 겹친 Hit박스들의
+    // FrameBox.damageScale을 합산해 ProcessHit을 1번 호출한다. 끄면 기존처럼 행동당 Damage 1회
+    [Tooltip("켜면 Damage가 '박스 1개당' 피해가 된다. 겹친 Hit박스의 damageScale 합 × Damage로 한 번에 맞힌다 (산탄용)")]
+    [SerializeField] private bool perBoxDamage;
+
+
+    [Header("쿨타임")]
+    // 재사용 대기 프레임.
+    [Tooltip("행동을 시작한 뒤 다시 쓸 수 있을 때까지의 프레임(60fps). 0 = 쿨타임 없음. 예: 4초 = 240")]
+    [Min(0)][SerializeField] private int cooldownFrames;
+
+    // 일반판정과 강화판정이 같은 스킬이라 쿨타임도 하나
+    // 에셋 둘이 서로 다른 행동이라 "같은 쿨"을 가리킬 방법이 필요해서, 기준이 되는 행동을 직접 참조한다(문자열 키 없음)
+    [Tooltip("비우면 이 행동 자신이 쿨타임 단위. 다른 행동을 넣으면 그 행동과 쿨타임을 공유한다 (강화판정이 일반판정을 넣는 식)")]
+    [SerializeField] private ActionData cooldownOwner;
+
+    [Header("실린더")]
+    // 이 행동을 시작할 때 소모하는 탄 수. 0이면 소모 없음(기존 행동 전부).
+    // 강화판정 에셋에 1을 넣는다. 실제 소모량은 장비 보정(SkillParamId.CylinderCost)이 더해진 값이다
+    [Tooltip("이 행동을 시작할 때 소모하는 실린더 탄 수. 0 = 소모 없음. 강화판정 에셋에 1")]
+    [Min(0)][SerializeField] private int cylinderCost;
+
+    // 탄이 모자랄 때 대신 나갈 행동. 기획서: "탄이 없을 때 길게 눌러도 일반 버전으로 나감".
+    // 비우면 탄이 모자랄 때 입력이 그냥 무시된다. 폴백은 1단계만 따라간다(폴백의 폴백은 안 봄)
+    [Tooltip("탄이 부족할 때 대신 나갈 행동 (일반판정). 비우면 입력이 무시된다. 이 행동은 탄을 소모하지 않아야 한다")]
+    [SerializeField] private ActionData fallbackAction;
 
     [Header("판정 박스")]
     // 이 배열 안의 각 FrameBox가 "이 행동 도중 어느 프레임에 어떤 판정 상자가 있는지"를 전부 담는다.
@@ -201,9 +231,15 @@ public class ActionData : ScriptableObject
     public int ProjectileIntervalFrames => projectileIntervalFrames;
     public Vector2 ProjectileMuzzle => projectileMuzzle;
 
+    public int CooldownFrames => cooldownFrames;
+    public ActionData CooldownKey => cooldownOwner != null ? cooldownOwner : this;
+    public int CylinderCost => cylinderCost;
+    public virtual bool PerBoxDamage => perBoxDamage;
+    public ActionData FallbackAction => fallbackAction;
     public FlameData Flame => flame;
 
-    public FrameBox[] FrameBoxes => frameBoxes;
+    public virtual FrameBox[] FrameBoxes => frameBoxes;
+    protected FrameBox[] StoredFrameBoxes => frameBoxes;
 
     /// <summary>
     /// 지정한 전체-타임라인 프레임(ActionState.GlobalFrame 기준)에 활성화된 박스만 반환한다.
@@ -215,7 +251,9 @@ public class ActionData : ScriptableObject
         // 배열 전체를 순회하면서 "지금 프레임이 이 박스의 활성 구간 안에 있는지"만 확인한다.
         // 박스 개수가 캐릭터당 많아야 십수 개 수준이라 매번 순회해도 성능 문제가 없어서,
         // 따로 프레임별 캐시(Dictionary<int, List<FrameBox>> 같은 것)를 만들지 않고 단순하게 짰다
-        foreach (var box in frameBoxes)
+        // 2026-10-16: 저장 배열(frameBoxes)이 아니라 virtual FrameBoxes를 읽는다 — 파생 행동(BoostShotActionData)이
+        // 계산으로 만든 박스도 이 함수로 나와야 "표시/판정은 같은 데이터"가 유지된다
+        foreach (var box in FrameBoxes)
         {
             if (globalFrame >= box.startFrame && globalFrame <= box.endFrame)
                 yield return box;

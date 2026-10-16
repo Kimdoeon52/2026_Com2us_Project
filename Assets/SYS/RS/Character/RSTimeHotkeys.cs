@@ -8,7 +8,7 @@
 //   F1       화면 안내 보이기 / 숨기기
 //   게임패드: Select(Back) = 낮 ↔ 밤 · 십자키 좌우 = 이전 / 다음 시간대
 // 키는 인스펙터에서 바꿀 수 있다. Input System · 예전 Input Manager 둘 다 동작한다.
-// (Input System 을 쓰려면 asmdef 밖이어야 해서 SYS/RSCharacter 에 둔다 — 간단 캐릭터와 같은 어셈블리)
+// (Input System 을 쓰려면 asmdef 밖이어야 해서 SYS/RS/Character 에 둔다 — 간단 캐릭터와 같은 어셈블리)
 using System;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM

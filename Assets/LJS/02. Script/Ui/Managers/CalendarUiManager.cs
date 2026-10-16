@@ -24,11 +24,7 @@ public class CalendarUiManager : MonoBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
-        else 
-        { 
-            Destroy(gameObject);
-            return;
-        }
+        else return;
         // 시작 시 Ui들 숨기기
         if (calendarCanvas != null) calendarCanvas.SetActive(false);
         if (confirmPopup != null) confirmPopup.SetActive(false);

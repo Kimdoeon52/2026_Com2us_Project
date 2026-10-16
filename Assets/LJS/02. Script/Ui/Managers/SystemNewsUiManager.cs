@@ -37,6 +37,7 @@ public class SystemNewsUiManager : MonoBehaviour
         TimeSystemManager.OnMonthScrapRestore += ScrapRestoreNews;
         TimeSystemManager.OnMonthNpcFightmoneyRestore += NpcFightmoneyRestoreNews;
         TimeSystemManager.OnWeekMartOpen += MartOpenNews;
+        TimeSystemManager.OnWeekMartClose += MartCloseNews;
     }
 
     private void OnDisable()
@@ -45,6 +46,7 @@ public class SystemNewsUiManager : MonoBehaviour
         TimeSystemManager.OnMonthScrapRestore -= ScrapRestoreNews;
         TimeSystemManager.OnMonthNpcFightmoneyRestore -= NpcFightmoneyRestoreNews;
         TimeSystemManager.OnWeekMartOpen -= MartOpenNews;
+        TimeSystemManager.OnWeekMartClose -= MartCloseNews;
 
         if (currentSequence != null && currentSequence.IsActive()) // 해당 오브젝트 비활성화시 DOTween Kill
         {
@@ -54,9 +56,10 @@ public class SystemNewsUiManager : MonoBehaviour
         isShowing = false;
     }
 
-    private void NpcFightmoneyRestoreNews() { EnqueueNews("NPC들의 경기용 판돈이 다시 채워졌습니다!"); }
-    private void ScrapRestoreNews() { EnqueueNews("고물상에 스크랩이 매입되었습니다!"); }
+    private void NpcFightmoneyRestoreNews() { EnqueueNews("일반 경기장 도전자들이 베팅금을 다시 충전했습니다!"); }
+    private void ScrapRestoreNews() { EnqueueNews("고물상에 월간 스크랩이 매입되었습니다!"); }
     private void MartOpenNews() { EnqueueNews("경매장에서 경매가 시작되었습니다!"); }
+    private void MartCloseNews() { EnqueueNews("금일의 경매가 종료되었습니다."); }
 
     [ContextMenu("테스트: 알림 띄우기")]
     public void TestNotification() // 컴포넌트에 있는 점 3개 누르고 클릭

@@ -26,7 +26,7 @@ public class IsoMapSystemManager : MonoBehaviour
     private void Awake()
     {
         if (Instance == null) Instance = this;
-        else { Destroy(gameObject); return; }
+        else return; 
 
         if (mainCamera == null) mainCamera = Camera.main; // 카메라 자동 할당
 

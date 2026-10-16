@@ -46,7 +46,7 @@ public class ArenaBettingManager : MonoBehaviour
     {
         // 싱글톤 초기화
         if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        else return;
     }
 
     private void Start()

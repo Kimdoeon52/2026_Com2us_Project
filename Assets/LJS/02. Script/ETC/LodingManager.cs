@@ -17,9 +17,10 @@ public class LoadingManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
             loadingCanvas.SetActive(false);
         }
-        else
-        {
-            Destroy(gameObject);
+        else 
+        { 
+            Destroy(gameObject); 
+            return; 
         }
     }
 

@@ -9,7 +9,6 @@ public class IsoMapSystemManager : MonoBehaviour
     public static event Action OnMapClosed;
 
     [Header("카메라 세팅 (3D)")]
-    public Camera mainCamera; // 메인 카메라(복귀용)
     public Camera mapCamera; // 맵 카메라
 
     [Header("UI Panels")]
@@ -27,8 +26,6 @@ public class IsoMapSystemManager : MonoBehaviour
     {
         if (Instance == null) Instance = this;
         else return; 
-
-        if (mainCamera == null) mainCamera = Camera.main; // 카메라 자동 할당
 
         mapCanvas.SetActive(false);
         confirmButton.SetActive(false);
@@ -91,10 +88,9 @@ public class IsoMapSystemManager : MonoBehaviour
     {
         isMapOpen = !isMapOpen;
 
-        if (mapCamera != null && mainCamera != null)
+        if (mapCamera != null)
         {
             mapCamera.gameObject.SetActive(isMapOpen);
-            mainCamera.gameObject.SetActive(!isMapOpen);
         }
 
         mapCanvas.SetActive(isMapOpen);

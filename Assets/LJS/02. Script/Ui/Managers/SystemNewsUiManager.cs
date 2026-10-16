@@ -26,6 +26,14 @@ public class SystemNewsUiManager : MonoBehaviour
     private bool isShowing = false;
     private Sequence currentSequence; // DOTween 이벤트용 변수
 
+    private class NewsData
+    {
+        public string message;
+        public int month;
+        public int day;
+        public int count;
+    } private List<NewsData> pendingNews = new List<NewsData>(); // 바구니
+
     private void Awake()
     {
         newsGroup.alpha = 0f;
@@ -56,7 +64,7 @@ public class SystemNewsUiManager : MonoBehaviour
         isShowing = false;
     }
 
-    private void NpcFightmoneyRestoreNews() { EnqueueNews("일반 경기장 도전자들이 베팅금을 다시 충전했습니다!"); }
+    private void NpcFightmoneyRestoreNews() { EnqueueNews("경기장 도전자들이 베팅금을 충전했습니다!"); }
     private void ScrapRestoreNews() { EnqueueNews("고물상에 월간 스크랩이 매입되었습니다!"); }
     private void MartOpenNews() { EnqueueNews("경매장에서 경매가 시작되었습니다!"); }
     private void MartCloseNews() { EnqueueNews("금일의 경매가 종료되었습니다."); }
@@ -67,14 +75,57 @@ public class SystemNewsUiManager : MonoBehaviour
         EnqueueNews("테스트: 시스템 알림이 정상적으로 작동합니다!");
     }
 
-    public void EnqueueNews(string news)
+    public void EnqueueNews(string news) // 큐에 임시저장
     {
-        newsQueue.Enqueue(news); // 큐 맨 뒤에 메시지 추가
+        int m = TimeSystemManager.Instance != null ? TimeSystemManager.Instance.month : 0;
+        int d = TimeSystemManager.Instance != null ? TimeSystemManager.Instance.day : 0;
 
-        // 현재 출력중인 뉴스가 없으면 다음 뉴스 재생
-        if (!isShowing)
+        // 이미 바구니에 같은 내용의 알림이 있는지 확인
+        NewsData existing = pendingNews.Find(x => x.message == news);
+
+        if (existing != null)
         {
-            ShowNextNews();
+            // 중복이면 날짜최신 후 카운트만 +1 증가
+            existing.month = m;
+            existing.day = d;
+            existing.count++;
+        }
+        else
+        {
+            // 처음이면 추가
+            pendingNews.Add(new NewsData { message = news, month = m, day = d, count = 1 });
+        }
+    }
+
+    private void LateUpdate()
+    {
+        if (pendingNews.Count > 0)
+        {
+            List<string> lines = new List<string>();
+
+            foreach (var n in pendingNews)
+            {
+                string line = $"[{n.month}월 {n.day}일]: {n.message}";
+
+                // 중복이면 끝에 곱하기 추가
+                if (n.count > 1)
+                {
+                    line += $" x{n.count}";
+                }
+                lines.Add(line);
+            }
+
+            string finalBlock = string.Join("\n", lines); // 줄 합치기
+
+            // 완성된 목록을 큐에 등록
+            newsQueue.Enqueue(finalBlock);
+            pendingNews.Clear();
+
+            // 출력이 쉬고 있다면 재생 시작
+            if (!isShowing)
+            {
+                ShowNextNews();
+            }
         }
     }
 

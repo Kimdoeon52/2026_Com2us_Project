@@ -61,6 +61,14 @@ public class ShapeRenderer : MonoBehaviour
         if (_image != null && _blockPrefab != null)
             _image.enabled = false;
 
+        // 블록이 없으면 외곽을 단색으로. 재사용 시 이전 이미지가 남지 않게 비운다
+        if (_image != null && _blockPrefab == null)
+        {
+            _image.enabled = true;
+            _image.sprite = null;
+            _image.color = color;
+        }
+
         if (_blockPrefab == null || shape == null)
             return;
 

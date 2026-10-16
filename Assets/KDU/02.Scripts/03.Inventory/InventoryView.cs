@@ -137,10 +137,6 @@ public class InventoryView : MonoBehaviour
         if (rect.TryGetComponent(out ShapeRenderer shape))
             shape.Draw(entry.Shape, entry.Definition != null ? entry.Definition.Sprite : null, _cellSize, _partsColor);
 
-        var label = rect.GetComponentInChildren<TMP_Text>();
-        if (label != null)
-            label.text = entry.Definition != null ? entry.Definition.DisplayName : string.Empty;
-
         return rect;
     }
 

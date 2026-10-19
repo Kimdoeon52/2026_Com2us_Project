@@ -151,7 +151,7 @@ namespace RealSteel.Build
 
         // 매 프레임 바뀌지 않는 값 (Build 시작에 계산)
         Vector2 windLocal;
-        float gustNow, timeNow;
+        float gustNow, timeNow, originAlong;
 
         void OnEnable()
         {
@@ -245,7 +245,8 @@ namespace RealSteel.Build
         /// <summary>바람 물결 (-1 ~ 1 근처)</summary>
         float Wave(float x, float z, float phase)
         {
-            float along = x * windLocal.x + z * windLocal.y;
+            // 월드 기준으로 이어지게 — 여러 천막에 같은 바람 물결이 차례로 지나간다
+            float along = x * windLocal.x + z * windLocal.y + originAlong;
             float wl = Mathf.Max(.25f, waveLength);
             float a = Mathf.Sin(2f * Mathf.PI * (along / wl - timeNow * windSpeed) + phase);
             float b = Mathf.Sin(2f * Mathf.PI * (along / (wl * .37f) - timeNow * windSpeed * 2.3f) + phase * 1.7f + 1.3f);
@@ -288,7 +289,11 @@ namespace RealSteel.Build
             timeNow = t + seed * 3.17f;
             float ang = (windAngle - transform.eulerAngles.y) * Mathf.Deg2Rad;
             windLocal = new Vector2(Mathf.Sin(ang), Mathf.Cos(ang));
-            gustNow = gust * (Mathf.PerlinNoise(timeNow * .35f, seed * 1.31f + .5f) - .5f) * 2f;
+            float wa = windAngle * Mathf.Deg2Rad;
+            var wp = transform.position;
+            originAlong = wp.x * Mathf.Sin(wa) + wp.z * Mathf.Cos(wa);
+            // 돌풍도 바람 방향으로 흘러가게 (바람 위쪽 천막이 먼저 흔들림)
+            gustNow = gust * (Mathf.PerlinNoise(timeNow * .35f - originAlong * .04f, 1.31f + seed * .07f) - .5f) * 2f;
 
             verts.Clear(); uvs.Clear(); trisCloth.Clear(); trisPole.Clear();
 

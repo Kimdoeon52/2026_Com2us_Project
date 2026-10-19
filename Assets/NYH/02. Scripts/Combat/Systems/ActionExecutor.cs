@@ -65,6 +65,8 @@ public class ActionExecutor : MonoBehaviour
     /// </summary>
     public event Action<HitResolutionResult> OnDamaged;
 
+    public event Action<ActionData, int> OnCylinderSpent; // 2026-10-20추가
+
     // 호출: PlayerRobotBootstrap.Awake. 받음: 입력원(사람인지 AI인지 몰라도 되게 인터페이스로 받는다), fighterId(CombatDataHub 조회 키)
     // (2026-09-29: 가드가 기동 행동에서 삭제되면서 방향 기반 가드 판정용으로 받던 mover 파라미터는 더 이상 필요 없어 제거함 — CLAUDE_1.md §5·§15)
     public void Init(IInputSource source, string fighterId)
@@ -438,6 +440,7 @@ public class ActionExecutor : MonoBehaviour
             Debug.Log($"[ActionExecutor] {FighterId}: '{action.ActionName}' 실린더 소모 없음");
             return;
         }
+        OnCylinderSpent?.Invoke(action, cost);   // 2026-10-20추가
 
         var hub = CombatDataHub.Instance;
         if (hub == null || !hub.TrySpendCylinder(FighterId, cost))

@@ -14,8 +14,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "NYH/Combat/BoostShot Action Data", fileName = "NewBoostShotActionData")]
 public class BoostShotActionData : ActionData
 {
-    [Header("부채꼴 산탄")]
-    [SerializeField] private BoostShotSettings fan = BoostShotSettings.BoosterNormal;
+    private BoostShotSettings fan = BoostShotSettings.BoosterNormal;
 
     // 계산 결과 캐시. 에셋은 불변 데이터이므로 한 번 만들면 값이 바뀌기 전까지 재사용한다 (GetActiveBoxes가 매 틱 불리므로)
     [System.NonSerialized] private FrameBox[] cache;

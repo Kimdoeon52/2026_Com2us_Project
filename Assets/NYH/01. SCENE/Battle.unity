@@ -772,93 +772,6 @@ MonoBehaviour:
   takenColor: {r: 1, g: 1, b: 1, a: 1}
   dealtColor: {r: 1, g: 1, b: 1, a: 1}
   missColor: {r: 1, g: 0.912394, b: 0, a: 1}
---- !u!1 &330939904
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 330939905}
-  - component: {fileID: 330939906}
-  m_Layer: 0
-  m_Name: Drone
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &330939905
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330939904}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0.70973223, y: 0.7044716, z: -0, w: 0}
-  m_LocalPosition: {x: 0.016, y: 0.595, z: -0.10000001}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1270632114}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: -90.426}
---- !u!212 &330939906
-SpriteRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 330939904}
-  m_Enabled: 1
-  m_CastShadows: 0
-  m_ReceiveShadows: 0
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 0
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 1
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 0
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: d38fbb46f499e5d4a88e8ae72650223d, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_FlipX: 0
-  m_FlipY: 0
-  m_DrawMode: 0
-  m_Size: {x: 0.32, y: 0.32}
-  m_AdaptiveModeThreshold: 0.5
-  m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
-  m_MaskInteraction: 0
-  m_SpriteSortPoint: 0
 --- !u!1 &688707214
 GameObject:
   m_ObjectHideFlags: 0
@@ -1546,6 +1459,7 @@ GameObject:
   - component: {fileID: 1270632122}
   - component: {fileID: 1270632123}
   - component: {fileID: 1270632124}
+  - component: {fileID: 1270632125}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1621,7 +1535,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 330939905}
+  - {fileID: 7579457771377214305}
   - {fileID: 1932992770}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1685,7 +1599,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   basicAttack: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
   leftArmSkill: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  leftArmSkillCharged: {fileID: 0}
+  leftArmSkillCharged: {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
   rightArmSkill: {fileID: 0}
   rightArmSkillCharged: {fileID: 0}
   leftLegSkill: {fileID: 0}
@@ -1844,6 +1758,68 @@ MonoBehaviour:
   takenColor: {r: 1, g: 1, b: 1, a: 1}
   dealtColor: {r: 1, g: 1, b: 1, a: 1}
   missColor: {r: 1, g: 0.8874772, b: 0.11792451, a: 1}
+--- !u!114 &1270632125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270632112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e39a7683bcbbad48a03df16e9aed3d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
+  prewarmCount: 4
+  orbitGroups:
+  - centerOffset: {x: 0, y: 0.45, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 0, y: 0, z: 25}
+    speedDeg: 120
+    clockwise: 0
+    phaseOffsetDeg: 0
+  - centerOffset: {x: 0, y: 0.48, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 0, y: 0, z: -25}
+    speedDeg: 90
+    clockwise: 1
+    phaseOffsetDeg: 120
+  - centerOffset: {x: 0, y: 0.44, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 60, y: 0, z: 0}
+    speedDeg: 150
+    clockwise: 0
+    phaseOffsetDeg: 240
+  orbitSmoothTime: 0.08
+  spawnOffset: {x: 0, y: 1.6, z: 0}
+  fallbackLocalTarget: {x: 1.2, y: 1.2}
+  multiDroneSpacing: 0.35
+  attackZOffset: -0.1
+  attackMoveCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 2.5
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1328636925
 GameObject:
   m_ObjectHideFlags: 0
@@ -2489,6 +2465,93 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
+--- !u!212 &2144651876340049377
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4017904133951291526}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 21300000, guid: d38fbb46f499e5d4a88e8ae72650223d, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.32, y: 0.32}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
+--- !u!1 &4017904133951291526
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7579457771377214305}
+  - component: {fileID: 2144651876340049377}
+  m_Layer: 0
+  m_Name: Drone
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7579457771377214305
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4017904133951291526}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0.70973223, y: 0.7044716, z: -0, w: 0}
+  m_LocalPosition: {x: 0.016, y: 0.595, z: -0.10000001}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1270632114}
+  m_LocalEulerAnglesHint: {x: 0, y: 180, z: -90.426}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

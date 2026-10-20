@@ -26,7 +26,7 @@ public class FistAuctionMode : IAuctionMode
         foreach (var ai in participants) // 참가한 Ai들 루틴 
         {
             if (ai == null || ai.IsGiveUp) continue; // ai 포기 한 상태는 무시
-
+            ai.ShowThinkChat();
             // AI 성격/보유 자금 기반 단 1회 가치 산정
             int aiBid = CalculateAiFistBid(ai, stuff.Cost); // 각 ai가 얼마를 걸엇는지 aiBid에 넣기
             

@@ -28,7 +28,7 @@ public class SystemUiOnOffManager : MonoBehaviour
             }
         }
 
-        else if (Input.GetKeyDown(KeyCode.C))
+        else if (Input.GetKeyDown(KeyCode.O))
         {
             if (isCalendarActive)
             {

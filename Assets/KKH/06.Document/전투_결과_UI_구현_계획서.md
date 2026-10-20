@@ -61,7 +61,7 @@ public static event Action<bool, string, BattleSettlementResult> OnBattleFinishe
    - 5개 부위 파츠의 잔여 내구도 슬롯이 좌측부터 순차 등장(`DOFade`).
    - 패배 시 영구 파괴 부품이 존재할 경우 붉은색 경고 점멸 연출.
 4. **[Phase 4] 1.5s 이후 (인터랙션 버튼 활성화)**:
-   - `[거점으로 복귀]`, `[재도전]` 버튼이 팝업되며 클릭 가능 상태로 전환.
+   - `[기지로 귀환]` 버튼이 팝업되며 클릭 가능 상태로 전환 (재도전은 기획 변경으로 제거).
 
 ---
 
@@ -119,10 +119,8 @@ Canvas (우클릭 > UI > Canvas)
             │                 └── DestroyedWarningText (우클릭 > UI > Text - TextMeshPro)
             │                     [컴포넌트: TextMeshPro - Text (UI)]
             └── ButtonGroup (우클릭 > Create Empty)
-                [컴포넌트: RectTransform, Horizontal Layout Group]
-                  ├── Btn_ReturnBase (우클릭 > UI > Button - TextMeshPro)
-                  │   [컴포넌트: RectTransform, Image, Button, 자식 Text (TMP)]
-                  └── Btn_Retry (우클릭 > UI > Button - TextMeshPro)
+                [컴포넌트: RectTransform]
+                  └── Btn_ReturnBase (우클릭 > UI > Button - TextMeshPro)
                       [컴포넌트: RectTransform, Image, Button, 자식 Text (TMP)]
 ```
 
@@ -175,12 +173,11 @@ Canvas (우클릭 > UI > Canvas)
 | **WarningGroup** | RightSection 우클릭 ➔ `UI > Image` | `RectTransform`<br>`Image` | • Width: `430`, Height: `65`<br>• Image Color: `#381010` (다크 레드 경고창) |
 | **DestroyedWarningText** | WarningGroup 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Anchor: `Stretch - Stretch`<br>• Font Size: `15`, Font Style: `Bold`<br>• Color: `#FF4D4D`, Alignment: `Center/Middle`<br>• Wrapping: `Enabled` |
 
-### 5.6 하단 인터랙션 버튼 그룹 (`ButtonGroup`)
+### 5.6 하단 인터랙션 버튼 (`ButtonGroup`)
 | 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
 |---|---|---|---|
-| **ButtonGroup** | WindowFrame 우클릭 ➔ `Create Empty` | `RectTransform`<br>`HorizontalLayoutGroup` | • Anchor: `Bottom - Center`, PosY: `45`<br>• Width: `900`, Height: `65`<br>• Spacing: `40`, Child Alignment: `Middle Center`<br>• Child Force Expand: `Width/Height 둘 다 OFF` |
-| **Btn_ReturnBase** | ButtonGroup 우클릭 ➔ `UI > Button - TextMeshPro` | `Button`<br>`Image`<br>자식 `TextMeshProUGUI` | • Width: `230`, Height: `50`<br>• Normal Color: `#233244`, Highlighted: `#33465E`<br>• 자식 Text: `"거점(로비) 복귀"`, Font Size: `20`, Bold |
-| **Btn_Retry** | ButtonGroup 우클릭 ➔ `UI > Button - TextMeshPro` | `Button`<br>`Image`<br>자식 `TextMeshProUGUI` | • Width: `230`, Height: `50`<br>• Normal Color: `#17483C`, Highlighted: `#226353`<br>• 자식 Text: `"전투 재도전"`, Font Size: `20`, Bold |
+| **ButtonGroup** | WindowFrame 우클릭 ➔ `Create Empty` | `RectTransform` | • Anchor: `Bottom - Center`, PosY: `45`<br>• Width: `400`, Height: `65` |
+| **Btn_ReturnBase** | ButtonGroup 우클릭 ➔ `UI > Button - TextMeshPro` | `Button`<br>`Image`<br>자식 `TextMeshProUGUI` | • Anchor: `Middle - Center`, Width: `320`, Height: `52`<br>• Normal Color: `#233244`, Highlighted: `#33465E`<br>• 자식 Text: `"기지로 귀환"`, Font Size: `22`, Bold |
 
 ---
 
@@ -204,7 +201,6 @@ Canvas (우클릭 > UI > Canvas)
 | `destroyedWarningText` | `DestroyedWarningText` | `TextMeshProUGUI` |
 | `destroyedWarningPanel` | `WarningGroup` | `GameObject` |
 | `btnReturnBase` | `Btn_ReturnBase` | `Button` |
-| `btnRetry` | `Btn_Retry` | `Button` |
 | `lobbySceneName` | `"Lobby"` | `string` |
 
 ---
@@ -248,5 +244,4 @@ Canvas (우클릭 > UI > Canvas)
      - 코어 상태 `<color=red>● 코어 불안정 (Unstable)</color>` 확인
      - 붉은색 경고 패널: `[경고] 영구 파손된 부품 소멸: PART_ARM_L_01` 정상 노출 확인
 3. **버튼 인터랙션 검증**:
-   - `[재도전]` 클릭 시 현재 씬이 즉시 리로드되는지 확인.
-   - `[거점 복귀]` 클릭 시 콘솔 안내 및 씬 전환 정상 작동 확인.
+   - `[기지로 귀환]` 클릭 시 콘솔 안내 및 거점(Lobby) 씬 전환 정상 작동 확인.

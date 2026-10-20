@@ -44,7 +44,6 @@ namespace RealSteel.UI
 
         [Header("=== 인터랙션 버튼 ===")]
         [SerializeField] private Button btnReturnBase;
-        [SerializeField] private Button btnRetry;
         [SerializeField] private string lobbySceneName = "Lobby";
 
         [Header("=== 연출 타이밍 설정 ===")]
@@ -64,7 +63,6 @@ namespace RealSteel.UI
 
             // 버튼 리스너 바인딩
             if (btnReturnBase != null) btnReturnBase.onClick.AddListener(OnClickReturnToBase);
-            if (btnRetry != null) btnRetry.onClick.AddListener(OnClickRetry);
 
             // 시작 시 화면에서 숨김 (단, GameObject 본체를 끄면 OnDisable로 이벤트 수신이 끊기므로 CanvasGroup 또는 자식 패널로 숨김)
             HidePanel();
@@ -334,7 +332,6 @@ namespace RealSteel.UI
 
             // 5. 버튼 인터랙션 활성화
             if (btnReturnBase != null) btnReturnBase.interactable = true;
-            if (btnRetry != null) btnRetry.interactable = true;
         }
 
         /// <summary>
@@ -352,16 +349,6 @@ namespace RealSteel.UI
                 Debug.LogWarning($"[BattleResultUI] '{lobbySceneName}' 씬이 Build Settings에 등록되지 않아 현재 씬을 유지합니다.");
                 if (resultPanelRoot != null) resultPanelRoot.SetActive(false);
             }
-        }
-
-        /// <summary>
-        /// [재도전] 버튼 클릭 처리 (현재 씬 리로드)
-        /// </summary>
-        public void OnClickRetry()
-        {
-            string currentSceneName = SceneManager.GetActiveScene().name;
-            Debug.Log($"<color=yellow>[BattleResultUI] 재도전 클릭: 현재 씬('{currentSceneName}')을 재시작합니다.</color>");
-            SceneManager.LoadScene(currentSceneName);
         }
 
         // ========================================================================
@@ -414,16 +401,10 @@ namespace RealSteel.UI
             GUILayout.Label($"<size=11><i>{_currentSettlement.SummaryMessage}</i></size>");
             GUILayout.FlexibleSpace();
 
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button("거점 복귀", GUILayout.Height(35)))
+            if (GUILayout.Button("기지로 귀환", GUILayout.Height(40)))
             {
                 OnClickReturnToBase();
             }
-            if (GUILayout.Button("재도전", GUILayout.Height(35)))
-            {
-                OnClickRetry();
-            }
-            GUILayout.EndHorizontal();
 
             GUILayout.EndArea();
         }

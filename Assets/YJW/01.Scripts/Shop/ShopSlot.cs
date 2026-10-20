@@ -23,20 +23,24 @@ public class ShopSlot : MonoBehaviour
         _name.text = name;
         _grade.text = grade.ToString();
         _icon.sprite = icon;
+        int disGold = 0;
         switch(grade)
         {
             case PartGrade.Common:
-                _cost.text = ((cost * 35 + 50)/100).ToString();
+                disGold = (cost * 35 + 50) / 100;
+                _cost.text = disGold.ToString();
                 break;
             case PartGrade.Rare:
-                _cost.text = ((cost * 30 + 50) / 100).ToString();
+                disGold = (cost * 30 + 50) / 100;
+                _cost.text = disGold.ToString();
                 break;
             case PartGrade.Epic:
-                _cost.text = ((cost * 20 + 50) / 100).ToString();
+                disGold = (cost * 20 + 50) / 100;
+                _cost.text = disGold.ToString();
                 break;
         }
         _part = part;
-        Gold = cost;
+        Gold = disGold;
     }
 
     bool hasPart(PartsDefinition part)

@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using Newtonsoft.Json.Converters;
 using NUnit.Framework;
 using System.Collections.Generic;
 using TMPro;
@@ -114,6 +115,9 @@ public class Auction : PersistentSingleton<Auction>
     [SerializeField] public Button normalModeButton;
     [SerializeField] public Button fistModeButton;
 
+    //===================================경매 탈출 버튼===================
+    [SerializeField] private Button getOutAuction;
+
     private UniTaskCompletionSource<AuctionType> modeSelectTcs;
     //===============================ai 슬롯 위치====================
     [Header("AI 슬롯")]
@@ -217,6 +221,7 @@ public class Auction : PersistentSingleton<Auction>
         BindButton(fistSubmitButton, OnSubmitFistBid);
         BindButton(raiseButton, OnRaiseButton);
         BindButton(giveUpButton, GiveUpButton);
+        BindButton(getOutAuction, OnGGAuction);
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
         EnableFistAuctionUI(false);
@@ -264,8 +269,7 @@ public class Auction : PersistentSingleton<Auction>
             await StartAuction();
         }
 
-        await UniTask.Delay(1000);
-        MoveToNextScene();
+        MoveToNextScene(1000).Forget();
     }
 
     // 회차 시작 전 물품/참가자/상태 초기화
@@ -296,8 +300,9 @@ public class Auction : PersistentSingleton<Auction>
     }
 
     // 모든 경매가 끝난 뒤 씬 이동. nextSceneName이 비어 있으면 이동하지 않음
-    private void MoveToNextScene()
+    private async UniTask MoveToNextScene(int waitDelay)
     {
+        await UniTask.Delay(waitDelay);
         if (string.IsNullOrWhiteSpace(nextSceneName))
         {
             Debug.Log("[Auction] 모든 경매 종료. 이동할 씬이 지정되지 않아 이동하지 않음.");
@@ -678,6 +683,11 @@ public class Auction : PersistentSingleton<Auction>
         {
             ShowErrorMessage("골드가 부족합니다.").Forget();
         }
+    }
+    public void OnGGAuction() //경매 자체 포기
+    {
+        ShowErrorMessage("경매를 나갑니다.").Forget();
+        MoveToNextScene(2000).Forget();
     }
     //================================Canvas에 AI 설치 =======================
     private void SpawnAndPositionAi()

@@ -24,11 +24,11 @@ public class GameSceneManager : PersistentSingleton<GameSceneManager>
     [SerializeField]
     private SceneShortcut[] _shortcuts =
     {
-        new SceneShortcut(KeyCode.F1, "Map_Test"),
-        new SceneShortcut(KeyCode.F2, "UiTest"),
-        new SceneShortcut(KeyCode.F3, "Auction"),
-        new SceneShortcut(KeyCode.F4, "JunkShop"),
-        new SceneShortcut(KeyCode.F5, "Battle"),
+        new SceneShortcut(KeyCode.F1, "Copys_1020/Map_Test"),
+        new SceneShortcut(KeyCode.F2, "Copys_1020/Tester"),
+        new SceneShortcut(KeyCode.F3, "Copys_1020/Battle"),
+        new SceneShortcut(KeyCode.F4, "Copys_1020/BattingTest"),
+        new SceneShortcut(KeyCode.F5, "Copys_1020/JunkShop_22"),
     };
 
     [SerializeField]

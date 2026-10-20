@@ -48,14 +48,15 @@ public class IsoMapSystemManager : MonoBehaviour
             return;
         }
 
+        int layerMask = 1 << LayerMask.NameToLayer("Map"); // 맵만 적중용 마스크
+
         Ray ray = mapCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, 1000f))
+        if (Physics.Raycast(ray, out hit, 1000f, layerMask))
         {
             // 광선에 맞은 오브젝트의 부모에게서 MapElement3D를 찾음
             MapElement3D hitElement = hit.collider.GetComponentInParent<MapElement3D>();
-
             if (hitElement != null) // 건물을 가리킴
             {
                 if (currentHoveredElement != hitElement) // 새로운 건물에 마우스를 올렸다면

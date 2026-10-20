@@ -130,7 +130,7 @@ GameObject:
   - component: {fileID: 4379066}
   - component: {fileID: 4379068}
   - component: {fileID: 4379067}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -266,6 +266,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 1549295959b8263448b753a023c6b310, type: 3}
       propertyPath: m_Name
       value: detail-barrier-strong-damaged
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1549295959b8263448b753a023c6b310, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -482,6 +486,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-f
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b2642eeb697f2fb46809f398ab6831b2, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -543,6 +551,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: db3b09e7e1ac9fd458d7c14f52256985, type: 3}
       propertyPath: m_Name
       value: building-skyscraper-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: db3b09e7e1ac9fd458d7c14f52256985, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -758,6 +770,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8e98683a57095ab4db63b704d6e575cd, type: 3}
       propertyPath: m_Name
       value: patch-grass-large
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8e98683a57095ab4db63b704d6e575cd, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1143,7 +1159,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 80633694}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 3dMap
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1159,15 +1175,14 @@ Transform:
   m_GameObject: {fileID: 80633693}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -960, y: -540, z: 0}
+  m_LocalPosition: {x: 0, y: 500, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 584794396}
+  - {fileID: 1196459055}
   - {fileID: 328331730}
-  - {fileID: 134419934}
-  - {fileID: 1934250585}
-  m_Father: {fileID: 447564910}
+  m_Father: {fileID: 1105590550}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &95006537
 PrefabInstance:
@@ -1220,6 +1235,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b9453acc374c34443a8e210926d9ecae, type: 3}
       propertyPath: m_Name
       value: detail-cables-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b9453acc374c34443a8e210926d9ecae, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1282,6 +1301,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: d44f5a24fa20e624ab41896964196c08, type: 3}
       propertyPath: m_Name
       value: building-m
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d44f5a24fa20e624ab41896964196c08, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1575,13 +1598,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 134419933}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -960, y: -530, z: -50}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 453362759}
-  m_Father: {fileID: 80633694}
+  m_Father: {fileID: 447564910}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &134419935
 MonoBehaviour:
@@ -1623,7 +1646,7 @@ GameObject:
   - component: {fileID: 160807655}
   - component: {fileID: 160807654}
   - component: {fileID: 160807653}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2057,6 +2080,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: truck-flat
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 237af542ba9f1894293bcb77f9a7cbec, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2078,7 +2105,7 @@ GameObject:
   - component: {fileID: 199018319}
   - component: {fileID: 199018321}
   - component: {fileID: 199018320}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -2214,6 +2241,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: grass
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a875bbdb22ada7840a36071fec65d2cc, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2275,6 +2306,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 673c8d15f0ddb884580138e54e0e868e, type: 3}
       propertyPath: m_Name
       value: building-type-j
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 673c8d15f0ddb884580138e54e0e868e, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2413,6 +2448,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-h
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 35b56a08e6a8c2b4cb6e63ab7f8303b5, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2474,6 +2513,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e46582c4616966c4e896f2d4db015363, type: 3}
       propertyPath: m_Name
       value: detail-light-double
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e46582c4616966c4e896f2d4db015363, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2537,6 +2580,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-c
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: dc749b67076599c4bb4fee600700286d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2598,6 +2645,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: cefe5b7ec8d94704db2985ef718dde7f, type: 3}
       propertyPath: m_Name
       value: metal-panel-screws-narrow
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cefe5b7ec8d94704db2985ef718dde7f, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -2798,6 +2849,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: box-open
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 82c86af5112b62546a2b3e4cf835a91c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -2859,6 +2914,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b484e8decfa631647958e62e1c99617c, type: 3}
       propertyPath: m_Name
       value: scaffolding-floor
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b484e8decfa631647958e62e1c99617c, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3075,6 +3134,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-i
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cf3f9df1db1264144a6343f689258cb7, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3094,7 +3157,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 328331730}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Group
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3458,6 +3521,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: scaffolding-poles
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a13e8eefdac1816488edab9d7cc2fd02, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3519,6 +3586,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f96b35bdcde15fa4395371cd57458bf8, type: 3}
       propertyPath: m_Name
       value: building-d
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f96b35bdcde15fa4395371cd57458bf8, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3582,6 +3653,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-f
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8c244efcbc6be1841bce997ac762e591, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3643,6 +3718,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f82470979f484754b82d579e306dd232, type: 3}
       propertyPath: m_Name
       value: barrel
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f82470979f484754b82d579e306dd232, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -3706,6 +3785,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-q
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 3de0aa57e829d044abac1e509ebdf136, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3727,7 +3810,7 @@ GameObject:
   - component: {fileID: 364273924}
   - component: {fileID: 364273926}
   - component: {fileID: 364273925}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -3862,6 +3945,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: door-type-a
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 93ba54fc7cf31424ebd0572ca11b381d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3884,7 +3971,7 @@ GameObject:
   - component: {fileID: 372310694}
   - component: {fileID: 372310693}
   - component: {fileID: 372310692}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4031,6 +4118,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: dba17284f077c524580c1e1771cbf0b2, type: 3}
       propertyPath: m_Name
       value: building-skyscraper-c
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: dba17284f077c524580c1e1771cbf0b2, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4191,7 +4282,7 @@ GameObject:
   - component: {fileID: 383343741}
   - component: {fileID: 383343740}
   - component: {fileID: 383343739}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4339,6 +4430,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-g
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b3234389a7effac40a3a585f2c21f83b, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4361,7 +4456,7 @@ GameObject:
   - component: {fileID: 397381290}
   - component: {fileID: 397381289}
   - component: {fileID: 397381288}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4508,6 +4603,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a9f0ae7dc3b70be47870ce7eb0f6b018, type: 3}
       propertyPath: m_Name
       value: building-n
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a9f0ae7dc3b70be47870ce7eb0f6b018, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4708,6 +4807,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: balcony-ladder-top
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4cd00de6e38823e4a8cc3ae3a0dc47f2, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4749,7 +4852,8 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 80633694}
+  - {fileID: 134419934}
+  - {fileID: 1934250585}
   m_Father: {fileID: 1105590550}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5215,6 +5319,62 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8206762599659303256, guid: 64ae0e23948972b4b92988ccbfef86d0, type: 3}
   m_PrefabInstance: {fileID: 470570661}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &496372409
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 496372411}
+  - component: {fileID: 496372410}
+  m_Layer: 0
+  m_Name: GameSceneManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &496372410
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496372409}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 11240baa579337e4f82dd56ef46ba752, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _shortcuts:
+  - Key: 282
+    SceneName: Map_Test
+  - Key: 283
+    SceneName: UiTest
+  - Key: 284
+    SceneName: Auction
+  - Key: 285
+    SceneName: JunkShop
+  - Key: 286
+    SceneName: Battle
+  _shortcutEnabled: 1
+--- !u!4 &496372411
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 496372409}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -14.214611, y: 387.20605, z: -56.5083}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &501855294
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5266,6 +5426,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: aea8fcbe2a1425b4896c1c71107ad7a9, type: 3}
       propertyPath: m_Name
       value: metal-panel
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: aea8fcbe2a1425b4896c1c71107ad7a9, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5329,6 +5493,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-k
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2f80b67d2a80a814e9a1c82878f2f73c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5391,6 +5559,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: resource-planks
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1bcd452a253917049af2643c647120bb, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5413,7 +5585,7 @@ GameObject:
   - component: {fileID: 533491061}
   - component: {fileID: 533491060}
   - component: {fileID: 533491059}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5561,6 +5733,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-k
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d3bbf6e3499801f4099a1fc344f8ef42, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5622,6 +5798,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 708a68355b6469a408b02333c471bbb6, type: 3}
       propertyPath: m_Name
       value: detail-awning-wide
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 708a68355b6469a408b02333c471bbb6, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5724,6 +5904,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-t
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c9b0dfd8cd2b23d45bcf79fc98a2e80b, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5785,6 +5969,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a3b64398d303470469d97d4f6ce89ba6, type: 3}
       propertyPath: m_Name
       value: detail-block
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a3b64398d303470469d97d4f6ce89ba6, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -5848,6 +6036,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-a
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2b84259f2fed89d46b3f0baa56be47d4, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5910,6 +6102,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: bucket
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d800a5bb02656dd41a9fc99868c58c54, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -5932,7 +6128,7 @@ GameObject:
   - component: {fileID: 584794399}
   - component: {fileID: 584794398}
   - component: {fileID: 584794397}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: BasePlane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -5986,8 +6182,8 @@ MeshRenderer:
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
+  m_DynamicOccludee: 0
+  m_StaticShadowCaster: 1
   m_MotionVectors: 1
   m_LightProbeUsage: 1
   m_ReflectionProbeUsage: 1
@@ -5999,7 +6195,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 61697f6b2a6443f45ac264b7f2aca5a0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6080,6 +6276,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 55f4c6aaccfd6c54b80064f7b2b08cc5, type: 3}
       propertyPath: m_Name
       value: building-type-t
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 55f4c6aaccfd6c54b80064f7b2b08cc5, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6256,7 +6456,7 @@ GameObject:
   - component: {fileID: 621177981}
   - component: {fileID: 621177980}
   - component: {fileID: 621177979}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -6404,6 +6604,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: detail-light-single
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5ecd8c2aebd7bd2488593b948b6f6e1f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6465,6 +6669,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: ccec219362044de4bb4904ef440364c0, type: 3}
       propertyPath: m_Name
       value: detail-light-traffic
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ccec219362044de4bb4904ef440364c0, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6528,6 +6736,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-o
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 61fdd7dd3888f4b43bc14518befcca7d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6590,6 +6802,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: metal-panel-narrow
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d46c01ac0c7c5f846b90cfc4eb8adfe5, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6651,6 +6867,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: f4a9b3c813e7f374683069390413577a, type: 3}
       propertyPath: m_Name
       value: detail-awning-small
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f4a9b3c813e7f374683069390413577a, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -6882,6 +7102,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-u
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d0b9c8b66e2bf544ea48a391abc42c11, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -6944,6 +7168,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-r
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a398c38575d06024f95450aacc56576f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7005,6 +7233,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 12e3f65dd0a9e4f45914b8bbeed390bc, type: 3}
       propertyPath: m_Name
       value: pallet-small
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 12e3f65dd0a9e4f45914b8bbeed390bc, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7221,6 +7453,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-m
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ed69fac773821fb4ca7c14eb29b35d2b, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7282,6 +7518,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a05d4695e717973409f549ce9e553b55, type: 3}
       propertyPath: m_Name
       value: roof-metal-poles
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a05d4695e717973409f549ce9e553b55, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7345,6 +7585,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-i
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 10815b76e41df724db6ed8f2f16b9956, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7406,6 +7650,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b919422aa5c541e4197f2ca29222bc27, type: 3}
       propertyPath: m_Name
       value: roof-metal-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b919422aa5c541e4197f2ca29222bc27, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7469,6 +7717,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: balcony-type-a
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ffb72c2395a69ab428cf219eb9f002d0, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7530,6 +7782,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 8a083ff874b0044429416397701d6f88, type: 3}
       propertyPath: m_Name
       value: detail-barrier-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8a083ff874b0044429416397701d6f88, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -7645,6 +7901,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-a
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7c7275fff48493245ba08b012c3568aa, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7707,6 +7967,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: road-dirt-center
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 90a928b0b55ea3d4ca747fc7f9954a85, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -7727,7 +7991,7 @@ GameObject:
   m_Component:
   - component: {fileID: 791138447}
   m_Layer: 0
-  m_Name: =======YJW(YJW)=======
+  m_Name: =======YJW(JunkShop_22)=======
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7760,7 +8024,7 @@ GameObject:
   - component: {fileID: 792340088}
   - component: {fileID: 792340087}
   - component: {fileID: 792340086}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -7908,6 +8172,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: campfire-pit
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c01114dd09f1c54489b064fc1e325f1b, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 3483068211074573027, guid: c01114dd09f1c54489b064fc1e325f1b, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8013,6 +8285,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 809967c3df62cf844bf8eac711efabee, type: 3}
       propertyPath: m_Name
       value: building-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 809967c3df62cf844bf8eac711efabee, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8304,6 +8580,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: detail-dumpster-closed
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d54bd355566c0f14f881d2f1df0fb94c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8366,6 +8646,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-sand-a
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d5407d2fb7260594595d43b04dfee202, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8388,7 +8672,7 @@ GameObject:
   - component: {fileID: 862994805}
   - component: {fileID: 862994804}
   - component: {fileID: 862994803}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -8536,6 +8820,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-e
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 349ee7af28d37e84498dab747730f29f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8598,6 +8886,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-p
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 885d340dc37cf014a8c59c0d81b9af0c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8659,6 +8951,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b67b7515da028694a80191d6ee6f0010, type: 3}
       propertyPath: m_Name
       value: truck-grey-cargo
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b67b7515da028694a80191d6ee6f0010, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -8875,6 +9171,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-n
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 06f780c2b40bd01499026dd3cd2d3caf, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -8936,6 +9236,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 0a4003c668e7671408d955d3800de49f, type: 3}
       propertyPath: m_Name
       value: building-s
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0a4003c668e7671408d955d3800de49f, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9136,6 +9440,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: box-large-open
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 6de23e1460e2c4f47b3e8a95040435c7, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9246,7 +9554,7 @@ GameObject:
   - component: {fileID: 964040893}
   - component: {fileID: 964040892}
   - component: {fileID: 964040891}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9393,6 +9701,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: d0518fc207e36b040bddfddfc584e0b2, type: 3}
       propertyPath: m_Name
       value: building-skyscraper-d
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d0518fc207e36b040bddfddfc584e0b2, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9593,6 +9905,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-skyscraper-e
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7b47236df7e1714479c5ad98b344d043, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9655,6 +9971,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-f
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f404cbcc224bbb14ea0c16187ce10bc6, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -9716,6 +10036,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: bf54322fb21b44243b6d8d7b921d16d8, type: 3}
       propertyPath: m_Name
       value: rock-flat-grass
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: bf54322fb21b44243b6d8d7b921d16d8, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9915,6 +10239,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: be8378668e085504f8b558add3000769, type: 3}
       propertyPath: m_Name
       value: building-k
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: be8378668e085504f8b558add3000769, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10235,6 +10563,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-skyscraper-b
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4db09cd523904a1498e4e70c6d208f35, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10408,7 +10740,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1105590550}
   m_Layer: 0
-  m_Name: Canvas
+  m_Name: Core
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10430,6 +10762,7 @@ Transform:
   - {fileID: 124164640}
   - {fileID: 1054155027}
   - {fileID: 447564910}
+  - {fileID: 80633694}
   m_Father: {fileID: 2031106828}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1113300371
@@ -10483,6 +10816,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: d839e4e24a3baf34db2ba5d464009f95, type: 3}
       propertyPath: m_Name
       value: building-type-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d839e4e24a3baf34db2ba5d464009f95, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10545,6 +10882,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 5a91a12bdedb0a243a95b4a750f4826a, type: 3}
       propertyPath: m_Name
       value: building-type-r
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5a91a12bdedb0a243a95b4a750f4826a, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -10745,6 +11086,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-n
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b3787a51710ff174c81407bdb5604a4c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10767,7 +11112,7 @@ GameObject:
   - component: {fileID: 1128161895}
   - component: {fileID: 1128161894}
   - component: {fileID: 1128161893}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10915,6 +11260,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: detail-beam
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c0d1f982a7bc08c4497c97343690e5f8, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -10976,6 +11325,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: b66711c0d87c0cf4fadf592a32da36eb, type: 3}
       propertyPath: m_Name
       value: building-h
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b66711c0d87c0cf4fadf592a32da36eb, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11065,6 +11418,115 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1354644887}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1196459054
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1196459055}
+  - component: {fileID: 1196459058}
+  - component: {fileID: 1196459057}
+  - component: {fileID: 1196459056}
+  m_Layer: 7
+  m_Name: BasePlane (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1196459055
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196459054}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.7, z: 0}
+  m_LocalScale: {x: 10, y: 1, z: 10}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 80633694}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!64 &1196459056
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196459054}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &1196459057
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196459054}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 0
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 77d067287fb28b7409b920737e9eb9ff, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!33 &1196459058
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1196459054}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1001 &1200059415
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -11116,6 +11578,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 65403814b50900245a55d221a6db7dd9, type: 3}
       propertyPath: m_Name
       value: building-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 65403814b50900245a55d221a6db7dd9, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11179,6 +11645,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-i
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d1daa51840e227f4e896f8e8897a017f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11240,6 +11710,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 2acc7499c613a8640ae4c02c070d61da, type: 3}
       propertyPath: m_Name
       value: building-e
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 2acc7499c613a8640ae4c02c070d61da, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11303,6 +11777,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: cliff-corner
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b37a531a1998c9840b71f1f0ad3e5b84, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11364,6 +11842,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: d84f2760dee36204bae7b5d29a5f199a, type: 3}
       propertyPath: m_Name
       value: building-l
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d84f2760dee36204bae7b5d29a5f199a, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -11643,6 +12125,10 @@ PrefabInstance:
       value: building-a
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 0befa6e1283377f4eae87a26caa21ab2, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 0befa6e1283377f4eae87a26caa21ab2, type: 3}
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
@@ -11708,6 +12194,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-sand-c
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 269f8ade1dbdb814ba08622e928b0515, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11770,6 +12260,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-p
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: fc78b9b78be20864a9fd4bf84aa0e45d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -11792,7 +12286,7 @@ GameObject:
   - component: {fileID: 1287958865}
   - component: {fileID: 1287958864}
   - component: {fileID: 1287958863}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -11900,7 +12394,7 @@ GameObject:
   - component: {fileID: 1292359921}
   - component: {fileID: 1292359920}
   - component: {fileID: 1292359919}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -12048,6 +12542,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: fence-fortified
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 567610b7efa6c674fbfd2e1ef48a0ebb, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12109,6 +12607,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e10287c8f3a566540aa736f5c5673224, type: 3}
       propertyPath: m_Name
       value: rock-sand-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e10287c8f3a566540aa736f5c5673224, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12237,6 +12739,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 1c942ee137f00d34096b2e711b0ac772, type: 3}
       propertyPath: m_Name
       value: planks
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1c942ee137f00d34096b2e711b0ac772, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12551,7 +13057,7 @@ Camera:
   m_Enabled: 1
   serializedVersion: 2
   m_ClearFlags: 2
-  m_BackGroundColor: {r: 0.3070488, g: 0.5048383, b: 0.5660378, a: 1}
+  m_BackGroundColor: {r: 0.3070488, g: 0.5048383, b: 0.5660378, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0
@@ -12580,7 +13086,7 @@ Camera:
   m_Depth: 10
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 160
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -12653,7 +13159,7 @@ Transform:
   m_GameObject: {fileID: 1375535091}
   serializedVersion: 2
   m_LocalRotation: {x: 0.24122144, y: -0.35008815, z: 0.093805864, w: 0.9002505}
-  m_LocalPosition: {x: 9, y: 8.5, z: -10}
+  m_LocalPosition: {x: 50.5, y: 544.5, z: -56}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12710,6 +13216,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 23616b7007aee39468723bbdc377db88, type: 3}
       propertyPath: m_Name
       value: building-g
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 23616b7007aee39468723bbdc377db88, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -12773,6 +13283,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: door-type-b
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: fc2aa18184c16094f9cb6f9a97a76607, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -12795,7 +13309,7 @@ GameObject:
   - component: {fileID: 1398894859}
   - component: {fileID: 1398894858}
   - component: {fileID: 1398894857}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (3)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13076,6 +13590,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-flat
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f4c6b2a2f29a93e45bc93c839cd26c09, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13137,6 +13655,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: adf15ea8d1489a145b70ff5d10f93fed, type: 3}
       propertyPath: m_Name
       value: wall-a-column-painted
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: adf15ea8d1489a145b70ff5d10f93fed, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13200,6 +13722,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-q
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4e61cc0059e35ec4799f6ec0636cd617, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13262,6 +13788,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: resource-stone-large
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f64b7f979ae264148bc8475f8ee25e39, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13323,6 +13853,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: e46de6501d379344cb014075e1579a9a, type: 3}
       propertyPath: m_Name
       value: detail-dumpster-open
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e46de6501d379344cb014075e1579a9a, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13417,6 +13951,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 4d35c8ea1fceef14bb34f637d14a62df, type: 3}
       propertyPath: m_Name
       value: box-large
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4d35c8ea1fceef14bb34f637d14a62df, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -13633,6 +14171,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-j
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c0858fe15f3b6b84db73a394adeb6f6e, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13655,7 +14197,7 @@ GameObject:
   - component: {fileID: 1545891680}
   - component: {fileID: 1545891679}
   - component: {fileID: 1545891678}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (4)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -13882,6 +14424,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-c
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e8941ebe3e939ba4f88c219a1865ae50, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -13943,6 +14489,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 49b2bcf65d4043f4fb4ce1f76cc2070d, type: 3}
       propertyPath: m_Name
       value: window-small-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 49b2bcf65d4043f4fb4ce1f76cc2070d, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -14006,6 +14556,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-l
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c36553e9fd84aab49a1e60dd84116e62, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14067,6 +14621,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a06bc863d6721f54c9e27555090fb366, type: 3}
       propertyPath: m_Name
       value: barrel-open
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a06bc863d6721f54c9e27555090fb366, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -14130,6 +14688,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: grass-large
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f74e4e0b39e82b449a6c32741c56a0de, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14152,7 +14714,7 @@ GameObject:
   - component: {fileID: 1585126219}
   - component: {fileID: 1585126218}
   - component: {fileID: 1585126217}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14300,6 +14862,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: scaffolding-structure
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: cb706e3b2549b874e9f781f299113ff1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14362,6 +14928,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-d
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7c2b212fba9fcc842a0360ae4a6bb4b1, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14383,7 +14953,7 @@ GameObject:
   - component: {fileID: 1597428245}
   - component: {fileID: 1597428247}
   - component: {fileID: 1597428246}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14721,6 +15291,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-j
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 58c895bb09ee2aa42ae7bc49db9d42c8, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -14743,7 +15317,7 @@ GameObject:
   - component: {fileID: 1617801055}
   - component: {fileID: 1617801054}
   - component: {fileID: 1617801053}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -14890,6 +15464,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: c214d94b616919149ad623d6647d691f, type: 3}
       propertyPath: m_Name
       value: building-type-d
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: c214d94b616919149ad623d6647d691f, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15106,6 +15684,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: detail-barrier-type-b
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4bffab92a630ad548b822d10d07308aa, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15321,6 +15903,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-o
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 484d8dda1ffb5034ba23e3a956f8dd94, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15382,6 +15968,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 148ab82ab085df54880ba1b1a70cb634, type: 3}
       propertyPath: m_Name
       value: detail-bricks-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 148ab82ab085df54880ba1b1a70cb634, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15445,6 +16035,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: box
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f608dd00ae7f0f945b0e595992e37f52, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15507,6 +16101,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: metal-panel-screws
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b987c0a160c77a0468058e405ff21533, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -15568,6 +16166,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 4fc3722c6600d1d448dd234c4a1df10d, type: 3}
       propertyPath: m_Name
       value: detail-barrier-strong-type-a
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 4fc3722c6600d1d448dd234c4a1df10d, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -15834,6 +16436,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-s
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 662a91c39c9a9bf48860526a1c6bf0d4, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16033,6 +16639,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-l
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 71b08b085d94c534381a21cc574fbf86, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16095,6 +16705,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-g
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 985024dd5e1db7145acd9b896c9db46d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16117,7 +16731,7 @@ GameObject:
   - component: {fileID: 1720842055}
   - component: {fileID: 1720842054}
   - component: {fileID: 1720842053}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -16334,6 +16948,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: floor-old
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: e2a35cbec03638a4f8686aa417c3be5d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16396,6 +17014,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: pallet
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: d0b28678cb6690b4592cb97211a8a6ed, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16457,6 +17079,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 041ee669c55b36842aacec0e8d8d7530, type: 3}
       propertyPath: m_Name
       value: detail-bench
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 041ee669c55b36842aacec0e8d8d7530, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -16657,6 +17283,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-m
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7ffeda060d648b447aa8d9bb2a031833, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16856,6 +17486,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-c
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1cbad8bc838bdf6439a2d567e9990dff, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -16878,7 +17512,7 @@ GameObject:
   - component: {fileID: 1873516796}
   - component: {fileID: 1873516795}
   - component: {fileID: 1873516794}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -17025,6 +17659,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: a71926e7f6f7eaf43858b394a188acd3, type: 3}
       propertyPath: m_Name
       value: detail-barrier-strong-type-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a71926e7f6f7eaf43858b394a188acd3, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -17546,6 +18184,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: balcony-ladder-bottom
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: ab73d8afe24eb7f4bb478e6ff3e960b9, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -17808,7 +18450,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1934250584}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: -50}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -17816,11 +18458,11 @@ RectTransform:
   - {fileID: 332978145}
   - {fileID: 2003888219}
   - {fileID: 939604159}
-  m_Father: {fileID: 80633694}
+  m_Father: {fileID: 447564910}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 960, y: 540}
+  m_AnchoredPosition: {x: 0, y: 10}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1001 &1942892435
@@ -17874,6 +18516,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 1816afde1d361db4c8e330458ad307bf, type: 3}
       propertyPath: m_Name
       value: truck-green-cargo
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1816afde1d361db4c8e330458ad307bf, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -17936,6 +18582,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 5dab89b6cc548144eaabf4d595dfb1c3, type: 3}
       propertyPath: m_Name
       value: cliff-side
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5dab89b6cc548144eaabf4d595dfb1c3, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18152,6 +18802,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-type-e
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 5dd23018cf289f04f8f58fb4d395609d, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -18254,7 +18908,7 @@ GameObject:
   - component: {fileID: 1991031226}
   - component: {fileID: 1991031225}
   - component: {fileID: 1991031224}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -18401,6 +19055,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 10d74cec471652947a6c71050593bf7a, type: 3}
       propertyPath: m_Name
       value: metal-panel-screws-half
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 10d74cec471652947a6c71050593bf7a, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18877,6 +19535,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: building-h
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 8943ae19f4bf6a348b2530245f457a6f, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -18938,6 +19600,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 524292f3dd0776e4d8d38ee54ee57495, type: 3}
       propertyPath: m_Name
       value: detail-cables-type-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 524292f3dd0776e4d8d38ee54ee57495, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19444,6 +20110,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-b
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a3835664f89d4794b8fc86990e47cab6, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -19505,6 +20175,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: df9f7723242592c4aab43ca60e09b5ec, type: 3}
       propertyPath: m_Name
       value: roof-metal-type-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: df9f7723242592c4aab43ca60e09b5ec, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -19720,6 +20394,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 91f2410b225ef8f4c9e7eee75686f70e, type: 3}
       propertyPath: m_Name
       value: building-b
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 91f2410b225ef8f4c9e7eee75686f70e, type: 3}
+      propertyPath: m_Layer
+      value: 7
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -20210,6 +20888,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: rock-c
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 491782734503b1240a5908cf136b8b3c, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -20281,7 +20963,7 @@ GameObject:
   - component: {fileID: 2140576456}
   - component: {fileID: 2140576455}
   - component: {fileID: 2140576454}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -20429,6 +21111,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: detail-bricks-type-b
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: a15a6324c913cce408e12b25d3176b82, type: 3}
+      propertyPath: m_Layer
+      value: 7
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -20524,3 +21210,4 @@ SceneRoots:
   - {fileID: 1903758966}
   - {fileID: 1987062709}
   - {fileID: 657260881}
+  - {fileID: 496372411}

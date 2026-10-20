@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// [전투 데이터 & 보스 시스템 종합 통합 테스트 러너 (CombatDataHubTester)]
-/// v5.6 아키텍처 및 리팩토링된 모든 백엔드 로직(코어 성장, 실린더, 보스 범용 기믹,
-/// 1:1 대전 모드 이원화, 기획서 승패 정산 및 기본 파츠 제외)을 콘솔 로그로 자동 검증함.
+/// [레거시 아카이브] 초기 전투 데이터 & 보스 시스템 수치 검증용 단위 테스트 러너 (CombatDataHubTester)
+/// 초기 검증 완료 후 99.Legacy 폴더로 아카이브 격리됨.
 /// </summary>
+[System.Obsolete("초기 백엔드 단위 테스트 완료 후 레거시 보관 처리된 스크립트입니다.")]
 public class CombatDataHubTester : MonoBehaviour
 {
     [Header("테스트 실행 설정")]
     [Tooltip("체크 시 씬 시작과 동시에 모든 단위/통합 테스트를 자동 실행함")]
-    public bool runTestOnStart = true;
+    public bool runTestOnStart = false;
 
-#if UNITY_EDITOR
+#if false // UNITY_EDITOR (레거시 비활성화: 씬 시작 시 자동 실행 차단)
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoRunInTestScene()
     {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 /// <summary>
@@ -60,7 +60,7 @@ public class BattleManager : MonoBehaviour
     public event Action OnBattleStarted;
 
     /// <summary>전투 종료 이벤트임: (bool playerWon, string winnerId, BattleSettlementResult result)</summary>
-    public event Action<bool, string, BattleSettlementResult> OnBattleFinished;
+    public static event Action<bool, string, BattleSettlementResult> OnBattleFinished;
 
     private void Awake()
     {

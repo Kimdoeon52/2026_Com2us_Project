@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 /// <summary>
@@ -7,6 +7,7 @@ using UnityEngine;
 /// 실시간 수치 변경 및 이벤트에 반응하여 게이지, 수치 텍스트, 상태별 색상(녹색->노랑->빨강->회색/KO)으로
 /// 정상 전환되는지 게임 뷰에서 눈으로 직접 검증하는 테스트 도구임.
 /// </summary>
+[System.Obsolete("레거시 아카이브")]
 public class HUDInteractiveTester : MonoBehaviour
 {
     [Header("테스트 대상 식별자")]
@@ -28,10 +29,10 @@ public class HUDInteractiveTester : MonoBehaviour
     [SerializeField] private int limbCoreDamage = 35;
 
     [Header("화면 조작 안내 GUI 표시")]
-    [SerializeField] private bool showOnScreenGUI = true;
+    [SerializeField] private bool showOnScreenGUI = false;
 
 #if UNITY_EDITOR
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    // [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void AutoRunInTestScene()
     {
         var currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();

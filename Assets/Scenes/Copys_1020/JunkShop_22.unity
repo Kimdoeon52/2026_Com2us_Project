@@ -14550,15 +14550,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   slots:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  - {fileID: 2130105246}
+  - {fileID: 2091689794}
+  - {fileID: 1593649577}
+  - {fileID: 1327193876}
+  - {fileID: 1061041959}
+  - {fileID: 2132868721}
+  - {fileID: 1861926050}
+  - {fileID: 167428635}
+  - {fileID: 560403648}
   catalog: {fileID: 11400000, guid: 39437a5512cf120419dd0f9072539cd0, type: 2}
   components: {fileID: 11400000, guid: 019fada31c90fb74eb17d7ffdc793b20, type: 2}
 --- !u!4 &1492904538
@@ -19046,7 +19046,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _recipe: {fileID: 1824575419}
   _resultSlot: {fileID: 1757723555}
-  _view: {fileID: 0}
+  _view: {fileID: 54309976}
   _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
   _ghostLayer: {fileID: 727382923}
 --- !u!114 &1757723555
@@ -21286,7 +21286,7 @@ MonoBehaviour:
   _ghostPrefab: {fileID: 2400770796018998218, guid: 7bd06f9c59efc204ea74f7e8425d1812, type: 3}
   _ghostLayer: {fileID: 727382923}
   _recipe: {fileID: 1824575419}
-  _view: {fileID: 0}
+  _view: {fileID: 54309976}
 --- !u!114 &1861926051
 MonoBehaviour:
   m_ObjectHideFlags: 0

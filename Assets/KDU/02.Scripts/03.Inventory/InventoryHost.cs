@@ -17,6 +17,9 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     [Tooltip("부품 목록")]
     [SerializeField] private ComponentCatalog _componentCatalog;
 
+    [Tooltip("코어 목록")]
+    [SerializeField] private CoreCatalog _coreCatalog;
+
     [Tooltip("난수 시드")]
     [SerializeField] private int _seed = 1;
 
@@ -34,6 +37,11 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     public InventorySaveData Save => _save;
     public PartsCatalog Catalog => _catalog;
     public ComponentCatalog ComponentCatalog => _componentCatalog;
+    public CoreCatalog CoreCatalog => _coreCatalog;
+
+    // 장착 코어. 코어 칸은 비지 않는다
+    public CoreDefinition Core => _coreCatalog != null ? _coreCatalog.Find(_save.Core.Id) : null;
+    public int CoreLevel => _save.Core.Level;
 
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
@@ -70,6 +78,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         _rng = new Rng(_seed);
         _save = new InventorySaveData();
         _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
+        EnsureCore();
 
         for (int i = 0; i < _startingParts; i++)
         {
@@ -202,6 +211,19 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return true;
     }
 
+    // 코어가 비었거나 목록에 없는 ID면 기본 코어를 끼운다
+    private void EnsureCore()
+    {
+        if (_coreCatalog == null || _coreCatalog.DefaultCore == null)
+        {
+            Debug.LogWarning("코어 목록이나 기본 코어가 비었다.", this);
+            return;
+        }
+
+        if (Core == null)
+            _save.Core.Set(_coreCatalog.DefaultCore.Id);
+    }
+
     public PartsDefinition GetEquipped(Slot slot)
     {
         return _catalog != null ? _catalog.Find(_save.Equipment.Get(slot)) : null;
@@ -297,6 +319,8 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     {
         _save.Components.Clear();
         _save.Equipment.Clear();
+        _save.Core.Clear();
+        EnsureCore();
         _grid.Clear();
         Changed?.Invoke();
     }
@@ -322,6 +346,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         _save = JsonUtility.FromJson<InventorySaveData>(_snapshot);
         _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
         _save.RestoreTo(_grid, _catalog);
+        EnsureCore();
         Changed?.Invoke();
     }
 

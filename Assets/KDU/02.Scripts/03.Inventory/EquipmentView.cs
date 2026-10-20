@@ -34,7 +34,7 @@ public class EquipmentView : MonoBehaviour
     {
         for (int i = 0; i < _slots.Length; i++)
         {
-            _slots[i].Show(_host.GetEquipped(_slots[i].Slot));
+            _slots[i].Show(_host);
         }
     }
 }

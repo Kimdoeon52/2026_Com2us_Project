@@ -9,10 +9,12 @@ public class InventorySaveData
     [SerializeField] private ComponentStock _components = new ComponentStock();
     [SerializeField] private List<PartsInstance> _parts = new List<PartsInstance>();
     [SerializeField] private EquipmentSaveData _equipment = new EquipmentSaveData();
+    [SerializeField] private CoreSaveData _core = new CoreSaveData();
 
     public ComponentStock Components => _components;
     public List<PartsInstance> Parts => _parts;
     public EquipmentSaveData Equipment => _equipment;
+    public CoreSaveData Core => _core;
 
     public void CaptureFrom(InventoryGrid grid)
     {

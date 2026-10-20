@@ -47,14 +47,31 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         _icon.preserveAspect = true;
     }
 
-    // null이면 빈 칸 모양으로
-    public void Show(PartsDefinition parts)
+    // 코어 칸은 코어를, 나머지는 장착 파츠를 그린다
+    public void Show(InventoryHost host)
     {
         if (_icon == null)
             return;
 
-        _icon.sprite = parts != null ? parts.Sprite : _emptySprite;
-        _icon.color = parts != null ? Color.white : _emptyColor;
+        Sprite sprite;
+        bool filled;
+
+        if (_slot == Slot.Core)
+        {
+            CoreDefinition core = host != null ? host.Core : null;
+            filled = core != null;
+            sprite = filled ? core.Sprite : null;
+        }
+        else
+        {
+            PartsDefinition parts = host != null ? host.GetEquipped(_slot) : null;
+            filled = parts != null;
+            sprite = filled ? parts.Sprite : null;
+        }
+
+        // 이미지가 아직 없으면 빈 칸 이미지를 흰색으로 그려 찬 칸임을 보인다
+        _icon.sprite = sprite != null ? sprite : _emptySprite;
+        _icon.color = filled ? Color.white : _emptyColor;
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -70,7 +87,15 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         if (_tooltip == null || eventData.dragging || InventoryHost.Instance == null)
             return;
 
-        PartsDefinition parts = InventoryHost.Instance.GetEquipped(_slot);
+        InventoryHost host = InventoryHost.Instance;
+        if (_slot == Slot.Core)
+        {
+            if (host.Core != null)
+                _tooltip.Show(host.Core.GetTooltip(host.CoreLevel));
+            return;
+        }
+
+        PartsDefinition parts = host.GetEquipped(_slot);
         if (parts != null)
             _tooltip.Show(parts.GetTooltip());
     }

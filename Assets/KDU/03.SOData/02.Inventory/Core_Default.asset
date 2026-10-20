@@ -1,0 +1,139 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a511b829e9e6b326a8a6f04de55c6d70, type: 3}
+  m_Name: Core_Default
+  m_EditorClassIdentifier: 
+  _id: CORE_DEFAULT
+  _displayName: "\uAE30\uBCF8 \uCF54\uC5B4"
+  _description: "\uD14C\uC2A4\uD2B8\uC6A9 \uC218\uCE58"
+  _sprite: {fileID: 0}
+  _levels:
+  - Hp: 300
+    Defense: 20
+    ExpToNext: 230
+    RepairCost: 150
+  - Hp: 315
+    Defense: 23
+    ExpToNext: 250
+    RepairCost: 200
+  - Hp: 330
+    Defense: 26
+    ExpToNext: 270
+    RepairCost: 250
+  - Hp: 345
+    Defense: 29
+    ExpToNext: 290
+    RepairCost: 300
+  - Hp: 360
+    Defense: 32
+    ExpToNext: 320
+    RepairCost: 350
+  - Hp: 375
+    Defense: 35
+    ExpToNext: 350
+    RepairCost: 400
+  - Hp: 390
+    Defense: 38
+    ExpToNext: 380
+    RepairCost: 450
+  - Hp: 405
+    Defense: 41
+    ExpToNext: 410
+    RepairCost: 500
+  - Hp: 420
+    Defense: 44
+    ExpToNext: 440
+    RepairCost: 550
+  - Hp: 435
+    Defense: 47
+    ExpToNext: 480
+    RepairCost: 600
+  - Hp: 455
+    Defense: 51
+    ExpToNext: 520
+    RepairCost: 650
+  - Hp: 475
+    Defense: 55
+    ExpToNext: 560
+    RepairCost: 700
+  - Hp: 495
+    Defense: 59
+    ExpToNext: 610
+    RepairCost: 750
+  - Hp: 515
+    Defense: 63
+    ExpToNext: 660
+    RepairCost: 800
+  - Hp: 535
+    Defense: 67
+    ExpToNext: 720
+    RepairCost: 850
+  - Hp: 555
+    Defense: 71
+    ExpToNext: 780
+    RepairCost: 900
+  - Hp: 575
+    Defense: 75
+    ExpToNext: 850
+    RepairCost: 950
+  - Hp: 595
+    Defense: 79
+    ExpToNext: 920
+    RepairCost: 1000
+  - Hp: 615
+    Defense: 83
+    ExpToNext: 1000
+    RepairCost: 1050
+  - Hp: 635
+    Defense: 87
+    ExpToNext: 1080
+    RepairCost: 1100
+  - Hp: 660
+    Defense: 92
+    ExpToNext: 1180
+    RepairCost: 1150
+  - Hp: 685
+    Defense: 97
+    ExpToNext: 1280
+    RepairCost: 1200
+  - Hp: 710
+    Defense: 102
+    ExpToNext: 1380
+    RepairCost: 1250
+  - Hp: 735
+    Defense: 107
+    ExpToNext: 1500
+    RepairCost: 1300
+  - Hp: 760
+    Defense: 112
+    ExpToNext: 1630
+    RepairCost: 1350
+  - Hp: 785
+    Defense: 117
+    ExpToNext: 1770
+    RepairCost: 1400
+  - Hp: 810
+    Defense: 122
+    ExpToNext: 1920
+    RepairCost: 1450
+  - Hp: 835
+    Defense: 127
+    ExpToNext: 2080
+    RepairCost: 1500
+  - Hp: 860
+    Defense: 132
+    ExpToNext: 2260
+    RepairCost: 1550
+  - Hp: 885
+    Defense: 137
+    ExpToNext: 0
+    RepairCost: 1600

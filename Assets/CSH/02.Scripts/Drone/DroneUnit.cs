@@ -9,8 +9,6 @@ public enum DroneState
 
 public class DroneUnit : MonoBehaviour
 {
-    [Tooltip("드론이 꺼질 때 나올 이펙트(선택). 루트에 ParticleSystem이 있어야 재생 후 자동으로 꺼진다")]
-    [SerializeField] protected GameObject consumeEffectPrefab;
 
     private GameObject consumeEffectInstance;
     private ParticleSystem consumeEffectParticle;
@@ -41,26 +39,7 @@ public class DroneUnit : MonoBehaviour
 
     private void CreateConsumeEffect()
     {
-        if (consumeEffectPrefab == null) return;
 
-        // 드론 자식으로 두지 않는다 — 드론은 Consume 직후 꺼지므로 자식이면 이펙트도 같이 꺼진다
-        consumeEffectInstance = Instantiate(consumeEffectPrefab);
-        consumeEffectInstance.name = $"{name}_ConsumeFX";
-
-        consumeEffectParticle = consumeEffectInstance.GetComponent<ParticleSystem>();
-        if (consumeEffectParticle != null)
-        {
-            // 재생이 끝나면 스스로 SetActive(false) — 드론이 꺼져 있어도 이펙트가 알아서 정리된다
-            var main = consumeEffectParticle.main;
-            main.loop = false;
-            main.stopAction = ParticleSystemStopAction.Disable;
-        }
-        else
-        {
-            Debug.LogWarning($"[DroneUnit] {name}: 이펙트 루트에 ParticleSystem이 없어 자동으로 꺼지지 않음");
-        }
-
-        consumeEffectInstance.SetActive(false);
     }
 
     /// <summary>풀에서 꺼내 공전 상태로 등장</summary>

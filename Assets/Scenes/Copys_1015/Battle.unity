@@ -1494,7 +1494,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!95 &1088690998
 Animator:
   serializedVersion: 7
@@ -1656,6 +1656,7 @@ GameObject:
   - component: {fileID: 1270632122}
   - component: {fileID: 1270632123}
   - component: {fileID: 1270632124}
+  - component: {fileID: 1270632125}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1794,8 +1795,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   basicAttack: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
-  leftArmSkill: {fileID: 0}
-  leftArmSkillCharged: {fileID: 0}
+  leftArmSkill: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  leftArmSkillCharged: {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
   rightArmSkill: {fileID: 0}
   rightArmSkillCharged: {fileID: 0}
   leftLegSkill: {fileID: 0}
@@ -1922,8 +1923,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectTable: {fileID: 0}
-  playerParts: []
+  effectTable: {fileID: 11400000, guid: ff8764b4f811c4340bfb84300bfac59d, type: 2}
+  playerParts:
+  - {fileID: 11400000, guid: 0b272ca40ea9d574fa8fb9fb7fd5b74e, type: 2}
   enemyParts: []
 --- !u!114 &1270632124
 MonoBehaviour:
@@ -1951,6 +1953,68 @@ MonoBehaviour:
   takenColor: {r: 1, g: 1, b: 1, a: 1}
   dealtColor: {r: 1, g: 1, b: 1, a: 1}
   missColor: {r: 1, g: 0.8874772, b: 0.11792451, a: 1}
+--- !u!114 &1270632125
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270632112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e39a7683bcbbad48a03df16e9aed3d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
+  prewarmCount: 4
+  orbitGroups:
+  - centerOffset: {x: 0, y: 0.45, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 0, y: 0, z: 25}
+    speedDeg: 120
+    clockwise: 0
+    phaseOffsetDeg: 0
+  - centerOffset: {x: 0, y: 0.48, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 0, y: 0, z: -25}
+    speedDeg: 90
+    clockwise: 1
+    phaseOffsetDeg: 120
+  - centerOffset: {x: 0, y: 0.44, z: 0}
+    radius: {x: 0.6, y: 0.2}
+    tiltEuler: {x: 60, y: 0, z: 0}
+    speedDeg: 150
+    clockwise: 0
+    phaseOffsetDeg: 240
+  orbitSmoothTime: 0.08
+  spawnOffset: {x: 0, y: 1.6, z: 0}
+  fallbackLocalTarget: {x: 0.15, y: 0.27}
+  multiDroneSpacing: 0.35
+  attackZOffset: -0.1
+  attackMoveCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 2.5
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    - serializedVersion: 3
+      time: 1
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1328636925
 GameObject:
   m_ObjectHideFlags: 0
@@ -2211,16 +2275,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerA: {fileID: 1270632114}
   playerB: {fileID: 310224676}
-  minX: -5
-  maxX: 5
-  framingPadding: 1
-  closeZ: -3
-  farZ: -7
-  minOrthoSize: 1.5
-  maxOrthoSize: 4
+  minX: -2.5
+  maxX: 2.5
+  framingPadding: 1.5
+  closeZ: -2
+  farZ: -3
+  minOrthoSize: 14
+  maxOrthoSize: 1.9
   positionSmoothTime: 0.025
-  zoomInSmoothTime: 0.1
-  fixedY: 2.5
+  zoomInSmoothTime: 0.2
+  fixedY: 1
   fighterEdgeInset: 0.25
 --- !u!1 &1580075003
 GameObject:

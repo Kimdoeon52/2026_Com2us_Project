@@ -12,7 +12,7 @@ public class CraftingUIManager : PersistentSingleton<CraftingUIManager>
     {
         if (Input.GetKeyDown(KeyCode.C))
             OpenCraftingWindow();
-        if (Input.GetKeyDown(KeyCode.S))
+        if (Input.GetKeyDown(KeyCode.K))
             OpenShopWindow();
     }
 

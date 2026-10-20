@@ -1,7 +1,8 @@
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using DG.Tweening;
 
 /// <summary>
 /// 일반 경기의 베팅 로직 및 UI를 담당하는 싱글톤 매니저.
@@ -41,6 +42,8 @@ public class ArenaBettingManager : MonoBehaviour
 
     private enum BetState { First, Second }
     private BetState currentState;
+
+    [SerializeField] private string nextSceneName = "Battle"; // 이동 씬 이름
 
     private void Awake()
     {
@@ -236,6 +239,23 @@ public class ArenaBettingManager : MonoBehaviour
     {
         bettingUiPanel.SetActive(false);
         ShowArenaInfo($"베팅 종료! {finalBetAmount}G로 경기가 시작됩니다!"); // 노란 알림
+        GlobalGold.Instance.UseGold("플레이어", finalBetAmount);
+        MoveToNextScene(2000).Forget();
+    }
+
+    private async UniTask MoveToNextScene(int waitDelay) // 전투를 위한 씬으로 이동
+    {
+        await UniTask.Delay(waitDelay);
+        if (string.IsNullOrWhiteSpace(nextSceneName))
+        {
+            Debug.Log("[Auction] 모든 경매 종료. 이동할 씬이 지정되지 않아 이동하지 않음.");
+            return;
+        }
+
+        if (GameSceneManager.Instance != null)
+            GameSceneManager.Instance.LoadScene(nextSceneName);
+        else
+            UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
     }
 
     private bool IsValidBetAmount(int amount)

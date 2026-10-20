@@ -3503,7 +3503,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -635, y: 480}
+  m_AnchoredPosition: {x: -650, y: 480}
   m_SizeDelta: {x: 900, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &174444699389173945
@@ -3543,8 +3543,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4281379584
+  m_fontColor: {r: 0, g: 0.6698113, b: 0.1881813, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -3567,7 +3567,7 @@ MonoBehaviour:
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 5
+  m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
@@ -6935,7 +6935,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   elementName: "\uACBD\uAE30\uC7A5"
   useHours: 3
-  targetSceneName: Battle
+  targetSceneName: BattingTest
   elementHighlight: {r: 1.2, g: 1.2, b: 1.2, a: 1}
 --- !u!65 &2312508128229402373
 BoxCollider:

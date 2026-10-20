@@ -1,7 +1,7 @@
 
 using UnityEditor;
 using UnityEngine;
-
+#if UNITY_EDITOR
 /// <summary>
 /// 총구(ActionData.projectileMuzzle)를 원점으로 광선 N개를 얇은 회전 Hit박스로 만든다 (2026-10-15).
 /// ActionDataEditor의 "부채꼴 생성" 버튼과 에셋 생성 도구가 둘 다 이 함수를 거치므로 만들어지는 박스가 항상 같다.
@@ -79,3 +79,4 @@ public static class FanShotBoxGenerator
         box.FindPropertyRelative("endFrame").intValue = Mathf.Max(1, totalFrames);
     }
 }
+#endif

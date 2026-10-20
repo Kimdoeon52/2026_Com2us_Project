@@ -1,6 +1,5 @@
 using DG.Tweening;
 using UnityEngine;
-using static UnityEditor.MaterialProperty;
 
 public class ImageJump : MonoBehaviour
 {

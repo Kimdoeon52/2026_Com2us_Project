@@ -1,0 +1,85 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c50c690434c7a94abf8eee0deacc7a7, type: 3}
+  m_Name: RS_GraphicsPresets
+  m_EditorClassIdentifier: 
+  note: 
+  low:
+    fog: 0
+    fogQuality: 0
+    screenGodRays: 0
+    godRayQuality: 0
+    cloudShadows: 0
+    lightShafts: 0
+    characterGlow: 1
+    wetFloor: 0
+    water: 0
+    indirect: 0
+    depthOfField: 0
+    bloom: 1
+    bloomHighQuality: 0
+    shadows: 0
+  mid:
+    fog: 1
+    fogQuality: 1
+    screenGodRays: 1
+    godRayQuality: 1
+    cloudShadows: 1
+    lightShafts: 0.5
+    characterGlow: 1
+    wetFloor: 1
+    water: 1
+    indirect: 1
+    depthOfField: 1
+    bloom: 1
+    bloomHighQuality: 0
+    shadows: 1
+  high:
+    fog: 1
+    fogQuality: 2
+    screenGodRays: 1
+    godRayQuality: 2
+    cloudShadows: 1
+    lightShafts: 1
+    characterGlow: 1
+    wetFloor: 2
+    water: 2
+    indirect: 2
+    depthOfField: 1
+    bloom: 1
+    bloomHighQuality: 1
+    shadows: 2
+  fogStepLengthScale:
+    low: 2.2
+    mid: 1.6
+    high: 1
+  fogMaxSteps:
+    low: 8
+    mid: 12
+    high: 0
+  fogMaxLights:
+    low: 2
+    mid: 4
+    high: 8
+  godRaySamples:
+    low: 8
+    mid: 12
+    high: 0
+  shadowDistanceScale:
+    low: 0.5
+    mid: 0.75
+    high: 1
+  wetMidSteps: 12
+  wetMidDistance: 12
+  indirectCoarseScale: 2
+  recommendLowBelowMB: 2000
+  recommendMidBelowMB: 4000

@@ -147,7 +147,7 @@ namespace RealSteel.Lighting
             if (glowLight.color != L.color) glowLight.color = L.color;
             if (!Mathf.Approximately(glowLight.range, L.range)) glowLight.range = L.range;
             if (!Mathf.Approximately(glowLight.intensity, k)) glowLight.intensity = k;
-            bool on = k > 0.01f;
+            bool on = k > 0.01f && RSGraphics.Effective.characterGlow;   // 그래픽 설정
             if (glowLight.enabled != on) glowLight.enabled = on;
 
             if (ownsLight)

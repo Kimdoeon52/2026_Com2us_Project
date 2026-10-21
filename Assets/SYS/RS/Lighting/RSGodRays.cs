@@ -180,13 +180,14 @@ namespace RealSteel.Lighting
                 if (tod.IsMoon) k *= l.moonStrength;
                 else { k *= tod.ShaftFactor; c *= tod.ShaftColor.linear; }
             }
-            want &= (k > 0.001f || debugView) && (s == null || s.isActiveAndEnabled);
+            var gq = RSGraphics.Effective;
+            want &= (k > 0.001f || debugView) && (s == null || s.isActiveAndEnabled) && gq.screenGodRays;
             if (mr.enabled != want) mr.enabled = want;
             if (!want) return;
 
             c *= k; c.a = 1f;
             mat.SetColor(IdColor, c);
-            mat.SetFloat(IdSamples, samples);
+            mat.SetFloat(IdSamples, Mathf.Min(samples, RSGraphics.GodRaySamples(gq.godRayQuality)));
             mat.SetFloat(IdLength, l.length);
             mat.SetFloat(IdDecay, l.decay);
             mat.SetFloat(IdThreshold, l.threshold);

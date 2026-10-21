@@ -361,6 +361,10 @@ namespace RealSteel.Lighting
         void Apply()
         {
             if (shader == null) return;
+            // 그래픽 설정: 안개를 끄면 안개 속 빛줄기도 같이 꺼진다
+            var gq = RSGraphics.Effective;
+            if (mr != null && mr.enabled != gq.fog) mr.enabled = gq.fog;
+            if (!gq.fog) return;
             if (mat == null)
             {
                 mat = new Material(shader) { name = "RS_FogVolume (자동)", hideFlags = HideFlags.DontSave };
@@ -384,8 +388,8 @@ namespace RealSteel.Lighting
             mat.SetFloat("_NoiseScale", L.noiseScale);
             mat.SetFloat("_NoiseStrength", L.noiseStrength);
             mat.SetVector("_Wind", L.wind);
-            mat.SetFloat("_Steps", steps);
-            mat.SetFloat("_StepLength", stepLength);
+            mat.SetFloat("_Steps", Mathf.Min(steps, RSGraphics.FogMaxSteps(gq.fogQuality)));
+            mat.SetFloat("_StepLength", stepLength * RSGraphics.FogStepLengthScale(gq.fogQuality));
             mat.SetFloat("_PointCore", L.pointCore);
             float shaftK = 1f;
             if (L.shaftsFollowTime)
@@ -402,7 +406,7 @@ namespace RealSteel.Lighting
             mat.SetFloat("_ShaftEven", L.shaftEven);
             mat.SetFloat("_ShaftDebug", debugShafts ? 1f : 0f);
             mat.SetTexture(IdNoise, NoiseTexture);
-            SetLights(L.pointLights);
+            SetLights(L.pointLights, RSGraphics.FogMaxLights(gq.fogQuality));
             SetZones();
             if (mr != null) mr.SetPropertyBlock(Mpb);
             mat.SetFloat("_MaxDistance", maxDistance);
@@ -437,7 +441,7 @@ namespace RealSteel.Lighting
         /// <summary>라이트 목록을 다음 프레임에 다시 찾는다 (라이트를 새로 만든 직후 등)</summary>
         public static void RescanLights() { lightsScannedAt = -10f; }
 
-        void SetLights(bool on)
+        void SetLights(bool on, int maxLights = MaxLights)
         {
             int n = 0;
             if (on && mr != null)
@@ -462,7 +466,8 @@ namespace RealSteel.Lighting
                 }
                 picked.Sort((x, y) => y.score.CompareTo(x.score));
                 bool temp = GraphicsSettings.lightsUseColorTemperature;
-                for (int i = 0; i < picked.Count && n < MaxLights; i++, n++)
+                int cap = Mathf.Min(MaxLights, maxLights);
+                for (int i = 0; i < picked.Count && n < cap; i++, n++)
                 {
                     var l = picked[i].l;
                     Vector3 p = l.transform.position;

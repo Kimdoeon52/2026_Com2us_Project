@@ -248,6 +248,7 @@ namespace RealSteel.Lighting
             get
             {
                 if (!isActiveAndEnabled) return false;
+                if (RSGraphics.Effective.indirect != appliedQ) return true;
                 if (geometryDirty) return Now >= nextGeometryTry;
                 if (valid == null || validCount == 0) return false;
                 return sunJob >= 0 || blending || SunChanged() || SourcesChanged(false);
@@ -255,6 +256,7 @@ namespace RealSteel.Lighting
         }
 
         int failCount;
+        [System.NonSerialized] int appliedQ = -1;   // 그래픽 설정 '간접광' 단계 (바뀌면 다시 계산)
 
         public void EditorTick(float dt) { Tick(dt, true); }
 
@@ -265,6 +267,15 @@ namespace RealSteel.Lighting
 
         void Tick(float dt, bool instant)
         {
+            // 그래픽 설정: 0 = 끔(계산도 안 함) · 1 = 칸 2배 · 2 = 원래대로. 바뀌면 처음부터 다시
+            int q = RSGraphics.Effective.indirect;
+            if (q != appliedQ)
+            {
+                appliedQ = q;
+                if (q != 0) { geometryDirty = true; nextGeometryTry = 0f; failCount = 0; }
+            }
+            if (q == 0) { Shader.SetGlobalVector(IdParams, Vector4.zero); return; }
+
             if (geometryDirty && Now >= nextGeometryTry)
             {
                 // 플레이 첫 프레임엔 지형이 아직 안 만들어졌을 수 있다
@@ -330,7 +341,7 @@ namespace RealSteel.Lighting
             }
             if (!any) b = new Bounds(center, new Vector3(Mathf.Max(1f, size.x), 20f, Mathf.Max(1f, size.y)));
 
-            cs = Mathf.Max(0.1f, cellSize);
+            cs = Mathf.Max(0.1f, cellSize) * RSGraphics.IndirectCellScale(RSGraphics.Effective.indirect);
             // 너무 많은 칸이면 칸을 키운다 (최대 약 6만 칸)
             while ((b.size.x / cs) * (b.size.z / cs) > 60000f) cs *= 1.25f;
             nx = Mathf.Max(2, Mathf.CeilToInt(b.size.x / cs));

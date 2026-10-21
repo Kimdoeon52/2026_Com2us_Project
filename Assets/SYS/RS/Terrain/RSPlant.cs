@@ -12,7 +12,7 @@ using RealSteel.Common;
 
 namespace RealSteel.Terrain
 {
-    [RSSummary("풀꽃 하나", "시트에서 잘라낸 풀 · 꽃 하나를 세운다. 오브젝트 위치 = 밑동. 바람에 흔들리고 캐릭터가 지나가면 눕는다 (머티리얼에서 조절).\n· 아래 그림을 눌러 다른 풀 · 꽃으로 바꿀 수 있다\n· 여러 개를 찍으려면 Tools/RE_AL STEEL/Stage/풀꽃 배치 창")]
+    [RSSummary("풀꽃 하나", "시트에서 잘라낸 풀 · 꽃 하나를 세운다. 오브젝트 위치 = 밑동. 바람에 흔들리고 캐릭터가 지나가면 눕는다 (머티리얼에서 조절).\n· 아래 그림을 눌러 다른 풀 · 꽃으로 바꿀 수 있다\n· 여러 개를 찍으려면 Tools/RE_AL STEEL/Stage/풀꽃 배치 창\n· 플레이 중엔 같은 머티리얼끼리 자동으로 합쳐 그린다 (플레이 중 움직이거나 지울 풀꽃만 '따로 그리기')")]
     [ExecuteAlways, DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     [AddComponentMenu("RE_AL STEEL/Terrain/풀꽃 하나")]
@@ -36,6 +36,10 @@ namespace RealSteel.Terrain
         public Color tint = Color.white;
         [Range(0f, 1f), Tooltip("흔들림 박자 어긋남 (포기마다 다르게)")]
         public float phase = 0.5f;
+
+        [RSGroup("묶어 그리기")]
+        [Tooltip("플레이 중 다른 풀꽃과 합쳐 그리지 않는다. 플레이 중에 움직이거나 지울 풀꽃만 켠다 (나머지는 자동으로 합쳐져 그리기 호출이 줄어든다)")]
+        public bool keepSeparate = false;
 
         [System.NonSerialized] Mesh mesh;
 

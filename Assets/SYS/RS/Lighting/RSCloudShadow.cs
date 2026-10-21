@@ -88,6 +88,8 @@ namespace RealSteel.Lighting
         Light lt;
         Texture2D tex;
         int builtKey;
+        byte[] cellByte;            // 칸 값 (재사용 — 다시 만들 때 쓰레기 메모리가 안 생기게)
+        float lastBuildTime = -10f; // 플레이 중 진하기만 바뀐 경우 다시 만드는 간격 제한용
         float clock;
 
         public bool WantsEditorAnimation { get { return isActiveAndEnabled && animateInEditMode; } }
@@ -171,6 +173,13 @@ namespace RealSteel.Lighting
             if (lt == null) lt = GetComponent<Light>();
             if (lt == null) return;
 
+            // 그래픽 설정에서 끄면 쿠키만 뗀다 (텍스처는 남겨 두어 다시 켤 때 바로)
+            if (!RSGraphics.Effective.cloudShadows)
+            {
+                if (tex != null && lt.cookie == tex) lt.cookie = null;
+                return;
+            }
+
             EnsureTexture();
             if (lt.cookie != tex) lt.cookie = tex;
 
@@ -217,6 +226,9 @@ namespace RealSteel.Lighting
                 if (key == 0) key = 1;
             }
             if (tex != null && key == builtKey) return;
+            // 플레이 중 진하기만 바뀐 경우(시간대 전환 중 밤낮 배율)는 0.1초에 한 번만 다시 만든다 — 전환 중 매 프레임 만들지 않게
+            if (Application.isPlaying && tex != null && sk == shapeKey && Time.unscaledTime - lastBuildTime < 0.1f) return;
+            lastBuildTime = Time.unscaledTime;
             builtKey = key;
 
             // 픽셀 모드: 칸 하나를 2~4 배로 키워서 넣는다 → 쿠키 아틀라스의 쌍선형 필터에도 칸 경계가 또렷하게 남는다
@@ -245,22 +257,29 @@ namespace RealSteel.Lighting
             var cloud = cloudCache;
             var dapple = ds > 0f ? dappleCache : null;
 
-            var cellVal = new float[cells * cells];
-            for (int i = 0; i < cellVal.Length; i++)
+            // 칸 값 → 밝기 바이트. 칸 수만큼만 계산하고(픽셀 수의 1/up²), 배열은 재사용한다
+            int nc = cells * cells;
+            if (cellByte == null || cellByte.Length != nc) cellByte = new byte[nc];
+            int bands = L.bands;
+            for (int i = 0; i < nc; i++)
             {
                 float c = cloud[i], d = dapple != null ? dapple[i] : 0f;
-                if (L.bands > 0) { c = Mathf.Round(c * L.bands) / L.bands; d = Mathf.Round(d * L.bands) / L.bands; }
-                cellVal[i] = (1f - c * s) * (1f - d * ds);
+                if (bands > 0) { c = Mathf.Round(c * bands) / bands; d = Mathf.Round(d * bands) / bands; }
+                float v = (1f - c * s) * (1f - d * ds);
+                cellByte[i] = (byte)(v <= 0f ? 0 : v >= 1f ? 255 : (int)(v * 255f + 0.5f));
             }
 
-            var px = new Color32[size * size];
+            // 텍스처 메모리에 바로 쓴다 (Color32 배열을 새로 만들지 않음). 칸 하나를 up × up 픽셀로 키운다
+            var px = tex.GetPixelData<Color32>(0);
             for (int y = 0; y < size; y++)
+            {
+                int row = (y / up) * cells, o = y * size;
                 for (int x = 0; x < size; x++)
                 {
-                    byte b = (byte)Mathf.RoundToInt(Mathf.Clamp01(cellVal[(y / up) * cells + (x / up)]) * 255f);
-                    px[y * size + x] = new Color32(b, b, b, 255);
+                    byte b = cellByte[row + x / up];
+                    px[o + x] = new Color32(b, b, b, 255);
                 }
-            tex.SetPixels32(px);
+            }
             tex.Apply(false, false);
         }
 

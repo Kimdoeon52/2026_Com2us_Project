@@ -236,13 +236,18 @@ Shader "RE_AL STEEL/Wet Reflection"
                 float ndv = saturate(dot(nFlat, -V));
                 float fres = _RSWetLook.z + (1.0 - _RSWetLook.z) * pow(1.0 - ndv, 5.0);
 
-                float hit;
-                half3 sky = SampleSH(R);
-                half3 refl = RSGlossyReflection(p + nFlat * 0.02, R, rough, _RSWetGloss.y,
-                                                _RSWetTrace.x, _RSWetTrace.y, _RSWetTrace.z, _RSWetEnv, sky, hit);
-                // 밝은 것만 비치기: 실제 젖은 길은 불빛 · 밝은 물체만 또렷이 비치고 어두운 곳은 거의 안 비친다
-                float rl = dot(refl, half3(0.299, 0.587, 0.114));
-                refl *= lerp(1.0, smoothstep(0.06, 0.7, rl), _RSWetPuddle.z);
+                // 반사 세기 0(그래픽 설정 '어둡게만')이면 반사 추적을 아예 건너뛴다 — 모든 픽셀이 같은 값이라 분기 비용 없음
+                half3 refl = 0;
+                if (_RSWetLook.y > 0.0)
+                {
+                    float hit;
+                    half3 sky = SampleSH(R);
+                    refl = RSGlossyReflection(p + nFlat * 0.02, R, rough, _RSWetGloss.y,
+                                              _RSWetTrace.x, _RSWetTrace.y, _RSWetTrace.z, _RSWetEnv, sky, hit);
+                    // 밝은 것만 비치기: 실제 젖은 길은 불빛 · 밝은 물체만 또렷이 비치고 어두운 곳은 거의 안 비친다
+                    float rl = dot(refl, half3(0.299, 0.587, 0.114));
+                    refl *= lerp(1.0, smoothstep(0.06, 0.7, rl), _RSWetPuddle.z);
+                }
                 refl *= _WetTint.rgb * _RSWetTintGlobal.rgb;
 
                 // 해 · 달 반사: 둥근 반짝임 + 세로 빛줄기 중 큰 쪽. 요철 법선이라 돌 윗면마다 반짝인다

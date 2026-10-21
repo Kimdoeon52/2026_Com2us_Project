@@ -93,8 +93,12 @@ namespace RealSteel.Water
             if (cam == null || cam == reflCam) return;
             if (cam.cameraType != CameraType.Game && cam.cameraType != CameraType.SceneView) return;
 
+            // 그래픽 설정: 0 = 하늘색만 · 1 = 화면 반사까지 · 2 = 이 컴포넌트 설정대로
+            int wq = RSGraphics.Effective.water;
+            if (wq == 0) { Shader.SetGlobalFloat(OnId, 0f); return; }
+
             // 화면 반사: 셰이더 값만 넣으면 끝 (거울 카메라 없음). 평면 반사가 오류로 꺼졌을 때도 이쪽으로
-            if (mode == Mode.Screen || failed)
+            if (mode == Mode.Screen || failed || wq == 1)
             {
                 if (cam.cameraType == CameraType.SceneView && !reflectInSceneView) { Shader.SetGlobalFloat(OnId, 0f); return; }
                 SetScreenMode();

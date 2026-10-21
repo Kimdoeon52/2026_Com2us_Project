@@ -250,13 +250,20 @@ namespace RealSteel.Lighting
 
         public void Apply()
         {
+            // 그래픽 설정: 0 = 어둡게만(반사 없음) · 1 = 화면 반사(걸음 · 거리 상한) · 2 = + 라이트 반사
+            var gq = RSGraphics.Effective;
+            float refl = gq.wetFloor == 0 ? 0f : L.reflection;
+            float lightRefl = gq.wetFloor == 2 ? L.lightReflection : 0f;
+            float traceSteps = gq.wetFloor == 1 ? Mathf.Min(L.steps, RSGraphics.WetMidSteps) : L.steps;
+            float dist = gq.wetFloor == 1 ? Mathf.Min(L.maxDistance, RSGraphics.WetMidDistance) : L.maxDistance;
+
             Shader.SetGlobalFloat(IdGlobal, L.rain);
-            Shader.SetGlobalVector(IdLook, new Vector4(L.darken, L.reflection, L.reflectionMin, L.highlight));
+            Shader.SetGlobalVector(IdLook, new Vector4(L.darken, refl, L.reflectionMin, L.highlight));
             Shader.SetGlobalColor(IdTint, L.reflectionTint);
             Shader.SetGlobalVector(IdRipple, new Vector4(L.ripple, L.rippleScale, L.rippleSpeed, L.highlightSharpness));
-            Shader.SetGlobalVector(IdTrace, new Vector4(L.steps, L.maxDistance, L.thickness, L.pixelsPerUnit));
+            Shader.SetGlobalVector(IdTrace, new Vector4(traceSteps, dist, L.thickness, L.pixelsPerUnit));
             Shader.SetGlobalVector(IdShape, new Vector4(L.edgeBreakup, L.edgeScale, L.followSlope, 0f));
-            Shader.SetGlobalVector(IdGlint, new Vector4(L.lightReflection, L.lightStreak, L.lightStreakSharpness, 0f));
+            Shader.SetGlobalVector(IdGlint, new Vector4(lightRefl, L.lightStreak, L.lightStreakSharpness, 0f));
             Shader.SetGlobalVector(IdGloss, new Vector4(L.roughness, L.reflectionStretch, L.surfaceBump, L.puddleInCracks));
             Shader.SetGlobalFloat(IdEnv, L.environment);
             Shader.SetGlobalVector(IdPuddle, new Vector4(L.puddlePatches, L.puddleScale, L.reflectionContrast, L.reflectionCover));

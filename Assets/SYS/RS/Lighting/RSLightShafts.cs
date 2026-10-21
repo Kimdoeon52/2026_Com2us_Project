@@ -258,6 +258,9 @@ namespace RealSteel.Lighting
             }
         }
 
+        /// <summary>실제로 그리는 빛줄기 수 = 룩 개수 × 그래픽 설정 '햇살 기둥 양'</summary>
+        int Count { get { return Mathf.RoundToInt(L.count * RSGraphics.Effective.lightShafts); } }
+
         public void Refresh()
         {
             EnsureChild();
@@ -272,7 +275,7 @@ namespace RealSteel.Lighting
 
             Color c = L.tint * sunColor;
             c.a = L.intensity * Mathf.Max(0f, intensityScale);
-            bool on = c.a > 0.001f && L.count > 0 && material != null;
+            bool on = c.a > 0.001f && Count > 0 && material != null;
             if (mr.enabled != on) mr.enabled = on;
             if (!on) return;
 
@@ -340,13 +343,13 @@ namespace RealSteel.Lighting
             int key = 17;
             unchecked
             {
-                for (int i = 0; i < L.count; i++) { Cycle(i, now, out int cy, out _, out _); key = key * 31 + cy; }
+                for (int i = 0; i < Count; i++) { Cycle(i, now, out int cy, out _, out _); key = key * 31 + cy; }
                 key = key * 31 + Mathf.RoundToInt(baseAxis.x * 200f);
                 key = key * 31 + Mathf.RoundToInt(baseAxis.y * 200f);
                 key = key * 31 + Mathf.RoundToInt(baseAxis.z * 200f);
                 var p = transform.position;
                 key = key * 31 + Mathf.RoundToInt(p.x * 100f) * 7 + Mathf.RoundToInt(p.y * 100f) * 13 + Mathf.RoundToInt(p.z * 100f);
-                key = key * 31 + L.count * 3 + seed * 5 + L.motesPerShaft * 7;
+                key = key * 31 + Count * 3 + seed * 5 + L.motesPerShaft * 7;
                 key = key * 31 + (area.GetHashCode() ^ L.length.GetHashCode() * 3 ^ L.width.GetHashCode() * 5 ^ L.lifetime.GetHashCode() * 7);
                 key = key * 31 + (L.fadeTime.GetHashCode() ^ L.drift.GetHashCode() * 3 ^ sinkIntoGround.GetHashCode() * 5 ^ spread.GetHashCode() * 7);
                 key = key * 31 + (L.intensityVariation.GetHashCode() ^ L.moteSize.GetHashCode() * 3 ^ L.minSteepness.GetHashCode() * 5);
@@ -358,7 +361,7 @@ namespace RealSteel.Lighting
             vCenter.Clear(); vAxis.Clear(); vSize.Clear(); vCorner.Clear(); vLife.Clear(); vExtra.Clear(); tris.Clear();
             var ct = child.transform;
 
-            for (int i = 0; i < L.count; i++)
+            for (int i = 0, cnt = Count; i < cnt; i++)
             {
                 Cycle(i, now, out int cycle, out float start, out float period);
 

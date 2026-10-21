@@ -168,6 +168,8 @@ namespace RealSteel.Lighting
         // ── 상태 (읽기 전용) ──
         /// <summary>0 = 밤, 1 = 낮</summary>
         public float DayFactor { get; private set; }
+        /// <summary>시간대가 화면 노출을 정하는 중인지 (그래픽 설정 '밝기'를 여기서 더한다)</summary>
+        public static bool DrivesExposure { get; private set; }
         public bool IsMoon { get; private set; }
         public bool IsNight { get { return IsMoon; } }
         public float Hour { get { return Mathf.Repeat(time, 24f); } }
@@ -253,6 +255,7 @@ namespace RealSteel.Lighting
             RSStageLook.Changed -= OnStageLookChanged;
             RSLightingClock.Unregister(this);
             if (postVolume != null) postVolume.enabled = false;
+            DrivesExposure = false;
         }
 
         void OnDestroy()
@@ -379,6 +382,7 @@ namespace RealSteel.Lighting
             if (!L.drivePost)
             {
                 if (postVolume != null && postVolume.enabled) postVolume.enabled = false;
+                DrivesExposure = false;
                 return;
             }
             EnsurePost();
@@ -387,7 +391,8 @@ namespace RealSteel.Lighting
             postVolume.priority = L.postPriority;
 
             postColor.colorFilter.Override(L.postTint.Evaluate(t01));
-            postColor.postExposure.Override(L.postExposure.Evaluate(h));
+            postColor.postExposure.Override(L.postExposure.Evaluate(h) + RSGraphics.Effective.brightness);   // + 그래픽 설정 밝기
+            DrivesExposure = true;
             postColor.saturation.Override(Mathf.Clamp(L.postSaturation.Evaluate(h), -100f, 100f));
             postVig.intensity.Override(Mathf.Clamp01(L.postVignette.Evaluate(h)));
             postVig.color.Override(L.vignetteColor.Evaluate(t01));

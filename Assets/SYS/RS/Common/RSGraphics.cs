@@ -5,7 +5,9 @@
 //
 //  · 각 조명 컴포넌트(안개 · 갓레이 · 구름 · 햇살 · 밤 빛 · 젖은 바닥 · 물 · 간접광)가 RSGraphics.Effective 를 매 프레임 읽는다
 //  · 후처리(DOF · 블룸 · 밝기) · URP 그림자 거리 · 해상도는 RSGraphicsManager(RSLighting)가 처리한다 — 씬에 놓을 것 없음, 자동 시작
-//  · 플레이어가 고른 값은 PlayerPrefs 에 저장된다
+//  · 플레이어가 고른 값은 JSON 파일에 저장된다: Application.persistentDataPath/graphics_settings.json
+//    (Windows: C:/Users/<이름>/AppData/LocalLow/<회사>/<제품>/ — 에디터와 빌드가 같은 파일을 쓴다)
+//    예전 PlayerPrefs 값이 있으면 처음 한 번 파일로 옮기고 지운다
 //  · 낮음 · 중간 · 높음 단계 값과 품질 숫자는 프리셋 에셋(SYS/Presets/Graphics/Resources/RS_GraphicsPresets.asset)에 있다
 //    → 인스펙터 표에서 고친다 (Tools → RE_AL STEEL → 그래픽 프리셋). 에셋이 없으면 코드 기본값
 //  · 에디터에서 플레이 중이 아닐 때는 항상 '높음'으로 보인다 (아트 작업 화면이 플레이어 설정에 흔들리지 않게)
@@ -18,6 +20,8 @@
 //   o.level  → 지금 값이 어느 단계와 같은지 (손대면 '사용자')
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text;
 using UnityEngine;
 
 namespace RealSteel.Common
@@ -123,7 +127,11 @@ namespace RealSteel.Common
 
     public static class RSGraphics
     {
-        const string PrefsKey = "RS.GraphicsOptions.v1";
+        const string FileName = "graphics_settings.json";
+        const string LegacyPrefsKey = "RS.GraphicsOptions.v1";   // 예전 저장 위치 (옮긴 뒤 지운다)
+
+        /// <summary>저장 파일 경로 (Windows: C:/Users/&lt;이름&gt;/AppData/LocalLow/&lt;회사&gt;/&lt;제품&gt;/graphics_settings.json)</summary>
+        public static string SettingsFilePath { get { return Path.Combine(Application.persistentDataPath, FileName); } }
 
         static RSGraphicsOptions options;
         static RSGraphicsOptions best;
@@ -188,22 +196,44 @@ namespace RealSteel.Common
             Set(o, save);
         }
 
+        /// <summary>지금 값을 파일에 쓴다. 임시 파일에 먼저 쓰고 바꿔 끼우므로 쓰다가 꺼져도 원래 파일이 깨지지 않는다</summary>
         public static void Save()
         {
             if (options == null) return;
-            PlayerPrefs.SetString(PrefsKey, JsonUtility.ToJson(options));
-            PlayerPrefs.Save();
+            string path = SettingsFilePath, tmp = path + ".tmp";
+            try
+            {
+                string dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir)) Directory.CreateDirectory(dir);
+                File.WriteAllText(tmp, JsonUtility.ToJson(options, true), new UTF8Encoding(false));
+                if (File.Exists(path)) File.Delete(path);
+                File.Move(tmp, path);
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[그래픽 설정] 저장하지 못했습니다: " + path + "\n" + e.Message);
+            }
         }
 
-        /// <summary>저장된 값을 다시 읽는다 (없으면 권장 단계)</summary>
+        /// <summary>저장된 값을 다시 읽는다 (파일 → 없으면 예전 PlayerPrefs → 없으면 권장 단계)</summary>
         public static void Load()
         {
+            string path = SettingsFilePath;
+            string json = ReadText(path);
+            if (string.IsNullOrEmpty(json)) json = ReadText(path + ".tmp");   // 바꿔 끼우던 중 꺼진 경우
+
+            bool fromLegacy = false;
+            if (string.IsNullOrEmpty(json) && PlayerPrefs.HasKey(LegacyPrefsKey))
+            {
+                json = PlayerPrefs.GetString(LegacyPrefsKey, "");
+                fromLegacy = true;
+            }
+
             RSGraphicsOptions o = null;
-            string json = PlayerPrefs.GetString(PrefsKey, "");
             if (!string.IsNullOrEmpty(json))
             {
                 try { o = JsonUtility.FromJson<RSGraphicsOptions>(json); }
-                catch (Exception e) { Debug.LogWarning("[그래픽 설정] 저장된 값을 읽지 못해 기본값을 씁니다: " + e.Message); }
+                catch (Exception e) { Debug.LogWarning("[그래픽 설정] 저장 파일을 읽지 못해 기본값을 씁니다: " + path + "\n" + e.Message); }
             }
             if (o == null)
             {
@@ -213,7 +243,27 @@ namespace RealSteel.Common
             o.Clamp();
             o.level = Detect(o);
             options = o;
+
+            if (fromLegacy)
+            {
+                Save();
+                if (File.Exists(path))
+                {
+                    PlayerPrefs.DeleteKey(LegacyPrefsKey);
+                    PlayerPrefs.Save();
+                }
+            }
             Raise();
+        }
+
+        static string ReadText(string path)
+        {
+            try { return File.Exists(path) ? File.ReadAllText(path, Encoding.UTF8) : null; }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[그래픽 설정] 저장 파일을 열지 못했습니다: " + path + "\n" + e.Message);
+                return null;
+            }
         }
 
         static void Raise()

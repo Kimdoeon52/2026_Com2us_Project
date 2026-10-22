@@ -1,7 +1,7 @@
 // RE:AL STEEL - 그래픽 설정 시험 창 (ESC 설정창이 생기기 전까지)
 //
 // 메뉴: Tools → RE_AL STEEL → 그래픽 설정 (시험)
-// 플레이 중에 품질 단계 · 항목을 바꿔 보며 화면 · 프레임을 비교한다. 바꾼 값은 플레이어 설정(PlayerPrefs)에 저장된다.
+// 플레이 중에 품질 단계 · 항목을 바꿔 보며 화면 · 프레임을 비교한다. 바꾼 값은 플레이어 설정 파일(persistentDataPath/graphics_settings.json)에 저장된다 — 빌드와 같은 파일.
 // 편집 중(플레이 아님)에는 씬 화면이 항상 '높음'으로 보인다 — 아트 작업 화면이 흔들리지 않게.
 using UnityEditor;
 using UnityEngine;
@@ -84,6 +84,15 @@ namespace RealSteel.Lighting.EditorTools
             {
                 if (GUILayout.Button("처음 값으로 (권장 단계)")) RSGraphics.ResetToDefault();
                 if (GUILayout.Button("저장된 값 다시 읽기")) RSGraphics.Load();
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField("저장 파일", System.IO.Path.GetFileName(RSGraphics.SettingsFilePath));
+                if (GUILayout.Button("폴더 열기", GUILayout.Width(80)))
+                {
+                    string f = RSGraphics.SettingsFilePath;
+                    EditorUtility.RevealInFinder(System.IO.File.Exists(f) ? f : System.IO.Path.GetDirectoryName(f));
+                }
             }
             if (GUILayout.Button("낮음 · 중간 · 높음 값 고치기 (프리셋 에셋 열기)"))
                 RealSteel.Common.EditorTools.RSGraphicsPresetsEditor.OpenAsset();

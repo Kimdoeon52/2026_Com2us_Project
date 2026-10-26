@@ -217,6 +217,16 @@ public class ActionExecutor : MonoBehaviour
         return hub.CanExecuteAction(FighterId, action) ? action : null;
     }
 
+    // 호출: ExecuteTick(새 행동을 받아들이는 자리). ActionData.GroundOnly인 행동을 공중에서 요청하면 null.
+    // RobotMover가 없으면(배선 전) 땅에 있다고 본다 — CheckLanding과 같은 안전 기본값
+    private ActionData GateByGround(ActionData action)
+    {
+        if (action == null || !action.GroundOnly) return action;
+
+        bool grounded = Mover == null || Mover.IsGrounded;
+        return grounded ? action : null;
+    }
+
     #region 최.추가
     private EquipmentEffectSet effects;
 
@@ -279,6 +289,7 @@ public class ActionExecutor : MonoBehaviour
 
         requested = ResolveReplacement(requested); // 최. 추가
         requested = GateByPartBroken(requested); // 부위 파손 시 기술 시전 차단 (§11-4, §14)
+        requested = GateByGround(requested); // 지상 전용 행동(회피 등)을 공중에서 누르면 무시. 쿨타임·탄보다 먼저 — 막히면 아무것도 소모하지 않는다
         // 탄이 모자라면 일반판정(fallbackAction)으로 바꾼다. 쿨타임 검사보다 먼저여야 한다 —
         // 바뀐 뒤의 행동이 쿨타임 중인지를 봐야 하기 때문 (없으면 null)
         requested = GateByCylinder(requested, out int cylinderCost);
@@ -311,8 +322,8 @@ public class ActionExecutor : MonoBehaviour
     /// <summary>슬롯 행동에 장비 대체(ActionReplaceEffect)를 적용한다. 시작 판정 전에 부른다</summary>
     internal ActionData SkillResolveSlotAction(ActionData bound) => ResolveReplacement(bound);
 
-    /// <summary>스킬 시작 게이트: 부위 파손 → 쿨타임. 실린더는 러너가 비용 확정할 때 따로 본다</summary>
-    internal ActionData SkillGateStart(ActionData action) => GateByCooldown(GateByPartBroken(action));
+    /// <summary>스킬 시작 게이트: 부위 파손 → 지상 전용 → 쿨타임. 실린더는 러너가 비용 확정할 때 따로 본다</summary>
+    internal ActionData SkillGateStart(ActionData action) => GateByCooldown(GateByGround(GateByPartBroken(action)));
 
     internal ActionData SkillGateCylinder(ActionData action, out int cost) => GateByCylinder(action, out cost);
 

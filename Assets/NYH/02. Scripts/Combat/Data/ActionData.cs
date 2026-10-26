@@ -134,6 +134,11 @@ public class ActionData : ScriptableObject
     [Tooltip("활성 구간 동안 몇 프레임마다 잔상을 찍을지(AfterImageEmitter 필요). 0이면 꼬리 잔상 없음")]
     [Min(0)] [SerializeField] private int trailAfterImageInterval;
 
+    // 2026-10-26 추가: 기획서1011 §6-12-6 회피 "공중 사용 불가". 기술 이름이 아니라 플래그로 막는다(§13) —
+    // 지상 전용 스킬이 더 생겨도 이 칸만 켜면 된다. 공중에서 누른 입력은 ActionExecutor.GateByGround가 버린다
+    [Tooltip("켜면 땅에 있을 때만 쓸 수 있다 (공중에서 누르면 무시)")]
+    [SerializeField] private bool groundOnly;
+
     [Header("투사체 — 비우면 일반 근접 행동")]
     // 2026-10-09 추가 (§11-15 투사체 구조): 활성 구간 동안 projectileIntervalFrames마다 한 발씩 쏜다.
     // 투사체의 데미지는 이 ActionData의 damage를 그대로 쓴다 — 한 발 = ProcessHit 한 번
@@ -226,6 +231,7 @@ public class ActionData : ScriptableObject
     public float AdvanceDistance => advanceDistance;
     public bool AdvanceDuringActiveOnly => advanceDuringActiveOnly;
     public int TrailAfterImageInterval => trailAfterImageInterval;
+    public bool GroundOnly => groundOnly;
 
     public ProjectileData Projectile => projectile;
     public int ProjectileIntervalFrames => projectileIntervalFrames;

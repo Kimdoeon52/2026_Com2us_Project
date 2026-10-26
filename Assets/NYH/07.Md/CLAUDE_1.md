@@ -246,7 +246,7 @@ public enum ActionPhase { Idle, Startup, Active, Recovery, Stagger, Down, Dead }
 | E (왼다리 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
 | R (오른다리 액티브) | 미정 | 미정 | 미정 | 미정 | 위와 동일 |
 | 머리 패시브 | — | — | — | — | 입력 없음, 자동 적용 |
-| 회피 (구 위닝) | — | 무적 0.3초 | — | 0.5초 | 전체 0.5초 / 무적 0.05~0.35초 / 자원 소모 없음 / 쿨타임 1.0초 / 공중 사용 불가 |
+| 회피 (구 위닝) | 3 | 18 (무적) | 9 | 30 | 전체 0.5초 / 무적 0.05~0.35초 / 이동 2.0 / 자원 소모 없음 / 쿨타임 1.0초 / 공중 사용 불가. (2026-10-26) `PlayerData/Player_Dodge.asset`(구 `Weaving.asset`, GUID 유지): 바라보는 방향으로 활성 구간에만 2.0 전진 + 꼬리 잔상 3f, `cooldownFrames 60`, `groundOnly`. 클립은 `PlayerAc.controller`의 `Weaving` 스테이트 임시 재사용 |
 
 - **가드는 기동 행동에서 삭제됐다.** 나중에 스킬로 재도입될 수 있다 (§15).
 - **경직 시스템은 완전히 삭제됐다** (§7).
@@ -507,6 +507,26 @@ class AIInputSource     : IInputSource { }   // 보스 패턴
 
 적 전용 `EnemyRobot` 클래스를 만들지 말 것. 입력만 바꿔 끼운다.
 
+### 2026-10-26 — 플레이어 입력은 CSH 스킬 시스템으로 넘어감 (커밋 `bd7d8b2`)
+
+CSH가 `Assets/CSH/CS/`에 스킬 시스템을 넣으면서 플레이어 입력 경로가 둘로 갈렸다. **아래 "입력 키" 표와
+`PlayerInputSource` 설명은 옛 경로 기준**이다 — 씬이 새 경로로 바뀌면 `PlayerInputSource`는 쓰이지 않는다.
+
+| | 옛 경로 (적·보스, 그리고 씬 교체 전 플레이어) | 새 경로 (플레이어) |
+|---|---|---|
+| 입력원 | `PlayerInputSource` / `AIInputSource` (`IInputSource`) | `PlayerSkillInputSource` (`IInputSource` + `ISkillInputSource`) |
+| 키 → 행동 연결 | 입력원의 인스펙터 칸 | `PlayerSkillLoadout`의 슬롯 6칸(Basic/LeftArm/RightArm/LeftLeg/RightLeg/Dodge) |
+| 입력 해석 | 입력원이 `ActionData`를 골라 줌 | 입력원은 슬롯 버튼 상태(`SlotState`: 눌림/누르는 중/뗌/누른 틱 수)만 주고, 탭/길게/홀드 해석은 `SkillData.EvaluateTrigger`가 함 |
+| 실행 | `ActionExecutor.TryBeginRequested` | `SkillDriver.Tick` → 일반 `ActionData`(D·회피)는 `TryBeginRequested` 그대로, `SkillData`는 `SkillRunner`가 `ActionState` 외부 구동 |
+
+- 갈림 조건: `ActionExecutor.Init`에서 입력원이 `ISkillInputSource`면 `SkillDriver`를 만든다. 적·보스는 영향 없음.
+- 동시 입력 우선순위(새 경로): 회피 > D > Q > W > E > R (`SkillDriver.TriggerOrder`).
+- **게이트는 한 곳에서**: 일반 행동은 `TryBeginRequested`(장비 대체 → 부위 파손 → 지상 전용 → 실린더 → 쿨타임), 스킬은
+  `SkillGateStart`(부위 파손 → 지상 전용 → 쿨타임, 실린더는 러너가 비용 확정 때). 새 게이트를 넣을 땐 **두 곳 모두** 넣을 것.
+- 씬 교체 방법: Player에서 `PlayerInputSource` 제거 → `PlayerSkillInputSource` + `PlayerSkillLoadout` 추가 → 슬롯에 에셋 연결
+  (`IInputSource` 구현체는 하나만 있어야 한다 — `PlayerRobotBootstrap`이 `GetComponent<IInputSource>()`로 찾음). 2026-10-26 기준 씬은 아직 옛 경로.
+- 키를 새로 추가하려면(예: 가드) `ActionSlot`·`SkillInputFrame`·`PlayerSkillInputSource`·`PlayerSkillLoadout`(전부 CSH 파일)을 같이 고쳐야 한다 → **CSH와 협의 후**.
+
 ### 입력 키 (리얼스틸 기획서(1) §6-12 기준, 2026-09-29 전면 교체 · 2026-10-02 차지/대시/점프 입력 수신 추가)
 
 기존 잽(D)/스트레이트(Q)/훅(A)/어퍼컷(W)/백스핀 엘보우(S)/가드/위닝(Space) 키 배치는 **전부 폐기됐다.**
@@ -641,6 +661,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 19. 🔶 (2026-10-11) 화염방사기 — 다단히트(`ActionData.hitIntervalFrames`, `ActionState.CanHitNow`) + 불 연출(`FlameData`/`FlameEmitter`, `ActionData.flame`, 총구는 `projectileMuzzle` 공용). 불 모양은 순수 연출이고 데미지는 Hit박스가 낸다(§4) — `FlameData.length`를 Hit박스 폭에 맞춰둘 것. 임시 기술 `Enemy_Skill5_Flame`(Skill5/Skill5_loop 클립, 활성 180f = 기획서 "3초"). 총구는 `ActionDataEditor` Scene 뷰의 주황 원으로 드래그. ⬜ 씬 연결(allActions·FlameEmitter)·플레이 검증 아직
 20. 🔶 (2026-10-11) 돌진 + 사망 잔해 — 돌진 `Enemy_Skill6_Dash`: 선딜(제자리 예비동작) 후 활성 동안만 전진(`ActionData.advanceDuringActiveOnly`), 꼬리 잔상(`ActionData.trailAfterImageInterval` → `AfterImageEmitter`), 클립 `Enemy1_Jump_Loop`(부스터). 사망은 폭발이 끝나면 `RobotView.deadStateName`(Enemy1_Die)으로 고정 — 비우면 예전처럼 사라짐. ⬜ 씬 연결·플레이 검증 아직
 21. 🔶 (2026-10-11) 데미지 숫자(`DamageNumberEmitter`, `ActionExecutor.OnDamaged` 구독, 자동 부착) + HP 바(`FighterHpBar`, 막대 Image에 붙이고 fighterId 지정, `CombatDataHub.GetCurrentHp/GetMaxHp` 매 프레임 조회). 효과 컴포넌트(화염·꼬리 잔상·데미지 숫자)는 `RobotView.EnsureEffectComponents`가 행동 데이터를 보고 자동으로 붙인다 — 패턴 끝 자세 잔상만 예외(AfterImageEmitter 직접 부착). ⬜ 플레이 검증 아직
+23. 🔶 (2026-10-26) 플레이어 회피 — `Player_Dodge.asset` 기획서1011 수치로 재작성, `ActionData.groundOnly` + `ActionExecutor.GateByGround`(지상 전용 행동을 공중에서 누르면 무시, 쿨타임·탄 소모 전에 거름 — `TryBeginRequested`·`SkillGateStart` 양쪽). ⬜ 씬 연결(옛 경로 `PlayerInputSource.dodge` / 새 경로 `PlayerSkillLoadout` Dodge 칸, Player `allActions`에 추가 — 꼬리 잔상 컴포넌트 자동 부착 조건)·플레이 검증 아직. 가드(별도 키)는 규칙·키 확인 후 착수
 22. ⬜ (다음) 기믹 "기물파괴 A: 폭발 화물 상자" — 담당 확인 후 착수. 쪼갠 작업·필요한 신규 구조·확인할 것은 개발일지 2026-10-11 마무리 절. 점프 패턴(후보 2개)도 같은 곳
 
 ---
@@ -681,6 +702,19 @@ NYH 쪽에서 이벤트 구독 원안으로 되돌리자고 요구하지 않는�
 새 코드를 짤 때 그 모양으로 다시 맞추려 하지 않는다. `ResolvedModifiers`에 프레임 보정 필드가
 없는 것, `ActionTag` 매칭이 비활성인 것, `KnockbackMultiplier`가 안 쓰이는 것 등은 CSH 쪽 작업
 범위이므로 NYH가 먼저 나서서 고치거나 요구하지 않는다 — 필요해지면 CSH가 알아서 채울 자리다.
+
+### 2026-10-26 갱신 — CSH 스킬 베이스가 NYH 파일에 추가로 병합됨 (커밋 `bd7d8b2`)
+
+10-06 결정대로 CSH 방식을 그대로 따른다. 이번에 NYH 파일에 들어온 것(`#region 최. 추가` / `// 최. 추가` 표시):
+
+- **`ActionState` 외부 구동**: `BeginExternal` / `SwapExternalAction` / `SyncExternal` / `EndExternal`, `IsExternallyDriven`.
+  홀드처럼 구간 길이가 입력에 따라 바뀌는 행동은 고정 3구간(`Advance()`)으로 표현이 안 돼서, `SkillRunner`가 구간·프레임·박스를 직접
+  정하고 `ActionState`에는 동기화만 한다. 외부 구동 중엔 `Advance()`와 `GetActiveBoxes()`의 기본 계산을 건너뛰고 `IExternalActionDriver`
+  (= `SkillDriver`)에 맡긴다. `Interrupt`/`Kill`은 `DetachExternal()`로 러너에 끊김을 알린다. 외부 구동이 아니면 기존 동작 그대로.
+- **`ActionExecutor`**: `SkillDriver` 분기, 행동 시작 블록을 `TryBeginRequested()`로 추출(내용·순서 동일), 외부 구동 중 `ApplyAdvance` 생략
+  (러너가 직접 전진), `StartCooldown(action, scale)` 배율 인자, 러너용 창구(`SkillGateStart`/`SkillGateCylinder`/`SkillApplyCost` 등).
+- NYH가 지킬 것: `ActionState`의 Phase/프레임을 바꾸는 새 코드를 넣을 땐 **외부 구동 중인지(`IsExternallyDriven`) 먼저 확인**할 것 —
+  러너가 프레임을 직접 넘기는 중에 NYH 쪽이 따로 세면 둘이 어긋난다. 입력 경로 변화는 §8 참고.
 
 ### 접촉 지점 (원안 — 이벤트 3개)
 
@@ -837,7 +871,7 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
 - ✅ `HitDetection`의 `isGuarding`은 이제 항상 `false` 고정 (KKH `ProcessHit` 시그니처는 안 건드림)
 - ✅ `ActionPhase.Stagger` 제거 (참조 0건 확인 후 삭제)
 - ⚠️ `ActionData.staggerValue`/`isGuardable` 필드는 **삭제하지 않고 남겨둠** — KKH의 `CombatCalculator.EvaluateHit`이 이 두 필드를 직접 읽는 계약이라(§0·§14) 지우면 KKH 쪽 컴파일이 깨진다. 완전히 정리하려면 KKH와 먼저 확인할 것. 코드에는 "2026-09-29 기준 무효화됨" 주석을 남겨둠
-- 남은 것: `Weaving.asset`(회피로 개명 예정, 프레임 수치는 §3 표대로 갱신 필요), Battle.unity 씬의 `PlayerInputSource` 인스펙터 필드 재연결(스크립트 필드명이 바뀌어서 기존 연결이 끊어짐 — D 에셋은 아직 없으므로 프레임 수치가 나온 뒤에 연결할 것)
+- 남은 것: ~~`Weaving.asset`(회피로 개명 예정, 프레임 수치는 §3 표대로 갱신 필요)~~ → 2026-10-26 `Player_Dodge.asset`으로 완료, Battle.unity 씬의 `PlayerInputSource` 인스펙터 필드 재연결(스크립트 필드명이 바뀌어서 기존 연결이 끊어짐 — D 에셋은 아직 없으므로 프레임 수치가 나온 뒤에 연결할 것)
 
 ### 2026-10-02 업데이트 — 입력 레이어 + 점프/대시 물리 + 방향 전환 정정
 

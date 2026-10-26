@@ -168,6 +168,8 @@ public class ActionState
     {
         if (action == null || IsDead) return;
 
+        DetachExternal(); // 최. 추가 — 스킬 러너가 돌던 중이면 끊겼다고 알린다 (Begin 전에: 쿨 계산에 끊긴 행동의 보정이 필요)
+
         CurrentAction = null;
         Phase = ActionPhase.Idle;
         FrameInPhase = 0;
@@ -183,6 +185,8 @@ public class ActionState
     {
         if (IsDead) return;
 
+        DetachExternal(); // 최. 추가
+
         CurrentAction = null;
         FrameInPhase = 0;
         Phase = ActionPhase.Dead;
@@ -196,6 +200,90 @@ public class ActionState
     {
         return FrameAdjustment.None;
     }
+
+    #region 최. 추가 — 스킬 러너(외부 구동) 연동
+    // 홀드형처럼 구간 길이가 입력에 따라 바뀌는 행동은 Advance()의 고정 3구간으로 표현할 수 없어서,
+    // 그런 행동은 SkillRunner(CSH)가 구간·프레임을 직접 정하고 여기에 동기화만 한다.
+    // 외부 구동 중이 아닐 때는 아래 코드가 전혀 개입하지 않는다 — 적/보스와 기존 행동은 동작이 그대로다.
+
+    private IExternalActionDriver externalDriver;
+
+    /// <summary>스킬 러너가 지금 이 상태를 구동 중인가</summary>
+    public bool IsExternallyDriven => externalDriver != null;
+
+    /// <summary>
+    /// 외부 구동 행동 시작. 기존 Begin을 그대로 거친다(보정 계산·Timeline·OnActionBegin) — 그 뒤로는 Advance가 건너뛰어진다.
+    /// Idle이 아니면 false
+    /// </summary>
+    public bool BeginExternal(ActionData action, IExternalActionDriver driver)
+    {
+        if (action == null || driver == null || !CanAcceptNewAction) return false;
+
+        Begin(action);
+        if (CurrentAction != action) return false;
+
+        externalDriver = driver;
+        return true;
+    }
+
+    /// <summary>
+    /// 외부 구동 중에 행동만 바꾼다 (차지 단계, 강화판정). 장비 보정과 Timeline을 새 행동 기준으로 다시 계산하고,
+    /// 이번 행동의 적중 기록을 지운다. restartPresentation이면 OnActionBegin을 다시 쏴서 애니메이션이 새 행동 것으로 바뀐다
+    /// </summary>
+    public void SwapExternalAction(ActionData action, bool restartPresentation)
+    {
+        if (externalDriver == null || action == null) return;
+
+        CurrentAction = action;
+        Resolved.Reset();
+        modifierResolver?.Invoke(action, Resolved);
+        Timeline = ResolvedAction.Resolve(action, BuildAdjustment(Resolved));
+        HasHitThisAction = false;
+
+        if (restartPresentation) OnActionBegin?.Invoke(action);
+    }
+
+    /// <summary>
+    /// 러너의 구간·프레임을 바깥(HitDetection, RobotView 등)에 보이는 값으로 옮긴다. 매 틱 1회.
+    /// 구간이 바뀌면 기존 Advance와 같은 이벤트(OnActionActiveStart / OnActionRecoveryStart)를 쏜다
+    /// </summary>
+    public void SyncExternal(ActionPhase phase, int frameInPhase, int globalFrame)
+    {
+        if (externalDriver == null) return;
+
+        ActionPhase previous = Phase;
+        Phase = phase;
+        FrameInPhase = frameInPhase;
+        GlobalFrame = globalFrame;
+
+        if (previous == phase) return;
+        if (phase == ActionPhase.Active) OnActionActiveStart?.Invoke(CurrentAction);
+        else if (phase == ActionPhase.Recovery) OnActionRecoveryStart?.Invoke(CurrentAction);
+    }
+
+    /// <summary>외부 구동 행동이 정상(또는 취소·체인)으로 끝났다. 기존 Recovery 종료와 같이 Idle로 돌아가고 OnActionEnd를 쏜다</summary>
+    public void EndExternal()
+    {
+        if (externalDriver == null) return;
+
+        externalDriver = null;
+        ActionData finished = CurrentAction;
+        Phase = ActionPhase.Idle;
+        CurrentAction = null;
+        FrameInPhase = 0;
+        OnActionEnd?.Invoke(finished);
+    }
+
+    // Interrupt / Kill에서 호출. 러너에게 끊겼다고 알리고 연결을 푼다 (OnActionEnd는 기존 규칙대로 안 보낸다)
+    private void DetachExternal()
+    {
+        if (externalDriver == null) return;
+
+        IExternalActionDriver driver = externalDriver;
+        externalDriver = null;
+        driver.OnExternalInterrupted();
+    }
+    #endregion
 
     /// <summary>
     /// 호출: HitDetection이 겹침을 감지해서 CombatDataHub.ProcessHit을 부른 직후.
@@ -214,6 +302,9 @@ public class ActionState
         // Idle 상태(행동 없음)면 셀 프레임 자체가 없으니 그냥 리턴 — 여기서 뭔가 세면 다음 Begin() 때
         // GlobalFrame이 0이 아닌 값에서 시작하는 등 꼬이게 된다
         if (CurrentAction == null) return;
+
+        // 최. 추가 — 스킬 러너가 구동 중인 행동은 러너가 구간·프레임을 직접 넘긴다 (SyncExternal)
+        if (externalDriver != null) return;
 
         // 이번 틱이 이 행동의 몇 번째 프레임인지 두 카운터를 같이 올린다.
         // FrameInPhase는 "지금 Phase 안에서 몇 번째"(Phase 전환 판단용), GlobalFrame은 "행동 전체에서 몇 번째"(박스 판정용)
@@ -275,7 +366,13 @@ public class ActionState
         // 원본(CurrentAction)이 아니라 Timeline에서 꺼내는 이유: 앵커로 찍은 박스는 확정 프레임을 알아야
         // 창이 정해지고, 프레임 보정이 걸리면 박스도 같이 따라가야 하기 때문이다
         if (CurrentAction != null)
+        {
+            // 최. 추가 — 스킬 러너 구동 중이면 박스도 러너가 정한다 (홀드처럼 길이가 가변인 구간이 있어서 GlobalFrame만으로는 창을 못 구함)
+            if (externalDriver != null)
+                return ApplyHitBoxModifiers(externalDriver.GetActiveBoxes());
+
             return ApplyHitBoxModifiers(Timeline.GetActiveBoxes(GlobalFrame)); // 최. 추가
+        }
 
         // 행동이 없으면(=Idle, 걷기 포함) IdleAction의 1번 프레임 박스를 대신 쓴다.
         // 굳이 GlobalFrame이 아니라 고정값 1을 넘기는 이유: 서 있는 자세는 프레임에 따라 박스가

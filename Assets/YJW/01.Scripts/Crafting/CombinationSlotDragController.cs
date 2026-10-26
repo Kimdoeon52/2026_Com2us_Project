@@ -74,9 +74,11 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
             {
                 // 다른 슬롯 위에 놓였다. 그 슬롯이 이미 차 있어도 상관없이 서로 내용을 맞바꾼다 (스왑)
                 // target이 비어있었다면 other는 null이 되고, 그게 그대로 _slot.SetComponent(null)로 들어가 원래 자리가 빈다
+                // 빨간 칸 여부(HasComponent)도 부품과 같이 옮겨야 한다
                 ComponentDefinition other = target.Component;
-                target.SetComponent(_dragged);
-                _slot.SetComponent(other);
+                bool otherHas = target.HasComponent;
+                target.SetComponent(_dragged, _slot.HasComponent);
+                _slot.SetComponent(other, otherHas);
 
                 // 배치가 바뀌었으니 지금 9칸 조합이 레시피와 맞는지 다시 확인시킨다
                 _recipe.PushPartData();
@@ -84,7 +86,9 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
             else if (target == null && IsOverInventory(eventData))
             {
                 // 인벤토리 위에 놓였다 → 수량을 돌려주고 슬롯을 비운다
-                Host.GiveComponent(_dragged, 1);
+                // 빨간 칸은 인벤토리에서 빠진 적이 없으니 돌려주지 않고 비우기만 한다
+                if (_slot.HasComponent)
+                    Host.GiveComponent(_dragged, 1);
                 _slot.SetComponent(null);
                 _recipe.PushPartData();
             }
@@ -174,7 +178,8 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
         ComponentDefinition component = _slot.Component;
         if (component == null) return;
 
-        Host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
+        if (_slot.HasComponent)             // 빨간 칸은 인벤토리에서 빠진 적이 없으니 돌려주지 않음
+            Host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
         _slot.SetComponent(null);           // 슬롯 비움
         _recipe.PushPartData();             // 조합 다시 판정
     }

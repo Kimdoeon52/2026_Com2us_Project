@@ -36,6 +36,16 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
         Pushcomponents();
     }
 
+    private void _HasComponent()
+    {
+        var Slots = CraftingManager.Instance.slots;
+        for (int i = 0; i < Slots.Length; i++)
+        {
+            var slot = Slots[i].GetComponent<CombinationSlot>();
+            
+        }
+    }
+
     private void Pushcomponents()
     {
         if (data == null) return;   // 카테고리 버튼을 안 눌러 데이터가 없는 슬롯
@@ -45,17 +55,16 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
         // 기존에 올려둔 부품이 있으면 먼저 인벤토리로 돌려놓는다 (안 하면 덮어써져서 사라짐)
         manager.AllComponentReturn();
 
-        if (!HaveAllComponents()) return;
-
         for (int i = 0; i < manager.slots.Length; i++)
         {
             var slot = manager.slots[i].GetComponent<CombinationSlot>();
             var component = manager.components.Find(data.Combination[i]);   // PartID가 아니라 i번째 칸의 부품 ID
 
-            if (component != null)
-                InventoryHost.Instance.ConsumeComponent(component.Id, 1);
+            // 빈 칸은 검사할 게 없으니 true(흰색)
+            // 부품 칸은 인벤토리에서 1개 빼보고, 성공하면 true(흰색) / 재고 없으면 false(빨강)
+            bool has = component == null || InventoryHost.Instance.ConsumeComponent(component.Id, 1);
 
-            slot.SetComponent(component);   // componentID는 SetComponent 안에서 같이 세팅되므로 따로 넣을 필요 없음
+            slot.SetComponent(component, has);   // componentID는 SetComponent 안에서 같이 세팅되므로 따로 넣을 필요 없음
         }
 
         // 결과 슬롯 갱신 (슬롯들의 부모에 CorrectRecipe가 있음)

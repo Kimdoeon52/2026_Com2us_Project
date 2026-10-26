@@ -51,7 +51,7 @@ public class PlayerStatView : MonoBehaviour
 
     private void Hook()
     {
-        if (_gold == null)
+        if (!IsAlive(_gold))
             _gold = FindGoldSource();
 
         if (_host != null || InventoryHost.Instance == null)
@@ -62,23 +62,46 @@ public class PlayerStatView : MonoBehaviour
         Refresh();
     }
 
-    // 골드 시스템은 씬 전환 유지 싱글톤이라 열 때마다 다시 찾지 않는다
+    // 씬을 다시 불러오면 씬에 박힌 사본과 씬 전환 유지 인스턴스가 한 프레임 겹친다.
+    // 사본은 그 프레임 끝에 파괴되므로 살아남는 쪽을 고른다
     private static IGoldSource FindGoldSource()
     {
         MonoBehaviour[] behaviours = FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+        IGoldSource fallback = null;
+
         for (int i = 0; i < behaviours.Length; i++)
         {
-            if (behaviours[i] is IGoldSource gold)
+            if (!(behaviours[i] is IGoldSource gold))
+                continue;
+
+            // 씬 전환 유지 오브젝트는 빌드 인덱스가 없다
+            if (behaviours[i].gameObject.scene.buildIndex < 0)
                 return gold;
+
+            if (fallback == null)
+                fallback = gold;
         }
 
-        return null;
+        return fallback;
+    }
+
+    // 인터페이스로 들고 있으면 파괴된 MonoBehaviour가 null로 잡히지 않는다
+    private static bool IsAlive(IGoldSource gold)
+    {
+        if (gold == null)
+            return false;
+
+        return !(gold is Object obj) || obj != null;
     }
 
     public void Refresh()
     {
         if (_text == null || _host == null)
             return;
+
+        // 씬을 다시 불러온 뒤면 캐시한 원본이 파괴된 사본일 수 있다
+        if (!IsAlive(_gold))
+            _gold = FindGoldSource();
 
         IReadOnlyList<StatLine> lines = _source.GetStats(_host.GetEquippedPartIds());
 
@@ -94,8 +117,7 @@ public class PlayerStatView : MonoBehaviour
             }
         }
 
-        // 파괴된 MonoBehaviour는 인터페이스로 들고 있으면 null 비교가 안 되므로 캐스팅해 확인한다
-        if (_gold is Object alive && alive != null)
+        if (IsAlive(_gold))
             AppendLine(_goldLabel, _gold.PlayerGold.ToString("N0"));
 
         _text.text = _builder.ToString();

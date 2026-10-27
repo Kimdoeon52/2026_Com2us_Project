@@ -72,7 +72,7 @@ public class CombatCamera : MonoBehaviour
     }
 
     // 호출: Unity(모든 Update 이후). 이동이 끝난 파이터 위치로 카메라 이동/줌을 정한다
-    // Update가 아니라 LateUpdate를 쓰는 이유: RobotMover.Update()에서 캐릭터가 다 이동한 "이후"의
+    // Update가 아니라 LateUpdate를 쓰는 이유: RobotMover.Tick()(CombatClock.Update 안에서 돎)에서 캐릭터가 다 이동한 "이후"의
     // 최종 위치를 기준으로 카메라를 맞춰야 한다. Update에서 카메라를 먼저 움직이면, 아직 그 프레임에
     // 이동하지 않은 "한 프레임 전" 캐릭터 위치를 쫓아가게 되어 살짝 밀리는 느낌이 생긴다
     private void LateUpdate()
@@ -157,7 +157,7 @@ public class CombatCamera : MonoBehaviour
     }
 
     /// <summary>이동하려는 x를 현재 화면 좌우 끝선 안으로 보정해서 돌려준다</summary>
-    // 호출: RobotMover.Update. 받음: 가고 싶은 x. 반환: 현재 화면 좌우 끝선 안으로 보정된 x
+    // 호출: RobotMover.Tick. 받음: 가고 싶은 x. 반환: 현재 화면 좌우 끝선 안으로 보정된 x
     public float ClampFighterX(float desiredX)
     {
         if (cam == null || playerA == null) return desiredX; // 카메라가 없으면 제한할 방법이 없으니 원하는 값 그대로 통과

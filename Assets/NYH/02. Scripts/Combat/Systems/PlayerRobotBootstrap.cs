@@ -20,6 +20,7 @@ public class PlayerRobotBootstrap : MonoBehaviour
 
     // OnEnable/OnDisable에서 구독/해제할 때 다시 써야 해서 필드로 들고 있는다
     private ActionExecutor executor;
+    private RobotMover mover;
 
     // 호출: Unity(오브젝트 생성 시). 같은 오브젝트의 부품들을 찾아 서로 연결한다 — 입력(IInputSource)과 상태(ActionState)를 여기서만 나눠준다
     private void Awake()
@@ -31,7 +32,7 @@ public class PlayerRobotBootstrap : MonoBehaviour
         // mover.Init에는 executor.State가 필요하다 — 그래서 executor.Init을 먼저 불러서 State가
         // 만들어지게 한 다음에 mover.Init을 부르는 순서가 되어야 한다 (아래 두 줄의 순서가 중요함)
         // (2026-09-29: 가드가 기동 행동에서 삭제되면서 executor.Init에는 더 이상 mover를 안 넘긴다 — §5·§15)
-        var mover = GetComponent<RobotMover>();
+        mover = GetComponent<RobotMover>();
 
         executor.Init(input, fighterId);
         // executor.Init이 먼저 끝나서 State가 이미 만들어져 있어야 여기서 null이 안 넘어간다.
@@ -48,9 +49,13 @@ public class PlayerRobotBootstrap : MonoBehaviour
     // Awake가 아니라 OnEnable에서 구독하는 이유: 오브젝트가 비활성화됐다가 다시 활성화되는 경우
     // (예: 풀링, 일시적으로 꺼놨다 켜는 연출 등)에도 구독이 제대로 다시 걸리게 하기 위함.
     // Awake는 오브젝트 생성 시 딱 한 번만 불리지만 OnEnable/OnDisable은 활성화될 때마다 짝을 맞춰 불린다
+    // 2026-10-27: 이동(RobotMover.Tick)도 같은 틱에 올렸다(§3). 순서는 행동 → 이동 —
+    // 이번 틱에 행동이 시작됐으면 그 틱부터 바로 멈춰야 공격 첫 프레임에 미끄러지지 않는다
     private void OnEnable()
     {
-        CombatClock.Instance.OnCombatTick += executor.ExecuteTick;
+        var clock = CombatClock.Instance;
+        clock.OnCombatTick += executor.ExecuteTick;
+        if (mover != null) clock.OnCombatTick += mover.Tick;
     }
 
     // 호출: Unity(비활성화/파괴 시). 등록했던 ExecuteTick을 해제한다 (안 하면 파괴된 오브젝트를 계속 호출함)
@@ -60,6 +65,8 @@ public class PlayerRobotBootstrap : MonoBehaviour
     private void OnDisable()
     {
         var clock = CombatClock.Existing;
-        if (clock != null) clock.OnCombatTick -= executor.ExecuteTick;
+        if (clock == null) return;
+        clock.OnCombatTick -= executor.ExecuteTick;
+        if (mover != null) clock.OnCombatTick -= mover.Tick;
     }
 }

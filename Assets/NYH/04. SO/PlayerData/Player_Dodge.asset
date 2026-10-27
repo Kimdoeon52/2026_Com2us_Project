@@ -17,7 +17,7 @@ MonoBehaviour:
   requiredPart: 5
   startupFrames: 3
   activeFrames: 18
-  recoveryFrames: 9
+  recoveryFrames: 0
   isInvincibleDuringActive: 1
   isGuardable: 0
   causesKnockdown: 0
@@ -25,19 +25,21 @@ MonoBehaviour:
   knockbackDistance: 0
   damage: 0
   hitIntervalFrames: 0
-  animationClipName: Weaving
+  animationClipName: Walk
   activeClipName: 
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
-  advanceDistance: 2
+  advanceDistance: 3
   advanceDuringActiveOnly: 1
-  trailAfterImageInterval: 3
-  groundOnly: 1
+  trailAfterImageInterval: 2
+  groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
   perBoxDamage: 0
-  cooldownFrames: 60
+  cooldownFrames: 0
   cooldownOwner: {fileID: 0}
   cylinderCost: 0
   fallbackAction: {fileID: 0}

@@ -648,7 +648,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 9. 🔶 (2026-10-09) 일반 적 AI 2차 — `AIInputSource`를 `EnemyAIProfile`(SO) 기반 **가중치 선택**으로 교체. 선택지 = 기술(사거리·쿨타임·부위 파손·상대 지상/공중 조건) + 접근 + 대기 + 점프. AI 자체 상태기계는 두지 않고 `ActionState`/`RobotMover`에 매번 묻는다. 판단·쿨타임은 `CombatClock` 틱에서만 센다. 적 Skill1~4·피격·총알 에셋은 `Assets/NYH/04. SO/EnemyData/`. 보스용과 계속 묶을지는 여전히 미정. ⬜ 씬 인스펙터 연결과 실제 플레이 검증은 아직(개발일지 2026-10-09)
 10. ✅ (2026-10-06 결정) CSH 연동 방식 확정 — `IUsable`/`SkillBase`는 CSH가 이미 폐기하고 "장비 효과"(`EquipmentEffectSet`/`ResolvedModifiers`) + 리졸버 주입(`SetModifierResolver`/`SetEffects`, 이미 `ActionState.cs`/`ActionExecutor.cs`에 병합됨) 체계로 교체함. §13 원안(이벤트 구독)으로 되돌리지 않고 **CSH가 만든 방식을 그대로 따라간다.** 프레임 보정 필드·`ActionTag` 매칭·`KnockbackMultiplier` 등 CSH 쪽 빈 자리는 CSH 책임 — NYH가 먼저 요구하지 않음
 11. ✅ (2026-09-29) D/Q/W/E/R 액션 구조 전환 — 기존 5종 기본기 에셋·키매핑 제거 + D 슬롯 신설 + Q/W/E/R 슬롯 구조 (§3·§8). 2026-10-02: Q/W 짧게·길게(차지) 입력 수신 + 대시·점프 입력 수신까지 추가 — 전부 `PlayerInputSource`의 "입력 수신"만 완료고, 실제 물리/실린더 연결은 미완료(아래 참고)
-12. ✅ (2026-10-02) 점프·대시를 `RobotMover`에 실제로 반영 — Y축 포물선 점프(`jumpVelocity`/`gravity`, 수치 전부 임시) + 대시 중 `moveSpeed` 배율(`dashSpeedMultiplier`, 수치 임시). **같은 작업 중 발견: 방향 전환이 "상대 위치 기준"(옛 SF2 미러매치 가정)으로 박혀 있던 걸 "이동 입력 방향 기준"(기획서 그래픽 §7-1 "방향 전환 | 반대 방향 입력")으로 교체함 — 할로우나이트/스컬류 보스전엔 전자가 안 맞음.** 이동 로직 자체는 여전히 `Update()`에서 돈다(`CombatTick` 이관은 별도 확인 필요 — §15).
+12. ✅ (2026-10-02) 점프·대시를 `RobotMover`에 실제로 반영 — Y축 포물선 점프(`jumpVelocity`/`gravity`, 수치 전부 임시) + 대시 중 `moveSpeed` 배율(`dashSpeedMultiplier`, 수치 임시). **같은 작업 중 발견: 방향 전환이 "상대 위치 기준"(옛 SF2 미러매치 가정)으로 박혀 있던 걸 "이동 입력 방향 기준"(기획서 그래픽 §7-1 "방향 전환 | 반대 방향 입력")으로 교체함 — 할로우나이트/스컬류 보스전엔 전자가 안 맞음.** 이동 로직은 2026-10-27에 `CombatClock` 틱(`RobotMover.Tick`, 행동 → 이동 순서)으로 옮겼다.
 13. ⬜ 보스 스킬의 "타격 부위" 데이터 표현 + `DurabilitySystem` 재설계 (§5·§15). **2026-10-11 방향 확정(남윤호)**: 기술마다 깎는 부위 **하나로 고정**,
     부위 데미지는 코어 HP 데미지와 **별도 수치**. → `ActionData`에 "깎을 부위(없음/머리/양팔/양다리)" + "부위 데미지" 칸 추가,
     `HitDetection`이 `ProcessHit`에 `Core` 고정 대신 그 값을 넘기면 된다(받는 쪽 KKH `ProcessHit`·`RuntimeRobot` 봉인은 이미 있음).
@@ -663,6 +663,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 21. 🔶 (2026-10-11) 데미지 숫자(`DamageNumberEmitter`, `ActionExecutor.OnDamaged` 구독, 자동 부착) + HP 바(`FighterHpBar`, 막대 Image에 붙이고 fighterId 지정, `CombatDataHub.GetCurrentHp/GetMaxHp` 매 프레임 조회). 효과 컴포넌트(화염·꼬리 잔상·데미지 숫자)는 `RobotView.EnsureEffectComponents`가 행동 데이터를 보고 자동으로 붙인다 — 패턴 끝 자세 잔상만 예외(AfterImageEmitter 직접 부착). ⬜ 플레이 검증 아직
 23. 🔶 (2026-10-26) 플레이어 회피 — `Player_Dodge.asset` 기획서1011 수치로 재작성, `ActionData.groundOnly` + `ActionExecutor.GateByGround`(지상 전용 행동을 공중에서 누르면 무시, 쿨타임·탄 소모 전에 거름 — `TryBeginRequested`·`SkillGateStart` 양쪽). ⬜ 씬 연결(옛 경로 `PlayerInputSource.dodge` / 새 경로 `PlayerSkillLoadout` Dodge 칸, Player `allActions`에 추가 — 꼬리 잔상 컴포넌트 자동 부착 조건)·플레이 검증 아직. 가드(별도 키)는 규칙·키 확인 후 착수
 22. ⬜ (다음) 기믹 "기물파괴 A: 폭발 화물 상자" — 담당 확인 후 착수. 쪼갠 작업·필요한 신규 구조·확인할 것은 개발일지 2026-10-11 마무리 절. 점프 패턴(후보 2개)도 같은 곳
+24. 🔶 (2026-10-27) 적 점프 패턴 "긴급 이탈" — 백점프(`ActionData.leapVelocity` → `RobotMover.Leap`, 공중 궤적·방향 고정) → 착지 행동 → 사격/돌진. 패턴 2개(`Enemy1_AIProfile`). 착지 행동은 패턴을 안 끊는다. 공중 판단(공중에서 다른 행동 고르기)은 여전히 없음. 내려찍기 패턴은 보류(사용자 결정). 폭발 화물 상자 대기, NPC B·C는 보스 제작 때
 
 ---
 
@@ -671,6 +672,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 - 주석과 로그는 한국어로 쓴다 (팀 전원 한국어)
 - 클래스/변수명은 영어, 프레임표의 기술 이름만 한국어 그대로 사용
 - 한 파일 = 한 클래스
+- (2026-10-27) `ActionData`에 칸을 추가하면 `Editor/ActionDataInspector`의 `Groups`에도 넣을 것 — 안 넣으면 인스펙터 맨 끝 "기타"에 나온다(사라지진 않음). 투사체·화염·도약처럼 일부 기술만 쓰는 **새 부가 기능은 다음부터 모듈(B안)로 분리하는 것을 우선 검토**한다(모든 기술에 칸이 늘어나는 구조를 더 키우지 않기 위해)
 - 새 MonoBehaviour를 추가하기 전에 **기존 시스템에 들어갈 자리가 아닌지** 먼저 확인할 것.
   3층의 시스템 개수는 고정이며, 늘어나야 할 이유가 있으면 먼저 물어볼 것
 - 수치가 필요한데 프레임표에 없으면 **임의로 지어내지 말고 물어볼 것.**
@@ -885,8 +887,8 @@ KKH가 이미 만들어둔 `Assets/KKH/02.Scripts/` 쪽 API. NYH는 이 계약�
   미러매치가 아니므로 상대를 강제로 계속 쳐다볼 이유가 없다. **교훈: 기존 코드가 새 설계와 충돌하지
   않는지는 "구조적으로 안 막혀 있다"만으로 판단하면 안 되고, 실제 장르 기준 문서(그래픽 섹션 등)와
   문장 단위로 대조해야 한다.**
-- 남은 것: 점프/대시 수치는 전부 임시값(체감 테스트 필요). 이동 로직은 여전히 `Update()` 기반 —
-  `CombatTick` 이관 여부는 별도 확인 필요. Push박스 겹침 판정이 점프로 인한 Y 변화를 전혀 안 보는 것도
+- 남은 것: 점프/대시 수치는 전부 임시값(체감 테스트 필요). ~~이동 로직 Update() 기반~~ → 2026-10-27 틱으로 이관 완료.
+  Push박스 겹침 판정이 점프로 인한 Y 변화를 전혀 안 보는 것도
   (보스 위로 뛰어넘기 등에서) 재검토 필요.
 
 ---

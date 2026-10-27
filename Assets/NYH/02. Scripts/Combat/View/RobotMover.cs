@@ -6,10 +6,10 @@ using UnityEngine;
 /// 위치가 바뀌거나 다른 시스템에 흡수될 수 있음 — 지금은 "키 누르면 움직인다"를
 /// 눈으로 확인하기 위한 최소 스캐폴드.
 ///
-/// CombatClock이 아직 없어서 임시로 Update()에서 직접 프레임을 센다.
-/// CombatClock 완성되면 이 이동 로직도 CombatTick()로 옮겨야 한다 (§3 원칙).
-/// (참고: CombatClock 자체는 이제 있음. 이동 로직을 CombatTick으로 옮기는 작업은 아직 안 함 —
-///  이동은 판정에 직접 쓰이는 값이 아니라서 우선순위가 낮았을 뿐, 위 원칙 자체는 여전히 유효)
+/// 2026-10-27: 이동·점프·Push 보정을 Update()에서 CombatClock 틱(Tick)으로 옮겼다 (§3).
+/// 전엔 Time.deltaTime으로 움직여서 판정(틱)과 위치(렌더 프레임)가 서로 다른 시계로 돌았고,
+/// F9로 멈춘 뒤 Keypad8로 한 프레임씩 넘겨도 캐릭터는 안 움직였다. 이제 위치도 1/60초마다 정확히 한 번 바뀐다.
+/// 렌더 프레임 사이 보간은 아직 없다 — 144Hz 모니터에서 움직임이 60Hz 계단처럼 보이면 그때 보간을 추가한다.
 /// </summary>
 public class RobotMover : MonoBehaviour
 {
@@ -35,7 +35,7 @@ public class RobotMover : MonoBehaviour
 
     private IInputSource inputSource;
     private ActionState actionState;
-    // 지금 오른쪽을 보고 있는지. Update()에서 매 프레임 갱신되고, 다른 시스템(BoxDrawer, HitDetection)은
+    // 지금 오른쪽을 보고 있는지. Tick()에서 매 틱 갱신되고, 다른 시스템(BoxDrawer, HitDetection)은
     // 이 필드를 직접 못 건드리고 아래 FacingRight 프로퍼티로 읽기만 한다
     private bool facingRight = true;
 
@@ -48,6 +48,10 @@ public class RobotMover : MonoBehaviour
     // 공격(canMove=false) 중에도 이 값을 그대로 유지해야 "점프 중 공격하면 관성이 뚝 끊기는" 문제가
     // 안 생긴다. 지상에서는 매 프레임 입력으로 덮어쓰므로 평소엔 그냥 "지금 입력" 그대로다
     private float moveVelocity;
+
+    // 2026-10-27 추가: Leap(스스로 뛰는 기술)로 떴는지. 켜져 있는 동안은 공중에서 입력을 안 읽어서 궤적·방향이 고정되고,
+    // 착지하면 꺼진다. 일반 점프(↑)는 이걸 안 켜므로 예전처럼 공중에서도 입력으로 움직일 수 있다
+    private bool airLocked;
 
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
@@ -79,6 +83,22 @@ public class RobotMover : MonoBehaviour
         isGrounded = false;
     }
 
+    /// <summary>
+    /// 스스로 뛴다 (긴급 이탈 백점프 등 ActionData.LeapVelocity). 수평 속도까지 정해서 뛰고, 착지할 때까지
+    /// 입력을 안 읽어서 궤적과 바라보는 방향이 고정된다 — 뒤로 뛰면서도 상대를 계속 바라본다
+    /// </summary>
+    // 호출: ActionExecutor.ApplyLeap. 받음: 월드 기준 수평 속도(부호 = 방향), 위쪽 초기 속도
+    public void Leap(float horizontalVelocity, float upwardVelocity)
+    {
+        moveVelocity = horizontalVelocity;
+        if (upwardVelocity > 0f)
+        {
+            verticalVelocity = upwardVelocity;
+            isGrounded = false;
+        }
+        airLocked = !isGrounded;
+    }
+
     /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 —
     /// 지금은 "키 누르면 움직인다"를 눈으로 확인하기 위한 최소 스캐폴드</summary>
     // 호출: PlayerRobotBootstrap.Awake. 받음: source(이동 키 읽기), state(공격 중 이동 잠금 판단)
@@ -95,15 +115,19 @@ public class RobotMover : MonoBehaviour
             Debug.LogWarning($"[RobotMover] {name}: 회전이 {transform.eulerAngles}로 남아 있음 — 좌우는 이제 spriteFacesRight로 맞추므로 Rotation을 0,0,0으로 바꿀 것");
     }
 
-    // 호출: Unity 매 렌더 프레임. 순서: 좌우 이동(대시 배율 포함) → 점프(Y축) → 화면 밖 보정 → 입력 방향으로 좌우 반전 → Push박스 겹침 보정
-    private void Update()
+    // 호출: CombatClock.OnCombatTick (PlayerRobotBootstrap이 ActionExecutor.ExecuteTick 다음에 등록).
+    // 순서: 좌우 이동(대시 배율 포함) → 점프(Y축) → 화면 밖 보정 → 입력 방향으로 좌우 반전 → Push박스 겹침 보정
+    public void Tick()
     {
         // 공격·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
         // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
         bool canMove = actionState == null || actionState.CanMove;
         float moveInput = 0f;
 
-        if (canMove)
+        // 도약(Leap) 중이면 입력을 아예 안 읽는다 — 수평 속도와 방향이 착지까지 그대로 간다
+        bool leaping = airLocked && !isGrounded;
+
+        if (canMove && !leaping)
         {
             moveInput = inputSource?.GetMoveInput() ?? 0f;
             // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
@@ -121,9 +145,8 @@ public class RobotMover : MonoBehaviour
         // 공중에서 입력으로 궤적을 바꾸고 싶어지면(에어 컨트롤) 이 분기를 다시 설계해야 함 — 지금은
         // "공중 상태를 어떻게 다룰지"가 §15 미정 항목이라 최소한의 수정만 했다
 
-        // Time.deltaTime을 곱해서 프레임 속도와 무관하게 "초당 moveVelocity만큼" 이동하게 한다.
-        // (이동 자체는 아직 CombatTick으로 안 옮겨서, 클래스 주석대로 §3 원칙을 완전히 지키진 못한 임시 상태)
-        transform.Translate(Vector3.right * moveVelocity * Time.deltaTime, Space.World);
+        // 틱 하나 = 정확히 1/60초라 TICK을 곱하면 "초당 moveVelocity만큼"이 된다 — 주사율과 무관 (§3)
+        transform.Translate(Vector3.right * moveVelocity * CombatClock.TICK, Space.World);
 
         UpdateJump(canMove);
 
@@ -154,9 +177,10 @@ public class RobotMover : MonoBehaviour
         transform.localScale = new Vector3(sign * Mathf.Abs(transform.localScale.x), transform.localScale.y, transform.localScale.z);
     }
 
-    // 호출: Update. 단순 포물선 점프 — 지상에서만 발동, 체공 중엔 중력만 적용하다 바닥(groundY)에 닿으면 착지.
-    // GetJumpInput()은 조건과 무관하게 매 프레임 반드시 한 번 호출해서 소비해야 한다 — 안 그러면
-    // PlayerInputSource의 버퍼링 플래그가 안 비워져서 나중에 엉뚱한 타이밍에 점프가 터질 수 있다
+    // 호출: Tick. 단순 포물선 점프 — 지상에서만 발동, 체공 중엔 중력만 적용하다 바닥(groundY)에 닿으면 착지.
+    // GetJumpInput()은 조건과 무관하게 매 틱 반드시 한 번 호출해서 소비해야 한다 — 안 그러면
+    // 입력원의 버퍼링 플래그가 안 비워져서 나중에 엉뚱한 타이밍에 점프가 터질 수 있다.
+    // 입력원들은 ↑를 Update에서 받아 틱이 읽을 때까지 들고 있으므로(래치), 틱에서 읽어도 입력이 유실되지 않는다
     private void UpdateJump(bool canMove)
     {
         bool jumpPressed = inputSource?.GetJumpInput() ?? false;
@@ -169,23 +193,24 @@ public class RobotMover : MonoBehaviour
 
         if (isGrounded) return;
 
-        verticalVelocity += gravity * Time.deltaTime;
+        verticalVelocity += gravity * CombatClock.TICK;
 
         Vector3 pos = transform.position;
-        pos.y += verticalVelocity * Time.deltaTime;
+        pos.y += verticalVelocity * CombatClock.TICK;
 
         if (pos.y <= groundY)
         {
             pos.y = groundY;
             verticalVelocity = 0f;
             isGrounded = true;
+            airLocked = false; // 도약 궤적 고정은 착지와 함께 끝난다
         }
 
         transform.position = pos;
     }
 
-    // 호출: Update(이동·방향 계산 끝난 뒤). 내 Push박스가 상대 Push박스와 겹치면, 겹친 만큼 나만 뒤로 물러난다.
-    // "나만" 미는 이유: 상대도 똑같이 자기 Update()에서 이 함수를 돌려서 스스로 물러날 것이므로,
+    // 호출: Tick(이동·방향 계산 끝난 뒤). 내 Push박스가 상대 Push박스와 겹치면, 겹친 만큼 나만 뒤로 물러난다.
+    // "나만" 미는 이유: 상대도 똑같이 자기 Tick()에서 이 함수를 돌려서 스스로 물러날 것이므로,
     // 각자 자기 위치만 책임지면 결과적으로 서로 밀어내는 것과 같은 효과가 난다 — 굳이 상대의 transform까지
     // 건드리는 중앙 조정자를 따로 안 둬도 되는 단순한 방식
     private void ResolvePushOverlap()

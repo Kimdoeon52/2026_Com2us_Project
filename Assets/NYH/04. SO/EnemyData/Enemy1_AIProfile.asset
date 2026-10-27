@@ -68,6 +68,28 @@ MonoBehaviour:
     targetCondition: 1
     leaveAfterImage: 1
     speed: 1
+  - patternName: "긴급이탈-사격"
+    steps:
+    - {fileID: 11400000, guid: ac799be9c2224e628e8df6aa01d27750, type: 2}
+    - {fileID: 11400000, guid: 6b2e03e0cab74c0681c2c71799896a6f, type: 2}
+    minRange: 0
+    maxRange: 0.5
+    weight: 1
+    cooldownFrames: 480
+    targetCondition: 0
+    leaveAfterImage: 0
+    speed: 1
+  - patternName: "긴급이탈-돌진"
+    steps:
+    - {fileID: 11400000, guid: ac799be9c2224e628e8df6aa01d27750, type: 2}
+    - {fileID: 11400000, guid: 63c23afab03a4fd38758b9ad16be5ade, type: 2}
+    minRange: 0
+    maxRange: 0.5
+    weight: 1
+    cooldownFrames: 480
+    targetCondition: 1
+    leaveAfterImage: 0
+    speed: 1
   thinkIntervalFrames: 15
   preferredRange: 0.6
   approachWeight: 4

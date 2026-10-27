@@ -337,11 +337,14 @@ public class AIInputSource : MonoBehaviour, IInputSource, IActionAdjustmentSourc
         if (afterImage != null) afterImage.SetArmed(false);
     }
 
-    // 호출: ActionState.OnActionBegin. 패턴 중에 내가 내준 단계가 아닌 행동(경직·착지 등)이 시작되면 패턴을 끊는다.
-    // 같은 기술이 패턴에 두 번 들어 있어도 "방금 내준 것"과만 비교하므로 헷갈리지 않는다
+    // 호출: ActionState.OnActionBegin. 패턴 중에 내가 내준 단계가 아닌 행동(경직 등)이 시작되면 패턴을 끊는다.
+    // 같은 기술이 패턴에 두 번 들어 있어도 "방금 내준 것"과만 비교하므로 헷갈리지 않는다.
+    // 2026-10-27: 착지 행동은 예외 — 긴급 이탈(백점프 → 착지 → 사격/돌진)처럼 공중을 거치는 패턴은 착지가 흐름의 일부다.
+    // 착지가 끝나면 Think가 다음 단계를 이어서 내준다(이미 골라둔 단계는 착지 중에 대기했다가 나간다)
     private void OnActionBegin(ActionData action)
     {
         if (activePattern < 0 || action == expectedAction) return;
+        if (action != null && action == executor.LandAction) return;
 
         Debug.Log($"[AI 패턴] {name}: {profile.Patterns[activePattern].patternName} 중단 — {action.ActionName}이(가) 끼어듦");
         CancelPattern();
@@ -377,7 +380,7 @@ public class AIInputSource : MonoBehaviour, IInputSource, IActionAdjustmentSourc
         return action;
     }
 
-    // 호출: RobotMover.Update / RobotView(걷기 그림). 접근 중이면 상대 쪽, 아니면 정지.
+    // 호출: RobotMover.Tick / RobotView(걷기 그림). 접근 중이면 상대 쪽, 아니면 정지.
     // 단, 상대가 등 뒤에 있으면 그쪽으로 잠깐 민다 — RobotMover는 "이동 입력 방향"으로만 몸을 돌리기 때문에(§12 2026-10-02),
     // 돌아서려면 그 방향 입력이 한 번은 들어가야 한다. 돌아서는 순간 IsFacingOpponent가 참이 되어 바로 0으로 돌아온다
     public float GetMoveInput()
@@ -395,7 +398,7 @@ public class AIInputSource : MonoBehaviour, IInputSource, IActionAdjustmentSourc
         return IsFacingOpponent() ? 0f : towardOpponent;
     }
 
-    // 호출: RobotMover.Update. 틱에서 정한 점프를 한 번만 내준다 (1회성 펄스 — IInputSource 계약)
+    // 호출: RobotMover.Tick. 틱에서 정한 점프를 한 번만 내준다 (1회성 펄스 — IInputSource 계약)
     public bool GetJumpInput()
     {
         bool jump = pendingJump;

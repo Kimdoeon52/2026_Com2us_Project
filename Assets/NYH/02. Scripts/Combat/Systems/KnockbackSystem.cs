@@ -31,7 +31,7 @@ public static class KnockbackSystem
             Vector3 pos = defender.transform.position;
             pos.x += direction * result.KnockbackDistance;
             defender.transform.position = pos;
-            // 화면 밖으로 밀려도 RobotMover.Update()가 CombatCamera.ClampFighterX로 바로 다음 프레임에 되돌린다
+            // 화면 밖으로 밀려도 RobotMover.Tick()이 CombatCamera.ClampFighterX로 다음 틱에 되돌린다
         }
 
         // 어퍼컷처럼 띄우는 기술 — KKH 결과(result)에는 이 값이 없어서 행동 데이터에서 직접 읽는다

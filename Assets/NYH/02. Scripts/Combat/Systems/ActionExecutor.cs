@@ -56,6 +56,9 @@ public class ActionExecutor : MonoBehaviour
     /// <summary>경직 규칙. HitReactionSystem이 읽는다 (null이면 경직 없음)</summary>
     public HitReactionData HitReaction => hitReaction;
 
+    /// <summary>착지 순간 자동으로 실행되는 행동. AI가 "이건 패턴을 끊는 끼어들기가 아니다"를 구분할 때 본다</summary>
+    public ActionData LandAction => landAction;
+
     /// <summary>같은 오브젝트의 RobotMover. 넉백의 띄우기·경직의 공중 판정·총구 방향이 이걸 본다. 없으면 null</summary>
     public RobotMover Mover { get; private set; }
 
@@ -130,11 +133,26 @@ public class ActionExecutor : MonoBehaviour
         EmitProjectiles();
 
         ApplyAdvance();
+        ApplyLeap();
+    }
+
+    // 2026-10-27 추가: ActionData.LeapVelocity가 있는 행동이면 활성 구간에 들어서는 틱에 한 번 뛴다 (긴급 이탈 백점프 등).
+    // 선딜 = 땅에서 웅크리는 예비동작, 활성 시작 = 이륙. EmitProjectiles와 같은 이유로 Advance 뒤에 본다
+    private void ApplyLeap()
+    {
+        if (state.IsExternallyDriven || Mover == null) return;
+
+        ActionData action = state.CurrentAction;
+        if (action == null || action.LeapVelocity == Vector2.zero) return;
+        if (state.Phase != ActionPhase.Active || state.FrameInPhase != 0) return;
+
+        float direction = Mover.FacingRight ? 1f : -1f;
+        Mover.Leap(direction * action.LeapVelocity.x, action.LeapVelocity.y);
     }
 
     // 2026-10-11 추가: ActionData.AdvanceDistance를 선딜~활성 프레임 수로 나눠 틱마다 조금씩 앞으로 민다.
-    // RobotMover(Update)가 아니라 여기서 하는 이유: 거리가 "몇 프레임 동안"에 묶인 값이라 틱에서 세야
-    // 주사율과 무관하게 같은 거리를 간다(§3). 화면 밖 보정·Push박스 밀어내기는 RobotMover.Update가 그대로 처리한다
+    // RobotMover.Tick(입력 이동)이 아니라 여기서 하는 이유: 거리가 "몇 프레임 동안"에 묶인 값이라 틱에서 세야
+    // 주사율과 무관하게 같은 거리를 간다(§3). 화면 밖 보정·Push박스 밀어내기는 RobotMover.Tick이 그대로 처리한다
     private void ApplyAdvance()
     {
         // 최. 추가 — 스킬 러너 구동 중이면 러너가 Timeline 기준으로 직접 전진시킨다 (홀드 시간이 끼면 GlobalFrame 기준이 어긋남)

@@ -32,9 +32,9 @@ public class ActionDataEditor : Editor
     // 유니티가 인스펙터 창을 그릴 때마다 호출하는 함수. 여기서 그린 UI가 곧 인스펙터에 보이는 내용이다
     public override void OnInspectorGUI()
     {
-        // ActionData 원래 필드들(StartupFrames, Damage 등)은 그대로 기본 방식으로 그려준다 —
-        // 이 커스텀 에디터는 "추가"로 박스 편집 UI를 덧붙이는 것뿐이지, 기존 필드 편집 기능을 대체하는 게 아니다
-        DrawDefaultInspector();
+        // ActionData 원래 필드들(StartupFrames, Damage 등)을 그린다. 2026-10-27부터 DrawDefaultInspector 대신
+        // 묶음별로 접고 펴는 공용 함수를 쓴다 — 핵심 칸은 항상 보이고 부가 기능은 쓸 때만 펼쳐진다 (ActionDataInspector)
+        ActionDataInspector.Draw(serializedObject, (ActionData)target);
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("박스 미리보기 / 편집 (Scene 뷰)", EditorStyles.boldLabel);

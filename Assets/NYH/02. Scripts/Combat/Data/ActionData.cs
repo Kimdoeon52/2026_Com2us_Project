@@ -47,7 +47,7 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "NYH/Combat/Action Data", fileName = "NewActionData")]
 public class ActionData : ScriptableObject
 {
-    [Header("식별")]
+    // ── 식별 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     [Tooltip("프레임표 [기술] 칸과 동일하게. 로그·디버그 표시에도 이 이름을 그대로 쓴다")]
     [SerializeField] private string actionName;
 
@@ -58,7 +58,7 @@ public class ActionData : ScriptableObject
     [Tooltip("source가 Part일 때만 의미 있음. 이 부위가 파괴되면 이 행동은 사용 불가")]
     [SerializeField] private BodyPart requiredPart;
 
-    [Header("프레임 (60fps)")]
+    // ── 프레임 (60fps) ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 선딜/활성/후딜 세 값이 이 클래스에서 가장 중요한 데이터다 — ActionState가 이 세 값만 보고
     // 언제 Phase를 넘길지 판단한다(선딜만큼 세면 Active로, 활성만큼 세면 Recovery로, ...)
     [Tooltip("선딜 프레임 — 순수 대기 구간. 판정 없음")]
@@ -75,7 +75,7 @@ public class ActionData : ScriptableObject
     [Tooltip("위닝처럼 활성 구간 전체가 무적인 행동에 체크. 부분 무적이 필요해지면 FrameBox 쪽으로 확장")]
     [SerializeField] private bool isInvincibleDuringActive;
 
-    [Header("판정 성질")]
+    // ── 판정 성질 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-09-29: 가드가 기동 행동에서 삭제되면서 HitDetection은 isGuarding을 항상 false로만 넘긴다(§5·§15).
     // 그 결과 이 필드는 지금 실질적으로 아무 효과가 없다 — 하지만 KKH의 CombatCalculator.EvaluateHit이
     // ActionData.IsGuardable을 직접 읽는 계약이라(§0·§14) 필드 자체를 지우면 KKH 쪽 컴파일이 깨진다.
@@ -88,7 +88,7 @@ public class ActionData : ScriptableObject
 
     // 아래 세 값은 기획이 프레임표를 아직 확정 안 해서 전부 임시값(0)이다. 코드에서 하드코딩하지 않고
     // 여기 필드로 빼둔 이유는 §2 원칙(밸런스 수치는 에셋에서) — 값이 확정되면 코드 수정 없이 인스펙터만 바꾸면 됨
-    [Header("경직도 / 넉백 — 값 전부 임시 (기획 확정 전, 설계 결정서 §8·§9 신뢰도 0%)")]
+    // ── 경직도 / 넉백 — 값 전부 임시 (기획 확정 전, 설계 결정서 §8·§9 신뢰도 0%) ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-09-29: 경직 시스템 자체가 완전히 삭제됐다(CLAUDE_1.md §7·§15) — 이 필드는 이제 항상 0으로 둔다.
     // KKH의 CombatCalculator.EvaluateHit이 ActionData.StaggerValue를 직접 읽는 계약이라(§0·§14)
     // 필드를 지우면 KKH 쪽 컴파일이 깨진다. 완전히 정리하려면 KKH와 먼저 확인할 것.
@@ -106,7 +106,7 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 다단히트 간격(프레임). 0 = 1회만 맞힘")]
     [Min(0)] [SerializeField] private int hitIntervalFrames;
 
-    [Header("연출")]
+    // ── 연출 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다.")]
     [SerializeField] private string animationClipName;
 
@@ -115,12 +115,23 @@ public class ActionData : ScriptableObject
     [Tooltip("활성 구간에 들어서는 순간 바꿔 재생할 Animator 스테이트 이름. 비우면 animationClipName을 계속 재생")]
     [SerializeField] private string activeClipName;
 
-    [Header("피격 효과 — 값 전부 임시 (기획 확정 전)")]
+    // 2026-10-27 추가: 클립 안에 행동보다 긴 동작이 들어 있을 때(예: 점프 시트 16장 중 웅크림 4장만 쓰기) 앞부분만 보여주려고.
+    // 평소엔 "데이터가 진실, 그림이 따라온다"(§10)대로 클립을 데이터 길이에 맞춰 늘이고 줄인다 — 이 칸은 그 예외를 명시적으로 켜는 자리
+    [Tooltip("켜면 첫 클립을 데이터 길이에 맞춰 늘이거나 줄이지 않고 원래 속도로 튼다 — 클립의 앞부분만 보이고 나머지는 잘린다")]
+    [SerializeField] private bool keepClipSpeed;
+
+    // ── 도약 — 값 전부 임시 (기획 확정 전) ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
+    // 2026-10-27 추가: 적 긴급 이탈(백점프)처럼 "스스로 뛰는" 기술용. 활성 구간에 들어서는 순간 한 번 뛴다.
+    // x는 바라보는 방향 기준(+ 앞, - 뒤), y는 위쪽 초기 속도. 공중에 있는 동안은 입력으로 궤적이 바뀌지 않는다(RobotMover.Leap)
+    [Tooltip("TODO: 임시값. 활성 시작 순간의 도약 속도. x = 바라보는 방향 기준 수평 속도(음수면 뒤로), y = 위쪽 속도. (0,0)이면 안 뜀")]
+    [SerializeField] private Vector2 leapVelocity;
+
+    // ── 피격 효과 — 값 전부 임시 (기획 확정 전) ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-09 추가: 어퍼컷처럼 맞은 상대를 위로 띄우는 기술용. 0이면 안 띄운다
     [Tooltip("TODO: 임시값. 맞은 상대에게 주는 위쪽 초기 속도(RobotMover.Launch). 0이면 띄우지 않음")]
     [Min(0)] [SerializeField] private float launchVelocity;
 
-    [Header("이동")]
+    // ── 이동 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-11 추가: 기획서1011 §6-10 "하단 → 어퍼컷 → 중단, 동작 중간마다 앞으로 조금 전진".
     // 기획서에 거리 수치가 없어서 기본값 0 — 기획이 정하기 전까지 테스트할 때만 인스펙터에서 넣는다(§12)
     [Tooltip("TODO: 기획 수치 없음. 선딜~활성 동안 바라보는 방향으로 나아가는 총 거리. 0이면 제자리")]
@@ -139,7 +150,7 @@ public class ActionData : ScriptableObject
     [Tooltip("켜면 땅에 있을 때만 쓸 수 있다 (공중에서 누르면 무시)")]
     [SerializeField] private bool groundOnly;
 
-    [Header("투사체 — 비우면 일반 근접 행동")]
+    // ── 투사체 — 비우면 일반 근접 행동 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-09 추가 (§11-15 투사체 구조): 활성 구간 동안 projectileIntervalFrames마다 한 발씩 쏜다.
     // 투사체의 데미지는 이 ActionData의 damage를 그대로 쓴다 — 한 발 = ProcessHit 한 번
     [Tooltip("활성 구간에 발사할 투사체. 비우면 발사 안 함")]
@@ -151,14 +162,14 @@ public class ActionData : ScriptableObject
     [Tooltip("총구 위치(투사체·화염 공통). 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
     [SerializeField] private Vector2 projectileMuzzle;
 
-    [Header("화염 — 비우면 없음")]
+    // ── 화염 — 비우면 없음 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-11 추가: 활성 구간 동안 총구(projectileMuzzle)에서 불줄기를 그린다(FlameEmitter). 순수 연출 —
     // 데미지는 이 행동의 Hit박스 + hitIntervalFrames로 따로 들어간다(§4 판정은 박스가 진실)
     [Tooltip("활성 구간 동안 총구에서 뿜을 불. 로봇에 FlameEmitter가 있어야 보인다")]
     [SerializeField] private FlameData flame;
 
 
-    [Header("박스당 피해")]
+    // ── 박스당 피해 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-15 추가: 부채꼴 산탄처럼 "겹친 Hit박스 수만큼 피해가 쌓이는" 행동용.
     // 켜면 Damage를 "Hit박스 1개(=1발)당 피해"로 읽는다. HitDetection이 한 틱에 Hurt박스와 겹친 Hit박스들의
     // FrameBox.damageScale을 합산해 ProcessHit을 1번 호출한다. 끄면 기존처럼 행동당 Damage 1회
@@ -166,7 +177,7 @@ public class ActionData : ScriptableObject
     [SerializeField] private bool perBoxDamage;
 
 
-    [Header("쿨타임")]
+    // ── 쿨타임 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 재사용 대기 프레임.
     [Tooltip("행동을 시작한 뒤 다시 쓸 수 있을 때까지의 프레임(60fps). 0 = 쿨타임 없음. 예: 4초 = 240")]
     [Min(0)][SerializeField] private int cooldownFrames;
@@ -176,7 +187,7 @@ public class ActionData : ScriptableObject
     [Tooltip("비우면 이 행동 자신이 쿨타임 단위. 다른 행동을 넣으면 그 행동과 쿨타임을 공유한다 (강화판정이 일반판정을 넣는 식)")]
     [SerializeField] private ActionData cooldownOwner;
 
-    [Header("실린더")]
+    // ── 실린더 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 이 행동을 시작할 때 소모하는 탄 수. 0이면 소모 없음(기존 행동 전부).
     // 강화판정 에셋에 1을 넣는다. 실제 소모량은 장비 보정(SkillParamId.CylinderCost)이 더해진 값이다
     [Tooltip("이 행동을 시작할 때 소모하는 실린더 탄 수. 0 = 소모 없음. 강화판정 에셋에 1")]
@@ -187,7 +198,7 @@ public class ActionData : ScriptableObject
     [Tooltip("탄이 부족할 때 대신 나갈 행동 (일반판정). 비우면 입력이 무시된다. 이 행동은 탄을 소모하지 않아야 한다")]
     [SerializeField] private ActionData fallbackAction;
 
-    [Header("판정 박스")]
+    // ── 판정 박스 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 이 배열 안의 각 FrameBox가 "이 행동 도중 어느 프레임에 어떤 판정 상자가 있는지"를 전부 담는다.
     // 빈 배열(new FrameBox[0])을 기본값으로 둔 이유: 아직 아무 좌표도 안 채워진 상태에서도
     // GetActiveBoxes()가 null 참조 예외 없이 그냥 빈 결과를 돌려주게 하기 위함
@@ -225,6 +236,8 @@ public class ActionData : ScriptableObject
 
     public string AnimationClipName => animationClipName;
     public string ActiveClipName => activeClipName;
+    public bool KeepClipSpeed => keepClipSpeed;
+    public Vector2 LeapVelocity => leapVelocity;
 
     public float LaunchVelocity => launchVelocity;
 

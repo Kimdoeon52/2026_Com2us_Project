@@ -77,6 +77,10 @@ public class RobotView : MonoBehaviour
     private bool wasGrounded = true;
     private float airFrames;
 
+    // 2026-10-27 추가: 도약 기술(ActionData.LeapVelocity)의 공중 클립. 행동이 공중에서 끝나도 착지할 때까지 일반 점프 그림 대신
+    // 이걸 계속 튼다 — 백점프 부스터 자세가 착지 직전에 일반 점프 루프로 바뀌어 버리지 않게. 착지하면 비운다
+    private string leapAirStateName;
+
     // 피격 점멸
     private Color baseColor = Color.white;
     private float flashRemainingFrames;
@@ -172,8 +176,9 @@ public class RobotView : MonoBehaviour
             frames = timeline != null ? timeline.TotalFrames : action.TotalFrames;
         float dataLength = frames * CombatClock.TICK; // 프레임표가 정한 "이 구간은 몇 초여야 하는지"
 
-        // 데이터가 진실이고 그림이 따라온다(§3, §10). dataLength가 0이면 나누기 오류라 원본 속도(1)
-        animator.speed = dataLength > 0f ? clipLength / dataLength : 1f;
+        // 데이터가 진실이고 그림이 따라온다(§3, §10). dataLength가 0이면 나누기 오류라 원본 속도(1).
+        // keepClipSpeed면 예외 — 클립을 원래 속도로 틀어서 데이터 길이만큼의 앞부분만 보인다(긴급 이탈의 웅크림 등)
+        animator.speed = action.KeepClipSpeed || dataLength <= 0f ? 1f : clipLength / dataLength;
 
         Debug.Log($"[RobotView] {action.ActionName} 클립길이={clipLength:F3}s 데이터길이={dataLength:F3}s → speed={animator.speed:F2}");
     }
@@ -185,7 +190,16 @@ public class RobotView : MonoBehaviour
         if (animator == null || string.IsNullOrEmpty(action.ActiveClipName)) return;
         animator.speed = 1f;
         animator.Play(action.ActiveClipName, 0, 0f);
+
+        // 도약 기술이면 이 클립을 착지까지 이어서 쓴다 — 키도 맞춰둬서 행동이 끝날 때 처음부터 다시 틀지 않게 한다
+        if (action.LeapVelocity != Vector2.zero)
+        {
+            leapAirStateName = action.ActiveClipName;
+            currentLocomotion = LeapAirKey;
+        }
     }
+
+    private string LeapAirKey => "leapAir:" + leapAirStateName;
 
     /// <summary>
     /// FrameStepper(F3)가 정지 상태에서 애니메이터를 정확히 1틱 미는 용도.
@@ -210,8 +224,10 @@ public class RobotView : MonoBehaviour
         if (animator == null) return;
         animator.speed = 1f;
 
-        // 끝나는 즉시 맞는 그림을 틀어준다 — 다음 Update까지 기다리면 한 프레임 동안 공격 마지막 장이 남는다
-        currentLocomotion = null;
+        // 끝나는 즉시 맞는 그림을 틀어준다 — 다음 Update까지 기다리면 한 프레임 동안 공격 마지막 장이 남는다.
+        // 도약 공중 클립이 이어지는 중이면 키를 지우지 않는다 — 지우면 같은 클립을 처음부터 다시 틀어서 공중에서 툭 튄다
+        bool continuingLeapAir = leapAirStateName != null && mover != null && !mover.IsGrounded;
+        if (!continuingLeapAir) currentLocomotion = null;
         UpdateLocomotion();
     }
 
@@ -242,6 +258,10 @@ public class RobotView : MonoBehaviour
             if (wasGrounded) airFrames = 0f; // 방금 떴다
             airFrames += elapsedFrames;
         }
+        else
+        {
+            leapAirStateName = null; // 착지 — 도약 공중 클립은 여기까지
+        }
 
         wasGrounded = grounded;
     }
@@ -255,6 +275,12 @@ public class RobotView : MonoBehaviour
         if (actionState != null && !actionState.CanMove) return;
 
         bool grounded = mover == null || mover.IsGrounded;
+
+        if (!grounded && leapAirStateName != null)
+        {
+            PlayLocomotion("leapAir", leapAirStateName, 0f);
+            return;
+        }
 
         if (!grounded && !string.IsNullOrEmpty(jumpLoopStateName))
         {

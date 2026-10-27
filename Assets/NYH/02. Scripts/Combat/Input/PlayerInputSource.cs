@@ -116,7 +116,7 @@ public class PlayerInputSource : MonoBehaviour, IInputSource
         return isExpired ? null : action;
     }
 
-    // 호출: RobotMover.Update(이동), RobotView.OnActionEnd(Walk/Idle 선택). 반환: -1(왼쪽) ~ 1(오른쪽)
+    // 호출: RobotMover.Tick(이동), RobotView.OnActionEnd(Walk/Idle 선택). 반환: -1(왼쪽) ~ 1(오른쪽)
     public float GetMoveInput()
     {
         // 이동은 공격 입력과 달리 버퍼링이 필요 없다 — "지금 이 순간 눌려있는지"만 알면 되고,

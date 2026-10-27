@@ -22,6 +22,8 @@ public class BossAiBase : AllAiBase
     [SerializeField] private Sprite cutsceneCharacter; //배너 캐릭터 모습
 
     [SerializeField] public int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
+
+    [SerializeField] private int bigRaisetimes = 1; // 횟수
     //================================기본 세팅=================================
     public override void Start()
     {
@@ -60,10 +62,11 @@ public class BossAiBase : AllAiBase
     }
     public virtual bool IsBigRaiseThink(int currentPrice, int baseCost) //큰레이즈 조건 판단
     {
-        if (!GlobalGold.Instance.CanUseGold(NPCName, currentPrice + bigRaiseGold)) //체크한번 해주고
+        if (!GlobalGold.Instance.CanUseGold(NPCName, currentPrice + bigRaiseGold) || bigRaisetimes < 1) //체크한번 해주고
         {
             return false;
         }
+        bigRaisetimes--; // 횟수 1회 감소
         return currentPrice >= (int)(baseCost * 1.5f);
     }
     public virtual async UniTask TriggerCutscene(string bossName, string skill)

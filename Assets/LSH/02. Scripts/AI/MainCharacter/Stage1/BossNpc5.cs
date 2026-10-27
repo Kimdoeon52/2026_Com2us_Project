@@ -17,7 +17,7 @@ public class BossNpc5 : BossAiBase
     }
     public override bool IsBigRaiseThink(int currentPrice, int baseCost)
     {
-        return currentPrice >= (int)(baseCost * 6f); //원가의 6배면 아무도 못잡게 크게 걸어버린다.
+        return base.IsBigRaiseThink(currentPrice, baseCost);
     }// Start is called once before the first execution of Update after the MonoBehaviour is created
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {

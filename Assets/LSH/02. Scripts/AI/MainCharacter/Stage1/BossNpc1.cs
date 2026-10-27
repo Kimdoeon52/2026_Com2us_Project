@@ -18,6 +18,6 @@ public class BossNpc1 : BossAiBase
     }
     public override bool IsBigRaiseThink(int currentPrice, int baseCost)
     {
-        return currentPrice >= (int)(baseCost * 5f); //원가의 5배면 아무도 못잡게 크게 걸어버린다.
+        return base.IsBigRaiseThink(currentPrice, baseCost);
     }
 }

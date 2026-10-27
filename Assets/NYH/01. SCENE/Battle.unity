@@ -1652,7 +1652,6 @@ GameObject:
   - component: {fileID: 1270632114}
   - component: {fileID: 1270632113}
   - component: {fileID: 1270632115}
-  - component: {fileID: 1270632116}
   - component: {fileID: 1270632119}
   - component: {fileID: 1270632118}
   - component: {fileID: 1270632117}
@@ -1662,6 +1661,8 @@ GameObject:
   - component: {fileID: 1270632123}
   - component: {fileID: 1270632124}
   - component: {fileID: 1270632125}
+  - component: {fileID: 1270632127}
+  - component: {fileID: 1270632126}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1787,26 +1788,6 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 0.32462072, y: 0.5712233}
   m_EdgeRadius: 0
---- !u!114 &1270632116
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270632112}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6e2e509e0b16fa43b600b3fd7436e47, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  basicAttack: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
-  leftArmSkill: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  leftArmSkillCharged: {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
-  rightArmSkill: {fileID: 0}
-  rightArmSkillCharged: {fileID: 0}
-  leftLegSkill: {fileID: 0}
-  rightLegSkill: {fileID: 0}
-  dodge: {fileID: 0}
 --- !u!114 &1270632117
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2022,6 +2003,43 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1270632126
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270632112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cffbd7e0bf78f664991101d1a3646e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  basic: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
+  leftArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  rightArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  leftLeg: {fileID: 0}
+  rightLeg: {fileID: 0}
+  dodge: {fileID: 0}
+--- !u!114 &1270632127
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1270632112}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9429dba914ba0c40a4e876a36e6786f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  basicKey: 100
+  leftArmKey: 113
+  rightArmKey: 119
+  leftLegKey: 101
+  rightLegKey: 114
+  dodgeKey: 32
+  inputBufferTicks: 2
 --- !u!1 &1328636925
 GameObject:
   m_ObjectHideFlags: 0

@@ -12,7 +12,7 @@ using UnityEngine;
 /// perBoxDamage는 항상 켜진 것으로 취급한다 (Damage = 1발당 피해, 겹친 Hit박스 배율 합 x Damage).
 /// </summary>
 [CreateAssetMenu(menuName = "NYH/Combat/BoostShot Action Data", fileName = "NewBoostShotActionData")]
-public class BoostShotActionData : ActionData
+public class BoostShotActionData : TapSkillData
 {
     [Header("부채꼴 산탄")]
     [SerializeField] private BoostShotSettings fan = BoostShotSettings.BoosterNormal;

@@ -31,6 +31,7 @@ MonoBehaviour:
   advanceDistance: 0
   advanceDuringActiveOnly: 0
   trailAfterImageInterval: 5
+  groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.15, y: 0.27}
@@ -206,6 +207,9 @@ MonoBehaviour:
     length: 3
     startFrame: 1
     endFrame: 31
+  chargedVariant: {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
+  chargeThresholdFrames: 18
+  autoReleaseFrames: 0
   fan:
     pellets: 5
     spreadDegrees: 60

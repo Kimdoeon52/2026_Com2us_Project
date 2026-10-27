@@ -16,12 +16,12 @@ MonoBehaviour:
   baseParams:
   - id: 0
     op: 0
-    value: 0
+    value: 1000
   - id: 2
     op: 0
     value: 0
-  slotNormal: {fileID: 0}
+  slotNormal: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
   slotCharged: {fileID: 0}
   normal: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  charged: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  replacePriority: 0
+  charged: {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
+  replacePriority: 2

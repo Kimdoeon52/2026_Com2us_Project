@@ -136,15 +136,50 @@ namespace RealSteel.Boss.Core
         
         //===============================================================================================
         // 공통 연동 헬퍼
-        protected bool IsPlayerInvincible(GameObject playerObj)
+        public bool IsPlayerInvincible(GameObject playerObj)
         {
             if (playerObj == null)
             {
                 return false;
             }
-            var executor = playerObj.GetComponent<ActionExecutor>();
+            var executor = playerObj.GetComponent<ActionExecutor>() ?? playerObj.GetComponentInParent<ActionExecutor>();
             return executor != null && executor.State != null && executor.State.CurrentAction != null && executor.State.CurrentAction.IsInvincibleDuringActive;
         }
+
+        public void ApplyDamageToPlayer(GameObject playerObj)
+        {
+            if (playerObj == null) return;
+
+            // Space 무적 회피 중인지 검사
+            if (IsPlayerInvincible(playerObj))
+            {
+                Debug.Log($"<color=cyan>[{GimmickName}] 플레이어가 Space 무적 회피로 공격을 회피했습니다!</color>");
+                return;
+            }
+
+            int dmg = patternData != null ? patternData.baseDamage : 50;
+            BodyPart targetPart = patternData != null ? patternData.targetPlayerPart : BodyPart.Core;
+            int partDmg = patternData != null ? patternData.partDurabilityDamage : 0;
+
+            // 기획서 §12.7 및 §5.3: 부위 타격 스킬인 경우 파츠 내구도와 코어 HP를 동시 타격
+            if (targetPart != BodyPart.Core && partDmg > 0)
+            {
+                Debug.Log($"<color=red>[{GimmickName}] 플레이어 {targetPart} 부위 타격! (파츠 피해: {partDmg}, 코어 피해: {dmg})</color>");
+                if (CombatDataHub.Instance != null)
+                {
+                    CombatDataHub.Instance.ApplyPartHit("Player", targetPart, partDmg, dmg);
+                }
+            }
+            else
+            {
+                Debug.Log($"<color=red>[{GimmickName}] 플레이어 코어 타격! (피해량: {dmg})</color>");
+                if (CombatDataHub.Instance != null)
+                {
+                    CombatDataHub.Instance.ApplyCoreDamage("Player", dmg);
+                }
+            }
+        }
+
         protected void ApplyPlayerPartHit(int baseDmg, BodyPart targetPart, int partDmg)
         {
             if(CombatDataHub.Instance != null)
@@ -152,9 +187,5 @@ namespace RealSteel.Boss.Core
                 CombatDataHub.Instance.ApplyPartHit("Player", targetPart, partDmg, baseDmg);
             }
         }
-
-
     }
-    
-    
 }

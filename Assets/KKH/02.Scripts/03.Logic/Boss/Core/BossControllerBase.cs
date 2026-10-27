@@ -126,13 +126,21 @@ namespace RealSteel.Boss.Core
         // ========================================================================
         // 템플릿 메서드: 피격 처리 (SSOT 연동)
         // ========================================================================
-        public virtual void TakeDamage(int rawDamage)
+        public virtual void TakeDamage(int rawDamage, bool isAlreadyCalculated = false)
         {
             if (Snapshot == null || !Snapshot.IsAlive) return;
 
             int adjustedDamage = OnPreTakeDamage(rawDamage);
-            float multiplier = Snapshot.isGroggy ? Snapshot.currentDamageMultiplier : 1.0f;
-            int finalDamage = CombatCalculator.CalculateDamage(adjustedDamage * multiplier, Snapshot.baseDefense);
+            int finalDamage;
+            if (isAlreadyCalculated)
+            {
+                finalDamage = adjustedDamage;
+            }
+            else
+            {
+                float multiplier = Snapshot.isGroggy ? Snapshot.currentDamageMultiplier : 1.0f;
+                finalDamage = CombatCalculator.CalculateDamage(adjustedDamage * multiplier, Snapshot.baseDefense);
+            }
 
             Snapshot.currentHp = Mathf.Max(0, Snapshot.currentHp - finalDamage);
             OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
@@ -147,6 +155,14 @@ namespace RealSteel.Boss.Core
                 OnBossDefeated();
                 BattleManager.Instance?.OnFighterKilled(Snapshot.bossID);
             }
+        }
+
+        /// <summary>
+        /// CombatDataHub.ProcessHit 등 외부에서 이미 방어력/배율 연산이 완료된 대미지를 수신할 때 사용함 (이중 차감 방지)
+        /// </summary>
+        public void NotifyDamageFromHub(int finalDamage)
+        {
+            TakeDamage(finalDamage, isAlreadyCalculated: true);
         }
 
         // ========================================================================

@@ -38,20 +38,16 @@ namespace RealSteel.Boss.FSM
 
                 if (!boss.Snapshot.IsAlive) return;
 
-                // 다음 패턴 조회
+                // 1. 모듈식 패턴 기믹 조회
                 var nextGimmick = boss.GetNextPatternGimmick();
                 if (nextGimmick != null)
                 {
                     var token = boss.RenewStateCancellationToken();
                     boss.StateMachine.ChangeState(new BossPatternExecutingState(boss, token, nextGimmick));
-                }
-                else
-                {
-                    Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
-                    Enter();
+                    return;
                 }
 
-                //레거시 호환용
+                // 2. 레거시 호환용 폴백
                 var legacyBoss = boss as BossController;
                 var nextPattern = legacyBoss?.GetNextPattern();
                 if (nextPattern != null && legacyBoss != null)
@@ -60,11 +56,9 @@ namespace RealSteel.Boss.FSM
                     boss.StateMachine.ChangeState(new BossPatternTellState(legacyBoss, token, nextPattern));
                     return;
                 }
-                else
-                {
-                    Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
-                    Enter();
-                }
+
+                Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
+                Enter();
             }
             catch (OperationCanceledException)
             {

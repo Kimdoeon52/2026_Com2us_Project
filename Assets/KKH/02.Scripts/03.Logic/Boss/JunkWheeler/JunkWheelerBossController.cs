@@ -1,0 +1,142 @@
+using System;
+using UnityEngine;
+using RealSteel.Boss.Core;
+
+namespace RealSteel.Boss.JunkWheeler
+{
+    /// <summary>
+    /// [지역 1 보스 "정크 휠러" 구체 컨트롤러 (JunkWheelerBossController)]
+    /// 기획서 §6.18 및 §3.2 (1), §5.1:
+    /// 1. BossController를 상속하여 기존 도구(BossFSMTester, BattleManager) 및 씬 직렬화 100% 호환 보장.
+    /// 2. 폐타이어 부위 기믹, 돌진 기믹, 탄막 기믹, 3단 내려찍기 기믹을 컴포지션(Composition)으로 조립/제어.
+    /// 3. 정크 휠러 스프라이트 반전(FaceDirection) 및 페이즈 전환(2페이즈 엔진 과열/불꽃) 연출 담당.
+    /// </summary>
+    public class JunkWheelerBossController : BossController
+    {
+        [Header("정크 휠러 전용 연출 및 컴포넌트")]
+        [SerializeField] private ParticleSystem phase2FireVFX; // 2페이즈 엔진 불꽃 파티클
+        [SerializeField] private ParticleSystem defeatExplosionVFX; // 토벌 사망 폭발 파티클
+
+        [Header("부착된 구체 기믹 참조 (인스펙터 모니터링)")]
+        [SerializeField] private JunkWheelerTirePartGimmick tirePartGimmick;
+        [SerializeField] private JunkWheelerChargePatternGimmick chargePatternGimmick;
+        [SerializeField] private JunkWheelerBarragePatternGimmick barragePatternGimmick;
+        [SerializeField] private JunkWheelerSlamPatternGimmick slamPatternGimmick;
+
+        public JunkWheelerTirePartGimmick TirePartGimmick => tirePartGimmick;
+        public JunkWheelerChargePatternGimmick ChargePatternGimmick => chargePatternGimmick;
+        public JunkWheelerBarragePatternGimmick BarragePatternGimmick => barragePatternGimmick;
+        public JunkWheelerSlamPatternGimmick SlamPatternGimmick => slamPatternGimmick;
+
+        protected override void RegisterGimmicks()
+        {
+            // 1. 타이어 부위 기믹 탐색 및 부착
+            tirePartGimmick = GetOrAddComponent<JunkWheelerTirePartGimmick>();
+            RegisterGimmick(tirePartGimmick);
+
+            // 2. 패턴 기믹 3종 탐색 및 부착 (마스터 데이터 매칭)
+            chargePatternGimmick = GetOrAddComponent<JunkWheelerChargePatternGimmick>();
+            barragePatternGimmick = GetOrAddComponent<JunkWheelerBarragePatternGimmick>();
+            slamPatternGimmick = GetOrAddComponent<JunkWheelerSlamPatternGimmick>();
+
+            BindPatternDataIfAvailable();
+
+            RegisterGimmick(chargePatternGimmick);
+            RegisterGimmick(barragePatternGimmick);
+            RegisterGimmick(slamPatternGimmick);
+
+            // 3. 기타 씬 내 추가 기믹(전장 기물 등) 자동 등록
+            base.RegisterGimmicks();
+        }
+
+        private T GetOrAddComponent<T>() where T : Component
+        {
+            var comp = GetComponentInChildren<T>(true);
+            if (comp == null)
+            {
+                comp = gameObject.AddComponent<T>();
+            }
+            return comp;
+        }
+
+        private void BindPatternDataIfAvailable()
+        {
+            if (masterData == null || masterData.patterns == null) return;
+
+            foreach (var p in masterData.patterns)
+            {
+                if (p == null) continue;
+
+                if (p.patternID == "PATTERN_CHARGE" && chargePatternGimmick != null)
+                {
+                    SetPatternDataPrivate(chargePatternGimmick, p);
+                }
+                else if (p.patternID == "PATTERN_JUMP_BARRAGE" && barragePatternGimmick != null)
+                {
+                    SetPatternDataPrivate(barragePatternGimmick, p);
+                }
+                else if (p.patternID == "PATTERN_SLAM" && slamPatternGimmick != null)
+                {
+                    SetPatternDataPrivate(slamPatternGimmick, p);
+                }
+            }
+        }
+
+        private void SetPatternDataPrivate(BossPatternGimmickBase gimmick, BossPatternData data)
+        {
+            var field = typeof(BossPatternGimmickBase).GetField("patternData", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (field != null && field.GetValue(gimmick) == null)
+            {
+                field.SetValue(gimmick, data);
+            }
+        }
+
+        protected override void OnBossInitialized()
+        {
+            base.OnBossInitialized();
+            Debug.Log("<color=green>[JunkWheelerBossController] 정크 휠러 초기화 완료! 엔진 가동 시작!</color>");
+        }
+
+        /// <summary>
+        /// 보스가 dirX 방향(1: 우측, -1: 좌측)을 정면으로 바라보도록 스프라이트 반전
+        /// 에셋 기준: scale.x > 0 일 때 왼쪽, scale.x < 0 일 때 오른쪽
+        /// </summary>
+        public void FaceDirection(float dirX)
+        {
+            Vector3 scale = transform.localScale;
+            float targetSign = dirX < 0 ? 1.0f : -1.0f;
+            transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
+        }
+
+        protected override void OnPhaseChanged(int prevPhase, int newPhase)
+        {
+            base.OnPhaseChanged(prevPhase, newPhase);
+            Debug.Log($"<color=red>[JunkWheelerBossController] ▶ [페이즈 전환!] Phase {prevPhase} ➔ Phase {newPhase}</color>");
+
+            if (newPhase >= 2)
+            {
+                // 2페이즈 진입: 엔진 과열 불꽃 이펙트 활성화
+                if (phase2FireVFX != null)
+                {
+                    phase2FireVFX.Play();
+                }
+            }
+        }
+
+        protected override void OnBossDefeated()
+        {
+            base.OnBossDefeated();
+            Debug.Log("<color=red>[JunkWheelerBossController] ▶ 정크 휠러 코어 체력 소진! 보스 토벌 완료!</color>");
+
+            if (phase2FireVFX != null)
+            {
+                phase2FireVFX.Stop();
+            }
+
+            if (defeatExplosionVFX != null)
+            {
+                defeatExplosionVFX.Play();
+            }
+        }
+    }
+}

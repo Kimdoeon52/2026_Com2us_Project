@@ -157,7 +157,13 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
         PartsDefinition part = _recipe.resultPart;
         if (part == null) return;
 
-        Host.GivePart(part);
+        // 인벤토리가 꽉 차서 못 넣으면 재료도 소모하지 않고 결과 슬롯에 그대로 둔다
+        if (!Host.GivePart(part))
+        {
+            Debug.Log("인벤토리에 빈자리가 없어 파츠를 넣을 수 없음");
+            return;
+        }
+
         _recipe.ConfirmCraft();
         _resultSlot.SetPart(null);
     }

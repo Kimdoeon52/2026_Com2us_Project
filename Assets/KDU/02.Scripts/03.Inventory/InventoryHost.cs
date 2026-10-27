@@ -300,6 +300,36 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return true;
     }
 
+    // 지급해도 버려지거나 칸이 없어 안 보이게 되지 않는지. 크래프팅 슬롯에서 돌려주기 전에 확인한다
+    public bool CanGiveComponent(ComponentDefinition component, int amount = 1)
+    {
+        if (component == null || _grid == null)
+            return false;
+
+        if (component.RemainingCapacity(_save.Components.Get(component.Id)) < amount)
+            return false;
+
+        // 이미 칸이 있으면 수량만 늘어난다
+        var entries = _grid.Entries;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].IsComponent && entries[i].Component.Id == component.Id)
+                return true;
+        }
+
+        // 새 칸이 필요하면 빈칸이 하나는 있어야 한다
+        for (int y = 0; y < _grid.Height; y++)
+        {
+            for (int x = 0; x < _grid.Width; x++)
+            {
+                if (_grid.GetIndexAt(new Vector2Int(x, y)) < 0)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
     [ContextMenu("첫 부품 1개 소모")]
     public void ConsumeSampleComponent()
     {

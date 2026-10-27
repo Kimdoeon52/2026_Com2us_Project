@@ -86,11 +86,7 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
             else if (target == null && IsOverInventory(eventData))
             {
                 // 인벤토리 위에 놓였다 → 수량을 돌려주고 슬롯을 비운다
-                // 빨간 칸은 인벤토리에서 빠진 적이 없으니 돌려주지 않고 비우기만 한다
-                if (_slot.HasComponent)
-                    Host.GiveComponent(_dragged, 1);
-                _slot.SetComponent(null);
-                _recipe.PushPartData();
+                ReturnComponent();
             }
             // target이 null(빈 곳에 놓임)이거나 자기 자신이면 아무것도 안 하고 원래 자리 그대로 둔다
         }
@@ -179,7 +175,15 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
         if (component == null) return;
 
         if (_slot.HasComponent)             // 빨간 칸은 인벤토리에서 빠진 적이 없으니 돌려주지 않음
+        {
+            // 인벤토리가 꽉 차서 못 돌려주면 슬롯에 그대로 둔다 (비우면 부품이 사라짐)
+            if (!Host.CanGiveComponent(component, 1))
+            {
+                Debug.Log("인벤토리에 빈자리가 없어 부품을 돌려줄 수 없음");
+                return;
+            }
             Host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
+        }
         _slot.SetComponent(null);           // 슬롯 비움
         _recipe.PushPartData();             // 조합 다시 판정
     }

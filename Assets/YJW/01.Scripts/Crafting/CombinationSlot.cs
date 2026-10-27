@@ -1,8 +1,12 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class CombinationSlot : MonoBehaviour
 {
+    // 아무 조합 슬롯의 내용이 바뀌면 발생. 제작 완료/슬롯 비우기는 인벤토리 Changed가 안 오므로 따로 알린다
+    public static event Action AnySlotChanged;
+
     [SerializeField] private Image _icon;
     [SerializeField] private Image _BGImage;
 
@@ -38,6 +42,8 @@ public class CombinationSlot : MonoBehaviour
             _icon.sprite = sprite;
             _icon.enabled = sprite != null;
         }
+
+        AnySlotChanged?.Invoke();
     }
     public void Clear()
     {

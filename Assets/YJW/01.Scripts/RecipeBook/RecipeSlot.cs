@@ -18,7 +18,24 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
         slotImage = GetComponent<Image>();
     }
 
-    private void Update()
+    // InventoryHost.Instance는 InventoryHost.Awake에서 채워지므로 Awake가 아니라 Start에서 구독
+    private void Start()
+    {
+        if (InventoryHost.Instance != null)
+            InventoryHost.Instance.Changed += RefreshColor;
+        CombinationSlot.AnySlotChanged += RefreshColor;
+        RefreshColor();
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryHost.Instance != null)
+            InventoryHost.Instance.Changed -= RefreshColor;
+        CombinationSlot.AnySlotChanged -= RefreshColor;
+    }
+
+    // 인벤토리가 바뀌거나 레시피가 바뀔 때만 색을 다시 칠한다
+    private void RefreshColor()
     {
         if (HaveAllComponents() == true)
             slotImage.color = Color.green;
@@ -29,6 +46,7 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     {
         data = recipe;
         image.sprite = icon;
+        RefreshColor();
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -75,7 +93,7 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     {
         var need = new Dictionary<ComponentDefinition, int>();
 
-        if (data == null) return false;
+        if (data == null || InventoryHost.Instance == null) return false;
         // 레시피 9칸에서 부품별 필요 개수를 센다 (빈 칸은 건너뜀)
         foreach (string id in data.Combination)
         {
@@ -87,11 +105,29 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
         }
 
         // 하나라도 부족하면 false, 전부 통과해야 true
+        // 조합 슬롯에 올려둔 부품도 인벤토리에서 빠졌을 뿐 보유 중이므로 같이 센다
         foreach (var pair in need)
         {
-            if (InventoryHost.Instance.Save.Components.Get(pair.Key.Id) < pair.Value)
+            int have = InventoryHost.Instance.Save.Components.Get(pair.Key.Id) + CountInSlots(pair.Key);
+            if (have < pair.Value)
                 return false;
         }
         return true;
+    }
+
+    // 조합 슬롯에 실제로 빠져나와 올라가 있는 부품 수 (빨간 칸은 인벤토리에서 빠진 적이 없으니 제외)
+    private int CountInSlots(ComponentDefinition component)
+    {
+        var slots = CraftingManager.Instance.slots;
+        int count = 0;
+        for (int i = 0; i < slots.Length; i++)
+        {
+            if (slots[i] == null) continue;
+
+            var slot = slots[i].GetComponent<CombinationSlot>();
+            if (slot != null && slot.Component == component && slot.HasComponent)
+                count++;
+        }
+        return count;
     }
 }

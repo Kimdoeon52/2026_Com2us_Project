@@ -13,9 +13,18 @@ public class ShopSlot : MonoBehaviour
     private PartsDefinition _part;
     private int Gold;
 
-    private void Update()
+    // InventoryHost.Instance는 InventoryHost.Awake에서 채워지므로 Awake가 아니라 Start에서 구독
+    private void Start()
     {
+        if (InventoryHost.Instance != null)
+            InventoryHost.Instance.Changed += CanSell;
         CanSell();
+    }
+
+    private void OnDestroy()
+    {
+        if (InventoryHost.Instance != null)
+            InventoryHost.Instance.Changed -= CanSell;
     }
 
     public void SetData(string name, PartGrade grade, Sprite icon, int cost, PartsDefinition part)
@@ -41,10 +50,12 @@ public class ShopSlot : MonoBehaviour
         }
         _part = part;
         Gold = disGold;
+        CanSell();   // 다른 파츠가 들어왔으니 판매 가능 여부도 다시 판정
     }
 
     bool hasPart(PartsDefinition part)
     {
+        if (part == null || InventoryHost.Instance == null) return false;
         return InventoryHost.Instance.Grid.Entries.Any(e => !e.IsComponent && e.Definition == part);
     }
 

@@ -180,7 +180,7 @@ public class Auction : PersistentSingleton<Auction>
      */
     private void OnEnable()
     {
-        BossAiBase.OnBossBigRaiseCutscene += HandleBossBigRaiseCutscene; //컷씬 옵져버 등록
+        BossAiBase.OnBossBigRaiseCutscene += HandleBossBigRaiseCutscene; //컷씬 옵져버 등록 OnBossBigRaiseCutscene 실행시 HandleBossBigRaiseCutscene발동
     }
 
     private void OnDisable()
@@ -188,12 +188,12 @@ public class Auction : PersistentSingleton<Auction>
         BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene; // 컷씬 옵져버 해제
     }
 
-    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite) //컷씬 대기용 함수
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite, Color newColor) //컷씬 대기용 함수
     {
         IsCutscenePlaying = true; // 컷씬 플레이 시작
         if (cutsceneManager != null)
         {
-            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite, characterSprite); // awiat으로 컷씬 연출 대기
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite, characterSprite, newColor); // awiat으로 컷씬 연출 대기
         }
         IsCutscenePlaying = false; // 컷씬 끝
     }
@@ -321,7 +321,7 @@ public class Auction : PersistentSingleton<Auction>
 
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(3, 9); // 경매 인원 3~8 (보스 포함)
+        dayOfEnterNpc = Random.Range(5, 7); // 경매 인원 5~7 (모든 랭커5(필수) + 쩌리(N명))
     }
 
     private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
@@ -329,11 +329,11 @@ public class Auction : PersistentSingleton<Auction>
         ClearSpawnedAi(); // 이전 회차 AI UI오브 젝트 제거
 
         auctionAiList.Clear(); //옥션 리스트 비우고
-        bool isBossEnter = Random.value < 1f; //지금은 1f로 실험용인데 나중에 확률 30%로 바꾸기
-        if (isBossEnter && bossAiList.Count > 0)
+        //bool isBossEnter = Random.value < 1f; //지금은 1f로 실험용인데 나중에 확률 30%로 바꾸기
+        foreach(BossAiBase isBossEnter in bossAiList)
         {
-            int randomBossIndex = Random.Range(0, bossAiList.Count); // 어떤 보스 넣을지
-            auctionAiList.Add(bossAiList[randomBossIndex]); // auctionAiList에 보스 하나 쑤셔넣기
+            auctionAiList.Add(isBossEnter);
+            Debug.Log($"{isBossEnter.name} 참여");
         }
 
         HashSet<int> selectedIndices = new HashSet<int>(); // 중첩되면 안되니까 hash

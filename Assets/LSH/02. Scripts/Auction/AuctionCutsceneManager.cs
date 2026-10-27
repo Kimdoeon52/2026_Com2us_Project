@@ -12,6 +12,7 @@ public class AuctionCutsceneManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI bossSkillName; //보스 스킬이름
     [SerializeField] private RectTransform cutsceneBanner; //배너
     [SerializeField] private Image cutSceneChatacterSprite; //배너
+    [SerializeField] private Image cutSceneBG; //배너 배경 기본 하얀색
 
     private void Awake()
     {
@@ -22,7 +23,7 @@ public class AuctionCutsceneManager : MonoBehaviour
         }
     }
 
-    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName, Sprite bannerSprite = null, Sprite characterSprite = null)
+    public async UniTask PlayBossCutsceneAsync(string bossName, string skillName, Sprite bannerSprite = null, Sprite characterSprite = null, Color newColor = default)
     {
         if (cutsceneCanvasGroup == null || bossNameText == null || bossSkillName == null || cutsceneBanner == null || characterSprite == null)
         {
@@ -47,6 +48,7 @@ public class AuctionCutsceneManager : MonoBehaviour
         //연출 시작
         cutsceneBanner.anchoredPosition = new Vector2(-1000f, 0f);
         cutsceneCanvasGroup.alpha = 0f;
+        cutSceneBG.color = newColor;
         //나중에 맘에 안들면 방식 수정해야지
         _ = DOTween.Sequence()
             .Join(cutsceneCanvasGroup.DOFade(1f, 0.25f))

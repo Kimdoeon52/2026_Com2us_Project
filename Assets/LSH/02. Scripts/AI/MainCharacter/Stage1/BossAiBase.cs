@@ -14,10 +14,11 @@ public class BossAiBase : AllAiBase
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
     public override bool IsGiveUp { get; set; } = false;
 
-    public static event Func<string, string, Sprite, Sprite, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
+    public static event Func<string, string, Sprite, Sprite, Color, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 
     [Header("컷씬 배너 이미지")]
     [SerializeField] private Sprite cutsceneBannerSprite; //이 보스 전용 컷씬 배너 (비우면 기본 배너 유지)
+    [SerializeField] private Color cutsceneBGcolor; //컷씬 백그라운드 색상
     [SerializeField] private Sprite cutsceneCharacter; //배너 캐릭터 모습
 
     [SerializeField] public int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
@@ -69,7 +70,7 @@ public class BossAiBase : AllAiBase
     {
        if (OnBossBigRaiseCutscene != null)
        {
-           await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter);
+           await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter, cutsceneBGcolor);
        }
     }
 

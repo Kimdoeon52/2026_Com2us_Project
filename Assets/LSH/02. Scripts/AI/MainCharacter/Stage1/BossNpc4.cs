@@ -21,6 +21,6 @@ public class BossNpc4 : BossAiBase
     }// Start is called once before the first execution of Update after the MonoBehaviour is created
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "저기~ 재밌는거 보여줄까?";
+        return "끼얏호오우우우우우우";
     }
 }

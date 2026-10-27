@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -17,7 +19,7 @@ namespace RealSteel.Boss.FSM
 
         public override string StateName => $"BossGroggyState ({_duration}초 그로기, 피해 {_damageMultiplier}배)";
 
-        public BossGroggyState(BossController boss, CancellationToken token, float duration = 4.0f, float damageMultiplier = 1.5f)
+        public BossGroggyState(BossControllerBase boss, CancellationToken token, float duration = 4.0f, float damageMultiplier = 1.5f)
             : base(boss, token)
         {
             _duration = duration;

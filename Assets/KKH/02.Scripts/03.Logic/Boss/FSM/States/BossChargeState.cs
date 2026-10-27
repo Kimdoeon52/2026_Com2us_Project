@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using RealSteel.Boss.Core;
 using UnityEngine;
 
 namespace RealSteel.Boss.FSM
@@ -32,7 +33,7 @@ namespace RealSteel.Boss.FSM
         public override string StateName => "BossChargeState (돌진 상태)";
 
         public BossChargeState(
-            BossController boss, 
+            BossControllerBase boss, 
             CancellationToken token, 
             BossPatternData pattern, 
             float chargeSpeed = 11.0f,

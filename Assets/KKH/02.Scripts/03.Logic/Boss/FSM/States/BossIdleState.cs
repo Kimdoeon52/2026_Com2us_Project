@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -16,7 +18,7 @@ namespace RealSteel.Boss.FSM
 
         public override string StateName => "BossIdleState (딜타임)";
 
-        public BossIdleState(BossController boss, CancellationToken token, float delaySeconds = 1.0f)
+        public BossIdleState(BossControllerBase boss, CancellationToken token, float delaySeconds = 1.0f)
             : base(boss, token)
         {
             _delaySeconds = delaySeconds;
@@ -37,11 +39,26 @@ namespace RealSteel.Boss.FSM
                 if (!boss.Snapshot.IsAlive) return;
 
                 // 다음 패턴 조회
-                var nextPattern = boss.GetNextPattern();
-                if (nextPattern != null)
+                var nextGimmick = boss.GetNextPatternGimmick();
+                if (nextGimmick != null)
                 {
                     var token = boss.RenewStateCancellationToken();
-                    boss.StateMachine.ChangeState(new BossPatternTellState(boss, token, nextPattern));
+                    boss.StateMachine.ChangeState(new BossPatternExecutingState(boss, token, nextGimmick));
+                }
+                else
+                {
+                    Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
+                    Enter();
+                }
+
+                //레거시 호환용
+                var legacyBoss = boss as BossController;
+                var nextPattern = legacyBoss?.GetNextPattern();
+                if (nextPattern != null && legacyBoss != null)
+                {
+                    var token = boss.RenewStateCancellationToken();
+                    boss.StateMachine.ChangeState(new BossPatternTellState(legacyBoss, token, nextPattern));
+                    return;
                 }
                 else
                 {

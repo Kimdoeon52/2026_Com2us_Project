@@ -3,6 +3,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -26,7 +28,7 @@ namespace RealSteel.Boss.FSM
 
         public override string StateName => $"BossPatternTellState ({_pattern.patternName} 전조)";
 
-        public BossPatternTellState(BossController boss, CancellationToken token, BossPatternData pattern)
+        public BossPatternTellState(BossControllerBase boss, CancellationToken token, BossPatternData pattern)
             : base(boss, token)
         {
             _pattern = pattern;

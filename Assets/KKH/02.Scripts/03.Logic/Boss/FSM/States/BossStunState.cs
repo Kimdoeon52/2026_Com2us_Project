@@ -2,6 +2,8 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -16,7 +18,7 @@ namespace RealSteel.Boss.FSM
 
         public override string StateName => $"BossStunState ({_duration}초 스턴)";
 
-        public BossStunState(BossController boss, CancellationToken token, float duration = 3.0f)
+        public BossStunState(BossControllerBase boss, CancellationToken token, float duration = 3.0f)
             : base(boss, token)
         {
             _duration = duration;

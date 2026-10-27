@@ -45,6 +45,8 @@ public class BossPatternData : ScriptableObject
     public int partDurabilityDamage = 25;
 
     [Header("5. 기본 공격력 계수 및 액션 타임라인")]
+    [Tooltip("패턴 적중 시 플레이어가 입는 기본 코어 피해량")]
+    public int baseDamage=50;
     [Tooltip("패턴 기본 피해량 계수 (%)")]
     public float damageRatio = 100f;
 

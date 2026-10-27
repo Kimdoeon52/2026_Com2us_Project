@@ -3,6 +3,8 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -37,7 +39,7 @@ namespace RealSteel.Boss.FSM
         public override string StateName => "BossJumpBarrageState (바이킹 순차 반원 탄막)";
 
         public BossJumpBarrageState(
-            BossController boss, 
+            BossControllerBase boss, 
             CancellationToken token, 
             BossPatternData pattern, 
             GameObject bulletPrefab = null, 

@@ -94,7 +94,7 @@ public static class BossAssetFactory
             gimmickName = "폐타이어 부위",
             isPhysicalBossPart = true,
             maxDurability = 2, // 펑크 2회 시 파괴
-            targetSkillIDToSeal = "PATTERN_JUMP_BARRAGE",
+            targetSkillIDToSeal = "",
             groggyDuration = 4.0f,
             damageAmplification = 1.5f
         });

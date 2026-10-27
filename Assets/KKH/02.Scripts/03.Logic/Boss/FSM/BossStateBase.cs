@@ -1,5 +1,7 @@
 using System.Threading;
 using UnityEngine;
+using RealSteel.Boss.Core;
+
 
 namespace RealSteel.Boss.FSM
 {
@@ -9,12 +11,12 @@ namespace RealSteel.Boss.FSM
     /// </summary>
     public abstract class BossStateBase
     {
-        protected readonly BossController boss;
+        protected readonly BossControllerBase boss;
         protected readonly CancellationToken cancellationToken;
 
         public abstract string StateName { get; }
 
-        protected BossStateBase(BossController boss, CancellationToken cancellationToken)
+        protected BossStateBase(BossControllerBase boss, CancellationToken cancellationToken)
         {
             this.boss = boss;
             this.cancellationToken = cancellationToken;

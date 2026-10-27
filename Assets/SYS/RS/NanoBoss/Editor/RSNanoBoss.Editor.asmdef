@@ -1,0 +1,21 @@
+{
+    "name": "RSNanoBoss.Editor",
+    "rootNamespace": "RealSteel.NanoBoss.EditorTools",
+    "references": [
+        "RSNanoBoss.Runtime",
+        "RSCommon.Runtime",
+        "RSCommon.Editor",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -76,7 +76,11 @@ public class BossAiBase : AllAiBase
            await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter, cutsceneBGcolor);
        }
     }
-
+    public virtual void UseBigSkill()
+    {
+        // 여기에 스킬 작성.
+        Debug.LogWarning($"나는 {data.mainCharacterName}!!!!!!!");
+    }
     //============================= 큰 레이즈가 생기면 얼마를 올릴 것인지, 보스 맨트 ==========================
 
     public virtual int BigRaiseGold() //큰 레이즈가 생기면 얼마를 올릴 것인지.

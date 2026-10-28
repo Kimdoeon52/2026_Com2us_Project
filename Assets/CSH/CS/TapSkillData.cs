@@ -12,7 +12,7 @@ using UnityEngine;
 /// 이 에셋 자체가 "일반판정"이다. 개별 스킬(부스터 샷, 지면 강타, 붐버)은 이걸로 에셋을 만들거나,
 /// 흐름이 달라야 하면 상속해서 CreateRunner를 바꾼다.
 /// </summary>
-[CreateAssetMenu(menuName = "CSH/Skill/Tap Skill (탭형 베이스)", fileName = "NewTapSkill")]
+[CreateAssetMenu(menuName = "CSH/Skill/Tap Skill", fileName = "NewTapSkill")]
 public class TapSkillData : SkillData
 {
     [Header("탭형 — 짧게 = 이 에셋(일반판정), 길게 = 강화판정")]

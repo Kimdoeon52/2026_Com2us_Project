@@ -13,13 +13,14 @@ public class ActionModifierData : EquipmentEffect
     [Tooltip("끄면 ActionData.RequiredPart가 아래 부위와 같은 행동에만 적용된다 (예: 오른팔 기술만 강화)")]
     [SerializeField] private bool limitToRequiredPart;
 
-    [SerializeField] private BodyPart requiredPart;
+    [SerializeField] private BodyPart SourcePart;
 
     /// <summary>이 수정자가 주어진 행동에 적용되는지</summary>
     public bool Matches(ActionData action)
     {
+        action.Source
         if (action == null) return false;
-        if (!limitToRequiredPart && action.RequiredPart != requiredPart) return false;
+        if (!limitToRequiredPart && action.RequiredPart != SourcePart) return false;
         return true;
     }
 

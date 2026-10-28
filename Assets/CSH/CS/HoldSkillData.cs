@@ -37,7 +37,7 @@ public enum EnhanceMode
 /// 공통 규칙(최소/최대 홀드, 조기 취소 쿨 배율, 홀드 중 강화)은 전부 이 데이터의 값으로 정하고,
 /// 스킬마다 다른 부분(차지 단계별 판정, 공중 정지 등)은 HoldSkillRunner를 상속해 훅으로 채운다.
 /// </summary>
-[CreateAssetMenu(menuName = "CSH/Skill/Hold Skill (홀드형 베이스)", fileName = "NewHoldSkill")]
+[CreateAssetMenu(menuName = "CSH/Skill/Hold Skill", fileName = "NewHoldSkill")]
 public class HoldSkillData : SkillData
 {
     [Header("홀드형 — 홀드")]

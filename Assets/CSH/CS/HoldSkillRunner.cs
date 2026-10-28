@@ -88,9 +88,16 @@ public class HoldSkillRunner : SkillRunner
         // SustainActive는 데이터의 활성 길이만큼은 보장한다
         if (Hold.HoldMode == HoldMode.SustainActive && PhaseFrame < Timeline.ActiveFrames) return;
 
-        bool timedOut = Hold.MaxHoldFrames > 0 && HeldFrames >= Hold.MaxHoldFrames;
+        bool timedOut = IsMaxHoldReached();
         if (released || timedOut) HandleRelease(timedOut);
     }
+
+    /// <summary>
+    /// 최대 홀드에 도달해 자동으로 뗀 것으로 처리할지. 홀드 구간에서 OnInput마다 불린다.
+    /// 기본: 누른 순간부터 센 HeldFrames(선딜 포함)가 MaxHoldFrames 이상.
+    /// 연속 펀치처럼 "때리는 시간"으로 세야 하는 스킬은 override한다.
+    /// </summary>
+    protected virtual bool IsMaxHoldReached() => Hold.MaxHoldFrames > 0 && HeldFrames >= Hold.MaxHoldFrames;
 
     protected override void OnPhaseTick(SkillPhase phase, in SkillInputFrame input)
     {

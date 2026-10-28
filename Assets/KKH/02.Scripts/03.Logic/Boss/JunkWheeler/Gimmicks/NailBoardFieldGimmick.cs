@@ -48,7 +48,7 @@ namespace RealSteel.Boss.JunkWheeler
             var tireGimmick = boss.GetGimmick<JunkWheelerTirePartGimmick>("TIRE_PART");
             if (tireGimmick != null)
             {
-                tireGimmick.TakePartDamage(1, GimmickTag.Pierce);
+               /* tireGimmick.TakePartDamage(1, GimmickTag.Pierce);*/
             }
 
             // 2. 보스 4초 그로기 (피해 1.5배) 인터럽트

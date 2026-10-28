@@ -31,7 +31,7 @@ public static class SpriteEffect
             var mover = styleSource.GetComponent<RobotMover>();
             if (mover != null) sign = mover.ScaleSignFor(facingRight);
 
-            var sourceRenderer = styleSource.GetComponent<SpriteRenderer>();
+            var sourceRenderer = RobotView.FindRenderer(styleSource); // 그림이 Visual 자식으로 분리됐을 수 있다(2026-10-28)
             if (sourceRenderer != null)
             {
                 renderer.sharedMaterial = sourceRenderer.sharedMaterial;

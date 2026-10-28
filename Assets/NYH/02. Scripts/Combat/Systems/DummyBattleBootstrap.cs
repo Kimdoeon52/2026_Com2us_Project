@@ -35,6 +35,15 @@ public class DummyBattleBootstrap : MonoBehaviour
         // ProcessHit을 아무리 불러도 "스냅샷을 찾을 수 없음" 경고만 뜨고 데미지 계산 자체가 안 된다
         BattleManager.Instance.InitializeBattle(player, enemy);
 
+        // 2026-10-28: 보스 씬이면 보스 모드로 다시 묶는다. KKH 보스는 Awake에서 스스로 보스 모드를 거는데,
+        // 위 InitializeBattle(로봇전)이 Start에서 그걸 덮어써서 보스 판정이 안 됐다. 정식 보스전 시작은 KKH 담당 — 그 전까지의 임시 처리
+        var boss = FindAnyObjectByType<RealSteel.Boss.Core.BossControllerBase>();
+        if (boss != null && boss.Snapshot != null)
+        {
+            CombatDataHub.Instance.InitializeBossBattle(player, boss.Snapshot);
+            Debug.Log($"[DummyBattleBootstrap] 보스 씬 — Player vs {boss.Snapshot.bossName} 보스 모드로 등록");
+        }
+
         ApplyEquipmentEffects(); // 최. 추가
 
         // 라이프사이클상 Ready 다음 단계로 넘겨서 "지금 전투 중"인 정상 상태로 맞춰둔다.

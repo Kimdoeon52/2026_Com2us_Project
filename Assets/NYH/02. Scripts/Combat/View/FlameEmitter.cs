@@ -97,7 +97,7 @@ public class FlameEmitter : MonoBehaviour
 
     private void Awake()
     {
-        source = GetComponent<SpriteRenderer>();
+        source = RobotView.FindRenderer(this); // 2026-10-28: 그림이 Visual 자식으로 분리돼서 루트 렌더러가 아니라 그림 렌더러를 본다
         mover = GetComponent<RobotMover>();
     }
 

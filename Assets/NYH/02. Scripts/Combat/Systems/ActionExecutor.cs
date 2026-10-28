@@ -59,6 +59,47 @@ public class ActionExecutor : MonoBehaviour
     /// <summary>착지 순간 자동으로 실행되는 행동. AI가 "이건 패턴을 끊는 끼어들기가 아니다"를 구분할 때 본다</summary>
     public ActionData LandAction => landAction;
 
+    /// <summary>
+    /// 히트스톱 남은 프레임 (2026-10-28). 0보다 크면 이 로봇은 그 프레임 동안 행동 진행·이동·발사가 전부 멈춘다.
+    /// 판정 박스는 그대로 고정 — 멈춘 자세의 박스가 그대로 남는다. 다른 로봇·날아가는 총알·UI는 안 멈춘다(timeScale 미사용, §3)
+    /// </summary>
+    public int HitStopRemaining { get; private set; }
+
+    /// <summary>히트스톱 중인지. RobotView(애니메이션 정지)가 본다</summary>
+    public bool IsInHitStop => HitStopRemaining > 0;
+
+    /// <summary>
+    /// 이번 틱을 히트스톱 때문에 건너뛰었는지. 같은 틱에 뒤이어 도는 RobotMover.Tick이 본다 —
+    /// IsInHitStop으로 보면 정지 마지막 틱에 카운터가 이미 0이 돼서 이동만 한 틱 먼저 풀린다
+    /// </summary>
+    public bool FrozenThisTick { get; private set; }
+
+    /// <summary>이번 히트스톱의 전체 길이. RobotView가 "남은 비율"로 진동을 줄여갈 때 쓴다</summary>
+    public int HitStopTotal { get; private set; }
+
+    /// <summary>이번 히트스톱의 진동 크기(화면 픽셀). 맞은 쪽은 크게, 때린 쪽은 작게 — HitStopSystem이 정한다</summary>
+    public float HitStopShakePixels { get; private set; }
+
+    /// <summary>
+    /// 이번 히트스톱 동안 이 로봇이 움직이는 속도(평소 대비). 맞은 쪽은 0(완전 정지), 때린 쪽은 0.03 같은 작은 값 —
+    /// RobotView(애니메이션 배속)·RobotMover(이동·낙하)가 이 비율로 느리게 계속 움직인다. 행동 프레임 수는 그대로 멈춘다
+    /// </summary>
+    public float HitStopTimeScale { get; private set; }
+
+    /// <summary>
+    /// 히트스톱을 건다. 이미 멈춰 있으면 더 긴 쪽으로 — 짧은 히트가 긴 정지를 잘라먹지 않게.
+    /// shakePixels는 그림 연출 값, timeScale은 정지 중 느린 움직임 비율
+    /// </summary>
+    // 호출: HitStopSystem.Apply
+    public void StartHitStop(int frames, float shakePixels, float timeScale)
+    {
+        if (frames <= HitStopRemaining) return;
+        HitStopRemaining = frames;
+        HitStopTotal = frames;
+        HitStopShakePixels = shakePixels;
+        HitStopTimeScale = Mathf.Clamp01(timeScale);
+    }
+
     /// <summary>같은 오브젝트의 RobotMover. 넉백의 띄우기·경직의 공중 판정·총구 방향이 이걸 본다. 없으면 null</summary>
     public RobotMover Mover { get; private set; }
 
@@ -101,7 +142,22 @@ public class ActionExecutor : MonoBehaviour
 
         // 죽었으면 더 할 일이 없다 — 입력도 프레임 전진도 안 한다 (사망 연출은 RobotView가 OnDead로 따로 돌림)
         CheckDeath();
-        if (state.IsDead) return;
+        if (state.IsDead)
+        {
+            HitStopRemaining = 0; // 죽은 로봇은 사망 연출이 멈추면 안 된다 — RobotView가 이 값을 보고 애니메이션을 세운다
+            FrozenThisTick = false;
+            return;
+        }
+
+        // 히트스톱 중이면 이번 틱은 통째로 건너뛴다 — 쿨타임·프레임·전진·발사가 전부 같이 멈춰야 정지가 끝난 뒤
+        // 모든 타이밍이 정확히 그만큼만 밀린다. 정지 중 누른 입력은 입력원의 래치·버퍼에 남아 있으면 풀린 뒤 처리된다
+        // (버퍼 길이보다 오래 멈추면 사라질 수 있음 — 플레이 확인 항목)
+        FrozenThisTick = HitStopRemaining > 0;
+        if (FrozenThisTick)
+        {
+            HitStopRemaining--;
+            return;
+        }
 
         // 쿨타임은 입력을 받기 "전에" 줄인다 — 그래야 cooldownFrames가 N이면 시작한 틱으로부터 정확히 N틱 뒤에 다시 쓸 수 있다
         TickCooldowns();

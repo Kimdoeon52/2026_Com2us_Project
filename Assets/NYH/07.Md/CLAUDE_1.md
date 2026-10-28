@@ -67,17 +67,27 @@ Assets/NYH/02. Scripts/Combat/
                 ProjectileData.cs  HitReactionData.cs  EnemyAIProfile.cs (2026-10-09)
                 (PartData.cs / CoreData.cs는 만들지 않음 — KKH의 PartMasterData 참조)
     Systems/ 추가 (2026-10-09): Projectile.cs(날아가는 판정체)  HitReactionSystem.cs(static, 경직 판단)
+    Systems/ 추가 (2026-10-28): HitStopSystem.cs(static, 히트스톱 판단)  — Data/ 추가: HitStopSettings.cs(히트스톱 공식 SO)
+    Systems/ 이동 (2026-10-28): RobotMover.cs — View에서 옮김(틱 이관 후 전투 로직). DummyJabInputSource.cs는 삭제(AIInputSource로 대체)
     View/ 추가 (2026-10-09): SpriteEffect.cs(static, 총알·폭발 스프라이트 생성)
     View/ 추가 (2026-10-11): AfterImageEmitter.cs(패턴 잔상 — 활성 끝 자세를 반투명으로 남김)
                              FlameEmitter.cs(화염 — 둠 불꽃 알고리즘으로 그림 없이 불줄기 생성)
                              DamageNumberEmitter.cs(데미지 숫자)  FighterHpBar.cs(HP 바 ↔ CombatDataHub)
     Data/ 추가 (2026-10-11): FlameData.cs(불 모양 SO)
     Input/ 추가 (2026-10-11): IActionAdjustmentSource.cs(입력원이 이번 실행분 프레임 보정을 줄 때 — AI 패턴 속도)
+    Systems/ 추가 (2026-10-28): HurtboxColliderSync.cs(플레이어 콜라이더 = Hurt박스, KKH 보스가 찾는 용)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
     Input/      IInputSource.cs ✅  PlayerInputSource.cs ✅  AIInputSource.cs
-    View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs  RobotMover.cs ✅(임시)
+    View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs
+
+Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속하는 NYH 보스. 보스2 쿄다이는 남윤호 담당)
+    Common/     BossHurtZone.cs(보스의 맞는 자리 + 부위 배율)  PixelStudio.cs(3D 모델 → 저해상도 → 경기장 판 2장)
+                GroundTelegraph.cs(바닥 예고 그림자)
+    Kyodai/     KyodaiBossController.cs  KyodaiLimb.cs(부위 = 레이어 규칙)  KyodaiPalmPressPattern.cs(패턴은 1개당 1클래스 — KKH 기믹 방식)
+    Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)
+Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
 Assets/NYH/04. SO/Combat/
     Actions/    D.asset  왼팔액티브.asset  오른팔액티브.asset  왼다리액티브.asset  오른다리액티브.asset  회피.asset  ... (2026-09-29 기준. 이름은 파츠 스킬 확정 후 갱신)
@@ -113,6 +123,13 @@ class HookAction : BaseAction { }
 판정은 **데이터로 들고 매 프레임 직접 AABB 겹침 검사**한다. (§4 참조)
 
 단, 전투와 무관한 용도(맵 경계 트리거, 아이템 픽업 등)에는 콜라이더를 써도 된다.
+
+**예외 — 보스전 (2026-10-28 결정, 남윤호)**: 보스는 KKH `BossControllerBase` 베이스로 가고, 보스 쪽 판정 방식(Physics2D + 태그)에 맞춘다
+(1:1 격투 형식이 아니게 됐으므로). 그래도 **모양의 원본은 우리 데이터 박스**다:
+- 보스 → 플레이어: KKH가 `OverlapCircle`·트리거로 "Player" 태그를 찾는다. 플레이어 `BoxCollider2D`는 `HurtboxColliderSync`가 매 프레임 Hurt박스에 맞춘다 — 콜라이더를 손으로 맞추지 말 것
+- 플레이어 → 보스: 우리 Hit박스(회전 포함) 자리에 `Physics2D.OverlapBox`를 던져 보스 콜라이더를 찾는다(`HitDetection`). 판정 타이밍은 여전히 전투 틱
+- 보스 HP는 KKH 허브(`ProcessHit` 보스 모드)가 깎는다. `NotifyDamageFromHub`는 부르지 않는다(같은 `BossSnapshot`을 또 깎음)
+- 나중에 박스 방식으로 통일할지는 미정(사용자: "나중에")
 
 ### ❌ Animator 재생 시간을 타이밍 기준으로 쓰지 말 것
 
@@ -664,6 +681,9 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 23. 🔶 (2026-10-26) 플레이어 회피 — `Player_Dodge.asset` 기획서1011 수치로 재작성, `ActionData.groundOnly` + `ActionExecutor.GateByGround`(지상 전용 행동을 공중에서 누르면 무시, 쿨타임·탄 소모 전에 거름 — `TryBeginRequested`·`SkillGateStart` 양쪽). ⬜ 씬 연결(옛 경로 `PlayerInputSource.dodge` / 새 경로 `PlayerSkillLoadout` Dodge 칸, Player `allActions`에 추가 — 꼬리 잔상 컴포넌트 자동 부착 조건)·플레이 검증 아직. 가드(별도 키)는 규칙·키 확인 후 착수
 22. ⬜ (다음) 기믹 "기물파괴 A: 폭발 화물 상자" — 담당 확인 후 착수. 쪼갠 작업·필요한 신규 구조·확인할 것은 개발일지 2026-10-11 마무리 절. 점프 패턴(후보 2개)도 같은 곳
 24. 🔶 (2026-10-27) 적 점프 패턴 "긴급 이탈" — 백점프(`ActionData.leapVelocity` → `RobotMover.Leap`, 공중 궤적·방향 고정) → 착지 행동 → 사격/돌진. 패턴 2개(`Enemy1_AIProfile`). 착지 행동은 패턴을 안 끊는다. 공중 판단(공중에서 다른 행동 고르기)은 여전히 없음. 내려찍기 패턴은 보류(사용자 결정). 폭발 화물 상자 대기, NPC B·C는 보스 제작 때
+25. 🔶 (2026-10-28) 히트스톱 1·2단계 — 피격 모션 나올 때만 멈춤, 그림을 `Visual` 자식으로 자동 분리, 진동(피격자 크게·공격자 작게, 지상 좌우·공중 전방향, 감쇠, 카메라 줌 보정)·공격자 미세 이동. 1단계: 멈춤(`ActionExecutor` 정지 카운터, `RobotMover`·`RobotView` 연동) + 강도 공식(`HitStopSettings`: 공격력 × 기술 계수 × 박스 계수). 기본값 0 = 없음.
+26. 🔶 (2026-10-28) 보스전 피격 연동(KKH `BossControllerBase`) — 플레이어→보스(`HitDetection` OverlapBox → 허브 `ProcessHit`, 근접·투사체·박스당 피해, 때린 쪽만 히트스톱), 보스→플레이어(허브 `OnPlayerHpChanged` 감소 → 경직·점멸·숫자·히트스톱, 넉백 없음), `HurtboxColliderSync`(플레이어 콜라이더 = Hurt박스, 무적·사망 시 끔, "Player" 태그). `DummyBattleBootstrap`이 보스 씬이면 보스 모드로 등록(정식은 KKH). **KKH 확인 필요**: 허브만 HP를 깎으면 보스 컨트롤러의 페이즈 전환·그로기·기믹 통보가 안 돈다. 보스 쪽 데미지 숫자·점멸 없음
+27. 🔶 (2026-10-28) 보스2 쿄다이 1단계 — 나노봇(보스3)은 중단. 3D 에셋 픽셀화 방식(`PixelStudio`: 스튜디오 카메라 → 저해상도 Point 렌더텍스처 → 경기장 판 뒤/앞 2장, 렌더 레이어 30/31). 레이어 규칙(`KyodaiLimb`: 배경·전이·공격·잔류·복귀, 잔류만 피격, 앞/뒤 판 전환), 부위 배율(`BossHurtZone` → `HitDetection`), 패턴 1개(손바닥 압착). 임시 상자 로봇 빌더. **3D 에셋 미정** — 리깅된 모델 확정 후 effector를 IK 타깃으로 교체. 테두리(붉은/흰)는 색 곱하기로 임시. 남은 패턴·탐조등/해킹 게이지·기물·페이즈 전환·부위 무력화 게이지 미착수
 
 ---
 

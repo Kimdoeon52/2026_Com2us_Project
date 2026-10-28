@@ -15,7 +15,7 @@
 ///   장비 보정(CSH ResolvedModifiers → BuildAdjustment)과 동시에 걸리면 FrameAdjustment.Combine으로 합쳐진다(가감은 더하고 배율은 곱함).
 ///
 /// ── 왜 IInputSource에 직접 안 넣었나 ─────────────────────────────────────────────
-///   필요한 건 지금 AI 패턴 하나뿐인데, IInputSource에 넣으면 PlayerInputSource·DummyJabInputSource까지 전부
+///   필요한 건 지금 AI 패턴 하나뿐인데, IInputSource에 넣으면 PlayerInputSource 같은 플레이어 입력원까지 전부
 ///   빈 구현을 달아야 한다. ActionExecutor가 "입력원이 이것도 구현했으면" 물어보는 선택 인터페이스로 뒀다.
 ///   나중에 플레이어 쪽에도 필요해지면(예: 특정 콤보 중 가속) PlayerInputSource가 이걸 구현하기만 하면 된다.
 ///

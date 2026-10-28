@@ -1,10 +1,11 @@
 using UnityEngine;
 
 /// <summary>
-/// [임시/테스트용] IInputSource의 이동 입력을 실제 transform 이동으로 옮기는 자리.
-/// 3층 구조 목록(CLAUDE.md §1)에 정식으로 없는 클래스라 나중에 팀 구조에 맞춰
-/// 위치가 바뀌거나 다른 시스템에 흡수될 수 있음 — 지금은 "키 누르면 움직인다"를
-/// 눈으로 확인하기 위한 최소 스캐폴드.
+/// 로봇의 몸 이동을 맡는 시스템 — 이동 입력(IInputSource)·점프·도약·띄우기를 실제 위치로 옮기고, 화면 끝 벽과
+/// 상대 Push박스에 막히게 한다. 바라보는 방향(FacingRight)의 단일 기준이기도 하다.
+///
+/// 처음엔 "키 누르면 움직인다"를 눈으로 확인하는 임시 스캐폴드라 View 폴더에 있었는데, 틱 이관(아래) 뒤로는
+/// 판정 위치를 정하는 전투 로직이 돼서 2026-10-28에 Systems 폴더로 옮겼다(GUID 유지라 씬 연결은 그대로).
 ///
 /// 2026-10-27: 이동·점프·Push 보정을 Update()에서 CombatClock 틱(Tick)으로 옮겼다 (§3).
 /// 전엔 Time.deltaTime으로 움직여서 판정(틱)과 위치(렌더 프레임)가 서로 다른 시계로 돌았고,
@@ -35,6 +36,8 @@ public class RobotMover : MonoBehaviour
 
     private IInputSource inputSource;
     private ActionState actionState;
+    // 히트스톱 중인지 묻는 용도(2026-10-28). 같은 몸에 붙은 실행기 — 없으면 히트스톱 없이 그냥 움직인다
+    private ActionExecutor executor;
     // 지금 오른쪽을 보고 있는지. Tick()에서 매 틱 갱신되고, 다른 시스템(BoxDrawer, HitDetection)은
     // 이 필드를 직접 못 건드리고 아래 FacingRight 프로퍼티로 읽기만 한다
     private bool facingRight = true;
@@ -106,6 +109,7 @@ public class RobotMover : MonoBehaviour
     {
         inputSource = source;
         actionState = state;
+        executor = GetComponent<ActionExecutor>();
         groundY = transform.position.y;
         // 인스펙터에서 안 넣어줬으면 씬에서 직접 찾는다 — 카메라는 씬에 보통 하나뿐이라 자동 검색이 안전함
         if (combatCamera == null) combatCamera = FindFirstObjectByType<CombatCamera>();
@@ -119,9 +123,21 @@ public class RobotMover : MonoBehaviour
     // 순서: 좌우 이동(대시 배율 포함) → 점프(Y축) → 화면 밖 보정 → 입력 방향으로 좌우 반전 → Push박스 겹침 보정
     public void Tick()
     {
+        // 히트스톱: 맞은 쪽(배율 0)은 공중에 떠 있어도 그 자리에 멈춘다(중력도 멈춤) — 어퍼컷 띄우기 속도도 보류됐다가
+        // 정지가 풀리는 틱부터 날아가서 "멈췄다가 튕겨 나가는" 모양이 된다. 때린 쪽은 평소의 몇 %(HitStopTimeScale)로
+        // 계속 움직인다 — 공중에서 때렸으면 아주 느리게 떨어진다. 정지 중엔 둘 다 입력을 안 읽어서 방향이 안 바뀐다
+        float dt = CombatClock.TICK;
+        bool slowedByHitStop = false;
+        if (executor != null && executor.FrozenThisTick)
+        {
+            if (executor.HitStopTimeScale <= 0f) return;
+            dt *= executor.HitStopTimeScale;
+            slowedByHitStop = true;
+        }
+
         // 공격·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
         // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
-        bool canMove = actionState == null || actionState.CanMove;
+        bool canMove = !slowedByHitStop && (actionState == null || actionState.CanMove);
         float moveInput = 0f;
 
         // 도약(Leap) 중이면 입력을 아예 안 읽는다 — 수평 속도와 방향이 착지까지 그대로 간다
@@ -135,9 +151,10 @@ public class RobotMover : MonoBehaviour
             float speedMultiplier = isDashing ? dashSpeedMultiplier : 1f;
             moveVelocity = moveInput * moveSpeed * speedMultiplier;
         }
-        else if (isGrounded)
+        else if (isGrounded && !slowedByHitStop)
         {
-            // 지상에서 행동(공격 등) 중이면 그 자리에 멈춘다 — 기존 동작과 동일
+            // 지상에서 행동(공격 등) 중이면 그 자리에 멈춘다 — 기존 동작과 동일.
+            // 히트스톱으로 느려진 틱은 속도를 지우지 않는다 — 정지가 풀리면 원래 속도 그대로 이어서 움직여야 한다
             moveVelocity = 0f;
         }
         // 공중에서 행동 중이면(canMove=false && !isGrounded) moveVelocity를 아무도 안 건드린다 —
@@ -145,10 +162,11 @@ public class RobotMover : MonoBehaviour
         // 공중에서 입력으로 궤적을 바꾸고 싶어지면(에어 컨트롤) 이 분기를 다시 설계해야 함 — 지금은
         // "공중 상태를 어떻게 다룰지"가 §15 미정 항목이라 최소한의 수정만 했다
 
-        // 틱 하나 = 정확히 1/60초라 TICK을 곱하면 "초당 moveVelocity만큼"이 된다 — 주사율과 무관 (§3)
-        transform.Translate(Vector3.right * moveVelocity * CombatClock.TICK, Space.World);
+        // 틱 하나 = 정확히 1/60초라 TICK을 곱하면 "초당 moveVelocity만큼"이 된다 — 주사율과 무관 (§3).
+        // 히트스톱으로 느려진 틱이면 dt가 그 비율만큼 작다
+        transform.Translate(Vector3.right * moveVelocity * dt, Space.World);
 
-        UpdateJump(canMove);
+        UpdateJump(canMove, dt, consumeInput: !slowedByHitStop);
 
         // 화면 밖으로 못 나가게 스테이지 벽 / 최대 거리로 보정
         if (combatCamera != null)
@@ -181,9 +199,11 @@ public class RobotMover : MonoBehaviour
     // GetJumpInput()은 조건과 무관하게 매 틱 반드시 한 번 호출해서 소비해야 한다 — 안 그러면
     // 입력원의 버퍼링 플래그가 안 비워져서 나중에 엉뚱한 타이밍에 점프가 터질 수 있다.
     // 입력원들은 ↑를 Update에서 받아 틱이 읽을 때까지 들고 있으므로(래치), 틱에서 읽어도 입력이 유실되지 않는다
-    private void UpdateJump(bool canMove)
+    // dt: 이번 틱의 시간(평소 TICK, 히트스톱으로 느려지면 더 작음). consumeInput: false면 점프 입력을 안 꺼낸다 —
+    // 히트스톱 중 누른 ↑는 입력원에 남겨뒀다가 정지가 풀린 뒤 처리한다
+    private void UpdateJump(bool canMove, float dt, bool consumeInput)
     {
-        bool jumpPressed = inputSource?.GetJumpInput() ?? false;
+        bool jumpPressed = consumeInput && (inputSource?.GetJumpInput() ?? false);
 
         if (jumpPressed && canMove && isGrounded)
         {
@@ -193,10 +213,10 @@ public class RobotMover : MonoBehaviour
 
         if (isGrounded) return;
 
-        verticalVelocity += gravity * CombatClock.TICK;
+        verticalVelocity += gravity * dt;
 
         Vector3 pos = transform.position;
-        pos.y += verticalVelocity * CombatClock.TICK;
+        pos.y += verticalVelocity * dt;
 
         if (pos.y <= groundY)
         {

@@ -56,7 +56,7 @@ MonoBehaviour:
     targetCondition: 1
     airborneTargetWeightMultiplier: 1
   patterns:
-  - patternName: "하단-어퍼컷-중단"
+  - patternName: "\uD558\uB2E8-\uC5B4\uD37C\uCEF7-\uC911\uB2E8"
     steps:
     - {fileID: 11400000, guid: a205ddbf7ae449ae861b4f02ffa04e79, type: 2}
     - {fileID: 11400000, guid: affd720bc1944d7fa95e42ded840e7f1, type: 2}
@@ -68,7 +68,7 @@ MonoBehaviour:
     targetCondition: 1
     leaveAfterImage: 1
     speed: 1
-  - patternName: "긴급이탈-사격"
+  - patternName: "\uAE34\uAE09\uC774\uD0C8-\uC0AC\uACA9"
     steps:
     - {fileID: 11400000, guid: ac799be9c2224e628e8df6aa01d27750, type: 2}
     - {fileID: 11400000, guid: 6b2e03e0cab74c0681c2c71799896a6f, type: 2}
@@ -79,7 +79,7 @@ MonoBehaviour:
     targetCondition: 0
     leaveAfterImage: 0
     speed: 1
-  - patternName: "긴급이탈-돌진"
+  - patternName: "\uAE34\uAE09\uC774\uD0C8-\uB3CC\uC9C4"
     steps:
     - {fileID: 11400000, guid: ac799be9c2224e628e8df6aa01d27750, type: 2}
     - {fileID: 11400000, guid: 63c23afab03a4fd38758b9ad16be5ade, type: 2}
@@ -90,9 +90,9 @@ MonoBehaviour:
     targetCondition: 1
     leaveAfterImage: 0
     speed: 1
-  thinkIntervalFrames: 15
+  thinkIntervalFrames: 25
   preferredRange: 0.6
   approachWeight: 4
-  waitWeight: 1
+  waitWeight: 2
   jumpWeight: 0.3
   jumpCooldownFrames: 180

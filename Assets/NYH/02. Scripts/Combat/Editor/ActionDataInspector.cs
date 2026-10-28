@@ -37,7 +37,7 @@ public static class ActionDataInspector
     {
         new Group("식별", true, "actionName", "source", "requiredPart"),
         new Group("프레임 (60fps)", true, "startupFrames", "activeFrames", "recoveryFrames", "isInvincibleDuringActive"),
-        new Group("피해", true, "damage", "knockbackDistance", "hitIntervalFrames"),
+        new Group("피해", true, "damage", "knockbackDistance", "hitIntervalFrames", "hitStopScale"),
         new Group("연출", true, "animationClipName", "activeClipName", "keepClipSpeed"),
 
         new Group("이동 · 잔상", false, "advanceDistance", "advanceDuringActiveOnly", "trailAfterImageInterval", "groundOnly"),

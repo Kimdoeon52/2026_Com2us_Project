@@ -81,6 +81,19 @@ public class RobotView : MonoBehaviour
     // 이걸 계속 튼다 — 백점프 부스터 자세가 착지 직전에 일반 점프 루프로 바뀌어 버리지 않게. 착지하면 비운다
     private string leapAirStateName;
 
+    // 히트스톱(2026-10-28): 멈추기 직전의 애니메이터 속도. 행동마다 데이터 길이에 맞춘 배속이 걸려 있어서 1로 되돌리면 안 된다
+    private float speedBeforeHitStop = 1f;
+    private float pausedSpeed; // 히트스톱 중 걸어둔 속도(원래 × 배율). 이 값에서 바뀌면 누가 새 클립을 튼 것
+    private bool pausedByHitStop;
+
+    // 그림 전용 자식 오브젝트(2026-10-28). 히트스톱 진동은 이것만 흔든다 — 로봇 본체(루트) 위치는 판정 박스의
+    // 기준이라 흔들면 안 된다. 씬에 "Visual" 자식이 없으면 플레이 시작 때 루트의 SpriteRenderer·Animator를 복사해서 자동으로 만든다
+    private const string VisualChildName = "Visual";
+    private SpriteRenderer visualRenderer;
+    private Transform visualTransform;
+    private bool visualResolved;
+    private Camera viewCamera;
+
     // 피격 점멸
     private Color baseColor = Color.white;
     private float flashRemainingFrames;
@@ -102,7 +115,8 @@ public class RobotView : MonoBehaviour
         actionState = state;
         this.mover = mover;
         this.executor = executor;
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        EnsureVisual();
+        spriteRenderer = visualRenderer != null ? visualRenderer : GetComponent<SpriteRenderer>();
         if (spriteRenderer != null) baseColor = spriteRenderer.color;
 
         // ActionState 쪽은 "누가 구독하는지" 전혀 모른 채로 이벤트만 쏘고, 반응은 전부 이쪽 책임이다(§13과 같은 패턴)
@@ -113,6 +127,86 @@ public class RobotView : MonoBehaviour
         if (executor != null) executor.OnDamaged += OnDamaged;
 
         EnsureEffectComponents(executor);
+    }
+
+    /// <summary>
+    /// 실제로 화면에 그려지는 로봇 그림. 잔상·화염·총알처럼 "로봇 그림을 베끼는" 코드는 루트 SpriteRenderer 대신 이걸 봐야 한다 —
+    /// 그림 분리 뒤 루트 렌더러는 꺼져 있어서 스프라이트가 더 이상 안 바뀐다. 처음 묻는 쪽이 분리를 일으킨다(순서 무관)
+    /// </summary>
+    public SpriteRenderer VisualRenderer
+    {
+        get
+        {
+            EnsureVisual();
+            return visualRenderer;
+        }
+    }
+
+    /// <summary>로봇 그림 렌더러를 찾는 공용 함수 — RobotView가 있으면 그림 자식, 없으면 그 오브젝트의 SpriteRenderer</summary>
+    public static SpriteRenderer FindRenderer(Component robot)
+    {
+        if (robot == null) return null;
+        var view = robot.GetComponent<RobotView>();
+        SpriteRenderer visual = view != null ? view.VisualRenderer : null;
+        return visual != null ? visual : robot.GetComponent<SpriteRenderer>();
+    }
+
+    private void Awake() => EnsureVisual();
+
+    // 루트의 그림(SpriteRenderer + Animator)을 "Visual" 자식으로 옮긴다. 컴포넌트는 옮길 수 없어서 새로 만들고 설정을 복사한 뒤
+    // 루트 것은 끈다. 애니메이션 클립은 Animator가 붙은 오브젝트 기준(경로 "")으로 스프라이트를 바꾸므로, Animator도 같이 옮겨야
+    // 자식 렌더러에 그림이 그려진다. 씬에서 직접 "Visual" 자식을 만들어 뒀으면 그걸 그대로 쓴다
+    private void EnsureVisual()
+    {
+        if (visualResolved || !Application.isPlaying) return;
+        visualResolved = true;
+
+        Transform existing = transform.Find(VisualChildName);
+        if (existing != null && existing.GetComponent<SpriteRenderer>() != null)
+        {
+            visualTransform = existing;
+            visualRenderer = existing.GetComponent<SpriteRenderer>();
+            var childAnimator = existing.GetComponent<Animator>();
+            if (childAnimator != null) animator = childAnimator;
+            return;
+        }
+
+        var rootRenderer = GetComponent<SpriteRenderer>();
+        if (rootRenderer == null) return; // 그림이 없는 로봇 — 진동할 것도 없다
+
+        var go = new GameObject(VisualChildName);
+        visualTransform = go.transform;
+        visualTransform.SetParent(transform, false); // 좌우 반전(루트 localScale.x)은 부모를 따라 자동으로 적용된다
+
+        visualRenderer = go.AddComponent<SpriteRenderer>();
+        visualRenderer.sprite = rootRenderer.sprite;
+        visualRenderer.color = rootRenderer.color;
+        visualRenderer.flipX = rootRenderer.flipX;
+        visualRenderer.flipY = rootRenderer.flipY;
+        visualRenderer.drawMode = rootRenderer.drawMode;
+        if (rootRenderer.drawMode != SpriteDrawMode.Simple) visualRenderer.size = rootRenderer.size;
+        visualRenderer.maskInteraction = rootRenderer.maskInteraction;
+        visualRenderer.spriteSortPoint = rootRenderer.spriteSortPoint;
+        visualRenderer.sharedMaterials = rootRenderer.sharedMaterials;
+        visualRenderer.sortingLayerID = rootRenderer.sortingLayerID;
+        visualRenderer.sortingOrder = rootRenderer.sortingOrder;
+        visualRenderer.renderingLayerMask = rootRenderer.renderingLayerMask;
+        visualRenderer.shadowCastingMode = rootRenderer.shadowCastingMode;
+        visualRenderer.receiveShadows = rootRenderer.receiveShadows;
+        rootRenderer.enabled = false;
+
+        Animator rootAnimator = animator != null ? animator : GetComponent<Animator>();
+        if (rootAnimator != null && rootAnimator.gameObject == gameObject)
+        {
+            var newAnimator = go.AddComponent<Animator>();
+            newAnimator.runtimeAnimatorController = rootAnimator.runtimeAnimatorController;
+            newAnimator.avatar = rootAnimator.avatar;
+            newAnimator.cullingMode = rootAnimator.cullingMode;
+            newAnimator.updateMode = rootAnimator.updateMode;
+            newAnimator.applyRootMotion = false;
+            rootAnimator.enabled = false;
+            animator = newAnimator;
+        }
     }
 
     // 2026-10-11 추가: 불·꼬리 잔상은 "행동 데이터에 넣으면 나온다"가 약속인데, 그리는 컴포넌트(FlameEmitter/AfterImageEmitter)를
@@ -243,8 +337,96 @@ public class RobotView : MonoBehaviour
             return;
         }
 
+        // 히트스톱 중엔 그림을 세우고 이동 그림도 안 바꾼다 — 점멸은 위에서 계속 돈다(맞은 티는 나야 하니까)
+        if (UpdateHitStopPause()) return;
+
         TrackAirborne(elapsedFrames);
         UpdateLocomotion();
+    }
+
+    // 실행기가 히트스톱 중이면 애니메이터 속도를 "원래 속도 × HitStopTimeScale"로(맞은 쪽 0 = 정지, 때린 쪽 3% 등),
+    // 풀리면 원래 속도로 되돌린다. 히트스톱 중이면 true.
+    // 맞는 순간 경직(피격 행동)이 시작되면 PlayAction이 피격 첫 장을 틀고 속도를 다시 매기는데, 다음 Update에서
+    // 그 속도를 원래 속도로 저장하고 다시 늦춘다 → "피격 첫 장에서 멈췄다가 풀리면 피격 모션이 이어지는" 모양이 된다
+    private bool UpdateHitStopPause()
+    {
+        if (animator == null) return false;
+        bool frozen = executor != null && executor.IsInHitStop;
+
+        if (frozen)
+        {
+            // 처음 멈출 때, 또는 정지 중에 PlayAction 등이 속도를 새로 매겼을 때만 원래 속도를 다시 잡는다
+            if (!pausedByHitStop || !Mathf.Approximately(animator.speed, pausedSpeed))
+            {
+                speedBeforeHitStop = animator.speed;
+                pausedSpeed = speedBeforeHitStop * executor.HitStopTimeScale;
+                animator.speed = pausedSpeed;
+            }
+            pausedByHitStop = true;
+            return true;
+        }
+
+        if (pausedByHitStop)
+        {
+            animator.speed = speedBeforeHitStop;
+            pausedByHitStop = false;
+        }
+        return false;
+    }
+
+    // 렌더 직전에 그림(Visual 자식)의 위치만 정한다 — 로봇 본체(루트)와 판정 박스는 안 움직인다.
+    //  · 진동: 정지 프레임이 남은 비율만큼 줄어든다(처음이 가장 큼). 지상은 좌우로만(위아래로 흔들면 발이 땅에 박혀 보임),
+    //          공중은 프레임마다 방향을 바꿔 전방향. 매 틱 번갈아 흔들리게 남은 프레임 수로 방향을 정해서 결과가 매번 같다
+    //  · 크기는 "화면 픽셀" 단위 → 카메라가 줌인·줌아웃해도 화면에서 같은 크기로 흔들린다
+    //  · 때린 쪽의 "정지 중 느린 움직임"은 여기가 아니라 애니메이션 배속(UpdateHitStopPause)·RobotMover(이동·낙하)가 맡는다
+    private void LateUpdate()
+    {
+        if (visualTransform == null) return;
+
+        Vector3 shake = Vector3.zero;
+        bool inHitStop = executor != null && executor.IsInHitStop && !isDying;
+
+        if (inHitStop)
+        {
+            float worldPerPixel = WorldUnitsPerScreenPixel();
+            int remaining = executor.HitStopRemaining;
+            float decay = remaining / (float)Mathf.Max(1, executor.HitStopTotal);
+            float amplitude = executor.HitStopShakePixels * worldPerPixel * decay;
+
+            if (amplitude > 0f)
+            {
+                bool grounded = mover == null || mover.IsGrounded;
+                if (grounded)
+                {
+                    shake.x = (remaining % 2 == 0 ? 1f : -1f) * amplitude;
+                }
+                else
+                {
+                    float angle = remaining * 2.3999632f; // 황금각 — 프레임마다 방향이 고르게 흩어진다
+                    shake = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * amplitude;
+                }
+            }
+        }
+
+        if (shake == Vector3.zero) visualTransform.localPosition = Vector3.zero;
+        else visualTransform.position = transform.position + shake;
+    }
+
+    // 지금 카메라로 로봇이 있는 깊이에서 화면 1픽셀이 월드 몇 단위인지. 카메라가 없으면 스프라이트 1픽셀(1/PPU)로 대신한다
+    private float WorldUnitsPerScreenPixel()
+    {
+        if (viewCamera == null) viewCamera = Camera.main;
+        if (viewCamera != null && Screen.height > 0)
+        {
+            if (viewCamera.orthographic)
+                return viewCamera.orthographicSize * 2f / Screen.height;
+
+            float distance = Mathf.Abs(Vector3.Dot(transform.position - viewCamera.transform.position, viewCamera.transform.forward));
+            return 2f * distance * Mathf.Tan(viewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad) / Screen.height;
+        }
+
+        float ppu = spriteRenderer != null && spriteRenderer.sprite != null ? spriteRenderer.sprite.pixelsPerUnit : 100f;
+        return 1f / ppu;
     }
 
     // 이륙 순간을 잡아서 점프 시작 그림 타이머를 돌린다. 행동 중(공중 공격 등)에도 계속 세야
@@ -341,6 +523,9 @@ public class RobotView : MonoBehaviour
         isDying = true;
         deathElapsedFrames = 0f;
         nextExplosionFrame = 0f;
+        // 막타 히트스톱 도중 죽었으면 정지를 버린다 — 사망 스테이트가 없는 로봇도 그림이 0배속에 굳지 않게 속도부터 되돌린다
+        if (pausedByHitStop && animator != null) animator.speed = speedBeforeHitStop;
+        pausedByHitStop = false;
 
         if (animator != null && !string.IsNullOrEmpty(deathStateName))
         {

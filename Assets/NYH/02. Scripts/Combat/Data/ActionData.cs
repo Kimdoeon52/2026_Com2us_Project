@@ -106,6 +106,11 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 다단히트 간격(프레임). 0 = 1회만 맞힘")]
     [Min(0)] [SerializeField] private int hitIntervalFrames;
 
+    // 2026-10-28 추가: 히트스톱 기술 계수. 정지 프레임은 HitStopSettings 공식(공격력 비례)으로 정해지고, 이 값을 곱한다.
+    // 1 = 공식 그대로, 2 = 두 배 묵직하게, 0 = 이 기술은 안 멈춤. 공격력이 같아도 손맛을 일부러 다르게 주고 싶을 때 쓴다
+    [Tooltip("히트스톱 계수. 1 = 공식 그대로(공격력 비례), 2 = 두 배 길게, 0 = 이 기술은 안 멈춤")]
+    [Min(0f)] [SerializeField] private float hitStopScale = 1f;
+
     // ── 연출 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     [Tooltip("프레임표 [애니메이션 클립] 칸과 1:1로 맞춘다.")]
     [SerializeField] private string animationClipName;
@@ -233,6 +238,7 @@ public class ActionData : ScriptableObject
     public float KnockbackDistance => knockbackDistance;
     public float Damage => damage;
     public int HitIntervalFrames => hitIntervalFrames;
+    public float HitStopScale => hitStopScale;
 
     public string AnimationClipName => animationClipName;
     public string ActiveClipName => activeClipName;

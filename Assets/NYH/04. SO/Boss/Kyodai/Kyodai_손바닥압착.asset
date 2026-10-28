@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: "Kyodai_\uC190\uBC14\uB2E5\uC555\uCC29"
+  m_EditorClassIdentifier: 
+  patternID: KYODAI_PALM_PRESS
+  patternName: "\uC190\uBC14\uB2E5 \uC555\uCC29"
+  description: "\uAE30\uD68D\uC11C10_28 2\uD398\uC774\uC988: \uC624\uB978\uD314 /
+    \uACBD\uAE30\uC7A5 1/3 \uADF8\uB9BC\uC790 1.2\uCD08 / \uC190\uBC14\uB2E5\uC774
+    \uC9D3\uB204\uB984 / \uC794\uB958 3\uCD08(\uC190\uB4F1 \uC704 \uD0C0\uACA9) /
+    \uD30C\uCE20 \uD53C\uD574 \u2014"
+  tellDuration: 1.2
+  postDelay: 1
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 5
+  partDurabilityDamage: 0
+  baseDamage: 50
+  damageRatio: 100
+  actionData: {fileID: 0}

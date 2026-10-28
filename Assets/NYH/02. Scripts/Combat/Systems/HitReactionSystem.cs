@@ -18,19 +18,20 @@ public static class HitReactionSystem
 
     // 호출: HitDetection(근접·투사체 공통, ProcessHit 직후 · 넉백 직전). 넉백보다 먼저 부르는 이유:
     // 넉백의 런치(띄우기)가 먼저 돌면 "공중이라 경직 없음"으로 판단돼서, 어퍼컷에 맞고도 움찔하지 않게 된다
-    public static void Apply(ActionExecutor defender, HitResolutionResult result)
+    // 반환: 이번 타격으로 피격 모션(경직)에 들어갔으면 true — 히트스톱이 "피격 모션이 나올 때만" 멈추는 데 쓴다(2026-10-28)
+    public static bool Apply(ActionExecutor defender, HitResolutionResult result)
     {
-        if (result.IsEvaded) return;
+        if (result.IsEvaded) return false;
 
         HitReactionData data = defender.HitReaction;
-        if (data == null || data.HurtAction == null) return; // 경직 규칙이 없는 로봇 — 점멸만 있음
+        if (data == null || data.HurtAction == null) return false; // 경직 규칙이 없는 로봇 — 점멸만 있음
 
         ActionState state = defender.State;
-        if (state.IsDead) return;
+        if (state.IsDead) return false;
 
         // 점프 중에는 기본적으로 궤적을 유지한다 (reactInAir로 켤 수 있음)
         RobotMover mover = defender.Mover;
-        if (mover != null && !mover.IsGrounded && !data.ReactInAir) return;
+        if (mover != null && !mover.IsGrounded && !data.ReactInAir) return false;
 
         bool heavy = result.DamageToHp >= data.InterruptDamageThreshold;
         ActionData current = state.CurrentAction;
@@ -38,15 +39,16 @@ public static class HitReactionSystem
         if (current == null)
         {
             // 대기·걷기 중: 강한 공격이면 무조건, 아니면 확률로
-            if (!heavy && rng.NextDouble() >= data.IdleReactionChance) return;
+            if (!heavy && rng.NextDouble() >= data.IdleReactionChance) return false;
         }
         else if (current != data.HurtAction)
         {
             // 공격 등 다른 행동 중: 강한 공격에만 끊긴다 — 약한 공격엔 버티고 하던 걸 마저 한다
-            if (!heavy) return;
+            if (!heavy) return false;
         }
         // 이미 경직 중이면 처음부터 다시 시작(경직 갱신) — 연타에 맞는 동안 계속 움찔하게
 
         state.Interrupt(data.HurtAction);
+        return true;
     }
 }

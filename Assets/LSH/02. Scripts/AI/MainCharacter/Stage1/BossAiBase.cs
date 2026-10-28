@@ -45,6 +45,7 @@ public class BossAiBase : AllAiBase
         {
             if(myparts > stuffGrade)
             {
+                IsGiveUp = true;
                 return false;
             }
         }

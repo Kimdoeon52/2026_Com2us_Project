@@ -88,7 +88,7 @@ public class PartsDefinition : ScriptableObject
             Debug.LogWarning($"{name}: 이미지 비율이 {_shape.Size.x}x{_shape.Size.y}와 다르다.", this);
     }
 
-    public string GetTooltip()
+    public string GetTooltip(bool destroyed = false)
     {
         Color color = _grade switch
         {
@@ -100,13 +100,15 @@ public class PartsDefinition : ScriptableObject
         };
 
         string hex = ColorUtility.ToHtmlStringRGB(color);
+        string tag = destroyed ? " <color=red>[파괴됨]</color>" : "";
+        int durability = destroyed ? 0 : _durability;
 
-        return $"이름: {_displayName}\n" +
+        return $"이름: {_displayName}{tag}\n" +
             "------------------------------\n" +
             $"설명: {_description}\n" +
-            $"등급: <color=#{hex}>{_grade}</color>\n" + 
+            $"등급: <color=#{hex}>{_grade}</color>\n" +
             $"최대 소지 갯수: {_maxCount}\n" +
             $"파괴저항력: {_destructiveResistance}\n" +
-            $"내구도: {_durability}\n";
+            $"내구도: {durability}\n";
     }
 }

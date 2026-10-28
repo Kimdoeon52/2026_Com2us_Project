@@ -104,7 +104,7 @@ public class InventoryGrid
         var entry = new Entry
         {
             IsComponent = false,
-            Parts = new PartsInstance(definition.Id, origin),
+            Parts = new PartsInstance(definition, origin),
             Definition = definition,
             Shape = definition.Shape,
             Origin = origin,
@@ -210,7 +210,7 @@ public class InventoryGrid
                 if (instance == null)
                     continue;
 
-                PartsDefinition definition = catalog.Find(instance.DefinitionId);
+                PartsDefinition definition = catalog.Find(instance.Definition.Id);
                 if (definition == null || !CanPlace(definition.Shape, instance.Origin))
                     continue;
 

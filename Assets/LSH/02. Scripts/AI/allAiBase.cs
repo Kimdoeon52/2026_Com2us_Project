@@ -12,7 +12,7 @@ public abstract class AllAiBase : MonoBehaviour
     public abstract int ThinkDelay { get;} //ai마다 생각하는 시간이 다르게 설정
     public virtual int RaiseGold { get; set; } = 100;
     public abstract void ReadyForAction();
-    public abstract bool RaiseThink(int actionPrise, int actionRealPrise);
+    public abstract bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade);
 
     [Header("Npc UI들 나오는 곳")]
     public Image thinkImage;

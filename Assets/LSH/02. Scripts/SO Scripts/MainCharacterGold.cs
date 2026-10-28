@@ -9,4 +9,5 @@ public class MainCharacterGold : ScriptableObject
     public int score;
     public int power;
     public int rank;
+    public PartGrade[] parts = new PartGrade[4];
 }

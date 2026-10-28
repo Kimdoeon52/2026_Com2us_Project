@@ -37,10 +37,17 @@ public class BossAiBase : AllAiBase
     }
 
     //==================================판단===================================
-    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     { //현재는 단순히 골드보유로만
         if (IsGiveUp || data == null) return false;
 
+        foreach(PartGrade myparts in data.parts)
+        {
+            if(myparts > stuffGrade)
+            {
+                return false;
+            }
+        }
         int NextPrice = actionPrise + RaiseGold;
 
         // GlobalGold 매니저를 통해 안전하게 잔고 검사
@@ -81,6 +88,7 @@ public class BossAiBase : AllAiBase
         // 여기에 스킬 작성.
         Debug.LogWarning($"나는 {data.mainCharacterName}!!!!!!!");
     }
+
     //============================= 큰 레이즈가 생기면 얼마를 올릴 것인지, 보스 맨트 ==========================
 
     public virtual int BigRaiseGold() //큰 레이즈가 생기면 얼마를 올릴 것인지.

@@ -192,6 +192,11 @@ MonoBehaviour:
   bump: 0
   bumpRadius: 1.4
   bumpShake: 0.6
+  picture: {fileID: 0}
+  frame: 0
+  fps: 12
+  loop: 1
+  pixelSize: 0.1
   feelVersion: 2
   stiffness: 45
   damping: 7
@@ -543,6 +548,11 @@ MonoBehaviour:
   bump: 0
   bumpRadius: 1.2
   bumpShake: 0.5
+  picture: {fileID: 0}
+  frame: 0
+  fps: 12
+  loop: 1
+  pixelSize: 0.1
   feelVersion: 2
   stiffness: 520
   damping: 30
@@ -1239,6 +1249,11 @@ MonoBehaviour:
   bump: 0
   bumpRadius: 1.2
   bumpShake: 0.5
+  picture: {fileID: 0}
+  frame: 0
+  fps: 12
+  loop: 1
+  pixelSize: 0.1
   feelVersion: 2
   stiffness: 120
   damping: 12
@@ -1332,11 +1347,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   botCount: 8000
   botWorldSize: 0.25
-  spacing: 0.1
+  spacing: 0.09375
   sparkleRatio: 0.05
   sparkleTint:
     serializedVersion: 2
     rgba: 4294959470
+  botKinds:
+  - picture: {fileID: 2800000, guid: 1687ed7a5e3319e4e8c68327d7167ac9, type: 3}
+    use: 0
+    ratio: 100
+  - picture: {fileID: 2800000, guid: faea6a95ff22df24ba67340c4eef0fe2, type: 3}
+    use: 3
+    ratio: 20
+  - picture: {fileID: 2800000, guid: 9c96a59bea0a52544846cf9a41082a0c, type: 3}
+    use: 3
+    ratio: 20
+  - picture: {fileID: 2800000, guid: 6248fead8ba996e4682cd4098404b7c9, type: 3}
+    use: 3
+    ratio: 20
+  - picture: {fileID: 2800000, guid: 857a67f2049321e4d86ab7d39923b599, type: 3}
+    use: 3
+    ratio: 20
+  - picture: {fileID: 2800000, guid: f218b4d857d4a184c858836088cf9960, type: 3}
+    use: 3
+    ratio: 20
+  spacingFromPicture: 1
   plates: 1
   refillDelay: 0.35
   viscosity: 8

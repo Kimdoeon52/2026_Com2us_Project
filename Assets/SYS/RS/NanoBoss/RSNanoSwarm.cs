@@ -52,7 +52,7 @@ namespace RealSteel.NanoBoss
         public float glow;         // 개별 발광 (반짝이 봇)
         public float rim;          // 3페 흰 테두리
         public Color32 tint;
-        public byte sprite;
+        public ushort tileBody, tileEdge, tileDrop, tileLoose;   // 아틀라스 칸: 몸 판 · 테두리 판 · 방울 · 낱개 (봇 종류)
         public float hash, hash2, hash3;
 
         public int cell;           // 격자 자리 (덩어리 · 리그 부위). -1 = 없음
@@ -80,16 +80,24 @@ namespace RealSteel.NanoBoss
         [Tooltip("봇 칸 크기 (m) = 픽셀 밀도. 8px ÷ 32px/m = 0.25 (게임 기준)")]
         public float botWorldSize = 0.25f;
 
-        [Tooltip("격자 간격 (m). 봇이 이 간격으로 맞물린다. 작을수록 촘촘하고 같은 봇 수에서 덩어리가 작다")]
-        [Range(0.05f, 0.3f)] public float spacing = 0.1f;
+        [Tooltip("격자 간격 (m). 봇이 이 간격으로 맞물린다. 작을수록 촘촘하고 같은 봇 수에서 덩어리가 작다.\n'간격을 그림에 맞춤' 이 켜져 있으면 몸 그림 크기로 자동")]
+        [Range(0.03f, 0.6f)] public float spacing = 0.1f;
 
         [Tooltip("반짝이는 봇 비율")]
         [Range(0f, 0.2f)] public float sparkleRatio = 0.05f;
 
         public Color32 sparkleTint = new Color32(110, 225, 255, 255);
 
+        [Header("봇 그림")]
+        [Tooltip("봇 종류 — 한 줄에 PNG 하나 + 쓰는 곳 + 비율.\n" +
+                 "몸 종류만 넣으면 테두리 · 유체 · 낱개 그림은 몸 그림으로 자동으로 만든다. 비우면 코드에 그린 시험 그림.\n" +
+                 "PNG 를 고쳐 저장하면 바로 바뀐다 (가져오기 설정은 자동으로 맞춘다)")]
+        public List<NanoBotKind> botKinds = new List<NanoBotKind>();
+        [Tooltip("격자 간격을 몸 그림 크기에 맞춘다 (비율이 가장 큰 몸 그림의 칠한 크기 × 픽셀 크기). 끄면 아래 '격자 간격' 값을 쓴다")]
+        public bool spacingFromPicture = true;
+
         [Header("기계 군체")]
-        [Tooltip("격자에 자리 잡은 봇을 판(3~6px)으로 그린다. 간격에 맞는 크기를 골라 빈틈 없이 맞물린다")]
+        [Tooltip("격자에 자리 잡은 봇을 몸 · 테두리 · 방울 그림으로 그린다. 끄면 모두 낱개 그림")]
         public bool plates = true;
         [Tooltip("맞아서 빈 자리를 다시 채우기 전까지 (초). 이동안 구멍이 보인다")]
         [Range(0f, 2f)] public float refillDelay = 0.35f;
@@ -181,7 +189,8 @@ namespace RealSteel.NanoBoss
         GraphicsBuffer buffer;
         MaterialPropertyBlock mpb;
         Material runtimeMaterial;
-        Texture2D atlas;
+        NanoBotAtlas atlas;
+        int atlasSig;
         Bounds bounds;
         int uploadedFrame = -1;
         System.Random rng = new System.Random(7);
@@ -217,9 +226,48 @@ namespace RealSteel.NanoBoss
             Build(transform.position);
         }
 
+        /// <summary>지금 봇 그림 아틀라스 (인스펙터 미리보기)</summary>
+        public NanoBotAtlas Atlas { get { EnsureAtlas(); return atlas; } }
+
         void EnsureAtlas()
         {
-            if (!atlas) atlas = RSNanoBotSprites.Build();
+            int sig = RSNanoBotSprites.Signature(botKinds);
+            if (atlas == null || !atlas.texture || sig != atlasSig)
+            {
+                if (atlas != null && atlas.texture) { if (Application.isPlaying) Destroy(atlas.texture); else DestroyImmediate(atlas.texture); }
+                atlas = RSNanoBotSprites.Build(botKinds);
+                atlasSig = sig;
+                for (int i = 0; i < bots.Length; i++) atlas.Assign(i, ref bots[i]);
+                dirty = true;
+            }
+            SyncSpacing();
+        }
+
+        /// <summary>'간격을 그림에 맞춤' — 격자 간격 = 몸 그림 칠한 크기 × 픽셀 크기</summary>
+        void SyncSpacing()
+        {
+            if (!spacingFromPicture || atlas == null) return;
+            spacing = Mathf.Clamp(atlas.MainSize * botWorldSize / RSNanoBotSprites.Tile, 0.03f, 0.6f);
+        }
+
+        /// <summary>봇 그림 PNG 를 다시 읽는다 (편집기가 PNG 가 다시 가져와질 때 부른다)</summary>
+        public void RebuildAtlas()
+        {
+            atlasSig = 0;
+            if (atlas != null && atlas.texture) { if (Application.isPlaying) Destroy(atlas.texture); else DestroyImmediate(atlas.texture); }
+            atlas = null;
+            EnsureAtlas();
+        }
+
+        /// <summary>편집기가 채운다: 봇 그림 PNG 가져오기 설정을 맞춘다 (읽기 허용 · 점 필터 · 무압축)</summary>
+        public static System.Action<Texture2D> fixSheetImport;
+
+        void OnValidate()
+        {
+            if (botKinds != null && fixSheetImport != null)
+                foreach (var k in botKinds)
+                    if (k != null && k.picture) fixSheetImport(k.picture);
+            if (atlas != null) SyncSpacing();
         }
 
         /// <summary>봇을 모두 없앤다 (에디터 미리보기 끝)</summary>
@@ -247,7 +295,8 @@ namespace RealSteel.NanoBoss
         void OnDestroy()
         {
             if (runtimeMaterial) { if (Application.isPlaying) Destroy(runtimeMaterial); else DestroyImmediate(runtimeMaterial); }
-            if (atlas) { if (Application.isPlaying) Destroy(atlas); else DestroyImmediate(atlas); }
+            if (atlas != null && atlas.texture) { if (Application.isPlaying) Destroy(atlas.texture); else DestroyImmediate(atlas.texture); }
+            atlas = null;
         }
 
         float R() => (float)rng.NextDouble();
@@ -282,11 +331,11 @@ namespace RealSteel.NanoBoss
                     scale = 0.8f + R() * 0.35f,
                     glow = sparkle ? 1.2f + R() : 0f,
                     tint = sparkle ? sparkleTint : new Color32(shade, shade, (byte)Mathf.Min(255, shade + 12), 255),
-                    sprite = (byte)Mathf.Min(RSNanoBotSprites.BasicCount - 1, (int)(R() * RSNanoBotSprites.BasicCount)),
                     hash = R(), hash2 = R(), hash3 = R(),
                     space = spacing,
                 };
                 bots[i].pos = blobCenter + Vector3.Scale(v, Blob.radius);
+                atlas.Assign(i, ref bots[i]);
             }
             // 덩어리 자리표는 봇 수 · 비율이 같으면 그대로 쓰고 주인만 비운다 (편집기 되감기 재시뮬이 자주 부른다)
             if (blobTable.Length == n && Mathf.Abs(blobAspectBuilt - Blob.aspect) <= 0.01f) blobSet.Resize(n);
@@ -686,13 +735,13 @@ namespace RealSteel.NanoBoss
 
             mpb ??= new MaterialPropertyBlock();
             mpb.SetBuffer(Ids.Bots, buffer);
-            mpb.SetTexture(Ids.MainTex, atlas);
+            mpb.SetTexture(Ids.MainTex, atlas.texture);
             mpb.SetVector(Ids.PlaneRight, right);
             mpb.SetVector(Ids.PlaneUp, up);
             mpb.SetVector(Ids.PlaneNormal, n);
-            mpb.SetVector(Ids.AtlasInfo, new Vector4(RSNanoBotSprites.Count, 1, RSNanoBotSprites.Cell, RSNanoBotSprites.Pad));
-            mpb.SetVector(Ids.AtlasSize, new Vector4(atlas.width, atlas.height, RSNanoBotSprites.Tile, 0f));
-            mpb.SetFloat(Ids.TileWorld, botWorldSize);
+            mpb.SetVector(Ids.AtlasInfo, new Vector4(atlas.cols, atlas.rows, atlas.tile + RSNanoBotSprites.Pad * 2, RSNanoBotSprites.Pad));
+            mpb.SetVector(Ids.AtlasSize, new Vector4(atlas.texture.width, atlas.texture.height, atlas.tile, 0f));
+            mpb.SetFloat(Ids.TileWorld, botWorldSize / RSNanoBotSprites.Tile * atlas.tile);   // 칸이 8px 보다 크면 그만큼 크게 → 픽셀 밀도 그대로
             mpb.SetFloat(Ids.BossFlip, 0f);
             mpb.SetColor(Ids.BossFlash, flashColor);
             mpb.SetFloat(Ids.Dark, dark);
@@ -741,7 +790,6 @@ namespace RealSteel.NanoBoss
                     highlightDanger = highlightDanger ? 1 : 0,
                     plates = plates ? 1 : 0,
                     freeGlow = freeGlow,
-                    texel = botWorldSize / RSNanoBotSprites.Tile,
                     freeTint = Pack(freeTint),
                 }.Run();
             }
@@ -768,98 +816,6 @@ namespace RealSteel.NanoBoss
                 runtimeMaterial = new Material(sh) { name = "NanoBot (자동)", hideFlags = HideFlags.DontSave };
             }
             return runtimeMaterial;
-        }
-    }
-
-    /// <summary>
-    /// 시험용 봇 그림 — 8x8 칸 안. 0~4 = 낱개 봇 (날아갈 때 · 떨어진 봇), 5~8 = 속판 3~6px, 9~12 = 테두리 판 3~6px,
-    /// 13~16 = 방울 3~6px (유체).
-    /// 디자인이 나오면 이 아틀라스를 바꾼다
-    /// </summary>
-    public static class RSNanoBotSprites
-    {
-        public const int Tile = 8, Pad = 1, Cell = Tile + Pad * 2;
-        public const int BasicCount = 5;
-
-        // . 투명  d 어두움  m 중간  l 밝음  c 코어(하늘)
-        static readonly string[][] Art =
-        {
-            new[] { "........", "........", ".lm..ml.", ".mmmmmm.", ".dddddd.", "........", "........", "........" }, // 아령 (마이크로봇)
-            new[] { "........", "...l....", "..lmm...", ".lmcmd..", "..dmd...", "...d....", "........", "........" }, // 마름모
-            new[] { "........", "........", "..lllm..", "..lcmd..", "..lmmd..", "..mmdd..", "........", "........" }, // 네모 칩
-            new[] { "........", "........", "......l.", ".....lm.", "....lmd.", "...lmdd.", "........", "........" }, // 파편
-            new[] { "........", "........", "........", "...lm...", "...md...", "........", "........", "........" }, // 점
-            // 속판 (격자 안쪽) 3 · 4 · 5 · 6 px — 오른쪽 아래 이음매가 어두워 맞물린 판으로 읽힌다
-            Plate(new[] { "lmm", "mmd", "mdd" }),
-            Plate(new[] { "lmmm", "mmmd", "mmmd", "mddd" }),
-            Plate(new[] { "lmmmm", "mmmmd", "mmmmd", "mmmmd", "mdddd" }),
-            Plate(new[] { "llmmmm", "lmmmmd", "mmmmmd", "mmmmmd", "mmmmdd", "mddddd" }),
-            // 테두리 판 (실루엣 가장자리)
-            Plate(new[] { "lll", "lmd", "ldd" }),
-            Plate(new[] { "llll", "lmmd", "lmmd", "lddd" }),
-            Plate(new[] { "lllll", "lmmmd", "lmmmd", "lmmmd", "ldddd" }),
-            Plate(new[] { "llllll", "lmmmmd", "lmmmmd", "lmmmmd", "lmmmmd", "lddddd" }),
-            // 방울 (유체) — 모서리가 둥글어 겹치면 이어진 액체로 읽힌다
-            Plate(new[] { ".l.", "lmd", ".d." }),
-            Plate(new[] { ".lm.", "lmmd", "mmmd", ".dd." }),
-            Plate(new[] { ".lmm.", "lmmmd", "mmmmd", "mmmdd", ".ddd." }),
-            Plate(new[] { ".lmmm.", "lmmmmd", "mmmmmd", "mmmmmd", "mmmmdd", ".dddd." }),
-        };
-        public static int Count => Art.Length;
-
-        /// <summary>작은 판을 8x8 칸 가운데에 놓는다</summary>
-        static string[] Plate(string[] p)
-        {
-            int s = p.Length, off = (Tile - s) / 2;
-            var rows = new string[Tile];
-            for (int y = 0; y < Tile; y++)
-            {
-                var row = new char[Tile];
-                for (int x = 0; x < Tile; x++) row[x] = '.';
-                int py = y - off;
-                if (py >= 0 && py < s)
-                    for (int x = 0; x < s; x++) row[off + x] = p[py][x];
-                rows[y] = new string(row);
-            }
-            return rows;
-        }
-
-        public static Texture2D Build()
-        {
-            int W = Count * Cell, H = Cell;
-            var px = new Color32[W * H];
-            for (int s = 0; s < Count; s++)
-            for (int y = 0; y < Tile; y++)
-            for (int x = 0; x < Tile; x++)
-            {
-                char ch = Art[s][y][x];
-                if (ch == '.') continue;
-                int ix = s * Cell + Pad + x, iy = Pad + y;               // 위쪽 0
-                px[(H - 1 - iy) * W + ix] = Col(ch);
-            }
-            var t = new Texture2D(W, H, TextureFormat.RGBA32, false, false)
-            {
-                name = "NanoBot Sprites (시험)",
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp,
-                hideFlags = HideFlags.DontSave,
-            };
-            t.SetPixels32(px);
-            t.Apply(false, true);
-            return t;
-        }
-
-        static Color32 Col(char c)
-        {
-            switch (c)
-            {
-                case 'o': return new Color32(14, 15, 20, 255);
-                case 'd': return new Color32(46, 50, 62, 255);
-                case 'm': return new Color32(78, 86, 104, 255);
-                case 'l': return new Color32(132, 144, 168, 255);
-                case 'c': return new Color32(110, 230, 255, 255);
-                default: return new Color32(255, 0, 255, 255);
-            }
         }
     }
 }

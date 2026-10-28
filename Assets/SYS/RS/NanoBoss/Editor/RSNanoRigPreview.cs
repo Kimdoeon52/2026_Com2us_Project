@@ -333,6 +333,18 @@ namespace RealSteel.NanoBoss.EditorTools
                     for (int i = N; i >= 0; i--) pts.Add(right[i]);
                     break;
                 }
+                case LimbType.Sprite:
+                {
+                    var pic = l.picture;
+                    float ps = l.pixelSize;
+                    float x0 = pic && pic.Ready ? pic.minX * ps : -0.5f, x1 = pic && pic.Ready ? (pic.maxX + 1) * ps : 0.5f;
+                    float y0 = pic && pic.Ready ? pic.minY * ps : -0.5f, y1 = pic && pic.Ready ? (pic.maxY + 1) * ps : 0.5f;
+                    pts.Add(l.transform.TransformPoint(new Vector3(x0, y0, 0f)));
+                    pts.Add(l.transform.TransformPoint(new Vector3(x1, y0, 0f)));
+                    pts.Add(l.transform.TransformPoint(new Vector3(x1, y1, 0f)));
+                    pts.Add(l.transform.TransformPoint(new Vector3(x0, y1, 0f)));
+                    break;
+                }
                 case LimbType.Blob:
                     for (int i = 0; i < 40; i++)
                     {

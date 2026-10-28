@@ -68,6 +68,8 @@ namespace RealSteel.NanoBoss.EditorTools
                 if (GUILayout.Button("+ 웅덩이")) Select(AddLimb(rig.transform, "웅덩이", LimbType.Puddle, new Vector3(3f, -2.1f, 0f), sw));
                 if (GUILayout.Button("+ 발사기")) Select(AddEmitter(rig.transform, "발사기", Vector3.right));
             }
+            if (GUILayout.Button(new GUIContent("+ 그림 (스프라이트 시트 따라가기)", "픽셀아트 시트를 넣으면 어두운 픽셀을 봇이 따라간다")))
+                Select(AddSprite(rig.transform, "그림", new Vector3(1.5f, 0f, 0f), sw));
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("+ 부위 프리셋 ▾")) RSNanoLimbPresets.Menu(rig, Selection.activeTransform);
@@ -112,7 +114,7 @@ namespace RealSteel.NanoBoss.EditorTools
             GUI.Label(r, $" {have}/{want}", EditorStyles.miniLabel);
         }
 
-        static string TypeName(LimbType t) => t == LimbType.Chain ? "줄기" : t == LimbType.Blob ? "덩어리" : "웅덩이";
+        static string TypeName(LimbType t) => t == LimbType.Chain ? "줄기" : t == LimbType.Blob ? "덩어리" : t == LimbType.Sprite ? "그림" : "웅덩이";
 
         static void Select(Component c) { if (c) Selection.activeGameObject = c.gameObject; }
 
@@ -167,6 +169,16 @@ namespace RealSteel.NanoBoss.EditorTools
             if (!sw) sw = l.GetComponentInParent<RSNanoSwarm>();
             float floor = sw ? (sw.floorFromTransform ? sw.transform.position.y : sw.floorY) : l.transform.position.y - 2.1f;
             l.bots = l.EstimateBots(Spacing(sw), floor);
+        }
+
+        public static RSNanoLimb AddSprite(Transform parent, string name, Vector3 local, RSNanoSwarm sw, Texture2D sheet = null)
+        {
+            var l = AddLimb(parent, name, LimbType.Sprite, local, sw);
+            l.ApplyPreset(RSNanoLimb.Presets[2]);
+            l.pixelSize = Spacing(sw);
+            if (sheet) l.picture = RSNanoSpriteBaker.CreateOrFind(sheet);
+            l.bots = Mathf.Max(1, l.SlotTotal);
+            return l;
         }
 
         public static RSNanoEmitter AddEmitter(Transform parent, string name, Vector3 local)

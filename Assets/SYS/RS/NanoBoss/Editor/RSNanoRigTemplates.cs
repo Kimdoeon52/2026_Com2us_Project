@@ -9,6 +9,7 @@
 //                   웅덩이 봇이 솟으며 '착' 잠겨 가시로 굳는다 (파악!)
 //   주먹 돌진       덩어리가 거대한 주먹으로 모인다 → 뒤로 당기며 빛난다 → 팔이 늘어나며 앞으로 돌진
 //   대검 잔상 (3페) 후광 봇이 거대한 칼로 모인다 → 머리 위로 들고 멈춘다 → 한 번에 휘두른다. 끝 늦음으로 궤적이 잔상이 된다
+//   그림 따라가기   주먹 펀치 스프라이트 시트(8프레임, 예제로 그려 둠)의 검은 픽셀을 봇이 따라간다. 프레임은 계단 키
 using UnityEditor;
 using UnityEngine;
 
@@ -170,6 +171,83 @@ namespace RealSteel.NanoBoss.EditorTools
             Step(clip, R, wave, "fire", (0f, 0f), (1.08f, 1f), (1.5f, 0f));
             Curve(clip, R, rig, "shake", (0f, 0f), (1.05f, 0f), (1.07f, 0.4f), (1.35f, 0f), (2.4f, 0f));
             Finish(rig, clip, brain, false, false, true);
+        }
+
+        [MenuItem(Menu + "예제: 그림 따라가기 (주먹 펀치 시트)", false, 20)]
+        static void Picture(MenuCommand cmd)
+        {
+            if (Skip(cmd)) return;
+            var sheet = SamplePunchSheet();
+            var rig = CreateRig("리그_그림주먹", 2.1f, out var brain);
+            if (!rig) return;
+            var sw = rig.swarm;
+            RSNanoRigEditor.EnsurePlayerAnchor(rig);
+            var shape = RSNanoSpriteBaker.CreateOrFind(sheet);
+            if (shape.columns != 8 || shape.rows != 1) { shape.columns = 8; shape.rows = 1; RSNanoSpriteBaker.Bake(shape); AssetDatabase.SaveAssets(); }
+            var pic = RSNanoRigEditor.AddSprite(rig.transform, "주먹 그림", new Vector3(1.2f, 0f, 0f), sw);
+            pic.picture = shape;
+            pic.bots = Mathf.Max(1, shape.botCount);
+            pic.fps = 0f;                 // 프레임은 계단 키로 (픽셀 애니의 '노출' 처럼)
+            pic.tint = new Color(1f, 0.75f, 0.6f);
+
+            var clip = RSNanoKeys.NewClip(rig, "그림주먹", 2.0f);
+            var R = rig.transform;
+            Curve(clip, R, pic, "amount", (0f, 0f), (0.4f, 1f), (1.6f, 1f), (2.0f, 0f));
+            //            프레임:  0 대기  1 당김  2 웅크림  3 뻗기  4 뻗기  5 다 뻗음  6 버팀  7 돌아옴
+            Step(clip, R, pic, "frame", (0f, 0f), (0.5f, 1f), (0.62f, 2f), (0.8f, 3f), (0.87f, 4f), (0.94f, 5f), (1.2f, 6f), (1.4f, 7f), (1.6f, 0f));
+            Curve(clip, R, pic, "glow", (0f, 0f), (0.5f, 0f), (0.78f, 2.2f), (0.82f, 0f));
+            Step(clip, R, pic, "danger", (0f, 0f), (0.87f, 1f), (1.25f, 0f));
+            Curve(clip, R, rig, "shake", (0f, 0f), (0.92f, 0f), (0.94f, 0.3f), (1.2f, 0f), (2.0f, 0f));
+            Finish(rig, clip, brain, true, true, false);
+        }
+
+        /// <summary>예제 시트 — 48 × 28 칸 8개, 검은 픽셀 (몸통 원 + 팔 + 주먹). 없을 때만 그린다</summary>
+        static Texture2D SamplePunchSheet()
+        {
+            string dir = RealSteel.Common.EditorTools.RSPaths.Ensure(RealSteel.Common.EditorTools.RSPaths.Data + "/NanoBoss/그림");
+            string path = dir + "/예제_주먹펀치.png";
+            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+            if (existing) return existing;
+            const int CW = 48, CH = 28, N = 8;
+            int[] armEnd = { 16, 14, 12, 22, 30, 36, 36, 24 };
+            int[] bodyR = { 8, 8, 9, 8, 8, 8, 8, 8 };
+            var px = new Color32[CW * N * CH];
+            var ink = new Color32(0, 0, 0, 255);
+            for (int f = 0; f < N; f++)
+            {
+                int ox = f * CW;
+                void Put(int x, int y) { if (x >= 0 && x < CW && y >= 0 && y < CH) px[y * CW * N + ox + x] = ink; }
+                // 몸통
+                for (int y = 0; y < CH; y++)
+                for (int x = 0; x < CW; x++)
+                {
+                    float dx = (x - 10) / (bodyR[f] * (f == 2 ? 1.15f : 1f)), dy = (y - 13) / (float)bodyR[f];
+                    if (dx * dx + dy * dy <= 1f) Put(x, y);
+                }
+                // 팔
+                for (int x = 14; x < armEnd[f]; x++) for (int y = 10; y <= 16; y++) Put(x, y);
+                // 주먹 (마디 홈 두 줄)
+                for (int x = armEnd[f]; x < armEnd[f] + 10; x++)
+                for (int y = 8; y <= 18; y++)
+                {
+                    bool notch = x == armEnd[f] + 9 && (y == 11 || y == 15);
+                    if (!notch) Put(x, y);
+                }
+            }
+            var t = new Texture2D(CW * N, CH, TextureFormat.RGBA32, false);
+            t.SetPixels32(px);
+            t.Apply();
+            System.IO.File.WriteAllBytes(path, t.EncodeToPNG());
+            Object.DestroyImmediate(t);
+            AssetDatabase.ImportAsset(path);
+            var imp = AssetImporter.GetAtPath(path) as TextureImporter;
+            if (imp)
+            {
+                imp.filterMode = FilterMode.Point;
+                imp.textureCompression = TextureImporterCompression.Uncompressed;
+                imp.SaveAndReimport();
+            }
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
         }
 
         // ─────────────────────────────────────────────────────────────

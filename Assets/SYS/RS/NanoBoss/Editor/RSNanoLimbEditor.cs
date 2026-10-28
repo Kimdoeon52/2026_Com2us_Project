@@ -60,6 +60,9 @@ namespace RealSteel.NanoBoss.EditorTools
                     EditorGUILayout.PropertyField(P("size"), new GUIContent("반지름 (m)"));
                     EditorGUILayout.PropertyField(P("wobble"), new GUIContent("출렁임"));
                     break;
+                case LimbType.Sprite:
+                    if (targets.Length == 1) SpriteSection(l, sw);
+                    break;
                 default:
                     EditorGUILayout.PropertyField(P("extent"), new GUIContent("너비 · 안쪽 깊이 (m)"));
                     EditorGUILayout.PropertyField(P("layer"), new GUIContent("층 두께 (m)"));
@@ -74,6 +77,9 @@ namespace RealSteel.NanoBoss.EditorTools
 
             // ── 봇 ──
             Section("봇");
+            if (l.type == LimbType.Sprite)
+                EditorGUILayout.LabelField($"   봇 {l.SlotTotal} — 그림에서 가장 많이 칠한 프레임의 픽셀 수 (픽셀 하나 = 봇 하나)", Mini);
+            else
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.PropertyField(P("bots"), new GUIContent("자리 수 (봇)", "양이 1 일 때 쓰는 봇 수 = 격자 자리 수"));
@@ -84,7 +90,7 @@ namespace RealSteel.NanoBoss.EditorTools
                     serializedObject.Update();
                 }
             }
-            if (targets.Length == 1)
+            if (targets.Length == 1 && l.type != LimbType.Sprite)
             {
                 float floor = RSNanoRigPreview.FloorY(rig);
                 int est = l.EstimateBots(RSNanoRigEditor.Spacing(sw), floor);
@@ -139,6 +145,78 @@ namespace RealSteel.NanoBoss.EditorTools
                     if (GUILayout.Button("동작 창")) RSNanoActionWindow.Open(rig);
                 }
             }
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 그림 (스프라이트 시트)
+        // ─────────────────────────────────────────────────────────────
+        int previewFrame;
+
+        void SpriteSection(RSNanoLimb l, RSNanoSwarm sw)
+        {
+            EditorGUILayout.HelpBox("픽셀아트 스프라이트 시트를 넣으면 프레임마다 어두운 픽셀(검정)을 봇 자리로 굽는다. 흰색 · 투명은 무시.\n" +
+                                    "픽셀 하나 = 봇 하나. 프레임이 바뀌면 남은 픽셀의 봇은 그대로, 새 픽셀은 가까운 봇이 옮겨 와 사이를 메운다.", MessageType.None);
+            var cur = l.picture ? l.picture.sheet : null;
+            var tex = (Texture2D)EditorGUILayout.ObjectField(new GUIContent("스프라이트 시트", "PNG. 가로로 이어 붙인 시트면 칸 수가 자동으로 잡힌다"), cur, typeof(Texture2D), false);
+            if (tex && tex != cur)
+            {
+                var shape = RSNanoSpriteBaker.CreateOrFind(tex);
+                Undo.RecordObject(l, "그림");
+                l.picture = shape;
+                if (sw) l.pixelSize = sw.spacing;
+                RSNanoRigPreview.MarkDirty();
+                serializedObject.Update();
+            }
+            EditorGUILayout.PropertyField(P("picture"), new GUIContent("그림 모양 (구운 것)"));
+            var pic = l.picture;
+            if (!pic) return;
+
+            var so = new SerializedObject(pic);
+            so.Update();
+            EditorGUI.BeginChangeCheck();
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("columns"), new GUIContent("가로 칸"));
+                EditorGUILayout.PropertyField(so.FindProperty("rows"), new GUIContent("세로 칸"));
+            }
+            EditorGUILayout.PropertyField(so.FindProperty("frameLimit"), new GUIContent("프레임 수 (0 = 전부)"));
+            EditorGUILayout.PropertyField(so.FindProperty("darkness"), new GUIContent("어두운 기준", "이보다 어두운 픽셀을 따라간다"));
+            EditorGUILayout.PropertyField(so.FindProperty("invert"), new GUIContent("반대로 (밝은 픽셀)"));
+            EditorGUILayout.PropertyField(so.FindProperty("alphaCut"), new GUIContent("투명 기준"));
+            EditorGUILayout.PropertyField(so.FindProperty("pivot"), new GUIContent("기준점"));
+            if (EditorGUI.EndChangeCheck()) so.ApplyModifiedProperties();
+            if (RSNanoSpriteBaker.NeedsBake(pic)) { RSNanoSpriteBaker.Bake(pic); RSNanoRigPreview.MarkDirty(); }
+
+            if (!pic.Ready)
+            {
+                EditorGUILayout.HelpBox("칠한 픽셀을 못 찾았다 — 칸 수 · 어두운 기준 · '반대로' 를 확인", MessageType.Warning);
+                return;
+            }
+            float w = (pic.maxX - pic.minX + 1) * l.pixelSize, h = (pic.maxY - pic.minY + 1) * l.pixelSize;
+            EditorGUILayout.LabelField($"   프레임 {pic.frameCount}개 · 봇 {pic.botCount}개 · 크기 {w:0.0} × {h:0.0} m", Mini);
+
+            previewFrame = Mathf.Clamp(EditorGUILayout.IntSlider("미리보기 프레임", previewFrame, 0, pic.frameCount - 1), 0, pic.frameCount - 1);
+            var prev = RSNanoSpriteBaker.Preview(pic, previewFrame);
+            if (prev)
+            {
+                float k = Mathf.Min(260f / prev.width, 120f / prev.height);
+                Rect r = GUILayoutUtility.GetRect(prev.width * k, prev.height * k, GUILayout.ExpandWidth(false));
+                r.x += 14;
+                GUI.DrawTexture(r, prev, ScaleMode.ScaleToFit);
+                EditorGUILayout.LabelField($"   이 프레임 칠한 픽셀 {pic.filled[previewFrame]} — 봇이 남으면 같은 픽셀에 겹쳐 선다", Mini);
+            }
+
+            EditorGUILayout.Space(2);
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(P("pixelSize"), new GUIContent("픽셀 크기 (m)", "그림 픽셀 하나 = 봇 하나의 간격"));
+                if (sw && GUILayout.Button(new GUIContent("격자 간격에", "군집 격자 간격과 같게 → 다른 부위와 판 크기가 같다"), GUILayout.Width(70)))
+                { Undo.RecordObject(l, "픽셀 크기"); l.pixelSize = sw.spacing; serializedObject.Update(); }
+            }
+            EditorGUILayout.PropertyField(P("fps"), new GUIContent("초당 프레임", "0 보다 크면 패턴 시작부터 저절로 넘긴다. 0 이면 '프레임' 키로 넘긴다"));
+            using (new EditorGUI.DisabledScope(l.fps > 0f))
+                EditorGUILayout.PropertyField(P("frame"), new GUIContent("프레임", "초당 프레임이 0 일 때 쓴다 (키를 잡는다 — 계단 키)"));
+            EditorGUILayout.PropertyField(P("loop"), new GUIContent("반복"));
         }
 
         static void Section(string title)
@@ -288,6 +366,7 @@ namespace RealSteel.NanoBoss.EditorTools
             {
                 case LimbType.Chain: ChainHandles(l); break;
                 case LimbType.Blob: BlobHandles(l); break;
+                case LimbType.Sprite: break;
                 default: PuddleHandles(l, floor); break;
             }
             SceneButtons(l);

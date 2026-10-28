@@ -8,6 +8,7 @@
 //            '바닥까지 채움' = 파도처럼 관절선 아래를 바닥까지 채움
 //   덩어리   타원 (크기 = size × 트랜스폼 스케일). 주먹 · 몸통 · 혹
 //   웅덩이   바닥에 깔리는 층 (너비 × 안쪽 깊이). 물결 + '요동 지점' 에서 솟아오름
+//   그림     픽셀아트 스프라이트 시트를 따라간다 (어두운 픽셀 = 봇 자리, 흰색 · 투명은 무시). 프레임이 바뀌면 봇이 흘러간다
 //
 // 양(amount) = 자리를 앞에서부터(뿌리 · 가운데부터) 채운 비율. 올리면 가까운 봇부터 흘러들고, 내리면 끝부터 풀려난다.
 // 결속(bind) 1 = 촘촘한 기계 격자 / 0 = 유체. 0 → 1 로 올리는 순간 뿌리부터 '착착' 잠긴다.
@@ -30,6 +31,7 @@ namespace RealSteel.NanoBoss
         [InspectorName("줄기 (관절 체인)")] Chain,
         [InspectorName("덩어리 (타원)")] Blob,
         [InspectorName("웅덩이 (바닥 층)")] Puddle,
+        [InspectorName("그림 (스프라이트 시트 따라가기)")] Sprite,
     }
 
     public enum GatherOrder
@@ -132,6 +134,18 @@ namespace RealSteel.NanoBoss
         [Tooltip("요동 세기 (0~1)")]
         [Range(0f, 1f)] public float bumpShake = 0.5f;
 
+        [Header("그림")]
+        [Tooltip("구운 그림 모양 (부위 인스펙터에 스프라이트 시트를 넣으면 만들어진다)")]
+        public RSNanoSpriteShape picture;
+        [Tooltip("지금 프레임 (키를 잡는다). '초당 프레임' 이 0 일 때 쓴다")]
+        [Min(0f)] public float frame;
+        [Tooltip("초당 프레임. 0 보다 크면 패턴 시작부터 저절로 넘긴다 (픽셀 애니는 보통 8~12)")]
+        [Min(0f)] public float fps = 12f;
+        [Tooltip("끝 프레임 다음에 처음으로")]
+        public bool loop = true;
+        [Tooltip("그림 픽셀 하나의 크기 (m). 보통 군집 격자 간격과 같게")]
+        [Min(0.01f)] public float pixelSize = 0.1f;
+
         // ── 예전 값 (10-27 판). 불러올 때 프레임 값으로 한 번 바꾼다 ─────────
         [SerializeField, HideInInspector] int feelVersion;
         [HideInInspector] public float stiffness = -1f, damping = -1f, maxSpeed = -1f, lag = -1f;
@@ -147,9 +161,33 @@ namespace RealSteel.NanoBoss
         float[] jt = Array.Empty<float>();
 
         public float CurScale { get; private set; } = 1f;
-        public int Desired => Mathf.RoundToInt(bots * Mathf.Clamp01(amount) * (isActiveAndEnabled ? 1f : 0f));
+        public int Desired => Mathf.RoundToInt(SlotTotal * Mathf.Clamp01(amount) * (isActiveAndEnabled ? 1f : 0f));
+        /// <summary>자리 수 — 그림은 구운 봇 수, 나머지는 '자리 수 (봇)'</summary>
+        public int SlotTotal => type == LimbType.Sprite ? (picture && picture.Ready ? picture.botCount : 0) : bots;
         public IReadOnlyList<Transform> Joints => joints;
-        public int LayoutKey => (int)type * 7919 + bots * 31 + (fillToFloor ? 1 : 0) + joints.Count * 131;
+        public int LayoutKey => (int)type * 7919 + SlotTotal * 31 + (fillToFloor ? 1 : 0) + joints.Count * 131 +
+                                (type == LimbType.Sprite && picture ? picture.GetInstanceID() * 17 + (picture.bakedKey != null ? picture.bakedKey.GetHashCode() : 0) : 0);
+
+        /// <summary>그림: 시각 clock 의 프레임 번호</summary>
+        public int SpriteFrame(float clock)
+        {
+            if (!picture || !picture.Ready) return 0;
+            int n = picture.frameCount;
+            int f = fps > 0f ? Mathf.FloorToInt(clock * fps + 1e-4f) : Mathf.FloorToInt(frame + 1e-4f);
+            return loop ? ((f % n) + n) % n : Mathf.Clamp(f, 0, n - 1);
+        }
+
+        /// <summary>그림: 프레임 f 의 자리 (부위 좌표, m) 를 dst[offset..] 의 xyz 에 쓴다 (w = 채움 순서는 그대로)</summary>
+        public void WriteSpriteSlots(float4[] dst, int offset, int f)
+        {
+            if (!picture || !picture.Ready) return;
+            int n = picture.botCount;
+            for (int k = 0; k < n; k++)
+            {
+                Vector3 p = picture.Local(f, k, pixelSize);
+                dst[offset + k] = new float4(p.x, p.y, p.z, dst[offset + k].w);
+            }
+        }
 
         void Reset() { feelVersion = 2; }
         void Awake() { Migrate(); }
@@ -311,6 +349,18 @@ namespace RealSteel.NanoBoss
                     Vector3 ls = transform.lossyScale;
                     return NanoLattice.Ellipse(n, new Vector2(size.x * ls.x, size.y * ls.y), out space);
                 }
+                case LimbType.Sprite:
+                {
+                    int m = Mathf.Max(1, SlotTotal);
+                    var res = new Vector4[m];
+                    for (int k = 0; k < m; k++)
+                    {
+                        Vector3 p = picture && picture.Ready ? picture.Local(0, k, pixelSize) : Vector3.zero;
+                        res[k] = new Vector4(p.x, p.y, p.z, k / (float)m);
+                    }
+                    space = pixelSize * CurScale;
+                    return res;
+                }
                 default:
                     return NanoLattice.Puddle(n, extent, out space);
             }
@@ -319,6 +369,7 @@ namespace RealSteel.NanoBoss
         /// <summary>격자 간격 spacing 으로 이 부위를 빈틈 없이 채우는 봇 수 (지금 모양 기준)</summary>
         public int EstimateBots(float spacing, float floorY)
         {
+            if (type == LimbType.Sprite) return Mathf.Max(1, SlotTotal);   // 그림: 칠한 픽셀 수
             CachePose();
             float cell = 0.866f * spacing * spacing;
             float area;

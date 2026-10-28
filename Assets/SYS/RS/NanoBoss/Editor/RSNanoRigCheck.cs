@@ -141,6 +141,8 @@ namespace RealSteel.NanoBoss.EditorTools
                         list.Add(I(0, $"'{l.name}' 두께가 예전 곡선 — 관절별 두께로 바꾸면 씬 뷰에서 끌어 고치고 키도 잡힌다", l, "바꾸기", () => RSNanoLimbEditor.ConvertThickness(limb)));
                     }
                 }
+                if (l.type == LimbType.Sprite && (!l.picture || !l.picture.Ready))
+                    list.Add(I(1, $"'{l.name}' 그림에 스프라이트 시트가 없거나 칠한 픽셀을 못 찾았다 — 부위 인스펙터에서 시트를 넣는다", l));
                 if (l.feedFrom && l.feedFrom.feedFrom == l)
                     list.Add(I(1, $"'{l.name}' 와 '{l.feedFrom.name}' 가 서로 봇을 가져온다 — 한쪽만 둔다", l));
             }

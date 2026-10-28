@@ -109,7 +109,6 @@ namespace RealSteel.NanoBoss
             b.segV = new Vector2(j - 1, 0f);
             b.tint = EyeRed;
             b.glow = 7f;
-            b.sprite = 4;
             b.rim = 0f;
             sw.Bind(i, RSNanoSwarm.G_Knight);
             eyeIds.Add(i);

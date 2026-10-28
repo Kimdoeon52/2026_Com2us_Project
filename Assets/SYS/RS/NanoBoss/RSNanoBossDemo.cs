@@ -246,16 +246,18 @@ namespace RealSteel.NanoBoss
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("격자 간격", GUILayout.Width(60));
-            swarm.spacing = GUILayout.HorizontalSlider(swarm.spacing, 0.06f, 0.2f);
+            if (swarm.spacingFromPicture) GUILayout.Label("봇 그림 크기에 맞춤", GUILayout.ExpandWidth(true));
+            else swarm.spacing = GUILayout.HorizontalSlider(swarm.spacing, 0.06f, 0.2f);
             GUILayout.Label((swarm.spacing * 100f).ToString("0.0") + "cm", GUILayout.Width(44));
             GUILayout.EndHorizontal();
+            swarm.spacingFromPicture = GUILayout.Toggle(swarm.spacingFromPicture, " 간격을 그림에 맞춤");
 
             GUILayout.BeginHorizontal();
             GUILayout.Label("픽셀 크기", GUILayout.Width(60));
             swarm.botWorldSize = GUILayout.HorizontalSlider(swarm.botWorldSize, 0.125f, 0.5f);
             GUILayout.Label((RSNanoBotSprites.Tile / swarm.botWorldSize).ToString("0") + "px/m", GUILayout.Width(52));
             GUILayout.EndHorizontal();
-            GUILayout.Label("게임 기준 32px/m. 간격 ÷ 픽셀로 판 크기(3~6px)가 정해진다", Rich(10));
+            GUILayout.Label("게임 기준 32px/m. 그림 크기 × 픽셀 크기 = 격자 간격", Rich(10));
 
             GUILayout.BeginHorizontal();
             swarm.plates = GUILayout.Toggle(swarm.plates, " 판으로 그리기");

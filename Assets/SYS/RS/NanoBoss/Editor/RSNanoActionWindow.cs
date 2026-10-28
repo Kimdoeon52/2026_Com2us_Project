@@ -363,6 +363,19 @@ namespace RealSteel.NanoBoss.EditorTools
                     {
                         if (Btn("나타나기", "양 0 → 1 (봇이 흘러들어 와 앞에서부터 채운다)")) Do(clip, "나타나기", () => { float L = Len(l); Key(clip, l, "amount", t, 0f); Key(clip, l, "amount", t + L, 1f); });
                         if (Btn("사라지기", "양 → 0 (끝 자리부터 풀려 돌아간다)")) Do(clip, "사라지기", () => { float L = Len(l); Key(clip, l, "amount", t, Val(clip, l, "amount", t, l.amount)); Key(clip, l, "amount", t + L, 0f); });
+                        if (l.type == LimbType.Sprite && l.picture && l.picture.Ready)
+                        {
+                            if (Btn("다음 그림 프레임", "지금 프레임에 그림 프레임 +1 (계단 키). 자동 넘김(초당 프레임)은 끈다"))
+                                Do(clip, "그림 프레임", () =>
+                                {
+                                    if (l.fps > 0f) { Undo.RecordObject(l, "초당 프레임"); l.fps = 0f; }
+                                    float cur = Mathf.Floor(Val(clip, l, "frame", t, l.frame));
+                                    var c = RSNanoKeys.Curve(clip, root, l, "frame");
+                                    float next = c == null || c.length == 0 ? cur : (cur + 1f) % l.picture.frameCount;
+                                    if (c == null && t > 1f / 60f) RSNanoKeys.Key(clip, root, l, "frame", 0f, 0f, true);
+                                    RSNanoKeys.Key(clip, root, l, "frame", t, next, true);
+                                });
+                        }
                         if (l.type == LimbType.Chain)
                         {
                             if (Btn("자라기", "자라기 0 → 1 (뿌리부터 뻗는다)")) Do(clip, "자라기", () => { float L = Len(l); Key(clip, l, "grow", t, 0f); Key(clip, l, "grow", t + L, 1f); });

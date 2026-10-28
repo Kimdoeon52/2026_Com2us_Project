@@ -79,6 +79,7 @@ namespace RealSteel.NanoBoss
         List<int>[] fresh = Array.Empty<List<int>>();
         NanoSlotSet[] sets = Array.Empty<NanoSlotSet>();
         Vector4[][] slotsOf = Array.Empty<Vector4[]>();
+        int[] spriteFrame = Array.Empty<int>();
         int[] slotOffset = Array.Empty<int>(), layoutKey = Array.Empty<int>(), histHead = Array.Empty<int>(), histCount = Array.Empty<int>(), desired = Array.Empty<int>();
         float[] layoutSpace = Array.Empty<float>(), layoutScale = Array.Empty<float>(), lockStart = Array.Empty<float>(), prevBind = Array.Empty<float>();
         LimbSim[] limbSim = new LimbSim[1];
@@ -228,6 +229,17 @@ namespace RealSteel.NanoBoss
             }
             if (relayout) ConcatSlots();
 
+            // 그림: 프레임이 바뀌면 그 프레임의 픽셀 자리로 바꿔 쓴다 → 봇이 흘러가 다음 그림이 된다
+            for (int li = 0; li < limbs.Count; li++)
+            {
+                var l = limbs[li];
+                if (l.type != LimbType.Sprite) continue;
+                int f = l.SpriteFrame(clock);
+                if (f == spriteFrame[li]) continue;
+                l.WriteSpriteSlots(slotTable, slotOffset[li], f);
+                spriteFrame[li] = f;
+            }
+
             RecordSpines();
             Allocate();
             MaintainSlots();
@@ -266,6 +278,7 @@ namespace RealSteel.NanoBoss
             lockStart = new float[L];
             prevBind = new float[L];
             desired = new int[L];
+            spriteFrame = new int[L];
             for (int li = 0; li < L; li++)
             {
                 limbBots[li] = new List<int>();
@@ -306,6 +319,7 @@ namespace RealSteel.NanoBoss
             {
                 var s = slotsOf[li];
                 for (int k = 0; k < s.Length; k++) slotTable[slotOffset[li] + k] = s[k];
+                if (li < spriteFrame.Length) spriteFrame[li] = -1;   // 그림은 다음 진행에서 지금 프레임으로 다시 쓴다
             }
         }
 
@@ -340,7 +354,7 @@ namespace RealSteel.NanoBoss
                     histBase = li * H,
                     histHead = Mathf.Max(0, histHead[li]),
                     histCount = histCount[li],
-                    local = l.transform.localToWorldMatrix * Matrix4x4.Scale(l.size),
+                    local = l.type == LimbType.Sprite ? l.transform.localToWorldMatrix : l.transform.localToWorldMatrix * Matrix4x4.Scale(l.size),
                     origin = l.transform.position,
                     grow = l.grow,
                     depth = l.depth,

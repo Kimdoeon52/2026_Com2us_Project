@@ -23,6 +23,8 @@ namespace RealSteel.NanoBoss.EditorTools
             m.AddSeparator("");
             m.AddItem(new GUIContent("파도 — 바닥까지 채운 물마루, 물렁"), false, () => Done(Wave(parent, rig)));
             m.AddItem(new GUIContent("웅덩이 — 바닥 층, 유체"), false, () => Done(Puddle(parent, rig)));
+            m.AddSeparator("");
+            m.AddItem(new GUIContent("그림 — 스프라이트 시트를 따라 움직임"), false, () => Done(RSNanoRigEditor.AddSprite(parent, "그림", new Vector3(1.5f, 0f, 0f), Sw(rig))));
             m.ShowAsContext();
         }
 

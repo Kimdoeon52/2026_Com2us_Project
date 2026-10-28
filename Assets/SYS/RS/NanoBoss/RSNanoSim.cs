@@ -10,6 +10,8 @@
 //
 // 스프링: 감쇠 진동의 정확해를 쓴다 → 서브스텝 없이도 안정, 같은 입력이면 같은 결과 (편집기 되감기 재시뮬)
 //
+// 깊이(z): 기계(결속 1)일수록 화면 안쪽 두께를 얇게 눌러 판이 한 장의 면처럼 맞물린다 (두꺼우면 원근 때문에
+//          판이 위아래로 어긋나 '물에 뜬 시리얼' 처럼 보인다). 유체일수록 원래 두께.
 // 결속(bind): 봇은 늘 자기 격자 자리를 갖는다. 기계(1)면 자리에 딱 맞물린 판, 유체(0)면 자리 위에 '흐름'(공간적으로
 // 이어진 물결 변위)이 얹히고 끈적임으로 이웃과 함께 움직이며 둥근 방울로 그려진다 → 흩어진 먼지가 아니라 흐르는 덩어리.
 using System.Runtime.InteropServices;
@@ -38,7 +40,7 @@ namespace RealSteel.NanoBoss
     /// <summary>리그 부위 하나 (잡으로 넘기는 값)</summary>
     public struct LimbSim
     {
-        public int type;                      // 0 줄기 · 1 덩어리 · 2 웅덩이
+        public int type;                      // 0 줄기 · 1 덩어리 · 2 웅덩이 · 3 그림
         public int slotStart, slotCount;      // 격자 자리표 안 위치
         public int histBase, histHead, histCount;   // 관절선 기록 (부위 번호 × 기록 수)
         public float4x4 local;                // 덩어리: 단위 타원 → 월드 (크기 곱함)
@@ -225,6 +227,9 @@ namespace RealSteel.NanoBoss
         }
 
         /// <summary>공간적으로 이어진 흐름 변위 (이웃끼리 비슷하게 움직인다)</summary>
+        /// <summary>깊이 배율 — 기계일수록 얇게</summary>
+        static float ZK(float bind) => math.lerp(1f, 0.06f, math.saturate(bind));
+
         static float3 Flow(float3 p, float t)
         {
             float x = math.sin(p.y * 1.6f + t * 1.7f) + 0.6f * math.sin(p.x * 2.9f - t * 2.3f + p.y * 1.1f);
@@ -411,8 +416,8 @@ namespace RealSteel.NanoBoss
             switch (g)
             {
                 case 0: return BlobTarget(b, ref f);
-                case 1: return TubeTarget(b, 0, tubeA);
-                case 2: return TubeTarget(b, 1, tubeB);
+                case 1: return TubeTarget(b, 0, tubeA, ZK(f.bind));
+                case 2: return TubeTarget(b, 1, tubeB, ZK(f.bind));
                 case 3: return RingTarget(b);
                 case 4: return KnightTarget(b, ref f);
                 case 5: return HaloTarget(b);
@@ -439,7 +444,7 @@ namespace RealSteel.NanoBoss
 
             float ang = math.atan2(v.y, v.x), ws = time * blob.wobbleSpeed;
             float w = 1f + blob.wobble * (math.sin(3f * ang + ws) * 0.5f + math.sin(5f * ang - ws * 1.4f) * 0.3f + math.sin(2f * ang + ws * 0.6f) * 0.4f);
-            float3 p = new float3(v.x * blob.radius.x * w, v.y * blob.radius.y * w, v.z * blob.radius.z);
+            float3 p = new float3(v.x * blob.radius.x * w, v.y * blob.radius.y * w, v.z * blob.radius.z * (f.lattice ? ZK(f.bind) : 1f));
             if (blob.bulge > 0f)
             {
                 float dm = math.length(v.xy);
@@ -459,7 +464,7 @@ namespace RealSteel.NanoBoss
             return pos;
         }
 
-        float3 TubeTarget(NanoBot* b, int which, TubeSim t)
+        float3 TubeTarget(NanoBot* b, int which, TubeSim t, float zk)
         {
             float3* nodes = tubeNodes + which * K;
             float fu = math.saturate(b->u) * (K - 1);
@@ -472,7 +477,7 @@ namespace RealSteel.NanoBoss
             n = math.lengthsq(n) < 1e-6f ? new float3(1f, 0f, 0f) : math.normalize(n);
             float3 bz = math.cross(tan, n);
             float r = math.lerp(t.r0, t.r1, b->u);
-            return p + n * (b->v.x * r) + bz * (b->v.y * r);
+            return p + n * (b->v.x * r) + bz * (b->v.y * r * zk);
         }
 
         float3 RingTarget(NanoBot* b)
@@ -505,7 +510,7 @@ namespace RealSteel.NanoBoss
             float2 rr = knightRad[s];
             float r = math.lerp(rr.x, rr.y, b->segU);
             float2 q = p + n * (b->segV.x * r);
-            return knight.origin + new float3(q.x * knight.facing, q.y, b->segV.y * r * 0.45f);
+            return knight.origin + new float3(q.x * knight.facing, q.y, b->segV.y * r * 0.45f * ZK(f.bind));
         }
 
         float3 HaloTarget(NanoBot* b)
@@ -531,13 +536,14 @@ namespace RealSteel.NanoBoss
             float lw = has ? 1f : 0f;   // 자리가 없으면 (아직 배정 전) 부위 안 무작위 자리
             switch (L->type)
             {
-                case 0: return ChainTarget(b, L, slot, lw);
-                case 1: return LimbBlobTarget(b, L, slot, lw);
+                case 0: return ChainTarget(b, L, slot, lw, ZK(f.bind));
+                case 1: return LimbBlobTarget(b, L, slot, lw, ZK(f.bind));
+                case 3: return SpriteTarget(b, L, slot, has);
                 default: return PuddleTarget(b, L, slot, lw);
             }
         }
 
-        float3 ChainTarget(NanoBot* b, LimbSim* L, float4 slot, float bind)
+        float3 ChainTarget(NanoBot* b, LimbSim* L, float4 slot, float bind, float zk)
         {
             bool floor = L->fillToFloor != 0;
             float fu = b->hash, fa = floor ? b->hash2 : b->hash2 * 2f - 1f, fz = b->hash3 * 2f - 1f;
@@ -549,19 +555,34 @@ namespace RealSteel.NanoBoss
                 // 관절선(물마루)에서 바닥까지 기둥처럼 채운다
                 float top = p.y + r;
                 float y = math.lerp(floorY + 0.1f, top, math.saturate(a));
-                return new float3(p.x, y, p.z + z * L->depth * 1.5f);
+                return new float3(p.x, y, p.z + z * L->depth * 1.5f * zk);
             }
             float3 nrm = math.cross(tan, new float3(0f, 0f, 1f));
             nrm = math.lengthsq(nrm) < 1e-6f ? new float3(1f, 0f, 0f) : math.normalize(nrm);
-            return p + nrm * (a * r) + new float3(0f, 0f, z * r * L->depth);
+            return p + nrm * (a * r) + new float3(0f, 0f, z * r * L->depth * zk);
         }
 
-        float3 LimbBlobTarget(NanoBot* b, LimbSim* L, float4 slot, float bind)
+        float3 LimbBlobTarget(NanoBot* b, LimbSim* L, float4 slot, float bind, float zk)
         {
             float3 v = math.lerp((float3)b->blobV, slot.xyz, bind);
+            v.z *= zk;
             float ang = math.atan2(v.y, v.x);
             float w = 1f + L->wobble * (math.sin(3f * ang + time * 2f + b->hash * 2f * (1f - bind)) * 0.6f + math.sin(5f * ang - time * 2.7f) * 0.4f);
             float3 p = math.transform(L->local, v * w);
+            if (L->lag > 0f)
+            {
+                float lagT = L->lag * (0.4f + 0.6f * b->hash2);
+                SampleSpine(L, 0f, clock - lagT, out float3 then, out _, out _);
+                SampleSpine(L, 0f, clock, out float3 now, out _, out _);
+                p += then - now;
+            }
+            return p;
+        }
+
+        /// <summary>그림 (스프라이트 시트) — 자리표가 지금 프레임의 칠한 픽셀 위치 (부위 좌표, m)</summary>
+        float3 SpriteTarget(NanoBot* b, LimbSim* L, float4 slot, bool has)
+        {
+            float3 p = math.transform(L->local, has ? slot.xyz : float3.zero);
             if (L->lag > 0f)
             {
                 float lagT = L->lag * (0.4f + 0.6f * b->hash2);
@@ -707,15 +728,13 @@ namespace RealSteel.NanoBoss
     [BurstCompile(CompileSynchronously = true)]
     public unsafe struct NanoUploadJob : IJob
     {
-        public const int PlateInner = 5, PlateEdge = 9, Drop = 13;   // 판 · 테두리 판 · 방울 그림 (각각 3 · 4 · 5 · 6 px)
-
         [NativeDisableUnsafePtrRestriction] public NanoBot* bots;
         [NativeDisableUnsafePtrRestriction] public NanoGpuBot* gpu;
         [NativeDisableUnsafePtrRestriction] public GuideFeel* feel;
         [NativeDisableUnsafePtrRestriction] public LimbSim* limbs;
         [NativeDisableUnsafePtrRestriction] public float3* bounds;
         public int count, limbCount, highlightDanger, plates;
-        public float freeGlow, texel;
+        public float freeGlow;
         public uint freeTint;
 
         static uint Mul(uint c, uint t)
@@ -724,6 +743,14 @@ namespace RealSteel.NanoBoss
             uint g = (((c >> 8) & 255u) * ((t >> 8) & 255u)) / 255u;
             uint b = (((c >> 16) & 255u) * ((t >> 16) & 255u)) / 255u;
             return r | (g << 8) | (b << 16) | (255u << 24);
+        }
+
+        static uint Mix(uint a, uint b)
+        {
+            uint r = (((a & 255u) + (b & 255u)) >> 1);
+            uint g = ((((a >> 8) & 255u) + ((b >> 8) & 255u)) >> 1);
+            uint bl = ((((a >> 16) & 255u) + ((b >> 16) & 255u)) >> 1);
+            return r | (g << 8) | (bl << 16) | (255u << 24);
         }
 
         public void Execute()
@@ -735,7 +762,7 @@ namespace RealSteel.NanoBoss
                 float scale = b->mode == BotMode.Dead ? 0f : b->scale;
                 float glow = b->glow;
                 uint c = (uint)b->tint.r | ((uint)b->tint.g << 8) | ((uint)b->tint.b << 16) | ((uint)b->tint.a << 24);
-                uint tile = b->sprite;
+                uint tile = b->tileLoose;
                 if (b->mode == BotMode.Bound)
                 {
                     int g = b->guide;
@@ -754,14 +781,17 @@ namespace RealSteel.NanoBoss
                         glow += feel[g].glow;
                         if (g != 0 && b->seg != -1) c = Mul(c, feel[g].tint);
                     }
-                    if (plates != 0 && b->space > 0f && texel > 0f)
+                    if (plates != 0 && b->space > 0f)
                     {
-                        // 격자 봇: 간격에 맞는 크기 (3~6px). 기계 = 판 (가장자리는 테두리 판), 유체 = 둥근 방울
-                        int px = (int)math.round(b->space / texel);
+                        // 격자 봇: 기계 = 몸 판 (가장자리는 테두리 판), 유체 = 방울. 그림은 봇 종류 (RSNanoBotKinds)
                         bool machine = b->machine > 0.5f;
-                        px = math.clamp(machine ? px : px + 1, 3, 6);   // 방울은 모서리가 비어 한 칸 크게 → 겹쳐 이어진다
-                        int baseTile = machine ? (b->edge > 0.5f ? PlateEdge : PlateInner) : Drop;
-                        tile = (uint)(baseTile + px - 3);
+                        tile = machine ? (b->edge > 0.5f ? b->tileEdge : b->tileBody) : b->tileDrop;
+                        if (machine && b->glow > 0.5f)
+                        {
+                            // 반짝이 봇은 판 위에선 은은하게 (밝은 판이 점점이 박히면 덩어리가 아니라 낱알로 읽힌다)
+                            glow -= b->glow * 0.8f;
+                            c = Mix(c, 0xFFC8C0B8u);
+                        }
                     }
                 }
                 else if (b->mode == BotMode.Free)

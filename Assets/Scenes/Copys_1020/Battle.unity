@@ -783,13 +783,11 @@ GameObject:
   - component: {fileID: 491960590}
   - component: {fileID: 491960589}
   - component: {fileID: 491960588}
-  - component: {fileID: 491960587}
   - component: {fileID: 491960586}
   - component: {fileID: 491960585}
   - component: {fileID: 491960584}
   - component: {fileID: 491960583}
   - component: {fileID: 491960582}
-  - component: {fileID: 491960581}
   - component: {fileID: 491960580}
   - component: {fileID: 491960579}
   - component: {fileID: 491960578}
@@ -850,33 +848,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e39a7683bcbbad48a03df16e9aed3d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
-  prewarmCount: 4
-  orbitGroups:
-  - centerOffset: {x: 0, y: 0.45, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: 25}
-    speedDeg: 120
-    clockwise: 0
-    phaseOffsetDeg: 0
-  - centerOffset: {x: 0, y: 0.48, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: -25}
-    speedDeg: 90
-    clockwise: 1
-    phaseOffsetDeg: 120
-  - centerOffset: {x: 0, y: 0.44, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 60, y: 0, z: 0}
-    speedDeg: 150
-    clockwise: 0
-    phaseOffsetDeg: 240
-  orbitSmoothTime: 0.08
-  spawnOffset: {x: 0, y: 1.6, z: 0}
-  fallbackLocalTarget: {x: 1.2, y: 1.2}
-  multiDroneSpacing: 0.35
-  attackZOffset: -0.1
-  attackMoveCurve:
+  dronePrefab: {fileID: 0}
+  idleSlots:
+  - {x: -0.45, y: 0.65, z: 0.05}
+  - {x: -0.6, y: 0.45, z: 0.05}
+  - {x: -0.45, y: 0.25, z: 0.05}
+  idleBobAmplitude: 0.03
+  idleBobFrequency: 1.2
+  idleSmoothTime: 0.1
+  fallbackLocalTarget: {x: 1.2, y: 0.6, z: -0.1}
+  multiDroneSpacing: 0.3
+  hitBoxZOffset: -0.1
+  sortieMoveCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -926,22 +909,6 @@ MonoBehaviour:
   takenColor: {r: 1, g: 1, b: 1, a: 1}
   dealtColor: {r: 1, g: 1, b: 1, a: 1}
   missColor: {r: 1, g: 0.8874772, b: 0.11792451, a: 1}
---- !u!114 &491960581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 491960576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  effectTable: {fileID: 11400000, guid: ff8764b4f811c4340bfb84300bfac59d, type: 2}
-  playerParts:
-  - {fileID: 11400000, guid: 0b272ca40ea9d574fa8fb9fb7fd5b74e, type: 2}
-  enemyParts: []
 --- !u!114 &491960582
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1035,25 +1002,6 @@ MonoBehaviour:
   spriteFacesRight: 1
   opponent: {fileID: 0}
   combatCamera: {fileID: 0}
---- !u!114 &491960587
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 491960576}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e606a1c8ba26aa84a972c4c8c4b6bbaf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  idleAction: {fileID: 11400000, guid: 3d9dcea5d6753044eb45f1aed4becebf, type: 2}
-  allActions:
-  - {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
-  - {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  - {fileID: 11400000, guid: 21821a8a04a85db4c9a6a54da369d722, type: 2}
-  hitReaction: {fileID: 11400000, guid: 94221f93d5bad9a4bb8f39ad9a518a51, type: 2}
-  landAction: {fileID: 0}
 --- !u!61 &491960588
 BoxCollider2D:
   m_ObjectHideFlags: 0

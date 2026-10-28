@@ -20,4 +20,12 @@ public class BossNpc1 : BossAiBase
     {
         return base.IsBigRaiseThink(currentPrice, baseCost);
     }
+    public override void UseBigSkill(Auction manager)
+    {
+        manager.CurrentCost += 1000;
+    }
+    protected override void HandleGiveUp()
+    {
+        ShowThinkChatWithText("쳇 난 포기 하겠어.");
+    }
 }

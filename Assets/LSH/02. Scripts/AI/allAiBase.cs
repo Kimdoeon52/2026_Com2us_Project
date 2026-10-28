@@ -1,4 +1,5 @@
 using DG.Tweening;
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -8,7 +9,24 @@ public abstract class AllAiBase : MonoBehaviour
 {
     public abstract string NPCName { get; }
     public abstract int Gold { get; }
-    public abstract bool IsGiveUp { get; set; }
+
+    [SerializeField] private bool isGiveUp;
+    public event Action OnGiveUpTrue;
+    public virtual bool IsGiveUp
+    {
+        get => isGiveUp;
+        set
+        {
+            if (isGiveUp != value)
+            {
+                isGiveUp = value;
+                if (isGiveUp)
+                {
+                    OnGiveUpTrue?.Invoke();
+                }
+            }
+        }
+    }
     public abstract int ThinkDelay { get;} //ai마다 생각하는 시간이 다르게 설정
     public virtual int RaiseGold { get; set; } = 100;
     public abstract void ReadyForAction();
@@ -47,17 +65,16 @@ public abstract class AllAiBase : MonoBehaviour
                 thinkCanvasGroup = thinkImage.gameObject.AddComponent<CanvasGroup>();
             }
             originalLocalPos = new Vector3(0f, 200f, 0f);
-
+            OnGiveUpTrue += HandleGiveUp;
             // 초기 상태 비활성화 및 초기화
             ResetThinkBubble();
         }
     }
-
     public virtual string GetRandomThinkChat()
     {
         if (thinkChatList != null && thinkChatList.Count > 0)
         {
-            int ranIndex = Random.Range(0, thinkChatList.Count);
+            int ranIndex = UnityEngine.Random.Range(0, thinkChatList.Count);
             return thinkChatList[ranIndex].thinkChat;
         }
         return string.Empty; // 대사가 없을 때 빈 문자열 반환
@@ -110,10 +127,14 @@ public abstract class AllAiBase : MonoBehaviour
             thinkImage.gameObject.SetActive(false);
         }
     }
-
+    protected virtual void HandleGiveUp()
+    {
+        ShowThinkChatWithText("쳇 난 포기 하겠어.");
+    }
     private void OnDestroy()
     {
-        // 오브젝트 파괴 시 DOTween 메모리 정리
         thinkSequence?.Kill();
+        // 메모리 누수 방지를 위한 이벤트 구독 해제
+        OnGiveUpTrue -= HandleGiveUp;
     }
 }

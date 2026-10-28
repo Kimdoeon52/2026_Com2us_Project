@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BossNpc2 : BossAiBase
@@ -22,5 +23,20 @@ public class BossNpc2 : BossAiBase
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
         return "흐응~ 이것도 잡아보시지?";
+    }
+    public override void UseBigSkill(Auction manager)
+    {
+        AllAiBase target;
+        int randomIndex = Random.Range(0, manager.auctionAiList.Count);
+        target = manager.auctionAiList[randomIndex];
+        if(target.NPCName == data.mainCharacterName)
+        {
+            //다른 한명을 강제로 포기하게 만드는 능력. 
+        }
+        target.IsGiveUp = true;
+    }
+    protected override void HandleGiveUp()
+    {
+        ShowThinkChatWithText("흥! 나 안할래!");
     }
 }

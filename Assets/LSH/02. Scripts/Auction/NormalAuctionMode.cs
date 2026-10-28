@@ -71,10 +71,11 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
                 if (ai is BossAiBase boss && boss.IsBigRaiseThink(manager.CurrentCost, stuff.Cost))
                 {
-                    raiseStep = boss.BigRaiseGold();
-                    manager.CurrentCost += raiseStep;
+                    //raiseStep = boss.BigRaiseGold();
+                    //manager.CurrentCost += raiseStep;
+                    boss.UseBigSkill(manager);
                     manager.UpdateAuctionCostUI();
-                    boss.UseBigSkill();
+                    
 
                     // 빅 레이즈 성공 말풍선 연출
                     ai.ShowThinkChatWithText($"{manager.CurrentCost}G! 확 올려버리지!");

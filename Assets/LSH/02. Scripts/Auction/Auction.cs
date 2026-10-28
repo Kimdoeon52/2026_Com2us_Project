@@ -88,7 +88,7 @@ public class Auction : PersistentSingleton<Auction>
     [Header("참여 AI 리스트")]
     [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록
     [SerializeField] public List<BossAiBase> bossAiList; //참여Boss목록
-    [SerializeField] private List<AllAiBase> auctionAiList; //지금 경매에 참여하고 있는 Ai들
+    [SerializeField] public List<AllAiBase> auctionAiList; //지금 경매에 참여하고 있는 Ai들
     [SerializeField] private int dayOfEnterNpc; //오늘 경매에 참여할 NPC수
 
     [Header("경매 물품 리스트")]
@@ -557,6 +557,7 @@ public class Auction : PersistentSingleton<Auction>
                 if (ai != null && ai.NPCName == WinnerName) // ai이름과 이긴 ai의 이름을 체크
                 {
                     GlobalGold.Instance.UseGold(ai.NPCName, CurrentCost); //이긴 ai 골드차감
+                    GlobalGold.Instance.ChangePartsGrade(ai.NPCName, stuffGrade);
                     GlobalGold.Instance.SaveGame(); // 저장
                     break;
                 }

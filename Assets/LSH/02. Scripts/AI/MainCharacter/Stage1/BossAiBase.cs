@@ -2,7 +2,13 @@ using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-
+/*
+보스1: 한번에 크게 넣는 능력. 2회 (확률형)
+보스2: 다른 한명을 강제로 포기하게 만드는 능력. 1회 (확률형)
+보스3: 경매시간을 반으로 줄이는 능력 1회 (확률형)
+보스4: 경매 아이템이 안보이는 능력 1회 (시작 확률형)
+보스5: 경매 아이템을 교체하는 능력 1회 (확률형)
+*/
 public class BossAiBase : AllAiBase
 {
     [Header("Npc 골드 데이터")]
@@ -33,7 +39,7 @@ public class BossAiBase : AllAiBase
     public override void ReadyForAction()
     {
         IsGiveUp = false;
-        RaiseGold = 200;
+        RaiseGold = 100;
     }
 
     //==================================판단===================================
@@ -74,7 +80,7 @@ public class BossAiBase : AllAiBase
         {
             return false;
         }
-        bigRaisetimes--; // 횟수 1회 감소
+        bigRaisetimes--;
         return currentPrice >= (int)(baseCost * 1.5f);
     }
     public virtual async UniTask TriggerCutscene(string bossName, string skill)
@@ -84,7 +90,7 @@ public class BossAiBase : AllAiBase
            await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter, cutsceneBGcolor);
        }
     }
-    public virtual void UseBigSkill()
+    public virtual void UseBigSkill(Auction manager)
     {
         // 여기에 스킬 작성.
         Debug.LogWarning($"나는 {data.mainCharacterName}!!!!!!!");

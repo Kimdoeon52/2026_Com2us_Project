@@ -37,7 +37,6 @@ public class NpcAiBase : AllAiBase
         if (!GlobalGold.Instance.CanUseGold(data.npcName, NextPrice))
         {
             IsGiveUp = true; // 예산 부족으로 포기
-            ShowThinkChatWithText("쳇 난 포기 하겠어.");
             return false;
         }
         return true;
@@ -51,5 +50,5 @@ public class NpcAiBase : AllAiBase
             Debug.Log($"{NPCName} : {finalPrise} 골드로 낙찰 받음. 남은 골드 : {data.npcGold}");
         }
     }
-   
+    
 }

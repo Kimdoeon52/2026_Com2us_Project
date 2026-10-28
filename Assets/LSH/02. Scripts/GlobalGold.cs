@@ -144,6 +144,24 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
         return false;
     }
+    //==========================================장비 등급 교체==========================================================
+    public void ChangePartsGrade(string name, PartGrade stuffGrade) //장비 등급 교체 함수
+    {
+        foreach (var data in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌
+        {
+            if (data.mainCharacterName == name)
+            {
+                for (int i = 0; i < data.parts.Length; i++)
+                {
+                    if(data.parts[i] < stuffGrade)
+                    {
+                        data.parts[i] = stuffGrade;
+                        break; //등급 하나만 바꾸고 탈출
+                    }
+                }
+            }
+        }
+    }
     //================================================SAVE&LOAD 기능=====================================================
     // JSON 파일로 저장
     public void SaveGame()

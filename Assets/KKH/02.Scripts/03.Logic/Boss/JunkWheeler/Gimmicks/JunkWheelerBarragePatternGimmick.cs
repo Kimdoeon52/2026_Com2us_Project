@@ -23,10 +23,12 @@ namespace RealSteel.Boss.JunkWheeler
         [Header("사출 및 탄막 파라미터")]
         [SerializeField] private float launchHeight = 1.7f;
         [SerializeField] private float launchDuration = 0.35f;
-        [SerializeField] private float bulletInterval = 0.05f;
+        [SerializeField] private float bulletInterval = 0.4f;
         [SerializeField] private float turnaroundDelay = 0.2f;
         [SerializeField] private int sweepRounds = 1;
-        [SerializeField] private float bulletSpeed = 6.0f;
+        [SerializeField] private float bulletSpeed = 4.0f;
+        [Tooltip("1회 스윕당 발사할 탄환 개수 (기본 7발 권장: 30도 간격으로 널널해짐)")]
+        [SerializeField] private int bulletCountPerSweep = 7;
         [SerializeField] private GameObject bulletPrefab;
         [SerializeField] private GameObject tirePrefab;
 
@@ -59,7 +61,8 @@ namespace RealSteel.Boss.JunkWheeler
             await _tireMoveTween.ToUniTask(cancellationToken: token);
 
             // 3단계: 바이킹 진자 순차 탄막 (15도 간격, 0번~12번 순차 발사 후 12번~0번 역순 복귀)
-            const int maxIndex = 12;
+            int maxIndex = Mathf.Max(1, bulletCountPerSweep - 1);
+            float angleStep = 180f / maxIndex;
             Vector3 fireOrigin = _activeTireObject.transform.position;
 
             for (int round = 0; round < sweepRounds; round++)
@@ -72,7 +75,7 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     token.ThrowIfCancellationRequested();
 
-                    float angle = 180f + (i * 15f);
+                    float angle = 180f + (i * angleStep);
                     FireSingleBullet(fireOrigin, angle);
 
                     // 타이어 틸트 연출
@@ -91,7 +94,7 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     token.ThrowIfCancellationRequested();
 
-                    float angle = 180f + (i * 15f);
+                    float angle = 180f + (i * angleStep);
                     FireSingleBullet(fireOrigin, angle);
 
                     float tiltZ = -Mathf.Sin((i / (float)maxIndex) * Mathf.PI) * 20f;

@@ -11,7 +11,7 @@ public class Npc5 : NpcAiBase
         base.Start();
     }
 
-    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {
         if (IsGiveUp || data == null) return false;
         int NextPrice = actionPrise + 100;

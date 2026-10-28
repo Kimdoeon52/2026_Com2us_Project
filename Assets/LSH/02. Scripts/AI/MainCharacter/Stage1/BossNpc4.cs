@@ -11,9 +11,9 @@ public class BossNpc4 : BossAiBase
         base.Start();
         RaiseGold = 400;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise);
+        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
     }
     public override bool IsBigRaiseThink(int currentPrice, int baseCost)
     {

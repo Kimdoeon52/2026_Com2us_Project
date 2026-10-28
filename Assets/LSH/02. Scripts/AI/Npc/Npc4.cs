@@ -6,7 +6,7 @@ public class Npc4 : NpcAiBase
     [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
     public float actionRate = 0.8f;
 
-    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {
         if (IsGiveUp || data == null) return false;
         int NextPrice = actionPrise + 100;

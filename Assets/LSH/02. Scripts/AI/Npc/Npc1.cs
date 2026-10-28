@@ -14,7 +14,7 @@ public class Npc1 : NpcAiBase //후반형
         base.ReadyForAction();
         RaiseGold = 200;
     }
-    public override bool RaiseThink(int actionPrice, int actionRealPrice)
+    public override bool RaiseThink(int actionPrice, int actionRealPrice, PartGrade stuffGrade)
     {
         // 10초 초과 시 관망 대사만 내보내고 지켜봄
         if (Auction.Instance.RemainingTime > 10f)
@@ -24,6 +24,6 @@ public class Npc1 : NpcAiBase //후반형
         }
 
         // 10초 이하가 되었을 때의 예산 판단
-        return base.RaiseThink(actionPrice, actionRealPrice);
+        return base.RaiseThink(actionPrice, actionRealPrice, stuffGrade);
     }
 }

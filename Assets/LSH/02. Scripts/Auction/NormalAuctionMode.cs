@@ -64,7 +64,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
             Debug.Log($"[AI 루틴 체크] {ai.NPCName} | 현재가: {manager.CurrentCost} | AI 보유 RaiseGold: {ai.RaiseGold}");
 
-            if (ai.RaiseThink(manager.CurrentCost, stuff.Cost))
+            if (ai.RaiseThink(manager.CurrentCost, stuff.Cost, stuff.Grade))
             {
                 int raiseStep = ai.RaiseGold;
 

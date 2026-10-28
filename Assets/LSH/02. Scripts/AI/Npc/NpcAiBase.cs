@@ -27,7 +27,7 @@ public class NpcAiBase : AllAiBase
     }
 
     //==================================판단===================================
-    public override bool RaiseThink(int actionPrise, int actionRealPrise)
+    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     { //현재는 단순히 골드보유로만
         if (IsGiveUp || data == null) return false;
 

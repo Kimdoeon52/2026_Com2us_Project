@@ -43,6 +43,14 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
+        /// <summary>
+        /// 전조(1.0초) 동안 정지 화면 대신 바퀴 공회전(차지 루프) 모션 재생
+        /// </summary>
+        public override void OnTellStarted()
+        {
+            OwnerBoss?.Animation?.PlayChargeLoop();
+        }
+
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
         {
             if (OwnerBoss == null) return;
@@ -61,6 +69,9 @@ namespace RealSteel.Boss.JunkWheeler
 
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY + jumpHeight, jumpDuration).SetEase(Ease.OutQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
+
+                // 상승 완료 후 공중 추적 구간: 정지 화면 대신 공중 회전 루프
+                OwnerBoss.Animation?.PlayRollBarrage();
 
                 // 2단계: 1초간 플레이어 X좌표 실시간 추적 (그림자/타겟팅)
                 float elapsed = 0f;
@@ -87,15 +98,11 @@ namespace RealSteel.Boss.JunkWheeler
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
 
-                // 3단계: 급강하 직전 공중 정지 (예고)
-                if (OwnerBoss.Animation != null)
-                {
-                    OwnerBoss.Animation.PlaySlamFall();
-                }
-
+                // 3단계: 급강하 직전 공중 정지 (예고) - 회전 루프 유지
                 await UniTask.Delay(TimeSpan.FromSeconds(hoverDuration), cancellationToken: token);
 
-                // 4단계: 급강하 내려찍기 (지면 충돌)
+                // 4단계: 급강하 내려찍기 (지면 충돌) - 실제 낙하 시점에 낙하 루프 재생
+                OwnerBoss.Animation?.PlaySlamFall();
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
 
@@ -105,7 +112,7 @@ namespace RealSteel.Boss.JunkWheeler
                     OwnerBoss.Animation.PlaySlamLand();
                 }
 
-                _currentTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.35f, -0.35f, 0f), 0.25f);
+                _currentTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(0.35f, -0.35f, 0f)), 0.25f);
                 await _currentTween.ToUniTask(cancellationToken: token);
                 Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅!)</color>");
 

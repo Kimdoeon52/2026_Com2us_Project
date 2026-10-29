@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
@@ -92,7 +92,6 @@ namespace RealSteel.Boss.JunkWheeler
         }
 
         [ContextMenu("[돌진] 전조 점멸 시작 (OnTellStarted)")]
-        [ContextMenu("[돌진] 전조 점멸 시작 (OnTellStarted)")]
         public void TestChargeTellStart()
         {
             ChargePatternGimmick?.OnTellStarted();
@@ -110,16 +109,7 @@ namespace RealSteel.Boss.JunkWheeler
             Debug.Log("<color=green>[JunkWheelerBossController] 정크 휠러 초기화 완료! 엔진 가동 시작!</color>");
         }
 
-        /// <summary>
-        /// 보스가 dirX 방향(1: 우측, -1: 좌측)을 정면으로 바라보도록 스프라이트 반전
-        /// 에셋 기준: scale.x > 0 일 때 왼쪽, scale.x < 0 일 때 오른쪽
-        /// </summary>
-        public void FaceDirection(float dirX)
-        {
-            Vector3 scale = transform.localScale;
-            float targetSign = dirX < 0 ? 1.0f : -1.0f;
-            transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
-        }
+        // 좌우 반전은 BossControllerBase.FaceDirection 단일 경로로 통일 (역부호 중복 선언 제거)
 
         protected override void OnPhaseChanged(int prevPhase, int newPhase)
         {

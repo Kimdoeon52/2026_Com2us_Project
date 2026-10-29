@@ -57,6 +57,14 @@ namespace RealSteel.Boss.JunkWheeler
             OwnerBoss?.FacePlayer();
         }
 
+        /// <summary>
+        /// 전조(1.5초) 동안 정지 화면 대신 바퀴 공회전(차지 루프) 모션 재생
+        /// </summary>
+        public override void OnTellStarted()
+        {
+            OwnerBoss?.Animation?.PlayChargeLoop();
+        }
+
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
         {
             if (OwnerBoss == null) return;
@@ -151,7 +159,7 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.Animation.PlaySlamLand();
             }
 
-            _bossPunchTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.25f, -0.25f, 0f), 0.2f);
+            _bossPunchTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(0.25f, -0.25f, 0f)), 0.2f);
             await _bossPunchTween.ToUniTask(cancellationToken: token);
 
             // 착지 후 플레이어를 향해 몸을 돌림

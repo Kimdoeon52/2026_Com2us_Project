@@ -69,6 +69,7 @@ public class RankingSystemManager : MonoBehaviour
     void Start()
     {
         InitializeNPCs();
+        SortAndRank();
     }
 
     private void InitializeNPCs() // npc 생성
@@ -83,6 +84,8 @@ public class RankingSystemManager : MonoBehaviour
         // 플레이어 객체 미리 생성 및 리스트 등록
         playerRef = new NPC();
         playerRef.isPlayer = true;
+        playerRef.name = "플레이어";
+
         npcList.Add(playerRef);
 
         // 이름 리스트 가져오기 및 섞기 (Fisher-Yates 알고리즘)

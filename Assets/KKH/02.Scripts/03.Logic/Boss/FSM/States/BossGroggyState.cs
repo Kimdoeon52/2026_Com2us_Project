@@ -67,6 +67,7 @@ namespace RealSteel.Boss.FSM
             boss.Snapshot.isGroggy = false;
             boss.Snapshot.currentDamageMultiplier = 1.0f;
             boss.SetGroggyView(false, 0f);
+            boss.FacePlayer();
             Debug.Log("[BossGroggyState] 그로기 상태 해제 완료.");
         }
     }

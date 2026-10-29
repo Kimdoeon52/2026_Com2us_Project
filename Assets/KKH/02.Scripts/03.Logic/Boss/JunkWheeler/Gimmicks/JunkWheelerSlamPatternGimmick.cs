@@ -39,6 +39,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss != null)
             {
                 _groundY = OwnerBoss.transform.position.y;
+                OwnerBoss.FacePlayer();
             }
         }
 
@@ -130,7 +131,9 @@ namespace RealSteel.Boss.JunkWheeler
                 }
             }
 
-            // 모든 회차 종료 후 Idle 복귀
+            // 모든 회차 종료 후 플레이어를 응시하고 Idle 복귀
+            OwnerBoss.FacePlayer();
+
             if (OwnerBoss.Animation != null)
             {
                 OwnerBoss.Animation.PlayIdle();

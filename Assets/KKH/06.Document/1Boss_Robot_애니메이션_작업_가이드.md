@@ -281,7 +281,23 @@ DOTween 기반 위치 연산 및 기물/투사체 충돌 감지를 위해 물리
 
 ---
 
-## 7. 자주 묻는 질문 (FAQ & Troubleshooting)
+## 7. 실시간 플레이어 자동 응시 (FacePlayer 시스템)
+
+보스가 멍하니 허공이나 벽을 보지 않고 항상 플레이어를 주시하도록 `BossControllerBase.FacePlayer()` 메서드가 전역 FSM 및 기믹 라이프사이클에 연동되어 있습니다:
+
+* **확정 딜타임 (`BossIdleState`)**:
+  - 딜타임(1.0초) 진입 즉시 플레이어 응시.
+  - 대기 중 플레이어가 회피/위빙으로 보스 등 뒤로 넘어가더라도 **0.1초 주기로 부드럽게 뒤돌아보며 플레이어를 실시간 추적**.
+* **탄막 기믹 (`JunkWheelerBarragePatternGimmick`)**:
+  - 공중 도약 직전 및 지면 착지 충격 직후 즉시 플레이어 쪽으로 몸을 정렬.
+* **3단 내려찍기 (`JunkWheelerSlamPatternGimmick`)**:
+  - 도약 직전 및 3회 슬램 최종 착지 직후 플레이어 방향 응시.
+* **그로기 / 스턴 (`BossGroggyState` / `BossStunState`)**:
+  - 무력화 시간이 종료되어 기절에서 깨어나는 순간(`Exit()`) 플레이어 쪽을 똑바로 쳐다봄.
+
+---
+
+## 8. 자주 묻는 질문 (FAQ & Troubleshooting)
 
 **Q. 플레이 중에 애니메이션이 바뀌지 않고 한 모션에 멈춰 있습니다.**
 * **A**: 유니티 Animator Controller 창에서 각 스테이트 노드의 이름이 명세표의 영문 이름(`Boss_Idle`, `Boss_Roll_Barrage` 등)과 정확히 일치하는지 대소문자를 확인하세요.

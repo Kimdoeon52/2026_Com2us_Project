@@ -9,7 +9,8 @@ namespace RealSteel.Boss.FSM
     /// <summary>
     /// [보스 딜타임 대기 상태 (BossIdleState)]
     /// 기획서 §6.18 공통 규칙: 모든 공격 패턴 종료 후 최소 1.0초간 확정 딜타임(대기)을 제공함.
-    /// 딜타임 만료 시 다음 공격 패턴을 선택하여 전조(BossPatternTellState)로 전이함.
+    /// 딜타임 대기 중에는 실시간으로 플레이어를 주시(FacePlayer)하며,
+    /// 딜타임 만료 시 다음 공격 패턴을 선택하여 실행/전조로 전이함.
     /// </summary>
     public class BossIdleState : BossStateBase
     {
@@ -25,6 +26,9 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
+            // 진입 즉시 플레이어 응시 및 Idle 모션 재생
+            boss.FacePlayer();
+
             if (boss.Animation != null)
             {
                 boss.Animation.PlayIdle();
@@ -37,10 +41,22 @@ namespace RealSteel.Boss.FSM
         {
             try
             {
-                // 기획서 명시 확정 딜타임 대기
-                await UniTask.Delay(TimeSpan.FromSeconds(_delaySeconds), cancellationToken: cancellationToken);
+                // 기획서 명시 확정 딜타임 대기 (대기 중 플레이어가 뒤로 이동하면 자연스럽게 몸을 돌려 응시)
+                float elapsed = 0f;
+                float interval = 0.1f;
+                while (elapsed < _delaySeconds)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    boss.FacePlayer();
+
+                    float step = Mathf.Min(interval, _delaySeconds - elapsed);
+                    await UniTask.Delay(TimeSpan.FromSeconds(step), cancellationToken: cancellationToken);
+                    elapsed += step;
+                }
 
                 if (!boss.Snapshot.IsAlive) return;
+
+                boss.FacePlayer();
 
                 // 1. 모듈식 패턴 기믹 조회
                 var nextGimmick = boss.GetNextPatternGimmick();

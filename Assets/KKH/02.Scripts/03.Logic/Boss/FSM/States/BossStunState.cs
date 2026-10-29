@@ -61,6 +61,7 @@ namespace RealSteel.Boss.FSM
         public override void Exit()
         {
             boss.SetStunView(false, 0f);
+            boss.FacePlayer();
             Debug.Log("[BossStunState] 스턴 상태 해제 완료.");
         }
     }

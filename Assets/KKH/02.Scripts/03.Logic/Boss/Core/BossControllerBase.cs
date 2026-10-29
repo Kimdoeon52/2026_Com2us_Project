@@ -112,6 +112,57 @@ namespace RealSteel.Boss.Core
             return desiredX;
         }
 
+        protected Transform _cachedPlayerTransform;
+
+        public Transform PlayerTransform
+        {
+            get
+            {
+                if (_cachedPlayerTransform == null)
+                {
+                    var playerObj = GameObject.FindWithTag("Player");
+                    if (playerObj != null) _cachedPlayerTransform = playerObj.transform;
+                }
+                return _cachedPlayerTransform;
+            }
+        }
+
+        /// <summary>
+        /// 보스가 현재 플레이어의 X축 위치를 바라보도록 방향을 전환함.
+        /// </summary>
+        public void FacePlayer()
+        {
+            var player = PlayerTransform;
+            if (player == null) return;
+
+            float diffX = player.position.x - transform.position.x;
+            if (Mathf.Abs(diffX) > 0.05f)
+            {
+                float dirX = diffX >= 0f ? 1f : -1f;
+                FaceDirection(dirX);
+            }
+        }
+
+        /// <summary>
+        /// 특정 X축 방향(dirX > 0 우측, dirX < 0 좌측)으로 스프라이트를 반전시킴.
+        /// </summary>
+        public void FaceDirection(float dirX)
+        {
+            if (Mathf.Approximately(dirX, 0f)) return;
+
+            if (Animation != null)
+            {
+                Animation.FaceDirection(dirX);
+            }
+            else
+            {
+                Vector3 scale = transform.localScale;
+                float sign = dirX >= 0f ? 1f : -1f;
+                scale.x = Mathf.Abs(scale.x) * sign;
+                transform.localScale = scale;
+            }
+        }
+
         protected virtual void OnDestroy()
         {
             CancelCurrentStateToken();

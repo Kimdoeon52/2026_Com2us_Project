@@ -51,9 +51,18 @@ namespace RealSteel.Boss.JunkWheeler
             Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 타이어 파괴 디버프 적용 상태: {_isTireBrokenDebuffed} (도약 높이: {(debuffed ? launchHeight * 0.7f : launchHeight):F2}m)</color>");
         }
 
+        protected override void OnPreExecute()
+        {
+            base.OnPreExecute();
+            OwnerBoss?.FacePlayer();
+        }
+
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
         {
             if (OwnerBoss == null) return;
+
+            // 도약 전 플레이어 방향 응시
+            OwnerBoss.FacePlayer();
 
             // 1단계: 원래 지면 Y좌표 기록 및 중간 상단(Apex) 도약 좌표 산출
             _groundY = OwnerBoss.transform.position.y;
@@ -144,6 +153,9 @@ namespace RealSteel.Boss.JunkWheeler
 
             _bossPunchTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.25f, -0.25f, 0f), 0.2f);
             await _bossPunchTween.ToUniTask(cancellationToken: token);
+
+            // 착지 후 플레이어를 향해 몸을 돌림
+            OwnerBoss.FacePlayer();
 
             if (OwnerBoss.Animation != null)
             {

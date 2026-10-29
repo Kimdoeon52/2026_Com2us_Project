@@ -3,12 +3,25 @@ using UnityEngine;
 
 public class RankingUiManager : MonoBehaviour
 {
+    public static RankingUiManager Instance;
+
+    [Header("UI Object")]
+    public GameObject rankingCanvas;
+
     [Header("Dependencies")]
     public RankingSystemManager rankingManager; // 데이터 매니저 참조
     public Transform contentParent;             // 하이어라키의 Content 객체 할당
     public GameObject npcLayPrefab;             // NpcLay 프리팹 할당[cite: 5]
 
     private List<NpcUiItem> spawnedItems = new List<NpcUiItem>();
+
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else return;
+        // 시작 시 Ui들 숨기기
+        if (rankingCanvas != null) rankingCanvas.SetActive(false);
+    }
 
     void Start()
     {
@@ -21,6 +34,25 @@ public class RankingUiManager : MonoBehaviour
         if (rankingManager != null)
         {
             rankingManager.OnRankingUpdated -= RefreshUI;
+        }
+    }
+
+    public void ToggleRankingUI()
+    {
+        bool isActive = !rankingCanvas.activeSelf;
+        rankingCanvas.SetActive(isActive);
+
+        if (isActive)
+        {
+            // UI를 열 때 게임 시간을 정지 상태(UIOpen)로 변경
+            TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
+            // 필요 시 UI를 열 때 최신 데이터로 즉시 화면 갱신
+            RefreshUI();
+        }
+        else
+        {
+            // UI를 닫을 때 게임 시간 다시 흐름(Running) 상태로 복구
+            TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.Running);
         }
     }
 

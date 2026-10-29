@@ -30,6 +30,7 @@ public class TimeSystemManager : MonoBehaviour
     public static event Action OnWeekMartClose; // 경매장 닫음 구독변수
     public static event Action OnMonthScrapRestore; // 고물상 고물 리셋변수
     public static event Action OnMonthNpcFightmoneyRestore; // 경기 Npc 보유금 리셋변수
+    public static event Action OnDayRankingRestore;
 
     private void Awake()
     {
@@ -105,6 +106,7 @@ public class TimeSystemManager : MonoBehaviour
         }
         if (day == 1 || day == 8 || day == 15 || day == 22) OnWeekMartOpen?.Invoke();
         if (day == 2 || day == 9 || day == 16 || day == 23) OnWeekMartClose?.Invoke();
+        OnDayRankingRestore?.Invoke();
     }
 
     private void UpdateTimeUI() // 날짜 새로고침

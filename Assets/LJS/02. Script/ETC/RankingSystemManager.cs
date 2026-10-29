@@ -48,26 +48,78 @@ public class NPC : IComparable<NPC>
 
 public class RankingSystemManager : MonoBehaviour
 {
-    public List<NPC> npcList = new List<NPC>(101);
+    public static RankingSystemManager Instance;
+
+    [Header("NPC Data")]
+    public NpcNameData npcNameData; // 스크립터블 오브젝트용
+
+    public List<NPC> npcList = new List<NPC>(101); // Npc랭킹 리스트. 플레이어까지 101명
     private NPC playerRef;
+
     // 다른 스크립트에서 참조용 리스트
     public List<PartGrade[]> top5NpcParts = new List<PartGrade[]>(5);
+
     public event Action OnRankingUpdated; // 외부 알림 이벤트. 필요하면 사용
+    private void Awake()
+    {
+        if (Instance == null) Instance = this;
+        else return;
+    }
+
     void Start()
     {
         InitializeNPCs();
     }
 
-    private void InitializeNPCs()
+    private void InitializeNPCs() // npc 생성
     {
+        npcList.Clear();
+        top5NpcParts.Clear();
         for (int i = 0; i < 5; i++)
         {
             top5NpcParts.Add(new PartGrade[4]);
         }
+
+        // 플레이어 객체 미리 생성 및 리스트 등록
+        playerRef = new NPC();
+        playerRef.isPlayer = true;
+        npcList.Add(playerRef);
+
+        // 이름 리스트 가져오기 및 섞기 (Fisher-Yates 알고리즘)
+        List<string> availableNames = new List<string>();
+        bool hasEnoughNames = (npcNameData != null && npcNameData.npcNames.Count >= 100);
+
+        if (hasEnoughNames)
+        {
+            // 원본 SO 데이터를 건드리지 않기 위해 복사본 생성
+            availableNames = new List<string>(npcNameData.npcNames);
+
+            for (int i = 0; i < availableNames.Count; i++)
+            {
+                string temp = availableNames[i];
+                int randomIndex = UnityEngine.Random.Range(i, availableNames.Count);
+                availableNames[i] = availableNames[randomIndex];
+                availableNames[randomIndex] = temp;
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[RankingSystem] NpcNameData가 없거나 이름 개수가 100개 미만. 기본 이름으로 대체.");
+        }
+
         for (int i = 0; i < 100; i++)
         {
             NPC newNpc = new NPC();
-            newNpc.name = "NPC" + i.ToString("D2");
+
+            // 데이터가 충분하면 섞인 리스트에서 순서대로 뽑아 배정 (중복 절대 없음)
+            if (hasEnoughNames)
+            {
+                newNpc.name = availableNames[i];
+            }
+            else
+            {
+                newNpc.name = "NPC" + i.ToString("D2"); // 실패 시 기존 방식 유지
+            }
             newNpc.cp = 72;
             newNpc.rank = i + 1;
             npcList.Add(newNpc);
@@ -97,6 +149,14 @@ public class RankingSystemManager : MonoBehaviour
         UpdateScores();
         SortAndRank();
         UpdateGroupVariables();
+    }
+    private void OnEnable()
+    {
+        TimeSystemManager.OnDayRankingRestore += OnEventTriggered;
+    }
+    private void OnDisable()
+    {
+        TimeSystemManager.OnDayRankingRestore -= OnEventTriggered;
     }
 
     private void UpdateCombatPower()

@@ -31,9 +31,9 @@ public class BossNpc2 : BossAiBase
         target = manager.auctionAiList[randomIndex];
         if(target.NPCName == data.mainCharacterName)
         {
-            //다른 한명을 강제로 포기하게 만드는 능력. 
+            return;
         }
-        target.IsGiveUp = true;
+        target.IsGiveUp = true; // 타겟을 강제로 포기하게 만들어버림
     }
     protected override void HandleGiveUp()
     {

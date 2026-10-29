@@ -18,7 +18,7 @@ public class BossAiBase : AllAiBase
     public override string NPCName => data != null ? data.mainCharacterName : "No Name";
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
-    public override bool IsGiveUp { get; set; } = false;
+    //public override bool IsGiveUp { get; set; } = false;
 
     public static event Func<string, string, Sprite, Sprite, Color, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 

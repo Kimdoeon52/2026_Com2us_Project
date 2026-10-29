@@ -16,7 +16,7 @@ public class NpcAiBase : AllAiBase
     public override int Gold => data != null ? data.npcGold : 0;
     public override int ThinkDelay => Random.Range(5000, 10000);
 
-    public override bool IsGiveUp { get; set; } = false;
+    //public override bool IsGiveUp { get; set; } = false;
 
     //================================기본 세팅=================================
     public override void ReadyForAction()

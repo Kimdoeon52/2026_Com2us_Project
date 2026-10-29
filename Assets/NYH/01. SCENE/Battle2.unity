@@ -1328,6 +1328,10 @@ MonoBehaviour:
   currentStateName: 
   currentHpView: 0
   isGroggyView: 0
+  clampToCameraBounds: 1
+  cameraEdgePadding: 0.65
+  targetCamera: {fileID: 0}
+  animationController: {fileID: 0}
   studio: {fileID: 1768044945}
   arenaMinX: -8.970694
   arenaMaxX: 10.0506935
@@ -3788,7 +3792,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 31.05664, y: 7.7958984}
+  m_LightCookieOffset: {x: 14.220703, y: 27.089844}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

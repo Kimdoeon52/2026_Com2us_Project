@@ -4,7 +4,6 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
-
 namespace RealSteel.Boss.FSM
 {
     /// <summary>
@@ -26,6 +25,11 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
+            if (boss.Animation != null)
+            {
+                boss.Animation.PlayIdle();
+            }
+
             WaitPostDelayAndSelectNextPatternAsync().Forget();
         }
 
@@ -58,11 +62,12 @@ namespace RealSteel.Boss.FSM
                 }
 
                 Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
-                Enter();
+                var retryToken = boss.RenewStateCancellationToken();
+                boss.StateMachine.ChangeState(new BossIdleState(boss, retryToken, 1.0f));
             }
             catch (OperationCanceledException)
             {
-                // 인터럽트(기믹 파훼 등)로 인한 상태 취소 시 정상 종료
+                // 외부 인터럽트 시 정상 종료
             }
         }
     }

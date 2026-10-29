@@ -62,6 +62,15 @@ public class CombatantSnapshot
     /// <summary>생존 여부 (코어 HP > 0)</summary>
     public bool IsAlive => currentHp > 0;
 
+    /// <summary>기획서 §4.7 방어력 기반 피해 감소율 = 방어력 / (방어력 + 100)</summary>
+    public float DamageReductionRate => (float)baseDefense / (Mathf.Max(0, baseDefense) + 100f);
+
+    /// <summary>기획서 §6.7 현재 유효 체력(EHP) = HP * (방어력 + 100) / 100</summary>
+    public int EffectiveHp => Mathf.RoundToInt((float)currentHp * (Mathf.Max(0, baseDefense) + 100f) / 100f);
+
+    /// <summary>기획서 §6.7 최대 유효 체력(Max EHP)</summary>
+    public int MaxEffectiveHp => Mathf.RoundToInt((float)maxHp * (Mathf.Max(0, baseDefense) + 100f) / 100f);
+
     // ========================================================================
     // 3. 실린더 시스템 (기획서 §6.11 / NYH 연동)
     // ========================================================================

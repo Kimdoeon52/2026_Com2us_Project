@@ -4,13 +4,15 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
-
 namespace RealSteel.Boss.FSM
 {
     /// <summary>
-    /// [보스 스턴 무력화 상태 (BossStunState)]
-    /// 돌진 전조 중 누적 피해 300 달성 시 또는 폭발 상자 자폭 충돌 시 진입함.
-    /// 기획서 기준 3.0초간 행동 불가 상태가 되며, 만료 시 1.0초 확정 딜타임(IdleState)으로 복귀함.
+    /// [보스 스턴 상태 (BossStunState)]
+    /// 기획서 §6.18, §3.2 (3):
+    /// - 돌진 패턴 2초 전조 중 300 DPS 저지 성공 시: 3.0초 스턴 전이.
+    /// - 돌진 중 폭발 화물 상자 충돌 시: 2.0초 스턴 전이.
+    /// - 스턴 중: 모든 패턴 실행 정지, 보스 조작 불가.
+    /// - 지속 시간 종료 시: 확정 딜타임(IdleState)으로 복귀.
     /// </summary>
     public class BossStunState : BossStateBase
     {
@@ -27,6 +29,12 @@ namespace RealSteel.Boss.FSM
         public override void Enter()
         {
             boss.SetStunView(true, _duration);
+
+            if (boss.Animation != null)
+            {
+                boss.Animation.PlayStun();
+            }
+
             Debug.Log($"<color=cyan>[BossStunState] 보스 {_duration}초간 스턴 상태 진입!</color>");
 
             ExecuteStunTimerAsync().Forget();
@@ -53,6 +61,7 @@ namespace RealSteel.Boss.FSM
         public override void Exit()
         {
             boss.SetStunView(false, 0f);
+            Debug.Log("[BossStunState] 스턴 상태 해제 완료.");
         }
     }
 }

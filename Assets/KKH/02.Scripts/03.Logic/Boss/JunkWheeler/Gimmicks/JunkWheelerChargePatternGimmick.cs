@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Core;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.JunkWheeler
 {
@@ -54,6 +55,11 @@ namespace RealSteel.Boss.JunkWheeler
 
         protected override void OnTellStarted()
         {
+            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayChargeStart();
+            }
+
             // 전조 연출: 엔진 과열 붉은색 점멸 및 바퀴 헛돔 진동
             _spriteRenderer = OwnerBoss != null ? OwnerBoss.GetComponentInChildren<SpriteRenderer>() : null;
             if (_spriteRenderer != null)
@@ -66,6 +72,18 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 float tellDur = patternData != null ? patternData.tellDuration : 2.0f;
                 _shakeTween = OwnerBoss.transform.DOShakePosition(tellDur, new Vector3(0.08f, 0f, 0f), 20);
+
+                // 전조 시작 직후 차지 루프로 부드럽게 전이
+                TransitToChargeLoopAsync(tellDur).Forget();
+            }
+        }
+
+        private async UniTaskVoid TransitToChargeLoopAsync(float delay)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
+            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayChargeLoop();
             }
         }
 
@@ -81,7 +99,16 @@ namespace RealSteel.Boss.JunkWheeler
             Vector3 startPosition = OwnerBoss.transform.position;
 
             // 1단계: 돌진 전 살짝 뒤로 당기기 (예열 웅크림)
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayChargeLoop();
+            }
+
             Vector3 pullBackPosition = startPosition - new Vector3(_chargeDirection * 0.3f, 0f, 0f);
+            if (OwnerBoss != null)
+            {
+                pullBackPosition.x = OwnerBoss.ClampToCameraX(pullBackPosition.x, 0.7f);
+            }
             _currentTween = OwnerBoss.transform.DOMoveX(pullBackPosition.x, anticipatedDuration).SetEase(Ease.OutQuad);
             await _currentTween.ToUniTask(cancellationToken: token);
 
@@ -100,6 +127,13 @@ namespace RealSteel.Boss.JunkWheeler
             float duration = distance / Mathf.Max(1.0f, finalSpeed);
 
             Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed}m/s, 거리: {distance:F1}m)</color>");
+
+            // 돌진 발사 순간 애니메이션 ➔ 주행 루프
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayChargeRelease();
+                TransitToChargeRunAsync().Forget();
+            }
 
             _currentTween = OwnerBoss.transform.DOMoveX(targetX, duration).SetEase(Ease.Linear);
 
@@ -129,9 +163,23 @@ namespace RealSteel.Boss.JunkWheeler
             // 벽 충돌 반동 대기
             await UniTask.Delay(TimeSpan.FromSeconds(wallStunDelay), cancellationToken: token);
 
-            // 5단계: 충돌 종료 확인 후 등 뒤의 플레이어를 향해 스프라이트 반전
+            // 5단계: 충돌 종료 확인 후 등 뒤의 플레이어를 향해 스프라이트 반전 및 Idle 복귀
             await WaitForCollisionToEndAsync(token);
             TryFlipAfterCollision();
+
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayIdle();
+            }
+        }
+
+        private async UniTaskVoid TransitToChargeRunAsync()
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(0.12f));
+            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayChargeRun();
+            }
         }
 
         private bool CheckCollisionsDuringCharge()
@@ -151,6 +199,11 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     Debug.Log("<color=red>[JunkWheelerChargePattern] ▶ 폭발 화물 상자 충돌! 2초 스턴 인터럽트 발생!</color>");
                     KillCurrentTween();
+
+                    if (OwnerBoss.Animation != null)
+                    {
+                        OwnerBoss.Animation.PlayStun();
+                    }
 
                     if (explosive != null)
                     {
@@ -191,9 +244,17 @@ namespace RealSteel.Boss.JunkWheeler
         private void FaceDirection(float dirX)
         {
             if (OwnerBoss == null) return;
-            Vector3 scale = OwnerBoss.transform.localScale;
-            float targetSign = dirX < 0 ? 1.0f : -1.0f;
-            OwnerBoss.transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
+
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.FaceDirection(dirX);
+            }
+            else
+            {
+                Vector3 scale = OwnerBoss.transform.localScale;
+                float targetSign = dirX < 0 ? 1.0f : -1.0f;
+                OwnerBoss.transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
+            }
         }
 
         private float CalculateTargetWallX(float currentX, float directionX)
@@ -206,9 +267,11 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (hit.collider != null && hit.collider.gameObject != OwnerBoss.gameObject)
             {
-                return hit.point.x - (directionX * 0.5f);
+                float wallHitX = hit.point.x - (directionX * 0.5f);
+                return OwnerBoss != null ? OwnerBoss.ClampToCameraX(wallHitX, 0.7f) : wallHitX;
             }
-            return currentX + (directionX * maxMapDistance);
+            float fallbackX = currentX + (directionX * maxMapDistance);
+            return OwnerBoss != null ? OwnerBoss.ClampToCameraX(fallbackX, 0.7f) : fallbackX;
         }
 
         private async UniTask WaitForCollisionToEndAsync(CancellationToken token)

@@ -4,13 +4,14 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
-
 namespace RealSteel.Boss.FSM
 {
     /// <summary>
     /// [보스 기믹 파훼 그로기 상태 (BossGroggyState)]
-    /// 고철 못판 착지(바퀴 펑크) 등 전장 기믹 파훼 성공 시 진입함.
-    /// 기획서 §6.18 기준: 4.0초간 행동 불가 무력화 및 받는 피해 1.5배(크리티컬 취약) 적용.
+    /// 기획서 §6.18, §4.1:
+    /// - 3단 내려찍기 중 고철 못판에 착지 시: 즉시 4초 그로기 전이.
+    /// - 그로기 중: 보스 행동 완전 불가 + 플레이어의 공격 피해 1.5배 증폭 적용.
+    /// - 지속 시간 종료 시: 기본 딜타임(IdleState)으로 복귀.
     /// </summary>
     public class BossGroggyState : BossStateBase
     {
@@ -32,6 +33,11 @@ namespace RealSteel.Boss.FSM
             boss.Snapshot.isGroggy = true;
             boss.Snapshot.currentDamageMultiplier = _damageMultiplier;
             boss.SetGroggyView(true, _duration);
+
+            if (boss.Animation != null)
+            {
+                boss.Animation.PlayGroggy();
+            }
 
             Debug.Log($"<color=magenta>[BossGroggyState] ▶ [기믹 파훼 성공!] 보스 {_duration}초간 그로기 상태 진입! (받는 피해 {_damageMultiplier}배 증폭)</color>");
 
@@ -58,10 +64,10 @@ namespace RealSteel.Boss.FSM
 
         public override void Exit()
         {
-            // 그로기 및 피해 배율 정상 원복
             boss.Snapshot.isGroggy = false;
             boss.Snapshot.currentDamageMultiplier = 1.0f;
             boss.SetGroggyView(false, 0f);
+            Debug.Log("[BossGroggyState] 그로기 상태 해제 완료.");
         }
     }
 }

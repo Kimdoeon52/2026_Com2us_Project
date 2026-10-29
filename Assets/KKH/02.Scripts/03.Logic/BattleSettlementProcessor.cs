@@ -50,6 +50,35 @@ public static class BattleSettlementProcessor
         return isWin ? Mathf.RoundToInt(baseExp) : Mathf.RoundToInt(baseExp * 0.2f);
     }
 
+    /// <summary>
+    /// 기획서 §6.6 레벨차 보정 배율:
+    /// - 지역 상한 이하: x1.0
+    /// - 상한 +3 이상: x0.5
+    /// - 상한 +6 이상: x0.1
+    /// </summary>
+    public static float GetLevelDiffMultiplier(int playerLevel, int regionLevelCap)
+    {
+        int diff = playerLevel - regionLevelCap;
+        if (diff >= 6) return 0.1f;
+        if (diff >= 3) return 0.5f;
+        return 1.0f;
+    }
+
+    /// <summary>
+    /// 기획서 §14.2 지역별 플레이 기준가 (G):
+    /// 지역 1(500G), 지역 2(800G), 지역 3(1300G)
+    /// </summary>
+    public static int GetRegionBasePrice(int regionIndex)
+    {
+        switch (regionIndex)
+        {
+            case 1: return 500;
+            case 2: return 800;
+            case 3: return 1300;
+            default: return 500;
+        }
+    }
+
 /// <summary>
 /// 코어 경험치 누적 및 레벨업 처리 (최대 30레벨)
 /// </summary> 

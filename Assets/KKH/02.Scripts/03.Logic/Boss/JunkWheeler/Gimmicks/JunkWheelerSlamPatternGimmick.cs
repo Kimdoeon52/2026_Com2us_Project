@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Core;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.JunkWheeler
 {
@@ -51,7 +52,12 @@ namespace RealSteel.Boss.JunkWheeler
 
                 Debug.Log($"<color=yellow>[JunkWheelerSlamPattern] ▶ 내려찍기 {round}/{slamRounds}회차 개시!</color>");
 
-                // 1단계: 공중 도약
+                // 1단계: 공중 도약 및 도약 애니메이션
+                if (OwnerBoss.Animation != null)
+                {
+                    OwnerBoss.Animation.PlaySlamJump();
+                }
+
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY + jumpHeight, jumpDuration).SetEase(Ease.OutQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
 
@@ -66,6 +72,13 @@ namespace RealSteel.Boss.JunkWheeler
                         float currentX = OwnerBoss.transform.position.x;
                         float targetX = _playerTransform.position.x;
                         float newX = Mathf.MoveTowards(currentX, targetX, 7.0f * Time.deltaTime);
+                        if (OwnerBoss != null)
+                        {
+                            newX = OwnerBoss.ClampToCameraX(newX, 0.65f);
+                            // 추적 방향으로 스프라이트 반전
+                            float dirX = targetX >= currentX ? 1f : -1f;
+                            OwnerBoss.Animation?.FaceDirection(dirX);
+                        }
                         OwnerBoss.transform.position = new Vector3(newX, OwnerBoss.transform.position.y, OwnerBoss.transform.position.z);
                     }
 
@@ -74,13 +87,23 @@ namespace RealSteel.Boss.JunkWheeler
                 }
 
                 // 3단계: 급강하 직전 공중 정지 (예고)
+                if (OwnerBoss.Animation != null)
+                {
+                    OwnerBoss.Animation.PlaySlamFall();
+                }
+
                 await UniTask.Delay(TimeSpan.FromSeconds(hoverDuration), cancellationToken: token);
 
                 // 4단계: 급강하 내려찍기 (지면 충돌)
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
 
-                // 착지 충격 연출 (바닥 찌그러짐)
+                // 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
+                if (OwnerBoss.Animation != null)
+                {
+                    OwnerBoss.Animation.PlaySlamLand();
+                }
+
                 _currentTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.35f, -0.35f, 0f), 0.25f);
                 await _currentTween.ToUniTask(cancellationToken: token);
                 Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅!)</color>");
@@ -89,6 +112,10 @@ namespace RealSteel.Boss.JunkWheeler
                 if (CheckNailBoardInteraction())
                 {
                     Debug.Log("<color=red>[JunkWheelerSlamPattern] ▶ 고철 못판 착지 감지! 패턴 즉시 중단 및 4초 그로기 전이!</color>");
+                    if (OwnerBoss.Animation != null)
+                    {
+                        OwnerBoss.Animation.PlayGroggy();
+                    }
                     InterruptPattern(InterruptReason.GimmickGroggy);
                     return; // 남은 내려찍기 회차 즉시 중단
                 }
@@ -101,6 +128,12 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     await UniTask.Delay(TimeSpan.FromSeconds(0.3f), cancellationToken: token);
                 }
+            }
+
+            // 모든 회차 종료 후 Idle 복귀
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayIdle();
             }
         }
 

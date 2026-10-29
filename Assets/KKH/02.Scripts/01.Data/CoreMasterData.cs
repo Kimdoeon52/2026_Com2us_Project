@@ -109,6 +109,52 @@ public class CoreMasterData : ScriptableObject
     }
 
     /// <summary>
+    /// 기획서 §6.5 레벨업 필요 경험치 공식:
+    /// 필요 EXP = 230 × 1.085^(Lv − 1), 10단위 반올림
+    /// </summary>
+    public static int CalculateRequiredExpByFormula(int level)
+    {
+        if (level < 1 || level >= MaxLevel) return 0;
+        double raw = 230.0 * System.Math.Pow(1.085, level - 1);
+        return (int)(System.Math.Round(raw / 10.0) * 10);
+    }
+
+    /// <summary>
+    /// 기획서 §6.7 레벨별 방어력에 따른 피해 감소율 산출:
+    /// 피해 감소율 = 방어력 / (방어력 + 100)
+    /// </summary>
+    public float GetDamageReductionRate(int level = -1)
+    {
+        int def = GetDefense(level);
+        return (float)def / (def + 100f);
+    }
+
+    /// <summary>
+    /// 기획서 §6.7 레벨별 유효 체력(EHP) 산출:
+    /// EHP = HP / (1 - 피해 감소율) = HP * (방어력 + 100) / 100
+    /// </summary>
+    public int GetEHP(int level = -1)
+    {
+        int hp = GetMaxHp(level);
+        int def = GetDefense(level);
+        return Mathf.RoundToInt((float)hp * (def + 100f) / 100f);
+    }
+
+    /// <summary>
+    /// 특정 레벨까지의 총 누적 경험치 산출 (Lv.30 기준 26,120 EXP)
+    /// </summary>
+    public int GetCumulativeEXP(int level)
+    {
+        int lv = Mathf.Clamp(level, 1, MaxLevel);
+        int total = 0;
+        for (int i = 0; i < lv - 1; i++)
+        {
+            total += requiredEXPTable[i];
+        }
+        return total;
+    }
+
+    /// <summary>
     /// 패배 시 불안정한 코어 복구 비용 산출 (기획서 공식: 100G + Lv * 50G)
     /// </summary>
     public int GetRecoveryCost(int level = -1)

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using RealSteel.Boss.FSM;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.Core
 {
@@ -16,9 +17,24 @@ namespace RealSteel.Boss.Core
         [SerializeField] protected int currentHpView;
         [SerializeField] protected bool isGroggyView;
 
+        [Header("3. Camera Bounds (X-Axis)")]
+        [SerializeField] protected bool clampToCameraBounds = true;
+        [SerializeField] protected float cameraEdgePadding = 0.65f;
+        [SerializeField] protected Camera targetCamera;
+
+        public Camera TargetCamera
+        {
+            get => targetCamera != null ? targetCamera : Camera.main;
+            set => targetCamera = value;
+        }
+
         public BossMasterData MasterData => masterData;
         public BossSnapshot Snapshot { get; protected set; }
         public BossStateMachine StateMachine { get; protected set; }
+        public BossAnimationController Animation => animationController;
+
+        [Header("4. 애니메이션 컨트롤러 (미할당 시 자동 탐색)")]
+        [SerializeField] protected BossAnimationController animationController;
 
         protected readonly Dictionary<string, BossGimmickBase> gimmickRegistry = new();
         protected readonly List<BossPatternGimmickBase> activePatternPool = new();
@@ -53,6 +69,49 @@ namespace RealSteel.Boss.Core
             }
         }
 
+        protected virtual void LateUpdate()
+        {
+            if (clampToCameraBounds)
+            {
+                // Y축(점프/급강하)은 완전히 자유롭게 유지하고, X축 위치만 카메라 화면 내로 보정
+                float clampedX = ClampToCameraX(transform.position.x);
+                if (!Mathf.Approximately(clampedX, transform.position.x))
+                {
+                    transform.position = new Vector3(clampedX, transform.position.y, transform.position.z);
+                }
+            }
+        }
+
+        public bool TryGetCameraBoundsX(out float minX, out float maxX, float padding = -1f)
+        {
+            float pad = padding >= 0f ? padding : cameraEdgePadding;
+            Camera cam = TargetCamera;
+
+            if (cam == null)
+            {
+                minX = float.MinValue;
+                maxX = float.MaxValue;
+                return false;
+            }
+
+            float distance = Mathf.Abs(cam.transform.position.z - transform.position.z);
+            Vector3 leftPoint = cam.ViewportToWorldPoint(new Vector3(0f, 0.5f, distance));
+            Vector3 rightPoint = cam.ViewportToWorldPoint(new Vector3(1f, 0.5f, distance));
+
+            minX = Mathf.Min(leftPoint.x, rightPoint.x) + pad;
+            maxX = Mathf.Max(leftPoint.x, rightPoint.x) - pad;
+            return true;
+        }
+
+        public float ClampToCameraX(float desiredX, float padding = -1f)
+        {
+            if (TryGetCameraBoundsX(out float minX, out float maxX, padding))
+            {
+                return Mathf.Clamp(desiredX, minX, maxX);
+            }
+            return desiredX;
+        }
+
         protected virtual void OnDestroy()
         {
             CancelCurrentStateToken();
@@ -64,6 +123,7 @@ namespace RealSteel.Boss.Core
         public void InitializeBoss()
         {
             SetupSnapshot();
+            SetupAnimationController();
 
             // CombatDataHub에 1:1 보스전 자동 바인딩
             if (CombatDataHub.Instance != null && Snapshot != null)
@@ -77,6 +137,18 @@ namespace RealSteel.Boss.Core
             OnBossInitialized(); // 구체 보스 훅
 
             StartCombatLoop();
+        }
+
+        protected virtual void SetupAnimationController()
+        {
+            if (animationController == null)
+            {
+                animationController = GetComponentInChildren<BossAnimationController>(true);
+            }
+            if (animationController == null)
+            {
+                animationController = gameObject.AddComponent<BossAnimationController>();
+            }
         }
 
         protected virtual void SetupSnapshot()

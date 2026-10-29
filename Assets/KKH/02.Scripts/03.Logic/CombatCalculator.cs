@@ -19,6 +19,44 @@ public static class CombatCalculator
         return Mathf.Max(1, Mathf.RoundToInt(rawDamage * multiplier));
     }
 
+    /// <summary>
+    /// 기획서 §4.7 피해 감소율 공식:
+    /// 피해 감소율 = 방어력 / (방어력 + 100)
+    /// </summary>
+    public static float CalculateDamageReductionRate(int defense)
+    {
+        float def = Mathf.Max(0, defense);
+        return def / (def + 100f);
+    }
+
+    /// <summary>
+    /// 기획서 §6.7 유효 체력(EHP) 계산 공식:
+    /// EHP = HP / (1 - 피해 감소율) = HP * (방어력 + 100) / 100
+    /// </summary>
+    public static int CalculateEHP(int hp, int defense)
+    {
+        float def = Mathf.Max(0, defense);
+        return Mathf.RoundToInt((float)hp * (def + 100f) / 100f);
+    }
+
+    /// <summary>
+    /// 기획서 §4.3.2 수치 공격력 산출 공식:
+    /// 공격력 = 기본 공격력 + ((왼팔 공격력 + 오른팔 공격력) / 2)
+    /// </summary>
+    public static int CalculateTotalAttackPower(int coreBaseAtk, int leftArmAtk, int rightArmAtk)
+    {
+        return coreBaseAtk + Mathf.RoundToInt((leftArmAtk + rightArmAtk) * 0.5f);
+    }
+
+    /// <summary>
+    /// 기획서 §4.3.4 이동 속도 산출 공식:
+    /// 이동 속도 = (왼다리 속도 + 오른다리 속도) / 2
+    /// </summary>
+    public static float CalculateMoveSpeed(float leftLegSpeed, float rightLegSpeed)
+    {
+        return (leftLegSpeed + rightLegSpeed) * 0.5f;
+    }
+
     // ========================================================================
     // 1. [모드 1] 로봇 vs 로봇 1:1 대전 판정 (플레이어 vs 일반 적 NPC A·B·C)
     // ========================================================================

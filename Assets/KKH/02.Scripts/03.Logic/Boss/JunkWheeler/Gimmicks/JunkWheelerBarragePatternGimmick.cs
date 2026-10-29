@@ -4,83 +4,93 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Core;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.JunkWheeler
 {
     /// <summary>
     /// [정크 휠러 바이킹 순차 반원 탄막 기믹 (JunkWheelerBarragePatternGimmick)]
-    /// 기획서 §6.18 및 §3.2 (4):
-    /// 1. 보스 본체는 지상 유지, 등 뒤의 타이어를 [보스와 플레이어의 중간 상단]으로 사출 (기본 높이 1.7m).
-    /// 2. 타이어 부위 파괴 시 사출 높이 30% 감축 (1.7m ➔ 1.19m).
-    /// 3. 사출된 타이어에서 180도 지상 반원 호를 따라 15도 간격(0~12번)으로 순차적 탄환 투사:
-    ///    - 순방향: 0번(180°) ➔ 12번(360°) 차례대로 발사 (틱-틱-틱...)
-    ///    - 정점 딜레이: 바이킹 진자 최고점 도달 후 짧은 반전 대기 (0.2초)
-    ///    - 역방향: 12번(360°) ➔ 0번(180°) 역순으로 차례대로 발사
-    /// 4. 발사 시퀀스 완료 후 타이어가 보스 본체로 고속 회수.
+    /// 기획서 §6.18 및 §3.2 (4) (최신 개편 사양):
+    /// 1. 타이어 사출 대신 보스 본체가 직접 [보스와 플레이어의 중간 상단]으로 도약 (기본 높이 1.7m).
+    /// 2. 공중에서 몸체를 회전(Roll)하며 지상 반원 호를 따라 순차적 탄환 투사:
+    ///    - 순방향: 0번(180°) ➔ 끝번(360°) 차례대로 발사 (틱-틱-틱...)
+    ///    - 정점 딜레이: 바이킹 진자 최고점 도달 후 반전 대기 (turnaroundDelay)
+    ///    - 역방향: 끝번(360°) ➔ 0번(180°) 역순으로 차례대로 발사
+    /// 3. 타이어 부위 파괴 시 도약 높이 30% 감축 (1.7m ➔ 1.19m) -> 플레이어 회피 용이.
+    /// 4. 발사 완료 후 보스 본체가 지면으로 고속 착지(Slam Land)하며 바닥 충격 연출 후 Idle 복귀.
     /// </summary>
     public class JunkWheelerBarragePatternGimmick : BossPatternGimmickBase
     {
-        [Header("사출 및 탄막 파라미터")]
+        [Header("도약 및 탄막 파라미터")]
+        [Tooltip("공중 도약 높이 (기준 1.7m)")]
         [SerializeField] private float launchHeight = 1.7f;
-        [SerializeField] private float launchDuration = 0.35f;
-        [SerializeField] private float bulletInterval = 0.4f;
+        [Tooltip("공중 도약 상승 시간")]
+        [SerializeField] private float launchDuration = 0.4f;
+        [Tooltip("탄막 발사 후 지면 착지 급강하 시간")]
+        [SerializeField] private float landDuration = 0.25f;
+        [Tooltip("탄환 발사 간격 (초)")]
+        [SerializeField] private float bulletInterval = 0.35f;
+        [Tooltip("바이킹 진자 반전 정점 대기 시간 (초)")]
         [SerializeField] private float turnaroundDelay = 0.2f;
+        [Tooltip("스윕 반복 횟수 (기본 1회: 왕복 1세트)")]
         [SerializeField] private int sweepRounds = 1;
+        [Tooltip("탄환 투사 속도")]
         [SerializeField] private float bulletSpeed = 4.0f;
-        [Tooltip("1회 스윕당 발사할 탄환 개수 (기본 7발 권장: 30도 간격으로 널널해짐)")]
+        [Tooltip("1회 스윕당 발사할 탄환 개수 (기본 7발 권장: 30도 간격)")]
         [SerializeField] private int bulletCountPerSweep = 7;
         [SerializeField] private GameObject bulletPrefab;
-        [SerializeField] private GameObject tirePrefab;
 
-        private GameObject _activeTireObject;
-        private Tweener _tireMoveTween;
-        private Tweener _tireRotateTween;
-        private Tweener _bossTween;
+        private Tweener _bossMoveTween;
+        private Tweener _bossPunchTween;
         private bool _isTireBrokenDebuffed = false;
+        private float _groundY;
 
         public void ApplyTireBrokenDebuff(bool debuffed)
         {
             _isTireBrokenDebuffed = debuffed;
-            Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 타이어 파괴 디버프 적용 상태: {_isTireBrokenDebuffed} (사출 높이: {(debuffed ? launchHeight * 0.7f : launchHeight):F2}m)</color>");
+            Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 타이어 파괴 디버프 적용 상태: {_isTireBrokenDebuffed} (도약 높이: {(debuffed ? launchHeight * 0.7f : launchHeight):F2}m)</color>");
         }
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
         {
             if (OwnerBoss == null) return;
 
-            // 1단계: 보스와 플레이어의 중간 지점 상단(Midpoint Apex) 좌표 산출
+            // 1단계: 원래 지면 Y좌표 기록 및 중간 상단(Apex) 도약 좌표 산출
+            _groundY = OwnerBoss.transform.position.y;
             Vector3 apexPos = CalculateMidpointApex();
 
-            // 2단계: 등 뒤의 타이어를 중간 상단으로 고속 사출
-            _activeTireObject = SpawnOrGetTireObject(OwnerBoss.transform.position);
+            Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 보스 본체 공중 도약 개시 ➔ {apexPos}</color>");
 
-            _tireMoveTween = _activeTireObject.transform.DOMove(apexPos, launchDuration).SetEase(Ease.OutBack);
-            _tireRotateTween = _activeTireObject.transform.DORotate(new Vector3(0, 0, -360), launchDuration, RotateMode.FastBeyond360);
-            _bossTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.12f, -0.12f, 0f), 0.25f);
+            // 2단계: 공중 회전 모션 재생 및 본체 직접 도약
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayRollBarrage();
+            }
 
-            await _tireMoveTween.ToUniTask(cancellationToken: token);
+            _bossMoveTween = OwnerBoss.transform.DOMove(apexPos, launchDuration).SetEase(Ease.OutQuad);
+            await _bossMoveTween.ToUniTask(cancellationToken: token);
 
-            // 3단계: 바이킹 진자 순차 탄막 (15도 간격, 0번~12번 순차 발사 후 12번~0번 역순 복귀)
+            // 3단계: 바이킹 진자 순차 탄막 발사 (보스 본체 중심에서 투사)
             int maxIndex = Mathf.Max(1, bulletCountPerSweep - 1);
             float angleStep = 180f / maxIndex;
-            Vector3 fireOrigin = _activeTireObject.transform.position;
 
             for (int round = 0; round < sweepRounds; round++)
             {
                 token.ThrowIfCancellationRequested();
 
-                // [순방향 스윕]: 0번부터 12번까지 차례대로 발사 (180도 -> 360도)
-                Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 바이킹 탄막 정방향 스윕 시작 (0번 ➔ 12번)</color>");
+                // [순방향 스윕]: 0번부터 maxIndex까지 순차 발사 (180도 -> 360도)
+                Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 바이킹 탄막 정방향 스윕 (0번 ➔ {maxIndex}번)</color>");
                 for (int i = 0; i <= maxIndex; i++)
                 {
                     token.ThrowIfCancellationRequested();
 
+                    Vector3 fireOrigin = OwnerBoss.transform.position;
                     float angle = 180f + (i * angleStep);
                     FireSingleBullet(fireOrigin, angle);
 
-                    // 타이어 틸트 연출
-                    float tiltZ = Mathf.Sin((i / (float)maxIndex) * Mathf.PI) * 20f;
-                    _activeTireObject.transform.rotation = Quaternion.Euler(0, 0, tiltZ);
+                    // 본체 반동 틸트
+                    float tiltZ = Mathf.Sin((i / (float)maxIndex) * Mathf.PI) * 15f;
+                    OwnerBoss.transform.rotation = Quaternion.Euler(0, 0, tiltZ);
 
                     await UniTask.Delay(TimeSpan.FromSeconds(bulletInterval), cancellationToken: token);
                 }
@@ -88,17 +98,18 @@ namespace RealSteel.Boss.JunkWheeler
                 // [정점 대기 (바이킹 반전)]
                 await UniTask.Delay(TimeSpan.FromSeconds(turnaroundDelay), cancellationToken: token);
 
-                // [역방향 스윕]: 12번부터 0번으로 거꾸로 발사
-                Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 바이킹 탄막 역방향 스윕 시작 (12번 ➔ 0번)</color>");
+                // [역방향 스윕]: maxIndex부터 0번으로 거꾸로 발사
+                Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 바이킹 탄막 역방향 스윕 ({maxIndex}번 ➔ 0번)</color>");
                 for (int i = maxIndex; i >= 0; i--)
                 {
                     token.ThrowIfCancellationRequested();
 
+                    Vector3 fireOrigin = OwnerBoss.transform.position;
                     float angle = 180f + (i * angleStep);
                     FireSingleBullet(fireOrigin, angle);
 
-                    float tiltZ = -Mathf.Sin((i / (float)maxIndex) * Mathf.PI) * 20f;
-                    _activeTireObject.transform.rotation = Quaternion.Euler(0, 0, tiltZ);
+                    float tiltZ = -Mathf.Sin((i / (float)maxIndex) * Mathf.PI) * 15f;
+                    OwnerBoss.transform.rotation = Quaternion.Euler(0, 0, tiltZ);
 
                     await UniTask.Delay(TimeSpan.FromSeconds(bulletInterval), cancellationToken: token);
                 }
@@ -109,18 +120,34 @@ namespace RealSteel.Boss.JunkWheeler
                 }
             }
 
-            // 4단계: 타이어 회수
-            if (_activeTireObject != null)
+            // 본체 회전 복원
+            OwnerBoss.transform.rotation = Quaternion.identity;
+
+            // 4단계: 지면으로 착지 급강하 (X축은 체공 지점 유지, Y축은 원지면으로 복귀)
+            Vector3 currentPos = OwnerBoss.transform.position;
+            Vector3 landPos = new Vector3(currentPos.x, _groundY, currentPos.z);
+
+            if (OwnerBoss.Animation != null)
             {
-                _tireMoveTween = _activeTireObject.transform.DOMove(OwnerBoss.transform.position, 0.3f).SetEase(Ease.InQuad);
-                _tireRotateTween = _activeTireObject.transform.DORotate(new Vector3(0, 0, 720), 0.3f, RotateMode.FastBeyond360);
-                await _tireMoveTween.ToUniTask(cancellationToken: token);
+                OwnerBoss.Animation.PlaySlamFall();
+            }
 
-                _bossTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.2f, -0.2f, 0f), 0.2f);
-                await _bossTween.ToUniTask(cancellationToken: token);
+            Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 탄막 종료, 지면 착지 급강하 ➔ {landPos}</color>");
+            _bossMoveTween = OwnerBoss.transform.DOMove(landPos, landDuration).SetEase(Ease.InQuad);
+            await _bossMoveTween.ToUniTask(cancellationToken: token);
 
-                Destroy(_activeTireObject);
-                _activeTireObject = null;
+            // 5단계: 착지 충격 연출 및 Idle 복귀
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlaySlamLand();
+            }
+
+            _bossPunchTween = OwnerBoss.transform.DOPunchScale(new Vector3(0.25f, -0.25f, 0f), 0.2f);
+            await _bossPunchTween.ToUniTask(cancellationToken: token);
+
+            if (OwnerBoss.Animation != null)
+            {
+                OwnerBoss.Animation.PlayIdle();
             }
         }
 
@@ -142,6 +169,11 @@ namespace RealSteel.Boss.JunkWheeler
                 float forwardDir = OwnerBoss.transform.localScale.x >= 0 ? -1f : 1f;
                 midX = bossPos.x + (forwardDir * 2.0f);
                 baseY = bossPos.y;
+            }
+
+            if (OwnerBoss != null)
+            {
+                midX = OwnerBoss.ClampToCameraX(midX, 1.0f);
             }
 
             bool isTireBroken = _isTireBrokenDebuffed;
@@ -199,32 +231,6 @@ namespace RealSteel.Boss.JunkWheeler
             Debug.DrawRay(originPos, dir * 2.0f, Color.yellow, 0.5f);
         }
 
-        private GameObject SpawnOrGetTireObject(Vector3 spawnPos)
-        {
-            if (tirePrefab != null)
-            {
-                return Instantiate(tirePrefab, spawnPos, Quaternion.identity);
-            }
-
-            GameObject tire = new GameObject("BossFlyingTire");
-            tire.transform.position = spawnPos;
-            var sr = tire.AddComponent<SpriteRenderer>();
-
-            var bossSr = OwnerBoss.GetComponentInChildren<SpriteRenderer>();
-            if (bossSr != null && bossSr.sprite != null)
-            {
-                sr.sprite = bossSr.sprite;
-                sr.color = new Color(0.25f, 0.25f, 0.25f, 1f);
-                tire.transform.localScale = OwnerBoss.transform.localScale * 0.65f;
-            }
-            else
-            {
-                tire.transform.localScale = Vector3.one * 0.7f;
-            }
-
-            return tire;
-        }
-
         private static Sprite _fallbackSprite;
         private static Sprite GetOrCreateFallbackBulletSprite()
         {
@@ -259,14 +265,12 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
-            if (_tireMoveTween != null && _tireMoveTween.IsActive()) _tireMoveTween.Kill();
-            if (_tireRotateTween != null && _tireRotateTween.IsActive()) _tireRotateTween.Kill();
-            if (_bossTween != null && _bossTween.IsActive()) _bossTween.Kill();
+            if (_bossMoveTween != null && _bossMoveTween.IsActive()) _bossMoveTween.Kill();
+            if (_bossPunchTween != null && _bossPunchTween.IsActive()) _bossPunchTween.Kill();
 
-            if (_activeTireObject != null)
+            if (OwnerBoss != null)
             {
-                Destroy(_activeTireObject);
-                _activeTireObject = null;
+                OwnerBoss.transform.rotation = Quaternion.identity;
             }
         }
     }

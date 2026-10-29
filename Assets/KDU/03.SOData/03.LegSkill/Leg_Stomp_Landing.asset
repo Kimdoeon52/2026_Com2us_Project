@@ -1,0 +1,77 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
+  m_Name: Leg_Stomp_Landing
+  m_EditorClassIdentifier: 
+  actionName: Leg_Stomp_Landing
+  source: 1
+  requiredPart: 3
+  startupFrames: 0
+  activeFrames: 12
+  recoveryFrames: 12
+  isInvincibleDuringActive: 1
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 30
+  hitIntervalFrames: 0
+  hitStopScale: 1
+  animationClipName: 
+  activeClipName: 
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
+  launchVelocity: 0
+  advanceDistance: 0
+  advanceDuringActiveOnly: 0
+  trailAfterImageInterval: 0
+  groundOnly: 0
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
+  flame: {fileID: 0}
+  perBoxDamage: 0
+  cooldownFrames: 0
+  cooldownOwner: {fileID: 0}
+  cylinderCost: 0
+  fallbackAction: {fileID: 0}
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -3
+      y: 0
+      width: 6
+      height: 3
+    rotation: 0
+    damageScale: 0
+    anchor: 3
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0

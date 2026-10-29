@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0e749e9de004d1ab47a1a147200be1f, type: 3}
+  m_Name: Leg_EnergyBarrier
+  m_EditorClassIdentifier: 
+  actionName: Leg_EnergyBarrier
+  source: 1
+  requiredPart: 3
+  startupFrames: 6
+  activeFrames: 48
+  recoveryFrames: 12
+  isInvincibleDuringActive: 0
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 15
+  hitIntervalFrames: 0
+  hitStopScale: 1
+  animationClipName: 
+  activeClipName: 
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
+  launchVelocity: 0
+  advanceDistance: 1
+  advanceDuringActiveOnly: 1
+  trailAfterImageInterval: 0
+  groundOnly: 1
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
+  flame: {fileID: 0}
+  perBoxDamage: 0
+  cooldownFrames: 540
+  cooldownOwner: {fileID: 0}
+  cylinderCost: 0
+  fallbackAction: {fileID: 0}
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0.8
+      height: 0.6
+    rotation: 0
+    damageScale: 0
+    anchor: 3
+    startOffset: 42
+    length: 6
+    startFrame: 0
+    endFrame: 0
+  chargedVariant: {fileID: 0}
+  chargeThresholdFrames: 18
+  autoReleaseFrames: 0
+  barrierRect:
+    serializedVersion: 2
+    x: 0.1
+    y: 0
+    width: 0.3
+    height: 0.6
+  meleeDamageScale: 0.5

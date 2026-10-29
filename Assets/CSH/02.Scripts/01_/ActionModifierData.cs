@@ -18,7 +18,6 @@ public class ActionModifierData : EquipmentEffect
     /// <summary>이 수정자가 주어진 행동에 적용되는지</summary>
     public bool Matches(ActionData action)
     {
-        // action.Source
         if (action == null) return false;
         if (!limitToRequiredPart && action.RequiredPart != SourcePart) return false;
         return true;

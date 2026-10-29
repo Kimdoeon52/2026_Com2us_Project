@@ -18,13 +18,13 @@ public class StompData : SkillData
 
         // 공중인지 확인한 뒤에 비용을 내야 하므로, 시작할 때 자동으로 내지 않는다
         protected override bool CommitOnBegin => false;
-
+ 
         protected override void OnBegin()
         {
             bool grounded = Ctx.Mover == null || Ctx.Mover.IsGrounded;
             if (grounded)
             {
-                Cancel(0f);   // 땅이면 시작 취소. 쿨타임 0, 탄 소모 없음
+                Commit();
                 return;
             }
             Commit();         // 공중 확인됨 — 쿨타임·탄 확정

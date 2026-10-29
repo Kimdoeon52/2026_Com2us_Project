@@ -792,6 +792,7 @@ GameObject:
   - component: {fileID: 491960579}
   - component: {fileID: 491960578}
   - component: {fileID: 491960577}
+  - component: {fileID: 491960591}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -811,12 +812,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cffbd7e0bf78f664991101d1a3646e00, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  basic: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
+  basic: {fileID: 11400000, guid: 94c8d8d7a06232b4b96f73048748b386, type: 2}
   leftArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  rightArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  leftLeg: {fileID: 0}
-  rightLeg: {fileID: 0}
-  dodge: {fileID: 0}
+  rightArm: {fileID: 11400000, guid: 10c7b185b91f0444592897e38d32924a, type: 2}
+  leftLeg: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
+  rightLeg: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
+  dodge: {fileID: 11400000, guid: 7082bb52b41adbd48a1cae793e5a85a4, type: 2}
 --- !u!114 &491960578
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -856,7 +857,7 @@ MonoBehaviour:
   idleBobAmplitude: 0.03
   idleBobFrequency: 1.2
   idleSmoothTime: 0.1
-  fallbackLocalTarget: {x: 1.2, y: 0.6, z: -0.1}
+  fallbackLocalTarget: {x: 1.2, y: 0.6}
   multiDroneSpacing: 0.3
   hitBoxZOffset: -0.1
   sortieMoveCurve:
@@ -1120,6 +1121,22 @@ Transform:
   - {fileID: 1672628629}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &491960591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 491960576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e606a1c8ba26aa84a972c4c8c4b6bbaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  idleAction: {fileID: 0}
+  allActions: []
+  hitReaction: {fileID: 0}
+  landAction: {fileID: 0}
 --- !u!1 &688707214
 GameObject:
   m_ObjectHideFlags: 0
@@ -1568,6 +1585,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17aa980fba1250b4eacc6f52574df870, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hitStopSettings: {fileID: 0}
 --- !u!1 &1007397701
 GameObject:
   m_ObjectHideFlags: 0

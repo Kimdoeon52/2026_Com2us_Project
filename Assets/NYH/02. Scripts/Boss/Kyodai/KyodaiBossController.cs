@@ -34,10 +34,30 @@ public class KyodaiBossController : BossControllerBase
     public float ArenaWidth => arenaMaxX - arenaMinX;
     public float GroundY => groundY;
 
+    private KyodaiLimb[] limbs;
+
+    /// <summary>부위 이름으로 KyodaiLimb 찾기 (모션 재생·미리보기용)</summary>
+    public KyodaiLimb FindLimb(string partId)
+    {
+        if (limbs == null || limbs.Length == 0) limbs = GetComponentsInChildren<KyodaiLimb>(true);
+        foreach (var limb in limbs) if (limb != null && limb.PartId == partId) return limb;
+        return null;
+    }
+
+    public KyodaiLimb[] Limbs
+    {
+        get
+        {
+            if (limbs == null || limbs.Length == 0) limbs = GetComponentsInChildren<KyodaiLimb>(true);
+            return limbs;
+        }
+    }
+
     protected override void RegisterGimmicks()
     {
-        foreach (var gimmick in GetComponentsInChildren<BossGimmickBase>(true))
-            RegisterGimmick(gimmick);
+        // 꺼둔 패턴(오브젝트 비활성·컴포넌트 체크 해제)은 등록하지 않는다 — 옛 패턴을 끄고 새 패턴만 쓰게
+        foreach (var gimmick in GetComponentsInChildren<BossGimmickBase>(false))
+            if (gimmick.enabled) RegisterGimmick(gimmick);
 
         allPatterns.Clear();
         allPatterns.AddRange(activePatternPool);

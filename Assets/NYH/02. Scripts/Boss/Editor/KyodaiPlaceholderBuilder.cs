@@ -134,6 +134,157 @@ public static class KyodaiPlaceholderBuilder
                   "Player에 HurtboxColliderSync, 씬에 DummyBattleBootstrap·HitDetection이 있어야 서로 때린다.");
     }
 
+    // 2026-10-29: 스튜디오 안에 넣은 리깅 모델을 선택하고 누르면 — KyodaiRig를 붙이고, 양팔 KyodaiLimb를 그 모델의 뼈로 연결하고,
+    // 임시 상자 로봇(몸·머리·손·팔)을 끈다. 뼈 이름은 Unity 표준(RightUpperArm 등) 기준
+    [MenuItem("NYH/쿄다이/선택한 리깅 모델 연결")]
+    private static void ConnectRig()
+    {
+        var model = Selection.activeGameObject;
+        if (model == null || model.GetComponentInChildren<SkinnedMeshRenderer>(true) == null)
+        {
+            EditorUtility.DisplayDialog("쿄다이", "Hierarchy에서 리깅된 모델(SkinnedMeshRenderer가 있는 오브젝트)을 먼저 선택하세요.", "확인");
+            return;
+        }
+        var studio = model.GetComponentInParent<PixelStudio>();
+        if (studio == null)
+        {
+            EditorUtility.DisplayDialog("쿄다이", "모델이 '쿄다이 스튜디오' 안에 있어야 합니다. 먼저 드래그해서 넣으세요.", "확인");
+            return;
+        }
+
+        var names = new System.Collections.Generic.HashSet<string>();
+        foreach (var t in model.GetComponentsInChildren<Transform>(true)) names.Add(t.name);
+
+        var rig = model.GetComponent<KyodaiRig>();
+        if (rig == null) rig = Undo.AddComponent<KyodaiRig>(model);
+
+        int connected = 0;
+        foreach (var limb in Object.FindObjectsByType<KyodaiLimb>(FindObjectsSortMode.None))
+        {
+            string side = limb.PartId == "오른팔" ? "Right" : limb.PartId == "왼팔" ? "Left" : null;
+            if (side == null) continue;
+            if (!names.Contains($"{side}UpperArm") || !names.Contains($"{side}LowerArm") || !names.Contains($"{side}Hand"))
+            {
+                Debug.LogWarning($"[Kyodai] {limb.PartId}: 모델에 {side}UpperArm/{side}LowerArm/{side}Hand 뼈가 없어서 연결 안 함");
+                continue;
+            }
+            Undo.RecordObject(limb, "리깅 모델 연결");
+            SetFields(limb, so =>
+            {
+                so.FindProperty("rig").objectReferenceValue = rig;
+                so.FindProperty("upperBone").stringValue = $"{side}UpperArm";
+                so.FindProperty("lowerBone").stringValue = $"{side}LowerArm";
+                so.FindProperty("endBone").stringValue = $"{side}Hand";
+                so.FindProperty("effector").objectReferenceValue = null;   // 시작할 때 손 위치에 IK 타깃 자동 생성
+                so.FindProperty("renderRoot").objectReferenceValue = null; // 쪼갠 팔 메쉬를 자동으로 씀
+                so.FindProperty("segment").objectReferenceValue = null;
+                so.FindProperty("shoulder").objectReferenceValue = null;
+            });
+            connected++;
+        }
+
+        // 임시 상자 로봇 끄기 — 새 모델이 들어 있는 가지는 남긴다
+        foreach (Transform child in studio.transform)
+        {
+            if (!child.name.StartsWith("모델 (임시")) continue;
+            foreach (Transform part in child)
+            {
+                if (model.transform == part || model.transform.IsChildOf(part)) continue;
+                Undo.RecordObject(part.gameObject, "리깅 모델 연결");
+                part.gameObject.SetActive(false);
+            }
+        }
+
+        EditorSceneManager.MarkSceneDirty(model.scene);
+        Debug.Log($"[Kyodai] 리깅 모델 '{model.name}' 연결 — 팔 {connected}개. 플레이하면 메쉬를 부위별로 쪼개고 팔이 IK로 움직인다");
+    }
+
+    // 2026-10-29: 코드로 짠 손바닥 압착(KyodaiPalmPressPattern)을 같은 타이밍의 모션 에셋 + KyodaiMotionPattern으로 바꾼다.
+    // 옛 패턴 오브젝트는 끈다(지우지 않음). 그다음부터는 모션 창에서 손으로 다듬는다
+    [MenuItem("NYH/쿄다이/손바닥 압착을 모션 패턴으로 바꾸기")]
+    private static void ConvertPalmPress()
+    {
+        var boss = Object.FindAnyObjectByType<KyodaiBossController>();
+        if (boss == null) { EditorUtility.DisplayDialog("쿄다이", "씬에 쿄다이가 없습니다. 먼저 '임시 보스 만들기'를 하세요.", "확인"); return; }
+        var old = boss.GetComponentInChildren<KyodaiPalmPressPattern>(true);
+
+        BossPatternData patternData = null;
+        GroundTelegraph telegraph = boss.GetComponentInChildren<GroundTelegraph>(true);
+        string partId = "오른팔";
+        float hover = 5f, slam = 0.18f, back = 0.8f, linger = 3f, thickness = 1.5f, crush = 3f, ratio = 1f / 3f;
+        if (old != null)
+        {
+            var so = new SerializedObject(old);
+            patternData = so.FindProperty("patternData").objectReferenceValue as BossPatternData;
+            if (so.FindProperty("telegraph").objectReferenceValue is GroundTelegraph t) telegraph = t;
+            if (so.FindProperty("limb").objectReferenceValue is KyodaiLimb l) partId = l.PartId;
+            hover = so.FindProperty("hoverHeight").floatValue;
+            slam = so.FindProperty("slamSeconds").floatValue;
+            back = so.FindProperty("returnSeconds").floatValue;
+            linger = so.FindProperty("lingerSeconds").floatValue;
+            thickness = so.FindProperty("palmThickness").floatValue;
+            crush = so.FindProperty("crushHeight").floatValue;
+            ratio = so.FindProperty("areaRatio").floatValue;
+        }
+        if (patternData == null) patternData = AssetDatabase.LoadAssetAtPath<BossPatternData>($"{DataFolder}/Kyodai_손바닥압착.asset");
+
+        KyodaiLimb limb = boss.FindLimb(partId);
+        float depth = limb != null ? limb.ForegroundDepth : ForegroundDepth;
+        float tell = patternData != null ? patternData.tellDuration : 1.2f;
+        float width = boss.ArenaWidth * ratio;
+
+        float tSlam = tell, tHit = tell + slam, tBack = tHit + linger, tEnd = tBack + back;
+        var motion = ScriptableObject.CreateInstance<KyodaiMotionData>();
+        motion.duration = tEnd + 0.05f;
+        motion.targetMargin = width * 0.5f;
+        motion.tracks.Add(new KyodaiMotionTrack
+        {
+            partId = partId,
+            hurtSize = new Vector2(width, thickness),
+            keys =
+            {
+                new KyodaiMotionKey { time = 0f, rest = true },
+                new KyodaiMotionKey { time = tSlam, offset = new Vector2(0f, hover), depth = depth, ease = DG.Tweening.Ease.OutCubic },
+                new KyodaiMotionKey { time = tHit, offset = new Vector2(0f, thickness * 0.5f), depth = depth, ease = DG.Tweening.Ease.InQuad },
+                new KyodaiMotionKey { time = tBack, offset = new Vector2(0f, thickness * 0.5f), depth = depth, ease = DG.Tweening.Ease.Linear },
+                new KyodaiMotionKey { time = tEnd, rest = true, ease = DG.Tweening.Ease.InOutSine },
+            },
+            layers =
+            {
+                new KyodaiLayerMark { time = 0f, layer = LimbLayer.Transition },
+                new KyodaiLayerMark { time = tSlam, layer = LimbLayer.Attack },
+                new KyodaiLayerMark { time = tHit, layer = LimbLayer.Linger },
+                new KyodaiLayerMark { time = tBack, layer = LimbLayer.Return },
+                new KyodaiLayerMark { time = tEnd, layer = LimbLayer.Background },
+            },
+        });
+        motion.events.Add(new KyodaiMotionEvent { time = 0f, type = KyodaiMotionEventType.TelegraphShow, center = Vector2.zero, size = new Vector2(width, 0.5f) });
+        motion.events.Add(new KyodaiMotionEvent { time = tHit, type = KyodaiMotionEventType.TelegraphHide });
+        motion.events.Add(new KyodaiMotionEvent { time = tHit, type = KyodaiMotionEventType.Hit, center = new Vector2(0f, crush * 0.5f), size = new Vector2(width, crush) });
+
+        string path = AssetDatabase.GenerateUniqueAssetPath($"{DataFolder}/Kyodai_손바닥압착_모션.asset");
+        EnsureFolder(DataFolder);
+        AssetDatabase.CreateAsset(motion, path);
+        AssetDatabase.SaveAssets();
+
+        var go = new GameObject("손바닥 압착 (모션)");
+        Undo.RegisterCreatedObjectUndo(go, "모션 패턴으로 바꾸기");
+        go.transform.SetParent(boss.transform, false);
+        var pattern = go.AddComponent<KyodaiMotionPattern>();
+        SetFields(pattern, so =>
+        {
+            so.FindProperty("patternData").objectReferenceValue = patternData;
+            so.FindProperty("motion").objectReferenceValue = motion;
+            so.FindProperty("telegraph").objectReferenceValue = telegraph;
+        });
+        if (old != null) { Undo.RecordObject(old.gameObject, "모션 패턴으로 바꾸기"); old.gameObject.SetActive(false); }
+
+        EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
+        Selection.activeObject = motion;
+        EditorWindow.GetWindow<KyodaiMotionWindow>("쿄다이 모션");
+        Debug.Log($"[Kyodai] 손바닥 압착 → 모션 패턴 ({path}). 옛 패턴 오브젝트는 꺼둠. 모션 창에서 다듬으면 됨");
+    }
+
     private static KyodaiLimb Arm(string name, Transform arenaRoot, Transform model, Transform body, float bodyH, float side,
                                   Vector3 handRest, Vector3 palmSize, KyodaiBossController boss)
     {

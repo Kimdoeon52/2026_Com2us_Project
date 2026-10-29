@@ -153,26 +153,35 @@ public class PixelStudio : MonoBehaviour
         return renderer;
     }
 
+    public int PixelsPerUnit => pixelsPerUnit;
+    public float PlaneZ => planeZ;
+
     /// <summary>스튜디오 안의 점이 경기장 어디에 보이는지 (경기장 평면 2D 좌표)</summary>
-    public Vector2 StudioToWorld(Vector3 studioPoint)
-    {
-        Vector3 vp = studioCamera.WorldToViewportPoint(studioPoint);
-        return new Vector2(arenaRect.xMin + vp.x * arenaRect.width, arenaRect.yMin + vp.y * arenaRect.height);
-    }
+    public Vector2 StudioToWorld(Vector3 studioPoint) => StudioToWorld(studioCamera, arenaRect, studioPoint);
 
     /// <summary>경기장의 이 자리에 보이려면 스튜디오 카메라에서 depth만큼 떨어진 어디에 둬야 하는지</summary>
-    public Vector3 WorldToStudio(Vector2 worldPoint, float depth)
-    {
-        float u = (worldPoint.x - arenaRect.xMin) / arenaRect.width;
-        float v = (worldPoint.y - arenaRect.yMin) / arenaRect.height;
-        return studioCamera.ViewportToWorldPoint(new Vector3(u, v, depth));
-    }
+    public Vector3 WorldToStudio(Vector2 worldPoint, float depth) => WorldToStudio(studioCamera, arenaRect, worldPoint, depth);
 
     /// <summary>스튜디오 카메라에서 depth만큼 떨어진 곳의 스튜디오 1칸이 경기장에서 몇 칸으로 보이는지</summary>
     public float WorldUnitsPerStudioUnit(float depth)
     {
         float frustumHeight = 2f * depth * Mathf.Tan(studioCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
         return arenaRect.height / frustumHeight;
+    }
+
+    // 같은 계산을 카메라·영역을 받아서 — 모션 창 편집 미리보기(플레이 전, 카메라 비율이 아직 안 맞춰진 때)가 쓴다.
+    // cam.aspect는 영역 비율과 같아야 한다
+    public static Vector2 StudioToWorld(Camera cam, Rect arena, Vector3 studioPoint)
+    {
+        Vector3 vp = cam.WorldToViewportPoint(studioPoint);
+        return new Vector2(arena.xMin + vp.x * arena.width, arena.yMin + vp.y * arena.height);
+    }
+
+    public static Vector3 WorldToStudio(Camera cam, Rect arena, Vector2 worldPoint, float depth)
+    {
+        float u = (worldPoint.x - arena.xMin) / arena.width;
+        float v = (worldPoint.y - arena.yMin) / arena.height;
+        return cam.ViewportToWorldPoint(new Vector3(u, v, depth));
     }
 
 #if UNITY_EDITOR

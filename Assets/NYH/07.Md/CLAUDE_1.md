@@ -85,8 +85,10 @@ Assets/NYH/02. Scripts/Combat/
 Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속하는 NYH 보스. 보스2 쿄다이는 남윤호 담당)
     Common/     BossHurtZone.cs(보스의 맞는 자리 + 부위 배율)  PixelStudio.cs(3D 모델 → 저해상도 → 경기장 판 2장)
                 GroundTelegraph.cs(바닥 예고 그림자)
-    Kyodai/     KyodaiBossController.cs  KyodaiLimb.cs(부위 = 레이어 규칙)  KyodaiPalmPressPattern.cs(패턴은 1개당 1클래스 — KKH 기믹 방식)
-    Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)
+    Kyodai/     KyodaiBossController.cs  KyodaiLimb.cs(부위 = 레이어 규칙)  KyodaiRig.cs(리깅 모델: 뼈 기준 메쉬 쪼개기 + 몸 따라오기 + IK 순서, 2026-10-29)  KyodaiPalmPressPattern.cs(패턴은 1개당 1클래스 — KKH 기믹 방식)
+                KyodaiMotionData.cs(동작 에셋: 손 키·레이어 띠·이벤트)  KyodaiMotionPlayer.cs(재생 — 게임·미리보기 공용)
+                KyodaiMotionPattern.cs(모션 에셋 재생 범용 패턴 — 이후 패턴은 에셋만 추가, 2026-10-29)
+    Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
 Assets/NYH/04. SO/Combat/

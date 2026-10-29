@@ -135,8 +135,11 @@ namespace RealSteel.Boss.JunkWheeler
 
         private async UniTaskVoid TransitToChargeLoopAsync(float delay)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(0.2f));
-            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            // Boss_Charge_Start 클립 길이(4프레임 @12fps = 0.333초)만큼 대기 후 전이 (마지막 프레임 잘림 방지)
+            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.34f), cancellationToken: this.GetCancellationTokenOnDestroy()).SuppressCancellationThrow();
+            if (canceled) return;
+            if (OwnerBoss != null && OwnerBoss.Animation != null
+                && OwnerBoss.Animation.CurrentStateHash == BossAnimationController.StateChargeStart)
             {
                 OwnerBoss.Animation.PlayChargeLoop();
             }
@@ -216,7 +219,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             // 4단계: 반대편 벽 충돌 임팩트 연출
-            _currentTween = OwnerBoss.transform.DOPunchScale(new Vector3(-0.25f, 0.25f, 0f), 0.2f);
+            _currentTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(-0.25f, 0.25f, 0f)), 0.2f);
             await _currentTween.ToUniTask(cancellationToken: token);
             Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 완료! (쿵!)</color>");
 
@@ -235,8 +238,12 @@ namespace RealSteel.Boss.JunkWheeler
 
         private async UniTaskVoid TransitToChargeRunAsync()
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(0.12f));
-            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            // Boss_Charge_Release 클립 길이(3프레임 @15fps = 0.2초) 이후 주행 루프로 전이
+            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy()).SuppressCancellationThrow();
+            if (canceled) return;
+            // 그사이 스턴/충돌 등으로 다른 모션이 재생됐다면 덮어쓰지 않음
+            if (OwnerBoss != null && OwnerBoss.Animation != null
+                && OwnerBoss.Animation.CurrentStateHash == BossAnimationController.StateChargeRelease)
             {
                 OwnerBoss.Animation.PlayChargeRun();
             }
@@ -297,24 +304,14 @@ namespace RealSteel.Boss.JunkWheeler
             }
             else
             {
-                _chargeDirection = OwnerBoss.transform.localScale.x >= 0 ? -1.0f : 1.0f;
+                // 스프라이트 기본 정면 = 우측(+X) 기준
+                _chargeDirection = OwnerBoss.transform.localScale.x >= 0 ? 1.0f : -1.0f;
             }
         }
 
         private void FaceDirection(float dirX)
         {
-            if (OwnerBoss == null) return;
-
-            if (OwnerBoss.Animation != null)
-            {
-                OwnerBoss.Animation.FaceDirection(dirX);
-            }
-            else
-            {
-                Vector3 scale = OwnerBoss.transform.localScale;
-                float targetSign = dirX < 0 ? 1.0f : -1.0f;
-                OwnerBoss.transform.localScale = new Vector3(Mathf.Abs(scale.x) * targetSign, scale.y, scale.z);
-            }
+            OwnerBoss?.FaceDirection(dirX);
         }
 
         private float CalculateTargetWallX(float currentX, float directionX)

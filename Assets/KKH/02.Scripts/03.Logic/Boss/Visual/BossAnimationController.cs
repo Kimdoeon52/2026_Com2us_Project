@@ -74,9 +74,16 @@ namespace RealSteel.Boss.Visual
         /// <summary>
         /// 특정 애니메이션 상태를 즉각 재생함.
         /// </summary>
-        public void Play(int stateHash, float normalizedTime = 0f)
+        /// <param name="forceRestart">false면 이미 같은 상태를 재생 중일 때 처음으로 되감지 않음 (루프 끊김 방지)</param>
+        public void Play(int stateHash, float normalizedTime = 0f, bool forceRestart = false)
         {
             if (animator == null || !animator.gameObject.activeInHierarchy) return;
+
+            if (!forceRestart && _currentHash == stateHash
+                && animator.GetCurrentAnimatorStateInfo(0).shortNameHash == stateHash)
+            {
+                return;
+            }
 
             _currentHash = stateHash;
             try
@@ -95,11 +102,20 @@ namespace RealSteel.Boss.Visual
         public void PlayChargeRelease() => Play(StateChargeRelease);
         public void PlayChargeRun() => Play(StateChargeRun);
         public void PlayRollBarrage() => Play(StateRollBarrage);
-        public void PlaySlamJump() => Play(StateSlamJump);
+        public void PlaySlamJump() => Play(StateSlamJump, 0f, true);
         public void PlaySlamFall() => Play(StateSlamFall);
-        public void PlaySlamLand() => Play(StateSlamLand);
+        public void PlaySlamLand() => Play(StateSlamLand, 0f, true);
         public void PlayGroggy() => Play(StateGroggy);
         public void PlayStun() => Play(StateStun);
+
+        /// <summary>
+        /// 좌우 반전(음수 scale.x) 상태에서도 Squash/Stretch 방향이 뒤집히지 않도록 펀치 벡터의 X 부호를 보정함.
+        /// </summary>
+        public static Vector3 FacingSafePunch(Transform target, Vector3 punch)
+        {
+            punch.x *= Mathf.Sign(target.localScale.x);
+            return punch;
+        }
     }
 }
 

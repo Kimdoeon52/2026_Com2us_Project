@@ -794,6 +794,7 @@ GameObject:
   - component: {fileID: 491960579}
   - component: {fileID: 491960578}
   - component: {fileID: 491960577}
+  - component: {fileID: 491960591}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -851,32 +852,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
-  prewarmCount: 4
-  orbitGroups:
-  - centerOffset: {x: 0, y: 0.45, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: 25}
-    speedDeg: 120
-    clockwise: 0
-    phaseOffsetDeg: 0
-  - centerOffset: {x: 0, y: 0.48, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: -25}
-    speedDeg: 90
-    clockwise: 1
-    phaseOffsetDeg: 120
-  - centerOffset: {x: 0, y: 0.44, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 60, y: 0, z: 0}
-    speedDeg: 150
-    clockwise: 0
-    phaseOffsetDeg: 240
-  orbitSmoothTime: 0.08
-  spawnOffset: {x: 0, y: 1.6, z: 0}
+  idleSlots:
+  - {x: -0.45, y: 0.65, z: 0.05}
+  - {x: -0.6, y: 0.45, z: 0.05}
+  - {x: -0.45, y: 0.25, z: 0.05}
+  idleBobAmplitude: 0.03
+  idleBobFrequency: 1.2
+  idleSmoothTime: 0.1
   fallbackLocalTarget: {x: 1.2, y: 1.2}
   multiDroneSpacing: 0.35
-  attackZOffset: -0.1
-  attackMoveCurve:
+  hitBoxZOffset: -0.1
+  sortieMoveCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -1172,6 +1158,26 @@ Transform:
   - {fileID: 1672628629}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &491960591
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 491960576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99f6f6395b2d7a44693577e57fa483c7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  skills:
+  - {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
+  - {fileID: 11400000, guid: 21d6f658e99b44b1a8a94dfe520b7b1f, type: 2}
+  - {fileID: 11400000, guid: 35156193a7d44aba8c13e3d9c5673c0b, type: 2}
+  - {fileID: 11400000, guid: 3c9ecd82b83a41e5ab27baec7a2b4d99, type: 2}
+  - {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
+  - {fileID: 11400000, guid: 072ac5274d1e4fc0aa545cf75f02ef73, type: 2}
+  slot: 3
 --- !u!1 &688707214
 GameObject:
   m_ObjectHideFlags: 0
@@ -1620,6 +1626,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17aa980fba1250b4eacc6f52574df870, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  hitStopSettings: {fileID: 0}
 --- !u!1 &1007397701
 GameObject:
   m_ObjectHideFlags: 0

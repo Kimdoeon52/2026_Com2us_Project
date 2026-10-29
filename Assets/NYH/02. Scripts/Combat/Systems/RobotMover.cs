@@ -12,7 +12,7 @@ using UnityEngine;
 /// F9로 멈춘 뒤 Keypad8로 한 프레임씩 넘겨도 캐릭터는 안 움직였다. 이제 위치도 1/60초마다 정확히 한 번 바뀐다.
 /// 렌더 프레임 사이 보간은 아직 없다 — 144Hz 모니터에서 움직임이 60Hz 계단처럼 보이면 그때 보간을 추가한다.
 /// </summary>
-public class RobotMover : MonoBehaviour
+public class RobotMover : MonoBehaviour, ISpeedBuffTarget
 {
     [SerializeField] private float moveSpeed = 3f; // TODO: 임시값. 프레임표/기획 확정 전
 
@@ -56,6 +56,11 @@ public class RobotMover : MonoBehaviour
     // 착지하면 꺼진다. 일반 점프(↑)는 이걸 안 켜므로 예전처럼 공중에서도 입력으로 움직일 수 있다
     private bool airLocked;
 
+    // 2026-10-29 추가 (KDU): 이동속도 버프(부스터). 남은 틱이 0이면 버프 없음
+    private float speedBuffMultiplier = 1f;
+    private int speedBuffTicks;
+    private bool speedBuffKeepRunning;
+
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
@@ -73,6 +78,9 @@ public class RobotMover : MonoBehaviour
 
     /// <summary>현재 위아래 속도. 양수면 올라가는 중</summary>
     public float VerticalVelocity => verticalVelocity;
+
+    /// <summary>중력 가속도(음수). 스킬이 목표 높이를 점프 속도로 환산할 때 읽는다 (2026-10-29 추가, KDU)</summary>
+    public float Gravity => gravity;
 
     /// <summary>
     /// 맞아서 위로 뜨게 만든다 (어퍼컷 등 ActionData.LaunchVelocity). 점프와 같은 물리를 그대로 쓴다 —
@@ -100,6 +108,23 @@ public class RobotMover : MonoBehaviour
             isGrounded = false;
         }
         airLocked = !isGrounded;
+    }
+
+    /// <summary>공중에서 수직 속도를 직접 지정한다 (음수 = 하강). 지상이면 무시 — 띄우는 건 Launch/Leap로 (2026-10-29 추가, KDU)</summary>
+    // 호출: LegStompData 급강하. 받음: 수직 속도
+    public void SetVerticalVelocity(float velocity)
+    {
+        if (isGrounded) return;
+        verticalVelocity = velocity;
+    }
+
+    /// <summary>이동속도 버프. 지속 틱 동안 이동 속도에 배율을 곱하고, keepRunning이면 달리기(대시) 배율도 유지한다 (2026-10-29 추가, KDU)</summary>
+    // 호출: BoosterBuffData. 받음: 배율, 지속 틱, 달리기 판정 유지 여부. 다시 걸면 덮어쓴다
+    public void ApplySpeedBuff(float multiplier, int durationTicks, bool keepRunning)
+    {
+        speedBuffMultiplier = multiplier;
+        speedBuffTicks = durationTicks;
+        speedBuffKeepRunning = keepRunning;
     }
 
     /// <summary>RobotMover와 RobotView를 분리하고 다른 시스템에 흡수는 수 있음 —
@@ -135,6 +160,10 @@ public class RobotMover : MonoBehaviour
             slowedByHitStop = true;
         }
 
+        // 이동속도 버프 시간 — 완전 정지(위 return) 중에는 흐르지 않는다
+        bool speedBuffed = speedBuffTicks > 0;
+        if (speedBuffed) speedBuffTicks--;
+
         // 공격·경직 등 Idle이 아닌 동안은 이동 입력을 무시한다
         // actionState가 null이어도 이동은 허용해야(테스트 시 ActionState 없이 이동만 확인하고 싶을 때 등) canMove를 true로 둔다
         bool canMove = !slowedByHitStop && (actionState == null || actionState.CanMove);
@@ -147,8 +176,9 @@ public class RobotMover : MonoBehaviour
         {
             moveInput = inputSource?.GetMoveInput() ?? 0f;
             // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
-            bool isDashing = inputSource?.GetDashInput() ?? false;
-            float speedMultiplier = isDashing ? dashSpeedMultiplier : 1f;
+            // 부스터 버프의 "달리기 판정 유지"면 더블탭 없이도 대시 배율이 붙는다
+            bool isDashing = (inputSource?.GetDashInput() ?? false) || (speedBuffed && speedBuffKeepRunning);
+            float speedMultiplier = (isDashing ? dashSpeedMultiplier : 1f) * (speedBuffed ? speedBuffMultiplier : 1f);
             moveVelocity = moveInput * moveSpeed * speedMultiplier;
         }
         else if (isGrounded && !slowedByHitStop)

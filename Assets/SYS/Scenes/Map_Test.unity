@@ -15,14 +15,14 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 0
-  m_FogColor: {r: 1, g: 0.8999997, b: 0.6733325, a: 1}
+  m_FogColor: {r: 1, g: 0.7, b: 0.52, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.57146114, g: 0.62700003, b: 0.73953885, a: 0.95}
-  m_AmbientEquatorColor: {r: 0.47646114, g: 0.475, b: 0.4910777, a: 0.95}
-  m_AmbientGroundColor: {r: 0.28573057, g: 0.2565, b: 0.22726943, a: 0.95}
+  m_AmbientSkyColor: {r: 0.19, g: 0.2375, b: 0.42749998, a: 0.95}
+  m_AmbientEquatorColor: {r: 0.1235, g: 0.1425, b: 0.285, a: 0.95}
+  m_AmbientGroundColor: {r: 0.0665, g: 0.0665, b: 0.133, a: 0.95}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
@@ -5520,7 +5520,7 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   fillDay: NaN
   fillNight: NaN
-  time: 9.5
+  time: 0
   dayLengthMinutes: 0
   flowInEditMode: 0
   sun: {fileID: 789245354}
@@ -9287,11 +9287,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 740487518}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 1.5
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9596,7 +9596,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 789245351}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.34020334, y: -0.45406446, z: 0.19296442, w: 0.8005323}
+  m_LocalRotation: {x: 0.10612067, y: 0.8880631, z: -0.365524, w: 0.25782672}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9624,7 +9624,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 29.050781, y: 31.520508}
+  m_LightCookieOffset: {x: 0.88590235, y: 0.36241457}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -9636,8 +9636,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 1, g: 0.90000135, b: 0.7750024, a: 1}
-  m_Intensity: 1.0648148
+  m_Color: {r: 0.55, g: 0.66, b: 1, a: 1}
+  m_Intensity: 1.25
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9646,7 +9646,7 @@ Light:
     m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 0.85
+    m_Strength: 0.6
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -19006,8 +19006,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.60153806, g: 0.66, b: 0.77846193, a: 1}
-  m_Intensity: 0.25
+  m_Color: {r: 0.2, g: 0.25, b: 0.45, a: 1}
+  m_Intensity: 0.08
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

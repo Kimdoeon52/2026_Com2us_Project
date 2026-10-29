@@ -379,7 +379,7 @@ namespace RealSteel.UI
             GUI.Box(new Rect(x, y, width, height), "");
             GUILayout.BeginArea(new Rect(x + 15, y + 15, width - 30, height - 30));
 
-            string title = _currentSettlement.PlayerWon ? "<color=#22FF88>★ VICTORY (승리) ★</color>" : "<color=#FF4444>✖ DEFEAT (패배) ✖</color>";
+            string title = _currentSettlement.PlayerWon ? "<color=#22FF88>[VICTORY (승리)]</color>" : "<color=#FF4444>[DEFEAT (패배)]</color>";
             GUILayout.Label($"<size=22><b>{title}</b></size>");
             GUILayout.Space(8);
 

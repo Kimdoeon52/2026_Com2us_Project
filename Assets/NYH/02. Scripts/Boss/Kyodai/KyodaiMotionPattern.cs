@@ -49,7 +49,7 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
         return new Vector2(boss.ClampToArena(x, motion != null ? motion.targetMargin : 0f), boss.GroundY);
     }
 
-    protected override void OnTellStarted()
+    public override void OnTellStarted()
     {
         if (motion == null) { finished = true; return; }
         Run(_patternCTS.Token).Forget();

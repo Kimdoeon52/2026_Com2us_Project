@@ -91,6 +91,19 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
+        [ContextMenu("[돌진] 전조 점멸 시작 (OnTellStarted)")]
+        [ContextMenu("[돌진] 전조 점멸 시작 (OnTellStarted)")]
+        public void TestChargeTellStart()
+        {
+            ChargePatternGimmick?.OnTellStarted();
+        }
+
+        [ContextMenu("[돌진] 전조 점멸 종료 (OnTellEnded)")]
+        public void TestChargeTellEnd()
+        {
+            ChargePatternGimmick?.OnTellEnded();
+        }
+
         protected override void OnBossInitialized()
         {
             base.OnBossInitialized();

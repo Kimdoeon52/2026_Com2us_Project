@@ -177,7 +177,7 @@ namespace RealSteel.Boss.Test
         // 2. 기믹 파훼 및 인터럽트 시뮬레이션
         // ========================================================================
 
-        [ContextMenu("⚙️ 고철 못판 착지 시뮬레이션 (4초 그로기 & 펑크)")]
+        [ContextMenu("[못판] 고철 못판 착지 시뮬레이션 (4초 그로기 & 펑크)")]
         public void SimulateNailBoardLanding()
         {
             if (targetBoss == null) return;
@@ -201,7 +201,7 @@ namespace RealSteel.Boss.Test
             targetBoss.InterruptToGroggy(4.0f, 1.5f);
         }
 
-        [ContextMenu("💥 폭발 화물 상자 충돌 시뮬레이션 (2초 스턴)")]
+        [ContextMenu("[폭발] 폭발 화물 상자 충돌 시뮬레이션 (2초 스턴)")]
         public void SimulateExplosiveBoxCollision()
         {
             if (targetBoss == null) return;
@@ -219,7 +219,7 @@ namespace RealSteel.Boss.Test
             targetBoss.InterruptToStun(2.0f);
         }
 
-        [ContextMenu("🎯 타이어 1회 펑크 (관통 피해 1)")]
+        [ContextMenu("[타이어] 타이어 1회 펑크 (관통 피해 1)")]
         public void PunctureTireOnce()
         {
             if (targetBoss == null) return;
@@ -235,7 +235,7 @@ namespace RealSteel.Boss.Test
             tireGimmick.TakePartDamage(1, GimmickTag.Pierce);
         }
 
-        [ContextMenu("⚠️ 타이어 완전 파괴 (2회 펑크 및 영구 약화)")]
+        [ContextMenu("[타이어] 타이어 완전 파괴 (2회 펑크 및 영구 약화)")]
         public void BreakTireCompletely()
         {
             if (targetBoss == null) return;
@@ -254,7 +254,7 @@ namespace RealSteel.Boss.Test
         // 3. 페이즈 전환 및 상태 출력
         // ========================================================================
 
-        [ContextMenu("🔥 페이즈 2 전환 (HP 50% 설정)")]
+        [ContextMenu("[페이즈] 페이즈 2 전환 (HP 50% 설정)")]
         public void ForcePhase2Transition()
         {
             if (targetBoss == null || targetBoss.Snapshot == null) return;
@@ -266,7 +266,7 @@ namespace RealSteel.Boss.Test
             targetBoss.TakeDamage(damage);
         }
 
-        [ContextMenu("🔄 1.0초 확정 딜타임(Idle) 복귀")]
+        [ContextMenu("[상태] 1.0초 확정 딜타임(Idle) 복귀")]
         public void ResetToIdle()
         {
             if (targetBoss == null) return;
@@ -276,7 +276,31 @@ namespace RealSteel.Boss.Test
             targetBoss.StateMachine.ChangeState(new BossIdleState(targetBoss, token, 1.0f));
         }
 
-        [ContextMenu("📋 보스 및 기믹 전체 상세 상태 출력")]
+        [ContextMenu("[전조] 돌진 전조 점멸 수동 테스트 (OnTellStarted)")]
+        public void TestChargeTellStart()
+        {
+            if (targetBoss == null) return;
+            var charge = targetBoss.GetGimmick<JunkWheelerChargePatternGimmick>("PATTERN_CHARGE");
+            if (charge != null)
+            {
+                Debug.Log("<color=red>[Tester] 돌진 전조 점멸 및 진동 수동 시작 (OnTellStarted)</color>");
+                charge.OnTellStarted();
+            }
+        }
+
+        [ContextMenu("[전조] 전조 점멸 수동 종료 (OnTellEnded)")]
+        public void TestChargeTellEnd()
+        {
+            if (targetBoss == null) return;
+            var charge = targetBoss.GetGimmick<JunkWheelerChargePatternGimmick>("PATTERN_CHARGE");
+            if (charge != null)
+            {
+                Debug.Log("<color=cyan>[Tester] 전조 점멸 및 진동 수동 종료 (OnTellEnded)</color>");
+                charge.OnTellEnded();
+            }
+        }
+
+        [ContextMenu("[상태] 보스 및 기믹 전체 상세 상태 출력")]
         public void PrintDetailedStatus()
         {
             if (targetBoss == null || targetBoss.Snapshot == null)
@@ -317,7 +341,7 @@ namespace RealSteel.Boss.Test
             if (!showOnScreenGui) return;
 
             // 화면 좌측 상단 컨트롤 패널 배치 (BossFSMTester와 충돌 방지)
-            GUILayout.BeginArea(new Rect(20, 20, 280, 520), "<b>[정크 휠러 기믹 테스터]</b>", GUI.skin.window);
+            GUILayout.BeginArea(new Rect(20, 20, 280, 560), "<b>[정크 휠러 기믹 테스터]</b>", GUI.skin.window);
             GUILayout.Space(4);
 
             if (targetBoss == null)
@@ -343,7 +367,7 @@ namespace RealSteel.Boss.Test
             }
             if (s != null && s.isGroggy)
             {
-                GUILayout.Label("<color=magenta><b>★ 그로기 취약 중 (피해 1.5배) ★</b></color>");
+                GUILayout.Label("<color=magenta><b>[그로기 취약 중 (피해 1.5배)]</b></color>");
             }
             GUILayout.EndVertical();
 
@@ -358,9 +382,9 @@ namespace RealSteel.Boss.Test
             GUILayout.Space(4);
             GUILayout.Label("<b>[기믹 파훼 & 인터럽트]</b>");
             GUI.color = new Color(1f, 0.7f, 1f, 1f);
-            if (GUILayout.Button("⚙️ [0] 못판 착지 (4초 그로기 & 펑크)", GUILayout.Height(28))) SimulateNailBoardLanding();
+            if (GUILayout.Button("[0] 못판 착지 (4초 그로기 & 펑크)", GUILayout.Height(28))) SimulateNailBoardLanding();
             GUI.color = new Color(1f, 0.8f, 0.6f, 1f);
-            if (GUILayout.Button("💥 [I] 폭발 상자 충돌 (2초 스턴)", GUILayout.Height(26))) SimulateExplosiveBoxCollision();
+            if (GUILayout.Button("[I] 폭발 상자 충돌 (2초 스턴)", GUILayout.Height(26))) SimulateExplosiveBoxCollision();
             GUI.color = Color.white;
 
             GUILayout.BeginHorizontal();
@@ -370,9 +394,19 @@ namespace RealSteel.Boss.Test
 
             GUILayout.Space(4);
             GUILayout.Label("<b>[전투 및 상태 제어]</b>");
-            if (GUILayout.Button("🔥 [U] 2페이즈 전환 (HP 50%)", GUILayout.Height(24))) ForcePhase2Transition();
-            if (GUILayout.Button("🔄 확정 딜타임(Idle) 복귀", GUILayout.Height(24))) ResetToIdle();
-            if (GUILayout.Button("📋 [L] 상세 스냅샷 콘솔 출력", GUILayout.Height(24))) PrintDetailedStatus();
+            if (GUILayout.Button("[U] 2페이즈 전환 (HP 50%)", GUILayout.Height(24))) ForcePhase2Transition();
+            if (GUILayout.Button("[복귀] 확정 딜타임(Idle) 복귀", GUILayout.Height(24))) ResetToIdle();
+            if (GUILayout.Button("[L] 상세 스냅샷 콘솔 출력", GUILayout.Height(24))) PrintDetailedStatus();
+
+            GUILayout.Space(4);
+            GUILayout.Label("<b>[전조 점멸(Tell Flash) 제어]</b>");
+            GUILayout.BeginHorizontal();
+            GUI.color = new Color(1f, 0.4f, 0.4f, 1f);
+            if (GUILayout.Button("전조 시작", GUILayout.Height(24))) TestChargeTellStart();
+            GUI.color = new Color(0.6f, 0.9f, 1f, 1f);
+            if (GUILayout.Button("점멸 종료", GUILayout.Height(24))) TestChargeTellEnd();
+            GUI.color = Color.white;
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(4);
             GUILayout.Label("<size=9><color=gray>[`] 키를 눌러 이 창을 접거나 펼 수 있습니다.</color></size>");

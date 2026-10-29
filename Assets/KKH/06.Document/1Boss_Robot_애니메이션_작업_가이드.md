@@ -216,6 +216,12 @@ DOTween 기반 위치 연산 및 기물/투사체 충돌 감지를 위해 물리
    * **Anticipated Duration**: `0.2` (돌진 직전 뒤로 웅크리는 시간)
    * **Wall Stun Delay**: `0.3` (벽 충돌 후 반동 대기 시간)
    * **Max Map Distance**: `5.0`
+   * **전조 점멸(Tell Flash) 파라미터**:
+     - **Flash Color**: `RGBA(255, 0, 0, 255)` (점멸 색상, 외부/인스펙터 조정 가능)
+     - **Flash Interval**: `0.15` (점멸 왕복 주기 초)
+     - **Shake Strength**: `X: 0.08, Y: 0, Z: 0` (바퀴 헛돔 진동 세기)
+     - **Shake Vibrato**: `20` (진동 빈도)
+     - *외부 제어 메서드*: `public void OnTellStarted(Color, float)`, `SetFlashParameters()` 제공
 
 3. **`JunkWheelerBarragePatternGimmick` (본체 도약 바이킹 탄막)**:
    * **Launch Height**: `1.7` (공중 도약 기준 높이 m, 타이어 파괴 시 1.19m로 자동 감축)

@@ -27,6 +27,42 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float wallStunDelay = 0.3f;
         [SerializeField] private float maxMapDistance = 5.0f;
 
+        [Header("전조(Tell) 연출 및 점멸 파라미터")]
+        [Tooltip("전조 점멸 목표 색상 (기본: 빨간색 Color.red)")]
+        [SerializeField] private Color flashColor = Color.red;
+        [Tooltip("점멸 왕복 주기/속도 (초, 기본: 0.15초)")]
+        [SerializeField] private float flashInterval = 0.15f;
+        [Tooltip("전조 중 보스 본체 바퀴 헛돔 진동 세기")]
+        [SerializeField] private Vector3 shakeStrength = new Vector3(0.08f, 0f, 0f);
+        [Tooltip("전조 중 진동 빈도")]
+        [SerializeField] private int shakeVibrato = 20;
+
+        [Header("인스펙터 전조 이벤트 바인딩")]
+        [Tooltip("전조 시작 시 인스펙터에서 연동할 UnityEvent")]
+        [SerializeField] private UnityEngine.Events.UnityEvent onTellStartedEvent;
+        [Tooltip("전조 종료 시 인스펙터에서 연동할 UnityEvent")]
+        [SerializeField] private UnityEngine.Events.UnityEvent onTellEndedEvent;
+
+        public UnityEngine.Events.UnityEvent OnTellStartedEvent => onTellStartedEvent;
+        public UnityEngine.Events.UnityEvent OnTellEndedEvent => onTellEndedEvent;
+
+        public Color FlashColor { get => flashColor; set => flashColor = value; }
+        public float FlashInterval { get => flashInterval; set => flashInterval = value; }
+        public Vector3 ShakeStrength { get => shakeStrength; set => shakeStrength = value; }
+        public int ShakeVibrato { get => shakeVibrato; set => shakeVibrato = value; }
+
+        public void SetFlashParameters(Color newColor, float newInterval)
+        {
+            flashColor = newColor;
+            flashInterval = newInterval;
+        }
+
+        public void SetShakeParameters(Vector3 newStrength, int newVibrato)
+        {
+            shakeStrength = newStrength;
+            shakeVibrato = newVibrato;
+        }
+
         private Tweener _currentTween;
         private Tweener _flashTween;
         private Tweener _shakeTween;
@@ -53,29 +89,48 @@ namespace RealSteel.Boss.JunkWheeler
             FaceDirection(_chargeDirection);
         }
 
-        protected override void OnTellStarted()
+        /// <summary>
+        /// 전조(Tell) 연출 시작: 바퀴 공회전 모션, 색상 점멸 및 본체 진동 가동 (인스펙터 및 외부 호출 가능)
+        /// </summary>
+        [ContextMenu("[전조] 점멸 시작 (OnTellStarted)")]
+        public override void OnTellStarted()
         {
             if (OwnerBoss != null && OwnerBoss.Animation != null)
             {
                 OwnerBoss.Animation.PlayChargeStart();
             }
 
-            // 전조 연출: 엔진 과열 붉은색 점멸 및 바퀴 헛돔 진동
+            // 전조 연출: 엔진 과열 점멸 및 바퀴 헛돔 진동
             _spriteRenderer = OwnerBoss != null ? OwnerBoss.GetComponentInChildren<SpriteRenderer>() : null;
             if (_spriteRenderer != null)
             {
                 _originalColor = _spriteRenderer.color;
-                _flashTween = _spriteRenderer.DOColor(Color.red, 0.15f).SetLoops(-1, LoopType.Yoyo);
+                if (_flashTween != null && _flashTween.IsActive()) _flashTween.Kill();
+                _flashTween = _spriteRenderer.DOColor(flashColor, flashInterval).SetLoops(-1, LoopType.Yoyo);
             }
 
             if (OwnerBoss != null)
             {
                 float tellDur = patternData != null ? patternData.tellDuration : 2.0f;
-                _shakeTween = OwnerBoss.transform.DOShakePosition(tellDur, new Vector3(0.08f, 0f, 0f), 20);
+                if (_shakeTween != null && _shakeTween.IsActive()) _shakeTween.Kill();
+                _shakeTween = OwnerBoss.transform.DOShakePosition(tellDur, shakeStrength, shakeVibrato);
 
                 // 전조 시작 직후 차지 루프로 부드럽게 전이
                 TransitToChargeLoopAsync(tellDur).Forget();
             }
+
+            // 인스펙터 바인딩 UnityEvent 실행
+            onTellStartedEvent?.Invoke();
+        }
+
+        /// <summary>
+        /// 외부에서 즉시 지정한 커스텀 점멸 색상과 주기로 전조를 시작하는 오버로딩 메서드
+        /// </summary>
+        public void OnTellStarted(Color customFlashColor, float customInterval)
+        {
+            flashColor = customFlashColor;
+            flashInterval = customInterval;
+            OnTellStarted();
         }
 
         private async UniTaskVoid TransitToChargeLoopAsync(float delay)
@@ -87,9 +142,14 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
-        protected override void OnTellEnded()
+        /// <summary>
+        /// 전조(Tell) 연출 종료: 점멸 및 진동 정지 (인스펙터 및 외부 호출 가능)
+        /// </summary>
+        [ContextMenu("[전조] 점멸 종료 (OnTellEnded)")]
+        public override void OnTellEnded()
         {
             StopTellVisuals();
+            onTellEndedEvent?.Invoke();
         }
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)

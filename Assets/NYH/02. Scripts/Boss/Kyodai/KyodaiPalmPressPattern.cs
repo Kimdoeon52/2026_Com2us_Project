@@ -62,7 +62,7 @@ public class KyodaiPalmPressPattern : BossPatternGimmickBase
     }
 
     // 2) 전조 = 전이: 그림자를 깔고, 손이 배경에서 그림자 위 공중으로 들어온다(가까워지며 커짐)
-    protected override void OnTellStarted()
+    public override void OnTellStarted()
     {
         if (telegraph != null) telegraph.Show(centerX, kyodai.GroundY, width);
         limb.SetLayer(LimbLayer.Transition);

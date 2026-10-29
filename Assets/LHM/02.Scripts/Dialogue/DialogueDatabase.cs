@@ -11,6 +11,7 @@ namespace RealSteel.Dialogue
 
         private readonly Dictionary<string, DialogueData> dialogues = new Dictionary<string, DialogueData>();
         private readonly List<DialogueData> dialogueList = new List<DialogueData>();
+        private readonly Dictionary<string, List<DialogueData>> pools = new Dictionary<string, List<DialogueData>>();
         private readonly Dictionary<string, string> strings = new Dictionary<string, string>();
         private readonly Dictionary<string, VariableDef> variableDefs = new Dictionary<string, VariableDef>();
         private readonly List<string> errors = new List<string>();
@@ -18,22 +19,39 @@ namespace RealSteel.Dialogue
         public IReadOnlyList<string> Errors => errors;
         public IReadOnlyList<DialogueData> Dialogues => dialogueList;
         public IReadOnlyDictionary<string, VariableDef> VariableDefs => variableDefs;
+        public IEnumerable<string> PoolIds => pools.Keys;
 
-        public bool Load(TextAsset poolAsset, TextAsset stringTableAsset, TextAsset variablesAsset)
+        public bool Load(IReadOnlyList<TextAsset> poolAssets, TextAsset stringTableAsset, TextAsset variablesAsset)
         {
             dialogues.Clear();
             dialogueList.Clear();
+            pools.Clear();
             strings.Clear();
             variableDefs.Clear();
             errors.Clear();
 
             VariableTableData variableTable = Parse<VariableTableData>(variablesAsset, "변수 목록");
             StringTableData table = Parse<StringTableData>(stringTableAsset, "문자열 테이블");
-            DialoguePoolData pool = Parse<DialoguePoolData>(poolAsset, "대사 풀");
 
             if (variableTable != null) LoadVariables(variableTable, variablesAsset.name);
             if (table != null) LoadStrings(table, stringTableAsset.name);
-            if (pool != null) LoadPool(pool, poolAsset.name, table != null, variableTable != null);
+
+            if (poolAssets == null || poolAssets.Count == 0)
+            {
+                errors.Add("대사 풀: 파일이 하나도 연결되지 않았습니다");
+            }
+            else
+            {
+                Dictionary<string, string> groupEvents = new Dictionary<string, string>();
+
+                for (int i = 0; i < poolAssets.Count; i++)
+                {
+                    DialoguePoolData pool = Parse<DialoguePoolData>(poolAssets[i], $"대사 풀 {i + 1}번째 칸");
+                    if (pool != null) LoadPool(pool, poolAssets[i].name, table != null, variableTable != null, groupEvents);
+                }
+
+                ValidateFormerIds();
+            }
 
             if (errors.Count > 0)
             {
@@ -41,8 +59,22 @@ namespace RealSteel.Dialogue
                 return false;
             }
 
-            Debug.Log($"[Dialogue] 로드 완료: 대화 {dialogues.Count}개, 문자열 {strings.Count}개, 변수 {variableDefs.Count}개");
+            Debug.Log($"[Dialogue] 로드 완료: 풀 {pools.Count}개 ({string.Join(", ", pools.Keys)}), 대화 {dialogues.Count}개, 문자열 {strings.Count}개, 변수 {variableDefs.Count}개");
             return true;
+        }
+
+        public bool TryGetPool(string poolId, out IReadOnlyList<DialogueData> pool)
+        {
+            pool = null;
+            if (string.IsNullOrEmpty(poolId) || !pools.TryGetValue(poolId, out List<DialogueData> list)) return false;
+
+            pool = list;
+            return true;
+        }
+
+        public string GetSpeakerName(string speakerId)
+        {
+            return string.IsNullOrEmpty(speakerId) ? "" : GetString(SpeakerKeyPrefix + speakerId);
         }
 
         public bool TryGetLines(string dialogueId, out List<DialogueLine> lines)
@@ -63,8 +95,12 @@ namespace RealSteel.Dialogue
             lines = new List<DialogueLine>(data.lines.Count);
             foreach (LineData line in data.lines)
             {
-                string speakerName = string.IsNullOrEmpty(line.speaker) ? "" : GetString(SpeakerKeyPrefix + line.speaker);
-                lines.Add(new DialogueLine(line.speaker ?? "", speakerName, GetString(line.textKey)));
+                string speakerName = GetSpeakerName(line.speaker);
+                lines.Add(new DialogueLine(line.speaker ?? "", speakerName, GetString(line.textKey))
+                {
+                    expression = line.expression ?? "",
+                    effects = line.effects,
+                });
             }
 
             return true;
@@ -174,11 +210,18 @@ namespace RealSteel.Dialogue
             }
         }
 
-        private void LoadPool(DialoguePoolData pool, string fileName, bool checkKeys, bool checkVariables)
+        private void LoadPool(DialoguePoolData pool, string fileName, bool checkKeys, bool checkVariables, Dictionary<string, string> groupEvents)
         {
             if (string.IsNullOrEmpty(pool.poolId))
             {
                 errors.Add($"{fileName}: poolId가 비어 있습니다");
+                return;
+            }
+
+            if (pools.ContainsKey(pool.poolId))
+            {
+                errors.Add($"{fileName}: poolId '{pool.poolId}'가 다른 대사 풀 파일과 중복됩니다 (같은 파일을 두 칸에 넣었는지 확인)");
+                return;
             }
 
             if (pool.dialogues == null || pool.dialogues.Count == 0)
@@ -187,8 +230,10 @@ namespace RealSteel.Dialogue
                 return;
             }
 
+            List<DialogueData> poolList = new List<DialogueData>(pool.dialogues.Count);
+            pools.Add(pool.poolId, poolList);
+
             bool hasFallback = false;
-            Dictionary<string, string> groupEvents = new Dictionary<string, string>();
 
             for (int i = 0; i < pool.dialogues.Count; i++)
             {
@@ -210,6 +255,7 @@ namespace RealSteel.Dialogue
                 }
 
                 ValidatePriority(dialogue, where);
+                ValidateDisplay(dialogue, where);
 
                 if (dialogue.conditions != null)
                 {
@@ -234,11 +280,11 @@ namespace RealSteel.Dialogue
                     ValidateLine(dialogue.lines[j], $"{where} › {j + 1}번째 줄", checkKeys);
                 }
 
+                dialogue.poolId = pool.poolId;
                 dialogues.Add(dialogue.id, dialogue);
                 dialogueList.Add(dialogue);
+                poolList.Add(dialogue);
             }
-
-            ValidateFormerIds(fileName);
 
             if (!hasFallback)
             {
@@ -246,7 +292,7 @@ namespace RealSteel.Dialogue
             }
         }
 
-        private void ValidateFormerIds(string fileName)
+        private void ValidateFormerIds()
         {
             Dictionary<string, string> owners = new Dictionary<string, string>();
 
@@ -256,7 +302,7 @@ namespace RealSteel.Dialogue
 
                 foreach (string formerId in dialogue.formerIds)
                 {
-                    string where = $"{fileName} › {dialogue.id}";
+                    string where = $"{dialogue.poolId} › {dialogue.id}";
 
                     if (string.IsNullOrEmpty(formerId))
                     {
@@ -346,6 +392,38 @@ namespace RealSteel.Dialogue
             }
         }
 
+        private void ValidateDisplay(DialogueData dialogue, string where)
+        {
+            switch (dialogue.display)
+            {
+                case null:
+                case "":
+                case "bottom":
+                    dialogue.parsedDisplay = DialogueDisplay.Bottom;
+                    break;
+                case "fullscreen":
+                    dialogue.parsedDisplay = DialogueDisplay.Fullscreen;
+                    break;
+                case "intermission":
+                    dialogue.parsedDisplay = DialogueDisplay.Intermission;
+                    break;
+                default:
+                    errors.Add($"{where}: display '{dialogue.display}'는 bottom / fullscreen / intermission 중 하나여야 합니다");
+                    return;
+            }
+
+            if (!string.IsNullOrEmpty(dialogue.background) && dialogue.parsedDisplay != DialogueDisplay.Fullscreen)
+            {
+                errors.Add($"{where}: background는 display가 fullscreen일 때만 쓸 수 있습니다");
+            }
+        }
+
+        public bool TryGetDialogue(string dialogueId, out DialogueData data)
+        {
+            data = null;
+            return !string.IsNullOrEmpty(dialogueId) && dialogues.TryGetValue(dialogueId, out data);
+        }
+
         private void ValidateCondition(ConditionData condition, string where, bool checkVariables)
         {
             if (string.IsNullOrEmpty(condition.variable) || string.IsNullOrEmpty(condition.op))
@@ -376,6 +454,8 @@ namespace RealSteel.Dialogue
 
         private void ValidateLine(LineData line, string where, bool checkKeys)
         {
+            ValidateEffects(line, where);
+
             if (string.IsNullOrEmpty(line.textKey))
             {
                 errors.Add($"{where}: textKey가 비어 있습니다 (철자·대소문자 확인)");
@@ -392,6 +472,39 @@ namespace RealSteel.Dialogue
             if (!string.IsNullOrEmpty(line.speaker) && !strings.ContainsKey(SpeakerKeyPrefix + line.speaker))
             {
                 errors.Add($"{where}: 화자 '{line.speaker}'의 이름 키 '{SpeakerKeyPrefix + line.speaker}'가 문자열 테이블에 없습니다");
+            }
+        }
+
+        private void ValidateEffects(LineData line, string where)
+        {
+            if (line.effects == null) return;
+
+            for (int i = 0; i < line.effects.Count; i++)
+            {
+                EffectData effect = line.effects[i];
+                string at = $"{where} › {i + 1}번째 연출";
+
+                if (effect == null || string.IsNullOrEmpty(effect.type))
+                {
+                    errors.Add($"{at}: type이 비어 있습니다 (철자·대소문자 확인)");
+                    continue;
+                }
+
+                if (Array.IndexOf(DialogueEffectTypes.All, effect.type) < 0)
+                {
+                    errors.Add($"{at}: 알 수 없는 연출 '{effect.type}' ({string.Join(" / ", DialogueEffectTypes.All)})");
+                    continue;
+                }
+
+                if (effect.value < 0f)
+                {
+                    errors.Add($"{at}: {effect.type}의 value {effect.value}는 0 이상이어야 합니다");
+                }
+
+                if (effect.type == DialogueEffectTypes.Sound && string.IsNullOrEmpty(effect.id))
+                {
+                    errors.Add($"{at}: sound는 id가 필요합니다");
+                }
             }
         }
     }

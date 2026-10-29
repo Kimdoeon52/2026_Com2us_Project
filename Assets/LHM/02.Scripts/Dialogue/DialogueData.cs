@@ -13,6 +13,13 @@ namespace RealSteel.Dialogue
         Critical = 1000,
     }
 
+    public enum DialogueDisplay
+    {
+        Bottom,
+        Fullscreen,
+        Intermission,
+    }
+
     public enum VariableType
     {
         Int,
@@ -39,9 +46,13 @@ namespace RealSteel.Dialogue
         public string perEvent;
         public string eventGroup;
         public float cooldownSec;
+        public string display;
+        public string background;
         public List<LineData> lines;
 
+        [NonSerialized] public string poolId;
         [NonSerialized] public DialogueBand parsedBand;
+        [NonSerialized] public DialogueDisplay parsedDisplay;
 
         public int ConditionCount => conditions == null ? 0 : conditions.Count;
 
@@ -64,6 +75,8 @@ namespace RealSteel.Dialogue
     {
         public string speaker;
         public string textKey;
+        public string expression;
+        public List<EffectData> effects;
     }
 
     [Serializable]

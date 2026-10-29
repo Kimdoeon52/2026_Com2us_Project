@@ -7,9 +7,9 @@
       "maxPlays": 1,
       "conditions": [],
       "lines": [
-        { "speaker": "auctioneer", "textKey": "auction.first_meet.1" },
+        { "speaker": "auctioneer", "textKey": "auction.first_meet.1", "expression": "smile", "effects": [ { "type": "zoom", "value": 1.2 } ] },
         { "speaker": "hero", "textKey": "auction.first_meet.2" },
-        { "speaker": "auctioneer", "textKey": "auction.first_meet.3" }
+        { "speaker": "auctioneer", "textKey": "auction.first_meet.3", "effects": [ { "type": "zoom", "value": 1 }, { "type": "sound", "id": "sfx.stamp" } ] }
       ]
     },
     {
@@ -35,10 +35,10 @@
     {
       "id": "auction_after_defeat",
       "band": "Reactive",
-      "perEvent": "match.count",
+      "perEvent": "hunt.count",
       "eventGroup": "defeat_reaction",
       "conditions": [
-        { "variable": "match.lastResult", "op": "==", "value": "lose" }
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" }
       ],
       "lines": [
         { "speaker": "auctioneer", "textKey": "auction.after_defeat.1" },
@@ -49,27 +49,42 @@
       "id": "auction_after_defeat_wheel",
       "band": "Reactive",
       "maxPlays": 2,
-      "perEvent": "match.count",
+      "perEvent": "hunt.count",
       "eventGroup": "defeat_reaction",
       "conditions": [
-        { "variable": "match.lastResult", "op": "==", "value": "lose" },
-        { "variable": "match.lastOpponent", "op": "==", "value": "boss.wheel" }
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" },
+        { "variable": "hunt.lastBoss", "op": "==", "value": "boss.wheel" }
       ],
       "lines": [
-        { "speaker": "auctioneer", "textKey": "auction.after_defeat_wheel.1" },
+        { "speaker": "auctioneer", "textKey": "auction.after_defeat_wheel.1", "expression": "worried", "effects": [ { "type": "shake", "value": 0.4 }, { "type": "sound", "id": "sfx.impact" } ] },
         { "speaker": "hero", "textKey": "auction.after_defeat_wheel.2" }
       ]
     },
     {
       "id": "auction_after_win",
       "band": "Reactive",
-      "perEvent": "match.count",
+      "perEvent": "hunt.count",
+      "eventGroup": "win_reaction",
       "conditions": [
-        { "variable": "match.lastResult", "op": "==", "value": "win" }
+        { "variable": "hunt.lastResult", "op": "==", "value": "win" }
       ],
       "lines": [
         { "speaker": "auctioneer", "textKey": "auction.after_win.1" },
         { "speaker": "hero", "textKey": "auction.after_win.2" }
+      ]
+    },
+    {
+      "id": "auction_after_win_hell",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "win_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "win" },
+        { "variable": "hunt.lastDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "auction.after_win_hell.1" },
+        { "speaker": "hero", "textKey": "auction.after_win_hell.2" }
       ]
     },
     {
@@ -81,8 +96,36 @@
         { "variable": "auction.lastResult", "op": "==", "value": "unsold" }
       ],
       "lines": [
-        { "speaker": "auctioneer", "textKey": "auction.unsold.1" },
-        { "speaker": "hero", "textKey": "auction.unsold.2" }
+        { "speaker": "auctioneer", "textKey": "auction.unsold.1", "expression": "sad", "effects": [ { "type": "fadeOut", "value": 1, "wait": true } ] },
+        { "speaker": "hero", "textKey": "auction.unsold.2", "effects": [ { "type": "fadeIn", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "test_prologue",
+      "band": "Story",
+      "display": "fullscreen",
+      "background": "bg.prologue",
+      "conditions": [
+        { "variable": "story.chapter", "op": "==", "value": "-1" }
+      ],
+      "lines": [
+        { "speaker": "", "textKey": "test.prologue.1" },
+        { "speaker": "chairman", "textKey": "test.prologue.2" },
+        { "speaker": "father", "textKey": "test.prologue.3" },
+        { "speaker": "father", "textKey": "test.prologue.4", "effects": [ { "type": "shake", "value": 0.5 } ] }
+      ]
+    },
+    {
+      "id": "test_intermission",
+      "band": "Story",
+      "display": "intermission",
+      "conditions": [
+        { "variable": "story.chapter", "op": "==", "value": "-1" }
+      ],
+      "lines": [
+        { "speaker": "agent", "textKey": "test.intermission.1" },
+        { "speaker": "chairman", "textKey": "test.intermission.2", "expression": "cold" },
+        { "speaker": "chairman", "textKey": "test.intermission.3" }
       ]
     }
   ]

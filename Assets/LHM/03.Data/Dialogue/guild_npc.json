@@ -1,0 +1,60 @@
+{
+  "poolId": "guild_npc",
+  "dialogues": [
+    {
+      "id": "guild_greeting",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "guild.greeting.1" },
+        { "speaker": "hero", "textKey": "guild.greeting.2" }
+      ]
+    },
+    {
+      "id": "guild_greeting_busy",
+      "band": "Fallback",
+      "cooldownSec": 20,
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "guild.greeting_busy.1" }
+      ]
+    },
+    {
+      "id": "guild_after_defeat",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "guild_hunt_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "guild.after_defeat.1" },
+        { "speaker": "hero", "textKey": "guild.after_defeat.2" }
+      ]
+    },
+    {
+      "id": "guild_after_win",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "guild_hunt_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "win" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "guild.after_win.1" }
+      ]
+    },
+    {
+      "id": "guild_top10_first",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "rank.top10Reached", "op": "==", "value": "yes" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "guild.top10_first.1", "effects": [ { "type": "zoom", "value": 1.15 } ] },
+        { "speaker": "hero", "textKey": "guild.top10_first.2", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    }
+  ]
+}

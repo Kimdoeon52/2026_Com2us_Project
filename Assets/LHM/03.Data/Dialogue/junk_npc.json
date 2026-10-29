@@ -1,0 +1,26 @@
+{
+  "poolId": "junk_npc",
+  "dialogues": [
+    {
+      "id": "junk_greeting",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "junkdealer", "textKey": "junk.greeting.1" }
+      ]
+    },
+    {
+      "id": "junk_after_defeat",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "junk_hunt_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" }
+      ],
+      "lines": [
+        { "speaker": "junkdealer", "textKey": "junk.after_defeat.1" },
+        { "speaker": "hero", "textKey": "junk.after_defeat.2" }
+      ]
+    }
+  ]
+}

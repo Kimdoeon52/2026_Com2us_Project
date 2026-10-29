@@ -1,11 +1,32 @@
 {
   "variables": [
-    { "name": "match.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "win", "lose"] },
-    { "name": "match.lastOpponent", "type": "string", "defaultValue": "" },
-    { "name": "match.count", "type": "int", "defaultValue": "0" },
-    { "name": "match.winCount", "type": "int", "defaultValue": "0" },
-    { "name": "match.loseCount", "type": "int", "defaultValue": "0" },
+    { "name": "time.weekday", "type": "enum", "defaultValue": "mon", "allowed": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] },
+    { "name": "time.month", "type": "int", "defaultValue": "1" },
+    { "name": "season.day", "type": "int", "defaultValue": "1" },
+    { "name": "season.endingSoon", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
+
+    { "name": "hunt.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "win", "lose"] },
+    { "name": "hunt.lastBoss", "type": "string", "defaultValue": "" },
+    { "name": "hunt.lastDifficulty", "type": "enum", "defaultValue": "none", "allowed": ["none", "veryEasy", "easy", "normal", "hard", "hell"] },
+    { "name": "hunt.bossLoseCount", "type": "int", "defaultValue": "0" },
+    { "name": "hunt.count", "type": "int", "defaultValue": "0" },
+    { "name": "hunt.winCount", "type": "int", "defaultValue": "0" },
+    { "name": "hunt.loseCount", "type": "int", "defaultValue": "0" },
+
+    { "name": "rank.band", "type": "enum", "defaultValue": "101+", "allowed": ["1", "2-10", "11-30", "31-100", "101+"] },
+    { "name": "rank.dailyChange", "type": "int", "defaultValue": "0" },
+    { "name": "rank.top10Reached", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
+
+    { "name": "player.usingBasicParts", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
+    { "name": "player.coreLevel", "type": "int", "defaultValue": "1" },
+
     { "name": "auction.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "sold", "unsold"] },
-    { "name": "auction.settleCount", "type": "int", "defaultValue": "0" }
+    { "name": "auction.settleCount", "type": "int", "defaultValue": "0" },
+
+    { "name": "race.id", "type": "enum", "defaultValue": "race1", "allowed": ["race1", "race2", "race3", "final"] },
+    { "name": "race.stage", "type": "int", "defaultValue": "0" },
+    { "name": "race.seasonFirst", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
+
+    { "name": "story.chapter", "type": "int", "defaultValue": "0" }
   ]
 }

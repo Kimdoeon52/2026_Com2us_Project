@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -12,6 +13,9 @@ namespace RealSteel.Dialogue
         [SerializeField] private TMP_Text speakerNameText;
         [SerializeField] private TMP_Text bodyText;
         [SerializeField] private DialogueVoice voice;
+        [SerializeField] private DialoguePortrait portrait;
+        [SerializeField] private DialogueDirector director;
+        [SerializeField] private DialogueStage stage;
 
         [Header("타자기")]
         [SerializeField, Min(0f)] private float charactersPerSecond = 30f;
@@ -20,8 +24,13 @@ namespace RealSteel.Dialogue
         private Typewriter typewriter;
         private int index;
         private bool isOpen;
+        private float effectWait;
+        private string pendingText;
+        private int openedFrame = -1;
 
         public bool IsOpen => isOpen;
+
+        public event Action Closed;
 
         private void Awake()
         {
@@ -47,8 +56,19 @@ namespace RealSteel.Dialogue
         {
             if (!isOpen) return;
 
+            if (effectWait > 0f)
+            {
+                effectWait -= Time.unscaledDeltaTime;
+                if (effectWait > 0f) return;
+
+                effectWait = 0f;
+                typewriter.Begin(pendingText, charactersPerSecond);
+                pendingText = null;
+            }
+
             typewriter.Tick(Time.unscaledDeltaTime);
 
+            if (Time.frameCount == openedFrame) return;
             if (!ConfirmPressed()) return;
 
             if (typewriter.IsTyping)
@@ -63,6 +83,11 @@ namespace RealSteel.Dialogue
 
         public void Open(IReadOnlyList<DialogueLine> newLines)
         {
+            Open(newLines, DialogueDisplay.Bottom, null);
+        }
+
+        public void Open(IReadOnlyList<DialogueLine> newLines, DialogueDisplay display, string background)
+        {
             if (!enabled) return;
 
             if (newLines == null || newLines.Count == 0)
@@ -75,16 +100,30 @@ namespace RealSteel.Dialogue
             current.AddRange(newLines);
             index = 0;
 
+            if (director != null) director.BeginDialogue();
+            if (stage != null) stage.Enter(display, background);
+
             box.SetActive(true);
             isOpen = true;
+            openedFrame = Time.frameCount;
             ShowLine();
         }
 
         public void Close()
         {
+            if (!isOpen) return;
+
             box.SetActive(false);
             isOpen = false;
+            effectWait = 0f;
+            pendingText = null;
+
+            if (portrait != null) portrait.Hide();
+            if (stage != null) stage.Exit();
+            if (director != null) director.EndDialogue();
+
             Debug.Log("[DialogueBox] 대화창 닫힘");
+            Closed?.Invoke();
         }
 
         private void Next()
@@ -109,9 +148,25 @@ namespace RealSteel.Dialogue
             speakerNameText.text = line.speaker;
 
             if (voice != null) voice.SetSpeaker(line.speakerId);
-            typewriter.Begin(line.text, charactersPerSecond);
+            if (portrait != null) portrait.Show(line.speakerId, line.expression);
 
-            Debug.Log($"[DialogueBox] {index + 1}/{current.Count} {(hasSpeaker ? line.speaker : "(내레이션)")}: {line.text}");
+            float wait = director != null ? director.Play(line.effects) : 0f;
+
+            if (wait > 0f)
+            {
+                effectWait = wait;
+                pendingText = line.text;
+                typewriter.Begin("", 0f);
+            }
+            else
+            {
+                effectWait = 0f;
+                pendingText = null;
+                typewriter.Begin(line.text, charactersPerSecond);
+            }
+
+            string effectLog = line.effects != null && line.effects.Count > 0 ? $" [연출: {string.Join(", ", line.effects)}]" : "";
+            Debug.Log($"[DialogueBox] {index + 1}/{current.Count} {(hasSpeaker ? line.speaker : "(내레이션)")}: {line.text}{effectLog}");
         }
 
         private void OnCharacterRevealed(char character)

@@ -2,6 +2,32 @@
   "entries": [
     { "key": "speaker.auctioneer", "value": "경매장 NPC" },
     { "key": "speaker.hero", "value": "주인공" },
+    { "key": "speaker.father", "value": "아버지" },
+    { "key": "speaker.chairman", "value": "A 총수" },
+    { "key": "speaker.agent", "value": "에이전트" },
+    { "key": "speaker.receptionist", "value": "길드 접수원" },
+    { "key": "speaker.junkdealer", "value": "고물상 아저씨" },
+
+    { "key": "menu.hunt_apply", "value": "토벌 신청" },
+    { "key": "menu.ranking_board", "value": "랭킹 보드" },
+    { "key": "menu.reward_claim", "value": "포상 수령" },
+    { "key": "menu.talk", "value": "대화" },
+    { "key": "menu.talk_more", "value": "대화하기" },
+    { "key": "menu.shop", "value": "상점 열기" },
+    { "key": "menu.exit", "value": "나가기" },
+
+    { "key": "guild.greeting.1", "value": "길드에 오신 걸 환영합니다. 오늘은 어떤 용무로 오셨나요?" },
+    { "key": "guild.greeting.2", "value": "그냥 둘러보러 왔어요." },
+    { "key": "guild.greeting_busy.1", "value": "시즌 중이라 정신이 없네요. 필요한 거 있으면 불러 주세요." },
+    { "key": "guild.after_defeat.1", "value": "토벌 결과 확인했어요. 기체 상태부터 챙기세요." },
+    { "key": "guild.after_defeat.2", "value": "...다음엔 결과 보고서가 다를 거예요." },
+    { "key": "guild.after_win.1", "value": "토벌 성공 처리됐어요. 점수는 00시에 반영돼요." },
+    { "key": "guild.top10_first.1", "value": "축하드려요! 10위권이에요. 이제 보드 맨 위쪽에서 이름이 보여요." },
+    { "key": "guild.top10_first.2", "value": "...아직 위에 아홉 명이나 있네요." },
+
+    { "key": "junk.greeting.1", "value": "왔냐. 쓸 만한 고철 있으면 가져와 봐." },
+    { "key": "junk.after_defeat.1", "value": "또 부서져서 왔구먼. 고칠 순 없어도 뜯어 쓸 순 있지." },
+    { "key": "junk.after_defeat.2", "value": "...쓸 만한 거 좀 골라 주세요." },
 
     { "key": "auction.first_meet.1", "value": "처음 보는 얼굴이네요. 그 고물상을 새로 맡았다는 분?" },
     { "key": "auction.first_meet.2", "value": "...네. 물건 좀 팔러 왔어요." },
@@ -23,7 +49,19 @@
     { "key": "auction.after_win.1", "value": "이겼다면서요! 오늘은 좋은 값 받겠네요." },
     { "key": "auction.after_win.2", "value": "좋은 걸로 부탁해요." },
 
+    { "key": "auction.after_win_hell.1", "value": "헬 난이도를 깼다고요? 그 고철 기체로요?" },
+    { "key": "auction.after_win_hell.2", "value": "...고철도 고철 나름이에요." },
+
     { "key": "auction.unsold.1", "value": "이번 주 물건은 유찰됐어요. 다음 주에 다시 올려볼까요?" },
-    { "key": "auction.unsold.2", "value": "...값을 좀 낮춰야겠네요." }
+    { "key": "auction.unsold.2", "value": "...값을 좀 낮춰야겠네요." },
+
+    { "key": "test.prologue.1", "value": "10년 전. A사 지하 연구동." },
+    { "key": "test.prologue.2", "value": "설계도는 어디 있지?" },
+    { "key": "test.prologue.3", "value": "코어의 결함을 메울 장치는 길드 레이스 최종 보스 안에 있다." },
+    { "key": "test.prologue.4", "value": "넌 절대 손에 넣지 못할 거다." },
+
+    { "key": "test.intermission.1", "value": "보고드립니다. 다른 회사 부품을 섞어 쓰는 신인이 10위권에 들어왔습니다." },
+    { "key": "test.intermission.2", "value": "...섞어 쓴다고?" },
+    { "key": "test.intermission.3", "value": "그 기체, 끝까지 지켜봐." }
   ]
 }

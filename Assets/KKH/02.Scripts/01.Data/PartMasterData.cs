@@ -28,16 +28,16 @@ using System.Collections.Generic;
 /// <summary>
 /// 기획서 §6.20.4 기믹 태그 (보스 및 기물 파훼 속성)
 /// </summary>
-public enum GimmickTag
-{
-    None,
-    ObjectBreak,      // 기물 파괴: 지상 기물에 추가 피해
-    RangedObject,     // 원거리 기물: 멀리 있거나 높은 기물 타격
-    HighPart,         // 상단 부위: 보스 머리·어깨 높이 판정
-    MidPart,          // 중단 부위: 몸통 높이 판정
-    LowPart,          // 하단 부위: 다리·바닥 높이 판정
-    Pierce            // 관통/찌르기 : 바닥 못판 등 관통 판정
-}
+//public enum GimmickTag
+//{
+//    None,
+//    ObjectBreak,      // 기물 파괴: 지상 기물에 추가 피해
+//    RangedObject,     // 원거리 기물: 멀리 있거나 높은 기물 타격
+//    HighPart,         // 상단 부위: 보스 머리·어깨 높이 판정
+//    MidPart,          // 중단 부위: 몸통 높이 판정
+//    LowPart,          // 하단 부위: 다리·바닥 높이 판정
+//    Pierce            // 관통/찌르기 : 바닥 못판 등 관통 판정
+//}
 
 [CreateAssetMenu(fileName = "PartMasterData", menuName = "RealSteel/DB/PartMasterData", order = 1)]
 public class PartMasterData : ScriptableObject

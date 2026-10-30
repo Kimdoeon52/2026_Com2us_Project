@@ -15,14 +15,14 @@ RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 10
   m_Fog: 0
-  m_FogColor: {r: 1, g: 0.7, b: 0.52, a: 1}
+  m_FogColor: {r: 1, g: 0.9093329, b: 0.69822097, a: 1}
   m_FogMode: 3
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.19, g: 0.2375, b: 0.42749998, a: 0.95}
-  m_AmbientEquatorColor: {r: 0.1235, g: 0.1425, b: 0.285, a: 0.95}
-  m_AmbientGroundColor: {r: 0.0665, g: 0.0665, b: 0.133, a: 0.95}
+  m_AmbientSkyColor: {r: 0.5735073, g: 0.62700003, b: 0.7374926, a: 0.95}
+  m_AmbientEquatorColor: {r: 0.4785073, g: 0.475, b: 0.4869854, a: 0.95}
+  m_AmbientGroundColor: {r: 0.28675365, g: 0.2565, b: 0.22624634, a: 0.95}
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
@@ -5520,7 +5520,7 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   fillDay: NaN
   fillNight: NaN
-  time: 0
+  time: 10.2
   dayLengthMinutes: 0
   flowInEditMode: 0
   sun: {fileID: 789245354}
@@ -8271,6 +8271,79 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 610329034}
   m_Mesh: {fileID: 0}
+--- !u!1001 &627061108
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0.35
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -9.79
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.115
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 6.04
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 0.8814684
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0.47224304
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 56.36
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: -8679921383154817045, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_ConstrainProportionsScale
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
+      propertyPath: m_Name
+      value: Cont
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: f02f5fc47907e904d951b985235f3a0c, type: 3}
 --- !u!1 &642490175
 GameObject:
   m_ObjectHideFlags: 0
@@ -9287,11 +9360,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 740487518}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 1.5
+  m_Intensity: 0
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9596,7 +9669,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 789245351}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.10612067, y: 0.8880631, z: -0.365524, w: 0.25782672}
+  m_LocalRotation: {x: 0.38764393, y: -0.39530826, z: 0.18894435, w: 0.8110263}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -9624,7 +9697,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 0.88590235, y: 0.36241457}
+  m_LightCookieOffset: {x: 5.5318747, y: 2.2630396}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -9636,8 +9709,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.55, g: 0.66, b: 1, a: 1}
-  m_Intensity: 1.25
+  m_Color: {r: 1, g: 0.9140007, b: 0.79950124, a: 1}
+  m_Intensity: 1.120834
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -9646,7 +9719,7 @@ Light:
     m_Type: 1
     m_Resolution: -1
     m_CustomResolution: -1
-    m_Strength: 0.6
+    m_Strength: 0.85
     m_Bias: 0.05
     m_NormalBias: 0.4
     m_NearPlane: 0.2
@@ -19006,8 +19079,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.2, g: 0.25, b: 0.45, a: 1}
-  m_Intensity: 0.08
+  m_Color: {r: 0.60369194, g: 0.66, b: 0.77630806, a: 1}
+  m_Intensity: 0.25
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -22056,3 +22129,4 @@ SceneRoots:
   - {fileID: 2109045614}
   - {fileID: 388797326}
   - {fileID: 1848693552}
+  - {fileID: 627061108}

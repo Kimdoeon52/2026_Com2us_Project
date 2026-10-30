@@ -11,7 +11,7 @@ namespace RealSteel.Dialogue
         [SerializeField] private DialogueBox dialogueBox;
 
         [Header("데이터")]
-        [SerializeField] private TextAsset poolJson;
+        [SerializeField] private TextAsset[] poolJson;
         [SerializeField] private TextAsset stringTableJson;
         [SerializeField] private TextAsset variablesJson;
 

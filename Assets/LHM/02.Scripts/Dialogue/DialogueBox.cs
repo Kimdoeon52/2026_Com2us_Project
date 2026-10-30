@@ -105,6 +105,7 @@ namespace RealSteel.Dialogue
 
             box.SetActive(true);
             isOpen = true;
+            UiStack.Push(this);
             openedFrame = Time.frameCount;
             ShowLine();
         }
@@ -115,6 +116,7 @@ namespace RealSteel.Dialogue
 
             box.SetActive(false);
             isOpen = false;
+            UiStack.Remove(this);
             effectWait = 0f;
             pendingText = null;
 
@@ -176,6 +178,9 @@ namespace RealSteel.Dialogue
 
         private static bool ConfirmPressed()
         {
+            InputModeController input = InputModeController.Current;
+            if (input != null) return input.WasPressed(InputMode.Dialogue, "Confirm");
+
             Keyboard keyboard = Keyboard.current;
             if (keyboard != null &&
                 (keyboard.spaceKey.wasPressedThisFrame ||

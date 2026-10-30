@@ -45,8 +45,13 @@ namespace RealSteel.Dialogue
 
             if (current == null) return;
 
+            InputModeController input = InputModeController.Current;
             Keyboard keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.eKey.wasPressedThisFrame)
+            bool interact = input != null
+                ? input.WasPressed(InputMode.Field, "Interact")
+                : keyboard != null && keyboard.eKey.wasPressedThisFrame;
+
+            if (interact)
             {
                 HidePrompt();
                 menu.Open(current);

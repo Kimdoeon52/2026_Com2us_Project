@@ -1,0 +1,63 @@
+{
+  "poolId": "boss_entry",
+  "dialogues": [
+    {
+      "id": "boss_entry_hint",
+      "band": "Critical",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.bossLoseCount", "op": ">=", "value": "3" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.hint.1" },
+        { "speaker": "receptionist", "textKey": "boss_entry.hint.2" },
+        { "speaker": "hero", "textKey": "boss_entry.hint.3" }
+      ]
+    },
+    {
+      "id": "boss_entry_first",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.first.1" },
+        { "speaker": "wheel", "textKey": "boss_entry.first.2", "effects": [ { "type": "zoom", "value": 1.2 }, { "type": "shake", "value": 0.3 } ] },
+        { "speaker": "hero", "textKey": "boss_entry.first.3", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "boss_entry_first_hell",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" },
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.first_hell.1" },
+        { "speaker": "wheel", "textKey": "boss_entry.first_hell.2", "effects": [ { "type": "zoom", "value": 1.25 }, { "type": "shake", "value": 0.5 } ] },
+        { "speaker": "hero", "textKey": "boss_entry.first_hell.3", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "boss_entry_retry",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.retry.1" }
+      ]
+    },
+    {
+      "id": "boss_entry_retry_hell",
+      "band": "Fallback",
+      "conditions": [
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.retry_hell.1" }
+      ]
+    }
+  ]
+}

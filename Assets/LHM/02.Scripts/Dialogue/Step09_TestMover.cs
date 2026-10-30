@@ -19,11 +19,23 @@ namespace RealSteel.Dialogue
         {
             if (interactor != null && interactor.IsBusy) return;
 
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
+            float x, y;
+            InputModeController input = InputModeController.Current;
 
-            float x = Axis(keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed, keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed);
-            float y = Axis(keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed, keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed);
+            if (input != null)
+            {
+                Vector2 move = input.Read<Vector2>(InputMode.Field, "Move");
+                x = move.x;
+                y = move.y;
+            }
+            else
+            {
+                Keyboard keyboard = Keyboard.current;
+                if (keyboard == null) return;
+
+                x = Axis(keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed, keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed);
+                y = Axis(keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed, keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed);
+            }
 
             Vector3 direction = plane == TestMovePlane.XZ ? new Vector3(x, 0f, y) : new Vector3(x, y, 0f);
             if (direction.sqrMagnitude > 1f) direction.Normalize();

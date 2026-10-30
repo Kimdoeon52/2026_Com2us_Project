@@ -12,6 +12,9 @@
     { "name": "hunt.count", "type": "int", "defaultValue": "0" },
     { "name": "hunt.winCount", "type": "int", "defaultValue": "0" },
     { "name": "hunt.loseCount", "type": "int", "defaultValue": "0" },
+    { "name": "hunt.targetBoss", "type": "string", "defaultValue": "" },
+    { "name": "hunt.targetDifficulty", "type": "enum", "defaultValue": "none", "allowed": ["none", "veryEasy", "easy", "normal", "hard", "hell"] },
+    { "name": "hunt.bossAttemptCount", "type": "int", "defaultValue": "0" },
 
     { "name": "rank.band", "type": "enum", "defaultValue": "101+", "allowed": ["1", "2-10", "11-30", "31-100", "101+"] },
     { "name": "rank.dailyChange", "type": "int", "defaultValue": "0" },

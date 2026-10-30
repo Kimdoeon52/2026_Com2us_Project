@@ -107,6 +107,7 @@ namespace RealSteel.Dialogue
             ClearUiSelection();
             panel.SetActive(true);
             ChangeState(State.Menu);
+            UiStack.Push(this);
             RefreshHighlight();
 
             Debug.Log($"[NPC] {target.name} ({target.Role}) 선택지 열림: {string.Join(" / ", Array.ConvertAll(actions, GetLabel))}");
@@ -170,26 +171,32 @@ namespace RealSteel.Dialogue
 
         private void HandleMenuInput()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
+            bool up, down, select, cancel;
+            InputModeController input = InputModeController.Current;
 
-            if (keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame)
+            if (input != null)
             {
-                Move(-1);
+                up = input.WasPressed(InputMode.Dialogue, "Up");
+                down = input.WasPressed(InputMode.Dialogue, "Down");
+                select = input.WasPressed(InputMode.Dialogue, "Select");
+                cancel = input.WasPressed(InputMode.Dialogue, "Cancel");
             }
-            else if (keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame)
+            else
             {
-                Move(1);
+                Keyboard keyboard = Keyboard.current;
+                if (keyboard == null) return;
+
+                up = keyboard.wKey.wasPressedThisFrame || keyboard.upArrowKey.wasPressedThisFrame;
+                down = keyboard.sKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame;
+                select = keyboard.eKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame ||
+                         keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame;
+                cancel = keyboard.escapeKey.wasPressedThisFrame;
             }
-            else if (keyboard.eKey.wasPressedThisFrame || keyboard.spaceKey.wasPressedThisFrame ||
-                     keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)
-            {
-                Choose(selected);
-            }
-            else if (keyboard.escapeKey.wasPressedThisFrame)
-            {
-                Choose(Array.IndexOf(actions, NpcAction.Exit));
-            }
+
+            if (up) Move(-1);
+            else if (down) Move(1);
+            else if (select) Choose(selected);
+            else if (cancel) Choose(Array.IndexOf(actions, NpcAction.Exit));
         }
 
         private void Move(int direction)
@@ -235,10 +242,20 @@ namespace RealSteel.Dialogue
 
         private void HandleShopInput()
         {
-            Keyboard keyboard = Keyboard.current;
-            if (keyboard == null) return;
+            bool close;
+            InputModeController input = InputModeController.Current;
 
-            if (keyboard.escapeKey.wasPressedThisFrame || keyboard.eKey.wasPressedThisFrame)
+            if (input != null)
+            {
+                close = input.WasPressed(InputMode.Dialogue, "Cancel") || input.WasPressed(InputMode.Dialogue, "Select");
+            }
+            else
+            {
+                Keyboard keyboard = Keyboard.current;
+                close = keyboard != null && (keyboard.escapeKey.wasPressedThisFrame || keyboard.eKey.wasPressedThisFrame);
+            }
+
+            if (close)
             {
                 if (shopPanel != null) shopPanel.SetActive(false);
                 Debug.Log("[NPC] 상점 닫힘 → 대화 종료");
@@ -265,6 +282,7 @@ namespace RealSteel.Dialogue
             Debug.Log($"[NPC] 상호작용 종료 ({(npc != null ? npc.name : "-")})");
             npc = null;
             state = State.Closed;
+            UiStack.Remove(this);
             endedFrame = Time.frameCount;
         }
 

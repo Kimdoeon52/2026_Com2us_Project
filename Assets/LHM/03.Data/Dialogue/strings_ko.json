@@ -7,6 +7,7 @@
     { "key": "speaker.agent", "value": "에이전트" },
     { "key": "speaker.receptionist", "value": "길드 접수원" },
     { "key": "speaker.junkdealer", "value": "고물상 아저씨" },
+    { "key": "speaker.wheel", "value": "정크 휠러" },
 
     { "key": "menu.hunt_apply", "value": "토벌 신청" },
     { "key": "menu.ranking_board", "value": "랭킹 보드" },
@@ -24,6 +25,18 @@
     { "key": "guild.after_win.1", "value": "토벌 성공 처리됐어요. 점수는 00시에 반영돼요." },
     { "key": "guild.top10_first.1", "value": "축하드려요! 10위권이에요. 이제 보드 맨 위쪽에서 이름이 보여요." },
     { "key": "guild.top10_first.2", "value": "...아직 위에 아홉 명이나 있네요." },
+
+    { "key": "boss_entry.first.1", "value": "시즌 대상 보스 토벌, 접수됐어요. 상대는 정크 휠러예요. 돌진 한 번에 기체가 반으로 접힌대요." },
+    { "key": "boss_entry.first.2", "value": "고철 냄새가 나는군. 오늘 부품은 네 것으로 하지." },
+    { "key": "boss_entry.first.3", "value": "...그 부품, 내가 먼저 뜯어 갈 거야." },
+    { "key": "boss_entry.first_hell.1", "value": "첫 도전을 헬 난이도로요? 길드는 책임 못 져요." },
+    { "key": "boss_entry.first_hell.2", "value": "겁도 없군. 톱날부터 맛봐라." },
+    { "key": "boss_entry.first_hell.3", "value": "...어차피 한 번은 부딪혀야 하니까." },
+    { "key": "boss_entry.retry.1", "value": "재도전 접수됐어요. 이번엔 돌아오세요." },
+    { "key": "boss_entry.retry_hell.1", "value": "또 헬이요? ...행운을 빌어요." },
+    { "key": "boss_entry.hint.1", "value": "잠깐만요. 지난 기록을 보니 세 번 다 돌진에 당하셨네요." },
+    { "key": "boss_entry.hint.2", "value": "돌진 직전에 바퀴가 한 번 헛돌아요. 그때 옆으로 피하면 벽에 박혀서 잠깐 멈춰요." },
+    { "key": "boss_entry.hint.3", "value": "...헛도는 소리. 기억해 둘게요." },
 
     { "key": "junk.greeting.1", "value": "왔냐. 쓸 만한 고철 있으면 가져와 봐." },
     { "key": "junk.after_defeat.1", "value": "또 부서져서 왔구먼. 고칠 순 없어도 뜯어 쓸 순 있지." },

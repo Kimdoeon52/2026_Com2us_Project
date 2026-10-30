@@ -22,6 +22,8 @@ namespace RealSteel.Dialogue
 
         private int difficultyIndex = 2;
 
+        public string SelectedDifficulty => Difficulties[difficultyIndex];
+
         private void Start()
         {
             if (manager == null)
@@ -72,7 +74,7 @@ namespace RealSteel.Dialogue
             Debug.Log($"[Step09] 다음 토벌 난이도: {Difficulties[difficultyIndex]}");
         }
 
-        private void RecordHunt(string result, string boss)
+        public void RecordHunt(string result, string boss)
         {
             DialogueVariables variables = manager.Variables;
             string difficulty = Difficulties[difficultyIndex];

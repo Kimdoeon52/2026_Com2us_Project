@@ -24,6 +24,10 @@ public class BossNpc1 : BossAiBase
     {
         manager.CurrentCost += 1000;
     }
+    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
+    {
+        return "그렇게 조금 걸어서 되겠어?";
+    }
     protected override void HandleGiveUp()
     {
         ShowThinkChatWithText("쳇 난 포기 하겠어.");

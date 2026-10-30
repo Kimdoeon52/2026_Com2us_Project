@@ -19,8 +19,12 @@ public class BossNpc3 : BossAiBase
     {
         return base.IsBigRaiseThink(currentPrice, baseCost);
     }// Start is called once before the first execution of Update after the MonoBehaviour is created
+    public override void UseBigSkill(Auction manager)
+    {
+        manager.RemainingTime /= 2; //시간을 절반으로
+    }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "저기~ 재밌는거 보여줄까?";
+        return "경기 시간이 너무 길지 않아?";
     }
 }

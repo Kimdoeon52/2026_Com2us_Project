@@ -19,8 +19,15 @@ public class BossNpc4 : BossAiBase
     {
         return base.IsBigRaiseThink(currentPrice, baseCost);
     }// Start is called once before the first execution of Update after the MonoBehaviour is created
+    public override void UseBigSkill(Auction manager)
+    {
+        //경매 아이템이 안보이는 능력.
+        manager.auctionName.text = "메롱 안보이지?";
+        manager.auctionCost.text = "얼마일까?";
+        manager.auctionGrade.text = "등급은 비밀이야~";
+    }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "끼얏호오우우우우우우";
+        return "아무것도 안보이게 만들어줄게?";
     }
 }

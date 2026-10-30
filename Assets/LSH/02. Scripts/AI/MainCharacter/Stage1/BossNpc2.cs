@@ -22,7 +22,7 @@ public class BossNpc2 : BossAiBase
     }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "흐응~ 이것도 잡아보시지?";
+        return "흐응~ 넌 강퇴야~";
     }
     public override void UseBigSkill(Auction manager)
     {

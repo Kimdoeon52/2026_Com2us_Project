@@ -70,7 +70,7 @@ public class Auction : PersistentSingleton<Auction>
     [Header("물건 정보 UI")]
     [SerializeField] public TextMeshProUGUI auctionName; //물건 이름
     [SerializeField] public TextMeshProUGUI auctionCost; //물건 가격
-    [SerializeField] private TextMeshProUGUI auctionGrade;// 물건 등급
+    [SerializeField] public TextMeshProUGUI auctionGrade;// 물건 등급
 
     [Header("대사 & 메시지 UI")]
     [SerializeField] public TextMeshProUGUI chat; //경매하는 사람 채팅 나올 곳

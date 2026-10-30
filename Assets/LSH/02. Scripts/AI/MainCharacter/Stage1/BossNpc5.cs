@@ -19,8 +19,13 @@ public class BossNpc5 : BossAiBase
     {
         return base.IsBigRaiseThink(currentPrice, baseCost);
     }// Start is called once before the first execution of Update after the MonoBehaviour is created
+    public override void UseBigSkill(Auction manager)
+    {
+        //경매 아이템 가격을 절반으로 낮추는 능력
+        manager.CurrentCost /= 2;
+    }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "우냐냐냐ㅑ냐냐냐냐ㅑ";
+        return "너무 비싸다요... 네고가능한가요";
     }
 }

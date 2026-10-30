@@ -302,6 +302,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 203d5eec57adef745b6903faf1bcc6d5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isGiveUp: 0
   thinkImage: {fileID: 8703547411300228660}
   npcThinkChat: {fileID: 551133288262341704}
   npcImage: {fileID: -1379383334, guid: 873fb8f681b0f4745a612b7371076530, type: 3}
@@ -314,4 +315,5 @@ MonoBehaviour:
   cutsceneBGcolor: {r: 0.4245283, g: 0.4245283, b: 0.4245283, a: 0.8666667}
   cutsceneCharacter: {fileID: 1028981832, guid: bb14adfb1901c504185646519cdc6b87, type: 3}
   bigRaiseGold: 1000
+  bigRaisetimes: 2
   actionRate: 0.7

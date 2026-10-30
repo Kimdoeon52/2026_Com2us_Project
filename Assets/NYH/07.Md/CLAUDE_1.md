@@ -83,12 +83,12 @@ Assets/NYH/02. Scripts/Combat/
     View/       RobotView.cs  BoxDrawer.cs  FrameStepper.cs
 
 Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속하는 NYH 보스. 보스2 쿄다이는 남윤호 담당)
-    Common/     BossHurtZone.cs(보스의 맞는 자리 + 부위 배율)  PixelStudio.cs(3D 모델 → 저해상도 → 경기장 판 2장)
+    Common/     BossHurtZone.cs(보스의 맞는 자리 + 부위 배율)  (PixelStudio.cs는 2026-10-30 삭제 — 모델을 경기장에 직접 두고 ProPixelizer 머티리얼로 픽셀화)
                 GroundTelegraph.cs(바닥 예고 그림자)
     Kyodai/     KyodaiBossController.cs  KyodaiLimb.cs(부위 = 레이어 규칙)  KyodaiRig.cs(리깅 모델: 뼈 기준 메쉬 쪼개기 + 몸 따라오기 + IK 순서, 2026-10-29)  KyodaiPalmPressPattern.cs(패턴은 1개당 1클래스 — KKH 기믹 방식)
                 KyodaiMotionData.cs(동작 에셋: 손 키·레이어 띠·이벤트)  KyodaiMotionPlayer.cs(재생 — 게임·미리보기 공용)
                 KyodaiMotionPattern.cs(모션 에셋 재생 범용 패턴 — 이후 패턴은 에셋만 추가, 2026-10-29)
-    Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)
+    Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)  KyodaiEditPreview.cs(플레이 전 실제 로봇 자세 미리보기)  KyodaiBonePicker.cs(Scene 뷰 뼈 선택)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
 Assets/NYH/04. SO/Combat/
@@ -686,6 +686,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 25. 🔶 (2026-10-28) 히트스톱 1·2단계 — 피격 모션 나올 때만 멈춤, 그림을 `Visual` 자식으로 자동 분리, 진동(피격자 크게·공격자 작게, 지상 좌우·공중 전방향, 감쇠, 카메라 줌 보정)·공격자 미세 이동. 1단계: 멈춤(`ActionExecutor` 정지 카운터, `RobotMover`·`RobotView` 연동) + 강도 공식(`HitStopSettings`: 공격력 × 기술 계수 × 박스 계수). 기본값 0 = 없음.
 26. 🔶 (2026-10-28) 보스전 피격 연동(KKH `BossControllerBase`) — 플레이어→보스(`HitDetection` OverlapBox → 허브 `ProcessHit`, 근접·투사체·박스당 피해, 때린 쪽만 히트스톱), 보스→플레이어(허브 `OnPlayerHpChanged` 감소 → 경직·점멸·숫자·히트스톱, 넉백 없음), `HurtboxColliderSync`(플레이어 콜라이더 = Hurt박스, 무적·사망 시 끔, "Player" 태그). `DummyBattleBootstrap`이 보스 씬이면 보스 모드로 등록(정식은 KKH). **KKH 확인 필요**: 허브만 HP를 깎으면 보스 컨트롤러의 페이즈 전환·그로기·기믹 통보가 안 돈다. 보스 쪽 데미지 숫자·점멸 없음
 27. 🔶 (2026-10-28) 보스2 쿄다이 1단계 — 나노봇(보스3)은 중단. 3D 에셋 픽셀화 방식(`PixelStudio`: 스튜디오 카메라 → 저해상도 Point 렌더텍스처 → 경기장 판 뒤/앞 2장, 렌더 레이어 30/31). 레이어 규칙(`KyodaiLimb`: 배경·전이·공격·잔류·복귀, 잔류만 피격, 앞/뒤 판 전환), 부위 배율(`BossHurtZone` → `HitDetection`), 패턴 1개(손바닥 압착). 임시 상자 로봇 빌더. **3D 에셋 미정** — 리깅된 모델 확정 후 effector를 IK 타깃으로 교체. 테두리(붉은/흰)는 색 곱하기로 임시. 남은 패턴·탐조등/해킹 게이지·기물·페이즈 전환·부위 무력화 게이지 미착수
+28. 🔶 (2026-10-30) 쿄다이 그림 방식 변경 — `PixelStudio`(스튜디오 카메라 → 픽셀 판) 삭제. 3D 모델을 `쿄다이` 밑 경기장 뒤(z+)에 두고 메인 카메라가 직접 찍음, 픽셀화·외곽선은 ProPixelizer 머티리얼(UberShader). 좌표는 전부 월드(`KyodaiBossController.PlayZ`·`PlayPoint`, 모션 키 `forward` = 경기장 평면에서 카메라 쪽 거리). 앞뒤 가림은 실제 z(앞/뒤 판 전환 없음, 레이어 색만). 편집 미리보기는 씬의 실제 로봇을 꺾고 끄면/저장 직전에 되돌림. 기존 씬은 메뉴 `스튜디오 걷어내기`로 옮김
 
 ---
 

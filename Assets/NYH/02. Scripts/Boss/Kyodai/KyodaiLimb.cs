@@ -23,15 +23,16 @@ public enum LimbReach
 }
 
 /// <summary>
-/// 쿄다이의 팔·다리 하나 (2026-10-28). 3D 모델 쪽(스튜디오)과 경기장 쪽(판정)을 잇는다.
+/// 쿄다이의 팔·다리 하나 (2026-10-28). 3D 모델과 경기장 판정을 잇는다.
+/// 2026-10-30: 스튜디오(PixelStudio)를 없애고 모델을 경기장에 그대로 둔다 — 모든 좌표가 월드 좌표.
 ///
-///   · effector: 스튜디오 안의 목표점. 패턴이 이걸 움직인다
+///   · effector: 손 목표점(월드). 패턴이 이걸 움직인다
 ///       - 임시 상자 모델: effector = 손 상자 자체(손이 날아감)
 ///       - 리깅 모델(rig 지정, 2026-10-29): effector = 보이지 않는 IK 타깃. 위팔·아래팔을 꺾어 손이 거기 닿게 한다(2본 IK).
 ///         안 닿으면 reachMode대로 — 기본은 팔만 커지며 뻗음(몸은 뒤에), Body면 KyodaiRig가 몸을 기울인다
-///   · 레이어에 따라 부위 렌더러를 뒤 판/앞 판 렌더 레이어로 옮기고 색을 바꾼다
-///   · 경기장 쪽 BossHurtZone을 매 프레임 손이 보이는 자리로 옮기고, 잔류(Linger)일 때만 맞게 한다
-///   · 패턴은 이 부위에 "경기장 이 자리로 와라"(MoveToWorld)만 시키면 된다 — 스튜디오 좌표·모델 종류는 몰라도 됨
+///   · 레이어에 따라 부위 색을 바꾼다 (앞뒤 가림은 실제 z 위치로 — 몸은 경기장 뒤, 공격하는 손은 경기장 평면까지 나옴)
+///   · 경기장 쪽 BossHurtZone을 매 프레임 손 자리로 옮기고, 잔류(Linger)일 때만 맞게 한다
+///   · 패턴은 이 부위에 "경기장 이 자리로 와라"(MoveToWorld)만 시키면 된다 — 모델 종류는 몰라도 됨
 /// </summary>
 public class KyodaiLimb : MonoBehaviour
 {
@@ -40,10 +41,10 @@ public class KyodaiLimb : MonoBehaviour
 
     [SerializeField] private KyodaiBossController boss;
 
-    [Tooltip("스튜디오 안의 목표점. 임시 상자 모델은 손 상자, 리깅 모델이면 비워두면 IK 타깃을 손 위치에 자동으로 만든다")]
+    [Tooltip("손 목표점. 임시 상자 모델은 손 상자, 리깅 모델이면 비워두면 IK 타깃을 손 위치에 자동으로 만든다")]
     [SerializeField] private Transform effector;
 
-    [Tooltip("레이어를 바꿀 렌더러들의 뿌리(스튜디오). 비우면 effector (리깅 모델은 쪼갠 부위 렌더러를 자동으로 씀)")]
+    [Tooltip("레이어 색을 바꿀 렌더러들의 뿌리. 비우면 effector (리깅 모델은 쪼갠 부위 렌더러를 자동으로 씀)")]
     [SerializeField] private Transform renderRoot;
 
     [Tooltip("임시 모델용: 어깨에서 손까지 늘려 잇는 팔 막대(선택). 리깅 모델이면 비움")]
@@ -53,8 +54,8 @@ public class KyodaiLimb : MonoBehaviour
     [Tooltip("경기장 쪽 피격 자리. 잔류(Linger)일 때만 켜진다")]
     [SerializeField] private BossHurtZone hurtZone;
 
-    [Tooltip("전경으로 나왔을 때 스튜디오 카메라와의 거리. 가까울수록 크게 보인다")]
-    [Min(0.1f)] [SerializeField] private float foregroundDepth = 20f;
+    [Tooltip("코드 패턴(MoveToWorld)이 손을 보낼 때 경기장 평면에서 카메라 쪽으로 나올 거리(월드). 0 = 플레이어와 같은 평면")]
+    [SerializeField] private float foregroundOffset;
 
     [Header("리깅 모델 (비우면 임시 상자 방식)")]
     [SerializeField] private KyodaiRig rig;
@@ -102,20 +103,20 @@ public class KyodaiLimb : MonoBehaviour
     public string PartId => partId;
     public LimbLayer Layer { get; private set; } = LimbLayer.Background;
     public BossHurtZone HurtZone => hurtZone;
-    public float ForegroundDepth => foregroundDepth;
+    public float ForegroundOffset => foregroundOffset;
     public Transform Effector => effector;
     /// <summary>준비 끝(Start 이후) — 모션 재생·미리보기는 이걸 보고 적용한다</summary>
     public bool Ready => ready;
-    /// <summary>대기 자세의 손 자리(스튜디오 좌표)</summary>
+    /// <summary>대기 자세의 손 자리(월드)</summary>
     public Vector3 RestPosition => restPosition;
 
-    /// <summary>손(끝점)이 지금 경기장 어디에 보이는지</summary>
+    /// <summary>손(끝점)의 경기장 xy</summary>
     public Vector2 WorldPosition
     {
         get
         {
-            if (boss == null || boss.Studio == null || effector == null) return transform.position;
-            return boss.Studio.StudioToWorld(RigMode ? end.position : effector.position);
+            if (effector == null) return transform.position;
+            return RigMode ? end.position : effector.position;
         }
     }
 
@@ -173,7 +174,7 @@ public class KyodaiLimb : MonoBehaviour
             renderRoot = partRenderer.transform;
             renderers = new Renderer[] { partRenderer };
         }
-        else Debug.LogWarning($"[KyodaiLimb] {partId}: 쪼갠 부위 메쉬가 없음 — 앞/뒤 판 전환 없이 몸통과 같이 그려진다");
+        else Debug.LogWarning($"[KyodaiLimb] {partId}: 쪼갠 부위 메쉬가 없음 — 레이어 색이 이 부위만 따로 안 바뀐다");
 
         rig.Register(this);
     }
@@ -188,11 +189,6 @@ public class KyodaiLimb : MonoBehaviour
     public void SetLayer(LimbLayer layer)
     {
         Layer = layer;
-        bool front = layer == LimbLayer.Transition || layer == LimbLayer.Attack || layer == LimbLayer.Linger;
-        int renderLayer = boss != null && boss.Studio != null ? (front ? boss.Studio.FrontLayer : boss.Studio.BackLayer) : 0;
-        if (renderRoot != null) SetRenderLayer(renderRoot, renderLayer);
-        if (segment != null) SetRenderLayer(segment, renderLayer);
-
         Color tint = layer == LimbLayer.Attack ? attackColor : layer == LimbLayer.Linger ? lingerColor : Color.white;
         foreach (var r in renderers) ApplyTint(r, tint);
         if (segment != null) foreach (var r in segment.GetComponentsInChildren<Renderer>(true)) ApplyTint(r, tint);
@@ -200,10 +196,10 @@ public class KyodaiLimb : MonoBehaviour
         if (hurtZone != null) hurtZone.Vulnerable = layer == LimbLayer.Linger;
     }
 
-    /// <summary>경기장 worldPoint 자리에 손이 보이도록 duration 동안 옮긴다 (전경 거리에서)</summary>
+    /// <summary>경기장 worldPoint 자리로 손을 duration 동안 옮긴다 (경기장 평면에서 foregroundOffset만큼 앞)</summary>
     public UniTask MoveToWorld(Vector2 worldPoint, float duration, Ease ease, CancellationToken token)
     {
-        Vector3 target = boss.Studio.WorldToStudio(worldPoint, foregroundDepth);
+        Vector3 target = boss.PlayPoint(worldPoint, foregroundOffset);
         return Play(effector.DOMove(target, duration).SetEase(ease), token);
     }
 
@@ -226,12 +222,12 @@ public class KyodaiLimb : MonoBehaviour
         SetLayer(LimbLayer.Background);
     }
 
-    /// <summary>모션 재생: 손을 스튜디오 좌표 studioPos에 두고 손목을 hand만큼 돌린다. weight = IK 세기 (KyodaiMotionPlayer)</summary>
-    public void SetPose(Vector3 studioPos, Quaternion hand, float weight = 1f)
+    /// <summary>모션 재생: 손을 월드 좌표 worldPos에 두고 손목을 hand만큼 돌린다. weight = IK 세기 (KyodaiMotionPlayer)</summary>
+    public void SetPose(Vector3 worldPos, Quaternion hand, float weight = 1f)
     {
         if (!ready) return;
         if (tweens.Count > 0) KillTweens();
-        effector.position = studioPos;
+        effector.position = worldPos;
         handOffset = hand;
         ikWeight = Mathf.Clamp01(weight);
         if (!RigMode) effector.rotation = restRotation * hand;
@@ -310,12 +306,6 @@ public class KyodaiLimb : MonoBehaviour
     public Transform EffectorSetting => effector;
     public Transform Segment => segment;
     public Transform Shoulder => shoulder;
-
-    private static void SetRenderLayer(Transform root, int layer)
-    {
-        root.gameObject.layer = layer;
-        foreach (Transform child in root) SetRenderLayer(child, layer);
-    }
 
     private void ApplyTint(Renderer r, Color tint)
     {

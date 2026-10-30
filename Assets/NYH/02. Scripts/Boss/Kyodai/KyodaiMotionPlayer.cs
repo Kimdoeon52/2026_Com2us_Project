@@ -12,7 +12,7 @@ public static class KyodaiMotionPlayer
     /// <summary>t초의 온몸 애니메이션·손 위치·손목·레이어를 적용. target = 목표 지점(경기장 월드)</summary>
     public static void ApplyPose(KyodaiMotionData motion, float t, Vector2 target, KyodaiBossController boss)
     {
-        if (motion == null || boss == null || boss.Studio == null) return;
+        if (motion == null || boss == null) return;
 
         // 온몸 애니메이션: 실제 샘플링은 KyodaiRig.LateUpdate가 IK 전에 한다.
         // 클립이 있으면 트랙 없는 부위는 IK를 끈다 — 안 끄면 대기 자리로 당겨져서 애니메이션을 덮는다
@@ -21,7 +21,6 @@ public static class KyodaiMotionPlayer
         if (motion.clip != null)
             foreach (var l in boss.Limbs) if (l.Ready && motion.tracks.Find(x => x.partId == l.PartId) == null) l.SetIKWeight(0f);
 
-        PixelStudio studio = boss.Studio;
         foreach (var track in motion.tracks)
         {
             KyodaiLimb limb = boss.FindLimb(track.partId);
@@ -35,9 +34,9 @@ public static class KyodaiMotionPlayer
             }
 
             if (track.keys.Count == 0) { limb.SetIKWeight(motion.clip != null ? 0f : 1f); continue; }
-            EvaluateTrack(track, t, target, (w, d) => studio.WorldToStudio(w, d), limb.RestPosition,
-                          out Vector3 studioPos, out Quaternion hand, out float weight);
-            limb.SetPose(studioPos, hand, weight);
+            EvaluateTrack(track, t, target, boss.PlayPoint, limb.RestPosition,
+                          out Vector3 pos, out Quaternion hand, out float weight);
+            limb.SetPose(pos, hand, weight);
         }
     }
 
@@ -70,20 +69,20 @@ public static class KyodaiMotionPlayer
         return target + key.offset;
     }
 
-    private static Vector3 KeyStudio(KyodaiMotionKey key, Vector2 target, Func<Vector2, float, Vector3> toStudio, Vector3 restStudio) =>
-        key.rest ? restStudio : toStudio(target + key.offset, key.depth);
+    private static Vector3 KeyPoint(KyodaiMotionKey key, Vector2 target, Func<Vector2, float, Vector3> toWorld, Vector3 rest) =>
+        key.rest ? rest : toWorld(target + key.offset, key.forward);
 
     /// <summary>
-    /// 트랙의 t초 손 위치(스튜디오 좌표)와 손목 회전. toStudio = 경기장 좌표+깊이 → 스튜디오 좌표, restStudio = 대기 손 자리.
-    /// 게임은 실제 스튜디오로, 편집 미리보기는 숨긴 복제본 카메라로 같은 계산을 한다
+    /// 트랙의 t초 손 위치(월드)와 손목 회전. toWorld = 경기장 좌표 + 앞으로 나온 거리 → 3D 좌표(KyodaiBossController.PlayPoint), rest = 대기 손 자리.
+    /// 게임과 편집 미리보기가 같은 계산을 한다
     /// </summary>
-    public static void EvaluateTrack(KyodaiMotionTrack track, float t, Vector2 target, Func<Vector2, float, Vector3> toStudio,
-                                     Vector3 restStudio, out Vector3 pos, out Quaternion hand, out float weight)
+    public static void EvaluateTrack(KyodaiMotionTrack track, float t, Vector2 target, Func<Vector2, float, Vector3> toWorld,
+                                     Vector3 rest, out Vector3 pos, out Quaternion hand, out float weight)
     {
         var keys = track.keys;
         if (t <= keys[0].time || keys.Count == 1)
         {
-            pos = KeyStudio(keys[0], target, toStudio, restStudio);
+            pos = KeyPoint(keys[0], target, toWorld, rest);
             hand = Quaternion.Euler(keys[0].handRotation);
             weight = keys[0].ikWeight;
             return;
@@ -97,15 +96,15 @@ public static class KyodaiMotionPlayer
             float span = Mathf.Max(b.time - a.time, 1e-4f);
             float u = Mathf.Clamp01((t - a.time) / span);
             float e = Ease01(b.ease, u);
-            // 스튜디오 공간에서 잇는다 — 깊이(크기)도 같이 자연스럽게 변한다
-            pos = Vector3.LerpUnclamped(KeyStudio(a, target, toStudio, restStudio), KeyStudio(b, target, toStudio, restStudio), e);
+            // 3D로 잇는다 — 뒤(대기)에서 앞(경기장 평면)으로 나오는 것도 같이 자연스럽게 변한다
+            pos = Vector3.LerpUnclamped(KeyPoint(a, target, toWorld, rest), KeyPoint(b, target, toWorld, rest), e);
             hand = Quaternion.SlerpUnclamped(Quaternion.Euler(a.handRotation), Quaternion.Euler(b.handRotation), e);
             weight = Mathf.Clamp01(Mathf.LerpUnclamped(a.ikWeight, b.ikWeight, e));
             return;
         }
 
         var last = keys[keys.Count - 1];
-        pos = KeyStudio(last, target, toStudio, restStudio);
+        pos = KeyPoint(last, target, toWorld, rest);
         hand = Quaternion.Euler(last.handRotation);
         weight = last.ikWeight;
     }

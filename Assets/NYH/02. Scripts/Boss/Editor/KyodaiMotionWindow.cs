@@ -11,7 +11,8 @@ using UnityEngine;
 ///         빈 곳을 누르거나 끌면 그 시각으로, ◆를 누르면 선택, 끌면 시각 이동
 ///   Scene 뷰  노란 십자 = 목표(플레이어 자리 대신) — 끌어서 옮김. 트랙 경로와 ◆ 키 — 선택한 키는 화살표로 끌어서 손 위치 수정.
 ///             빨간 네모 = 판정 범위, 검은 띠 = 그림자. 흰 점 = 지금 손이 보이는 자리
-///   미리보기  플레이 중에만 로봇이 실제로 움직인다(보스 AI는 멈춤). 편집 내용은 에셋에 바로 저장 — 플레이를 멈춰도 남는다
+///   미리보기  플레이 전: 편집 미리보기가 씬의 실제 로봇을 움직인다(끄면 원래 자세로). 플레이 중: '미리보기 시작'(보스 AI는 멈춤).
+///             편집 내용은 에셋에 바로 저장 — 플레이를 멈춰도 남는다
 /// </summary>
 public class KyodaiMotionWindow : EditorWindow
 {
@@ -47,13 +48,14 @@ public class KyodaiMotionWindow : EditorWindow
     private bool selLayerMark;
     private int selMark = -1;
 
-    // 플레이 전 미리보기 (숨긴 복제본) — 2026-10-29
+    // 플레이 전 미리보기 (씬의 실제 로봇을 움직임) — 2026-10-29, 2026-10-30
     private readonly KyodaiEditPreview editPreview = new KyodaiEditPreview();
     private bool editPreviewOn = true;
     private bool previewDirty = true;
     private float renderedTime = -1f;
     private Vector2 renderedTarget;
     private double lastClipRefresh;
+    private bool pausedForAnimationWindow;
 
     // 타임라인 드래그 상태
     private enum Drag { None, Time, Key, Event, Mark }
@@ -69,6 +71,8 @@ public class KyodaiMotionWindow : EditorWindow
         EditorApplication.playModeStateChanged += OnPlayModeChanged;
         AssemblyReloadEvents.beforeAssemblyReload += editPreview.End;
         UnityEditor.SceneManagement.EditorSceneManager.sceneClosing += OnSceneClosing;
+        UnityEditor.SceneManagement.EditorSceneManager.sceneSaving += OnSceneSaving;
+        EditorApplication.quitting += editPreview.End;
         Undo.undoRedoPerformed += OnUndoRedo;
         lastTick = EditorApplication.timeSinceStartup;
         if (motion == null && Selection.activeObject is KyodaiMotionData m) motion = m;
@@ -81,12 +85,17 @@ public class KyodaiMotionWindow : EditorWindow
         EditorApplication.playModeStateChanged -= OnPlayModeChanged;
         AssemblyReloadEvents.beforeAssemblyReload -= editPreview.End;
         UnityEditor.SceneManagement.EditorSceneManager.sceneClosing -= OnSceneClosing;
+        UnityEditor.SceneManagement.EditorSceneManager.sceneSaving -= OnSceneSaving;
+        EditorApplication.quitting -= editPreview.End;
         Undo.undoRedoPerformed -= OnUndoRedo;
         StopPreview();
         editPreview.End();
     }
 
     private void OnSceneClosing(UnityEngine.SceneManagement.Scene scene, bool removing) => editPreview.End();
+
+    // 미리보기로 꺾인 자세가 씬에 저장되지 않게 — 저장 직전에 원래 자세로. 다음 Tick에서 다시 시작한다
+    private void OnSceneSaving(UnityEngine.SceneManagement.Scene scene, string path) { editPreview.End(); previewDirty = true; }
     private void OnUndoRedo() { previewDirty = true; Repaint(); }
 
     private void OnPlayModeChanged(PlayModeStateChange change)
@@ -130,15 +139,25 @@ public class KyodaiMotionWindow : EditorWindow
             KyodaiMotionPlayer.ApplyPose(motion, time, target, boss);
         }
 
-        // 플레이 전: 숨긴 복제본으로 찍어서 보여준다. 바뀐 게 있을 때만 다시 찍는다
+        // 플레이 전: 씬의 실제 로봇을 움직인다. 애니메이션 창이 녹화·미리보기 중이면 그쪽이 로봇을 쓰니 비켜준다
+        // 멈출 때 기본 자세 기록은 버리지 않고(End 아님) 원래 자세로만 돌린다 — 꺾인 자세를 기본 자세로 다시 읽는 일이 없게
+        bool animWindowBusy = AnimationMode.InAnimationMode();
+        if (animWindowBusy != pausedForAnimationWindow)
+        {
+            pausedForAnimationWindow = animWindowBusy;
+            if (animWindowBusy) editPreview.Pause();
+            else previewDirty = true;
+            Repaint();
+        }
+        if (animWindowBusy && !Application.isPlaying) return;
         if (!Application.isPlaying && editPreviewOn && FindBoss() != null)
         {
             if (!editPreview.Active || editPreview.Boss != boss) { editPreview.Begin(boss); previewDirty = true; }
-            // 클립이 있으면 애니메이션 창에서 키를 고친 것도 따라오게 가끔 다시 찍는다
+            // 클립이 있으면 애니메이션 창에서 키를 고친 것도 따라오게 가끔 다시 적용한다
             if (motion.clip != null && now - lastClipRefresh > 0.25) { previewDirty = true; lastClipRefresh = now; }
             if (editPreview.Active && (previewDirty || playing || renderedTime != time || renderedTarget != target))
             {
-                editPreview.Render(motion, time, target);
+                editPreview.Apply(motion, time, target);
                 previewDirty = false;
                 renderedTime = time;
                 renderedTarget = target;
@@ -248,15 +267,19 @@ public class KyodaiMotionWindow : EditorWindow
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                bool on = GUILayout.Toggle(editPreviewOn, new GUIContent(" 편집 미리보기 (플레이 안 해도 로봇이 움직임)", "숨긴 복제본을 찍어서 Scene 뷰의 판 자리와 아래 창에 그린다. 씬은 안 바뀜"));
+                bool on = GUILayout.Toggle(editPreviewOn, new GUIContent(" 편집 미리보기 (플레이 안 해도 로봇이 움직임)",
+                    "씬의 실제 로봇을 이 모션 자세로 꺾는다. 끄거나 씬을 저장하면 원래 자세로 돌아간다 — Scene 뷰에서 돌려보고 확대해서 확인"));
                 if (on != editPreviewOn) { editPreviewOn = on; previewDirty = true; }
-                if (GUILayout.Button(new GUIContent("새로고침", "모델 위치·크기를 바꿨으면 눌러서 복제본을 다시 만든다"), GUILayout.Width(70)))
+                if (GUILayout.Button(new GUIContent("새로고침", "뼈 기본 자세를 직접 고쳤으면 미리보기를 껐다 켜거나 이걸 눌러 기본 자세를 다시 읽는다"), GUILayout.Width(70)))
                 {
                     editPreview.End();
                     previewDirty = true;
                 }
             }
-            DrawPreviewImage();
+            if (editPreviewOn && pausedForAnimationWindow)
+                EditorGUILayout.HelpBox("애니메이션 창이 녹화·미리보기 중이라 편집 미리보기를 잠시 멈췄습니다. 애니메이션 창의 미리보기를 끄면 다시 움직입니다.", MessageType.Info);
+            else if (editPreviewOn)
+                EditorGUILayout.HelpBox("미리보기 중에는 로봇 뼈를 직접 돌려도 다음 프레임에 덮어씌워집니다. 뼈를 고칠 땐 미리보기를 끄세요.", MessageType.None);
         }
         else if (boss == null)
             EditorGUILayout.HelpBox("씬에 KyodaiBossController가 없습니다.", MessageType.Warning);
@@ -270,26 +293,6 @@ public class KyodaiMotionWindow : EditorWindow
             }
             GUI.backgroundColor = bg;
         }
-    }
-
-    // 창 안 미리보기 그림 (판 비율 그대로, 픽셀 그대로)
-    private void DrawPreviewImage()
-    {
-        if (!editPreviewOn || !editPreview.Active || editPreview.Texture == null) return;
-        var tex = editPreview.Texture;
-        float w = position.width - 24f;
-        float h = Mathf.Min(260f, w * tex.height / tex.width);
-        w = h * tex.width / tex.height;
-        Rect r = GUILayoutUtility.GetRect(w, h, GUILayout.ExpandWidth(false));
-        r.x = (position.width - w) * 0.5f;
-        EditorGUI.DrawRect(r, new Color(0.22f, 0.24f, 0.28f));
-        if (Event.current.type == EventType.Repaint) GUI.DrawTexture(r, tex, ScaleMode.StretchToFill, true);
-
-        // 목표 표시 (노란 십자) — 판 위 자리
-        Rect a = editPreview.Arena;
-        Vector2 p = new Vector2(r.x + (target.x - a.xMin) / a.width * r.width, r.yMax - (target.y - a.yMin) / a.height * r.height);
-        EditorGUI.DrawRect(new Rect(p.x - 6f, p.y, 12f, 1f), Color.yellow);
-        EditorGUI.DrawRect(new Rect(p.x, p.y - 6f, 1f, 12f), Color.yellow);
     }
 
     // ── 타임라인 ──
@@ -543,7 +546,7 @@ public class KyodaiMotionWindow : EditorWindow
         }
         KyodaiMotionKey src = a != null && !a.rest ? a : b != null && !b.rest ? b : null;
         if (src == null) return;
-        key.depth = src.depth;
+        key.forward = src.forward;
         key.offset = src.offset;
         key.handRotation = src.handRotation;
         key.ikWeight = src.ikWeight;
@@ -551,7 +554,7 @@ public class KyodaiMotionWindow : EditorWindow
         {
             float u = KyodaiMotionPlayer.Ease01(b.ease, Mathf.InverseLerp(a.time, b.time, time));
             key.offset = Vector2.LerpUnclamped(a.offset, b.offset, u);
-            key.depth = Mathf.LerpUnclamped(a.depth, b.depth, u);
+            key.forward = Mathf.LerpUnclamped(a.forward, b.forward, u);
             key.handRotation = Vector3.LerpUnclamped(a.handRotation, b.handRotation, u);
         }
     }
@@ -605,7 +608,7 @@ public class KyodaiMotionWindow : EditorWindow
                     using (new EditorGUI.DisabledScope(key.rest))
                     {
                         key.offset = EditorGUILayout.Vector2Field(new GUIContent("목표에서 손까지", "Scene 뷰에서 화살표로 끌어도 됨"), key.offset);
-                        key.depth = EditorGUILayout.Slider(new GUIContent("가까움(깊이)", "작을수록 카메라 쪽으로 나와 크게 보임"), key.depth, 0.5f, 120f);
+                        key.forward = EditorGUILayout.FloatField(new GUIContent("앞으로 나온 거리", "경기장 평면에서 카메라 쪽으로(월드). 0 = 플레이어와 같은 평면 — 판정 자리와 보이는 자리가 맞는다"), key.forward);
                     }
                     key.handRotation = EditorGUILayout.Vector3Field("손목 회전(도)", key.handRotation);
                     key.ikWeight = EditorGUILayout.Slider(new GUIContent("IK 세기", "1 = 손이 이 키 자리에 정확히 / 0 = 온몸 애니메이션 그대로(위치 무시)"), key.ikWeight, 0f, 1f);
@@ -676,19 +679,6 @@ public class KyodaiMotionWindow : EditorWindow
         if (motion == null) return;
         FindBoss();
         EnsureTarget();
-        PixelStudio studio = boss != null ? boss.Studio : null;
-
-        // 편집 미리보기 그림을 판 자리에 (다른 표시보다 먼저 = 아래에)
-        if (!Application.isPlaying && editPreviewOn && editPreview.Active && editPreview.Texture != null && Event.current.type == EventType.Repaint)
-        {
-            Rect a = editPreview.Arena;
-            Vector2 p0 = HandleUtility.WorldToGUIPoint(new Vector3(a.xMin, a.yMax, studio != null ? studio.PlaneZ : 0f));
-            Vector2 p1 = HandleUtility.WorldToGUIPoint(new Vector3(a.xMax, a.yMin, studio != null ? studio.PlaneZ : 0f));
-            Handles.BeginGUI();
-            GUI.DrawTexture(Rect.MinMaxRect(Mathf.Min(p0.x, p1.x), Mathf.Min(p0.y, p1.y), Mathf.Max(p0.x, p1.x), Mathf.Max(p0.y, p1.y)),
-                            editPreview.Texture, ScaleMode.StretchToFill, true);
-            Handles.EndGUI();
-        }
 
         // 목표 (노란 십자) — 끌어서 옮김
         Handles.color = Color.yellow;
@@ -732,9 +722,9 @@ public class KyodaiMotionWindow : EditorWindow
             KyodaiLimb limb = boss != null ? boss.FindLimb(track.partId) : null;
             Color tc = TrackColors[ti % TrackColors.Length];
 
-            // 대기 손 자리: 플레이 중이면 실제 부위, 아니면 편집 미리보기 복제본
+            // 대기 손 자리: 플레이 중이면 실제 부위, 아니면 편집 미리보기가 적어 둔 자리
             Vector2? restWorld = Application.isPlaying
-                ? (limb != null && limb.Ready && studio != null ? studio.StudioToWorld(limb.RestPosition) : (Vector2?)null)
+                ? (limb != null && limb.Ready ? (Vector2)limb.RestPosition : (Vector2?)null)
                 : editPreview.Active ? editPreview.RestWorld(track.partId) : null;
 
             var pts = new List<Vector3>();

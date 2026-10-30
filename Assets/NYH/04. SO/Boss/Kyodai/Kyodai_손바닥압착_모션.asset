@@ -21,35 +21,35 @@ MonoBehaviour:
     - time: 0
       rest: 1
       offset: {x: 0, y: 4}
-      depth: 20
+      forward: 0
       handRotation: {x: 0, y: 0, z: 0}
       ikWeight: 1
       ease: 4
     - time: 1.2
       rest: 0
       offset: {x: 0, y: 5}
-      depth: 0.5
+      forward: 0
       handRotation: {x: 9.96, y: 551.1, z: 126}
       ikWeight: 1
       ease: 9
     - time: 1.3800001
       rest: 0
       offset: {x: 0, y: 0.75}
-      depth: 25
+      forward: 0
       handRotation: {x: 0, y: 0, z: 0}
       ikWeight: 1
       ease: 5
     - time: 4.38
       rest: 0
       offset: {x: 0, y: 0.75}
-      depth: 25
+      forward: 0
       handRotation: {x: 0, y: 0, z: 0}
       ikWeight: 1
       ease: 1
     - time: 5.1800003
       rest: 1
       offset: {x: 0, y: 4}
-      depth: 20
+      forward: 0
       handRotation: {x: 0, y: 0, z: 0}
       ikWeight: 1
       ease: 4

@@ -9,16 +9,15 @@ using UnityEngine;
 ///
 /// 만드는 것:
 ///   · 데이터: 04. SO/Boss/Kyodai/ 에 BossMasterData·손바닥 압착 BossPatternData (이미 있으면 그대로 씀)
-///   · 스튜디오(맵 밖 y=-500): 원근 카메라 + 상자 로봇(몸·머리·양팔). PixelStudio
-///   · 경기장 쪽: KyodaiBossController, 양팔 KyodaiLimb + BossHurtZone, 손바닥 압착 패턴, 바닥 그림자
+///   · 쿄다이(경기장): KyodaiBossController, 그 밑에 상자 로봇(몸·머리·양팔 — 경기장 뒤 z+), 양팔 KyodaiLimb + BossHurtZone,
+///     손바닥 압착 패턴, 바닥 그림자
 /// 경기장 범위는 메인 카메라가 경기장 평면(z=0)에서 보는 영역 × 1.5, 바닥은 씬의 첫 로봇 발밑으로 잡는다 — 인스펙터에서 고치면 된다.
-/// 에셋이 정해지면 스튜디오의 "모델"만 갈아 끼우고 KyodaiLimb의 effector를 새 손·발(IK 타깃)로 바꾼다.
+/// 2026-10-30: 스튜디오(맵 밖 카메라 → 픽셀 판)를 없앴다. 모델은 경기장에 그대로 있고 픽셀화는 ProPixelizer 머티리얼이 한다.
 /// </summary>
 public static class KyodaiPlaceholderBuilder
 {
     private const string DataFolder = "Assets/NYH/04. SO/Boss/Kyodai";
-    private const float BackDepth = 60f;       // 배경 부위가 스튜디오 카메라에서 떨어진 거리
-    private const float ForegroundDepth = 25f; // 전경으로 나온 부위 거리 (가까울수록 크게)
+    private const float BackZ = 15f; // 몸·대기 중인 팔이 경기장 평면 뒤로 떨어진 거리(월드)
 
     [MenuItem("NYH/쿄다이/임시 보스 만들기 (현재 씬)")]
     private static void Build()
@@ -55,57 +54,33 @@ public static class KyodaiPlaceholderBuilder
         // ── 2. 경기장 범위 ──
         Rect arena = GuessArena(out float groundY);
 
-        // ── 3. 스튜디오 ──
-        var studioRoot = new GameObject("쿄다이 스튜디오");
-        studioRoot.transform.position = new Vector3(0f, -500f, 0f);
-        var cam = new GameObject("스튜디오 카메라").AddComponent<Camera>();
-        cam.transform.SetParent(studioRoot.transform, false);
-        cam.fieldOfView = 30f;
-        cam.nearClipPlane = 0.3f;
-        cam.farClipPlane = 200f;
-        cam.aspect = arena.width / arena.height;
-        cam.depth = -100f; // 플레이 전(렌더텍스처 연결 전)에 게임 화면을 덮지 않게 메인 카메라보다 먼저 그린다
-        cam.cullingMask = 1 << 30;
-
-        var studio = studioRoot.AddComponent<PixelStudio>();
-        SetFields(studio, so =>
-        {
-            so.FindProperty("studioCamera").objectReferenceValue = cam;
-            so.FindProperty("arenaRect").rectValue = arena;
-            so.FindProperty("planeZ").floatValue = 0f;
-        });
-        int backLayer = 30;
-
-        float wpsBack = WorldPerStudio(cam, arena, BackDepth);
-        float wpsFront = WorldPerStudio(cam, arena, ForegroundDepth);
-        Vector3 At(float u, float v, float depth) => cam.ViewportToWorldPoint(new Vector3(u, v, depth));
-
-        var model = new GameObject("모델 (임시 상자 로봇)");
-        model.transform.SetParent(studioRoot.transform, false);
-
-        float bodyH = arena.height * 0.45f / wpsBack;
-        var body = Box("몸", model.transform, At(0.5f, 0.62f, BackDepth), new Vector3(bodyH * 0.8f, bodyH, bodyH * 0.4f), new Color(0.35f, 0.38f, 0.42f));
-        var head = Box("머리", model.transform, body.position + Vector3.up * bodyH * 0.65f, Vector3.one * bodyH * 0.35f, new Color(0.3f, 0.3f, 0.34f));
-        Box("메인 렌즈", model.transform, head.position + Vector3.back * bodyH * 0.18f, Vector3.one * bodyH * 0.12f, new Color(1f, 0.2f, 0.15f));
-
-        // 손 크기: 전경에서 경기장 1/3 너비(손바닥 압착)로 보이게
-        float palmW = arena.width / 3f / wpsFront;
-        float palmT = 1.5f / wpsFront;
-        Vector3 palmSize = new Vector3(palmW, palmT, palmW * 0.5f);
-
+        // ── 3. 상자 로봇 (경기장 뒤) ──
         var root = new GameObject("쿄다이");
         root.tag = "Boss";
         var boss = root.AddComponent<KyodaiBossController>();
 
-        KyodaiLimb rightArm = Arm("오른팔", root.transform, model.transform, body, bodyH, +1f, At(0.72f, 0.42f, BackDepth), palmSize, boss);
-        Arm("왼팔", root.transform, model.transform, body, bodyH, -1f, At(0.28f, 0.42f, BackDepth), palmSize, boss);
+        var model = new GameObject("모델 (임시 상자 로봇)");
+        model.transform.SetParent(root.transform, false);
 
-        SetLayerRecursive(model.transform, backLayer);
+        // 원근 카메라면 뒤로 간 만큼 작아 보이니 그만큼 키운다
+        float backScale = BackScale();
+        float bodyH = arena.height * 0.45f * backScale;
+        var body = Box("몸", model.transform, new Vector3(arena.center.x, groundY + bodyH * 0.9f, BackZ), new Vector3(bodyH * 0.8f, bodyH, bodyH * 0.4f), new Color(0.35f, 0.38f, 0.42f));
+        var head = Box("머리", model.transform, body.position + Vector3.up * bodyH * 0.65f, Vector3.one * bodyH * 0.35f, new Color(0.3f, 0.3f, 0.34f));
+        Box("메인 렌즈", model.transform, head.position + Vector3.back * bodyH * 0.18f, Vector3.one * bodyH * 0.12f, new Color(1f, 0.2f, 0.15f));
+
+        // 손 크기: 경기장 평면으로 나왔을 때 경기장 1/3 너비(손바닥 압착)
+        float palmW = arena.width / 3f;
+        Vector3 palmSize = new Vector3(palmW, 1.5f, palmW * 0.5f);
+
+        float handY = body.position.y - bodyH * 0.3f;
+        KyodaiLimb rightArm = Arm("오른팔", root.transform, model.transform, body, bodyH, +1f, new Vector3(body.position.x + bodyH * 0.9f, handY, BackZ), palmSize, boss);
+        Arm("왼팔", root.transform, model.transform, body, bodyH, -1f, new Vector3(body.position.x - bodyH * 0.9f, handY, BackZ), palmSize, boss);
 
         SetFields(boss, so =>
         {
             so.FindProperty("masterData").objectReferenceValue = master;
-            so.FindProperty("studio").objectReferenceValue = studio;
+            so.FindProperty("playZ").floatValue = 0f;
             so.FindProperty("arenaMinX").floatValue = arena.xMin + arena.width / 6f; // 판 가장자리보다 안쪽
             so.FindProperty("arenaMaxX").floatValue = arena.xMax - arena.width / 6f;
             so.FindProperty("groundY").floatValue = groundY;
@@ -126,7 +101,6 @@ public static class KyodaiPlaceholderBuilder
             so.FindProperty("telegraph").objectReferenceValue = shadowGo.GetComponent<GroundTelegraph>();
         });
 
-        Undo.RegisterCreatedObjectUndo(studioRoot, "쿄다이 만들기");
         Undo.RegisterCreatedObjectUndo(root, "쿄다이 만들기");
         EditorSceneManager.MarkSceneDirty(root.scene);
         Selection.activeGameObject = root;
@@ -134,7 +108,7 @@ public static class KyodaiPlaceholderBuilder
                   "Player에 HurtboxColliderSync, 씬에 DummyBattleBootstrap·HitDetection이 있어야 서로 때린다.");
     }
 
-    // 2026-10-29: 스튜디오 안에 넣은 리깅 모델을 선택하고 누르면 — KyodaiRig를 붙이고, 양팔 KyodaiLimb를 그 모델의 뼈로 연결하고,
+    // 2026-10-29: 쿄다이 밑에 넣은 리깅 모델을 선택하고 누르면 — KyodaiRig를 붙이고, 양팔 KyodaiLimb를 그 모델의 뼈로 연결하고,
     // 임시 상자 로봇(몸·머리·손·팔)을 끈다. 뼈 이름은 Unity 표준(RightUpperArm 등) 기준
     [MenuItem("NYH/쿄다이/선택한 리깅 모델 연결")]
     private static void ConnectRig()
@@ -145,10 +119,10 @@ public static class KyodaiPlaceholderBuilder
             EditorUtility.DisplayDialog("쿄다이", "Hierarchy에서 리깅된 모델(SkinnedMeshRenderer가 있는 오브젝트)을 먼저 선택하세요.", "확인");
             return;
         }
-        var studio = model.GetComponentInParent<PixelStudio>();
-        if (studio == null)
+        var bossRoot = model.GetComponentInParent<KyodaiBossController>();
+        if (bossRoot == null)
         {
-            EditorUtility.DisplayDialog("쿄다이", "모델이 '쿄다이 스튜디오' 안에 있어야 합니다. 먼저 드래그해서 넣으세요.", "확인");
+            EditorUtility.DisplayDialog("쿄다이", "모델이 '쿄다이'(KyodaiBossController) 밑에 있어야 합니다. 먼저 드래그해서 넣으세요.", "확인");
             return;
         }
 
@@ -184,7 +158,7 @@ public static class KyodaiPlaceholderBuilder
         }
 
         // 임시 상자 로봇 끄기 — 새 모델이 들어 있는 가지는 남긴다
-        foreach (Transform child in studio.transform)
+        foreach (Transform child in bossRoot.transform)
         {
             if (!child.name.StartsWith("모델 (임시")) continue;
             foreach (Transform part in child)
@@ -197,6 +171,67 @@ public static class KyodaiPlaceholderBuilder
 
         EditorSceneManager.MarkSceneDirty(model.scene);
         Debug.Log($"[Kyodai] 리깅 모델 '{model.name}' 연결 — 팔 {connected}개. 플레이하면 메쉬를 부위별로 쪼개고 팔이 IK로 움직인다");
+    }
+
+    // 2026-10-30: 예전 방식(쿄다이 스튜디오 → 픽셀 판)으로 만든 씬을 옮긴다.
+    // 스튜디오 안의 모델들을 쿄다이 밑으로 옮겨 경기장 뒤(z+)에 세우고, 스튜디오(카메라 포함)는 지운다.
+    // 크기·위치는 대략(메인 카메라 화면 높이의 70%, 경기장 가운데, 발이 바닥) — 그다음 직접 맞추면 된다
+    [MenuItem("NYH/쿄다이/스튜디오 걷어내기 (원본 모델 직접 표시)")]
+    private static void RemoveStudio()
+    {
+        var boss = Object.FindAnyObjectByType<KyodaiBossController>();
+        GameObject studio = null;
+        foreach (var go in boss != null ? boss.gameObject.scene.GetRootGameObjects() : new GameObject[0])
+            if (go.name.Contains("스튜디오")) { studio = go; break; }
+        if (boss == null || studio == null)
+        {
+            EditorUtility.DisplayDialog("쿄다이", "씬에서 쿄다이(KyodaiBossController)와 이름에 '스튜디오'가 들어간 최상위 오브젝트를 못 찾았습니다.", "확인");
+            return;
+        }
+
+        var models = new System.Collections.Generic.List<Transform>();
+        foreach (Transform child in studio.transform)
+            if (child.GetComponent<Camera>() == null) models.Add(child);
+
+        var main = Camera.main;
+        float viewH = main == null ? 12f
+            : main.orthographic ? main.orthographicSize * 2f
+            : 2f * Mathf.Abs(BackZ - main.transform.position.z) * Mathf.Tan(main.fieldOfView * 0.5f * Mathf.Deg2Rad);
+        float centerX = (boss.ArenaMinX + boss.ArenaMaxX) * 0.5f;
+
+        foreach (var model in models)
+        {
+            Undo.SetTransformParent(model, boss.transform, "스튜디오 걷어내기");
+            Undo.RegisterFullObjectHierarchyUndo(model.gameObject, "스튜디오 걷어내기");
+            SetLayerRecursive(model, 0); // 스튜디오 전용 레이어(30)였던 것을 Default로
+
+            // 보이는 부분 크기로 맞춘다 — 꺼둔 상자 로봇은 빼고
+            Bounds? b = VisibleBounds(model);
+            if (!b.HasValue) { model.position = new Vector3(centerX, boss.GroundY, BackZ); continue; }
+            float scale = viewH * 0.7f / Mathf.Max(b.Value.size.y, 1e-3f);
+            model.localScale *= scale;
+            b = VisibleBounds(model);
+            Vector3 shift = new Vector3(centerX - b.Value.center.x, boss.GroundY - b.Value.min.y, BackZ - b.Value.center.z);
+            model.position += shift;
+        }
+
+        Undo.DestroyObjectImmediate(studio);
+        EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
+        Selection.activeGameObject = boss.gameObject;
+        Debug.Log($"[Kyodai] 스튜디오 걷어냄 — 모델 {models.Count}개를 쿄다이 밑, 경기장 뒤 z={BackZ}에 세움. " +
+                  "위치·크기는 Scene 뷰에서 직접 맞추고, 머티리얼 Pixel Size를 다시 키울 것(이제 스튜디오가 픽셀화하지 않음)");
+    }
+
+    private static Bounds? VisibleBounds(Transform root)
+    {
+        Bounds? b = null;
+        foreach (var r in root.GetComponentsInChildren<Renderer>(false))
+        {
+            if (!r.enabled) continue;
+            if (b.HasValue) { var v = b.Value; v.Encapsulate(r.bounds); b = v; }
+            else b = r.bounds;
+        }
+        return b;
     }
 
     // 2026-10-29: 코드로 짠 손바닥 압착(KyodaiPalmPressPattern)을 같은 타이밍의 모션 에셋 + KyodaiMotionPattern으로 바꾼다.
@@ -229,7 +264,7 @@ public static class KyodaiPlaceholderBuilder
         if (patternData == null) patternData = AssetDatabase.LoadAssetAtPath<BossPatternData>($"{DataFolder}/Kyodai_손바닥압착.asset");
 
         KyodaiLimb limb = boss.FindLimb(partId);
-        float depth = limb != null ? limb.ForegroundDepth : ForegroundDepth;
+        float forward = limb != null ? limb.ForegroundOffset : 0f;
         float tell = patternData != null ? patternData.tellDuration : 1.2f;
         float width = boss.ArenaWidth * ratio;
 
@@ -244,9 +279,9 @@ public static class KyodaiPlaceholderBuilder
             keys =
             {
                 new KyodaiMotionKey { time = 0f, rest = true },
-                new KyodaiMotionKey { time = tSlam, offset = new Vector2(0f, hover), depth = depth, ease = DG.Tweening.Ease.OutCubic },
-                new KyodaiMotionKey { time = tHit, offset = new Vector2(0f, thickness * 0.5f), depth = depth, ease = DG.Tweening.Ease.InQuad },
-                new KyodaiMotionKey { time = tBack, offset = new Vector2(0f, thickness * 0.5f), depth = depth, ease = DG.Tweening.Ease.Linear },
+                new KyodaiMotionKey { time = tSlam, offset = new Vector2(0f, hover), forward = forward, ease = DG.Tweening.Ease.OutCubic },
+                new KyodaiMotionKey { time = tHit, offset = new Vector2(0f, thickness * 0.5f), forward = forward, ease = DG.Tweening.Ease.InQuad },
+                new KyodaiMotionKey { time = tBack, offset = new Vector2(0f, thickness * 0.5f), forward = forward, ease = DG.Tweening.Ease.Linear },
                 new KyodaiMotionKey { time = tEnd, rest = true, ease = DG.Tweening.Ease.InOutSine },
             },
             layers =
@@ -318,7 +353,6 @@ public static class KyodaiPlaceholderBuilder
             so.FindProperty("segment").objectReferenceValue = segment;
             so.FindProperty("shoulder").objectReferenceValue = shoulder;
             so.FindProperty("hurtZone").objectReferenceValue = zone;
-            so.FindProperty("foregroundDepth").floatValue = ForegroundDepth;
         });
         return limb;
     }
@@ -327,7 +361,7 @@ public static class KyodaiPlaceholderBuilder
     {
         var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
         go.name = name;
-        Object.DestroyImmediate(go.GetComponent<Collider>()); // 스튜디오 모델은 그림 전용
+        Object.DestroyImmediate(go.GetComponent<Collider>()); // 모델은 그림 전용 — 판정은 BossHurtZone
         go.transform.SetParent(parent, false);
         go.transform.position = position;
         go.transform.localScale = size;
@@ -359,8 +393,14 @@ public static class KyodaiPlaceholderBuilder
 
     private static Rect MakeRect(Vector2 center, float w, float h) => new Rect(center.x - w * 0.5f, center.y - h * 0.5f, w, h);
 
-    private static float WorldPerStudio(Camera cam, Rect arena, float depth) =>
-        arena.height / (2f * depth * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad));
+    // 원근 메인 카메라에서 경기장 평면(z=0)보다 BackZ 뒤에 있는 물체가 같은 크기로 보이려면 몇 배 커야 하나
+    private static float BackScale()
+    {
+        var main = Camera.main;
+        if (main == null || main.orthographic) return 1f;
+        float dist = Mathf.Max(Mathf.Abs(main.transform.position.z), 0.1f);
+        return (dist + BackZ) / dist;
+    }
 
     private static void SetLayerRecursive(Transform t, int layer)
     {

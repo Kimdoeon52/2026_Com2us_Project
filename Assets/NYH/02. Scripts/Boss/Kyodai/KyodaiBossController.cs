@@ -9,12 +9,13 @@ using UnityEngine;
 ///   · 패턴·부위는 자식에 붙은 기믹 컴포넌트를 전부 자동 등록한다(정크 휠러와 달리 이름 매칭 없음)
 ///   · 페이즈별 패턴: BossMasterData.phases의 availableSkillIDs(= 패턴 ID)로 거른다. 비어 있으면 전부
 ///   · 경기장 범위·바닥 높이: 패턴들이 "경기장 1/3", "화면 양 끝" 같은 자리를 계산할 때 쓴다
-///   · 그림: PixelStudio(3D 모델 → 픽셀 판). 부위 하나하나는 KyodaiLimb
+///   · 그림: 3D 모델을 경기장 뒤(z+)에 그대로 두고 메인 카메라가 찍는다(픽셀화는 ProPixelizer 머티리얼, 2026-10-30).
+///     부위 하나하나는 KyodaiLimb
 /// </summary>
 public class KyodaiBossController : BossControllerBase
 {
-    [Tooltip("3D 모델을 픽셀 판으로 찍는 스튜디오")]
-    [SerializeField] private PixelStudio studio;
+    [Tooltip("경기장 평면 z(월드) — 플레이어가 있는 평면. 모션 키의 '앞으로 나온 거리'는 여기서 카메라 쪽(-z)으로 잰다")]
+    [SerializeField] private float playZ;
 
     [Tooltip("경기장 왼쪽 끝 x(월드)")]
     [SerializeField] private float arenaMinX = -10f;
@@ -28,7 +29,7 @@ public class KyodaiBossController : BossControllerBase
     // 등록된 패턴 전부 — 페이즈가 바뀌면 여기서 다시 골라 activePatternPool을 채운다
     private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
 
-    public PixelStudio Studio => studio;
+    public float PlayZ => playZ;
     public float ArenaMinX => arenaMinX;
     public float ArenaMaxX => arenaMaxX;
     public float ArenaWidth => arenaMaxX - arenaMinX;
@@ -80,6 +81,9 @@ public class KyodaiBossController : BossControllerBase
         }
         _patternIndex = 0;
     }
+
+    /// <summary>경기장 point 자리에서 카메라 쪽(-z)으로 forward만큼 나온 3D 좌표 (손 목표·IK 타깃)</summary>
+    public Vector3 PlayPoint(Vector2 point, float forward) => new Vector3(point.x, point.y, playZ - forward);
 
     /// <summary>경기장 안으로 x를 자른다. halfWidth만큼 안쪽 여유를 둔다(넓은 공격이 벽 밖으로 안 나가게)</summary>
     public float ClampToArena(float x, float halfWidth = 0f)

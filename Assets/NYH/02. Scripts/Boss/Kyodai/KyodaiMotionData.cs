@@ -79,8 +79,8 @@ public class KyodaiMotionKey
     [Tooltip("목표에서 손까지(월드). (0, 0)이면 목표 바로 위")]
     public Vector2 offset = new Vector2(0f, 4f);
 
-    [Tooltip("스튜디오 카메라에서 손까지 거리. 작을수록 카메라 쪽으로 나와서 크게 보인다")]
-    [Min(0.5f)] public float depth = 20f;
+    [Tooltip("경기장 평면에서 카메라 쪽으로 나온 거리(월드). 0 = 플레이어와 같은 평면 — 판정 자리와 보이는 자리가 맞는다")]
+    public float forward;
 
     [Tooltip("손목 회전(도). 애니메이션(없으면 대기 자세) 손목 기준")]
     public Vector3 handRotation;

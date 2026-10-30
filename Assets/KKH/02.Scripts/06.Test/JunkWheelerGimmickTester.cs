@@ -58,6 +58,12 @@ namespace RealSteel.Boss.Test
             // 단축키 매핑 (HUD 1~5번 및 레거시 F1~F6 키 충돌 회피)
             // ====================================================================
 
+            // [6/B]: 회전 톱날 당구 돌진 강제 실행 (PATTERN_BLADE_RICOCHET)
+            if (Input.GetKeyDown(KeyCode.Alpha6) || Input.GetKeyDown(KeyCode.Keypad6) || Input.GetKeyDown(KeyCode.B))
+            {
+                ForceExecuteBladeRicochet();
+            }
+
             // [7]: 돌진 패턴 강제 실행 (PATTERN_CHARGE)
             if (Input.GetKeyDown(KeyCode.Alpha7) || Input.GetKeyDown(KeyCode.Keypad7))
             {
@@ -132,6 +138,7 @@ namespace RealSteel.Boss.Test
         private void PrintUsageGuide()
         {
             Debug.Log("<color=cyan><b>[JunkWheelerGimmickTester 초기화 완료]</b>\n" +
+                      "▶ [6/B]: 회전 톱날 당구 돌진 강제 실행 (PATTERN_BLADE_RICOCHET)\n" +
                       "▶ [7]: 돌진 패턴 강제 실행 (PATTERN_CHARGE)\n" +
                       "▶ [8]: 바이킹 순차 탄막 강제 실행 (PATTERN_JUMP_BARRAGE)\n" +
                       "▶ [9]: 3단 내려찍기 강제 실행 (PATTERN_SLAM)\n" +
@@ -147,6 +154,9 @@ namespace RealSteel.Boss.Test
         // ========================================================================
         // 1. 공격 패턴 강제 실행 제어
         // ========================================================================
+
+        [ContextMenu("▶ 패턴 4: 회전 톱날 당구 돌진 실행")]
+        public void ForceExecuteBladeRicochet() => ForceExecutePattern(JunkWheelerRicochetBladePatternGimmick.PatternRicochetBladeID);
 
         [ContextMenu("▶ 패턴 1: 바이킹 순차 탄막 실행")]
         public void ForceExecuteBarrage() => ForceExecutePattern("PATTERN_JUMP_BARRAGE");
@@ -374,9 +384,10 @@ namespace RealSteel.Boss.Test
             GUILayout.Space(4);
             GUILayout.Label("<b>[공격 패턴 강제 시전]</b>");
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button("[6] 당구", GUILayout.Height(25))) ForceExecuteBladeRicochet();
             if (GUILayout.Button("[7] 돌진", GUILayout.Height(25))) ForceExecuteCharge();
             if (GUILayout.Button("[8] 탄막", GUILayout.Height(25))) ForceExecuteBarrage();
-            if (GUILayout.Button("[9] 내려찍기", GUILayout.Height(25))) ForceExecuteSlam();
+            if (GUILayout.Button("[9] 찍기", GUILayout.Height(25))) ForceExecuteSlam();
             GUILayout.EndHorizontal();
 
             GUILayout.Space(4);

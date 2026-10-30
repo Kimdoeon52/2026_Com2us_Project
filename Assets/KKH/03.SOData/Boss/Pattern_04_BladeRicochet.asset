@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_04_BladeRicochet
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_BLADE_RICOCHET
+  patternName: "\uD68C\uC804 \uD1B1\uB0A0 \uB2F9\uAD6C \uB3CC\uC9C4"
+  description: "1.8\uCD08 \uC804\uC870(\uD1B1\uB0A0 \uC804\uAC1C \uBC0F \uCD08\uACE0\uC18D \uD68C\uC804) \uD6C4 \uC0AC\uC120\uC73C\uB85C \uBC1C\uC0AC\uB418\uC5B4 \uC804\uC7A5 \uC0AC\uBC29 \uACBD\uACC4(3\uCFE0\uC158)\uB97C \uD280\uAE30\uBA70 \uB3CC\uC9C4\uD55C \uD6C4 \uCC29\uC9C0\uD558\uB294 \uD328\uD134."
+  tellDuration: 1.8
+  postDelay: 1.2
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 0
+  interruptStunDuration: 0
+  targetPlayerPart: 5
+  partDurabilityDamage: 1
+  damageRatio: 120
+  actionData: {fileID: 0}
+

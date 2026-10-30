@@ -20,22 +20,44 @@ namespace RealSteel.Boss.JunkWheeler
     /// </summary>
     public class JunkWheelerChargePatternGimmick : BossPatternGimmickBase
     {
-        [Header("돌진 파라미터")]
+        [Header("돌진 기본 파라미터")]
         [SerializeField] private float chargeSpeed = 11.0f;
         [SerializeField] private float brokenTireSpeed = 5.5f;
         [SerializeField] private float anticipatedDuration = 0.2f;
         [SerializeField] private float wallStunDelay = 0.3f;
         [SerializeField] private float maxMapDistance = 5.0f;
 
-        [Header("전조(Tell) 연출 및 점멸 파라미터")]
+        [Header("비선형 전조(Tell) 가속 파라미터")]
         [Tooltip("전조 점멸 목표 색상 (기본: 빨간색 Color.red)")]
         [SerializeField] private Color flashColor = Color.red;
-        [Tooltip("점멸 왕복 주기/속도 (초, 기본: 0.15초)")]
-        [SerializeField] private float flashInterval = 0.15f;
-        [Tooltip("전조 중 보스 본체 바퀴 헛돔 진동 세기")]
-        [SerializeField] private Vector3 shakeStrength = new Vector3(0.08f, 0f, 0f);
-        [Tooltip("전조 중 진동 빈도")]
-        [SerializeField] private int shakeVibrato = 20;
+        [Tooltip("전조 시작 시 점멸 주기 (초, 기본: 0.30초)")]
+        [SerializeField] private float flashStartInterval = 0.30f;
+        [Tooltip("전조 종료 직전 초고속 스트로보 주기 (초, 기본: 0.04초)")]
+        [SerializeField] private float flashEndInterval = 0.04f;
+        [Tooltip("전조 시작 시 미세 진동 세기 (m)")]
+        [SerializeField] private float minShakeStrength = 0.02f;
+        [Tooltip("전조 발사 직전 최대 폭발 진동 세기 (m)")]
+        [SerializeField] private float maxShakeStrength = 0.20f;
+        [Tooltip("전조 시작 시 진동 주파수 (Hz)")]
+        [SerializeField] private float minShakeVibrato = 10f;
+        [Tooltip("전조 발사 직전 진동 주파수 (Hz)")]
+        [SerializeField] private float maxShakeVibrato = 50f;
+        [Tooltip("진동/점멸 가속 곡선 지수 (t^k, 기본: 2.8)")]
+        [SerializeField] private float shakeCurveExponent = 2.8f;
+
+        [Header("탄성 반동(Rebound) 및 롤 감속 파라미터")]
+        [Tooltip("벽 충돌 후 반대 방향으로 튕겨 나오는 후방 거리 (m)")]
+        [SerializeField] private float reboundDistance = 1.4f;
+        [Tooltip("벽 충돌 후 반동 이동 소요 시간 (초)")]
+        [SerializeField] private float reboundDuration = 0.24f;
+        [Tooltip("튕겨 나온 후 Roll 바퀴가 지면을 굴러가며 감속되는 시간 (초)")]
+        [SerializeField] private float rollDecelDuration = 0.40f;
+        [Tooltip("벽 충돌 순간 가로 압착 비율 (X: 가로, Y: 세로)")]
+        [SerializeField] private Vector2 impactSquashScale = new Vector2(0.55f, 1.45f);
+        [Tooltip("충돌 순간 초고속 압착 시간 (Fast-In)")]
+        [SerializeField] private float squashDuration = 0.04f;
+        [Tooltip("압착 후 탄성 진동하며 복원되는 시간 (Elastic-Out)")]
+        [SerializeField] private float elasticRestoreDuration = 0.28f;
 
         [Header("인스펙터 전조 이벤트 바인딩")]
         [Tooltip("전조 시작 시 인스펙터에서 연동할 UnityEvent")]
@@ -47,20 +69,21 @@ namespace RealSteel.Boss.JunkWheeler
         public UnityEngine.Events.UnityEvent OnTellEndedEvent => onTellEndedEvent;
 
         public Color FlashColor { get => flashColor; set => flashColor = value; }
-        public float FlashInterval { get => flashInterval; set => flashInterval = value; }
-        public Vector3 ShakeStrength { get => shakeStrength; set => shakeStrength = value; }
-        public int ShakeVibrato { get => shakeVibrato; set => shakeVibrato = value; }
+        public float FlashInterval { get => flashStartInterval; set => flashStartInterval = value; }
+        public float MinShakeStrength { get => minShakeStrength; set => minShakeStrength = value; }
+        public float MaxShakeStrength { get => maxShakeStrength; set => maxShakeStrength = value; }
+        public float ShakeCurveExponent { get => shakeCurveExponent; set => shakeCurveExponent = value; }
 
         public void SetFlashParameters(Color newColor, float newInterval)
         {
             flashColor = newColor;
-            flashInterval = newInterval;
+            flashStartInterval = newInterval;
         }
 
         public void SetShakeParameters(Vector3 newStrength, int newVibrato)
         {
-            shakeStrength = newStrength;
-            shakeVibrato = newVibrato;
+            maxShakeStrength = Mathf.Max(newStrength.x, newStrength.y);
+            maxShakeVibrato = newVibrato;
         }
 
         private Tweener _currentTween;
@@ -68,6 +91,9 @@ namespace RealSteel.Boss.JunkWheeler
         private Tweener _shakeTween;
         private SpriteRenderer _spriteRenderer;
         private Color _originalColor = Color.white;
+        private CancellationTokenSource _tellVisualCts;
+        private Vector3 _baseWorldPosBeforeTell;
+        private bool _isTellVisualRunning = false;
 
         private bool _isTireBrokenDebuffed = false;
         private bool _hasHitPlayer = false;
@@ -90,7 +116,7 @@ namespace RealSteel.Boss.JunkWheeler
         }
 
         /// <summary>
-        /// 전조(Tell) 연출 시작: 바퀴 공회전 모션, 색상 점멸 및 본체 진동 가동 (인스펙터 및 외부 호출 가능)
+        /// 전조(Tell) 연출 시작: 바퀴 공회전 모션, 비선형 로그/지수 점멸 및 본체 가속 진동 가동 (인스펙터 및 외부 호출 가능)
         /// </summary>
         [ContextMenu("[전조] 점멸 시작 (OnTellStarted)")]
         public override void OnTellStarted()
@@ -100,23 +126,23 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.Animation.PlayChargeStart();
             }
 
-            // 전조 연출: 엔진 과열 점멸 및 바퀴 헛돔 진동
             _spriteRenderer = OwnerBoss != null ? OwnerBoss.GetComponentInChildren<SpriteRenderer>() : null;
             if (_spriteRenderer != null)
             {
                 _originalColor = _spriteRenderer.color;
-                if (_flashTween != null && _flashTween.IsActive()) _flashTween.Kill();
-                _flashTween = _spriteRenderer.DOColor(flashColor, flashInterval).SetLoops(-1, LoopType.Yoyo);
             }
 
             if (OwnerBoss != null)
             {
                 float tellDur = patternData != null ? patternData.tellDuration : 2.0f;
-                if (_shakeTween != null && _shakeTween.IsActive()) _shakeTween.Kill();
-                _shakeTween = OwnerBoss.transform.DOShakePosition(tellDur, shakeStrength, shakeVibrato);
 
                 // 전조 시작 직후 차지 루프로 부드럽게 전이
                 TransitToChargeLoopAsync(tellDur).Forget();
+
+                // 비선형 전조(지수 가속 진동 & 스트로보 점멸) 비동기 루프 가동
+                StopTellVisuals();
+                _tellVisualCts = new CancellationTokenSource();
+                RunNonlinearTellVisualsAsync(tellDur, _tellVisualCts.Token).Forget();
             }
 
             // 인스펙터 바인딩 UnityEvent 실행
@@ -129,7 +155,7 @@ namespace RealSteel.Boss.JunkWheeler
         public void OnTellStarted(Color customFlashColor, float customInterval)
         {
             flashColor = customFlashColor;
-            flashInterval = customInterval;
+            flashStartInterval = customInterval;
             OnTellStarted();
         }
 
@@ -142,6 +168,73 @@ namespace RealSteel.Boss.JunkWheeler
                 && OwnerBoss.Animation.CurrentStateHash == BossAnimationController.StateChargeStart)
             {
                 OwnerBoss.Animation.PlayChargeLoop();
+            }
+        }
+
+        private async UniTaskVoid RunNonlinearTellVisualsAsync(float duration, CancellationToken token)
+        {
+            if (OwnerBoss == null) return;
+
+            _baseWorldPosBeforeTell = OwnerBoss.transform.position;
+            _isTellVisualRunning = true;
+            float elapsed = 0f;
+
+            try
+            {
+                while (elapsed < duration)
+                {
+                    token.ThrowIfCancellationRequested();
+
+                    float progress = Mathf.Clamp01(elapsed / duration); // 0 ~ 1
+                    float curvedT = Mathf.Pow(progress, shakeCurveExponent); // 비선형 지수 가속 (t^2.8)
+
+                    // 1. 비선형 진동 계산 (X축 바퀴 헛돔 진동 + 미세 Y축 떨림)
+                    float curAmp = Mathf.Lerp(minShakeStrength, maxShakeStrength, curvedT);
+                    float curFreq = Mathf.Lerp(minShakeVibrato, maxShakeVibrato, curvedT);
+                    float shakeOffsetX = Mathf.Sin(elapsed * curFreq * Mathf.PI * 2f) * curAmp;
+                    float shakeOffsetY = Mathf.Cos(elapsed * curFreq * Mathf.PI * 1.5f) * (curAmp * 0.25f);
+
+                    OwnerBoss.transform.position = new Vector3(
+                        _baseWorldPosBeforeTell.x + shakeOffsetX,
+                        _baseWorldPosBeforeTell.y + shakeOffsetY,
+                        _baseWorldPosBeforeTell.z
+                    );
+
+                    // 2. 비선형 점멸 계산 (스트로보 가속)
+                    if (_spriteRenderer != null)
+                    {
+                        if (progress >= 0.92f)
+                        {
+                            // 발사 직전 임계 폭발 피크: 완전 붉은색 고정 (Peak Saturation)
+                            _spriteRenderer.color = flashColor;
+                        }
+                        else
+                        {
+                            float curInterval = Mathf.Lerp(flashStartInterval, flashEndInterval, curvedT);
+                            float pingPong = Mathf.PingPong(elapsed / Mathf.Max(0.01f, curInterval), 1f);
+                            _spriteRenderer.color = Color.Lerp(Color.white, flashColor, pingPong);
+                        }
+                    }
+
+                    elapsed += Time.deltaTime;
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 외부 인터럽트 시 정상 종료
+            }
+            finally
+            {
+                _isTellVisualRunning = false;
+                if (OwnerBoss != null)
+                {
+                    OwnerBoss.transform.position = _baseWorldPosBeforeTell;
+                }
+                if (_spriteRenderer != null)
+                {
+                    _spriteRenderer.color = _originalColor;
+                }
             }
         }
 
@@ -218,17 +311,54 @@ namespace RealSteel.Boss.JunkWheeler
                 return;
             }
 
-            // 4단계: 반대편 벽 충돌 임팩트 연출
-            _currentTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(-0.25f, 0.25f, 0f)), 0.2f);
+            // 4단계: 반대편 벽 충돌 임팩트 및 탄성 반동(Elastic Rebound)
+            Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 접촉! (콰앙!)</color>");
+
+            // [Step 4-A] 벽면 극단적 가로 압착 (Squash & Stretch Fast-In / Elastic-Out)
+            UniTask squashTask = UniTask.CompletedTask;
+            if (OwnerBoss.Animation != null)
+            {
+                squashTask = OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                    OwnerBoss.transform,
+                    impactSquashScale,
+                    squashDuration,
+                    elasticRestoreDuration,
+                    token
+                );
+            }
+
+            // [Step 4-B] 탄성 튕김 이동 (벽면에서 반대 방향으로 reboundDistance만큼 튕겨 나감)
+            float wallContactX = OwnerBoss.transform.position.x;
+            float reboundTargetX = wallContactX - (_chargeDirection * reboundDistance);
+            if (OwnerBoss != null)
+            {
+                reboundTargetX = OwnerBoss.ClampToCameraX(reboundTargetX, 0.7f);
+            }
+
+            _currentTween = OwnerBoss.transform.DOMoveX(reboundTargetX, reboundDuration).SetEase(Ease.OutQuad);
             await _currentTween.ToUniTask(cancellationToken: token);
-            Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 완료! (쿵!)</color>");
 
-            // 벽 충돌 반동 대기
-            await UniTask.Delay(TimeSpan.FromSeconds(wallStunDelay), cancellationToken: token);
+            // 스쿼시 트윈 완료 대기
+            await squashTask;
 
-            // 5단계: 충돌 종료 확인 후 등 뒤의 플레이어를 향해 스프라이트 반전 및 Idle 복귀
+            // [Step 4-C] 지면 굴림(Roll) 관성 감속 (0.40s)
+            // 튕겨 나온 후 바퀴가 천천히 굴러가며 잔여 관성을 자연스럽게 소모함
+            if (OwnerBoss.Animation != null)
+            {
+                await OwnerBoss.Animation.PlayRollDecelAsync(rollDecelDuration, 1.2f, 0.3f, token);
+            }
+            else
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(rollDecelDuration), cancellationToken: token);
+            }
+
+            // 5단계: 충돌 종료 확인 후 플레이어를 향해 스프라이트 반전 및 Idle 복귀
             await WaitForCollisionToEndAsync(token);
-            TryFlipAfterCollision();
+            if (OwnerBoss != null)
+            {
+                OwnerBoss.Animation?.ResetScale();
+                OwnerBoss.FacePlayer();
+            }
 
             if (OwnerBoss.Animation != null)
             {
@@ -371,6 +501,7 @@ namespace RealSteel.Boss.JunkWheeler
             base.OnInterrupted(reason);
             KillCurrentTween();
             StopTellVisuals();
+            OwnerBoss?.Animation?.ResetScale();
         }
 
         protected override void CleanupEffects()
@@ -378,6 +509,7 @@ namespace RealSteel.Boss.JunkWheeler
             base.CleanupEffects();
             KillCurrentTween();
             StopTellVisuals();
+            OwnerBoss?.Animation?.ResetScale();
         }
 
         private void KillCurrentTween()
@@ -391,6 +523,19 @@ namespace RealSteel.Boss.JunkWheeler
 
         private void StopTellVisuals()
         {
+            if (_tellVisualCts != null)
+            {
+                if (!_tellVisualCts.IsCancellationRequested) _tellVisualCts.Cancel();
+                _tellVisualCts.Dispose();
+                _tellVisualCts = null;
+            }
+
+            if (_isTellVisualRunning && OwnerBoss != null)
+            {
+                OwnerBoss.transform.position = _baseWorldPosBeforeTell;
+                _isTellVisualRunning = false;
+            }
+
             if (_flashTween != null && _flashTween.IsActive())
             {
                 _flashTween.Kill();

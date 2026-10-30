@@ -18,6 +18,7 @@ namespace RealSteel.Boss.JunkWheeler
     ///    - 역방향: 끝번(360°) ➔ 0번(180°) 역순으로 차례대로 발사
     /// 3. 타이어 부위 파괴 시 도약 높이 30% 감축 (1.7m ➔ 1.19m) -> 플레이어 회피 용이.
     /// 4. 발사 완료 후 보스 본체가 지면으로 고속 착지(Slam Land)하며 바닥 충격 연출 후 Idle 복귀.
+    /// 5. 비대칭 펀치(Squash & Stretch) 및 도약 텐션 연출 일괄 적용.
     /// </summary>
     public class JunkWheelerBarragePatternGimmick : BossPatternGimmickBase
     {
@@ -39,6 +40,11 @@ namespace RealSteel.Boss.JunkWheeler
         [Tooltip("1회 스윕당 발사할 탄환 개수 (기본 7발 권장: 30도 간격)")]
         [SerializeField] private int bulletCountPerSweep = 7;
         [SerializeField] private GameObject bulletPrefab;
+
+        [Header("비대칭 임팩트 펀치 파라미터")]
+        [SerializeField] private Vector2 landSquashScale = new Vector2(1.40f, 0.55f);
+        [SerializeField] private float squashFastInDuration = 0.04f;
+        [SerializeField] private float restoreElasticDuration = 0.25f;
 
         private Tweener _bossMoveTween;
         private Tweener _bossPunchTween;
@@ -77,6 +83,13 @@ namespace RealSteel.Boss.JunkWheeler
             Vector3 apexPos = CalculateMidpointApex();
 
             Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 보스 본체 공중 도약 개시 ➔ {apexPos}</color>");
+
+            // [도약 텐션]: 바닥 웅크림 (0.06s, Y 0.75) 후 도약 상승
+            if (OwnerBoss.Animation != null)
+            {
+                await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                    OwnerBoss.transform, new Vector2(1.15f, 0.75f), 0.06f, 0.08f, token);
+            }
 
             // 2단계: 공중 회전 모션 재생 및 본체 직접 도약
             if (OwnerBoss.Animation != null)
@@ -157,16 +170,16 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss.Animation != null)
             {
                 OwnerBoss.Animation.PlaySlamLand();
+                // 비대칭 펀치(Squash & Stretch) 적용: 0.04s 압착 -> 0.25s 복원
+                await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                    OwnerBoss.transform, landSquashScale, squashFastInDuration, restoreElasticDuration, token);
             }
 
-            _bossPunchTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(0.25f, -0.25f, 0f)), 0.2f);
-            await _bossPunchTween.ToUniTask(cancellationToken: token);
-
-            // 착지 후 플레이어를 향해 몸을 돌림
-            OwnerBoss.FacePlayer();
-
+            // 착지 후 스케일 완전 복원 및 플레이어 응시 후 Idle 복귀
             if (OwnerBoss.Animation != null)
             {
+                OwnerBoss.Animation.ResetScale();
+                OwnerBoss.FacePlayer();
                 OwnerBoss.Animation.PlayIdle();
             }
         }
@@ -196,15 +209,10 @@ namespace RealSteel.Boss.JunkWheeler
                 midX = OwnerBoss.ClampToCameraX(midX, 1.0f);
             }
 
-            bool isTireBroken = _isTireBrokenDebuffed;
-            var tireGimmick = OwnerBoss.GetGimmick<JunkWheelerTirePartGimmick>("TIRE_PART");
-            if (tireGimmick != null && tireGimmick.IsPermanentlyBroken)
-            {
-                isTireBroken = true;
-            }
+            float effectiveLaunchHeight = _isTireBrokenDebuffed ? launchHeight * 0.7f : launchHeight;
+            float apexY = baseY + effectiveLaunchHeight;
 
-            float finalHeight = isTireBroken ? launchHeight * 0.7f : launchHeight;
-            return new Vector3(midX, baseY + finalHeight, bossPos.z);
+            return new Vector3(midX, apexY, bossPos.z);
         }
 
         private void FireSingleBullet(Vector3 originPos, float angleDeg)
@@ -258,18 +266,15 @@ namespace RealSteel.Boss.JunkWheeler
 
             int size = 16;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            Vector2 center = new Vector2(size * 0.5f, size * 0.5f);
-            float radius = size * 0.45f;
-
+            Color c = Color.white;
             for (int y = 0; y < size; y++)
             {
                 for (int x = 0; x < size; x++)
                 {
-                    float dist = Vector2.Distance(new Vector2(x, y), center);
-                    if (dist <= radius)
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(size * 0.5f, size * 0.5f));
+                    if (dist <= size * 0.45f)
                     {
-                        float alpha = Mathf.Clamp01((radius - dist) + 0.5f);
-                        tex.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+                        tex.SetPixel(x, y, c);
                     }
                     else
                     {
@@ -291,6 +296,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss != null)
             {
                 OwnerBoss.transform.rotation = Quaternion.identity;
+                OwnerBoss.Animation?.ResetScale();
             }
         }
     }

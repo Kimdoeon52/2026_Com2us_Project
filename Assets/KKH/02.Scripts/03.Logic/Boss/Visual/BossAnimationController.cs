@@ -1,4 +1,7 @@
 using System;
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 
 namespace RealSteel.Boss.Visual
@@ -35,10 +38,15 @@ namespace RealSteel.Boss.Visual
 
         private int _currentHash = 0;
         private float _baseScaleX = 1f;
+        private float _baseScaleY = 1f;
+        private float _baseScaleZ = 1f;
 
         public Animator Animator => animator;
         public SpriteRenderer SpriteRenderer => spriteRenderer;
         public int CurrentStateHash => _currentHash;
+        public float BaseScaleX => _baseScaleX;
+        public float BaseScaleY => _baseScaleY;
+        public float BaseScaleZ => _baseScaleZ;
 
         private void Awake()
         {
@@ -52,10 +60,22 @@ namespace RealSteel.Boss.Visual
             }
 
             _baseScaleX = Mathf.Abs(transform.localScale.x);
-            if (Mathf.Approximately(_baseScaleX, 0f))
-            {
-                _baseScaleX = 1f;
-            }
+            _baseScaleY = Mathf.Abs(transform.localScale.y);
+            _baseScaleZ = Mathf.Abs(transform.localScale.z);
+            if (Mathf.Approximately(_baseScaleX, 0f)) _baseScaleX = 1f;
+            if (Mathf.Approximately(_baseScaleY, 0f)) _baseScaleY = 1f;
+            if (Mathf.Approximately(_baseScaleZ, 0f)) _baseScaleZ = 1f;
+        }
+
+        /// <summary>
+        /// 보스의 스케일을 원래의 불변 기본 스케일로 즉시 복원함.
+        /// </summary>
+        public void ResetScale(Transform target = null)
+        {
+            Transform t = target != null ? target : transform;
+            t.DOKill();
+            float signX = Mathf.Sign(t.localScale.x);
+            t.localScale = new Vector3(_baseScaleX * signX, _baseScaleY, _baseScaleZ);
         }
 
         /// <summary>
@@ -115,6 +135,108 @@ namespace RealSteel.Boss.Visual
         {
             punch.x *= Mathf.Sign(target.localScale.x);
             return punch;
+        }
+
+        /// <summary>
+        /// 비대칭 비선형 펀치감 연출 (Fast-In 초고속 압착 -> Elastic-Out 탄성 복원)
+        /// 좌우 반전 상태(scale.x < 0)에서도 대칭적인 Squash & Stretch를 보장함.
+        /// </summary>
+        public async UniTask PlayImpactSquashAndStretchAsync(
+            Vector2 squashScaleRatio,
+            float inDuration = 0.04f,
+            float outDuration = 0.28f,
+            CancellationToken token = default)
+        {
+            await PlayImpactSquashAndStretchAsync(transform, squashScaleRatio, inDuration, outDuration, token);
+        }
+
+        /// <summary>
+        /// 비대칭 비선형 펀치감 연출 (특정 대상 Transform 지정)
+        /// 불변 기본 스케일(_baseScaleX, _baseScaleY)을 기준으로 연산하여 연속 호출 시에도 스케일 왜곡 누적 방지.
+        /// </summary>
+        public async UniTask PlayImpactSquashAndStretchAsync(
+            Transform target,
+            Vector2 squashScaleRatio,
+            float inDuration = 0.04f,
+            float outDuration = 0.28f,
+            CancellationToken token = default)
+        {
+            if (target == null) return;
+
+            // 진행 중인 이전 스케일 트윈 즉시 중단 (트윈 중첩 간섭 방지)
+            target.DOKill();
+
+            float signX = Mathf.Sign(target.localScale.x);
+            // 영구 불변 기본 스케일을 기준으로 원본 스케일 및 압착 스케일 산출
+            Vector3 originalScale = new Vector3(_baseScaleX * signX, _baseScaleY, _baseScaleZ);
+            Vector3 squashedScale = new Vector3(
+                _baseScaleX * squashScaleRatio.x * signX,
+                _baseScaleY * squashScaleRatio.y,
+                _baseScaleZ
+            );
+
+            try
+            {
+                // 1단계: 초고속 압착 (Fast In)
+                await target.DOScale(squashedScale, inDuration)
+                    .SetEase(Ease.InQuad)
+                    .ToUniTask(cancellationToken: token);
+
+                // 2단계: 탄성 로그 감쇠 복원 (Elastic Out)
+                await target.DOScale(originalScale, outDuration)
+                    .SetEase(Ease.OutElastic)
+                    .ToUniTask(cancellationToken: token);
+            }
+            catch (OperationCanceledException)
+            {
+                if (target != null)
+                {
+                    target.DOKill();
+                    target.localScale = originalScale;
+                }
+                throw;
+            }
+            finally
+            {
+                if (target != null)
+                {
+                    target.DOKill();
+                    target.localScale = originalScale;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 지면 구름(Roll) 감속 모션 재생 (지정 시간 동안 Animator speed를 서서히 줄여 자연스러운 회전 감속 표현)
+        /// </summary>
+        public async UniTask PlayRollDecelAsync(float duration, float startSpeed = 1.2f, float endSpeed = 0.3f, CancellationToken token = default)
+        {
+            PlayRollBarrage();
+            if (animator == null)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(duration), cancellationToken: token);
+                return;
+            }
+
+            float elapsed = 0f;
+            try
+            {
+                while (elapsed < duration)
+                {
+                    token.ThrowIfCancellationRequested();
+                    float t = elapsed / Mathf.Max(0.001f, duration);
+                    animator.speed = Mathf.Lerp(startSpeed, endSpeed, t);
+                    elapsed += Time.deltaTime;
+                    await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
+                }
+            }
+            finally
+            {
+                if (animator != null)
+                {
+                    animator.speed = 1.0f;
+                }
+            }
         }
     }
 }

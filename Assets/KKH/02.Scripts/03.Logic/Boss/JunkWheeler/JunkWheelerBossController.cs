@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
@@ -8,7 +8,7 @@ namespace RealSteel.Boss.JunkWheeler
     /// [지역 1 보스 "정크 휠러" 구체 컨트롤러 (JunkWheelerBossController)]
     /// 기획서 §6.18 및 §3.2 (1), §5.1:
     /// 1. BossController를 상속하여 기존 도구(BossFSMTester, BattleManager) 및 씬 직렬화 100% 호환 보장.
-    /// 2. 폐타이어 부위 기믹, 돌진 기믹, 탄막 기믹, 3단 내려찍기 기믹을 컴포지션(Composition)으로 조립/제어.
+    /// 2. 폐타이어 부위 기믹, 돌진 기믹, 탄막 기믹, 3단 내려찍기 기믹, 회전 톱날 당구 돌진 기믹을 컴포지션(Composition)으로 조립/제어.
     /// 3. 정크 휠러 스프라이트 반전(FaceDirection) 및 페이즈 전환(2페이즈 엔진 과열/불꽃) 연출 담당.
     /// </summary>
     public class JunkWheelerBossController : BossController
@@ -22,11 +22,13 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private JunkWheelerChargePatternGimmick chargePatternGimmick;
         [SerializeField] private JunkWheelerBarragePatternGimmick barragePatternGimmick;
         [SerializeField] private JunkWheelerSlamPatternGimmick slamPatternGimmick;
+        [SerializeField] private JunkWheelerRicochetBladePatternGimmick ricochetBladePatternGimmick;
 
         public JunkWheelerTirePartGimmick TirePartGimmick => tirePartGimmick;
         public JunkWheelerChargePatternGimmick ChargePatternGimmick => chargePatternGimmick;
         public JunkWheelerBarragePatternGimmick BarragePatternGimmick => barragePatternGimmick;
         public JunkWheelerSlamPatternGimmick SlamPatternGimmick => slamPatternGimmick;
+        public JunkWheelerRicochetBladePatternGimmick RicochetBladePatternGimmick => ricochetBladePatternGimmick;
 
         protected override void RegisterGimmicks()
         {
@@ -34,16 +36,18 @@ namespace RealSteel.Boss.JunkWheeler
             tirePartGimmick = GetOrAddComponent<JunkWheelerTirePartGimmick>();
             RegisterGimmick(tirePartGimmick);
 
-            // 2. 패턴 기믹 3종 탐색 및 부착 (마스터 데이터 매칭)
+            // 2. 패턴 기믹 4종 탐색 및 부착 (마스터 데이터 매칭)
             chargePatternGimmick = GetOrAddComponent<JunkWheelerChargePatternGimmick>();
             barragePatternGimmick = GetOrAddComponent<JunkWheelerBarragePatternGimmick>();
             slamPatternGimmick = GetOrAddComponent<JunkWheelerSlamPatternGimmick>();
+            ricochetBladePatternGimmick = GetOrAddComponent<JunkWheelerRicochetBladePatternGimmick>();
 
             BindPatternDataIfAvailable();
 
             RegisterGimmick(chargePatternGimmick);
             RegisterGimmick(barragePatternGimmick);
             RegisterGimmick(slamPatternGimmick);
+            RegisterGimmick(ricochetBladePatternGimmick);
 
             // 3. 기타 씬 내 추가 기믹(전장 기물 등) 자동 등록
             base.RegisterGimmicks();
@@ -78,6 +82,10 @@ namespace RealSteel.Boss.JunkWheeler
                 else if (p.patternID == "PATTERN_SLAM" && slamPatternGimmick != null)
                 {
                     SetPatternDataPrivate(slamPatternGimmick, p);
+                }
+                else if (p.patternID == JunkWheelerRicochetBladePatternGimmick.PatternRicochetBladeID && ricochetBladePatternGimmick != null)
+                {
+                    SetPatternDataPrivate(ricochetBladePatternGimmick, p);
                 }
             }
         }

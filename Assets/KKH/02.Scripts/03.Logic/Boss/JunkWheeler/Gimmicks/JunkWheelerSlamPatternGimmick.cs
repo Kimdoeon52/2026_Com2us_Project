@@ -16,6 +16,9 @@ namespace RealSteel.Boss.JunkWheeler
     /// 3. 착지 지점 반경 1.0m 내에 고철 못판(NailBoardFieldGimmick)이 감지되면:
     ///    - 못판 기믹 트리거 ➔ 타이어 펑크 발생 ➔ 남은 내려찍기 즉시 취소!
     ///    - 보스를 4초 그로기(받는 피해 1.5배)로 전이시키며 패턴 즉각 종료.
+    /// 4. 비선형 텐션 & 비대칭 펀치(Squash & Stretch) 연출 탑재:
+    ///    - 도약 전 웅크림(Squash) ➔ 도약 순간 상단 신장(Stretch).
+    ///    - 급강하 지면 충돌 순간 초고속 압착(0.04s) ➔ 탄성 로그 복원(0.28s).
     /// </summary>
     public class JunkWheelerSlamPatternGimmick : BossPatternGimmickBase
     {
@@ -28,6 +31,11 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float impactRadius = 1.2f;
         [SerializeField] private float nailBoardDetectRadius = 1.0f;
         [SerializeField] private int slamRounds = 3;
+
+        [Header("비대칭 임팩트 펀치 파라미터")]
+        [SerializeField] private Vector2 slamSquashScale = new Vector2(1.45f, 0.50f);
+        [SerializeField] private float squashFastInDuration = 0.04f;
+        [SerializeField] private float restoreElasticDuration = 0.28f;
 
         private Tweener _currentTween;
         private float _groundY;
@@ -61,7 +69,14 @@ namespace RealSteel.Boss.JunkWheeler
 
                 Debug.Log($"<color=yellow>[JunkWheelerSlamPattern] ▶ 내려찍기 {round}/{slamRounds}회차 개시!</color>");
 
-                // 1단계: 공중 도약 및 도약 애니메이션
+                // [텐션 1단계]: 도약 직전 바닥 웅크림 (Squash Anticipation)
+                if (OwnerBoss.Animation != null)
+                {
+                    await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                        OwnerBoss.transform, new Vector2(1.20f, 0.70f), 0.08f, 0.10f, token);
+                }
+
+                // [텐션 2단계]: 공중 도약 및 도약 애니메이션
                 if (OwnerBoss.Animation != null)
                 {
                     OwnerBoss.Animation.PlaySlamJump();
@@ -106,17 +121,17 @@ namespace RealSteel.Boss.JunkWheeler
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
 
-                // 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
+                // 5단계: 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
                 if (OwnerBoss.Animation != null)
                 {
                     OwnerBoss.Animation.PlaySlamLand();
+                    // 비대칭 펀치(Squash & Stretch): 0.04s 초고속 지면 압착 -> 0.28s 탄성 복원
+                    await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                        OwnerBoss.transform, slamSquashScale, squashFastInDuration, restoreElasticDuration, token);
                 }
+                Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅! 비대칭 펀치 적용)</color>");
 
-                _currentTween = OwnerBoss.transform.DOPunchScale(BossAnimationController.FacingSafePunch(OwnerBoss.transform, new Vector3(0.35f, -0.35f, 0f)), 0.25f);
-                await _currentTween.ToUniTask(cancellationToken: token);
-                Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅!)</color>");
-
-                // 5단계: 착지 반경 1.0m 내 고철 못판(NailBoardFieldGimmick) 감지 검사
+                // 6단계: 착지 반경 1.0m 내 고철 못판(NailBoardFieldGimmick) 감지 검사
                 if (CheckNailBoardInteraction())
                 {
                     Debug.Log("<color=red>[JunkWheelerSlamPattern] ▶ 고철 못판 착지 감지! 패턴 즉시 중단 및 4초 그로기 전이!</color>");
@@ -128,21 +143,21 @@ namespace RealSteel.Boss.JunkWheeler
                     return; // 남은 내려찍기 회차 즉시 중단
                 }
 
-                // 6단계: 고철 못판이 없으면 플레이어 피격 판정 (Space 무적 검사 및 LeftLeg 파츠 타격)
+                // 7단계: 고철 못판이 없으면 플레이어 피격 판정 (Space 무적 검사 및 LeftLeg 파츠 타격)
                 CheckPlayerHit();
 
                 // 다음 회차 전 짧은 딜레이
                 if (round < slamRounds)
                 {
-                    await UniTask.Delay(TimeSpan.FromSeconds(0.3f), cancellationToken: token);
+                    await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: token);
                 }
             }
 
-            // 모든 회차 종료 후 플레이어를 응시하고 Idle 복귀
-            OwnerBoss.FacePlayer();
-
+            // 모든 회차 종료 후 스케일 완전 복원 및 플레이어 응시 후 Idle 복귀
             if (OwnerBoss.Animation != null)
             {
+                OwnerBoss.Animation.ResetScale();
+                OwnerBoss.FacePlayer();
                 OwnerBoss.Animation.PlayIdle();
             }
         }
@@ -188,6 +203,7 @@ namespace RealSteel.Boss.JunkWheeler
             base.OnInterrupted(reason);
             KillCurrentTween();
             ResetToGround();
+            OwnerBoss?.Animation?.ResetScale();
         }
 
         protected override void CleanupEffects()
@@ -195,6 +211,7 @@ namespace RealSteel.Boss.JunkWheeler
             base.CleanupEffects();
             KillCurrentTween();
             ResetToGround();
+            OwnerBoss?.Animation?.ResetScale();
         }
 
         private void KillCurrentTween()

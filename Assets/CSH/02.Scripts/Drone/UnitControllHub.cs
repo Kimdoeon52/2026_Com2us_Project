@@ -86,8 +86,8 @@ public class UnitControllHub : MonoBehaviour
     // 이 컴포넌트의 Awake 시점엔 아직 없을 수 있다 (FlameEmitter와 같은 방식)
     private void Start()
     {
-        executor = GetComponent<ActionExecutor>();
-        mover = GetComponent<RobotMover>();
+        executor = TryGetComponent<ActionExecutor>(out var exec) ? exec : null;
+        mover = TryGetComponent<RobotMover>(out var mov) ? mov : null;
         state = executor.State;
 
         if (state == null)

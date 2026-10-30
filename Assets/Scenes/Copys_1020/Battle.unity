@@ -814,7 +814,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   basic: {fileID: 11400000, guid: 94c8d8d7a06232b4b96f73048748b386, type: 2}
   leftArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  rightArm: {fileID: 11400000, guid: 10c7b185b91f0444592897e38d32924a, type: 2}
+  rightArm: {fileID: 11400000, guid: ceb7c46d469c6da4faa0bd5bac720976, type: 2}
   leftLeg: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
   rightLeg: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
   dodge: {fileID: 11400000, guid: 7082bb52b41adbd48a1cae793e5a85a4, type: 2}
@@ -849,7 +849,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e39a7683bcbbad48a03df16e9aed3d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dronePrefab: {fileID: 0}
+  dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
   idleSlots:
   - {x: -0.45, y: 0.65, z: 0.05}
   - {x: -0.6, y: 0.45, z: 0.05}

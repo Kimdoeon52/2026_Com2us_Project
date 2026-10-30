@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -19,13 +19,63 @@ namespace RealSteel.Boss.Core
 
         [Header("3. Camera Bounds (X-Axis)")]
         [SerializeField] protected bool clampToCameraBounds = true;
-        [SerializeField] protected float cameraEdgePadding = 0.65f;
+        [SerializeField] protected float cameraEdgePadding = 0.50f;
         [SerializeField] protected Camera targetCamera;
+        protected CombatCamera _cachedCombatCamera;
+        private float _initialGroundY;
+        private bool _hasInitialGroundY = false;
+
+        /// <summary>
+        /// 보스의 기본 지면 Y 좌표 (공중 패턴 종료/캔슬 후 바닥 복귀 기준점)
+        /// </summary>
+        public float GroundY
+        {
+            get
+            {
+                if (!_hasInitialGroundY)
+                {
+                    _initialGroundY = transform.position.y;
+                    _hasInitialGroundY = true;
+                }
+                return _initialGroundY;
+            }
+            protected set
+            {
+                _initialGroundY = value;
+                _hasInitialGroundY = true;
+            }
+        }
+
+        /// <summary>
+        /// 보스가 공중에 떠 있는 경우 기본 지면 높이(GroundY)로 즉시 스냅 복귀시킴.
+        /// </summary>
+        public void SnapToGroundY()
+        {
+            float gy = GroundY;
+            if (Mathf.Abs(transform.position.y - gy) > 0.001f)
+            {
+                transform.position = new Vector3(transform.position.x, gy, transform.position.z);
+            }
+        }
 
         public Camera TargetCamera
         {
             get => targetCamera != null ? targetCamera : Camera.main;
             set => targetCamera = value;
+        }
+
+        public CombatCamera TargetCombatCamera
+        {
+            get
+            {
+                if (_cachedCombatCamera == null)
+                {
+                    Camera cam = TargetCamera;
+                    if (cam != null) _cachedCombatCamera = cam.GetComponent<CombatCamera>();
+                    if (_cachedCombatCamera == null) _cachedCombatCamera = FindFirstObjectByType<CombatCamera>();
+                }
+                return _cachedCombatCamera;
+            }
         }
 
         public BossMasterData MasterData => masterData;
@@ -40,6 +90,8 @@ namespace RealSteel.Boss.Core
         protected readonly List<BossPatternGimmickBase> activePatternPool = new();
         protected CancellationTokenSource _stateCts;
         protected int _patternIndex = 0;
+        private CombatDataHub _subscribedHub;
+        private bool _isDefeatedHandled = false;
 
         // 대외 브로드캐스팅 이벤트
         public event Action<string> OnStateChanged;
@@ -49,6 +101,39 @@ namespace RealSteel.Boss.Core
         public event Action<int, int> OnDpsCheckProgressChanged;
         public event Action<BossPatternData> OnPatternStarted;
 
+        protected virtual void Reset()
+        {
+            AutoBindInspectorReferences();
+        }
+
+        protected virtual void OnValidate()
+        {
+            AutoBindInspectorReferences();
+        }
+
+        public virtual void AutoBindInspectorReferences()
+        {
+#if UNITY_EDITOR
+            if (masterData == null)
+            {
+                masterData = UnityEditor.AssetDatabase.LoadAssetAtPath<BossMasterData>("Assets/KKH/03.SOData/Boss/BossMasterData_JunkWheeler.asset");
+            }
+#endif
+            if (animationController == null)
+            {
+                animationController = GetComponentInChildren<BossAnimationController>(true);
+            }
+            else
+            {
+                animationController.AutoBindReferences();
+            }
+
+            if (targetCamera == null && gameObject.scene.IsValid())
+            {
+                targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            }
+        }
+
         protected virtual void Awake()
         {
             InitializeBoss();
@@ -56,6 +141,7 @@ namespace RealSteel.Boss.Core
 
         protected virtual void Update()
         {
+            EnsureHubSubscription();
             StateMachine?.Update();
 
             if (Snapshot != null)
@@ -73,8 +159,8 @@ namespace RealSteel.Boss.Core
         {
             if (clampToCameraBounds)
             {
-                // Y축(점프/급강하)은 완전히 자유롭게 유지하고, X축 위치만 카메라 화면 내로 보정
-                float clampedX = ClampToCameraX(transform.position.x);
+                // CombatCamera보다 먼저 LateUpdate가 실행되더라도 카메라 줌아웃을 막지 않도록 스테이지 최대 카메라 경계로 보정
+                float clampedX = ClampToStageWallX(transform.position.x);
                 if (!Mathf.Approximately(clampedX, transform.position.x))
                 {
                     transform.position = new Vector3(clampedX, transform.position.y, transform.position.z);
@@ -82,6 +168,9 @@ namespace RealSteel.Boss.Core
             }
         }
 
+        /// <summary>
+        /// 현재 프레임의 순간 카메라 뷰포트 좌/우 X 경계를 반환함 (기울어진 3D 카메라 왜곡을 배제한 평면 투영).
+        /// </summary>
         public bool TryGetCameraBoundsX(out float minX, out float maxX, float padding = -1f)
         {
             float pad = padding >= 0f ? padding : cameraEdgePadding;
@@ -94,13 +183,80 @@ namespace RealSteel.Boss.Core
                 return false;
             }
 
-            float distance = Mathf.Abs(cam.transform.position.z - transform.position.z);
-            Vector3 leftPoint = cam.ViewportToWorldPoint(new Vector3(0f, 0.5f, distance));
-            Vector3 rightPoint = cam.ViewportToWorldPoint(new Vector3(1f, 0.5f, distance));
+            float halfWidth;
+            if (cam.orthographic)
+            {
+                halfWidth = cam.orthographicSize * cam.aspect;
+            }
+            else
+            {
+                float distance = Mathf.Abs(cam.transform.position.z - transform.position.z);
+                halfWidth = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * distance * cam.aspect;
+            }
 
-            minX = Mathf.Min(leftPoint.x, rightPoint.x) + pad;
-            maxX = Mathf.Max(leftPoint.x, rightPoint.x) - pad;
+            float centerX = cam.transform.position.x;
+            minX = centerX - halfWidth + pad;
+            maxX = centerX + halfWidth - pad;
             return true;
+        }
+
+        /// <summary>
+        /// CombatCamera가 줌아웃(farZ) 및 스테이지 이동 한계(minX~maxX)에 도달했을 때의 '최대 전장 카메라 벽(Stage Wall)' 좌/우 X 경계를 반환함.
+        /// 돌진이나 당구 바운스처럼 카메라를 밀어붙이며 화면 끝까지 가야 하는 패턴에서 사용함.
+        /// </summary>
+        public bool TryGetStageWallBoundsX(out float minX, out float maxX, float padding = -1f)
+        {
+            float pad = padding >= 0f ? padding : cameraEdgePadding;
+            Camera cam = TargetCamera;
+            var combatCam = TargetCombatCamera;
+
+            if (cam != null && combatCam != null)
+            {
+                var minXField = typeof(CombatCamera).GetField("minX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var maxXField = typeof(CombatCamera).GetField("maxX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var farZField = typeof(CombatCamera).GetField("farZ", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                var maxOrthoField = typeof(CombatCamera).GetField("maxOrthoSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                float camMinCenter = minXField != null ? (float)minXField.GetValue(combatCam) : -3f;
+                float camMaxCenter = maxXField != null ? (float)maxXField.GetValue(combatCam) : 3f;
+
+                float maxHalfWidth;
+                if (cam.orthographic)
+                {
+                    float maxOrtho = maxOrthoField != null ? (float)maxOrthoField.GetValue(combatCam) : cam.orthographicSize;
+                    maxHalfWidth = Mathf.Max(cam.orthographicSize, maxOrtho) * cam.aspect;
+                }
+                else
+                {
+                    float farZ = farZField != null ? (float)farZField.GetValue(combatCam) : cam.transform.position.z;
+                    float maxDist = Mathf.Max(Mathf.Abs(cam.transform.position.z - transform.position.z), Mathf.Abs(farZ - transform.position.z));
+                    maxHalfWidth = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * maxDist * cam.aspect;
+                }
+
+                // 현재 순간 카메라 경계와 최대 스테이지 경계 중 더 넓은 범위를 허용하여 카메라가 줌아웃하며 따라올 수 있게 보장
+                if (TryGetCameraBoundsX(out float curMinX, out float curMaxX, pad))
+                {
+                    minX = Mathf.Min(curMinX, camMinCenter - maxHalfWidth + pad);
+                    maxX = Mathf.Max(curMaxX, camMaxCenter + maxHalfWidth - pad);
+                }
+                else
+                {
+                    minX = camMinCenter - maxHalfWidth + pad;
+                    maxX = camMaxCenter + maxHalfWidth - pad;
+                }
+                return true;
+            }
+
+            return TryGetCameraBoundsX(out minX, out maxX, pad);
+        }
+
+        public float ClampToStageWallX(float desiredX, float padding = -1f)
+        {
+            if (TryGetStageWallBoundsX(out float minX, out float maxX, padding))
+            {
+                return Mathf.Clamp(desiredX, minX, maxX);
+            }
+            return desiredX;
         }
 
         public float ClampToCameraX(float desiredX, float padding = -1f)
@@ -165,7 +321,29 @@ namespace RealSteel.Boss.Core
 
         protected virtual void OnDestroy()
         {
+            UnsubscribeHub();
             CancelCurrentStateToken();
+        }
+
+        private void EnsureHubSubscription()
+        {
+            var hub = CombatDataHub.Instance;
+            if (hub == _subscribedHub) return;
+            UnsubscribeHub();
+            _subscribedHub = hub;
+            if (_subscribedHub != null)
+            {
+                _subscribedHub.OnBossDamaged += HandleHubBossDamaged;
+            }
+        }
+
+        private void UnsubscribeHub()
+        {
+            if (_subscribedHub != null)
+            {
+                _subscribedHub.OnBossDamaged -= HandleHubBossDamaged;
+                _subscribedHub = null;
+            }
         }
 
         // ========================================================================
@@ -173,14 +351,28 @@ namespace RealSteel.Boss.Core
         // ========================================================================
         public void InitializeBoss()
         {
+            _isDefeatedHandled = false;
+            if (!_hasInitialGroundY)
+            {
+                _initialGroundY = transform.position.y;
+                _hasInitialGroundY = true;
+            }
             SetupSnapshot();
             SetupAnimationController();
 
-            // CombatDataHub에 1:1 보스전 자동 바인딩
+            if (targetCamera == null)
+            {
+                targetCamera = Camera.main != null ? Camera.main : FindFirstObjectByType<Camera>();
+            }
+
+            // CombatDataHub에 1:1 보스전 자동 바인딩 및 피격 이벤트 구독
+            EnsureHubSubscription();
             if (CombatDataHub.Instance != null && Snapshot != null)
             {
                 CombatDataHub.Instance.InitializeBossBattle(CombatDataHub.Instance.PlayerSnapshot, Snapshot);
             }
+
+            AutoWireSceneSystems();
 
             SetupStateMachine();
             RegisterGimmicks(); // 구체 보스 훅
@@ -188,6 +380,45 @@ namespace RealSteel.Boss.Core
             OnBossInitialized(); // 구체 보스 훅
 
             StartCombatLoop();
+        }
+
+        protected virtual void AutoWireSceneSystems()
+        {
+            // 1. BattleManager의 enemyRobotObject가 비어있거나 비활성화된 더미 Enemy를 가리키면 현재 보스로 자동 교체
+            var bm = BattleManager.Instance;
+            if (bm != null)
+            {
+                var enemyField = typeof(BattleManager).GetField("enemyRobotObject", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (enemyField != null)
+                {
+                    var curEnemy = enemyField.GetValue(bm) as GameObject;
+                    if (curEnemy == null || !curEnemy.activeInHierarchy)
+                    {
+                        enemyField.SetValue(bm, gameObject);
+                    }
+                }
+            }
+
+            // 2. 보스전이므로 CombatCamera의 두 번째 추적 대상(playerB)을 무조건 현재 보스 Transform으로 바인딩
+            // (씬에 남아있는 더미 Enemy 로봇이 켜져 있더라도 카메라가 보스를 추적하고 줌아웃하도록 보장)
+            var combatCam = TargetCombatCamera;
+            if (combatCam != null)
+            {
+                var playerBField = typeof(CombatCamera).GetField("playerB", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (playerBField != null)
+                {
+                    var curB = playerBField.GetValue(combatCam) as Transform;
+                    if (curB != transform)
+                    {
+                        if (curB != null && curB.GetComponent<BossControllerBase>() == null && curB.gameObject.activeSelf)
+                        {
+                            // 보스 씬의 더미 일반 적(Enemy) 오브젝트가 켜져 있으면 비활성화
+                            curB.gameObject.SetActive(false);
+                        }
+                        playerBField.SetValue(combatCam, transform);
+                    }
+                }
+            }
         }
 
         protected virtual void SetupAnimationController()
@@ -266,6 +497,25 @@ namespace RealSteel.Boss.Core
             }
 
             Snapshot.currentHp = Mathf.Max(0, Snapshot.currentHp - finalDamage);
+            CombatDataHub.Instance?.SyncBossToEnemyProxy();
+
+            ProcessPostDamageReactions(finalDamage);
+        }
+
+        /// <summary>
+        /// CombatDataHub.ProcessHit(NYH HitDetection)에서 이미 Snapshot.currentHp 차감이 끝난 후
+        /// 이중 차감 없이 FSM/기믹(300 DPS 저지)/페이즈 전환/토벌 사망 처리를 수행하는 핸들러임.
+        /// </summary>
+        protected virtual void HandleHubBossDamaged(int finalDamage)
+        {
+            if (Snapshot == null) return;
+            ProcessPostDamageReactions(finalDamage);
+        }
+
+        protected virtual void ProcessPostDamageReactions(int finalDamage)
+        {
+            if (Snapshot == null) return;
+
             OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
 
             StateMachine?.OnDamageTaken(finalDamage);
@@ -273,10 +523,27 @@ namespace RealSteel.Boss.Core
 
             CheckPhaseTransition();
 
-            if (Snapshot.currentHp <= 0)
+            if (Snapshot.currentHp <= 0 && !_isDefeatedHandled)
             {
+                _isDefeatedHandled = true;
+                StopBossCombat();
                 OnBossDefeated();
                 BattleManager.Instance?.OnFighterKilled(Snapshot.bossID);
+            }
+        }
+
+        /// <summary>
+        /// 전투 종료(승리/패배/타임오버) 시 진행 중인 모든 비동기 패턴 루프와 FSM을 즉시 정지함.
+        /// </summary>
+        public virtual void StopBossCombat()
+        {
+            CancelCurrentStateToken();
+            foreach (var pattern in activePatternPool)
+            {
+                if (pattern != null)
+                {
+                    pattern.InterruptPattern(InterruptReason.PhaseTransition);
+                }
             }
         }
 

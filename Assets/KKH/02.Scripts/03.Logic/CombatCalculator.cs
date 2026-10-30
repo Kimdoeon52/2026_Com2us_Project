@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// [순수 C# 전투 수치 판정기 (CombatCalculator)]
@@ -207,8 +207,8 @@ public static class CombatCalculator
             result.cylinderGained = true;
         }
 
-        // 2) 그로기 상태 1.5배 피해 배율 적용
-        float damageMultiplier = boss.isGroggy ? 1.5f : 1.0f;
+        // 2) 그로기 상태 피해 배율 적용 (BossSnapshot.currentDamageMultiplier 반영)
+        float damageMultiplier = boss.isGroggy ? Mathf.Max(1.0f, boss.currentDamageMultiplier) : 1.0f;
         float actualDamage = isBasicAttackD ? 10f : skillBaseDamage * (player.totalAttackPower / 100f);
         result.coreHpDamage = CalculateDamage(actualDamage * damageMultiplier, boss.baseDefense);
         boss.currentHp = Mathf.Max(0, boss.currentHp - result.coreHpDamage);

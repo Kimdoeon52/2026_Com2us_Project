@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -46,7 +46,8 @@ namespace RealSteel.Boss.JunkWheeler
             _playerTransform = GameObject.FindWithTag("Player")?.transform;
             if (OwnerBoss != null)
             {
-                _groundY = OwnerBoss.transform.position.y;
+                _groundY = OwnerBoss.GroundY;
+                OwnerBoss.SnapToGroundY();
                 OwnerBoss.FacePlayer();
             }
         }
@@ -101,7 +102,7 @@ namespace RealSteel.Boss.JunkWheeler
                         float newX = Mathf.MoveTowards(currentX, targetX, 7.0f * Time.deltaTime);
                         if (OwnerBoss != null)
                         {
-                            newX = OwnerBoss.ClampToCameraX(newX, 0.65f);
+                            newX = OwnerBoss.ClampToStageWallX(newX, 0.50f);
                             // 추적 방향으로 스프라이트 반전
                             float dirX = targetX >= currentX ? 1f : -1f;
                             OwnerBoss.Animation?.FaceDirection(dirX);
@@ -225,9 +226,9 @@ namespace RealSteel.Boss.JunkWheeler
 
         private void ResetToGround()
         {
-            if (OwnerBoss != null && OwnerBoss.transform.position.y > _groundY)
+            if (OwnerBoss != null)
             {
-                OwnerBoss.transform.position = new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z);
+                OwnerBoss.SnapToGroundY();
             }
         }
     }

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -40,7 +40,7 @@ namespace RealSteel.Boss.FSM
             float brokenTireSpeed = 5.5f,
             float anticipatedDuration = 0.2f,
             float wallStunDelay = 0.3f,
-            float maxMapDistance = 5.0f,
+            float maxMapDistance = 20.0f,
             int chargeDamage = 50) : base(boss, token)
         {
             _pattern = pattern;
@@ -226,17 +226,22 @@ namespace RealSteel.Boss.FSM
 
         private float CalculateTargetWallX(float currentX, float directionX)
         {
-            RaycastHit2D hit = Physics2D.Raycast(
-                boss.transform.position,
-                Vector2.right * directionX,
-                _maxMapDistance,
-                LayerMask.GetMask("Wall", "Ground", "Default"));
+            int wallMask = LayerMask.GetMask("Wall");
+            RaycastHit2D hit = wallMask != 0
+                ? Physics2D.Raycast(boss.transform.position, Vector2.right * directionX, _maxMapDistance, wallMask)
+                : default;
 
+            float wallX = currentX + (directionX * _maxMapDistance);
             if (hit.collider != null && hit.collider.gameObject != boss.gameObject)
             {
-                return hit.point.x - (directionX * 0.5f);
+                wallX = hit.point.x - (directionX * 0.5f);
             }
-            return currentX + (directionX * _maxMapDistance);
+
+            if (boss != null && boss.TryGetStageWallBoundsX(out float camMinX, out float camMaxX, 0.5f))
+            {
+                return directionX > 0 ? Mathf.Min(wallX, camMaxX) : Mathf.Max(wallX, camMinX);
+            }
+            return wallX;
         }
 
         private bool CheckChargeCollisions()

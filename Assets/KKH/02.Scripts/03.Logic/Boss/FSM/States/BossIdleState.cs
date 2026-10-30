@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -26,7 +26,8 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
-            // 진입 즉시 플레이어 응시 및 Idle 모션 재생
+            // 진입 즉시 지면 높이 보장, 플레이어 응시 및 Idle 모션 재생
+            boss.SnapToGroundY();
             boss.FacePlayer();
 
             if (boss.Animation != null)

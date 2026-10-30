@@ -161,13 +161,19 @@ public class BattleManager : MonoBehaviour
     {
         if (currentState == BattleState.BattleEnd) return;
 
-        int playerHp = CombatDataHub.Instance != null ? CombatDataHub.Instance.GetCurrentHp("Player") : 0;
-        int enemyHp = CombatDataHub.Instance != null ? CombatDataHub.Instance.GetCurrentHp("Enemy") : 0;
+        var hub = CombatDataHub.Instance;
+        int playerHp = hub != null ? hub.GetCurrentHp("Player") : 0;
+        int playerMax = hub != null ? Mathf.Max(1, hub.GetMaxHp("Player")) : 1000;
+        int enemyHp = hub != null ? hub.GetCurrentHp("Enemy") : 0;
+        int enemyMax = hub != null ? Mathf.Max(1, hub.GetMaxHp("Enemy")) : 1000;
 
-        bool playerWon = playerHp >= enemyHp;
+        float playerRatio = (float)playerHp / playerMax;
+        float enemyRatio = (float)enemyHp / enemyMax;
+
+        bool playerWon = playerRatio >= enemyRatio;
         string winnerId = playerWon ? "Player" : "Enemy";
 
-        Debug.Log($"[BattleManager] 타임아웃 판정함! Player HP: {playerHp} vs Enemy HP: {enemyHp} -> 승자: {winnerId}");
+        Debug.Log($"[BattleManager] 타임아웃 판정함! Player HP: {playerHp}/{playerMax} ({playerRatio:P1}) vs Enemy HP: {enemyHp}/{enemyMax} ({enemyRatio:P1}) -> 승자: {winnerId}");
         EndBattle(playerWon, winnerId);
     }
 
@@ -180,11 +186,24 @@ public class BattleManager : MonoBehaviour
 
         SetState(BattleState.BattleEnd);
 
-        // 하드코어 승패 정산기 실행함 (내구도 복구 또는 영구 파괴 롤링 및 외부 통보함)
-        CombatantSnapshot player = CombatDataHub.Instance?.PlayerSnapshot;
-        CombatantSnapshot enemy = CombatDataHub.Instance?.EnemySnapshot;
+        // 전투 종료 시 씬 내 활성 보스의 비동기 FSM 루프 즉시 중단
+        var bossCtrl = (enemyRobotObject != null ? enemyRobotObject.GetComponent<RealSteel.Boss.Core.BossControllerBase>() : null)
+                       ?? FindFirstObjectByType<RealSteel.Boss.Core.BossControllerBase>();
+        if (bossCtrl != null)
+        {
+            bossCtrl.StopBossCombat();
+        }
 
-        var settlement = BattleSettlementProcessor.ProcessSettlement(playerWon, player, enemy, betGold);
+        // 하드코어 승패 정산기 실행함 (내구도 복구 또는 영구 파괴 롤링 및 외부 통보함)
+        var hub = CombatDataHub.Instance;
+        CombatantSnapshot player = hub?.PlayerSnapshot;
+        CombatantSnapshot enemy = hub?.EnemySnapshot;
+        BossMasterData bossMaster = (hub != null && hub.CurrentBattleMode == BattleMode.RobotVsBoss && bossCtrl != null)
+            ? bossCtrl.MasterData
+            : null;
+
+        var settlement = BattleSettlementProcessor.ProcessSettlement(
+            playerWon, player, enemy, betGold, bossMaster: bossMaster);
 
         OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
         Debug.Log($"[BattleManager] 전투 종료 완료됨: 승자={winnerId}, {settlement.SummaryMessage}");

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -79,7 +79,8 @@ namespace RealSteel.Boss.JunkWheeler
             OwnerBoss.FacePlayer();
 
             // 1단계: 원래 지면 Y좌표 기록 및 중간 상단(Apex) 도약 좌표 산출
-            _groundY = OwnerBoss.transform.position.y;
+            _groundY = OwnerBoss.GroundY;
+            OwnerBoss.SnapToGroundY();
             Vector3 apexPos = CalculateMidpointApex();
 
             Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 보스 본체 공중 도약 개시 ➔ {apexPos}</color>");
@@ -206,7 +207,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (OwnerBoss != null)
             {
-                midX = OwnerBoss.ClampToCameraX(midX, 1.0f);
+                midX = OwnerBoss.ClampToStageWallX(midX, 0.8f);
             }
 
             float effectiveLaunchHeight = _isTireBrokenDebuffed ? launchHeight * 0.7f : launchHeight;
@@ -296,6 +297,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss != null)
             {
                 OwnerBoss.transform.rotation = Quaternion.identity;
+                OwnerBoss.SnapToGroundY();
                 OwnerBoss.Animation?.ResetScale();
             }
         }

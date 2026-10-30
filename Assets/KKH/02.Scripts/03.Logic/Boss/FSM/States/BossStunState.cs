@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -28,6 +28,7 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
+            boss.SnapToGroundY();
             boss.SetStunView(true, _duration);
 
             if (boss.Animation != null)

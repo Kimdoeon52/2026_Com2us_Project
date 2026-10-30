@@ -19,6 +19,8 @@ GameObject:
   - component: {fileID: 371741583458075138}
   - component: {fileID: 8152764038469079320}
   - component: {fileID: 7090729570231879717}
+  - component: {fileID: 8812345678901234501}
+  - component: {fileID: 8812345678901234502}
   m_Layer: 0
   m_Name: Boss1_JunkWheeler
   m_TagString: Boss
@@ -181,15 +183,16 @@ MonoBehaviour:
   currentHpView: 0
   isGroggyView: 0
   clampToCameraBounds: 1
-  cameraEdgePadding: 0.65
+  cameraEdgePadding: 0.5
   targetCamera: {fileID: 0}
-  animationController: {fileID: 0}
+  animationController: {fileID: 8812345678901234501}
   phase2FireVFX: {fileID: 0}
   defeatExplosionVFX: {fileID: 0}
   tirePartGimmick: {fileID: 3468832547808010039}
   chargePatternGimmick: {fileID: 8211426203969925326}
   barragePatternGimmick: {fileID: 512307155976557277}
   slamPatternGimmick: {fileID: 371741583458075138}
+  ricochetBladePatternGimmick: {fileID: 8812345678901234502}
 --- !u!114 &3468832547808010039
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,7 +249,8 @@ MonoBehaviour:
   brokenTireSpeed: 5.5
   anticipatedDuration: 0.2
   wallStunDelay: 0.3
-  maxMapDistance: 5
+  maxMapDistance: 20
+  wallEdgePadding: 0.5
 --- !u!114 &371741583458075138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -310,3 +314,64 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &8812345678901234501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3268763706634737369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cae77d7afc149864b93b452e4df21bad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  animator: {fileID: 5432419012459111250}
+  spriteRenderer: {fileID: 559362491712179911}
+  baseFacingSign: 1
+--- !u!114 &8812345678901234502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3268763706634737369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f1e29a43a0d11ef88b100155d000201, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: 8f1e29a43a0d11ef88b100155d000401, type: 2}
+  rushSpeed: 14
+  maxBounceCount: 3
+  cameraPaddingX: 0.5
+  cameraPaddingY: 0.5
+  groundPaddingY: 0.1
+  initialAngleDeg: 40
+  flashColor: {r: 1, g: 0.2, b: 0.1, a: 1}
+  flashStartInterval: 0.25
+  flashEndInterval: 0.04
+  minShakeStrength: 0.02
+  maxShakeStrength: 0.18
+  minShakeVibrato: 12
+  maxShakeVibrato: 50
+  shakeCurveExponent: 2.8
+  deploySprites:
+  - {fileID: 21300101, guid: a00d23f030326cd4ab11433cae538c14, type: 3}
+  - {fileID: 21300102, guid: a00d23f030326cd4ab11433cae538c14, type: 3}
+  - {fileID: 21300103, guid: a00d23f030326cd4ab11433cae538c14, type: 3}
+  - {fileID: 21300104, guid: a00d23f030326cd4ab11433cae538c14, type: 3}
+  spinSprites:
+  - {fileID: 21300201, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300202, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300203, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300204, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300205, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300206, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300207, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  - {fileID: 21300208, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+  retractSprites:
+  - {fileID: 21300301, guid: c776be3f298dcea47ad9b6e66266e3f4, type: 3}
+  - {fileID: 21300302, guid: c776be3f298dcea47ad9b6e66266e3f4, type: 3}
+  - {fileID: 21300303, guid: c776be3f298dcea47ad9b6e66266e3f4, type: 3}
+  bladeLocalOffset: {x: 0, y: 0.375, z: -0.05}

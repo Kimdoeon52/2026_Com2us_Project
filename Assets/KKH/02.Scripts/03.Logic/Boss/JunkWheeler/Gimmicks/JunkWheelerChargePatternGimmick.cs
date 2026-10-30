@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -25,7 +25,8 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float brokenTireSpeed = 5.5f;
         [SerializeField] private float anticipatedDuration = 0.2f;
         [SerializeField] private float wallStunDelay = 0.3f;
-        [SerializeField] private float maxMapDistance = 5.0f;
+        [SerializeField] private float maxMapDistance = 20.0f;
+        [SerializeField] private float wallEdgePadding = 0.50f;
 
         [Header("비선형 전조(Tell) 가속 파라미터")]
         [Tooltip("전조 점멸 목표 색상 (기본: 빨간색 Color.red)")]
@@ -108,6 +109,7 @@ namespace RealSteel.Boss.JunkWheeler
 
         protected override void OnPreExecute()
         {
+            OwnerBoss?.SnapToGroundY();
             _hasHitPlayer = false;
             _playerTransform = GameObject.FindWithTag("Player")?.transform;
 
@@ -263,7 +265,7 @@ namespace RealSteel.Boss.JunkWheeler
             Vector3 pullBackPosition = startPosition - new Vector3(_chargeDirection * 0.3f, 0f, 0f);
             if (OwnerBoss != null)
             {
-                pullBackPosition.x = OwnerBoss.ClampToCameraX(pullBackPosition.x, 0.7f);
+                pullBackPosition.x = OwnerBoss.ClampToStageWallX(pullBackPosition.x, 0.5f);
             }
             _currentTween = OwnerBoss.transform.DOMoveX(pullBackPosition.x, anticipatedDuration).SetEase(Ease.OutQuad);
             await _currentTween.ToUniTask(cancellationToken: token);
@@ -277,12 +279,10 @@ namespace RealSteel.Boss.JunkWheeler
             }
             float finalSpeed = isTireBroken ? brokenTireSpeed : chargeSpeed;
 
-            // 3단계: 반대편 벽 X좌표 산출 및 돌진 주행
-            float targetX = CalculateTargetWallX(startPosition.x, _chargeDirection);
-            float distance = Mathf.Abs(targetX - OwnerBoss.transform.position.x);
-            float duration = distance / Mathf.Max(1.0f, finalSpeed);
-
-            Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed}m/s, 거리: {distance:F1}m)</color>");
+            // 3단계: 반대편 카메라 벽 경계까지 실시간 추적 돌진 주행
+            // (CombatCamera가 이동/줌아웃에 따라 카메라 화면 경계를 실시간 확장하므로 매 프레임 화면 끝을 추적함)
+            float initialTargetX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
+            Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed}m/s, 목표 벽 X: {initialTargetX:F2})</color>");
 
             // 돌진 발사 순간 애니메이션 ➔ 주행 루프
             if (OwnerBoss.Animation != null)
@@ -291,10 +291,11 @@ namespace RealSteel.Boss.JunkWheeler
                 TransitToChargeRunAsync().Forget();
             }
 
-            _currentTween = OwnerBoss.transform.DOMoveX(targetX, duration).SetEase(Ease.Linear);
-
             bool hitExplosive = false;
-            while (_currentTween != null && _currentTween.IsActive() && !_currentTween.IsComplete())
+            float maxChargeTime = 3.0f;
+            float chargeElapsed = 0f;
+
+            while (chargeElapsed < maxChargeTime)
             {
                 token.ThrowIfCancellationRequested();
 
@@ -303,6 +304,25 @@ namespace RealSteel.Boss.JunkWheeler
                     hitExplosive = true;
                     break;
                 }
+
+                float dt = Time.deltaTime;
+                chargeElapsed += dt;
+
+                // 매 프레임 현재 카메라 뷰포트의 실제 좌/우 끝 벽 좌표를 실시간 조회
+                float dynamicWallX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
+                float nextX = OwnerBoss.transform.position.x + (_chargeDirection * finalSpeed * dt);
+
+                bool reachedWall = (_chargeDirection > 0f && nextX >= dynamicWallX - 0.02f) ||
+                                   (_chargeDirection < 0f && nextX <= dynamicWallX + 0.02f);
+
+                if (reachedWall)
+                {
+                    nextX = dynamicWallX;
+                    OwnerBoss.transform.position = new Vector3(nextX, OwnerBoss.transform.position.y, OwnerBoss.transform.position.z);
+                    break;
+                }
+
+                OwnerBoss.transform.position = new Vector3(nextX, OwnerBoss.transform.position.y, OwnerBoss.transform.position.z);
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
             }
 
@@ -332,7 +352,7 @@ namespace RealSteel.Boss.JunkWheeler
             float reboundTargetX = wallContactX - (_chargeDirection * reboundDistance);
             if (OwnerBoss != null)
             {
-                reboundTargetX = OwnerBoss.ClampToCameraX(reboundTargetX, 0.7f);
+                reboundTargetX = OwnerBoss.ClampToStageWallX(reboundTargetX, 0.5f);
             }
 
             _currentTween = OwnerBoss.transform.DOMoveX(reboundTargetX, reboundDuration).SetEase(Ease.OutQuad);
@@ -446,19 +466,33 @@ namespace RealSteel.Boss.JunkWheeler
 
         private float CalculateTargetWallX(float currentX, float directionX)
         {
-            RaycastHit2D hit = Physics2D.Raycast(
-                OwnerBoss.transform.position,
-                Vector2.right * directionX,
-                maxMapDistance,
-                LayerMask.GetMask("Wall", "Ground", "Default"));
+            float pad = wallEdgePadding > 0f ? wallEdgePadding : 0.50f;
 
-            if (hit.collider != null && hit.collider.gameObject != OwnerBoss.gameObject)
+            // 1. CombatCamera 줌아웃(farZ) 및 스테이지 한계(minX/maxX)가 반영된 실제 전장 카메라 벽 좌표를 최우선 획득
+            float cameraWallX = currentX + (directionX * Mathf.Max(20f, maxMapDistance));
+            if (OwnerBoss != null && OwnerBoss.TryGetStageWallBoundsX(out float camMinX, out float camMaxX, pad))
             {
-                float wallHitX = hit.point.x - (directionX * 0.5f);
-                return OwnerBoss != null ? OwnerBoss.ClampToCameraX(wallHitX, 0.7f) : wallHitX;
+                cameraWallX = directionX > 0f ? camMaxX : camMinX;
             }
-            float fallbackX = currentX + (directionX * maxMapDistance);
-            return OwnerBoss != null ? OwnerBoss.ClampToCameraX(fallbackX, 0.7f) : fallbackX;
+
+            // 2. 물리적 Wall 레이어만 검사 (Default 레이어의 플레이어/못판/기타 오브젝트에 가로막혀 중도 정지하는 현상 차단)
+            int wallLayerMask = LayerMask.GetMask("Wall");
+            if (wallLayerMask != 0 && OwnerBoss != null)
+            {
+                RaycastHit2D hit = Physics2D.Raycast(
+                    OwnerBoss.transform.position,
+                    Vector2.right * directionX,
+                    Mathf.Max(20f, maxMapDistance),
+                    wallLayerMask);
+
+                if (hit.collider != null && hit.collider.gameObject != OwnerBoss.gameObject && !hit.collider.isTrigger)
+                {
+                    float wallHitX = hit.point.x - (directionX * pad);
+                    return directionX > 0f ? Mathf.Min(cameraWallX, wallHitX) : Mathf.Max(cameraWallX, wallHitX);
+                }
+            }
+
+            return cameraWallX;
         }
 
         private async UniTask WaitForCollisionToEndAsync(CancellationToken token)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -48,16 +48,24 @@ namespace RealSteel.Boss.Visual
         public float BaseScaleY => _baseScaleY;
         public float BaseScaleZ => _baseScaleZ;
 
-        private void Awake()
+        private void Reset() => AutoBindReferences();
+        private void OnValidate() => AutoBindReferences();
+
+        public void AutoBindReferences()
         {
             if (animator == null)
             {
-                animator = GetComponentInChildren<Animator>();
+                animator = GetComponentInChildren<Animator>(true);
             }
             if (spriteRenderer == null)
             {
-                spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+                spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
             }
+        }
+
+        private void Awake()
+        {
+            AutoBindReferences();
 
             _baseScaleX = Mathf.Abs(transform.localScale.x);
             _baseScaleY = Mathf.Abs(transform.localScale.y);

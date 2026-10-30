@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -35,9 +35,9 @@ namespace RealSteel.Boss.JunkWheeler
         [Tooltip("최대 바운스 횟수 (당구 3쿠션)")]
         [SerializeField] private int maxBounceCount = 3;
         [Tooltip("카메라 좌우 경계 패딩 (m)")]
-        [SerializeField] private float cameraPaddingX = 0.85f;
+        [SerializeField] private float cameraPaddingX = 0.50f;
         [Tooltip("카메라 상단 천장 경계 패딩 (m)")]
-        [SerializeField] private float cameraPaddingY = 0.85f;
+        [SerializeField] private float cameraPaddingY = 0.50f;
         [Tooltip("지면 착지 높이 오프셋")]
         [SerializeField] private float groundPaddingY = 0.1f;
         [Tooltip("사선 발사 수직 각도 (도)")]
@@ -57,7 +57,7 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private Sprite[] deploySprites;
         [SerializeField] private Sprite[] spinSprites;
         [SerializeField] private Sprite[] retractSprites;
-        [SerializeField] private Vector3 bladeLocalOffset = new Vector3(0f, 0.80f, -0.05f);
+        [SerializeField] private Vector3 bladeLocalOffset = new Vector3(0f, 0.375f, -0.05f);
 
         // 런타임 제어 변수
         private GameObject _bladeVfxObj;
@@ -74,9 +74,31 @@ namespace RealSteel.Boss.JunkWheeler
         private static readonly int AnimHashSpin = Animator.StringToHash("Boss_Blades_Spin");
         private static readonly int AnimHashRetract = Animator.StringToHash("Boss_Blades_Retract");
 
-        private void Awake()
+                private void Awake()
         {
+            if (Mathf.Abs(bladeLocalOffset.y - 0.80f) < 0.05f)
+            {
+                bladeLocalOffset = new Vector3(0f, 0.375f, -0.05f);
+            }
             EnsureBladeVfxObject();
+            LoadSpritesIfNeeded();
+        }
+
+        private void Reset()
+        {
+            LoadSpritesIfNeeded();
+        }
+
+        private void OnValidate()
+        {
+            if (Mathf.Abs(bladeLocalOffset.y - 0.80f) < 0.05f)
+            {
+                bladeLocalOffset = new Vector3(0f, 0.375f, -0.05f);
+            }
+            if (_bladeVfxObj != null)
+            {
+                _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+            }
             LoadSpritesIfNeeded();
         }
 
@@ -85,7 +107,8 @@ namespace RealSteel.Boss.JunkWheeler
             base.OnPreExecute();
             if (OwnerBoss != null)
             {
-                _groundY = OwnerBoss.transform.position.y;
+                _groundY = OwnerBoss.GroundY;
+                OwnerBoss.SnapToGroundY();
                 OwnerBoss.Animation?.ResetScale();
                 OwnerBoss.FacePlayer();
             }
@@ -251,6 +274,9 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     token.ThrowIfCancellationRequested();
 
+                    // 매 프레임 카메라/스테이지 경계를 동적으로 갱신 (카메라 줌아웃/패닝 실시간 반영)
+                    GetArenaBounds(out minX, out maxX, out minY, out maxY);
+
                     float dt = Time.deltaTime;
                     Vector3 currentPos = OwnerBoss.transform.position;
                     Vector3 nextPos = currentPos + (Vector3)(moveDir * (rushSpeed * dt));
@@ -322,15 +348,29 @@ namespace RealSteel.Boss.JunkWheeler
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
 
-                // 4단계: 3차 바운스 후 지면 착지 하강
+                // 4단계: 3차 바운스 후 지면 착지 하강 (바운스 스쿼시 DOKill에 끊기지 않도록 프레임 루프로 확실히 지면까지 강하)
+                _groundY = OwnerBoss != null ? OwnerBoss.GroundY : _groundY;
                 Debug.Log($"<color=cyan>[JunkWheelerRicochet] 3쿠션 완료! 원지면({_groundY:F2})으로 착지 하강</color>");
                 OwnerBoss.Animation?.PlaySlamFall();
 
-                Vector3 beforeLandPos = OwnerBoss.transform.position;
-                Vector3 landTargetPos = new Vector3(OwnerBoss.ClampToCameraX(beforeLandPos.x, 0.7f), _groundY, beforeLandPos.z);
-                
-                _currentTween = OwnerBoss.transform.DOMove(landTargetPos, 0.28f).SetEase(Ease.InQuad);
-                await _currentTween.ToUniTask(cancellationToken: token);
+                Vector3 fallStartPos = OwnerBoss.transform.position;
+                Vector3 landTargetPos = new Vector3(OwnerBoss.ClampToStageWallX(fallStartPos.x, 0.5f), _groundY, fallStartPos.z);
+                float fallDistY = Mathf.Abs(fallStartPos.y - _groundY);
+                if (fallDistY > 0.02f)
+                {
+                    float fallDuration = Mathf.Clamp(fallDistY / Mathf.Max(8f, rushSpeed * 1.15f), 0.14f, 0.32f);
+                    float fallElapsed = 0f;
+                    while (fallElapsed < fallDuration)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        fallElapsed += Time.deltaTime;
+                        float t = Mathf.Clamp01(fallElapsed / fallDuration);
+                        float easedT = t * t; // Ease.InQuad 급강하 가속
+                        OwnerBoss.transform.position = Vector3.Lerp(fallStartPos, landTargetPos, easedT);
+                        await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
+                    }
+                }
+                OwnerBoss.transform.position = landTargetPos;
 
                 // 5단계: 착지 임팩트 펀치 & 톱날 수납 & 롤 감속
                 OwnerBoss.Animation?.PlaySlamLand();
@@ -360,7 +400,11 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     _bladeVfxObj.SetActive(false);
                 }
-                OwnerBoss?.Animation?.ResetScale();
+                if (OwnerBoss != null)
+                {
+                    OwnerBoss.SnapToGroundY();
+                    OwnerBoss.Animation?.ResetScale();
+                }
             }
         }
 
@@ -381,20 +425,29 @@ namespace RealSteel.Boss.JunkWheeler
         private void GetArenaBounds(out float minX, out float maxX, out float minY, out float maxY)
         {
             minY = _groundY + groundPaddingY;
-            maxY = _groundY + 4.5f;
+            maxY = _groundY + 4.2f;
             minX = -7.5f;
             maxX = 7.5f;
 
-            Camera cam = OwnerBoss != null ? OwnerBoss.TargetCamera : Camera.main;
-            if (cam != null && OwnerBoss != null)
+            if (OwnerBoss != null)
             {
-                float zDist = Mathf.Abs(cam.transform.position.z - OwnerBoss.transform.position.z);
-                Vector3 bl = cam.ViewportToWorldPoint(new Vector3(0f, 0f, zDist));
-                Vector3 tr = cam.ViewportToWorldPoint(new Vector3(1f, 1f, zDist));
+                // 좌우 경계: 스테이지 최대 카메라 확장 범위(StageWallBounds)를 사용하여 줌인 상태에서도 끝까지 튕기도록 보장
+                if (!OwnerBoss.TryGetStageWallBoundsX(out minX, out maxX, cameraPaddingX))
+                {
+                    OwnerBoss.TryGetCameraBoundsX(out minX, out maxX, cameraPaddingX);
+                }
 
-                minX = Mathf.Min(bl.x, tr.x) + cameraPaddingX;
-                maxX = Mathf.Max(bl.x, tr.x) - cameraPaddingX;
-                maxY = Mathf.Max(bl.y, tr.y) - cameraPaddingY;
+                Camera cam = OwnerBoss.TargetCamera;
+                if (cam != null)
+                {
+                    // 3D 틸트 카메라(X=34도)에서 ViewportToWorldPoint 왜곡을 방지하기 위해 보스 Z 평면 기준 가시 높이를 삼각함수로 산출
+                    float zDist = Mathf.Abs(cam.transform.position.z - OwnerBoss.transform.position.z);
+                    if (zDist < 0.01f) zDist = 10f;
+                    float halfHeight = cam.orthographic
+                        ? cam.orthographicSize
+                        : Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * zDist;
+                    maxY = Mathf.Max(_groundY + 3.0f, _groundY + (halfHeight * 1.6f) - cameraPaddingY);
+                }
             }
         }
 
@@ -439,10 +492,14 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 _bladeVfxObj.SetActive(false);
             }
-            if (OwnerBoss != null && OwnerBoss.Animation != null)
+            if (OwnerBoss != null)
             {
-                OwnerBoss.Animation.ResetScale();
-                OwnerBoss.Animation.PlayIdle();
+                OwnerBoss.SnapToGroundY();
+                if (OwnerBoss.Animation != null)
+                {
+                    OwnerBoss.Animation.ResetScale();
+                    OwnerBoss.Animation.PlayIdle();
+                }
             }
         }
 
@@ -451,12 +508,18 @@ namespace RealSteel.Boss.JunkWheeler
         // ========================================================================
         private void EnsureBladeVfxObject()
         {
-            if (_bladeVfxObj != null) return;
+                        if (_bladeVfxObj != null)
+            {
+                _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+                return;
+            }
 
             Transform existing = transform.Find("BladeVfxRenderer");
             if (existing != null)
             {
                 _bladeVfxObj = existing.gameObject;
+                _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+                _bladeVfxObj.transform.localScale = Vector3.one;
             }
             else
             {

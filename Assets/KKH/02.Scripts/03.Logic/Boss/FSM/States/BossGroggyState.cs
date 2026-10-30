@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -29,6 +29,7 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
+            boss.SnapToGroundY();
             // 스냅샷 그로기 플래그 및 피해 증폭 배율 활성화
             boss.Snapshot.isGroggy = true;
             boss.Snapshot.currentDamageMultiplier = _damageMultiplier;

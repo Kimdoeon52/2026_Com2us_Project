@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -161,30 +161,39 @@ namespace RealSteel.Boss.Core
             BodyPart targetPart = patternData != null ? patternData.targetPlayerPart : BodyPart.Core;
             int partDmg = patternData != null ? patternData.partDurabilityDamage : 0;
 
-            // 기획서 §12.7 및 §5.3: 부위 타격 스킬인 경우 파츠 내구도와 코어 HP를 동시 타격
-            if (targetPart != BodyPart.Core && partDmg > 0)
-            {
-                Debug.Log($"<color=red>[{GimmickName}] 플레이어 {targetPart} 부위 타격! (파츠 피해: {partDmg}, 코어 피해: {dmg})</color>");
-                if (CombatDataHub.Instance != null)
-                {
-                    CombatDataHub.Instance.ApplyPartHit("Player", targetPart, partDmg, dmg);
-                }
-            }
-            else
-            {
-                Debug.Log($"<color=red>[{GimmickName}] 플레이어 코어 타격! (피해량: {dmg})</color>");
-                if (CombatDataHub.Instance != null)
-                {
-                    CombatDataHub.Instance.ApplyCoreDamage("Player", dmg);
-                }
-            }
+            ApplyPlayerPartHit(dmg, targetPart, partDmg);
         }
 
         protected void ApplyPlayerPartHit(int baseDmg, BodyPart targetPart, int partDmg)
         {
-            if(CombatDataHub.Instance != null)
+            var hub = CombatDataHub.Instance;
+            if (hub == null) return;
+
+            string attackerId = OwnerBoss != null && OwnerBoss.Snapshot != null ? OwnerBoss.Snapshot.bossID : "Boss";
+
+            // 보스전 모드가 활성화되어 있으면 ProcessHit을 경유하여 플레이어 방어력(baseDefense) 감쇄 연산 적용
+            if (hub.CurrentBattleMode == BattleMode.RobotVsBoss && hub.BossSnapshot != null && hub.PlayerSnapshot != null)
             {
-                CombatDataHub.Instance.ApplyPartHit("Player", targetPart, partDmg, baseDmg);
+                var result = hub.ProcessHit(attackerId, "Player", baseDmg, targetPart, partDmg);
+                if (targetPart != BodyPart.Core && partDmg > 0)
+                {
+                    Debug.Log($"<color=red>[{GimmickName}] 플레이어 {targetPart} 부위 타격! (원시 피해: {baseDmg} ➔ 방어력 적용 피해: {result.DamageToHp}, 파츠 피해: {partDmg})</color>");
+                }
+                else
+                {
+                    Debug.Log($"<color=red>[{GimmickName}] 플레이어 코어 타격! (원시 피해: {baseDmg} ➔ 방어력 적용 피해: {result.DamageToHp})</color>");
+                }
+                return;
+            }
+
+            // 폴백: 보스전 모드가 아닌 단독 테스트 환경일 때 직접 차감
+            if (targetPart != BodyPart.Core && partDmg > 0)
+            {
+                hub.ApplyPartHit("Player", targetPart, partDmg, baseDmg);
+            }
+            else
+            {
+                hub.ApplyCoreDamage("Player", baseDmg);
             }
         }
     }

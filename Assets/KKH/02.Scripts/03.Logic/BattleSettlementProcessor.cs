@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -148,7 +148,8 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
         int betGold = 0,
         int regionBasePrice = 1000, //(500G ~ 3000G)
         CoreMasterData coreMaster = null,
-        Dictionary<string, PartMasterData> partMasterLookup = null)
+        Dictionary<string, PartMasterData> partMasterLookup = null,
+        BossMasterData bossMaster = null)
     {
         var result = new BattleSettlementResult
         {
@@ -159,12 +160,14 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
         {
             // ────────────────────────────────────────────────────────────────
             // [승리 시 정산]
-            // 1. 판돈 2배 지급함
-            // 2. 코어 EXP 획득함
+            // 1. 일반전: 판돈 2배 지급 / 보스전: 보스 토벌 고정 보상(rewardGold) 지급
+            // 2. 코어 EXP 획득 (보스전은 rewardCoreExp 우선 적용)
             // 3. 파손된(내구도 0) 부품은 긴급 응급복구 (내구도 1로 복구함)
             // ────────────────────────────────────────────────────────────────
-            result.GoldDelta = betGold * 2;
-            result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
+            result.GoldDelta = (bossMaster != null && bossMaster.rewardGold > 0) ? bossMaster.rewardGold : betGold * 2;
+            result.CoreExpGained = (bossMaster != null && bossMaster.rewardCoreExp > 0)
+                ? bossMaster.rewardCoreExp
+                : CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
             result.CoreUnstable = false;
             if (coreMaster != null)
             {

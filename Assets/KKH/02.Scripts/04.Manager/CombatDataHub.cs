@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -40,7 +40,7 @@ public class CombatDataHub : MonoBehaviour
 
     [Tooltip("[모드 1 전용] 일반 적(NPC A·B·C) 로봇 스냅샷")]
     public CombatantSnapshot EnemySnapshot;
-    public CombatantSnapshot EnemyRobotSnapshot => EnemySnapshot;
+    public CombatantSnapshot EnemyRobotSnapshot => currentBattleMode == BattleMode.RobotVsRobot ? EnemySnapshot : null;
 
     [Tooltip("[모드 2 전용] 보스 스냅샷 (범용 기믹 DTO)")]
     public BossSnapshot BossSnapshot;
@@ -69,6 +69,7 @@ public class CombatDataHub : MonoBehaviour
 
     // [보스전 전용 이벤트]
     public event Action<int, int, int> OnBossHpChanged; // curHp, maxHp, phase
+    public event Action<int> OnBossDamaged;             // finalDamage (BossControllerBase FSM/기믹/페이즈 반응용)
     public event Action<string, bool> OnBossGimmickTriggered; // gimmickId, isGroggy
     public event Action<string> OnBossGimmickBroken;          // gimmickId
     public event Action<int, int, int> OnCoreLevelUp;         // newLv, newHp, newDef
@@ -144,10 +145,30 @@ public class CombatDataHub : MonoBehaviour
         currentBattleMode = BattleMode.RobotVsBoss;
         PlayerSnapshot = player;
         BossSnapshot = boss;
-        EnemySnapshot = null;
+        SyncBossToEnemyProxy();
 
         Debug.Log($"[CombatDataHub] 1:1 보스 토벌전 초기화 완료 - Player({player?.fighterID}) vs Boss({boss?.bossName})");
         BroadcastFullState();
+    }
+
+    /// <summary>
+    /// FighterHpBar 등 'Enemy' 식별자로 GetSnapshot('Enemy')를 조회하는 외부 UI와의 100% 호환을 위해
+    /// 보스전에서도 EnemySnapshot 프록시를 유지하고 보스 체력과 실시간 동기화함.
+    /// </summary>
+    public void SyncBossToEnemyProxy()
+    {
+        if (BossSnapshot == null) return;
+        if (EnemySnapshot == null)
+        {
+            EnemySnapshot = new CombatantSnapshot
+            {
+                fighterID = "Enemy",
+                isPlayer = false
+            };
+        }
+        EnemySnapshot.maxHp = BossSnapshot.maxHp;
+        EnemySnapshot.currentHp = BossSnapshot.currentHp;
+        EnemySnapshot.baseDefense = BossSnapshot.baseDefense;
     }
 
     /// <summary>기존 레거시 등록 함수 호환</summary>
@@ -205,9 +226,12 @@ public class CombatDataHub : MonoBehaviour
                 result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD);
                 result.KnockbackDistance = attackAction != null ? attackAction.KnockbackDistance : 0f;
 
+                SyncBossToEnemyProxy();
                 OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
                 OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+                OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
                 OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
+                if (result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
             }
             else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
             {
@@ -218,6 +242,11 @@ public class CombatDataHub : MonoBehaviour
 
                 OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
                 OnHpChanged?.Invoke(PlayerSnapshot.fighterID, PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+                if (hitPart != BodyPart.Core && PlayerSnapshot.partStates.TryGetValue(hitPart, out var pState))
+                {
+                    OnPlayerPartDurabilityChanged?.Invoke(hitPart, pState.currentDurability, pState.maxDurability);
+                    OnPartDurabilityChanged?.Invoke(PlayerSnapshot.fighterID, hitPart, pState.currentDurability, pState.maxDurability);
+                }
             }
         }
 
@@ -262,13 +291,23 @@ public class CombatDataHub : MonoBehaviour
             if (isAttackerPlayer && PlayerSnapshot != null && BossSnapshot != null)
             {
                 result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, rawDamage, isBasicAttackD, tag, targetGimmickId);
+                SyncBossToEnemyProxy();
                 OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
                 OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+                OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
+                OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
+                if (result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
             }
             else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
             {
                 result = CombatCalculator.EvaluateBossAttack(BossSnapshot, PlayerSnapshot, rawDamage, targetPart, partDamage, false);
                 OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+                OnHpChanged?.Invoke(PlayerSnapshot.fighterID, PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
+                if (targetPart != BodyPart.Core && partDamage > 0 && PlayerSnapshot.partStates.TryGetValue(targetPart, out var pState))
+                {
+                    OnPlayerPartDurabilityChanged?.Invoke(targetPart, pState.currentDurability, pState.maxDurability);
+                    OnPartDurabilityChanged?.Invoke(PlayerSnapshot.fighterID, targetPart, pState.currentDurability, pState.maxDurability);
+                }
             }
         }
 
@@ -433,19 +472,27 @@ public class CombatDataHub : MonoBehaviour
 
     public int GetCurrentHp(string fighterId)
     {
+        if (currentBattleMode == BattleMode.RobotVsBoss && BossSnapshot != null &&
+            (fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0 ||
+             fighterId.IndexOf("Enemy", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+            return BossSnapshot.currentHp;
+        }
         var s = GetSnapshot(fighterId);
         if (s != null) return s.currentHp;
-        if (BossSnapshot != null && fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
-            return BossSnapshot.currentHp;
         return 0;
     }
 
     public int GetMaxHp(string fighterId)
     {
+        if (currentBattleMode == BattleMode.RobotVsBoss && BossSnapshot != null &&
+            (fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0 ||
+             fighterId.IndexOf("Enemy", StringComparison.OrdinalIgnoreCase) >= 0))
+        {
+            return BossSnapshot.maxHp;
+        }
         var s = GetSnapshot(fighterId);
         if (s != null) return s.maxHp;
-        if (BossSnapshot != null && fighterId.IndexOf("Boss", StringComparison.OrdinalIgnoreCase) >= 0)
-            return BossSnapshot.maxHp;
         return 1000;
     }
 

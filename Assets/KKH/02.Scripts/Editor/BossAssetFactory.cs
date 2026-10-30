@@ -1,4 +1,4 @@
-#if UNITY_EDITOR
+﻿#if UNITY_EDITOR
 using UnityEditor;
 using UnityEngine;
 using System.IO;
@@ -60,6 +60,19 @@ public static class BossAssetFactory
             partDamage: 30
         );
 
+        // 3-2. 패턴 4: 회전 톱날 당구 돌진
+        var pattern4 = CreateOrLoadPattern(
+            "Pattern_04_BladeRicochet",
+            "PATTERN_BLADE_RICOCHET",
+            "회전 톱날 당구 돌진",
+            "1.8초 전조(톱날 전개 및 초고속 회전) 후 사선으로 발사되어 전장 사방 경계(3쿠션)를 튀기며 돌진한 후 착지하는 패턴.",
+            tellDuration: 1.8f,
+            postDelay: 1.2f,
+            hasDpsCheck: false,
+            targetPart: BodyPart.Core,
+            partDamage: 1
+        );
+
         // 4. 보스 마스터 데이터 생성 및 패턴 연결
         string masterPath = $"{SO_DIR}/BossMasterData_JunkWheeler.asset";
         var masterData = AssetDatabase.LoadAssetAtPath<BossMasterData>(masterPath);
@@ -104,12 +117,75 @@ public static class BossAssetFactory
         masterData.patterns.Add(pattern1);
         masterData.patterns.Add(pattern2);
         masterData.patterns.Add(pattern3);
+        masterData.patterns.Add(pattern4);
+
+        // 페이즈 데이터 연결 (Phase 1: 100%, Phase 2: 50% 체력 진입 시 엔진 과열 불꽃 VFX 가동)
+        masterData.phases.Clear();
+        masterData.phases.Add(new BossPhaseData
+        {
+            phaseIndex = 1,
+            hpThresholdRatio = 1.0f,
+            availableSkillIDs = new System.Collections.Generic.List<string>
+            {
+                "PATTERN_JUMP_BARRAGE",
+                "PATTERN_CHARGE",
+                "PATTERN_SLAM",
+                "PATTERN_BLADE_RICOCHET"
+            }
+        });
+        masterData.phases.Add(new BossPhaseData
+        {
+            phaseIndex = 2,
+            hpThresholdRatio = 0.5f,
+            availableSkillIDs = new System.Collections.Generic.List<string>
+            {
+                "PATTERN_JUMP_BARRAGE",
+                "PATTERN_CHARGE",
+                "PATTERN_SLAM",
+                "PATTERN_BLADE_RICOCHET"
+            }
+        });
 
         EditorUtility.SetDirty(masterData);
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
 
-        Debug.Log("<color=green>[BossAssetFactory] 지역 1 보스(정크 휠러) 마스터 데이터 및 패턴 SO 에셋 3종 생성 완료!</color>");
+        Debug.Log("<color=green>[BossAssetFactory] 지역 1 보스(정크 휠러) 마스터 데이터 및 패턴 SO 에셋 4종 생성 완료!</color>");
+    }
+
+    [MenuItem("RealSteel/Boss/Auto-Setup Scene & Prefab Boss References", priority = 11)]
+    public static void AutoSetupBossSceneAndPrefabReferences()
+    {
+        GenerateRegion1BossAssets();
+
+        // 1. 씬 내 활성화된 JunkWheelerBossController 모두 자동 설정
+        var sceneBosses = Object.FindObjectsByType<RealSteel.Boss.JunkWheeler.JunkWheelerBossController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        foreach (var boss in sceneBosses)
+        {
+            boss.EditorEnsureAllComponentsAndReferences();
+            EditorUtility.SetDirty(boss);
+        }
+
+        // 2. Boss1_JunkWheeler.prefab 에셋 직접 로드 및 컴포넌트/참조 자동 연결
+        string prefabPath = "Assets/KKH/04.Prefab/BOSS/First_Boss/Boss1_JunkWheeler.prefab";
+        if (File.Exists(prefabPath))
+        {
+            GameObject prefabRoot = PrefabUtility.LoadPrefabContents(prefabPath);
+            if (prefabRoot != null)
+            {
+                var bossCtrl = prefabRoot.GetComponent<RealSteel.Boss.JunkWheeler.JunkWheelerBossController>();
+                if (bossCtrl != null)
+                {
+                    bossCtrl.EditorEnsureAllComponentsAndReferences();
+                }
+                PrefabUtility.SaveAsPrefabAsset(prefabRoot, prefabPath);
+                PrefabUtility.UnloadPrefabContents(prefabRoot);
+            }
+        }
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+        Debug.Log("<color=cyan>[BossAssetFactory] 보스 프리팹 및 씬 내 인스펙터 참조 원클릭 자동 배선 완료!</color>");
     }
 
     private static BossPatternData CreateOrLoadPattern(

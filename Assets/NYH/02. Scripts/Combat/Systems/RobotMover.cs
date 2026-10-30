@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 /// <summary>
 /// 로봇의 몸 이동을 맡는 시스템 — 이동 입력(IInputSource)·점프·도약·띄우기를 실제 위치로 옮기고, 화면 끝 벽과
@@ -265,12 +265,12 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     // 건드리는 중앙 조정자를 따로 안 둬도 되는 단순한 방식
     private void ResolvePushOverlap()
     {
-        if (opponent == null || actionState == null) return;
+        if (opponent == null || !opponent.gameObject.activeInHierarchy || actionState == null) return;
 
         // 상대의 ActionExecutor/RobotMover가 있어야 상대의 박스 데이터와 방향을 읽을 수 있다.
         // 없으면(아직 배선 전 등) 그냥 아무 보정도 안 하고 넘어간다
         var opponentExecutor = opponent.GetComponent<ActionExecutor>();
-        if (opponentExecutor == null) return;
+        if (opponentExecutor == null || opponentExecutor.State == null) return;
         var opponentMover = opponent.GetComponent<RobotMover>();
         bool opponentFacingRight = opponentMover == null || opponentMover.FacingRight;
 
@@ -301,6 +301,7 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     // (§4 "Push는 액션당 1개"라 보통 하나만 있지만, 혹시 여러 개 등록돼 있어도 여기선 첫 번째 것만 쓴다)
     private static Rect? FindPushWorldRect(ActionState state, Vector3 position, bool facingRight)
     {
+        if (state == null) return null;
         foreach (var box in state.GetActiveBoxes())
         {
             if (box.type == BoxType.Push)

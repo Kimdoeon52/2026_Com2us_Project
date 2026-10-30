@@ -30,8 +30,8 @@ MonoBehaviour:
     gimmickName: "\uD3D0\uD0C0\uC774\uC5B4 \uBD80\uC704"
     isPhysicalBossPart: 1
     maxDurability: 2
-    requiredGimmickTag: 0
-    targetSkillIDToSeal: PATTERN_JUMP_BARRAGE
+    requiredGimmickTag: 2
+    targetSkillIDToSeal: 
     groggyDuration: 4
     damageAmplification: 1.5
   patterns:
@@ -39,6 +39,20 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f79329232a4e4454cae6c6f56fd4533e, type: 2}
   - {fileID: 11400000, guid: a3c486bf9ea12e646abf92087d5e3a30, type: 2}
   - {fileID: 11400000, guid: 8f1e29a43a0d11ef88b100155d000401, type: 2}
-  phases: []
+  phases:
+  - phaseIndex: 1
+    hpThresholdRatio: 1
+    availableSkillIDs:
+    - PATTERN_JUMP_BARRAGE
+    - PATTERN_CHARGE
+    - PATTERN_SLAM
+    - PATTERN_BLADE_RICOCHET
+  - phaseIndex: 2
+    hpThresholdRatio: 0.5
+    availableSkillIDs:
+    - PATTERN_JUMP_BARRAGE
+    - PATTERN_CHARGE
+    - PATTERN_SLAM
+    - PATTERN_BLADE_RICOCHET
   rewardGold: 1500
   rewardCoreExp: 500

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
@@ -29,6 +29,35 @@ namespace RealSteel.Boss.JunkWheeler
         public JunkWheelerBarragePatternGimmick BarragePatternGimmick => barragePatternGimmick;
         public JunkWheelerSlamPatternGimmick SlamPatternGimmick => slamPatternGimmick;
         public JunkWheelerRicochetBladePatternGimmick RicochetBladePatternGimmick => ricochetBladePatternGimmick;
+
+        public override void AutoBindInspectorReferences()
+        {
+            base.AutoBindInspectorReferences();
+            if (tirePartGimmick == null) tirePartGimmick = GetComponentInChildren<JunkWheelerTirePartGimmick>(true);
+            if (chargePatternGimmick == null) chargePatternGimmick = GetComponentInChildren<JunkWheelerChargePatternGimmick>(true);
+            if (barragePatternGimmick == null) barragePatternGimmick = GetComponentInChildren<JunkWheelerBarragePatternGimmick>(true);
+            if (slamPatternGimmick == null) slamPatternGimmick = GetComponentInChildren<JunkWheelerSlamPatternGimmick>(true);
+            if (ricochetBladePatternGimmick == null) ricochetBladePatternGimmick = GetComponentInChildren<JunkWheelerRicochetBladePatternGimmick>(true);
+
+            BindPatternDataIfAvailable();
+        }
+
+        [ContextMenu("[자동 설정] 인스펙터 컴포넌트 및 SO 일괄 연결")]
+        public void EditorEnsureAllComponentsAndReferences()
+        {
+            SetupAnimationController();
+            animationController?.AutoBindReferences();
+            tirePartGimmick = GetOrAddComponent<JunkWheelerTirePartGimmick>();
+            chargePatternGimmick = GetOrAddComponent<JunkWheelerChargePatternGimmick>();
+            barragePatternGimmick = GetOrAddComponent<JunkWheelerBarragePatternGimmick>();
+            slamPatternGimmick = GetOrAddComponent<JunkWheelerSlamPatternGimmick>();
+            ricochetBladePatternGimmick = GetOrAddComponent<JunkWheelerRicochetBladePatternGimmick>();
+            AutoBindInspectorReferences();
+            AutoWireSceneSystems();
+#if UNITY_EDITOR
+            UnityEditor.EditorUtility.SetDirty(gameObject);
+#endif
+        }
 
         protected override void RegisterGimmicks()
         {

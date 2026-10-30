@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -123,8 +123,17 @@ namespace RealSteel.Boss.JunkWheeler
                     }
                     else
                     {
-                        Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 플레이어가 상자 폭발에 피격당함! (피해량: {playerDamage})</color>");
-                        CombatDataHub.Instance?.ApplyCoreDamage("Player", playerDamage);
+                        var hub = CombatDataHub.Instance;
+                        if (hub != null && hub.CurrentBattleMode == BattleMode.RobotVsBoss && hub.BossSnapshot != null && hub.PlayerSnapshot != null)
+                        {
+                            var res = hub.ProcessHit("ExplosiveBox", "Player", playerDamage);
+                            Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 플레이어가 상자 폭발에 피격당함! (원시 피해: {playerDamage} ➔ 방어력 적용 피해: {res.DamageToHp})</color>");
+                        }
+                        else
+                        {
+                            Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 플레이어가 상자 폭발에 피격당함! (피해량: {playerDamage})</color>");
+                            hub?.ApplyCoreDamage("Player", playerDamage);
+                        }
                     }
                 }
             }

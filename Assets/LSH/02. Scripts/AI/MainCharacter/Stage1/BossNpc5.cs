@@ -26,6 +26,6 @@ public class BossNpc5 : BossAiBase
     }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
-        return "너무 비싸다요... 네고가능한가요";
+        return "너무 비싸다요... 네고가능한가요...?";
     }
 }

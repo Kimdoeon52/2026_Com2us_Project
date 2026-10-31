@@ -18,6 +18,24 @@ using UnityEngine;
 /// </summary>
 public class HitDetection : MonoBehaviour
 {
+    public static HitDetection Instance { get; private set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogWarning($"[HitDetection] Duplicate HitDetection component detected on {gameObject.name}. Disabling and destroying.");
+            enabled = false;
+            DestroyImmediate(this);
+            return;
+        }
+        Instance = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) { Instance = null; lastPlayerHp = -1; }
+    }
     // 2026-10-28 추가: 히트스톱 공식. 비우면 히트스톱 없음 (HitStopSystem)
     [Tooltip("히트스톱 공식 에셋(NYH/Combat/Hit Stop Settings). 비우면 맞아도 안 멈춘다")]
     [SerializeField] private HitStopSettings hitStopSettings;
@@ -37,7 +55,7 @@ public class HitDetection : MonoBehaviour
 
     // 보스 공격(허브가 플레이어 HP를 직접 깎음)을 알아채려고 구독 중인 허브와, 직전 플레이어 HP
     private CombatDataHub subscribedHub;
-    private int lastPlayerHp = -1;
+    private static int lastPlayerHp = -1;
 
     // 다중 박스 판정에서 방어자 Hurt박스를 한 번만 월드로 바꿔 담는 임시 버퍼 (틱마다 새로 할당하지 않으려고 재사용) 최.추가
     private static readonly List<WorldBox> hurtBuffer = new List<WorldBox>(8);
@@ -45,6 +63,11 @@ public class HitDetection : MonoBehaviour
     // 호출: Unity(이 컴포넌트가 활성화될 때). 씬에서 로봇 2개를 찾아 캐싱하고 CombatClock에 판정 함수를 등록한다
     private void OnEnable()
     {
+        if (Instance != null && Instance != this)
+        {
+            enabled = false;
+            return;
+        }
         fighters.Clear();
         fighters.AddRange(FindObjectsByType<ActionExecutor>(FindObjectsSortMode.None));
         fighterA = fighterB = null;
@@ -431,7 +454,7 @@ public class HitDetection : MonoBehaviour
         if (hub == subscribedHub) return;
         if (subscribedHub != null) subscribedHub.OnPlayerHpChanged -= OnPlayerHpChanged;
         subscribedHub = hub;
-        lastPlayerHp = -1;
+        lastPlayerHp = (hub != null && hub.PlayerSnapshot != null) ? hub.PlayerSnapshot.currentHp : -1;
         if (hub != null) hub.OnPlayerHpChanged += OnPlayerHpChanged;
     }
 
@@ -440,6 +463,9 @@ public class HitDetection : MonoBehaviour
     // KKH 코드를 고치지 않고 피격 연출을 붙이려고 이벤트로 받는다 — 단, 때린 위치를 몰라서 넉백은 없다
     private void OnPlayerHpChanged(int currentHp, int maxHp)
     {
+        if (Instance != null && Instance != this) return;
+        if (!isActiveAndEnabled) return;
+
         int previous = lastPlayerHp;
         lastPlayerHp = currentHp;
         if (previous < 0 || currentHp >= previous || !IsBossBattle) return;

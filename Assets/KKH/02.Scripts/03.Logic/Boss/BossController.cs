@@ -13,7 +13,10 @@ public class BossController : BossControllerBase
         var gimmicks = GetComponentsInChildren<BossGimmickBase>(true);
         foreach (var g in gimmicks)
         {
-            RegisterGimmick(g);
+            if (g != null && !gimmickRegistry.ContainsKey(g.GimmickID))
+            {
+                RegisterGimmick(g);
+            }
         }
     }
 

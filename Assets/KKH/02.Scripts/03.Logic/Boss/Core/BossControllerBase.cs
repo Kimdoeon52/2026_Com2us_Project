@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
@@ -92,6 +92,11 @@ namespace RealSteel.Boss.Core
         protected int _patternIndex = 0;
         private CombatDataHub _subscribedHub;
         private bool _isDefeatedHandled = false;
+
+        /// <summary>
+        /// StopBossCombat()으로 전투가 의도적으로 정지되었는지 여부 (FSM 자동 복구 로직이 루프를 되살리지 않도록 구분)
+        /// </summary>
+        public bool IsCombatStopped { get; private set; }
 
         // 대외 브로드캐스팅 이벤트
         public event Action<string> OnStateChanged;
@@ -352,6 +357,7 @@ namespace RealSteel.Boss.Core
         public void InitializeBoss()
         {
             _isDefeatedHandled = false;
+            IsCombatStopped = false;
             if (!_hasInitialGroundY)
             {
                 _initialGroundY = transform.position.y;
@@ -537,6 +543,7 @@ namespace RealSteel.Boss.Core
         /// </summary>
         public virtual void StopBossCombat()
         {
+            IsCombatStopped = true;
             CancelCurrentStateToken();
             foreach (var pattern in activePatternPool)
             {
@@ -566,7 +573,10 @@ namespace RealSteel.Boss.Core
 
             if (gimmick is BossPatternGimmickBase patternGimmick)
             {
-                activePatternPool.Add(patternGimmick);
+                if (!activePatternPool.Contains(patternGimmick))
+                {
+                    activePatternPool.Add(patternGimmick);
+                }
             }
         }
 

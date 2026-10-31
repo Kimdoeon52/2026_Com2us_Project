@@ -69,12 +69,16 @@ namespace RealSteel.Boss.JunkWheeler
         private Vector3 _baseWorldPosBeforeTell;
         private Color _originalColor = Color.white;
         private bool _isActionRunning = false;
+        private bool _isBladeSpinning = false;
+        private float _currentSpinInterval = 0.045f;
+        private float _spinFrameTimer = 0f;
+        private int _spinFrameIndex = 0;
 
         private static readonly int AnimHashDeploy = Animator.StringToHash("Boss_Blades_Deploy");
         private static readonly int AnimHashSpin = Animator.StringToHash("Boss_Blades_Spin");
         private static readonly int AnimHashRetract = Animator.StringToHash("Boss_Blades_Retract");
 
-                private void Awake()
+        private void Awake()
         {
             if (Mathf.Abs(bladeLocalOffset.y - 0.80f) < 0.05f)
             {
@@ -82,6 +86,62 @@ namespace RealSteel.Boss.JunkWheeler
             }
             EnsureBladeVfxObject();
             LoadSpritesIfNeeded();
+        }
+
+        private void Update()
+        {
+            if (!_isBladeSpinning) return;
+
+            EnsureBladeVfxObject();
+            if (_bladeVfxObj == null || _bladeRenderer == null) return;
+
+            if (!_bladeVfxObj.activeSelf)
+            {
+                _bladeVfxObj.SetActive(true);
+            }
+
+            float dt = Time.deltaTime;
+
+            // 1) 물리적 Z축 연속 고속 회전 (전조 진동/점멸 중에도 매 프레임 끊김 없이 회전 보장)
+            float rotSpeed = _currentSpinInterval <= 0.045f ? -1080f : -540f;
+            _bladeVfxObj.transform.Rotate(0f, 0f, rotSpeed * dt);
+
+            // 2) 스핀 스프라이트 프레임 순환 (비어있거나 null이면 deploySprites 마지막 프레임으로 안전 폴백)
+            _spinFrameTimer += dt;
+            float interval = Mathf.Max(0.02f, _currentSpinInterval);
+            if (_spinFrameTimer >= interval)
+            {
+                _spinFrameTimer -= interval;
+                Sprite nextSprite = GetValidSpinSprite(_spinFrameIndex);
+                if (nextSprite != null)
+                {
+                    _bladeRenderer.sprite = nextSprite;
+                }
+                _spinFrameIndex++;
+            }
+            else if (_bladeRenderer.sprite == null)
+            {
+                Sprite fallback = GetValidSpinSprite(_spinFrameIndex);
+                if (fallback != null) _bladeRenderer.sprite = fallback;
+            }
+        }
+
+        private Sprite GetValidSpinSprite(int index)
+        {
+            LoadSpritesIfNeeded();
+            if (spinSprites != null && spinSprites.Length > 0)
+            {
+                Sprite s = spinSprites[Mathf.Abs(index) % spinSprites.Length];
+                if (s != null) return s;
+            }
+            if (deploySprites != null && deploySprites.Length > 0)
+            {
+                for (int i = deploySprites.Length - 1; i >= 0; i--)
+                {
+                    if (deploySprites[i] != null) return deploySprites[i];
+                }
+            }
+            return null;
         }
 
         private void Reset()
@@ -164,8 +224,8 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeVfxObj.SetActive(true);
             }
 
-            // 1단계: 톱날 전개 애니메이션 가동
-            PlayBladeDeployAsync(ct).Forget();
+            // Deploy on Tell start -> start Spin loop immediately after Deploy
+            PlayBladeDeployAndSpinAsync(ct).Forget();
 
             float elapsed = 0f;
             float flashTimer = 0f;
@@ -180,7 +240,7 @@ namespace RealSteel.Boss.JunkWheeler
                     float progress = Mathf.Clamp01(elapsed / Mathf.Max(0.001f, duration));
                     float nonLinearT = Mathf.Pow(progress, shakeCurveExponent);
 
-                    // 1) 지수 가속 진동 (등속 ➔ 로그/지수 가속)
+                    // 1) Shake position
                     float currentShakeStrength = Mathf.Lerp(minShakeStrength, maxShakeStrength, nonLinearT);
                     float currentVibrato = Mathf.Lerp(minShakeVibrato, maxShakeVibrato, nonLinearT);
                     float shakePhase = elapsed * currentVibrato * Mathf.PI * 2f;
@@ -192,7 +252,7 @@ namespace RealSteel.Boss.JunkWheeler
                         OwnerBoss.transform.position = _baseWorldPosBeforeTell + new Vector3(offsetX, offsetY, 0f);
                     }
 
-                    // 2) 비선형 점멸 주기
+                    // 2) Flash intervals
                     float currentFlashInterval = Mathf.Lerp(flashStartInterval, flashEndInterval, nonLinearT);
                     flashTimer += Time.deltaTime;
                     if (flashTimer >= currentFlashInterval)
@@ -216,9 +276,6 @@ namespace RealSteel.Boss.JunkWheeler
                     elapsed += Time.deltaTime;
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: ct);
                 }
-
-                // 전조 완료: 톱날 초고속 Spin 회전 상태 돌입
-                PlayBladeSpin();
             }
             finally
             {
@@ -241,7 +298,7 @@ namespace RealSteel.Boss.JunkWheeler
                 // 1단계: 발사 방향 설정 (플레이어를 향한 사선 상향 또는 하향)
                 EnsureBladeVfxObject();
                 if (_bladeVfxObj != null) _bladeVfxObj.SetActive(true);
-                PlayBladeSpin();
+                StartSpinLoop();
 
                 Transform player = OwnerBoss.PlayerTransform;
                 float dirX = 1f;
@@ -374,6 +431,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 // 5단계: 착지 임팩트 펀치 & 톱날 수납 & 롤 감속
                 OwnerBoss.Animation?.PlaySlamLand();
+                _currentSpinInterval = 0.065f; // 착지 충격 시 톱날 회전 감속
                 if (OwnerBoss.Animation != null)
                 {
                     await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
@@ -396,9 +454,15 @@ namespace RealSteel.Boss.JunkWheeler
             finally
             {
                 _isActionRunning = false;
+                _isBladeSpinning = false;
                 if (_bladeVfxObj != null)
                 {
+                    _bladeVfxObj.transform.DOKill();
                     _bladeVfxObj.SetActive(false);
+                    if (_bladeRenderer != null) _bladeRenderer.sprite = null;
+                    _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+                    _bladeVfxObj.transform.localScale = Vector3.one;
+                    _bladeVfxObj.transform.localRotation = Quaternion.identity;
                 }
                 if (OwnerBoss != null)
                 {
@@ -483,6 +547,7 @@ namespace RealSteel.Boss.JunkWheeler
         {
             StopTellVisuals();
             _isActionRunning = false;
+            _isBladeSpinning = false;
             if (_currentTween != null && _currentTween.IsActive())
             {
                 _currentTween.Kill();
@@ -490,7 +555,12 @@ namespace RealSteel.Boss.JunkWheeler
             }
             if (_bladeVfxObj != null)
             {
+                _bladeVfxObj.transform.DOKill();
                 _bladeVfxObj.SetActive(false);
+                if (_bladeRenderer != null) _bladeRenderer.sprite = null;
+                _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+                _bladeVfxObj.transform.localScale = Vector3.one;
+                _bladeVfxObj.transform.localRotation = Quaternion.identity;
             }
             if (OwnerBoss != null)
             {
@@ -508,7 +578,7 @@ namespace RealSteel.Boss.JunkWheeler
         // ========================================================================
         private void EnsureBladeVfxObject()
         {
-                        if (_bladeVfxObj != null)
+            if (_bladeVfxObj != null)
             {
                 _bladeVfxObj.transform.localPosition = bladeLocalOffset;
                 return;
@@ -520,6 +590,7 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeVfxObj = existing.gameObject;
                 _bladeVfxObj.transform.localPosition = bladeLocalOffset;
                 _bladeVfxObj.transform.localScale = Vector3.one;
+                _bladeVfxObj.transform.localRotation = Quaternion.identity;
             }
             else
             {
@@ -527,6 +598,7 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeVfxObj.transform.SetParent(transform, false);
                 _bladeVfxObj.transform.localPosition = bladeLocalOffset;
                 _bladeVfxObj.transform.localScale = Vector3.one;
+                _bladeVfxObj.transform.localRotation = Quaternion.identity;
             }
 
             _bladeRenderer = _bladeVfxObj.GetComponent<SpriteRenderer>();
@@ -550,18 +622,28 @@ namespace RealSteel.Boss.JunkWheeler
             _bladeVfxObj.SetActive(false);
         }
 
+        private static bool NeedsSpriteReload(Sprite[] arr)
+        {
+            if (arr == null || arr.Length == 0) return true;
+            for (int i = 0; i < arr.Length; i++)
+            {
+                if (arr[i] == null) return true;
+            }
+            return false;
+        }
+
         private void LoadSpritesIfNeeded()
         {
 #if UNITY_EDITOR
-            if (deploySprites == null || deploySprites.Length == 0)
+            if (NeedsSpriteReload(deploySprites))
             {
                 deploySprites = LoadSpritesFromAsset("Assets/Sprites/1Boss_Robot/Blade_Vfx/1Boss_robot_blades_deploy.png");
             }
-            if (spinSprites == null || spinSprites.Length == 0)
+            if (NeedsSpriteReload(spinSprites))
             {
                 spinSprites = LoadSpritesFromAsset("Assets/Sprites/1Boss_Robot/Blade_Vfx/1Boss_robot_blades_spin.png");
             }
-            if (retractSprites == null || retractSprites.Length == 0)
+            if (NeedsSpriteReload(retractSprites))
             {
                 retractSprites = LoadSpritesFromAsset("Assets/Sprites/1Boss_Robot/Blade_Vfx/1Boss_robot_blades_retract.png");
             }
@@ -577,83 +659,131 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 if (a is Sprite s) list.Add(s);
             }
+            list.Sort((a, b) => string.CompareOrdinal(a.name, b.name));
             return list.ToArray();
         }
 #endif
 
-        private async UniTask PlayBladeDeployAsync(CancellationToken token)
+        private async UniTask PlayBladeDeployAndSpinAsync(CancellationToken token)
         {
-            if (_bladeRenderer == null) return;
+            if (_bladeRenderer == null || _bladeVfxObj == null) return;
+            LoadSpritesIfNeeded();
 
-            if (_bladeAnimator != null && _bladeAnimator.HasState(0, AnimHashDeploy))
-            {
-                _bladeAnimator.Play(AnimHashDeploy);
-                await UniTask.Delay(TimeSpan.FromSeconds(0.25f), cancellationToken: token);
-                return;
-            }
+            // Step 1: Slide out from wheel + Scale 0 -> 1
+            _isBladeSpinning = false;
+            _bladeVfxObj.transform.DOKill();
+            _bladeVfxObj.transform.localRotation = Quaternion.identity;
+            Vector3 hiddenLocalPos = bladeLocalOffset - new Vector3(0f, 0.18f, 0f);
+            _bladeVfxObj.transform.localPosition = hiddenLocalPos;
+            _bladeVfxObj.transform.localScale = Vector3.zero;
 
-            if (deploySprites != null && deploySprites.Length > 0)
+            float deployDuration = 0.24f;
+            _bladeVfxObj.transform.DOLocalMove(bladeLocalOffset, deployDuration).SetEase(Ease.OutCubic);
+            _bladeVfxObj.transform.DOScale(Vector3.one, deployDuration).SetEase(Ease.OutBack);
+
+            // Step 2: Deploy sprite sequence (4 frames)
+            float elapsed = 0f;
+            int frameCount = (deploySprites != null && deploySprites.Length > 0) ? deploySprites.Length : 1;
+            float frameDelay = deployDuration / frameCount;
+
+            while (elapsed < deployDuration)
             {
-                float frameDelay = 0.25f / deploySprites.Length;
-                for (int i = 0; i < deploySprites.Length; i++)
+                if (token.IsCancellationRequested || _bladeVfxObj == null) return;
+
+                if (deploySprites != null && deploySprites.Length > 0)
                 {
-                    token.ThrowIfCancellationRequested();
-                    _bladeRenderer.sprite = deploySprites[i];
-                    await UniTask.Delay(TimeSpan.FromSeconds(frameDelay), cancellationToken: token);
+                    int idx = Mathf.Clamp(Mathf.FloorToInt(elapsed / frameDelay), 0, deploySprites.Length - 1);
+                    if (deploySprites[idx] != null)
+                    {
+                        _bladeRenderer.sprite = deploySprites[idx];
+                    }
                 }
+
+                // 전개하는 동안에도 서서히 회전 가속 시작 (-360도 -> -1080도)
+                float t = Mathf.Clamp01(elapsed / deployDuration);
+                float deployRotSpeed = Mathf.Lerp(-360f, -1080f, t);
+                _bladeVfxObj.transform.Rotate(0f, 0f, deployRotSpeed * Time.deltaTime);
+
+                elapsed += Time.deltaTime;
+                await UniTask.Yield(PlayerLoopTiming.Update);
             }
+
+            if (token.IsCancellationRequested || _bladeVfxObj == null) return;
+
+            _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+            _bladeVfxObj.transform.localScale = Vector3.one;
+
+            // Step 3: Deploy finished -> Start spin loop immediately!
+            _currentSpinInterval = 0.032f;
+            StartSpinLoop();
         }
 
-        private void PlayBladeSpin()
+        private void StartSpinLoop()
         {
-            if (_bladeRenderer == null) return;
+            EnsureBladeVfxObject();
+            if (_bladeRenderer == null || _bladeVfxObj == null) return;
+            LoadSpritesIfNeeded();
 
-            if (_bladeAnimator != null && _bladeAnimator.HasState(0, AnimHashSpin))
+            if (!_bladeVfxObj.activeSelf)
             {
-                _bladeAnimator.Play(AnimHashSpin);
-                return;
+                _bladeVfxObj.SetActive(true);
             }
 
-            // 폴백: 스프라이트 스핀 루프 가동
-            RunSpinLoopAsync().Forget();
-        }
-
-        private async UniTaskVoid RunSpinLoopAsync()
-        {
-            if (spinSprites == null || spinSprites.Length == 0) return;
-            int idx = 0;
-            while (_isActionRunning && _bladeVfxObj != null && _bladeVfxObj.activeInHierarchy)
+            Sprite initialSprite = GetValidSpinSprite(_spinFrameIndex);
+            if (initialSprite != null)
             {
-                if (_bladeRenderer != null)
-                {
-                    _bladeRenderer.sprite = spinSprites[idx % spinSprites.Length];
-                }
-                idx++;
-                await UniTask.Delay(TimeSpan.FromSeconds(0.045f));
+                _bladeRenderer.sprite = initialSprite;
             }
+
+            _isBladeSpinning = true;
         }
 
         private async UniTask PlayBladeRetractAsync(CancellationToken token)
         {
-            if (_bladeRenderer == null) return;
+            if (_bladeRenderer == null || _bladeVfxObj == null) return;
+            LoadSpritesIfNeeded();
 
+            // 스핀 루프 정지
+            _isBladeSpinning = false;
+
+            // 1단계: 휠 안쪽으로 슬라이드 인 + 스케일 1 -> 0 (InBack 쏙 빨려 들어감 연출)
+            _bladeVfxObj.transform.DOKill();
+            _bladeVfxObj.transform.localRotation = Quaternion.identity;
+            float retractDuration = 0.22f;
+            Vector3 hiddenLocalPos = bladeLocalOffset - new Vector3(0f, 0.18f, 0f);
+            _bladeVfxObj.transform.DOLocalMove(hiddenLocalPos, retractDuration).SetEase(Ease.InQuad);
+            _bladeVfxObj.transform.DOScale(Vector3.zero, retractDuration).SetEase(Ease.InBack);
+
+            // 2단계: 수납 프레임 재생
             if (_bladeAnimator != null && _bladeAnimator.HasState(0, AnimHashRetract))
             {
                 _bladeAnimator.Play(AnimHashRetract);
-                await UniTask.Delay(TimeSpan.FromSeconds(0.20f), cancellationToken: token);
-                return;
+                await UniTask.Delay(TimeSpan.FromSeconds(retractDuration), cancellationToken: token);
             }
-
-            if (retractSprites != null && retractSprites.Length > 0)
+            else if (retractSprites != null && retractSprites.Length > 0)
             {
-                float frameDelay = 0.20f / retractSprites.Length;
+                float frameDelay = retractDuration / retractSprites.Length;
                 for (int i = 0; i < retractSprites.Length; i++)
                 {
                     token.ThrowIfCancellationRequested();
-                    _bladeRenderer.sprite = retractSprites[i];
+                    if (retractSprites[i] != null)
+                    {
+                        _bladeRenderer.sprite = retractSprites[i];
+                    }
                     await UniTask.Delay(TimeSpan.FromSeconds(frameDelay), cancellationToken: token);
                 }
             }
+            else
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(retractDuration), cancellationToken: token);
+            }
+
+            // 3단계: 수납 완료 즉시 스프라이트 및 오브젝트 클리어 (감속 모션 중 찌꺼기 방지)
+            _bladeRenderer.sprite = null;
+            _bladeVfxObj.SetActive(false);
+            _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+            _bladeVfxObj.transform.localScale = Vector3.one;
+            _bladeVfxObj.transform.localRotation = Quaternion.identity;
         }
     }
 }

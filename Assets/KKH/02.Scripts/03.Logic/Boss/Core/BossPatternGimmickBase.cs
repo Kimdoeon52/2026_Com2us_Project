@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -56,6 +56,7 @@ namespace RealSteel.Boss.Core
             }
             finally
             {
+                _isTellPhase = false;
                 CleanupEffects();
                 if (_patternCTS != null)
                 {
@@ -75,8 +76,8 @@ namespace RealSteel.Boss.Core
             float elapsed = 0f;
             while(elapsed < duration)
             {
-                if (token.IsCancellationRequested)
-                {return false;}
+                // 외부 취소는 저지 성공(false)이 아니므로 예외로 전파하여 Cancelled 처리 (불필요한 스턴 덮어쓰기 방지)
+                token.ThrowIfCancellationRequested();
                 if (patternData != null && patternData.hasDpsCheck && _accumulatedTellDamage >= patternData.requiredDamageToInterrupt)
                 {
                     OnTellEnded();

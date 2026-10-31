@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -106,6 +106,9 @@ namespace RealSteel.Boss.Visual
         public void Play(int stateHash, float normalizedTime = 0f, bool forceRestart = false)
         {
             if (animator == null || !animator.gameObject.activeInHierarchy) return;
+
+            if (!animator.enabled) animator.enabled = true;
+            animator.speed = 1.0f;
 
             if (!forceRestart && _currentHash == stateHash
                 && animator.GetCurrentAnimatorStateInfo(0).shortNameHash == stateHash)

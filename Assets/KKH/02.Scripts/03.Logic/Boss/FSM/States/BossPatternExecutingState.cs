@@ -36,11 +36,30 @@ namespace RealSteel.Boss.FSM
 
         private async UniTaskVoid ExecuteAsync()
         {
-            var result = await _gimmick.ExecutePatternSequenceAsync(cancellationToken);
+            PatternExecutionResult result;
+            try
+            {
+                result = await _gimmick.ExecutePatternSequenceAsync(cancellationToken);
+            }
+            catch (System.Exception e)
+            {
+                // 패턴 내부 예외로 UniTaskVoid가 중단되면 FSM이 영구 정지되므로 로그 후 복구
+                Debug.LogException(e);
+                result = PatternExecutionResult.Cancelled;
+            }
 
             // 정상 완료된 경우 1.0초 확정 딜타임(BossIdleState)으로 복귀
             if (result == PatternExecutionResult.Completed)
             {
+                ReturnToIdle();
+                return;
+            }
+
+            // 인터럽트/취소로 끝났는데 스턴·그로기 등 다른 상태로 전이되지 않고 여전히 이 상태에 머물러 있다면
+            // (예: 이미 퓨즈가 켜진 폭발 상자에 돌진 충돌 → 스턴 미발생) 루프가 멈추므로 Idle로 강제 복구
+            if (boss.StateMachine.CurrentState == this && boss.Snapshot.IsAlive && !boss.IsCombatStopped)
+            {
+                Debug.LogWarning($"[BossPatternExecutingState] {_gimmick.GimmickName} 패턴이 {result}로 종료되었으나 후속 상태 전이가 없어 Idle로 복구합니다.");
                 ReturnToIdle();
             }
         }
@@ -52,9 +71,7 @@ namespace RealSteel.Boss.FSM
             boss.StateMachine.ChangeState(new BossIdleState(boss, token, postDelay));
         }
 
-        public override void OnDamageTaken(int damage)
-        {
-            _gimmick?.NotifyDamageTaken(damage);
-        }
+        // 피격 대미지는 BossControllerBase.NotifyGimmicksDamageTaken()이 등록된 모든 기믹(실행 중 패턴 포함)에 전달함.
+        // 여기서 _gimmick에 다시 전달하면 DPS 저지 게이지가 2배로 누적되므로 별도 전달하지 않음.
     }
 }

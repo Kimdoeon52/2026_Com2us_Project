@@ -1654,7 +1654,6 @@ GameObject:
   m_Component:
   - component: {fileID: 860313875}
   - component: {fileID: 860313874}
-  - component: {fileID: 860313877}
   - component: {fileID: 860313876}
   m_Layer: 0
   m_Name: 'FrameStepper '
@@ -1703,19 +1702,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxFPS: 144
---- !u!114 &860313877
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 860313873}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 17aa980fba1250b4eacc6f52574df870, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hitStopSettings: {fileID: 0}
 --- !u!1001 &872821603
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1882,7 +1868,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 4.85
       objectReference: {fileID: 0}
     - target: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_LocalPosition.y
@@ -1940,10 +1926,50 @@ PrefabInstance:
       propertyPath: m_SpriteTilingProperty.oldSize.y
       value: 1.6
       objectReference: {fileID: 0}
+    - target: {fileID: 8152764038469079320, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: maxBounceCount
       value: 9
       objectReference: {fileID: 0}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: deploySprites.Array.size
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[4]'
+      value: 
+      objectReference: {fileID: 21300201, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[5]'
+      value: 
+      objectReference: {fileID: 21300202, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[6]'
+      value: 
+      objectReference: {fileID: 21300203, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[7]'
+      value: 
+      objectReference: {fileID: 21300204, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[8]'
+      value: 
+      objectReference: {fileID: 21300205, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[9]'
+      value: 
+      objectReference: {fileID: 21300206, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[10]'
+      value: 
+      objectReference: {fileID: 21300207, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: 'deploySprites.Array.data[11]'
+      value: 
+      objectReference: {fileID: 21300208, guid: 77bf12b3b7c165646ad96c2ea880ef35, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4492,7 +4518,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 35.563736, y: 29.276072}
+  m_LightCookieOffset: {x: 6.5149536, y: 23.937897}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -5619,7 +5645,7 @@ GameObject:
   - component: {fileID: 1854844737}
   m_Layer: 0
   m_Name: "RS_Terrain_\uD22C\uC6B0\uC7A5"
-  m_TagString: Untagged
+  m_TagString: Ground
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

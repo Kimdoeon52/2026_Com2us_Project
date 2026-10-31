@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -122,17 +122,7 @@ namespace RealSteel.Boss.JunkWheeler
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                 await _currentTween.ToUniTask(cancellationToken: token);
 
-                // 5단계: 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
-                if (OwnerBoss.Animation != null)
-                {
-                    OwnerBoss.Animation.PlaySlamLand();
-                    // 비대칭 펀치(Squash & Stretch): 0.04s 초고속 지면 압착 -> 0.28s 탄성 복원
-                    await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
-                        OwnerBoss.transform, slamSquashScale, squashFastInDuration, restoreElasticDuration, token);
-                }
-                Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅! 비대칭 펀치 적용)</color>");
-
-                // 6단계: 착지 반경 1.0m 내 고철 못판(NailBoardFieldGimmick) 감지 검사
+                // [지면 충돌 즉시 판정 (Frame 0)]: 충돌하는 그 순간 딜레이 없이 못판 및 피격 판정!
                 if (CheckNailBoardInteraction())
                 {
                     Debug.Log("<color=red>[JunkWheelerSlamPattern] ▶ 고철 못판 착지 감지! 패턴 즉시 중단 및 4초 그로기 전이!</color>");
@@ -144,8 +134,18 @@ namespace RealSteel.Boss.JunkWheeler
                     return; // 남은 내려찍기 회차 즉시 중단
                 }
 
-                // 7단계: 고철 못판이 없으면 플레이어 피격 판정 (Space 무적 검사 및 LeftLeg 파츠 타격)
+                // 고철 못판이 없으면 착지 순간 즉시 플레이어 피격 판정 (쾅! 충돌과 동시에 대미지 적용)
                 CheckPlayerHit();
+
+                // 5단계: 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
+                if (OwnerBoss.Animation != null)
+                {
+                    OwnerBoss.Animation.PlaySlamLand();
+                    // 비대칭 펀치(Squash & Stretch): 0.04s 초고속 지면 압착 -> 0.28s 탄성 복원
+                    await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
+                        OwnerBoss.transform, slamSquashScale, squashFastInDuration, restoreElasticDuration, token);
+                }
+                Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅! 비대칭 펀치 적용)</color>");
 
                 // 다음 회차 전 짧은 딜레이
                 if (round < slamRounds)
@@ -186,12 +186,13 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (OwnerBoss == null) return;
 
-            Vector2 center = OwnerBoss.transform.position;
-            Collider2D[] hits = Physics2D.OverlapCircleAll(center, impactRadius);
+            Vector2 center = (Vector2)OwnerBoss.transform.position + Vector2.up * 0.4f;
+            float radius = Mathf.Max(impactRadius, 1.4f);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius);
 
             foreach (var hit in hits)
             {
-                if (hit.CompareTag("Player"))
+                if (hit.CompareTag("Player") || (hit.transform.root != null && hit.transform.root.CompareTag("Player")))
                 {
                     ApplyDamageToPlayer(hit.gameObject);
                     break;

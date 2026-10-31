@@ -56,7 +56,12 @@ public class ShopSlot : MonoBehaviour
     bool hasPart(PartsDefinition part)
     {
         if (part == null || InventoryHost.Instance == null) return false;
-        return InventoryHost.Instance.Grid.Entries.Any(e => !e.IsComponent && e.Definition == part);
+
+        return InventoryHost.Instance.Grid.Entries.Any(e =>
+            !e.IsComponent &&
+            e.Definition == part &&
+            e.Parts != null &&
+            !e.Parts.IsDestroyed);
     }
 
     private void CanSell()

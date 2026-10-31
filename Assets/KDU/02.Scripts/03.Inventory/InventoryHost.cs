@@ -117,8 +117,11 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             if (entry.IsComponent || entry.Definition != definition)
                 continue;
 
+            if (entry.Parts == null || entry.Parts.IsDestroyed)   // 파괴된 파츠는 판매 대상에서 제외
+                continue;
+
             _grid.Remove(i);
-            Changed?.Invoke();   // UI 갱신
+            Changed?.Invoke();
             return true;
         }
 

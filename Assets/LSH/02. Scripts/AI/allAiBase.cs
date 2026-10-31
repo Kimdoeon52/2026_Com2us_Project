@@ -31,7 +31,7 @@ public abstract class AllAiBase : MonoBehaviour
     public virtual int RaiseGold { get; set; } = 100;
     public abstract void ReadyForAction();
     public abstract bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade);
-
+    public virtual float SkillChance { get; set; } = 0.1f; // 스킬 발동 확률 (기본값 10%)
     [Header("Npc UI들 나오는 곳")]
     public Image thinkImage;
     public TextMeshProUGUI npcThinkChat;

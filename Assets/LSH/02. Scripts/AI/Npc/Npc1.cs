@@ -5,6 +5,7 @@ public class Npc1 : NpcAiBase //후반형
     [Range(0.1f, 1f)]
     [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
     public float actionRate = 1f; // 후반형은 올인까지 배팅 시도
+    public override float SkillChance { get; set; } = 0.2f;
     public override void Start()
     {
         base.Start();

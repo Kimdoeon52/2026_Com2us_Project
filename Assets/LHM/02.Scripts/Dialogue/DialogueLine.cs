@@ -9,6 +9,7 @@ namespace RealSteel.Dialogue
     {
         public string speakerId;
         public string speaker;
+        public string speakerTitle;
 
         [TextArea(2, 4)]
         public string text;
@@ -21,6 +22,7 @@ namespace RealSteel.Dialogue
         {
             this.speakerId = speakerId;
             this.speaker = speaker;
+            speakerTitle = "";
             this.text = text;
             expression = "";
             effects = null;

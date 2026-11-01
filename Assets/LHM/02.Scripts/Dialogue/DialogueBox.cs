@@ -15,6 +15,11 @@ namespace RealSteel.Dialogue
         [SerializeField] private DialoguePortrait portrait;
         [SerializeField] private DialogueDirector director;
         [SerializeField] private DialogueStage stage;
+        [SerializeField] private DialogueBoxMotion motion;
+
+        [Header("이름표 (선택)")]
+        [SerializeField] private GameObject speakerPlate;
+        [SerializeField] private TMP_Text speakerTitleText;
 
         [Header("타자기")]
         [SerializeField, Min(0f)] private float charactersPerSecond = 30f;
@@ -176,6 +181,7 @@ namespace RealSteel.Dialogue
             if (stage != null) stage.Enter(display, background);
 
             box.SetActive(true);
+            if (motion != null) motion.PlayOpen();
             isOpen = true;
             UiStack.Push(this);
             inputReadyAt = Time.unscaledTime + openInputDelay;
@@ -188,8 +194,9 @@ namespace RealSteel.Dialogue
         {
             if (!isOpen) return;
 
-            box.SetActive(false);
             isOpen = false;
+            if (motion != null) motion.PlayClose(HideBoxAfterMotion);
+            else box.SetActive(false);
             UiStack.Remove(this);
             effectWait = 0f;
             pendingText = null;
@@ -203,6 +210,11 @@ namespace RealSteel.Dialogue
 
             Debug.Log("[DialogueBox] 대화창 닫힘");
             Closed?.Invoke();
+        }
+
+        private void HideBoxAfterMotion()
+        {
+            if (!isOpen) box.SetActive(false);
         }
 
         private void Next()
@@ -229,6 +241,13 @@ namespace RealSteel.Dialogue
 
             speakerNameText.gameObject.SetActive(hasSpeaker);
             speakerNameText.text = line.speaker;
+            if (speakerPlate != null) speakerPlate.SetActive(hasSpeaker);
+            if (speakerTitleText != null)
+            {
+                bool hasTitle = hasSpeaker && !string.IsNullOrEmpty(line.speakerTitle);
+                speakerTitleText.gameObject.SetActive(hasTitle);
+                speakerTitleText.text = hasTitle ? line.speakerTitle : "";
+            }
 
             if (voice != null) voice.SetSpeaker(line.speakerId);
             if (portrait != null) portrait.Show(line.speakerId, line.expression);

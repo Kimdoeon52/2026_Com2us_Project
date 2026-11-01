@@ -8,6 +8,7 @@ namespace RealSteel.Dialogue
     {
         public const string SpeakerKeyPrefix = "speaker.";
         public const string MenuKeyPrefix = "menu.";
+        public const string SpeakerTitleSuffix = ".title";
         public const int MaxSubPriority = 99;
 
         private readonly Dictionary<string, DialogueData> dialogues = new Dictionary<string, DialogueData>();
@@ -112,6 +113,12 @@ namespace RealSteel.Dialogue
             return string.IsNullOrEmpty(speakerId) ? "" : GetString(SpeakerKeyPrefix + speakerId);
         }
 
+        public string GetSpeakerTitle(string speakerId)
+        {
+            if (string.IsNullOrEmpty(speakerId)) return "";
+            return strings.TryGetValue(SpeakerKeyPrefix + speakerId + SpeakerTitleSuffix, out string title) ? title : "";
+        }
+
         public bool TryGetLines(string dialogueId, out List<DialogueLine> lines)
         {
             lines = null;
@@ -133,6 +140,7 @@ namespace RealSteel.Dialogue
                 string speakerName = GetSpeakerName(line.speaker);
                 lines.Add(new DialogueLine(line.speaker ?? "", speakerName, GetString(line.textKey))
                 {
+                    speakerTitle = GetSpeakerTitle(line.speaker),
                     expression = line.expression ?? "",
                     effects = line.effects,
                     textKey = line.textKey ?? "",

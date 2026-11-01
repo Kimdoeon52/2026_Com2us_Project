@@ -16,6 +16,21 @@ namespace RealSteel.Dialogue
 
         public bool IsPlaying => pending != null;
 
+        public void Play(string bossId, string difficulty, int attemptCount, int loseCount, Action onFinished)
+        {
+            if (manager != null && manager.IsReady && !manager.IsFallback)
+            {
+                DialogueVariables variables = manager.Variables;
+                variables.Set("hunt.targetBoss", bossId ?? "");
+                variables.Set("hunt.targetDifficulty", string.IsNullOrEmpty(difficulty) ? "none" : difficulty);
+                variables.Set("hunt.bossAttemptCount", attemptCount);
+                variables.Set("hunt.bossLoseCount", loseCount);
+                Debug.Log($"[BossEntry] 진입 대상 {bossId} ({difficulty}) — 이 보스 도전 {attemptCount}회, 패배 {loseCount}회", this);
+            }
+
+            Play(onFinished);
+        }
+
         public void Play(Action onFinished)
         {
             if (pending != null)

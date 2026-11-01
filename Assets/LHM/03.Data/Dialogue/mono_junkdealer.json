@@ -1,0 +1,20 @@
+{
+  "poolId": "mono_junkdealer",
+  "dialogues": [
+    {
+      "id": "mono_junkdealer_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [ { "speaker": "junkdealer", "textKey": "mono.junkdealer.fallback.1" } ]
+    },
+    {
+      "id": "mono_junkdealer_basic_parts",
+      "band": "Ambient",
+      "cooldownSec": 30,
+      "conditions": [
+        { "variable": "player.usingBasicParts", "op": "==", "value": "yes" }
+      ],
+      "lines": [ { "speaker": "junkdealer", "textKey": "mono.junkdealer.basic_parts.1" } ]
+    }
+  ]
+}

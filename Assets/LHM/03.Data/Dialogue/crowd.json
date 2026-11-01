@@ -1,0 +1,62 @@
+{
+  "poolId": "crowd",
+  "dialogues": [
+    {
+      "id": "crowd_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [ { "textKey": "crowd.fallback.1" } ]
+    },
+    {
+      "id": "crowd_cheer_break",
+      "band": "Ambient",
+      "cooldownSec": 6,
+      "conditions": [],
+      "lines": [ { "textKey": "crowd.cheer_break.1" } ]
+    },
+    {
+      "id": "crowd_cheer_scrap",
+      "band": "Ambient",
+      "cooldownSec": 6,
+      "conditions": [],
+      "lines": [ { "textKey": "crowd.cheer_scrap.1" } ]
+    },
+    {
+      "id": "crowd_cheer_wheel",
+      "band": "Ambient",
+      "cooldownSec": 8,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" }
+      ],
+      "lines": [ { "textKey": "crowd.cheer_wheel.1" } ]
+    },
+    {
+      "id": "crowd_cheer_kyodai",
+      "band": "Ambient",
+      "cooldownSec": 8,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.kyodai" }
+      ],
+      "lines": [ { "textKey": "crowd.cheer_kyodai.1" } ]
+    },
+    {
+      "id": "crowd_basic_parts_easy",
+      "band": "Reactive",
+      "cooldownSec": 20,
+      "conditions": [
+        { "variable": "player.usingBasicParts", "op": "==", "value": "yes" },
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "veryEasy" }
+      ],
+      "lines": [ { "textKey": "crowd.basic_parts_easy.1" } ]
+    },
+    {
+      "id": "crowd_hell",
+      "band": "Reactive",
+      "cooldownSec": 15,
+      "conditions": [
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [ { "textKey": "crowd.hell.1" } ]
+    }
+  ]
+}

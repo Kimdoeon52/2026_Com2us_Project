@@ -18,6 +18,7 @@ namespace RealSteel.Dialogue
         public int playOrder;
         public List<PlayRecord> records;
         public List<EventMark> eventMarks;
+        public List<string> readLines;
     }
 
     [Serializable]

@@ -38,7 +38,7 @@ namespace RealSteel.Dialogue
             variables = new DialogueVariables(database.VariableDefs);
             ready = true;
 
-            Debug.Log("[Step05] F1 패배(주 상대) / Shift+F1 패배(다른 상대) / F2 승리 / F3 경매 유찰 / F4 말 걸기 / F5 기록 보기 / F12 전체 초기화");
+            Debug.Log("[Step05] F1 패배(주 상대) / Shift+F1 패배(다른 상대) / F2 승리 / F3 경매 정산(판매) / F4 말 걸기 / F5 기록 보기 / F12 전체 초기화");
             LogState("시작");
         }
 
@@ -59,7 +59,7 @@ namespace RealSteel.Dialogue
             }
             else if (keyboard.f3Key.wasPressedThisFrame)
             {
-                RecordAuction("unsold");
+                RecordAuction("sold");
             }
             else if (keyboard.f4Key.wasPressedThisFrame)
             {

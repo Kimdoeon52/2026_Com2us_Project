@@ -23,13 +23,19 @@
     { "name": "player.usingBasicParts", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
     { "name": "player.coreLevel", "type": "int", "defaultValue": "1" },
 
-    { "name": "auction.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "sold", "unsold"] },
+    { "name": "auction.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "sold"] },
     { "name": "auction.settleCount", "type": "int", "defaultValue": "0" },
 
     { "name": "race.id", "type": "enum", "defaultValue": "race1", "allowed": ["race1", "race2", "race3", "final"] },
     { "name": "race.stage", "type": "int", "defaultValue": "0" },
     { "name": "race.seasonFirst", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
 
-    { "name": "story.chapter", "type": "int", "defaultValue": "0" }
+    { "name": "story.chapter", "type": "int", "defaultValue": "0" },
+
+    { "name": "battle.event", "type": "enum", "defaultValue": "none", "allowed": ["none", "playerPartBroken", "bossPartBroken", "bossGroggy"] },
+    { "name": "battle.brokenPart", "type": "enum", "defaultValue": "none", "allowed": ["none", "Head", "LeftArm", "RightArm", "LeftLeg", "RightLeg", "Core"] },
+    { "name": "battle.bossPartId", "type": "string", "defaultValue": "" },
+    { "name": "battle.playerBrokenCount", "type": "int", "defaultValue": "0" },
+    { "name": "battle.bossHpPercent", "type": "int", "defaultValue": "100" }
   ]
 }

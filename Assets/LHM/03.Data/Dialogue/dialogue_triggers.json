@@ -1,0 +1,11 @@
+{
+  "triggers": [
+    { "dialogueId": "story_top10_first", "queue": "story" },
+    { "dialogueId": "story_chairman_suspicion", "queue": "story" },
+    { "dialogueId": "system_season_ending", "queue": "system" },
+    { "dialogueId": "tutorial_t12_first_defeat", "queue": "system" },
+    { "dialogueId": "bubble_auction_sold", "queue": "bubble" },
+    { "dialogueId": "bubble_guild_after_defeat", "queue": "bubble" },
+    { "dialogueId": "bubble_guild_after_defeat_wheel", "queue": "bubble" }
+  ]
+}

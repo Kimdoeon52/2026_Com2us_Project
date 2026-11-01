@@ -15,6 +15,7 @@ namespace RealSteel.Dialogue
 
         public string expression;
         public List<EffectData> effects;
+        public string textKey;
 
         public DialogueLine(string speakerId, string speaker, string text)
         {
@@ -23,6 +24,7 @@ namespace RealSteel.Dialogue
             this.text = text;
             expression = "";
             effects = null;
+            textKey = "";
         }
 
         public DialogueLine(string speaker, string text) : this("", speaker, text)

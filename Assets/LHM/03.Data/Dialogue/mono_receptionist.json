@@ -1,0 +1,20 @@
+{
+  "poolId": "mono_receptionist",
+  "dialogues": [
+    {
+      "id": "mono_receptionist_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [ { "speaker": "receptionist", "textKey": "mono.receptionist.fallback.1" } ]
+    },
+    {
+      "id": "mono_receptionist_season_end",
+      "band": "Ambient",
+      "cooldownSec": 30,
+      "conditions": [
+        { "variable": "season.endingSoon", "op": "==", "value": "yes" }
+      ],
+      "lines": [ { "speaker": "receptionist", "textKey": "mono.receptionist.season_end.1" } ]
+    }
+  ]
+}

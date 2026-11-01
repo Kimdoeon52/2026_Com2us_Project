@@ -31,6 +31,7 @@ namespace RealSteel.Dialogue
     public class DialoguePoolData
     {
         public string poolId;
+        public bool eventOnly;
         public List<DialogueData> dialogues;
     }
 

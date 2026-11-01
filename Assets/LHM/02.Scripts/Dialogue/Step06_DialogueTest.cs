@@ -54,7 +54,7 @@ namespace RealSteel.Dialogue
             ready = true;
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[Step06] 1~5 난이도 선택 / F1 패배 (Shift: 다른 보스) / F2 승리 / F3 유찰 (Shift: 판매) / F4 말 걸기 / F5 기록 / F6 저장 / F7 다시 읽기 / F8 세이브 폴더 / F9 순위 올리기 (Shift: 내리기) / F10 풀스크린 시험 / F11 인터미션 시험 / F12 초기화 후 저장 / Shift+F12 세이브 삭제");
+            Debug.Log("[Step06] 1~5 난이도 선택 / F1 패배 (Shift: 다른 보스) / F2 승리 / F3 경매 정산(판매) / F4 말 걸기 / F5 기록 / F6 저장 / F7 다시 읽기 / F8 세이브 폴더 / F9 순위 올리기 (Shift: 내리기) / F10 풀스크린 시험 / F11 인터미션 시험 / F12 초기화 후 저장 / Shift+F12 세이브 삭제");
 #endif
         }
 
@@ -75,7 +75,7 @@ namespace RealSteel.Dialogue
             else if (keyboard.digit5Key.wasPressedThisFrame) SelectDifficulty(4);
             else if (keyboard.f1Key.wasPressedThisFrame) RecordHunt("lose", shift ? otherBoss : seasonBoss);
             else if (keyboard.f2Key.wasPressedThisFrame) RecordHunt("win", seasonBoss);
-            else if (keyboard.f3Key.wasPressedThisFrame) RecordAuction(shift ? "sold" : "unsold");
+            else if (keyboard.f3Key.wasPressedThisFrame) RecordAuction("sold");
             else if (keyboard.f4Key.wasPressedThisFrame) Talk();
             else if (keyboard.f5Key.wasPressedThisFrame) Debug.Log("[Step06] 본 대사 기록\n" + history.Dump());
             else if (keyboard.f6Key.wasPressedThisFrame) SaveToFile();

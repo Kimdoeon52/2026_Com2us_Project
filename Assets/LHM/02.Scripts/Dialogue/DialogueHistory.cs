@@ -19,7 +19,20 @@ namespace RealSteel.Dialogue
         private readonly Dictionary<string, PlayRecord> records = new Dictionary<string, PlayRecord>();
         private readonly Dictionary<string, string> eventMarks = new Dictionary<string, string>();
         private readonly Dictionary<string, float> lastPlayedTimes = new Dictionary<string, float>();
+        private readonly HashSet<string> readLines = new HashSet<string>();
         private int playOrder;
+
+        public int ReadLineCount => readLines.Count;
+
+        public bool IsRead(string textKey)
+        {
+            return !string.IsNullOrEmpty(textKey) && readLines.Contains(textKey);
+        }
+
+        public void MarkRead(string textKey)
+        {
+            if (!string.IsNullOrEmpty(textKey)) readLines.Add(textKey);
+        }
 
         public int GetPlayCount(string id)
         {
@@ -85,6 +98,7 @@ namespace RealSteel.Dialogue
                 playOrder = playOrder,
                 records = new List<PlayRecord>(records.Values),
                 eventMarks = new List<EventMark>(),
+                readLines = new List<string>(readLines),
             };
 
             foreach (KeyValuePair<string, string> mark in eventMarks)
@@ -118,6 +132,11 @@ namespace RealSteel.Dialogue
                 {
                     if (!string.IsNullOrEmpty(mark.key)) eventMarks[mark.key] = mark.value;
                 }
+            }
+
+            if (data.readLines != null)
+            {
+                foreach (string key in data.readLines) MarkRead(key);
             }
         }
 
@@ -159,6 +178,7 @@ namespace RealSteel.Dialogue
             records.Clear();
             eventMarks.Clear();
             lastPlayedTimes.Clear();
+            readLines.Clear();
             playOrder = 0;
         }
 
@@ -167,6 +187,7 @@ namespace RealSteel.Dialogue
             if (records.Count == 0) return "(기록 없음)";
 
             StringBuilder builder = new StringBuilder();
+            builder.AppendLine($"  [읽은 줄] {readLines.Count}줄");
             foreach (PlayRecord record in records.Values)
             {
                 builder.AppendLine($"  {record.id}: {record.playCount}회, 순번 {record.lastOrder}");

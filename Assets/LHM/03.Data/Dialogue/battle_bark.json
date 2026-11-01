@@ -1,0 +1,156 @@
+{
+  "poolId": "battle_bark",
+  "dialogues": [
+    {
+      "id": "bark_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.fallback.1" }
+      ]
+    },
+    {
+      "id": "bark_player_part",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_part.1" }
+      ]
+    },
+    {
+      "id": "bark_player_head",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.brokenPart", "op": "==", "value": "Head" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_head.1" }
+      ]
+    },
+    {
+      "id": "bark_player_left_arm",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.brokenPart", "op": "==", "value": "LeftArm" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_left_arm.1" }
+      ]
+    },
+    {
+      "id": "bark_player_right_arm",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.brokenPart", "op": "==", "value": "RightArm" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_right_arm.1" }
+      ]
+    },
+    {
+      "id": "bark_player_left_leg",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.brokenPart", "op": "==", "value": "LeftLeg" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_left_leg.1" }
+      ]
+    },
+    {
+      "id": "bark_player_right_leg",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.brokenPart", "op": "==", "value": "RightLeg" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_right_leg.1" }
+      ]
+    },
+    {
+      "id": "bark_player_many",
+      "band": "Reactive",
+      "subPriority": 10,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "playerPartBroken" },
+        { "variable": "battle.playerBrokenCount", "op": ">=", "value": "3" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.player_many.1" }
+      ]
+    },
+    {
+      "id": "bark_boss_part",
+      "band": "Reactive",
+      "cooldownSec": 2,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.boss_part.1" }
+      ]
+    },
+    {
+      "id": "bark_boss_tire",
+      "band": "Reactive",
+      "cooldownSec": 2,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "TIRE_PART" }
+      ],
+      "lines": [
+        { "speaker": "wheel", "textKey": "bark.boss_tire.1" }
+      ]
+    },
+    {
+      "id": "bark_boss_groggy",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossGroggy" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.boss_groggy.1" }
+      ]
+    },
+    {
+      "id": "bark_boss_groggy_low",
+      "band": "Reactive",
+      "subPriority": 10,
+      "cooldownSec": 30,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossGroggy" },
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" },
+        { "variable": "battle.bossHpPercent", "op": "<=", "value": "30" }
+      ],
+      "lines": [
+        { "speaker": "wheel", "textKey": "bark.boss_groggy_low.1" }
+      ]
+    },
+    {
+      "id": "bark_kyodai_groggy",
+      "band": "Reactive",
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossGroggy" },
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.kyodai" }
+      ],
+      "lines": [
+        { "speaker": "kyodai", "textKey": "bark.kyodai_groggy.1" }
+      ]
+    }
+  ]
+}

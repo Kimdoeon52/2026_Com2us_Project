@@ -18,6 +18,13 @@ namespace RealSteel.Dialogue
 
         public int Count => opened.Count;
 
+        public event System.Action DayPassed;
+
+        public void SetTime(int hour, int minute)
+        {
+            minutes = Mathf.Clamp(hour * 60 + minute, 0, 1439);
+        }
+
         private void Awake()
         {
             minutes = startHour * 60f;
@@ -42,7 +49,11 @@ namespace RealSteel.Dialogue
             if (opened.Count == 0)
             {
                 minutes += Time.deltaTime * minutesPerSecond;
-                if (minutes >= 1440f) minutes -= 1440f;
+                if (minutes >= 1440f)
+                {
+                    minutes -= 1440f;
+                    DayPassed?.Invoke();
+                }
             }
 
             RefreshClock();

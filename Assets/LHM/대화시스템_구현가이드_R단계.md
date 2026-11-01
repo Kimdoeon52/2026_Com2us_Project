@@ -232,7 +232,7 @@ var envelope = new SaveEnvelope { checksum = ComputeChecksum(data), data = data 
 | F1 | 시즌 보스(`boss.wheel`)에게 패배 → `hunt.bossLoseCount` +1 |
 | Shift + F1 | 다른 보스에게 패배 → `bossLoseCount`는 그대로 (보스 기준) |
 | F2 | 승리 |
-| F3 / **Shift + F3** | 경매 유찰 / **판매** |
+| F3 | 경매 정산 (판매) — v6에서 유찰 삭제 |
 | F4 ~ F8 | 6단계와 같음 |
 | **F9 / Shift + F9** | 순위 구간 한 칸 올리기 / 내리기. `2-10` 이상이 되면 `rank.top10Reached = yes` |
 | F12 / Shift + F12 | 6단계와 같음 |

@@ -88,16 +88,17 @@
       ]
     },
     {
-      "id": "auction_unsold",
+      "id": "auction_sold",
       "band": "Reactive",
       "subPriority": 10,
       "perEvent": "auction.settleCount",
+      "eventGroup": "sold_reaction",
       "conditions": [
-        { "variable": "auction.lastResult", "op": "==", "value": "unsold" }
+        { "variable": "auction.lastResult", "op": "==", "value": "sold" }
       ],
       "lines": [
-        { "speaker": "auctioneer", "textKey": "auction.unsold.1", "expression": "sad", "effects": [ { "type": "fadeOut", "value": 1, "wait": true } ] },
-        { "speaker": "hero", "textKey": "auction.unsold.2", "effects": [ { "type": "fadeIn", "value": 1 } ] }
+        { "speaker": "auctioneer", "textKey": "auction.sold.1", "expression": "smile", "effects": [ { "type": "sound", "id": "sfx.stamp" } ] },
+        { "speaker": "hero", "textKey": "auction.sold.2" }
       ]
     },
     {

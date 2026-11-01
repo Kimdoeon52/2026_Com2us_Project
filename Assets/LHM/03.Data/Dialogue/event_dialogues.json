@@ -1,0 +1,82 @@
+{
+  "poolId": "event_dialogues",
+  "eventOnly": true,
+  "dialogues": [
+    {
+      "id": "story_top10_first",
+      "band": "Story",
+      "maxPlays": 1,
+      "display": "fullscreen",
+      "conditions": [
+        { "variable": "rank.top10Reached", "op": "==", "value": "yes" }
+      ],
+      "lines": [
+        { "speaker": "", "textKey": "event.top10_first.1" },
+        { "speaker": "hero", "textKey": "event.top10_first.2" },
+        { "speaker": "", "textKey": "event.top10_first.3", "effects": [ { "type": "shake", "value": 0.3 } ] }
+      ]
+    },
+    {
+      "id": "story_chairman_suspicion",
+      "band": "Story",
+      "maxPlays": 1,
+      "display": "intermission",
+      "conditions": [
+        { "variable": "rank.top10Reached", "op": "==", "value": "yes" }
+      ],
+      "lines": [
+        { "speaker": "chairman", "textKey": "event.chairman_suspicion.1", "effects": [ { "type": "zoom", "value": 1.2 } ] },
+        { "speaker": "chairman", "textKey": "event.chairman_suspicion.2", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "system_season_ending",
+      "band": "Progress",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "season.endingSoon", "op": "==", "value": "yes" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.season_ending.1" },
+        { "speaker": "receptionist", "textKey": "event.season_ending.2" }
+      ]
+    },
+    {
+      "id": "bubble_auction_sold",
+      "band": "Reactive",
+      "perEvent": "auction.settleCount",
+      "eventGroup": "sold_reaction",
+      "conditions": [
+        { "variable": "auction.lastResult", "op": "==", "value": "sold" }
+      ],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "event.bubble_auction_sold.1" }
+      ]
+    },
+    {
+      "id": "bubble_guild_after_defeat",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "guild_hunt_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.bubble_guild_after_defeat.1" }
+      ]
+    },
+    {
+      "id": "bubble_guild_after_defeat_wheel",
+      "band": "Reactive",
+      "perEvent": "hunt.count",
+      "eventGroup": "guild_hunt_reaction",
+      "conditions": [
+        { "variable": "hunt.lastResult", "op": "==", "value": "lose" },
+        { "variable": "hunt.lastBoss", "op": "==", "value": "boss.wheel" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.bubble_guild_after_defeat_wheel.1" }
+      ]
+    }
+  ]
+}

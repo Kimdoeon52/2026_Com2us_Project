@@ -1,0 +1,49 @@
+{
+  "poolId": "tutorial",
+  "eventOnly": true,
+  "dialogues": [
+    {
+      "id": "tutorial_t3_map",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "hero", "textKey": "tutorial.t3_map.1" },
+        { "speaker": "hero", "textKey": "tutorial.t3_map.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t9_hunt_apply",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "tutorial.t9_hunt_apply.1" },
+        { "speaker": "receptionist", "textKey": "tutorial.t9_hunt_apply.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t10_battle",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "hero", "textKey": "tutorial.t10_battle.1" },
+        { "speaker": "hero", "textKey": "tutorial.t10_battle.2" },
+        { "speaker": "hero", "textKey": "tutorial.t10_battle.3" }
+      ]
+    },
+    {
+      "id": "tutorial_t12_first_defeat",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.loseCount", "op": ">=", "value": "1" }
+      ],
+      "lines": [
+        { "speaker": "junkdealer", "textKey": "tutorial.t12_first_defeat.1" },
+        { "speaker": "junkdealer", "textKey": "tutorial.t12_first_defeat.2" }
+      ]
+    }
+  ]
+}

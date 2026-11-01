@@ -2,10 +2,19 @@
   "poolId": "boss_entry",
   "dialogues": [
     {
+      "id": "boss_entry_retry",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.retry.1" }
+      ]
+    },
+    {
       "id": "boss_entry_hint",
       "band": "Critical",
       "maxPlays": 1,
       "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" },
         { "variable": "hunt.bossLoseCount", "op": ">=", "value": "3" }
       ],
       "lines": [
@@ -19,6 +28,7 @@
       "band": "Story",
       "maxPlays": 1,
       "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" },
         { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" }
       ],
       "lines": [
@@ -32,6 +42,7 @@
       "band": "Story",
       "maxPlays": 1,
       "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" },
         { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" },
         { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
       ],
@@ -42,21 +53,61 @@
       ]
     },
     {
-      "id": "boss_entry_retry",
+      "id": "boss_entry_retry_wheel",
       "band": "Fallback",
-      "conditions": [],
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" }
+      ],
       "lines": [
-        { "speaker": "receptionist", "textKey": "boss_entry.retry.1" }
+        { "speaker": "receptionist", "textKey": "boss_entry.retry_wheel.1" }
       ]
     },
     {
       "id": "boss_entry_retry_hell",
       "band": "Fallback",
       "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.wheel" },
         { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
       ],
       "lines": [
         { "speaker": "receptionist", "textKey": "boss_entry.retry_hell.1" }
+      ]
+    },
+    {
+      "id": "boss_entry_kyodai_hint",
+      "band": "Critical",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.kyodai" },
+        { "variable": "hunt.bossLoseCount", "op": ">=", "value": "3" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyodai_hint.1" },
+        { "speaker": "hero", "textKey": "boss_entry.kyodai_hint.2" }
+      ]
+    },
+    {
+      "id": "boss_entry_kyodai_first",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.kyodai" },
+        { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyodai_first.1" },
+        { "speaker": "kyodai", "textKey": "boss_entry.kyodai_first.2", "effects": [ { "type": "zoom", "value": 1.2 }, { "type": "shake", "value": 0.4 } ] },
+        { "speaker": "hero", "textKey": "boss_entry.kyodai_first.3", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "boss_entry_kyodai_retry",
+      "band": "Fallback",
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.kyodai" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyodai_retry.1" }
       ]
     }
   ]

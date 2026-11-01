@@ -7,6 +7,7 @@ namespace RealSteel.Dialogue
     public class DialogueDatabase
     {
         public const string SpeakerKeyPrefix = "speaker.";
+        public const string MenuKeyPrefix = "menu.";
         public const int MaxSubPriority = 99;
 
         private readonly Dictionary<string, DialogueData> dialogues = new Dictionary<string, DialogueData>();
@@ -15,13 +16,27 @@ namespace RealSteel.Dialogue
         private readonly Dictionary<string, string> strings = new Dictionary<string, string>();
         private readonly Dictionary<string, VariableDef> variableDefs = new Dictionary<string, VariableDef>();
         private readonly List<string> errors = new List<string>();
+        private readonly List<string> warnings = new List<string>();
 
         public IReadOnlyList<string> Errors => errors;
+        public IReadOnlyList<string> Warnings => warnings;
         public IReadOnlyList<DialogueData> Dialogues => dialogueList;
         public IReadOnlyDictionary<string, VariableDef> VariableDefs => variableDefs;
         public IEnumerable<string> PoolIds => pools.Keys;
+        public int StringCount => strings.Count;
 
         public bool Load(IReadOnlyList<TextAsset> poolAssets, TextAsset stringTableAsset, TextAsset variablesAsset)
+        {
+            List<DialogueSourceFile> poolFiles = new List<DialogueSourceFile>();
+            if (poolAssets != null)
+            {
+                foreach (TextAsset asset in poolAssets) poolFiles.Add(DialogueSourceFile.From(asset));
+            }
+
+            return Load(poolFiles, DialogueSourceFile.From(stringTableAsset), DialogueSourceFile.From(variablesAsset), true);
+        }
+
+        public bool Load(IReadOnlyList<DialogueSourceFile> poolFiles, DialogueSourceFile stringTable, DialogueSourceFile variablesFile, bool logResult)
         {
             dialogues.Clear();
             dialogueList.Clear();
@@ -29,14 +44,15 @@ namespace RealSteel.Dialogue
             strings.Clear();
             variableDefs.Clear();
             errors.Clear();
+            warnings.Clear();
 
-            VariableTableData variableTable = Parse<VariableTableData>(variablesAsset, "변수 목록");
-            StringTableData table = Parse<StringTableData>(stringTableAsset, "문자열 테이블");
+            VariableTableData variableTable = Parse<VariableTableData>(variablesFile, "변수 목록");
+            StringTableData table = Parse<StringTableData>(stringTable, "문자열 테이블");
 
-            if (variableTable != null) LoadVariables(variableTable, variablesAsset.name);
-            if (table != null) LoadStrings(table, stringTableAsset.name);
+            if (variableTable != null) LoadVariables(variableTable, variablesFile.name);
+            if (table != null) LoadStrings(table, stringTable.name);
 
-            if (poolAssets == null || poolAssets.Count == 0)
+            if (poolFiles == null || poolFiles.Count == 0)
             {
                 errors.Add("대사 풀: 파일이 하나도 연결되지 않았습니다");
             }
@@ -44,23 +60,42 @@ namespace RealSteel.Dialogue
             {
                 Dictionary<string, string> groupEvents = new Dictionary<string, string>();
 
-                for (int i = 0; i < poolAssets.Count; i++)
+                for (int i = 0; i < poolFiles.Count; i++)
                 {
-                    DialoguePoolData pool = Parse<DialoguePoolData>(poolAssets[i], $"대사 풀 {i + 1}번째 칸");
-                    if (pool != null) LoadPool(pool, poolAssets[i].name, table != null, variableTable != null, groupEvents);
+                    DialoguePoolData pool = Parse<DialoguePoolData>(poolFiles[i], $"대사 풀 {i + 1}번째 칸");
+                    if (pool != null) LoadPool(pool, poolFiles[i].name, table != null, variableTable != null, groupEvents);
                 }
 
                 ValidateFormerIds();
+                if (table != null) CollectUnusedStrings();
             }
 
             if (errors.Count > 0)
             {
-                Debug.LogError($"[Dialogue] 데이터 로드 실패 ({errors.Count}건)\n - " + string.Join("\n - ", errors));
+                if (logResult) Debug.LogError($"[Dialogue] 데이터 로드 실패 ({errors.Count}건)\n - " + string.Join("\n - ", errors));
                 return false;
             }
 
-            Debug.Log($"[Dialogue] 로드 완료: 풀 {pools.Count}개 ({string.Join(", ", pools.Keys)}), 대화 {dialogues.Count}개, 문자열 {strings.Count}개, 변수 {variableDefs.Count}개");
+            if (logResult) Debug.Log($"[Dialogue] 로드 완료: 풀 {pools.Count}개 ({string.Join(", ", pools.Keys)}), 대화 {dialogues.Count}개, 문자열 {strings.Count}개, 변수 {variableDefs.Count}개");
             return true;
+        }
+
+        private void CollectUnusedStrings()
+        {
+            HashSet<string> used = new HashSet<string>();
+            foreach (DialogueData dialogue in dialogueList)
+            {
+                foreach (LineData line in dialogue.lines)
+                {
+                    if (!string.IsNullOrEmpty(line.textKey)) used.Add(line.textKey);
+                    if (!string.IsNullOrEmpty(line.speaker)) used.Add(SpeakerKeyPrefix + line.speaker);
+                }
+            }
+
+            foreach (string key in strings.Keys)
+            {
+                if (!used.Contains(key) && !key.StartsWith(SpeakerKeyPrefix) && !key.StartsWith(MenuKeyPrefix)) warnings.Add($"문자열 '{key}'를 쓰는 대사가 없습니다");
+            }
         }
 
         public bool TryGetPool(string poolId, out IReadOnlyList<DialogueData> pool)
@@ -100,6 +135,7 @@ namespace RealSteel.Dialogue
                 {
                     expression = line.expression ?? "",
                     effects = line.effects,
+                    textKey = line.textKey ?? "",
                 });
             }
 
@@ -111,9 +147,9 @@ namespace RealSteel.Dialogue
             return strings.TryGetValue(key, out string value) ? value : $"#{key}#";
         }
 
-        private T Parse<T>(TextAsset asset, string label) where T : class
+        private T Parse<T>(DialogueSourceFile file, string label) where T : class
         {
-            if (asset == null)
+            if (file == null)
             {
                 errors.Add($"{label}: 파일이 연결되지 않았습니다");
                 return null;
@@ -121,13 +157,13 @@ namespace RealSteel.Dialogue
 
             try
             {
-                T data = JsonUtility.FromJson<T>(asset.text);
-                if (data == null) errors.Add($"{asset.name}: 내용이 비어 있습니다");
+                T data = string.IsNullOrWhiteSpace(file.text) ? null : JsonUtility.FromJson<T>(file.text);
+                if (data == null) errors.Add($"{file.name}: 내용이 비어 있습니다");
                 return data;
             }
             catch (ArgumentException e)
             {
-                errors.Add($"{asset.name}: JSON 문법 오류 — {e.Message}");
+                errors.Add($"{file.name}: JSON 문법 오류 — {e.Message}");
                 return null;
             }
         }
@@ -218,6 +254,11 @@ namespace RealSteel.Dialogue
                 return;
             }
 
+            if (pool.poolId != fileName)
+            {
+                errors.Add($"{fileName}: poolId '{pool.poolId}'가 파일 이름과 다릅니다 (풀 이름 = 파일 이름 = CSV 이름)");
+            }
+
             if (pools.ContainsKey(pool.poolId))
             {
                 errors.Add($"{fileName}: poolId '{pool.poolId}'가 다른 대사 풀 파일과 중복됩니다 (같은 파일을 두 칸에 넣었는지 확인)");
@@ -263,6 +304,8 @@ namespace RealSteel.Dialogue
                     {
                         ValidateCondition(dialogue.conditions[c], $"{where} › {c + 1}번째 조건", checkVariables);
                     }
+
+                    if (checkVariables) ValidateReachable(dialogue, where);
                 }
 
                 ValidateConsume(dialogue, where, checkVariables, groupEvents);
@@ -286,7 +329,7 @@ namespace RealSteel.Dialogue
                 poolList.Add(dialogue);
             }
 
-            if (!hasFallback)
+            if (!hasFallback && !pool.eventOnly)
             {
                 errors.Add($"{fileName}: 항상 나올 수 있는 기본 대사(조건·소비 규칙 없음)가 최소 1개 필요합니다");
             }
@@ -310,9 +353,18 @@ namespace RealSteel.Dialogue
                         continue;
                     }
 
-                    if (dialogues.ContainsKey(formerId))
+                    if (formerId == dialogue.id)
                     {
-                        errors.Add($"{where}: 이전 ID '{formerId}'가 현재 다른 대화의 ID로 쓰이고 있습니다");
+                        errors.Add($"{where}: 순환 참조 — 이전 ID에 자기 자신 '{formerId}'가 적혀 있습니다");
+                        continue;
+                    }
+
+                    if (dialogues.TryGetValue(formerId, out DialogueData other))
+                    {
+                        bool mutual = other.formerIds != null && other.formerIds.Contains(dialogue.id);
+                        errors.Add(mutual
+                            ? $"{where}: 순환 참조 — '{dialogue.id}'와 '{formerId}'가 서로를 이전 ID로 적었습니다"
+                            : $"{where}: 이전 ID '{formerId}'가 현재 다른 대화의 ID로 쓰이고 있습니다");
                         continue;
                     }
 
@@ -450,6 +502,104 @@ namespace RealSteel.Dialogue
             {
                 errors.Add($"{where}: {condition.variable}의 값 {reason}");
             }
+        }
+
+        private void ValidateReachable(DialogueData dialogue, string where)
+        {
+            Dictionary<string, List<ConditionData>> byVariable = new Dictionary<string, List<ConditionData>>();
+            foreach (ConditionData condition in dialogue.conditions)
+            {
+                if (condition == null || string.IsNullOrEmpty(condition.variable) || !variableDefs.ContainsKey(condition.variable)) continue;
+
+                if (!byVariable.TryGetValue(condition.variable, out List<ConditionData> list))
+                {
+                    list = new List<ConditionData>();
+                    byVariable.Add(condition.variable, list);
+                }
+                list.Add(condition);
+            }
+
+            foreach (KeyValuePair<string, List<ConditionData>> pair in byVariable)
+            {
+                if (pair.Value.Count < 2) continue;
+
+                VariableDef def = variableDefs[pair.Key];
+                bool possible = def.parsedType == VariableType.Int ? IntPossible(pair.Value)
+                    : def.parsedType == VariableType.Enum ? EnumPossible(def, pair.Value)
+                    : StringPossible(pair.Value);
+
+                if (!possible)
+                {
+                    errors.Add($"{where}: 조건끼리 모순이라 절대 나올 수 없습니다 ({string.Join(" 그리고 ", pair.Value)})");
+                }
+            }
+        }
+
+        private static bool IntPossible(List<ConditionData> conditions)
+        {
+            long low = long.MinValue;
+            long high = long.MaxValue;
+            long? equal = null;
+            HashSet<long> excluded = new HashSet<long>();
+
+            foreach (ConditionData condition in conditions)
+            {
+                if (!long.TryParse(condition.value, out long v)) return true;
+
+                switch (condition.op)
+                {
+                    case ">": low = Math.Max(low, v + 1); break;
+                    case ">=": low = Math.Max(low, v); break;
+                    case "<": high = Math.Min(high, v - 1); break;
+                    case "<=": high = Math.Min(high, v); break;
+                    case "==":
+                        if (equal.HasValue && equal.Value != v) return false;
+                        equal = v;
+                        break;
+                    case "!=": excluded.Add(v); break;
+                }
+            }
+
+            if (equal.HasValue) return equal.Value >= low && equal.Value <= high && !excluded.Contains(equal.Value);
+            if (low > high) return false;
+            if (low == long.MinValue || high == long.MaxValue || high - low >= excluded.Count) return true;
+
+            for (long v = low; v <= high; v++)
+            {
+                if (!excluded.Contains(v)) return true;
+            }
+            return false;
+        }
+
+        private static bool EnumPossible(VariableDef def, List<ConditionData> conditions)
+        {
+            HashSet<string> left = new HashSet<string>(def.allowed);
+            foreach (ConditionData condition in conditions)
+            {
+                if (condition.op == "==") left.IntersectWith(new[] { condition.value ?? "" });
+                else if (condition.op == "!=") left.Remove(condition.value ?? "");
+            }
+            return left.Count > 0;
+        }
+
+        private static bool StringPossible(List<ConditionData> conditions)
+        {
+            string equal = null;
+            HashSet<string> excluded = new HashSet<string>();
+            foreach (ConditionData condition in conditions)
+            {
+                string value = condition.value ?? "";
+                if (condition.op == "==")
+                {
+                    if (equal != null && equal != value) return false;
+                    equal = value;
+                }
+                else if (condition.op == "!=")
+                {
+                    excluded.Add(value);
+                }
+            }
+            return equal == null || !excluded.Contains(equal);
         }
 
         private void ValidateLine(LineData line, string where, bool checkKeys)

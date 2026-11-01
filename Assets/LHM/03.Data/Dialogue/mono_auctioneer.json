@@ -1,0 +1,20 @@
+{
+  "poolId": "mono_auctioneer",
+  "dialogues": [
+    {
+      "id": "mono_auctioneer_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [ { "speaker": "auctioneer", "textKey": "mono.auctioneer.fallback.1" } ]
+    },
+    {
+      "id": "mono_auctioneer_sold",
+      "band": "Ambient",
+      "cooldownSec": 30,
+      "conditions": [
+        { "variable": "auction.lastResult", "op": "==", "value": "sold" }
+      ],
+      "lines": [ { "speaker": "auctioneer", "textKey": "mono.auctioneer.sold.1" } ]
+    }
+  ]
+}

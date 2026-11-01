@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -16,13 +17,24 @@ namespace RealSteel.Dialogue
         [Header("F4로 말 걸 대사 풀")]
         [SerializeField] private string talkPoolId = "auction_npc";
 
-        [Header("디버그 토벌 보스")]
-        [SerializeField] private string seasonBoss = "boss.wheel";
-        [SerializeField] private string otherBoss = "boss.hammer";
+        [Header("디버그 토벌 보스 (G로 전환)")]
+        [SerializeField] private string[] regionBosses = { "boss.wheel", "boss.kyodai" };
 
+        private readonly Dictionary<string, int> attempts = new Dictionary<string, int>();
+        private readonly Dictionary<string, int> loses = new Dictionary<string, int>();
         private int difficultyIndex = 2;
+        private int bossIndex;
 
         public string SelectedDifficulty => Difficulties[difficultyIndex];
+        public string TargetBoss => regionBosses != null && regionBosses.Length > 0 ? regionBosses[bossIndex % regionBosses.Length] : "boss.wheel";
+
+        public int AttemptsOf(string boss) => attempts.TryGetValue(boss, out int count) ? count : 0;
+        public int LosesOf(string boss) => loses.TryGetValue(boss, out int count) ? count : 0;
+
+        public void AddAttempt(string boss)
+        {
+            attempts[boss] = AttemptsOf(boss) + 1;
+        }
 
         private void Start()
         {
@@ -34,7 +46,7 @@ namespace RealSteel.Dialogue
             }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
-            Debug.Log("[Step09] 1~5 난이도 / F1 패배 (Shift: 다른 보스) / F2 승리 / F3 유찰 (Shift: 판매) / F4 말 걸기 / F5 기록 / F6 저장 / F7 다시 읽기 / F8 세이브 폴더 / F9 순위 올리기 (Shift: 내리기) / F10 풀스크린 / F11 인터미션 / F12 초기화 후 저장 / Shift+F12 세이브 삭제");
+            Debug.Log("[Step09] 1~5 난이도 / G 대상 보스 전환 / F1 패배 / F2 승리 / F3 경매 정산(판매) / F4 말 걸기 / F5 기록 / F6 저장 / F7 다시 읽기 / F8 세이브 폴더 / F9 순위 올리기 (Shift: 내리기) / F10 풀스크린 / F11 인터미션 / F12 초기화 후 저장 / Shift+F12 세이브 삭제");
 #endif
         }
 
@@ -53,9 +65,10 @@ namespace RealSteel.Dialogue
             else if (keyboard.digit3Key.wasPressedThisFrame) SelectDifficulty(2);
             else if (keyboard.digit4Key.wasPressedThisFrame) SelectDifficulty(3);
             else if (keyboard.digit5Key.wasPressedThisFrame) SelectDifficulty(4);
-            else if (keyboard.f1Key.wasPressedThisFrame) RecordHunt("lose", shift ? otherBoss : seasonBoss);
-            else if (keyboard.f2Key.wasPressedThisFrame) RecordHunt("win", seasonBoss);
-            else if (keyboard.f3Key.wasPressedThisFrame) RecordAuction(shift ? "sold" : "unsold");
+            else if (keyboard.gKey.wasPressedThisFrame) NextBoss();
+            else if (keyboard.f1Key.wasPressedThisFrame) RecordHunt("lose", TargetBoss);
+            else if (keyboard.f2Key.wasPressedThisFrame) RecordHunt("win", TargetBoss);
+            else if (keyboard.f3Key.wasPressedThisFrame) RecordAuction("sold");
             else if (keyboard.f4Key.wasPressedThisFrame) manager.Talk(talkPoolId);
             else if (keyboard.f5Key.wasPressedThisFrame) Debug.Log("[Step09] 본 대사 기록\n" + manager.History.Dump());
             else if (keyboard.f6Key.wasPressedThisFrame) manager.Save();
@@ -74,6 +87,12 @@ namespace RealSteel.Dialogue
             Debug.Log($"[Step09] 다음 토벌 난이도: {Difficulties[difficultyIndex]}");
         }
 
+        private void NextBoss()
+        {
+            bossIndex = regionBosses == null || regionBosses.Length == 0 ? 0 : (bossIndex + 1) % regionBosses.Length;
+            Debug.Log($"[Step09] 대상 보스: {TargetBoss} (도전 {AttemptsOf(TargetBoss)}회, 패배 {LosesOf(TargetBoss)}회)");
+        }
+
         public void RecordHunt(string result, string boss)
         {
             DialogueVariables variables = manager.Variables;
@@ -84,9 +103,9 @@ namespace RealSteel.Dialogue
             variables.Set("hunt.lastDifficulty", difficulty);
             variables.Add("hunt.count", 1);
             variables.Add(result == "win" ? "hunt.winCount" : "hunt.loseCount", 1);
-            if (result == "lose" && boss == seasonBoss) variables.Add("hunt.bossLoseCount", 1);
+            if (result == "lose") loses[boss] = LosesOf(boss) + 1;
 
-            manager.LogState($"{(result == "win" ? "승리" : "패배")} ({boss}, {difficulty})");
+            manager.LogState($"{(result == "win" ? "승리" : "패배")} ({boss}, {difficulty}) — 이 보스 패배 {LosesOf(boss)}회");
             manager.Save();
         }
 

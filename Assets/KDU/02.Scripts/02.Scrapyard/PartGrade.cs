@@ -1,6 +1,7 @@
 // 부품 등급. 프로토타입을 뺀 등급마다 부품 1~3번이 있다
 public enum PartGrade
 {
+    Basic = -1,  // 파츠 전용. 부품·드랍 대상 아님
     Common = 0,
     Rare = 1,
     Epic = 2,
@@ -26,6 +27,8 @@ public static class PartGrades
     {
         switch (grade)
         {
+            case PartGrade.Basic:
+                return "기본";
             case PartGrade.Common:
                 return "일반";
             case PartGrade.Rare:

@@ -17,19 +17,20 @@ public class CraftingManager : Singleton<CraftingManager>
 
     public int SortParts(string partID)
     {
-        string number = partID.Split('_')[^1];
+        PartsDefinition part = catalog != null ? catalog.Find(partID) : null;
+        if (part == null)
+            return 0;
 
-        switch (number)
+        switch (part.Slot)
         {
-            case "001" or "002" or "003":   // 왼쪽 팔
+            case Slot.LeftArm:      // 왼쪽 팔
                 return 1;
-            case "004" or "005" or "006":   // 오른쪽 팔
+            case Slot.RightArm:     // 오른쪽 팔
                 return 2;
-            case "007" or "008" or "009":   // 왼쪽 다리
+            case Slot.LeftLeg:      // 왼쪽 다리
                 return 3;
-            case "010" or "011" or "012":   // 오른쪽 다리
+            case Slot.RightLeg:     // 오른쪽 다리
                 return 4;
-
         }
         return 0;
     }

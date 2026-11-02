@@ -17,7 +17,7 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
             OpenCraftingWindow();
         if (Input.GetKeyDown(KeyCode.K))
             OpenShopWindow();
-        if (Input.GetKeyDown(KeyCode.L))
+        if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftShift))
             OpenFixWindow();
     }
 

@@ -148,7 +148,8 @@ namespace RealSteel.Dialogue
                     .Add("F6 / F7 / F8", "저장 / 다시 읽기 / 세이브 폴더")
                     .Add("F9 · Shift + F9", "순위 구간 올리기 · 내리기")
                     .Add("F10 / F11", "풀스크린 / 인터미션 대사")
-                    .Add("F12 · Shift + F12", "기록 초기화 · 세이브 삭제");
+                    .Add("F12 · Shift + F12", "기록 초기화 · 세이브 삭제")
+                    .Add("Shift + Z",  "수리 복구 기능");
             }
             if (Has(nameof(Step112_MidnightTest)))
             {

@@ -38,6 +38,12 @@ public class CoreDefinition : ScriptableObject
     [Tooltip("코어 이미지")]
     [SerializeField] private Sprite _sprite;
 
+    [Tooltip("기본 공격력")]
+    [Min(0)][SerializeField] private int _baseAttack;
+
+    [Tooltip("파츠 쿨타임 감소 합 상한 (%)")]
+    [Min(0f)][SerializeField] private float _cooldownReductionCap = 30f;
+
     [Tooltip("레벨별 수치")]
     [SerializeField] private CoreLevel[] _levels = new CoreLevel[1];
 
@@ -45,6 +51,8 @@ public class CoreDefinition : ScriptableObject
     public string DisplayName => _displayName;
     public string Description => _description;
     public Sprite Sprite => _sprite;
+    public int BaseAttack => _baseAttack;
+    public float CooldownReductionCap => _cooldownReductionCap;
     public int MaxLevel => _levels != null ? _levels.Length : 0;
 
     // 범위 밖 레벨은 양 끝으로 맞춘다

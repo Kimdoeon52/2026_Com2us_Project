@@ -89,6 +89,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             _save = new InventorySaveData();
             _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
             EnsureCore();
+            EquipStarting();
 
             for (int i = 0; i < _startingParts; i++)
             {
@@ -460,6 +461,26 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
 
         if (Core == null)
             _save.Core.Set(_coreCatalog.DefaultCore.Id);
+    }
+
+    // 새 게임에서 시작 파츠를 각 부위에 바로 장착한다
+    private void EquipStarting()
+    {
+        PartsDefinition[] starting = _catalog != null ? _catalog.StartingEquipment : null;
+        if (starting == null)
+            return;
+
+        for (int i = 0; i < starting.Length; i++)
+        {
+            PartsDefinition part = starting[i];
+            if (part == null)
+                continue;
+
+            if (_save.Equipment.Get(part.Slot) != null)
+                Debug.LogWarning($"시작 파츠 {part.Id}: {part.Slot} 부위가 겹친다.", this);
+
+            _save.Equipment.Set(part.Slot, part.Id);
+        }
     }
 
     public PartsDefinition GetEquipped(Slot slot)

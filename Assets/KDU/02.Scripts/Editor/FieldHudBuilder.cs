@@ -15,6 +15,11 @@ public static class FieldHudBuilder
     private const int TimelineSegments = 20;
     private const int StatusSegments = 10;
     private const int MissionRows = 3;
+    private const string CirclePath = "Assets/KDU/06.Image/Radar/radar_circle.png";
+    private const string RingPath = "Assets/KDU/06.Image/Radar/radar_ring.png";
+    private const float RadarSize = 190f;
+    private const float SweepAngle = 60f;
+    private const float SweepAlpha = 0.35f;
 
     // 로봇 상태 줄: 부위, 라벨, 열, 행
     private static readonly (Slot slot, string label, int col, int row)[] StatusLayout =
@@ -213,20 +218,129 @@ public static class FieldHudBuilder
         return PlaceLabel(go.transform, "Value", "0", 22, Bone, TextAlignmentOptions.Left, 10f, 18f, width, 28f);
     }
 
-    //================================ 우상단: 미니맵 자리 ================================
-    // 지도 UI는 다른 파트. 틀과 표시 자리만 둔다
+    //================================ 우상단: 고물 레이더 ================================
     private static void BuildMinimap(Transform root)
     {
         GameObject map = PlacePanel(root, "Minimap", "bg_panelSmall", Color.white, 3f, 1615f, 100f, 265f, 235f);
         Overlay(map.transform, "frame_panelMedium_v8", 8f);
+        Transform t = map.transform;
 
-        GameObject view = FindOrCreate(map.transform, "MapView");
-        PlaceRect(view, 24f, 24f, 217f, 187f);
-        RawImage raw = GetOrAdd<RawImage>(view);
-        raw.color = new Color(1f, 1f, 1f, 0.05f);
-        raw.raycastTarget = false;
+        Transform oldView = t.Find("MapView");
+        if (oldView != null)
+            Undo.DestroyObjectImmediate(oldView.gameObject);
 
-        PlaceLabel(map.transform, "Caption", "MAP", 10, Neutral, TextAlignmentOptions.Right, 180f, 210f, 60f, 14f);
+        Sprite circle = EnsureCircleSprite(CirclePath, 0f);
+        Sprite ring = EnsureCircleSprite(RingPath, 3f);
+
+        GameObject radar = FindOrCreate(t, "Radar");
+        PlaceRect(radar, 37f, 22f, RadarSize, RadarSize);
+        Transform r = radar.transform;
+
+        PlaceSprite(r, "Base", circle, new Color(1f, 1f, 1f, 0.06f), 0f);
+        PlaceBox(r, "AxisH", Ghost, 0f, RadarSize * 0.5f, RadarSize, 1f);
+        PlaceBox(r, "AxisV", Ghost, RadarSize * 0.5f, 0f, 1f, RadarSize);
+        PlaceSprite(r, "RingInner", ring, Ghost, RadarSize * 0.2f);
+        PlaceSprite(r, "RingOuter", ring, new Color(0.71f, 0.73f, 0.75f, 0.6f), 0f);
+
+        Image sweep = PlaceSprite(r, "Sweep", circle, new Color(Yellow.r, Yellow.g, Yellow.b, SweepAlpha), 0f);
+        sweep.type = Image.Type.Filled;
+        sweep.fillMethod = Image.FillMethod.Radial360;
+        sweep.fillOrigin = (int)Image.Origin360.Top;
+        sweep.fillClockwise = false;
+        sweep.fillAmount = SweepAngle / 360f;
+
+        GameObject blips = FindOrCreate(r, "Blips");
+        Stretch(blips.GetComponent<RectTransform>());
+
+        GameObject template = PlaceBox(r, "BlipTemplate", Orange, 0f, 0f, 8f, 8f);
+        Center(template.GetComponent<RectTransform>(), 8f);
+        template.SetActive(false);
+
+        GameObject player = PlaceDiamond(r, "Player", Yellow, 0f, 0f, 10f);
+        Center(player.GetComponent<RectTransform>(), 10f);
+        player.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+        PlaceLabel(t, "Caption", "SCRAP RADAR", 10, Neutral, TextAlignmentOptions.Right, 140f, 212f, 100f, 14f);
+
+        ScrapRadarView view = GetOrAdd<ScrapRadarView>(map);
+        var so = new SerializedObject(view);
+        so.FindProperty("_sweep").objectReferenceValue = sweep;
+        so.FindProperty("_blipRoot").objectReferenceValue = blips.GetComponent<RectTransform>();
+        so.FindProperty("_blipTemplate").objectReferenceValue = template;
+        if (so.FindProperty("_detector").objectReferenceValue == null)
+            so.FindProperty("_detector").objectReferenceValue = Object.FindAnyObjectByType<ScrapNodeDetector>(FindObjectsInactive.Include);
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // 레이더 영역을 inset만큼 줄여 채운다. 회전 중심이 가운데가 되도록 피벗도 가운데
+    private static Image PlaceSprite(Transform parent, string name, Sprite sprite, Color color, float inset)
+    {
+        GameObject go = FindOrCreate(parent, name);
+        RectTransform rect = go.GetComponent<RectTransform>();
+        Stretch(rect);
+        rect.offsetMin = new Vector2(inset, inset);
+        rect.offsetMax = new Vector2(-inset, -inset);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.localRotation = Quaternion.identity;
+
+        Image image = GetOrAdd<Image>(go);
+        image.sprite = sprite;
+        image.type = Image.Type.Simple;
+        image.color = color;
+        image.raycastTarget = false;
+        return image;
+    }
+
+    private static void Center(RectTransform rect, float size)
+    {
+        rect.anchorMin = new Vector2(0.5f, 0.5f);
+        rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.pivot = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(size, size);
+    }
+
+    // 원(thickness 0) 또는 링 스프라이트를 없을 때만 만든다
+    private static Sprite EnsureCircleSprite(string path, float thickness)
+    {
+        Sprite existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        if (existing != null)
+            return existing;
+
+        const int size = 256;
+        float center = (size - 1) * 0.5f;
+        float radius = size * 0.5f - 1f;
+        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+
+        for (int y = 0; y < size; y++)
+        {
+            for (int x = 0; x < size; x++)
+            {
+                float d = Vector2.Distance(new Vector2(x, y), new Vector2(center, center));
+                float alpha = Mathf.Clamp01(radius - d + 0.5f);
+                if (thickness > 0f)
+                    alpha = Mathf.Min(alpha, Mathf.Clamp01(d - (radius - thickness) + 0.5f));
+
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, alpha));
+            }
+        }
+
+        string folder = System.IO.Path.GetDirectoryName(path).Replace('\\', '/');
+        if (!AssetDatabase.IsValidFolder(folder))
+            AssetDatabase.CreateFolder(System.IO.Path.GetDirectoryName(folder).Replace('\\', '/'), System.IO.Path.GetFileName(folder));
+
+        System.IO.File.WriteAllBytes(path, texture.EncodeToPNG());
+        Object.DestroyImmediate(texture);
+        AssetDatabase.ImportAsset(path);
+
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType = TextureImporterType.Sprite;
+        importer.spriteImportMode = SpriteImportMode.Single;
+        importer.alphaIsTransparency = true;
+        importer.mipmapEnabled = false;
+        importer.SaveAndReimport();
+
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     //================================ 우측: 미션 ================================

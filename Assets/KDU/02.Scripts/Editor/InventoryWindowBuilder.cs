@@ -49,6 +49,7 @@ public static class InventoryWindowBuilder
         (Slot.RightArm, "R.ARM · W"),
         (Slot.LeftLeg, "L.LEG · E"),
         (Slot.RightLeg, "R.LEG · R"),
+        (Slot.Head, "HEAD"),
     };
 
     [MenuItem("KDU/인벤토리/인벤토리 창 스타일 적용")]
@@ -239,18 +240,18 @@ public static class InventoryWindowBuilder
     private static void BuildSpec(Transform window)
     {
         Transform panel = Section(window, "SpecPanel", SpecX, SpecWidth);
-        PlaceLabel(panel, "Caption", "PLAYER  //  SPEC", 14, Cyan, TextAlignmentOptions.Left, 32f, 28f, 300f, 20f);
-        PlaceLabel(panel, "Title", "스펙", 44, Bone, TextAlignmentOptions.Left, 32f, 50f, 300f, 56f);
-        PlaceBox(panel, "Divider", Ghost, 32f, 120f, SpecWidth - 64f, 2f);
+        PlaceLabel(panel, "Caption", "PLAYER  //  SPEC", 12, Cyan, TextAlignmentOptions.Left, 104f, 32f, 300f, 16f);
+        PlaceLabel(panel, "Title", "스펙", 28, Bone, TextAlignmentOptions.Left, 32f, 20f, 70f, 36f);
+        PlaceBox(panel, "Divider", Ghost, 32f, 64f, SpecWidth - 64f, 2f);
 
         MoveStat(window, panel);
 
-        PlaceBox(panel, "SkillDivider", Ghost, 32f, 404f, SpecWidth - 64f, 2f);
-        TextMeshProUGUI header = PlaceLabel(panel, "SkillHeader", "SKILLS // 0", 26, Bone, TextAlignmentOptions.Left, 32f, 418f, 260f, 34f);
-        PlaceLabel(panel, "SkillCaption", "장착 파츠 스킬", 16, Neutral, TextAlignmentOptions.Left, 230f, 428f, 200f, 22f);
+        PlaceBox(panel, "SkillDivider", Ghost, 32f, 360f, SpecWidth - 64f, 2f);
+        TextMeshProUGUI header = PlaceLabel(panel, "SkillHeader", "SKILLS // 0", 24, Bone, TextAlignmentOptions.Left, 32f, 372f, 260f, 32f);
+        PlaceLabel(panel, "SkillCaption", "장착 파츠 스킬", 16, Neutral, TextAlignmentOptions.Left, 220f, 380f, 200f, 22f);
 
         GameObject list = FindOrCreate(panel, "SkillList");
-        PlaceRect(list, 32f, 464f, SpecWidth - 64f, 320f);
+        PlaceRect(list, 32f, 414f, SpecWidth - 64f, 366f);
 
         PlayerSkillView view = list.GetComponent<PlayerSkillView>();
         if (view == null)
@@ -284,7 +285,7 @@ public static class InventoryWindowBuilder
         if (stat.parent != panel)
             Undo.SetTransformParent(stat, panel, Title);
 
-        PlaceRect(stat.gameObject, 32f, 136f, SpecWidth - 64f, 256f);
+        PlaceRect(stat.gameObject, 32f, 76f, SpecWidth - 64f, 276f);
 
         PlayerStatView view = stat.GetComponent<PlayerStatView>();
         if (view == null)
@@ -292,21 +293,22 @@ public static class InventoryWindowBuilder
 
         var so = new SerializedObject(view);
         so.FindProperty("_title").stringValue = "";
+        so.FindProperty("_lineHeight").floatValue = 1.35f;
         so.ApplyModifiedPropertiesWithoutUndo();
 
         if (so.FindProperty("_text").objectReferenceValue is TextMeshProUGUI text)
         {
-            text.fontSize = 24;
+            text.fontSize = 20;
             text.color = Bone;
-            text.lineSpacing = 18f;
+            text.lineSpacing = 0f;
             text.raycastTarget = false;
         }
     }
 
     private static void BuildSkillCard(Transform list, int index, Slot slot, string slotLabel)
     {
-        const float height = 74f;
-        const float gap = 8f;
+        const float height = 66f;
+        const float gap = 6f;
         float width = SpecWidth - 64f;
 
         GameObject card = FindOrCreate(list, $"SkillCard_{index}");
@@ -315,15 +317,15 @@ public static class InventoryWindowBuilder
         card.GetComponent<Image>().raycastTarget = false;
 
         PlaceBox(card.transform, "Accent", Yellow, 0f, 14f, 4f, height - 28f);
-        TextMeshProUGUI skillName = PlaceLabel(card.transform, "SkillName", "비어 있음", 26, Bone, TextAlignmentOptions.Left, 20f, 8f, 300f, 32f);
-        PlaceLabel(card.transform, "SlotLabel", slotLabel, 12, Cyan, TextAlignmentOptions.Right, width - 220f, 52f, 200f, 16f);
-        TextMeshProUGUI partName = PlaceLabel(card.transform, "PartName", "", 14, Neutral, TextAlignmentOptions.Left, 140f, 46f, 220f, 20f);
-        PlaceLabel(card.transform, "CostLabel", "COST", 12, Neutral, TextAlignmentOptions.Left, 20f, 48f, 44f, 16f);
+        TextMeshProUGUI skillName = PlaceLabel(card.transform, "SkillName", "비어 있음", 24, Bone, TextAlignmentOptions.Left, 20f, 6f, 300f, 30f);
+        PlaceLabel(card.transform, "SlotLabel", slotLabel, 12, Cyan, TextAlignmentOptions.Right, width - 220f, 44f, 200f, 16f);
+        TextMeshProUGUI partName = PlaceLabel(card.transform, "PartName", "", 14, Neutral, TextAlignmentOptions.Left, 140f, 40f, 220f, 20f);
+        PlaceLabel(card.transform, "CostLabel", "COST", 12, Neutral, TextAlignmentOptions.Left, 20f, 42f, 44f, 16f);
 
         var pips = new Image[MaxCostPips];
         for (int i = 0; i < MaxCostPips; i++)
         {
-            GameObject pip = PlaceBox(card.transform, $"Pip_{i}", Yellow, 66f + i * 14f, 50f, 9f, 9f);
+            GameObject pip = PlaceBox(card.transform, $"Pip_{i}", Yellow, 66f + i * 14f, 44f, 9f, 9f);
             pip.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 45f);
             pip.SetActive(false);
             pips[i] = pip.GetComponent<Image>();

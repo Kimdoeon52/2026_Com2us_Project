@@ -15,15 +15,18 @@ public class PlayerStatView : MonoBehaviour
     [Tooltip("골드 라벨")]
     [SerializeField] private string _goldLabel = "골드";
 
+    [Tooltip("줄 높이 (em)")]
+    [Min(0.5f)][SerializeField] private float _lineHeight = 1f;
+
     private readonly StringBuilder _builder = new StringBuilder();
-    private IPlayerStatSource _source = new DummyPlayerStatSource();
+    private IPlayerStatSource _source = new CoreStatSource();
     private IGoldSource _gold;
     private InventoryHost _host;
 
     // 실제 스탯 계산을 붙일 때 호출한다
     public void Bind(IPlayerStatSource source)
     {
-        _source = source ?? new DummyPlayerStatSource();
+        _source = source ?? new CoreStatSource();
         Refresh();
     }
 
@@ -95,6 +98,6 @@ public class PlayerStatView : MonoBehaviour
     private void AppendLine(string label, string value)
     {
         _builder.Append("<align=left>").Append(label).Append("<line-height=0>\n");
-        _builder.Append("<align=right>").Append(value).Append("<line-height=1em>\n");
+        _builder.Append("<align=right>").Append(value).Append("<line-height=").Append(_lineHeight.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)).Append("em>\n");
     }
 }

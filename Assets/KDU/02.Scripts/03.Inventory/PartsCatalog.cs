@@ -7,7 +7,11 @@ public class PartsCatalog : ScriptableObject
     [Tooltip("파츠 정의")]
     [SerializeField] private PartsDefinition[] _parts;
 
+    [Tooltip("새 게임 시 장착된 파츠")]
+    [SerializeField] private PartsDefinition[] _startingEquipment;
+
     public PartsDefinition[] Parts => _parts;
+    public PartsDefinition[] StartingEquipment => _startingEquipment;
 
     public PartsDefinition Find(string id)
     {

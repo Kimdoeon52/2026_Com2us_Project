@@ -73,11 +73,20 @@ public class PartsDefinition : ScriptableObject
     [Range(0f, 1f)]
     private float _destructionResistance;
 
-    [Tooltip("공격력 계수")]
-    private int _attackPower;        // 팔 파츠: 공격력 기여치
+    [Tooltip("공격력 (팔)")]
+    [Min(0)][SerializeField] private int _attackPower;
 
-    [Tooltip("이동속도 보너스")]
-    private float _moveSpeedBonus;   // 다리 파츠: 이동속도 보정
+    [Tooltip("이동속도 지수 (다리)")]
+    [Min(0f)][SerializeField] private float _moveSpeedIndex;
+
+    [Tooltip("쿨타임 감소 (%)")]
+    [Min(0f)][SerializeField] private float _cooldownReduction;
+
+    [Tooltip("방어력 보너스")]
+    [Min(0f)][SerializeField] private float _defenseBonus;
+
+    [Tooltip("사거리 증가 (%)")]
+    [Min(0f)][SerializeField] private float _rangeIncrease;
 
     [Tooltip("치명타 저항력")]
     private float _critResistance;   // 머리 파츠: 치명타 저항
@@ -106,7 +115,10 @@ public class PartsDefinition : ScriptableObject
     public int Cost => cost;
     public float DestructionResistance => _destructionResistance;
     public int AttackPower => _attackPower;
-    public float MoveSpeedBonus => _moveSpeedBonus;
+    public float MoveSpeedIndex => _moveSpeedIndex;
+    public float CooldownReduction => _cooldownReduction;
+    public float DefenseBonus => _defenseBonus;
+    public float RangeIncrease => _rangeIncrease;
     public float CritResistance => _critResistance;
     public float CritDamageReduction => _critDamageReduction;
     public string ActiveSkillId => _activeSkillId;

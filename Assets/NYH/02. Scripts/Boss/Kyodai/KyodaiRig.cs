@@ -66,6 +66,9 @@ public class KyodaiRig : MonoBehaviour
 
     public SkinnedMeshRenderer BodyRenderer { get; private set; }
 
+    /// <summary>몸 중심 뼈 (Hips). 양팔이 맡는 구역을 나누는 기준</summary>
+    public Transform BodyBone => body;
+
     private void Awake()
     {
         foreach (var t in GetComponentsInChildren<Transform>(true))

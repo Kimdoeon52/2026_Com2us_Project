@@ -81,6 +81,13 @@ public class KyodaiLimb : MonoBehaviour
     [SerializeField] private Color attackColor = new Color(1f, 0.55f, 0.55f, 1f);
     [SerializeField] private Color lingerColor = new Color(1.6f, 1.6f, 1.6f, 1f);
 
+    [Header("어깨 조준 한계 — 기획 수치 없음(임시)")]
+    [Tooltip("TODO: 기획 수치 없음. 어깨가 애니메이션 자세에서 벗어날 수 있는 최대 각도(도). 작을수록 팔이 덜 틀어진다")]
+    [Range(0f, 90f)] [SerializeField] private float maxAimAngle = 35f;
+
+    [Tooltip("TODO: 기획 수치 없음. 몸 중심에서 이 팔 쪽으로 띄울 거리(월드). 이 선을 넘어 반대쪽으로 가지 않는다")]
+    [Min(0f)] [SerializeField] private float bodyCenterMargin;
+
     [Header("피격 연출")]
     [SerializeField] private Color hitFlashColor = new Color(2f, 0.15f, 0.15f, 1f);
 
@@ -113,6 +120,7 @@ public class KyodaiLimb : MonoBehaviour
     private float baseArmLength; // 커지기 전 위팔 + 아래팔 길이(월드)
     private float aimX;      // 화면에서 손을 맞출 경기장 x
     private float aimWeight; // 0 = 조준 안 함
+    private float bodySide = 1f; // 몸 중심에서 이 팔이 있는 쪽 (+1 = 월드 x+)
 
     // 팔 판정: [0] 아래팔~손끝, [1] 위팔. 경기장 평면에 놓인 회전 상자
     private BossHurtZone[] armZones = new BossHurtZone[0];
@@ -129,6 +137,10 @@ public class KyodaiLimb : MonoBehaviour
     public BossHurtZone HurtZone => hurtZone;
     public float ForegroundOffset => foregroundOffset;
     public Transform Effector => effector;
+    /// <summary>어깨가 각도 한계에 걸려 손이 목표까지 못 가는 중인지</summary>
+    public bool AimCapped { get; private set; }
+    /// <summary>조준 뒤 손이 화면에서 실제로 있는 경기장 x</summary>
+    public float AimResultX { get; private set; }
     /// <summary>준비 끝(Start 이후) — 모션 재생·미리보기는 이걸 보고 적용한다</summary>
     public bool Ready => ready;
     /// <summary>대기 자세의 손 자리(월드)</summary>
@@ -212,6 +224,7 @@ public class KyodaiLimb : MonoBehaviour
         endRest = end.localRotation;
         upperRestScale = upper.localScale;
         baseArmLength = Vector3.Distance(upper.position, lower.position) + Vector3.Distance(lower.position, end.position);
+        if (rig.BodyBone != null) bodySide = Mathf.Sign(upper.position.x - rig.BodyBone.position.x);
 
         if (effector == null)
         {
@@ -323,6 +336,17 @@ public class KyodaiLimb : MonoBehaviour
         aimWeight = Mathf.Clamp01(weight);
     }
 
+    /// <summary>경기장 x를 이 팔이 맡는 쪽(몸 중심 기준 절반)으로 자른다</summary>
+    public float ClampAimX(float playX)
+    {
+        if (!RigMode || rig.BodyBone == null) return playX;
+        float limit = boss.ToPlayPlane(rig.BodyBone.position).x + bodySide * bodyCenterMargin;
+        return bodySide > 0f ? Mathf.Max(playX, limit) : Mathf.Min(playX, limit);
+    }
+
+    /// <summary>경기장 x가 이 팔이 맡는 쪽에 있는지</summary>
+    public bool CoversX(float playX) => Mathf.Approximately(ClampAimX(playX), playX);
+
     private async UniTask Play(Tween tween, CancellationToken token)
     {
         tweens.Add(tween);
@@ -380,6 +404,7 @@ public class KyodaiLimb : MonoBehaviour
     // 위팔만 돌리므로 애니메이션의 팔 모양이 그대로 남는다
     private void ApplyAim()
     {
+        AimCapped = false;
         if (aimWeight <= 0f) return;
         Vector3 shoulderPos = upper.position, handPos = end.position;
         Vector2 seen = boss.ToPlayPlane(handPos);
@@ -400,7 +425,11 @@ public class KyodaiLimb : MonoBehaviour
         }
 
         Quaternion turn = Quaternion.FromToRotation(handPos - shoulderPos, sight.GetPoint(distance) - shoulderPos);
-        upper.rotation = Quaternion.Slerp(Quaternion.identity, turn, aimWeight) * upper.rotation;
+        // 섞이는 중에는 한계 판정을 하지 않는다 — 덜 돌아간 자리를 한계로 착각해 목표가 끌려온다
+        AimCapped = aimWeight >= 1f && Quaternion.Angle(Quaternion.identity, turn) > maxAimAngle;
+        Quaternion limited = Quaternion.RotateTowards(Quaternion.identity, turn, maxAimAngle);
+        upper.rotation = Quaternion.Slerp(Quaternion.identity, limited, aimWeight) * upper.rotation;
+        AimResultX = boss.ToPlayPlane(end.position).x;
     }
 
     // 뼈 자세가 끝난 뒤, 화면에 보이는 팔 자리로 판정 상자를 옮긴다

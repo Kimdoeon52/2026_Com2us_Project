@@ -86,6 +86,19 @@ public class KyodaiBossController : BossControllerBase
         _patternIndex = 0;
     }
 
+    // 팔마다 몸 중심 기준 자기 쪽만 맡으므로, 플레이어 반대쪽 팔의 패턴은 건너뛴다
+    public override BossPatternGimmickBase GetNextPatternGimmick()
+    {
+        BossPatternGimmickBase first = base.GetNextPatternGimmick();
+        BossPatternGimmickBase next = first;
+        for (int i = 0; i < activePatternPool.Count && next != null; i++)
+        {
+            if (!(next is KyodaiMotionPattern motionPattern) || motionPattern.CanReachPlayer()) return next;
+            next = base.GetNextPatternGimmick();
+        }
+        return first;
+    }
+
     /// <summary>경기장 point 자리에서 카메라 쪽(-z)으로 forward만큼 나온 3D 좌표 (손 목표·IK 타깃)</summary>
     public Vector3 PlayPoint(Vector2 point, float forward) => new Vector3(point.x, point.y, playZ - forward);
 

@@ -29,6 +29,7 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     private float followVelocity;
     private float telegraphOffsetX;
     private bool contactHit; // 팔 접촉 피해는 패턴당 1번
+    private KyodaiLimb aimLimb;
 
     public KyodaiMotionData Motion => motion;
 
@@ -48,6 +49,18 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
         followVelocity = 0f;
         telegraphOffsetX = 0f;
         contactHit = false;
+        aimLimb = motion != null && motion.UsesAim ? kyodai.FindLimb(motion.aimPartId) : null;
+        if (aimLimb != null) target.x = aimLimb.ClampAimX(target.x);
+    }
+
+    /// <summary>플레이어가 이 패턴의 팔이 맡는 쪽에 있는지. 조준 없는 패턴은 항상 true</summary>
+    public bool CanReachPlayer()
+    {
+        if (motion == null || !motion.UsesAim) return true;
+        KyodaiLimb limb = kyodai.FindLimb(motion.aimPartId);
+        var found = GameObject.FindWithTag("Player");
+        if (limb == null || found == null) return true;
+        return limb.CoversX(kyodai.ClampToArena(found.transform.position.x, motion.targetMargin));
     }
 
     /// <summary>플레이어 발밑 x를 경기장 안으로 자른 자리. 모션 창 미리보기도 같은 규칙</summary>
@@ -93,9 +106,20 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     // 추적 구간에만 목표가 플레이어를 늦게 따라간다. 구간이 끝나면 그 자리에 고정되고 판정·그림자도 거기로 간다
     private void FollowPlayer(float t)
     {
-        if (player == null || !motion.IsFollowing(t)) return;
-        float wanted = kyodai.ClampToArena(player.position.x, motion.targetMargin);
-        target.x = Mathf.SmoothDamp(target.x, wanted, ref followVelocity, motion.followTime, motion.maxFollowSpeed, Time.deltaTime);
+        if (aimLimb == null || aimLimb.Layer != LimbLayer.Transition) return;
+
+        if (player != null && motion.IsFollowing(t))
+        {
+            float wanted = aimLimb.ClampAimX(kyodai.ClampToArena(player.position.x, motion.targetMargin));
+            target.x = Mathf.SmoothDamp(target.x, wanted, ref followVelocity, motion.followTime, motion.maxFollowSpeed, Time.deltaTime);
+        }
+
+        // 어깨가 각도 한계에 걸리면 목표를 손이 실제로 있는 자리로 당긴다 — 손·그림자·판정이 어긋나지 않게
+        if (aimLimb.AimCapped)
+        {
+            target.x = aimLimb.AimResultX;
+            followVelocity = 0f;
+        }
         if (telegraph != null) telegraph.MoveTo(target.x + telegraphOffsetX);
     }
 

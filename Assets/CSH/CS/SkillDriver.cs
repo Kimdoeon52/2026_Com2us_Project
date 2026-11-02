@@ -55,6 +55,13 @@ public sealed class SkillDriver : IExternalActionDriver
     /// <summary>러너로 스킬이 시작된 순간</summary>
     public event Action<SkillRunner> OnSkillBegin;
 
+    /// <summary>
+    /// 마지막으로 시작한 행동의 슬롯. 시작한 적이 없으면 null.
+    /// 장비 보정(ActionModifierData)이 "이 행동이 어느 슬롯에서 나왔는지"를 알기 위해 읽는다 —
+    /// 보정은 Begin·비용 확정 시점에만 계산되므로, 그 시점에는 항상 지금 행동의 슬롯이 들어 있다
+    /// </summary>
+    public ActionSlot? ActiveSlot { get; private set; }
+
     public SkillDriver(ActionExecutor executor, ISkillInputSource input, ISkillLoadout loadout)
     {
         this.executor = executor;
@@ -120,6 +127,7 @@ public sealed class SkillDriver : IExternalActionDriver
             SlotState s = frame[slot];
             if (!s.Any) continue;
             if (running != null && running.ListensTo(slot)) continue;
+            if (IsSlotBroken(slot)) continue; // 부위 파괴된 슬롯은 입력 버퍼에도 넣지 않는다
 
             ActionData bound = loadout.GetSlotAction(slot);
             if (bound == null) continue;
@@ -147,9 +155,14 @@ public sealed class SkillDriver : IExternalActionDriver
 
     private void StartFromSlot(Pending p, in SkillInputFrame frame)
     {
+        // 버퍼에 들고 있던 사이에 부위가 파괴됐을 수 있으니 시작 직전에 한 번 더 본다
+        if (IsSlotBroken(p.Slot)) return;
+
+        ActiveSlot = p.Slot;
+
         if (p.Bound is SkillData skill)
         {
-            // 부위 파손·쿨타임 게이트. 실린더 게이트는 러너가 비용 확정 시점에 한다
+            // 지상 전용·쿨타임 게이트 (부위 파손은 위 IsSlotBroken이 슬롯 기준으로 이미 봤다). 실린더 게이트는 러너가 비용 확정 시점에 한다
             ActionData gated = executor.SkillGateStart(p.StartAs);
             if (gated == null) return;
 
@@ -179,6 +192,8 @@ public sealed class SkillDriver : IExternalActionDriver
     // 체인은 이미 비용을 낸 후속 동작이라 게이트·비용 없이 바로 시작한다
     private void StartChain(ActionData next, ActionSlot slot, in SkillInputFrame frame)
     {
+        ActiveSlot = slot;
+
         if (next is SkillData skill)
         {
             if (StartRunner(skill, next, slot, prepaid: true))
@@ -200,6 +215,19 @@ public sealed class SkillDriver : IExternalActionDriver
         current = runner;
         OnSkillBegin?.Invoke(runner);
         return true;
+    }
+
+    /// <summary>
+    /// 슬롯에 대응하는 부위가 파괴됐는지 (ActionSlotParts 매핑 기준). Basic/Dodge는 항상 false.
+    /// CombatDataHub나 스냅샷이 없으면 막을 근거가 없으니 false — ActionExecutor.IsPartBroken과 같은 정책
+    /// </summary>
+    public bool IsSlotBroken(ActionSlot slot)
+    {
+        if (!slot.TryGetBodyPart(out BodyPart part)) return false;
+
+        var hub = CombatDataHub.Instance;
+        string id = executor.FighterId;
+        return hub != null && hub.GetSnapshot(id) != null && hub.IsPartBroken(id, part);
     }
 
     private SkillRunner GetRunner(SkillData skill)

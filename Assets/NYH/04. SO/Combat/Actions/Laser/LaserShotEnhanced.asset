@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2aeed0f9ecea019459fe11b4dc8f756f, type: 3}
+  m_Name: LaserShotEnhanced
+  m_EditorClassIdentifier: 
+  actionName: LaserShot
+  source: 1
+  requiredPart: 2
+  startupFrames: 90
+  activeFrames: 6
+  recoveryFrames: 30
+  isInvincibleDuringActive: 0
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 11
+  hitIntervalFrames: 9
+  hitStopScale: 1
+  animationClipName: 
+  activeClipName: 
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
+  launchVelocity: 0
+  advanceDistance: 0
+  advanceDuringActiveOnly: 0
+  trailAfterImageInterval: 0
+  groundOnly: 0
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0.05, y: 0.27}
+  flame: {fileID: 0}
+  perBoxDamage: 0
+  cooldownFrames: 60
+  cooldownOwner: {fileID: 11400000, guid: a1eb701c456a7af4bb711b788c0bb1a1, type: 2}
+  cylinderCost: 1
+  fallbackAction: {fileID: 11400000, guid: a1eb701c456a7af4bb711b788c0bb1a1, type: 2}
+  frameBoxes: []
+  holdMode: 0
+  minHoldFrames: 60
+  earlyReleaseCooldownScale: 0.5
+  maxHoldFrames: 0
+  enhancedVariant: {fileID: 0}
+  enhanceSlot: 0
+  enhanceMode: 0
+  interruptCooldownScale: 1
+  fan:
+    rays: 11
+    spreadDegrees: 90
+    range: 7
+    thickness: 0.6
+    hitLength: 0
+  hoverInAir: 1

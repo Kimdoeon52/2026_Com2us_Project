@@ -71,6 +71,7 @@ public class PartMasterData : ScriptableObject
     public float moveSpeedBonus;   // 다리 파츠: 이동속도 보정
     public float critResistance;   // 머리 파츠: 치명타 저항
     public float critDamageReduction;
+    public float reduceCooldown;     // 팔/다리 파츠: 스킬 쿨타임 감소율
 
 
 

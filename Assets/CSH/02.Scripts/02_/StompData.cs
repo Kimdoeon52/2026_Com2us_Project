@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [CreateAssetMenu(menuName = "CSH/Skill/Stomp Skill", fileName = "Stomp")]
-public class StompData : SkillData
+public class StompData : TapSkillData
 {
     [Header("스탬프")]
     [Tooltip("땅에 안 닿아도 이 프레임이 지나면 활성을 끝낸다")]

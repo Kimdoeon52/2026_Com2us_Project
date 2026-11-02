@@ -61,6 +61,9 @@ public class Projectile : MonoBehaviour
     /// <summary>지금 Hit박스의 월드 좌표. HitDetection(판정)과 OnDrawGizmos(표시)가 둘 다 이것만 쓴다 (§4)</summary>
     public Rect GetWorldHitBox() => BoxResolver.ToWorldRect(transform.position, data.HitBox, facingRight);
 
+    // 최. 추가: 폭발형 투사체인지. HitDetection이 직격 단일 피해를 건너뛰고 Explode만 부르게 한다(이중 피해 방지)
+    public bool IsExplosive => data is ExplosiveProjectileData;
+
     /// <summary>
     /// 맞았거나 사거리 끝에 닿았을 때 — 그 자리에서 멈추고 폭발 연출로 바뀐다. Live에서 바로 빠지므로
     /// 같은 틱에 다른 대상을 또 맞히는 일은 없다(한 발 = 한 번)

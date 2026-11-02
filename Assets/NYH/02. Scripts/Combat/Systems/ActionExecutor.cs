@@ -285,6 +285,8 @@ public class ActionExecutor : MonoBehaviour
     // CombatDataHub가 아직 씬에 없으면(테스트 초기 등) 막을 근거가 없으니 그냥 통과시킨다
     private ActionData GateByPartBroken(ActionData action)
     {
+        if (skillDriver != null) return action;
+
         var hub = CombatDataHub.Instance;
         if (hub == null) return action;
 

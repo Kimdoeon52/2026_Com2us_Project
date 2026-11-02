@@ -1828,6 +1828,14 @@ MonoBehaviour:
     maxHp: 0
     baseDefense: 0
     currentPhase: 1
+    difficulty: 2
+    attackMultiplier: 1
+    tellDurationMultiplier: 1
+    maxAllowedPatterns: 4
+    maxActiveGimmicks: 2
+    allowPhase2: 0
+    allowPatternChain: 0
+    passiveCount: 0
     isGroggy: 0
     currentDamageMultiplier: 1
 --- !u!4 &776998634
@@ -2047,7 +2055,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17aa980fba1250b4eacc6f52574df870, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hitStopSettings: {fileID: 0}
+  hitStopSettings: {fileID: 11400000, guid: f8c7697532724de5a8c408d7e762d148, type: 2}
 --- !u!1001 &872821603
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4126,6 +4134,7 @@ MonoBehaviour:
   currentState: 0
   betGold: 100
   timeLimit: 99
+  selectedDifficulty: 2
 --- !u!4 &1214054391
 Transform:
   m_ObjectHideFlags: 0
@@ -4279,7 +4288,6 @@ GameObject:
   - component: {fileID: 1270632120}
   - component: {fileID: 1270632121}
   - component: {fileID: 1270632122}
-  - component: {fileID: 1270632123}
   - component: {fileID: 1270632124}
   - component: {fileID: 1270632125}
   - component: {fileID: 1270632127}
@@ -4520,21 +4528,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 656c6f95810a9ab46b77147b237ab697, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &1270632123
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1270632112}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  effectTable: {fileID: 0}
-  playerParts: []
-  enemyParts: []
 --- !u!114 &1270632124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4574,32 +4567,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dronePrefab: {fileID: 36515379104279792, guid: 614957612902d7c44a10203a90df2b95, type: 3}
-  prewarmCount: 4
-  orbitGroups:
-  - centerOffset: {x: 0, y: 0.45, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: 25}
-    speedDeg: 120
-    clockwise: 0
-    phaseOffsetDeg: 0
-  - centerOffset: {x: 0, y: 0.48, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 0, y: 0, z: -25}
-    speedDeg: 90
-    clockwise: 1
-    phaseOffsetDeg: 120
-  - centerOffset: {x: 0, y: 0.44, z: 0}
-    radius: {x: 0.6, y: 0.2}
-    tiltEuler: {x: 60, y: 0, z: 0}
-    speedDeg: 150
-    clockwise: 0
-    phaseOffsetDeg: 240
-  orbitSmoothTime: 0.08
-  spawnOffset: {x: 0, y: 1.6, z: 0}
+  idleSlots:
+  - {x: -0.45, y: 0.65, z: 0.05}
+  - {x: -0.6, y: 0.45, z: 0.05}
+  - {x: -0.45, y: 0.25, z: 0.05}
+  idleBobAmplitude: 0.03
+  idleBobFrequency: 1.2
+  idleSmoothTime: 0.1
   fallbackLocalTarget: {x: 1.2, y: 1.2}
   multiDroneSpacing: 0.35
-  attackZOffset: -0.1
-  attackMoveCurve:
+  hitBoxZOffset: -0.1
+  sortieMoveCurve:
     serializedVersion: 2
     m_Curve:
     - serializedVersion: 3
@@ -4636,8 +4614,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   basic: {fileID: 11400000, guid: 44d1edb1bf47f9e4a8304c057d0e67be, type: 2}
-  leftArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
-  rightArm: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
+  leftArm: {fileID: 0}
+  rightArm: {fileID: 0}
   leftLeg: {fileID: 0}
   rightLeg: {fileID: 0}
   dodge: {fileID: 11400000, guid: 7082bb52b41adbd48a1cae793e5a85a4, type: 2}
@@ -4746,7 +4724,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 34.606384, y: 1.0662537}
+  m_LightCookieOffset: {x: 4.5546875, y: 6.772461}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

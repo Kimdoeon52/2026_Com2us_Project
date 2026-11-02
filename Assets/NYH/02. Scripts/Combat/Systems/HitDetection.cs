@@ -154,7 +154,8 @@ public class HitDetection : MonoBehaviour
             if (hurtBox.type != BoxType.Hurt) continue;
             Rect worldHurt = BoxResolver.ToWorldRect(defender.transform.position, hurtBox.rect, defenderFacingRight);
             if (!Overlap(worldHit, worldHurt)) continue;
-
+            // 최.추가: 폭발형은 직격 대상도 폭발 범위 판정(ProjectileExplosion)에서 한 번만 맞는다
+            if (projectile.IsExplosive) { projectile.Explode(); return true; }
             if (CombatDataHub.Instance == null)
             {
                 Debug.LogWarning("[HitDetection] CombatDataHub가 씬에 없어서 투사체 히트 처리를 건너뜀");

@@ -22,6 +22,26 @@ public enum ActionSlot
 }
 
 /// <summary>
+/// 슬롯 → 부위 고정 매핑. 플레이어의 "이 부위가 파괴되면 이 슬롯 봉인" 기준이다.
+/// 플레이어는 ActionData.RequiredPart를 무시하고 이 매핑만 쓴다 (적/보스는 슬롯이 없어 기존처럼 RequiredPart 사용)
+/// Basic(D) / Dodge(Space)는 코어 고정이라 대응 부위가 없다 — 부위가 파괴돼도 봉인되지 않는다.
+/// </summary>
+public static class ActionSlotParts
+{
+    public static bool TryGetBodyPart(this ActionSlot slot, out BodyPart part)
+    {
+        switch (slot)
+        {
+            case ActionSlot.LeftArm: part = BodyPart.LeftArm; return true;
+            case ActionSlot.RightArm: part = BodyPart.RightArm; return true;
+            case ActionSlot.LeftLeg: part = BodyPart.LeftLeg; return true;
+            case ActionSlot.RightLeg: part = BodyPart.RightLeg; return true;
+            default: part = default; return false;
+        }
+    }
+}
+
+/// <summary>
 /// 한 슬롯의 이번 틱 버튼 상태. 전부 CombatTick 단위로 센다 (시간이 아니라 틱 — 프레임레이트와 무관하게 판정이 같다).
 /// </summary>
 public readonly struct SlotState

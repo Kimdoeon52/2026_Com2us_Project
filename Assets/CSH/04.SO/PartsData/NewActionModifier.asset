@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 27abb1f71b0542e4bbe2e5ee8d97f2dd, type: 3}
-  m_Name: testLeftArm1_Skill
+  m_Name: NewActionModifier
   m_EditorClassIdentifier: 
-  skillId: 1
+  skillId: 0
   baseParams:
-  - id: 0
-    op: 0
-    value: 1000
-  limitToRequiredPart: 0
-  requiredPart: 1
+  - id: 1
+    op: 1
+    value: 0.96
+  applyToAllActions: 0
+  SourcePart: 0

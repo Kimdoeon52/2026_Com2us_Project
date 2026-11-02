@@ -10,12 +10,6 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a9c3408cf0574c428eeec63521757af, type: 3}
-  m_Name: testEquipmentEffectTable
+  m_Name: EquipmentEffectTable
   m_EditorClassIdentifier: 
-  entries:
-  - partID: ITEM_20_1_001
-    effects:
-    - {fileID: 11400000, guid: 324b92574ae5ab147bed8d13acb4f057, type: 2}
-  - partID: ITEM_20_1_001
-    effects:
-    - {fileID: 11400000, guid: 324b92574ae5ab147bed8d13acb4f057, type: 2}
+  entries: []

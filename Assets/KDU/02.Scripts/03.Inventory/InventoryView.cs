@@ -78,6 +78,7 @@ public class InventoryView : MonoBehaviour
 
         DeactivateFrom(_partsLayer, partsCount);
         DeactivateFrom(_componentLayer, componentCount);
+        HideOccupiedCells();
     }
 
     // 셀 크기와 그리드 규격으로 레이어·GridLayoutGroup을 맞춘다. 씬에서 손으로 맞추지 않는다
@@ -120,6 +121,23 @@ public class InventoryView : MonoBehaviour
         for (int i = 0; i < total; i++)
         {
             _gridRoot.GetOrCreateChild(_cellPrefab, i);
+        }
+    }
+
+    // 아이템이 놓인 칸의 배경은 숨긴다. GridLayoutGroup 배치가 흐트러지지 않게 끄지 않고 투명하게 둔다
+    private void HideOccupiedCells()
+    {
+        InventoryGrid grid = _host.Grid;
+        int count = Mathf.Min(_gridRoot.childCount, grid.Width * grid.Height);
+
+        for (int i = 0; i < count; i++)
+        {
+            // 칸은 왼쪽 위부터 채워지고 그리드 좌표는 왼쪽 아래가 원점이다
+            var cell = new Vector2Int(i % grid.Width, grid.Height - 1 - i / grid.Width);
+            bool occupied = grid.GetIndexAt(cell) >= 0;
+
+            CanvasGroup group = _gridRoot.GetChild(i).GetOrAddComponent<CanvasGroup>();
+            group.alpha = occupied ? 0f : 1f;
         }
     }
 

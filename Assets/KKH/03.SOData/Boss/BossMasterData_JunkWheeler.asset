@@ -14,9 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bossID: BOSS_REGION_01
   bossName: "\uC815\uD06C \uD720\uB7EC (\uD3D0\uD0C0\uC774\uC5B4 & \uD3D0\uC5D4\uC9C4)"
-  maxHp: 4000
+  regionIndex: 1
+  regionBasePrice: 500
+  regionLevelCap: 10
+  maxHp: 200
   baseDefense: 40
   patternPostDelay: 1
+  difficultyLayers: []
   gimmickParts:
   - gimmickID: GIMMICK_NAIL_BOARD
     gimmickName: "\uACE0\uCCA0 \uBABB\uD310"

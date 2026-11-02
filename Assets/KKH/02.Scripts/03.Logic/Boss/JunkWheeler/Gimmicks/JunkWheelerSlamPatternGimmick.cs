@@ -29,7 +29,8 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float trackingDuration = 1.0f;
         [SerializeField] private float hoverDuration = 0.4f;
         [SerializeField] private float slamDuration = 0.22f;
-        [SerializeField] private float impactRadius = 1.2f;
+        [Tooltip("플레이어 피격 판정 반경 (정밀 타격: 0.75m)")]
+        [SerializeField] private float impactRadius = 0.75f;
         [SerializeField] private float nailBoardDetectRadius = 1.2f;
         [SerializeField] private int slamRounds = 3;
 

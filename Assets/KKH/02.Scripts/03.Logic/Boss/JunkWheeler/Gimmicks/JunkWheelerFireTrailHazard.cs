@@ -17,7 +17,7 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float lifetime = 2.0f;
         [SerializeField] private float tickInterval = 0.4f;
         [SerializeField] private int tickDamage = 15;
-        [SerializeField] private float damageRadius = 0.85f;
+        [SerializeField] private float damageRadius = 0.45f;
 
         [Header("시각 효과 (선택적)")]
         [SerializeField] private ParticleSystem fireParticle;

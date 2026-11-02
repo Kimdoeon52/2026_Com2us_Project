@@ -39,6 +39,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: f79329232a4e4454cae6c6f56fd4533e, type: 2}
   - {fileID: 11400000, guid: a3c486bf9ea12e646abf92087d5e3a30, type: 2}
   - {fileID: 11400000, guid: 8f1e29a43a0d11ef88b100155d000401, type: 2}
+  - {fileID: 11400000, guid: 3a415ac28e0d44d298dc4b7f5406a94b, type: 2}
   phases:
   - phaseIndex: 1
     hpThresholdRatio: 1
@@ -47,6 +48,7 @@ MonoBehaviour:
     - PATTERN_CHARGE
     - PATTERN_SLAM
     - PATTERN_BLADE_RICOCHET
+    - PATTERN_DRIBBLE_SHOCKWAVE
   - phaseIndex: 2
     hpThresholdRatio: 0.5
     availableSkillIDs:
@@ -54,5 +56,6 @@ MonoBehaviour:
     - PATTERN_CHARGE
     - PATTERN_SLAM
     - PATTERN_BLADE_RICOCHET
+    - PATTERN_DRIBBLE_SHOCKWAVE
   rewardGold: 1500
   rewardCoreExp: 500

@@ -62,6 +62,12 @@ namespace RealSteel.Boss.Test
             // 단축키 매핑 (HUD 1~5번 및 레거시 F1~F6 키 충돌 회피)
             // ====================================================================
 
+            // [5/V]: 드리블 충격파 강제 실행 (PATTERN_DRIBBLE_SHOCKWAVE)
+            if (Input.GetKeyDown(KeyCode.Alpha5) || Input.GetKeyDown(KeyCode.Keypad5) || Input.GetKeyDown(KeyCode.V))
+            {
+                ForceExecuteDribbleShockwave();
+            }
+
             // [6/B]: 회전 톱날 당구 돌진 강제 실행 (PATTERN_BLADE_RICOCHET)
             if (Input.GetKeyDown(KeyCode.Alpha6) || Input.GetKeyDown(KeyCode.Keypad6) || Input.GetKeyDown(KeyCode.B))
             {
@@ -137,7 +143,7 @@ namespace RealSteel.Boss.Test
         private void PrintUsageGuide()
         {
             Debug.Log("<color=cyan><b>[JunkWheelerGimmickTester 가이드]</b>\n" +
-                      "` 키: OnGUI 창 토글 | 6: 당구 톱날 | 7: 돌진 | 8: 탄막 | 9: 찍기 | 0: 못판 착지\n" +
+                      "` 키: OnGUI 창 토글 | 5: 드리블 충격파 | 6: 당구 톱날 | 7: 돌진 | 8: 탄막 | 9: 찍기 | 0: 못판 착지\n" +
                       "I: 폭발 상자 | P: 타이어 1회 펑크 | O: 타이어 파괴 | U: 2페이즈 | L: 상태 출력</color>");
         }
 
@@ -162,6 +168,12 @@ namespace RealSteel.Boss.Test
         // ========================================================================
         // 2. 공격 패턴 강제 시전
         // ========================================================================
+
+        [ContextMenu("[패턴] 드리블 충격파 강제 실행 (PATTERN_DRIBBLE_SHOCKWAVE)")]
+        public void ForceExecuteDribbleShockwave()
+        {
+            ForceExecutePattern(JunkWheelerDribbleShockwavePatternGimmick.PatternDribbleShockwaveID);
+        }
 
         [ContextMenu("[패턴] 회전 톱날 당구 돌진 강제 실행 (PATTERN_BLADE_RICOCHET)")]
         public void ForceExecuteBladeRicochet()
@@ -460,8 +472,11 @@ namespace RealSteel.Boss.Test
             GUILayout.Space(2);
             GUILayout.Label("<b>[공격 패턴 강제 시전]</b>");
             GUILayout.BeginHorizontal();
+            if (GUILayout.Button("[5] 드리블", GUILayout.Height(24))) ForceExecuteDribbleShockwave();
             if (GUILayout.Button("[6] 당구", GUILayout.Height(24))) ForceExecuteBladeRicochet();
             if (GUILayout.Button("[7] 돌진", GUILayout.Height(24))) ForceExecuteCharge();
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
             if (GUILayout.Button("[8] 탄막", GUILayout.Height(24))) ForceExecuteBarrage();
             if (GUILayout.Button("[9] 찍기", GUILayout.Height(24))) ForceExecuteSlam();
             GUILayout.EndHorizontal();

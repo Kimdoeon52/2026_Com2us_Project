@@ -253,7 +253,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 var col2d = bullet.AddComponent<CircleCollider2D>();
                 col2d.isTrigger = true;
-                col2d.radius = 0.5f;
+                col2d.radius = 0.20f;
 
                 var fallbackRb2d = bullet.AddComponent<Rigidbody2D>();
                 fallbackRb2d.gravityScale = 0f;
@@ -339,6 +339,12 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (collision.CompareTag("Player"))
             {
+                if (_ownerPattern != null && _ownerPattern.IsPlayerInvincible(collision.gameObject))
+                {
+                    // 무적 회피 중에는 탄환이 관통하여 지나감 (피격 파티클 미생성)
+                    return;
+                }
+
                 _hasHit = true;
                 if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
                 _ownerPattern.ApplyDamageToPlayer(collision.gameObject);

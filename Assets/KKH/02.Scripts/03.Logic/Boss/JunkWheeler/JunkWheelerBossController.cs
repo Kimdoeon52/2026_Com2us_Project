@@ -23,12 +23,14 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private JunkWheelerBarragePatternGimmick barragePatternGimmick;
         [SerializeField] private JunkWheelerSlamPatternGimmick slamPatternGimmick;
         [SerializeField] private JunkWheelerRicochetBladePatternGimmick ricochetBladePatternGimmick;
+        [SerializeField] private JunkWheelerDribbleShockwavePatternGimmick dribbleShockwavePatternGimmick;
 
         public JunkWheelerTirePartGimmick TirePartGimmick => tirePartGimmick;
         public JunkWheelerChargePatternGimmick ChargePatternGimmick => chargePatternGimmick;
         public JunkWheelerBarragePatternGimmick BarragePatternGimmick => barragePatternGimmick;
         public JunkWheelerSlamPatternGimmick SlamPatternGimmick => slamPatternGimmick;
         public JunkWheelerRicochetBladePatternGimmick RicochetBladePatternGimmick => ricochetBladePatternGimmick;
+        public JunkWheelerDribbleShockwavePatternGimmick DribbleShockwavePatternGimmick => dribbleShockwavePatternGimmick;
 
         public override void AutoBindInspectorReferences()
         {
@@ -38,6 +40,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (barragePatternGimmick == null) barragePatternGimmick = GetComponentInChildren<JunkWheelerBarragePatternGimmick>(true);
             if (slamPatternGimmick == null) slamPatternGimmick = GetComponentInChildren<JunkWheelerSlamPatternGimmick>(true);
             if (ricochetBladePatternGimmick == null) ricochetBladePatternGimmick = GetComponentInChildren<JunkWheelerRicochetBladePatternGimmick>(true);
+            if (dribbleShockwavePatternGimmick == null) dribbleShockwavePatternGimmick = GetComponentInChildren<JunkWheelerDribbleShockwavePatternGimmick>(true);
 
             BindPatternDataIfAvailable();
         }
@@ -52,6 +55,7 @@ namespace RealSteel.Boss.JunkWheeler
             barragePatternGimmick = GetOrAddComponent<JunkWheelerBarragePatternGimmick>();
             slamPatternGimmick = GetOrAddComponent<JunkWheelerSlamPatternGimmick>();
             ricochetBladePatternGimmick = GetOrAddComponent<JunkWheelerRicochetBladePatternGimmick>();
+            dribbleShockwavePatternGimmick = GetOrAddComponent<JunkWheelerDribbleShockwavePatternGimmick>();
             AutoBindInspectorReferences();
             AutoWireSceneSystems();
 #if UNITY_EDITOR
@@ -70,11 +74,12 @@ namespace RealSteel.Boss.JunkWheeler
             tirePartGimmick = GetOrAddComponent<JunkWheelerTirePartGimmick>();
             RegisterGimmick(tirePartGimmick);
 
-            // 2. 패턴 기믹 4종 탐색 및 부착 (마스터 데이터 매칭)
+            // 2. 패턴 기믹 5종 탐색 및 부착 (마스터 데이터 매칭)
             chargePatternGimmick = GetOrAddComponent<JunkWheelerChargePatternGimmick>();
             barragePatternGimmick = GetOrAddComponent<JunkWheelerBarragePatternGimmick>();
             slamPatternGimmick = GetOrAddComponent<JunkWheelerSlamPatternGimmick>();
             ricochetBladePatternGimmick = GetOrAddComponent<JunkWheelerRicochetBladePatternGimmick>();
+            dribbleShockwavePatternGimmick = GetOrAddComponent<JunkWheelerDribbleShockwavePatternGimmick>();
 
             BindPatternDataIfAvailable();
 
@@ -82,6 +87,7 @@ namespace RealSteel.Boss.JunkWheeler
             RegisterGimmick(barragePatternGimmick);
             RegisterGimmick(slamPatternGimmick);
             RegisterGimmick(ricochetBladePatternGimmick);
+            RegisterGimmick(dribbleShockwavePatternGimmick);
         }
 
         protected override void ApplyDifficultyToGimmicks()
@@ -146,6 +152,10 @@ namespace RealSteel.Boss.JunkWheeler
                 else if (p.patternID == JunkWheelerRicochetBladePatternGimmick.PatternRicochetBladeID && ricochetBladePatternGimmick != null)
                 {
                     SetPatternDataPrivate(ricochetBladePatternGimmick, p);
+                }
+                else if (p.patternID == JunkWheelerDribbleShockwavePatternGimmick.PatternDribbleShockwaveID && dribbleShockwavePatternGimmick != null)
+                {
+                    SetPatternDataPrivate(dribbleShockwavePatternGimmick, p);
                 }
             }
         }

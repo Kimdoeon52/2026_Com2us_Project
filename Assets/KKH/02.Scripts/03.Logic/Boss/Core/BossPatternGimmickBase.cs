@@ -164,18 +164,24 @@ namespace RealSteel.Boss.Core
                 return false;
             }
             var executor = playerObj.GetComponent<ActionExecutor>() ?? playerObj.GetComponentInParent<ActionExecutor>();
-            return executor != null && executor.State != null && executor.State.CurrentAction != null && executor.State.CurrentAction.IsInvincibleDuringActive;
+            if (executor == null || executor.State == null) return false;
+
+            // 1. HitDetection 공식 무적 판정 (Active 페이즈 여부 일치)
+            if (HitDetection.IsInvincibleNow(executor)) return true;
+
+            // 2. ActionData 무적 플래그 폴백
+            return executor.State.CurrentAction != null && executor.State.CurrentAction.IsInvincibleDuringActive;
         }
 
-        public void ApplyDamageToPlayer(GameObject playerObj)
+        public bool ApplyDamageToPlayer(GameObject playerObj)
         {
-            if (playerObj == null) return;
+            if (playerObj == null) return false;
 
             // Space 무적 회피 중인지 검사
             if (IsPlayerInvincible(playerObj))
             {
                 Debug.Log($"<color=cyan>[{GimmickName}] 플레이어가 Space 무적 회피로 공격을 회피했습니다!</color>");
-                return;
+                return false;
             }
 
             int dmg = patternData != null ? patternData.baseDamage : 50;
@@ -191,6 +197,7 @@ namespace RealSteel.Boss.Core
             }
 
             ApplyPlayerPartHit(dmg, targetPart, partDmg);
+            return true;
         }
 
         protected void ApplyPlayerPartHit(int baseDmg, BodyPart targetPart, int partDmg)

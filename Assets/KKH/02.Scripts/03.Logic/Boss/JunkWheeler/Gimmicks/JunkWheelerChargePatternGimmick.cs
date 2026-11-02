@@ -31,8 +31,8 @@ namespace RealSteel.Boss.JunkWheeler
         public float WallStunDelay => wallStunDelay;
         [SerializeField] private float maxMapDistance = 20.0f;
         [SerializeField] private float wallEdgePadding = 0.50f;
-        [Tooltip("돌진 중 플레이어 및 오브젝트 충돌 감지 반경 (VFX 크기와 무관하게 엄격히 고정되는 기획 반경)")]
-        [SerializeField] private float chargeCollisionRadius = 1.0f;
+        [Tooltip("돌진 중 플레이어 및 오브젝트 충돌 감지 반경 (정밀 타격: 0.65m)")]
+        [SerializeField] private float chargeCollisionRadius = 0.65f;
 
         [Header("비선형 전조(Tell) 가속 파라미터")]
         [Tooltip("전조 점멸 목표 색상 (기본: 빨간색 Color.red)")]
@@ -501,10 +501,18 @@ namespace RealSteel.Boss.JunkWheeler
                 // 2. 플레이어 충돌 검사
                 if (!_hasHitPlayer && hit.CompareTag("Player"))
                 {
+                    if (IsPlayerInvincible(hit.gameObject))
+                    {
+                        // 플레이어가 무적 회피(Space 회피 등) 중이면 피격 판정 및 이펙트 스폰 무시하고 통과
+                        continue;
+                    }
+
                     _hasHitPlayer = true;
-                    // [VFX 3] 플레이어 피격 히트 이펙트 스폰
-                    SpawnVfx(playerHitVfxPrefab, hit.transform.position);
-                    ApplyDamageToPlayer(hit.gameObject);
+                    if (ApplyDamageToPlayer(hit.gameObject))
+                    {
+                        // [VFX 3] 실제로 피해가 적용된 경우에만 플레이어 피격 히트 이펙트 스폰
+                        SpawnVfx(playerHitVfxPrefab, hit.transform.position);
+                    }
                 }
             }
             return false;

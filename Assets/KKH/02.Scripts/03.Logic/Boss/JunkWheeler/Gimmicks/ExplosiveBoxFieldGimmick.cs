@@ -24,7 +24,7 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private int bossDamage = 150;
         [SerializeField] private int playerDamage = 80;
         [SerializeField] private float bossStunDuration = 2.0f;
-        [SerializeField] private float explosionRadius = 2.5f;
+        [SerializeField] private float explosionRadius = 1.6f;
         [SerializeField] private float fuseDuration = 1.5f;
         [SerializeField] private ParticleSystem explosionParticle;
 

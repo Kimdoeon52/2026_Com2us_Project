@@ -42,8 +42,8 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float groundPaddingY = 0.1f;
         [Tooltip("사선 발사 수직 각도 (도)")]
         [SerializeField] private float initialAngleDeg = 40.0f;
-        [Tooltip("회전 톱날 당구 돌진 시 플레이어 피격 감지 반경 (VFX 크기와 무관하게 엄격히 고정되는 기획 반경)")]
-        [SerializeField] private float bladeHitRadius = 1.2f;
+        [Tooltip("회전 톱날 당구 돌진 시 플레이어 피격 감지 반경 (정밀 타격: 0.70m)")]
+        [SerializeField] private float bladeHitRadius = 0.70f;
 
         [Header("비선형 전조(Tell) 파라미터")]
         [SerializeField] private Color flashColor = new Color(1.0f, 0.2f, 0.1f, 1f);
@@ -539,17 +539,66 @@ namespace RealSteel.Boss.JunkWheeler
             var player = OwnerBoss.PlayerTransform;
             if (player == null) return false;
 
-            // [판정 분리]: VFX 크기와 무관하게 원본 고정 반경(bladeHitRadius)만 검사
-            float dist = Vector2.Distance(OwnerBoss.transform.position, player.position);
-            if (dist <= Mathf.Max(0.1f, bladeHitRadius))
+            // 1. 플레이어가 무적 회피(Space 회피 등) 중이면 피격 판정 및 피격 이펙트 완전 배제
+            if (IsPlayerInvincible(player.gameObject)) return false;
+
+            Vector2 center = OwnerBoss.transform.position;
+            float radius = Mathf.Max(0.1f, bladeHitRadius);
+
+            // 2. HurtboxColliderSync와 연동된 Physics2D Overlap 검사 (플레이어 Hurt 콜라이더 유효성 검증)
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius);
+            bool collided = false;
+            GameObject targetPlayerObj = null;
+
+            foreach (var hit in hits)
             {
-                Debug.Log("<color=red>[JunkWheelerRicochet] 회전 톱날 돌진 ➔ 플레이어 피격 충돌!</color>");
-                // [VFX 2] 플레이어 피격 참격 이펙트 스폰
-                Vector3 hitPos = (OwnerBoss.transform.position + player.position) * 0.5f;
-                SpawnVfx(bladeHitVfxPrefab, hitPos);
-                ApplyDamageToPlayer(player.gameObject);
-                return true;
+                if (hit.gameObject == OwnerBoss.gameObject) continue;
+                if (hit.CompareTag("Player") || (hit.transform.root != null && hit.transform.root.CompareTag("Player")) || hit.transform == player)
+                {
+                    collided = true;
+                    targetPlayerObj = hit.gameObject;
+                    break;
+                }
             }
+
+            // 폴백: 콜라이더가 비활성화/누락된 테스트 환경 지원 (단, HurtboxColliderSync로 꺼진 상태면 충돌 아님)
+            if (!collided)
+            {
+                var playerCollider = player.GetComponentInChildren<Collider2D>();
+                if (playerCollider != null && !playerCollider.enabled)
+                {
+                    // 회피 무적이나 사망으로 콜라이더가 비활성화된 상태이면 피격 무시
+                    return false;
+                }
+
+                // 콜라이더 컴포넌트 자체가 전혀 없는 경우에만 거리 기반 폴백 적용
+                if (playerCollider == null)
+                {
+                    float dist = Vector2.Distance(center, player.position);
+                    if (dist <= radius)
+                    {
+                        collided = true;
+                        targetPlayerObj = player.gameObject;
+                    }
+                }
+            }
+
+            if (collided && targetPlayerObj != null)
+            {
+                // 최종 무적 재검사
+                if (IsPlayerInvincible(targetPlayerObj)) return false;
+
+                // 3. 실제 데미지 적용에 성공한 경우에만 피격 로그 및 피격 파티클 스폰
+                if (ApplyDamageToPlayer(targetPlayerObj))
+                {
+                    Debug.Log("<color=red>[JunkWheelerRicochet] 회전 톱날 돌진 ➔ 플레이어 피격 충돌 및 피해 적용!</color>");
+                    // [VFX 2] 플레이어 피격 참격 이펙트 스폰
+                    Vector3 hitPos = (OwnerBoss.transform.position + player.position) * 0.5f;
+                    SpawnVfx(bladeHitVfxPrefab, hitPos);
+                    return true;
+                }
+            }
+
             return false;
         }
 

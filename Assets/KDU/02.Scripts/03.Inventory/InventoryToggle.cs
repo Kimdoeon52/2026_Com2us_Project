@@ -22,6 +22,9 @@ public class InventoryToggle : MonoBehaviour
 
         [Tooltip("이 모드의 인벤토리 위치")]
         public Vector2 RootPosition;
+
+        [Tooltip("인벤토리를 가운데에 맞출 칸. 지정하면 위치값 대신 사용")]
+        public RectTransform RootAnchor;
     }
 
     [Tooltip("켜고 끌 인벤토리 UI 루트. 이 컴포넌트가 붙은 오브젝트를 지정하면 다시 켤 수 없다")]
@@ -84,11 +87,26 @@ public class InventoryToggle : MonoBehaviour
     {
         _current = mode;
 
-        if (_rootRect != null)
-            _rootRect.anchoredPosition = mode.MoveRoot ? mode.RootPosition : _rootHome;
+        PlaceRoot(mode);
 
         SetActive(_inventoryRoot, true);
         SetPanels(mode, true);
+    }
+
+    // 기준 칸이 있으면 그 중심에, 없으면 위치값에 둔다
+    private void PlaceRoot(Mode mode)
+    {
+        if (_rootRect == null)
+            return;
+
+        _rootRect.anchoredPosition = mode.MoveRoot ? mode.RootPosition : _rootHome;
+
+        if (mode.RootAnchor == null)
+            return;
+
+        Vector3 center = mode.RootAnchor.TransformPoint(mode.RootAnchor.rect.center);
+        Vector3 offset = _rootRect.TransformPoint(_rootRect.rect.center) - _rootRect.position;
+        _rootRect.position = center - offset;
     }
 
     // invokeHooks가 false면 이미 밖에서 닫힌 경우
@@ -97,11 +115,12 @@ public class InventoryToggle : MonoBehaviour
         Mode mode = _current;
         _current = null;
 
-        if (invokeHooks)
-            mode.OnClose?.Invoke();
-
+        // 훅에서 예외가 나도 창은 닫히게 먼저 끈다
         SetActive(_inventoryRoot, false);
         SetPanels(mode, false);
+
+        if (invokeHooks)
+            mode.OnClose?.Invoke();
     }
 
     private bool IsFullyOpen(Mode mode)

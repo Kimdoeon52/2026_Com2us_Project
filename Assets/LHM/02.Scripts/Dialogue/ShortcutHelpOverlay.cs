@@ -18,6 +18,7 @@ namespace RealSteel.Dialogue
         [SerializeField] private TMP_FontAsset font;
         [SerializeField] private int sortingOrder = 300;
         [SerializeField, Range(1, 4)] private int columns = 3;
+        [SerializeField] private bool showTestKeys = true;
 
         private GameObject root;
         private TMP_Text[] columnTexts;
@@ -136,8 +137,9 @@ namespace RealSteel.Dialogue
                     .Add("Z", "시즌 시작 전화 받기"));
             }
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
-            var test = new Section { title = "테스트 (개발 빌드 전용)" };
+            if (!showTestKeys) return list;
+
+            var test = new Section { title = "테스트 키" };
             if (Has(nameof(Step09_DialogueDebug)))
             {
                 test.Add("1 ~ 5", "다음 토벌 난이도")
@@ -171,7 +173,6 @@ namespace RealSteel.Dialogue
             MonoBehaviour scenes = Find("GameSceneManager");
             if (scenes != null && ReadBool(scenes, "_shortcutEnabled")) test.Add("F1 ~ F5", "테스트 씬 전환 (위 F키와 겹침)");
             if (test.entries.Count > 0) list.Add(test);
-#endif
             return list;
         }
 

@@ -1,11 +1,13 @@
 using UnityEngine;
 using DG.Tweening;
 using TMPro;
-using System; // Dotween 사용용. UI 깜빡임에 사용
+using System;
+using RealSteel.Lighting; // Dotween 사용용. UI 깜빡임에 사용
 
 public class TimeSystemManager : MonoBehaviour
 {
     public static TimeSystemManager Instance; // 싱글톤
+    public RSTimeOfDay timeOfDay; // 배경 시간대 변수
 
     public enum TimeState { Running, UIOpen, Combat } // 보통, UI 연 상태, 전투 중 조건 enum
     public TimeState currentState = TimeState.Running;
@@ -19,6 +21,8 @@ public class TimeSystemManager : MonoBehaviour
     [Header("Settings")]
     public float timeToGame = 7.5f; // 현실 시간 7.5초가 게임 시간 1시간
     private float nextHourTime; // 다음 목표 시간
+
+    private float blockTimer = 0f; // 동기화 충돌 방지용 타이머
 
     [Header("UI")]
     public TextMeshProUGUI timeText; // 시간 UI
@@ -40,8 +44,9 @@ public class TimeSystemManager : MonoBehaviour
 
     private void Start()
     {
-        UpdateTimeUI();                                                     // 시간 UI 최신화
+        UpdateTimeUI();                                                 // 시간 UI 최신화
         nextHourTime = Time.unscaledTime + timeToGame;      // 시간 세팅
+        if (timeOfDay != null) timeOfDay.SetTime(hour);            // 배경 시간대 세팅
     }
     private void Update() // 사용자 환경에 맞춘 시간 흐름이기 때문에 update
     {
@@ -52,13 +57,36 @@ public class TimeSystemManager : MonoBehaviour
             PassTime(1);
             nextHourTime = Time.unscaledTime + timeToGame;
         }
+
+        // 연출(TransitionTo) 중이 아니고, timeOfDay가 연결되어 있을 때만 실행
+        if (timeOfDay != null && Time.unscaledTime >= blockTimer)
+        {
+            // 7.5초 간의 진행도를 0.0 ~ 1.0 비율로 계산하여 태양이 뚝뚝 끊기지 않고 부드럽게 흐르게 함
+            float progress = 1f - Mathf.Clamp01((nextHourTime - Time.unscaledTime) / timeToGame);
+            timeOfDay.time = hour + progress;
+            timeOfDay.Apply();
+        }
     }
 
     // 시간이 소모되는 행동용 함수. begin은 행동 시작시 시간 멈춤. End는 시간 소모(passtime)후 시간 다시 흐름
     public void BeginAction() { ChangeTimeState(TimeState.UIOpen); }
-    public void EndAction(int inputHours) { PassTime(inputHours); ChangeTimeState(TimeState.Running); }
+    public void EndAction(int inputHours) 
+    {
+        PassTime(inputHours); 
+        ChangeTimeState(TimeState.Running);
+       
+        if (timeOfDay != null)
+        {
+            float transitionTime = 1.5f; // 해당 시간동안 전환 연출
+            timeOfDay.TransitionTo(hour, transitionTime);
+            blockTimer = Time.unscaledTime + transitionTime; // 연출 동안 Update 동기화 일시 정지
+        }
 
-    public void PassTime(int inputHours)                             // 시간 증가용
+        // 행동이 끝나면 타이머 즉시 리셋
+        nextHourTime = Time.unscaledTime + timeToGame;
+    }
+
+    public void PassTime(int inputHours) // 시간 증가용
     {
         hour += inputHours;
         while (hour >= 24)
@@ -79,6 +107,15 @@ public class TimeSystemManager : MonoBehaviour
         int totalHoursSkip = (dayAdd * 24) + (targetHour - hour); // 더할 총 시간 계산 (더할 일자 * 하루 시간) + (목표 시간 - 현재 시간)
 
         PassTime(totalHoursSkip); // 시간 경과
+
+        if (timeOfDay != null)
+        {
+            float transitionTime = 2f;
+            timeOfDay.TransitionTo(hour, transitionTime);
+            blockTimer = Time.unscaledTime + transitionTime;
+        }
+
+        nextHourTime = Time.unscaledTime + timeToGame;
     }
 
     public void PassDay() // 저장 및 로드에 대해서 추가 수정 필요함. // 날짜 증가용
@@ -111,6 +148,8 @@ public class TimeSystemManager : MonoBehaviour
 
     private void UpdateTimeUI() // 날짜 새로고침
     {
+        timeOfDay.SetTime(hour); //  즉시 시간 변경 반영_RSTimeOfDay
+        timeOfDay.TransitionTo(hour, 1f); // 1초에 걸쳐 시간 변경 반영_RSTimeOfDay
         timeText.text = $"{year}년 {month:D2}월 {day:D2}일 {hour:D2}시";
     }
 

@@ -239,7 +239,7 @@ public class ArenaBettingManager : MonoBehaviour
     {
         bettingUiPanel.SetActive(false);
         ShowArenaInfo($"베팅 종료! {finalBetAmount}G로 경기가 시작됩니다!"); // 노란 알림
-        GlobalGold.Instance.UseGold("플레이어", finalBetAmount);
+        GlobalGold.Instance.UseGold(0, finalBetAmount);
         MoveToNextScene(2000).Forget();
     }
 

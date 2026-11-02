@@ -7,22 +7,36 @@
 
 ## 2. 화면 구성 요소 분해 및 에셋/오브젝트 파일명 정리
 
-레퍼런스 이미지를 구성하는 모든 시각 요소를 **프리팹(Prefab), 스프라이트(Sprite), 스크립트(Script), Hierarchy 오브젝트명**으로 일대일 매칭한 표준 파일명 규격이다.
+레퍼런스 이미지를 구성하는 모든 시각 요소를 **기존 프로젝트 에셋(`Assets/Sprites/UI/`), 프리팹(Prefab), 스크립트(Script), Hierarchy 오브젝트명**으로 일대일 매칭한 실제 에셋 매핑 규격이다.
 
-### 2.1 프로젝트 폴더별 파일명 규격 (File Naming Convention)
+### 2.1 실제 UI 스프라이트 매핑표 (`Assets/Sprites/UI/` 기반)
+
+> [!IMPORTANT]
+> 신규 임의 경로 에셋 대신, 현재 프로젝트의 공식 UI 라이브러리인 `Assets/Sprites/UI/` 경로 내 에셋을 100% 활용하도록 일대일 대체 매핑 완료.
+
+| 레퍼런스 시각 요소 | 실제 에셋 경로 (`Assets/Sprites/UI/...`) | 규격(해상도) | Image Type 및 셋팅 가이드 |
+|---|---|---|---|
+| **외곽 노란색 꺾쇠 (`ㄱ`, `┘`)** | `Frame/Corner/corner_v01.png` | 340 x 340 | • **Image Type**: `Simple`<br>• **우상단(`TR`)**: `Rotation Z = -90` (또는 Scale X = -1)<br>• **우하단(`BR`)**: `Rotation Z = 180` (또는 Scale X=-1, Y=-1)<br>• **Color**: 기본 택티컬 옐로우 (`#FFE800`) 내장 |
+| **메인 리포트 카드 배경** | `BG/Panel/bg_panelLarge.png` | 1480 x 1620 | • **Image Type**: `Sliced` (또는 `Simple`)<br>• 다크 차콜 (`#232426`) 배경 패널 |
+| **메인 리포트 외곽 프레임** | `Frame/Panel/panelLarge/frame_panelLarge_v1.png` (또는 `v2`) | 1480 x 1620 | • **Image Type**: `Sliced`<br>• `bg_panelLarge` 위에 오버레이하여 택티컬 보더 라인 연출 |
+| **헤더 다이아몬드 아이콘 (`◆`)** | `BG/Swatch/swatch_v1.png` | 120 x 120 | • **Image Type**: `Simple`<br>• **Size**: 12 x 12 px, **Rotation Z**: `45`<br>• **Color**: 기본 노란색 내장 (`#FFE800`) |
+| **헤더 리포트 데코 아이콘 (선택)** | `Icon/Material/ic_assessment.png` | 96 x 96 | • 리포트/차트 아이콘 (타이틀 좌측 장식) |
+| **헤더 캘린더 아이콘 (선택)** | `Icon/Material/ic_calendar_today.png` | 96 x 96 | • DAY 결산 텍스트 앞 캘린더 아이콘 |
+| **지표 행 베이스 카드 (선택)** | `BG/Button/selectItem/bg_selectItem_enabled.png` | 64 x 64 | • **Image Type**: `Sliced`<br>• 각 지표 행 호버 또는 기본 다크 배경 `#1A1B1D` |
+| **행 구분선 (1px Divider)** | `BG/Swatch/swatch_v2.png` (또는 `v3`) | 120 x 120 | • **Image Type**: `Simple`<br>• Height `1px`로 지정하여 다크 그레이 구분선 표현 |
+| **하단 브리핑 컬러 바 (`┃`)** | `BG/Swatch/swatch_v1.png` | 120 x 120 | • **Image Type**: `Simple`<br>• Width `4px`, Height `36px`<br>• **Image Color**: 레드(`#EF4444`), 오렌지(`#F97316`), 시안(`#06B6D4`) 틴트 적용 |
+| **우하단 스탬프/바코드 박스** | `BG/Panel/bg_panelSmall.png` (또는 `Frame/Panel/panelMedium/frame_panelMedium_v1.png`) | 480 x 480 | • **Image Type**: `Sliced`<br>• Size `390 x 110`, 우하단 리포트 스탬프 컨테이너 |
+| **전체 화면 클릭 진행 버튼** | `BG/Button/button/bg_button_primary_enabled.png` (선택 버튼 필요 시) | 360 x 120 | • 결과 확인/다음 날 진행 전용 버튼 필요 시 활용 |
+
+### 2.2 프로젝트 프리팹 및 스크립트 규격
 
 | 분류 | 권장 경로 (`Assets/KKH/...`) | 파일명 (File Name) | 역할 및 설명 |
 |---|---|---|---|
-| **메인 프리팹** | `04.Prefab/UI/` | `BattleResultCanvas.prefab` | 결과 UI 전체를 담는 최상위 프리팹 |
+| **메인 프리팹** | `04.Prefab/UI/` | `BattleResultCanvas.prefab` | 결과 UI 전체를 담는 최상위 Canvas 프리팹 |
 | **행(Row) 프리팹** | `04.Prefab/UI/` | `UI_ReportMetricRow.prefab` | 상단 4개 지표 행 (수입 / 지출 / 기체 마모 / 활동 시간) 재사용 템플릿 |
 | **하단 알림 프리팹** | `04.Prefab/UI/` | `UI_ReportBriefingItem.prefab` | 하단 3개 컬러 바 브리핑 항목 (`D-2`, `OMEN`, `SHOP` 등) 템플릿 |
-| **컨트롤러 스크립트** | `02.Scripts/05.UI/` | `BattleResultUI.cs` | 이벤트 수신, 정산 데이터 매핑, DOTween 롤링 연출 제어 |
-| **데이터 DTO** | `02.Scripts/03.Logic/` | `BattleSettlementProcessor.cs` | `BattleSettlementResult` 정산 결과 데이터 구조체/클래스 |
-| **스프라이트 (아이콘)** | `05.Sprites/UI/Result/` | `Spr_Icon_DiamondYellow.png` | 헤더 좌측 노란색 마름모(`◆`) 포인트 아이콘 |
-| **스프라이트 (프레임)** | `05.Sprites/UI/Result/` | `Spr_Frame_CornerBracket_L.png` | 우측 상단 / 우측 하단 노란색 `ㄱ`, `ㅢ` 형태 코너 브래킷(`L`자 테두리) |
-| **스프라이트 (바코드)** | `05.Sprites/UI/Result/` | `Spr_Deco_ReportBarcode.png` | 우측 하단 리포트 스탬프 내부 바코드 그래픽 (`\|\|\|\|\|\|\|\|`) |
-| **스프라이트 (박스)** | `05.Sprites/UI/Result/` | `Spr_Box_ThinOutline.png` | 1px 얇은 외곽선이 들어간 9-Slice 다크 패널 프레임 (`#121417`, 보더 `#2A2D32`) |
-| **스프라이트 (배경문자)** | `05.Sprites/UI/Result/` | `Spr_Bg_Watermark_DAY.png` | 배경 상단에 희미하게 깔리는 대형 아웃라인 워터마크 이미지 (또는 TMP 텍스트로 대체 가능) |
+| **컨트롤러 스크립트** | `02.Scripts/05.UI/` | `BattleResultUI.cs` | 정산 데이터 매핑 및 DOTween 롤링 연출 제어 |
+| **데이터 DTO** | `02.Scripts/03.Logic/` | `BattleSettlementProcessor.cs` | 정산 결과 데이터 구조체 (`BattleSettlementResult`) |
 
 ---
 
@@ -153,14 +167,14 @@ BattleResultCanvas (Canvas, CanvasScaler, GraphicRaycaster)
 ## 4. 오브젝트별 인스펙터 수치 레시피 (1920x1080 기준)
 
 ### 4.1 메인 리포트 프레임 & 헤더 (`ReportWindowContainer`)
-| 오브젝트명 | Anchor / Pivot | Pos (X, Y) | Size (W, H) | 컬러 및 폰트 디테일 |
+| 오브젝트명 | Anchor / Pivot | Pos (X, Y) | Size (W, H) | 스프라이트 및 비주얼 셋팅 레시피 |
 |---|---|---|---|---|
 | **ReportWindowContainer** | `Middle - Center` `(0.5, 0.5)` | `(-20, 25)` | `1360 x 740` | 투명 컨테이너 |
-| **ReportWindowFrame** | `Stretch - Stretch` | `(0, 0, 0, 0)` | 전체 채움 | `Image`: `#121417` (Alpha `248`)<br>`Outline`: `#2A2E35`, Distance `(1, -1)` |
-| **Img_CornerBracket_TR** | `Top - Right` `(1, 1)` | `(18, 18)` | `28 x 28` | 우상단 바깥쪽 노란 꺾쇠 `#EAB308` |
-| **Img_CornerBracket_BR** | `Bottom - Right` `(1, 0)` | `(18, -18)` | `28 x 28` | 우하단 바깥쪽 노란 꺾쇠 `#EAB308` |
-| **HeaderBar** | `Top - Stretch` `(0.5, 1)` | `PosY: 0` | `Height: 68` | `Image`: `#090B0E` (완전 다크 블랙) |
-| **Img_HeaderDiamond** | `Middle - Left` `(0, 0.5)` | `(32, 0)` | `12 x 12` | 기본 흰색 Image에 `Rotation Z = 45`, Color `#FACC15` |
+| **ReportWindowFrame** | `Stretch - Stretch` | `(0, 0, 0, 0)` | 전체 채움 | • **Source Image**: `Assets/Sprites/UI/BG/Panel/bg_panelLarge.png`<br>• **Type**: `Sliced`<br>• **(옵션 오버레이)**: `Frame/Panel/panelLarge/frame_panelLarge_v1.png` |
+| **Img_CornerBracket_TR** | `Top - Right` `(1, 1)` | `(18, 18)` | `36 x 36` | • **Source Image**: `Assets/Sprites/UI/Frame/Corner/corner_v01.png`<br>• **Rotation Z**: `-90` (우상단 `ㄱ` 방향)<br>• 자체 노란색(`#FFE800`) 내장 |
+| **Img_CornerBracket_BR** | `Bottom - Right` `(1, 0)` | `(18, -18)` | `36 x 36` | • **Source Image**: `Assets/Sprites/UI/Frame/Corner/corner_v01.png`<br>• **Rotation Z**: `180` (우하단 `┘` 방향)<br>• 자체 노란색(`#FFE800`) 내장 |
+| **HeaderBar** | `Top - Stretch` `(0.5, 1)` | `PosY: 0` | `Height: 68` | `Image`: `#090B0E` (완전 다크 블랙 스트립) |
+| **Img_HeaderDiamond** | `Middle - Left` `(0, 0.5)` | `(32, 0)` | `12 x 12` | • **Source Image**: `Assets/Sprites/UI/BG/Swatch/swatch_v1.png`<br>• **Rotation Z**: `45` (마름모 포인트 `◆`) |
 | **Txt_HeaderTitle** | `Middle - Left` `(0, 0.5)` | `(58, 0)` | `280 x 40` | Font Size `24`, Bold, Character Spacing `12`, Color `#F3F4F6` |
 | **Txt_HeaderSubtitle** | `Middle - Left` `(0, 0.5)` | `(320, 0)` | `300 x 40` | Font Size `20`, Regular, Color `#D1D5DB` |
 
@@ -169,6 +183,7 @@ BattleResultCanvas (Canvas, CanvasScaler, GraphicRaycaster)
   - Anchor: `Top - Stretch`, Left `48`, Right `48`, PosY `-88`, Height `360`
   - `VerticalLayoutGroup`: Spacing `0`, Child Alignment `Upper Center`, Control Child Size (`Width: ON, Height: OFF`)
 * **개별 행(`Row_Income`, `Row_Expense`, `Row_Wear`, `Row_Activity`) 내부 규격 (Height: `88`)**:
+  - **행 베이스 (선택)**: `Image` Source `Assets/Sprites/UI/BG/Button/selectItem/bg_selectItem_enabled.png` (Type: `Sliced`, Alpha 약 `0.2f`)
   - **`Txt_EnLabel`** (좌상단): Anchor `Top-Left`, Pos `(0, -14)`, Font Size `13`, Character Spacing `8`, Color `#7A828E`
   - **`Txt_KrLabel`** (좌하단): Anchor `Bottom-Left`, Pos `(0, 16)`, Font Size `22`, Bold, Color `#E5E7EB`
   - **`Txt_Value`** (우측 수치): Anchor `Middle-Right`, Pos `(0, 0)`, Width `400`, Alignment `Right/Middle`, Font Size `36`, Bold
@@ -176,27 +191,33 @@ BattleResultCanvas (Canvas, CanvasScaler, GraphicRaycaster)
     - 지출(`Txt_ExpenseValue`): `#F87171` (`"-350"`)
     - 기체 마모(`Txt_WearValue`): `#FB923C` (`"+6%"`)
     - 활동 시간(`Txt_ActivityValue`): `#FFFFFF` (`"20H 00M"`)
-  - **`Img_Divider`** (하단 구분선, 1~3행에만 존재): Anchor `Bottom-Stretch`, PosY `0`, Height `1`, Color `#24282E`
+  - **`Img_Divider`** (하단 구분선, 1~3행에만 존재):
+    - Anchor `Bottom-Stretch`, PosY `0`, Height `1`
+    - **Source Image**: `Assets/Sprites/UI/BG/Swatch/swatch_v2.png` (Color: `#24282E`)
 
 ### 4.3 하단 브리핑 리스트 (`BriefingGroup`)
 * **위치**: Anchor `Bottom - Stretch`, Left `48`, Right `48`, PosY `36`, Height `210`
 * **`Txt_BriefingHeader`**:
   - Anchor `Top - Left`, Pos `(0, 0)`, Font Size `15`, Bold, Character Spacing `10`, Color `#EAB308` (`"TODAY · DAY 13"`)
 * **개별 브리핑 아이템 (`BriefingItem_1~3`, Height: `44`, Spacing: `12`)**:
-  - **`Img_AccentBar`**: Anchor `Stretch - Left`, Width `4`, PosX `0`, Color:
-    - 1번 바: `#EF4444` (레드)
-    - 2번 바: `#F97316` (오렌지)
-    - 3번 바: `#06B6D4` (시안)
+  - **`Img_AccentBar`**:
+    - Anchor `Stretch - Left`, Width `4`, PosX `0`
+    - **Source Image**: `Assets/Sprites/UI/BG/Swatch/swatch_v1.png`
+    - **Color**:
+      - 1번 바: `#EF4444` (레드)
+      - 2번 바: `#F97316` (오렌지)
+      - 3번 바: `#06B6D4` (시안)
   - **`Txt_Tag`**: Anchor `Top - Left`, Pos `(18, -2)`, Font Size `15`, Bold, Character Spacing `6`, Color `#E5E7EB` (`"D-2"`, `"OMEN"`, `"SHOP"`)
   - **`Txt_Desc`**: Anchor `Bottom - Left`, Pos `(110, 4)`, Font Size `20`, Medium, Color `#F3F4F6`
 
 ### 4.4 우하단 바코드 스탬프 (`BarcodeStampBox`) & 계속 프롬프트
 * **`BarcodeStampBox`**:
   - Anchor: `Bottom - Right` `(1, 0)`, Pos `(-50, 28)`, Size `390 x 110`
-  - `Image`: `#0D0F12` (Alpha `230`), `Outline`: `#374151` `(1, -1)`
+  - **Source Image**: `Assets/Sprites/UI/BG/Panel/bg_panelSmall.png` (Type: `Sliced`, Alpha `230`)
+  - `Outline`: `#374151` `(1, -1)`
   - **`Txt_ReportNoLabel`**: 좌상단 `(16, -10)`, Font Size `12`, Color `#6B7280`, Text `"REPORT NO."`
   - **`Txt_ReportNoValue`**: 우상단 `(-16, -10)`, Font Size `13`, Bold, Color `#E5E7EB`, Text `"DR-0012"`
-  - **`Img_Barcode`**: 중앙 `(0, -4)`, Size `356 x 42`, Color `#D1D5DB`
+  - **`Img_Barcode`**: 중앙 `(0, -4)`, Size `356 x 42`, Color `#D1D5DB` (TMP Monospace 폰트 `|| ||| | ||| |||| |` 또는 스트라이프 스프라이트)
   - **`Txt_AutoSaveInfo`**: 좌하단 `(16, 8)`, Font Size `11`, Character Spacing `4`, Color `#6B7280`, Text `"AUTO SAVE // DAY 13 06:00"`
 * **`Txt_ContinuePrompt`**:
   - Anchor: `Bottom - Left` `(0, 0)`, Pos `(42, 24)`, Size `500 x 36`

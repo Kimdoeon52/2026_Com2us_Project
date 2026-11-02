@@ -15,11 +15,11 @@ public class FistAuctionMode : IAuctionMode
         manager.EnableFistAuctionUI(false); //주먹 경매용 버튼 Ui비활성화
 
         // 2. 제출된 제시가 모음
-        Dictionary<string, int> allBids = new Dictionary<string, int>(); // 제시가를 담을 딕션너뤼
+        Dictionary<int, int> allBids = new Dictionary<int, int>(); // 제시가를 담을 딕션너뤼
 
         if (playerBid > 0)
         {
-            allBids.Add(manager.PlayerName, playerBid); //플레이어가 값을 정한 값을 넣음
+            allBids.Add(manager.PlayerID, playerBid); //플레이어가 값을 정한 값을 넣음
         }
 
         // 3. AI 입찰 계산
@@ -30,7 +30,7 @@ public class FistAuctionMode : IAuctionMode
             // AI 성격/보유 자금 기반 단 1회 가치 산정
             int aiBid = CalculateAiFistBid(ai, stuff.Cost); // 각 ai가 얼마를 걸엇는지 aiBid에 넣기
             
-            allBids.Add(ai.NPCName, aiBid); // 누가 얼마 걸었는지 딕션어리에 저장
+            allBids.Add(ai.NPCID, aiBid); // 누가 얼마 걸었는지 딕션어리에 저장
             manager.AppendConsoleLog($"{ai.NPCName}님이 입찰서를 제출했습니다."); // 
         }
 
@@ -38,11 +38,11 @@ public class FistAuctionMode : IAuctionMode
         manager.SetChat("모든 참가자의 입찰서 제출이 완료되었습니다! 결과를 공개합니다.");
         await UniTask.Delay(2000);
 
-        string highestBidder = "";
+        int highestBidder = 0;
         int maxBid = -1;
         foreach (var kvp in allBids)
         {
-            manager.AppendConsoleLog($"{kvp.Key}님의 입찰가: {kvp.Value}G");
+            manager.AppendConsoleLog($"ID{kvp.Key}님의 입찰가: {kvp.Value}G");
             if (kvp.Value > maxBid)
             {
                 maxBid = kvp.Value;
@@ -54,17 +54,17 @@ public class FistAuctionMode : IAuctionMode
         if (allBids.Count == 0 || maxBid <= 0)
         {
             manager.SetChat("입찰자가 없습니다. 경매가 유찰되었습니다.");
-            manager.WinnerName = "";
+            manager.WinnerID = -1;
             manager.IfPlayerWin = false;
             return;
         }
 
         manager.CurrentCost = maxBid;
         manager.UpdateAuctionCostUI();
-        manager.WinnerName = highestBidder;
-        manager.IfPlayerWin = (highestBidder == manager.PlayerName);
+        manager.WinnerID = highestBidder;
+        manager.IfPlayerWin = (highestBidder == manager.PlayerID);
 
-        manager.SetChat($"최고 입찰자: {highestBidder}님 ({maxBid}G)! 축하합니다.");
+        manager.SetChat($"최고 입찰자: ID{highestBidder}님 ({maxBid}G)! 축하합니다.");
     }
 
     private int CalculateAiFistBid(AllAiBase ai, int baseCost)
@@ -73,7 +73,7 @@ public class FistAuctionMode : IAuctionMode
         int maxPossible = (int)(baseCost * Random.Range(0.8f, 1.5f));
 
         // 보유 골드 검증
-        if (!GlobalGold.Instance.CanUseGold(ai.NPCName, maxPossible))
+        if (!GlobalGold.Instance.CanUseGold(ai.NPCID, maxPossible))
         {
             maxPossible = ai.Gold; // 올인 또는 남은 잔고 전체
         }

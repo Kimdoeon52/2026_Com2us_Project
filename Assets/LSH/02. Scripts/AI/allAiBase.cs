@@ -9,6 +9,7 @@ public abstract class AllAiBase : MonoBehaviour
 {
     public abstract string NPCName { get; }
     public abstract int Gold { get; }
+    public abstract int NPCID { get; }
 
     [SerializeField] private bool isGiveUp;
     public event Action OnGiveUpTrue;

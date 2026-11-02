@@ -18,6 +18,8 @@ public class BossAiBase : AllAiBase
     public override string NPCName => data != null ? data.mainCharacterName : "No Name";
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
+    public override int NPCID => data != null ? data.mainCharacterID : -1;
+    public override float SkillChance { get; set; } = 0.2f; // 보스는 스킬 발동 확률 높게 (기본값 20%)
     //public override bool IsGiveUp { get; set; } = false;
 
     public static event Func<string, string, Sprite, Sprite, Color, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
@@ -58,7 +60,7 @@ public class BossAiBase : AllAiBase
         int NextPrice = actionPrise + RaiseGold;
 
         // GlobalGold 매니저를 통해 안전하게 잔고 검사
-        if (!GlobalGold.Instance.CanUseGold(NPCName, NextPrice))
+        if (!GlobalGold.Instance.CanUseGold(NPCID, NextPrice))
         {
             IsGiveUp = true; // 예산 부족으로 포기
             return false;
@@ -76,7 +78,7 @@ public class BossAiBase : AllAiBase
     }
     public virtual bool IsBigRaiseThink(int currentPrice, int baseCost) //큰레이즈 조건 판단
     {
-        if (!GlobalGold.Instance.CanUseGold(NPCName, currentPrice + bigRaiseGold) || bigRaisetimes < 1) //체크한번 해주고
+        if (!GlobalGold.Instance.CanUseGold(NPCID, currentPrice + bigRaiseGold) || bigRaisetimes < 1) //체크한번 해주고
         {
             return false;
         }

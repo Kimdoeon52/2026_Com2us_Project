@@ -15,6 +15,7 @@ public class NpcAiBase : AllAiBase
     public override string NPCName => data != null ? data.npcName : "No Name";
     public override int Gold => data != null ? data.npcGold : 0;
     public override int ThinkDelay => Random.Range(5000, 10000);
+    public override int NPCID => data != null ? data.npcID : -1;
 
     //public override bool IsGiveUp { get; set; } = false;
 
@@ -34,7 +35,7 @@ public class NpcAiBase : AllAiBase
         int NextPrice = actionPrise + RaiseGold;
 
         // GlobalGold 매니저를 통해 안전하게 잔고 검사
-        if (!GlobalGold.Instance.CanUseGold(data.npcName, NextPrice))
+        if (!GlobalGold.Instance.CanUseGold(data.npcID, NextPrice))
         {
             IsGiveUp = true; // 예산 부족으로 포기
             return false;

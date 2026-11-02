@@ -89,11 +89,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
 
     //================================================골드 관련 기능=====================================================
 
-    public void GetGold(string name, int goldplus) //골드 추가하는 함수임
+    public void GetGold(int id, int goldplus) //골드 추가하는 함수임
     {
         foreach (var goldData in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌
         {
-            if (goldData.mainCharacterName == name)
+            if (goldData.mainCharacterID == id)
             {
                 goldData.mainCharacterGold += goldplus;
                 Debug.Log($"NPC {goldData.mainCharacterName}의 골드추가했다능~ {goldData.mainCharacterGold}");
@@ -102,11 +102,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
     }
 
-    public bool UseGold(string name, int goldminus) //골드 사용했다는 함수임 일부러 bool을 리턴해서 골드 사용 가능 불가능 여부 전달.
+    public bool UseGold(int id, int goldminus) //골드 사용했다는 함수임 일부러 bool을 리턴해서 골드 사용 가능 불가능 여부 전달.
     {
         foreach (var goldData in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 사용해줌
         {
-            if (goldData.mainCharacterName == name)
+            if (goldData.mainCharacterID == id)
             {
                 if (goldData.mainCharacterGold >= goldminus)
                 {
@@ -133,11 +133,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
     }
     //====================================골드 사용 가능 불가능 판단 여부===============================================
-    public bool CanUseGold(string name, int requiredGold) //골드 사용 가능 여부 판단하는 함수임
+    public bool CanUseGold(int id, int requiredGold) //골드 사용 가능 여부 판단하는 함수임
     {
         foreach (var goldData in mainCharacterdata)
         {
-            if (goldData.mainCharacterName == name)
+            if (goldData.mainCharacterID == id)
             {
                 return goldData.mainCharacterGold >= requiredGold;
             }
@@ -145,11 +145,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         return false;
     }
     //==========================================장비 등급 교체==========================================================
-    public void ChangePartsGrade(string name, PartGrade stuffGrade) //장비 등급 교체 함수
+    public void ChangePartsGrade(int id, PartGrade stuffGrade) //장비 등급 교체 함수
     {
         foreach (var data in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌
         {
-            if (data.mainCharacterName == name)
+            if (data.mainCharacterID == id)
             {
                 for (int i = 0; i < data.parts.Length; i++)
                 {

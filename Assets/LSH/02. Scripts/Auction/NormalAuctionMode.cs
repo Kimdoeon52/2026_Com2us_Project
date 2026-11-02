@@ -46,7 +46,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
 
             // 이미 최고 입찰자라면 고민(ThinkDelay)도 안 하고 연출도 스킵!
-            if (manager.WinnerName == ai.NPCName)
+            if (manager.WinnerID == ai.NPCID)
             {
                 await UniTask.Yield(); // 무한 루프 방지용 최소 대기
                 continue;
@@ -90,7 +90,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                     ai.ShowThinkChatWithText($"{manager.CurrentCost}G 가본다!");
                 }
 
-                manager.WinnerName = ai.NPCName;
+                manager.WinnerID = ai.NPCID;
                 manager.IfPlayerWin = false;
                 manager.SetChat($"{ai.NPCName} 님이 {manager.CurrentCost}G로 레이즈!");
 

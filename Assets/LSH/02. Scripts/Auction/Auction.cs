@@ -125,10 +125,11 @@ public class Auction : Singleton<Auction>
 
     // --- 프로퍼티 & 캡슐화 변수 ---
     public string PlayerName { get; private set; } // 플레이어 이름 받아올 용도의 변수
+    public int PlayerID { get; set; } // 승자 이름 받아올 용도의 변수
     public int CurrentCost { get; set; } = 0; //현재 물건 가격을 나타낼 변수
     public bool IsAuctioningFin { get; set; } = true; //경매가 끝났는지 체크하는 변수
     public bool IsCutscenePlaying { get; set; } = false; //컷씬이 실행되고 있는지 체크하는 변수
-    public string WinnerName { get; set; } = ""; //승자 이름을 저장할 변수
+    public int WinnerID { get; set; } = -1; //승자 ID를 저장할 변수
     public bool IfPlayerWin { get; set; } = false; //플레이어가 이겼는지 체크하는 변수
 
     private PartsDefinition stuff; //현재 경매 물품을 저장할 용도
@@ -245,11 +246,13 @@ public class Auction : Singleton<Auction>
         if (GlobalGold.Instance.mainCharacterdata != null && GlobalGold.Instance.mainCharacterdata.Count > 0)
         {
             PlayerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName; //플레이어 이름 삽입
+            PlayerID = GlobalGold.Instance.mainCharacterdata[0].mainCharacterID;
         }
         else
         {
             Debug.LogError("GlobalGold에 mainCharacterdata가 읍다");
             PlayerName = "Player"; // 플레이어 이름 비우면 그냥 플레이어
+            PlayerID = 0;
         }
 
         RunAuctionSessionAsync().Forget(); // 경매 연속 진행 시작
@@ -284,7 +287,7 @@ public class Auction : Singleton<Auction>
         if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
         if (auctionName != null) auctionName.text = "";
 
-        WinnerName = "";
+        WinnerID = -1;
         IfPlayerWin = false;
         isPlayerGiveUp = false;
         IsTimeRunning = false;
@@ -382,7 +385,7 @@ public class Auction : Singleton<Auction>
 
         IsAuctioningFin = false; 
         isPlayerGiveUp = false;
-        WinnerName = "";
+        WinnerID  = -1;
         IfPlayerWin = false;
         auctionTime = 60f;
 
@@ -442,7 +445,7 @@ public class Auction : Singleton<Auction>
             if (ai != null && !ai.IsGiveUp) inGamePlayer++;
         }
         if (inGamePlayer == 0) return true;
-        return inGamePlayer <= 1 && !string.IsNullOrEmpty(WinnerName);
+        return inGamePlayer <= 1 && WinnerID != -1;
     }
 
     public async UniTask StartAuctionTimer() // 제한 시간 시작
@@ -541,7 +544,7 @@ public class Auction : Singleton<Auction>
             // 인벤토리에 먼저 넣어보고 성공했을 때만 골드 차감 (칸이 없으면 골드만 빠지는 거 방지)
             if (InventoryHost.Instance != null && InventoryHost.Instance.GivePart(stuff))
             {
-                GlobalGold.Instance.UseGold(PlayerName, CurrentCost); // 플레이어 골드 소모
+                GlobalGold.Instance.UseGold(GlobalGold.Instance.mainCharacterdata[0].mainCharacterID, CurrentCost); // 플레이어 골드 소모
                 UpdateGoldDisplay(); // 골드 시각적으로 보이기
                 GlobalGold.Instance.SaveGame(); // 저장
             }
@@ -554,10 +557,10 @@ public class Auction : Singleton<Auction>
         {
             foreach (var ai in auctionAiList) // ai싹다 돌아보기
             {
-                if (ai != null && ai.NPCName == WinnerName) // ai이름과 이긴 ai의 이름을 체크
+                if (ai != null && ai.NPCID == WinnerID) // ai이름과 이긴 ai의 이름을 체크
                 {
-                    GlobalGold.Instance.UseGold(ai.NPCName, CurrentCost); //이긴 ai 골드차감
-                    GlobalGold.Instance.ChangePartsGrade(ai.NPCName, stuffGrade);
+                    GlobalGold.Instance.UseGold(ai.NPCID, CurrentCost); //이긴 ai 골드차감
+                    GlobalGold.Instance.ChangePartsGrade(ai.NPCID, stuffGrade);
                     GlobalGold.Instance.SaveGame(); // 저장
                     break;
                 }
@@ -598,16 +601,16 @@ public class Auction : Singleton<Auction>
             Debug.LogError("[ActionFinish] GlobalGold 데이터가 없습니다.");
             return;
         }
-        string finalWinner = IfPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterName : WinnerName;
+        int finalWinner = IfPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterID : WinnerID;
 
-        if (string.IsNullOrEmpty(finalWinner))
+        if (finalWinner == -1)
         {
             SetChat("낙찰자가 없습니다.");
             await WaitInput();
             return;
         }
-
-        List<string> chatList = ChatList.Instance.GetChat("경매완료", finalWinner);
+        string winnerName = IfPlayerWin ? PlayerName : auctionAiList.Find(ai => ai.NPCID == finalWinner)?.NPCName ?? "알 수 없음";
+        List<string> chatList = ChatList.Instance.GetChat("경매완료", winnerName);
         if (chatList != null && chatList.Count > 0)
         {
             foreach (var chatMessage in chatList)
@@ -659,18 +662,18 @@ public class Auction : Singleton<Auction>
             Debug.LogError("[OnRaiseButton] GlobalGold 데이터가 없습니다.");
             return;
         }
-        if (!string.IsNullOrEmpty(WinnerName) && WinnerName == PlayerName)
+        if (WinnerID != -1 && WinnerID == GlobalGold.Instance.mainCharacterdata[0].mainCharacterID)
         {
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
         }
-        Debug.Log($"[비교 확인] WinnerName: '{WinnerName}' / PlayerName: '{PlayerName}' / 데이터이름: '{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName}'");
+        Debug.Log($"[비교 확인] WinnerID: '{WinnerID}' / PlayerID: '{GlobalGold.Instance.mainCharacterdata[0].mainCharacterID}'");
         int needGold = CurrentCost + 100;
-        if (GlobalGold.Instance.CanUseGold(PlayerName, needGold))
+        if (GlobalGold.Instance.CanUseGold(GlobalGold.Instance.mainCharacterdata[0].mainCharacterID, needGold))
         {
             CurrentCost = needGold;
             UpdateAuctionCostUI();
-            WinnerName = GlobalGold.Instance.mainCharacterdata[0].mainCharacterName;
+            WinnerID = GlobalGold.Instance.mainCharacterdata[0].mainCharacterID;
             IfPlayerWin = true;
             SetChat($"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {CurrentCost}G로 레이즈!");
             if (RemainingTime < 10f) RemainingTime = 10f;

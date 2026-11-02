@@ -4,7 +4,7 @@ using UnityEngine;
 [System.Serializable]
 public class MainCharacterGold : ScriptableObject
 {
-    public int id;
+    public int mainCharacterID;
     public string mainCharacterName;
     public int mainCharacterGold;
     public int score;

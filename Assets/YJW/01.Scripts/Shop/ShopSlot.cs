@@ -75,7 +75,7 @@ public class ShopSlot : MonoBehaviour
         if (hasPart(_part) == true)
         {
             InventoryHost.Instance.RemovePart(_part);
-            GlobalGold.Instance.GetGold("윤지우", Gold);
+            GlobalGold.Instance.GetGold(0, Gold);
             GlobalGold.Instance.SaveGame();
         }
         else return;

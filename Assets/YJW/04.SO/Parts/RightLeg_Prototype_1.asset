@@ -13,21 +13,22 @@ MonoBehaviour:
   m_Name: RightLeg_Prototype_1
   m_EditorClassIdentifier: 
   _id: PX-P-RL
-  _displayName: "코어 v.2 시제형 오른다리 [스톰프]"
+  _displayName: "\uCF54\uC5B4 v.2 \uC2DC\uC81C\uD615 \uC624\uB978\uB2E4\uB9AC [\uC2A4\uD1B0\uD504]"
   _description: 
   _slot: 3
   _grade: 4
   _durability: 120
   _shape:
     _size: {x: 2, y: 2}
-    _cells: 01010001
+    _cells: 01010101
   _maxCount: 0
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 0
-  _activeSkillId: SK_LEG_STOMP
   _attackPower: 0
   _moveSpeedIndex: 116.1
   _cooldownReduction: 8.3
   _defenseBonus: 4.1
   _rangeIncrease: 10.4
+  _activeSkillId: SK_LEG_STOMP
+  _skillCost: 1

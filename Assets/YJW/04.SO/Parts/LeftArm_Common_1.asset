@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LeftArm_Common_1
   m_EditorClassIdentifier: 
   _id: PA-N-LA1
-  _displayName: "A사 보급형 왼팔 [붐버]"
+  _displayName: "A\uC0AC \uBCF4\uAE09\uD615 \uC67C\uD314 [\uBD90\uBC84]"
   _description: 
   _slot: 0
   _grade: 0
@@ -25,9 +25,10 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 50
-  _activeSkillId: SK_ARM_BOMBER
   _attackPower: 100
   _moveSpeedIndex: 0
   _cooldownReduction: 4
   _defenseBonus: 0
   _rangeIncrease: 0
+  _activeSkillId: SK_ARM_BOMBER
+  _skillCost: 1

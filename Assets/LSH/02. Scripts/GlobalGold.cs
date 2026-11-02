@@ -17,6 +17,15 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
                                  // 플레이어는 0번
     public int PlayerGold => mainCharacterdata != null && mainCharacterdata.Count > 0 ? mainCharacterdata[0].mainCharacterGold : 0;
 
+    [System.Serializable]
+    private class StageProgress // 스테이지 진행도 저장용
+    {
+        public int currentStage = 1;
+    }
+
+    private string stageSavePath; //스테이지 진행도 세이브 경로
+    public int CurrentStage { get; private set; } = 1; //현재 스테이지 (1부터 시작)
+
     protected override void Awake()
     {
         base.Awake();
@@ -36,8 +45,11 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         // 최종 파일 경로: LSH/06.JSon/mainGold.json
         mainSavePath = Path.GetFullPath(Path.Combine(basePath, "mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
 
+        stageSavePath = Path.GetFullPath(Path.Combine(basePath, "stageProgress.json"));
+
         Debug.Log($"[저장 경로] {mainSavePath}");
         LoadGame();
+        LoadStage();
     }
 
     void Start()
@@ -160,6 +172,23 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
                     }
                 }
             }
+        }
+    }
+    //==========================================스테이지 진행==========================================================
+    public void AdvanceStage(int maxStage) //다음 스테이지로 이동. 마지막 스테이지면 유지
+    {
+        if (CurrentStage >= maxStage) return;
+        CurrentStage++;
+        File.WriteAllText(stageSavePath, JsonUtility.ToJson(new StageProgress { currentStage = CurrentStage }));
+        Debug.Log($"[스테이지 이동] 현재 스테이지: {CurrentStage}");
+    }
+
+    private void LoadStage()
+    {
+        if (File.Exists(stageSavePath))
+        {
+            StageProgress progress = JsonUtility.FromJson<StageProgress>(File.ReadAllText(stageSavePath));
+            CurrentStage = Mathf.Max(1, progress.currentStage);
         }
     }
     //================================================SAVE&LOAD 기능=====================================================

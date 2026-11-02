@@ -23,13 +23,7 @@ public class BossNpc1 : BossAiBase
         {
             return false;
         }
-        if(CanUseSkill())
-        {
-            SkillCount--;
-            return true;
-        }
-        else
-             return false;
+        return base.IsBigRaiseThink(currentPrice, baseCost);
     }
     public override void UseBigSkill(Auction manager)
     {

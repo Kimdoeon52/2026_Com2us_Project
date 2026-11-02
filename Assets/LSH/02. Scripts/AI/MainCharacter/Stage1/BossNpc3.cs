@@ -23,7 +23,6 @@ public class BossNpc3 : BossAiBase
     }
     public override void UseBigSkill(Auction manager)
     {
-        SkillCount--;
         manager.RemainingTime /= 2; //시간을 절반으로
     }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트

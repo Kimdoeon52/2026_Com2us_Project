@@ -73,12 +73,20 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                 {
                     //raiseStep = boss.BigRaiseGold();
                     //manager.CurrentCost += raiseStep;
+                    int beforeCost = manager.CurrentCost;
                     boss.UseBigSkill(manager);
-                    manager.UpdateAuctionCostUI();
-                    
+                    if (manager.CurrentCost != beforeCost) manager.UpdateAuctionCostUI(); // 가격을 가리는 스킬이 덮어써지지 않게 가격이 바뀔 때만 갱신
 
-                    // 빅 레이즈 성공 말풍선 연출
-                    ai.ShowThinkChatWithText($"{manager.CurrentCost}G! 확 올려버리지!");
+                    if (manager.CurrentCost > beforeCost) // 가격을 올린 스킬만 입찰로 인정
+                    {
+                        // 빅 레이즈 성공 말풍선 연출
+                        ai.ShowThinkChatWithText($"{manager.CurrentCost}G! 확 올려버리지!");
+                        ApplyAiBid(manager, ai);
+                    }
+                    else
+                    {
+                        ai.ShowThinkChatWithText(boss.BigRaiseSkillName());
+                    }
                     await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
                 }
                 else
@@ -88,15 +96,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
                     // 일반 레이즈 성공 말풍선 연출 (금액 외치기)
                     ai.ShowThinkChatWithText($"{manager.CurrentCost}G 가본다!");
-                }
-
-                manager.WinnerID = ai.NPCID;
-                manager.IfPlayerWin = false;
-                manager.SetChat($"{ai.NPCName} 님이 {manager.CurrentCost}G로 레이즈!");
-
-                if (manager.RemainingTime < 10f)
-                {
-                    manager.RemainingTime = 10f;
+                    ApplyAiBid(manager, ai);
                 }
             }
             else
@@ -113,6 +113,18 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                     manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
                 break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
             }
+        }
+    }
+
+    private void ApplyAiBid(Auction manager, AllAiBase ai) // AI를 최고 입찰자로 등록
+    {
+        manager.WinnerID = ai.NPCID;
+        manager.IfPlayerWin = false;
+        manager.SetChat($"{ai.NPCName} 님이 {manager.CurrentCost}G로 레이즈!");
+
+        if (manager.RemainingTime < 10f)
+        {
+            manager.RemainingTime = 10f;
         }
     }
 }

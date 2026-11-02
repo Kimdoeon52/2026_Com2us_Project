@@ -87,7 +87,12 @@ public class BossAiBase : AllAiBase
         {
             return false;
         }
-        return CanUseSkill();
+        if (!CanUseSkill())
+        {
+            return false;
+        }
+        SkillCount--; //스킬 사용 횟수 차감
+        return true;
     }
     public virtual async UniTask TriggerCutscene(string bossName, string skill)
     {
@@ -117,7 +122,7 @@ public class BossAiBase : AllAiBase
     }
     protected virtual bool CanUseSkill()
     {
-         bool canUseSkill = UnityEngine.Random.value < SkillChance;
+         bool canUseSkill = UnityEngine.Random.value * 100f < SkillChance; //SkillChance는 0~100 기준
          return canUseSkill && SkillCount > 0;
     }
 }

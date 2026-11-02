@@ -13,21 +13,22 @@ MonoBehaviour:
   m_Name: LeftLeg_Common_6
   m_EditorClassIdentifier: 
   _id: PC-N-LL2
-  _displayName: "C사 보급형 왼다리 [부스터]"
+  _displayName: "C\uC0AC \uBCF4\uAE09\uD615 \uC67C\uB2E4\uB9AC [\uBD80\uC2A4\uD130]"
   _description: 
   _slot: 2
   _grade: 0
   _durability: 100
   _shape:
     _size: {x: 2, y: 2}
-    _cells: 01010100
+    _cells: 01010101
   _maxCount: 0
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 45
-  _activeSkillId: SK_LEG_BOOSTER
   _attackPower: 0
   _moveSpeedIndex: 103
   _cooldownReduction: 0
   _defenseBonus: 0
   _rangeIncrease: 5
+  _activeSkillId: SK_LEG_BOOSTER
+  _skillCost: 1

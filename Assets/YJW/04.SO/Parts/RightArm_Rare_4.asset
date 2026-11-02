@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RightArm_Rare_4
   m_EditorClassIdentifier: 
   _id: PB-R-RA2
-  _displayName: "B사 개량형 오른팔 [지면 강타]"
+  _displayName: "B\uC0AC \uAC1C\uB7C9\uD615 \uC624\uB978\uD314 [\uC9C0\uBA74 \uAC15\uD0C0]"
   _description: 
   _slot: 1
   _grade: 1
@@ -25,9 +25,10 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 125
-  _activeSkillId: SK_ARM_SLAM
   _attackPower: 126
   _moveSpeedIndex: 0
   _cooldownReduction: 0
   _defenseBonus: 2.4
   _rangeIncrease: 0
+  _activeSkillId: SK_ARM_SLAM
+  _skillCost: 1

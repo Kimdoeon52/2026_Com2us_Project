@@ -87,7 +87,7 @@ public class Auction : Singleton<Auction>
 
     [Header("참여 AI 리스트")]
     [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록
-    [SerializeField] public List<BossAiBase> bossAiList; //참여Boss목록
+    [SerializeField] private AuctionStageData stageData; //스테이지별 참여Boss목록
     [SerializeField] public List<AllAiBase> auctionAiList; //지금 경매에 참여하고 있는 Ai들
     [SerializeField] private int dayOfEnterNpc; //오늘 경매에 참여할 NPC수
 
@@ -269,7 +269,20 @@ public class Auction : Singleton<Auction>
             await StartAuction();
         }
 
+        GlobalGold.Instance.AdvanceStage(stageData.StageCount); // 세션이 끝나면 다음 스테이지로
         MoveToNextScene(1000).Forget();
+    }
+
+    // 현재 스테이지의 보스 명단 가져오기
+    private List<BossAiBase> GetStageBosses()
+    {
+        int stage = GlobalGold.Instance.CurrentStage;
+        List<BossAiBase> bosses = stageData != null ? stageData.GetBosses(stage) : null;
+        if (bosses == null)
+        {
+            Debug.LogError($"Stage{stage} 보스 명단이 읍다. stageData를 확인해라");
+        }
+        return bosses;
     }
 
     // 회차 시작 전 물품/참가자/상태 초기화
@@ -280,6 +293,9 @@ public class Auction : Singleton<Auction>
             Debug.LogError("경매 물품 리스트가 읍다");
             return false;
         }
+
+        List<BossAiBase> stageBosses = GetStageBosses();
+        if (stageBosses == null) return false; // 보스 명단이 없으면 중단
 
         stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
         CurrentCost = stuff.Cost / 2;
@@ -295,7 +311,7 @@ public class Auction : Singleton<Auction>
         NPCImageOff();
         UpdateGoldDisplay(); // 골드 업데이트
         DayOfAuctionEnter(); // 그 회차 경매할 인원 정하기
-        GetAuctionNpc(dayOfEnterNpc); // ai 정하기
+        GetAuctionNpc(dayOfEnterNpc, stageBosses); // ai 정하기
         return true;
     }
 
@@ -327,13 +343,13 @@ public class Auction : Singleton<Auction>
         dayOfEnterNpc = Random.Range(5, 7); // 경매 인원 5~7 (모든 랭커5(필수) + 쩌리(N명))
     }
 
-    private void GetAuctionNpc(int enterNpc) // 그날 하루 경매할 npc 수 매개변수
+    private void GetAuctionNpc(int enterNpc, List<BossAiBase> stageBosses) // 그날 하루 경매할 npc 수, 현재 스테이지 보스 명단 매개변수
     {
         ClearSpawnedAi(); // 이전 회차 AI UI오브 젝트 제거
 
         auctionAiList.Clear(); //옥션 리스트 비우고
         //bool isBossEnter = Random.value < 1f; //지금은 1f로 실험용인데 나중에 확률 30%로 바꾸기
-        foreach(BossAiBase isBossEnter in bossAiList)
+        foreach(BossAiBase isBossEnter in stageBosses)
         {
             auctionAiList.Add(isBossEnter);
             Debug.Log($"{isBossEnter.name} 참여");
@@ -656,7 +672,7 @@ public class Auction : Singleton<Auction>
 
     public void OnRaiseButton() // 레이즈 버튼
     {
-        if (!IsTimeRunning || isPlayerGiveUp) return;
+        if (!IsTimeRunning || isPlayerGiveUp || IsCutscenePlaying) return;
         if (GlobalGold.Instance == null || GlobalGold.Instance.mainCharacterdata == null || GlobalGold.Instance.mainCharacterdata.Count == 0)
         {
             Debug.LogError("[OnRaiseButton] GlobalGold 데이터가 없습니다.");

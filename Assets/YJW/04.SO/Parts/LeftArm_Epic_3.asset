@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LeftArm_Epic_3
   m_EditorClassIdentifier: 
   _id: PB-E-LA1
-  _displayName: "B사 정예형 왼팔 [차지 샷]"
+  _displayName: "B\uC0AC \uC815\uC608\uD615 \uC67C\uD314 [\uCC28\uC9C0 \uC0F7]"
   _description: 
   _slot: 0
   _grade: 2
@@ -25,9 +25,10 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 300
-  _activeSkillId: SK_ARM_CHARGE
   _attackPower: 151
   _moveSpeedIndex: 0
   _cooldownReduction: 0
   _defenseBonus: 2.9
   _rangeIncrease: 0
+  _activeSkillId: SK_ARM_CHARGE
+  _skillCost: 1

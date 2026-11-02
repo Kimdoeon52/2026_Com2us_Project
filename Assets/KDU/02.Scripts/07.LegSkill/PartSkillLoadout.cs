@@ -65,8 +65,9 @@ public class PartSkillLoadout : MonoBehaviour, ISkillLoadout
             if (part == null || string.IsNullOrEmpty(part.ActiveSkillId) || _catalog == null)
                 continue;
 
-            _cache[i] = _catalog.Find(part.ActiveSkillId);
-            if (_cache[i] == null)
+            if (_catalog.TryFind(part.ActiveSkillId, out PartSkillCatalog.Entry entry))
+                _cache[i] = entry.Action;
+            else
                 Debug.LogWarning($"[PartSkillLoadout] {part.Id}: 스킬 ID {part.ActiveSkillId} 매핑 없음", this);
         }
     }

@@ -14,14 +14,54 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _entries:
   - Id: SK_LEG_DASH
+    DisplayName: "부스터 대시"
+    TypeLabel: "사거리 4.0 · 공중 가능"
     Action: {fileID: 11400000, guid: 35156193a7d44aba8c13e3d9c5673c0b, type: 2}
   - Id: SK_LEG_SHIELD
+    DisplayName: "에너지 방어막"
+    TypeLabel: "전진 1.0 · 충격파 3.0"
     Action: {fileID: 11400000, guid: 3c9ecd82b83a41e5ab27baec7a2b4d99, type: 2}
   - Id: SK_LEG_HIJUMP
+    DisplayName: "하이 점프"
+    TypeLabel: "높이 4.0"
     Action: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
   - Id: SK_LEG_STOMP
+    DisplayName: "스톰프"
+    TypeLabel: "반경 3.0 · 공중 전용"
     Action: {fileID: 11400000, guid: 072ac5274d1e4fc0aa545cf75f02ef73, type: 2}
   - Id: SK_LEG_BACKBOOST
+    DisplayName: "백 부스트"
+    TypeLabel: "후방 3.0 · 공중 가능"
     Action: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
   - Id: SK_LEG_BOOSTER
+    DisplayName: "부스터"
+    TypeLabel: "3초 이동속도 +100%"
     Action: {fileID: 11400000, guid: 21d6f658e99b44b1a8a94dfe520b7b1f, type: 2}
+  - Id: SK_ARM_BOOSTSHOT
+    DisplayName: "부스터 샷"
+    TypeLabel: "탭 · 부채꼴 2.5"
+    Action: {fileID: 0}
+  - Id: SK_ARM_SLAM
+    DisplayName: "지면 강타"
+    TypeLabel: "탭 · 반경 2.0"
+    Action: {fileID: 0}
+  - Id: SK_ARM_CHARGE
+    DisplayName: "차지 샷"
+    TypeLabel: "홀드 · 사거리 1.5"
+    Action: {fileID: 0}
+  - Id: SK_ARM_BOMBER
+    DisplayName: "붐버"
+    TypeLabel: "탭 · 사거리 6.0"
+    Action: {fileID: 0}
+  - Id: SK_ARM_RUSH
+    DisplayName: "연속 펀치"
+    TypeLabel: "홀드 · 사거리 1.3"
+    Action: {fileID: 0}
+  - Id: SK_ARM_LASER
+    DisplayName: "레이저 샷"
+    TypeLabel: "홀드 · 부채꼴 7.0"
+    Action: {fileID: 0}
+  - Id: SK_BASIC_TBD
+    DisplayName: "공용 기본 스킬"
+    TypeLabel: "설계 예정"
+    Action: {fileID: 0}

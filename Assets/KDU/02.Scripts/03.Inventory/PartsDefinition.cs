@@ -91,7 +91,7 @@ public class PartsDefinition : ScriptableObject
     private GimmickTag _gimmickTag = GimmickTag.None;
 
     [Tooltip("스킬 코스트")]
-    private int _skillCost = 1;
+    [Min(0)][SerializeField] private int _skillCost = 1;
 
     public string Id => _id;
     public string DisplayName => _displayName;

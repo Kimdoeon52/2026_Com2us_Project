@@ -16,6 +16,12 @@ public class InventoryToggle : MonoBehaviour
 
         [Tooltip("키로 닫을 때 추가 처리")]
         public UnityEvent OnClose;
+
+        [Tooltip("인벤토리 위치 변경")]
+        public bool MoveRoot;
+
+        [Tooltip("이 모드의 인벤토리 위치")]
+        public Vector2 RootPosition;
     }
 
     [Tooltip("켜고 끌 인벤토리 UI 루트. 이 컴포넌트가 붙은 오브젝트를 지정하면 다시 켤 수 없다")]
@@ -28,11 +34,17 @@ public class InventoryToggle : MonoBehaviour
     [SerializeField] private KeyCode _closeKey = KeyCode.Escape;
 
     private Mode _current;
+    private RectTransform _rootRect;
+    private Vector2 _rootHome;
 
     public bool IsOpen => _current != null;
 
     private void Start()
     {
+        _rootRect = _inventoryRoot != null ? _inventoryRoot.transform as RectTransform : null;
+        if (_rootRect != null)
+            _rootHome = _rootRect.anchoredPosition;
+
         SetActive(_inventoryRoot, false);
         for (int i = 0; i < _modes.Length; i++)
         {
@@ -71,6 +83,10 @@ public class InventoryToggle : MonoBehaviour
     private void Open(Mode mode)
     {
         _current = mode;
+
+        if (_rootRect != null)
+            _rootRect.anchoredPosition = mode.MoveRoot ? mode.RootPosition : _rootHome;
+
         SetActive(_inventoryRoot, true);
         SetPanels(mode, true);
     }

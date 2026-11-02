@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 스킬 ID → 행동 매핑
+// 스킬 ID → 행동·표시 정보 매핑
 [CreateAssetMenu(menuName = "KDU/LegSkill/Part Skill Catalog", fileName = "PartSkillCatalog")]
 public class PartSkillCatalog : ScriptableObject
 {
@@ -12,25 +12,40 @@ public class PartSkillCatalog : ScriptableObject
         [Tooltip("스킬 ID")]
         public string Id;
 
-        [Tooltip("행동")]
+        [Tooltip("표시명")]
+        public string DisplayName;
+
+        [Tooltip("스킬 종류 태그")]
+        public string TypeLabel;
+
+        [Tooltip("행동. 비우면 표시만")]
         public ActionData Action;
     }
 
     [Tooltip("매핑 목록")]
     [SerializeField] private Entry[] _entries;
 
-    public ActionData Find(string id)
+    public bool TryFind(string id, out Entry entry)
     {
+        entry = default;
         if (_entries == null || string.IsNullOrEmpty(id))
-            return null;
+            return false;
 
         for (int i = 0; i < _entries.Length; i++)
         {
-            if (_entries[i].Id == id)
-                return _entries[i].Action;
+            if (_entries[i].Id != id)
+                continue;
+
+            entry = _entries[i];
+            return true;
         }
 
-        return null;
+        return false;
+    }
+
+    public ActionData Find(string id)
+    {
+        return TryFind(id, out Entry entry) ? entry.Action : null;
     }
 
     private void OnValidate()
@@ -47,9 +62,6 @@ public class PartSkillCatalog : ScriptableObject
 
             if (!seen.Add(id))
                 Debug.LogWarning($"{name}: 스킬 ID {id} 중복", this);
-
-            if (_entries[i].Action == null)
-                Debug.LogWarning($"{name}: 스킬 ID {id} 행동 비어 있음", this);
         }
     }
 }

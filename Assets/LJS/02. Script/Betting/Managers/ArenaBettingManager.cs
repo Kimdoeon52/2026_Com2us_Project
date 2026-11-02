@@ -92,6 +92,12 @@ public class ArenaBettingManager : MonoBehaviour
         currentNpc = targetNpc;
         currentBasePrice = regionBasePrice;
 
+        if (InventoryHost.Instance != null && !InventoryHost.Instance.CanSortie)
+        {
+            ShowArenaInfo("코어가 불안정합니다.\n정비소에서 코어를 복구해야 출전할 수 있습니다.");
+            return;
+        }
+
         if (!currentNpc.CanPlayMatch())
         {
             ShowArenaInfo("NPC의 소지금이 부족하여\n경기를 진행할 수 없습니다."); // 노란 알림

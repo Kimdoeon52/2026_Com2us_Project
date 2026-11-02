@@ -148,8 +148,11 @@ public class TimeSystemManager : MonoBehaviour
 
     private void UpdateTimeUI() // 날짜 새로고침
     {
-        timeOfDay.SetTime(hour); //  즉시 시간 변경 반영_RSTimeOfDay
-        timeOfDay.TransitionTo(hour, 1f); // 1초에 걸쳐 시간 변경 반영_RSTimeOfDay
+        if (timeOfDay != null) // 배경 시간대가 없는 씬에서도 날짜는 갱신
+        {
+            timeOfDay.SetTime(hour); //  즉시 시간 변경 반영_RSTimeOfDay
+            timeOfDay.TransitionTo(hour, 1f); // 1초에 걸쳐 시간 변경 반영_RSTimeOfDay
+        }
         timeText.text = $"{year}년 {month:D2}월 {day:D2}일 {hour:D2}시";
     }
 

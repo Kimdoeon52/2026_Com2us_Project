@@ -95,6 +95,7 @@ public class CombatDataHub : MonoBehaviour
         }
 
         ValidateAndRepairSnapshots();
+        InventoryBattleBridge.ApplyTo(PlayerSnapshot);
         CacheSnapshotsPartMasters();
     }
 
@@ -135,6 +136,7 @@ public class CombatDataHub : MonoBehaviour
     public void InitializeRobotBattle(CombatantSnapshot player, CombatantSnapshot enemyRobot)
     {
         currentBattleMode = BattleMode.RobotVsRobot;
+        InventoryBattleBridge.ApplyTo(player);
         PlayerSnapshot = player;
         EnemySnapshot = enemyRobot;
         BossSnapshot = null;
@@ -150,6 +152,7 @@ public class CombatDataHub : MonoBehaviour
     public void InitializeBossBattle(CombatantSnapshot player, BossSnapshot boss)
     {
         currentBattleMode = BattleMode.RobotVsBoss;
+        InventoryBattleBridge.ApplyTo(player);
         PlayerSnapshot = player;
         BossSnapshot = boss;
         SyncBossToEnemyProxy();
@@ -190,7 +193,10 @@ public class CombatDataHub : MonoBehaviour
     {
         if (combatant == null) return;
         if (combatant.isPlayer || combatant.fighterID.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0)
+        {
+            InventoryBattleBridge.ApplyTo(combatant);
             PlayerSnapshot = combatant;
+        }
         else
             EnemySnapshot = combatant;
 

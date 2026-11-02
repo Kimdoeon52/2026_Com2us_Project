@@ -8,11 +8,13 @@ public class CoreSaveData
     [SerializeField] private string _id;
     [SerializeField] private int _level = 1;
     [SerializeField] private int _exp;
+    [SerializeField] private bool _isUnstable;
 
     // 비었으면 null
     public string Id => string.IsNullOrEmpty(_id) ? null : _id;
     public int Level => Mathf.Max(1, _level);
     public int Exp => _exp;
+    public bool IsUnstable { get => _isUnstable; set => _isUnstable = value; }
 
     // 다른 코어로 바꾸면 레벨과 경험치는 처음부터
     public void Set(string id)
@@ -20,6 +22,7 @@ public class CoreSaveData
         _id = id;
         _level = 1;
         _exp = 0;
+        _isUnstable = false;
     }
 
     public void Clear()

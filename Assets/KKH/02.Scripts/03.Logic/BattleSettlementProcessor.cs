@@ -227,6 +227,13 @@ public static class BattleSettlementProcessor
                     {
                         grade = masterData.partGrade;
                     }
+                    else if (InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null)
+                    {
+                        // 마스터 데이터가 없는 인벤토리 파츠는 파츠 정의의 등급을 쓴다
+                        PartsDefinition definition = InventoryHost.Instance.Catalog.Find(partState.partID);
+                        if (definition != null)
+                            grade = definition.Grade;
+                    }
 
                     float destroyChance = GetDestructionProbability(grade);
                     float roll = UnityEngine.Random.value;

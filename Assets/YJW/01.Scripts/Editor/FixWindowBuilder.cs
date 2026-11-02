@@ -84,6 +84,87 @@ public static class FixWindowBuilder
         Debug.Log($"[{UndoName}] 완료. 확인 후 Ctrl+S로 저장하세요.");
     }
 
+    // 화면을 지우지 않고 FixWindowController만 붙이고 스프라이트를 채운다
+    [MenuItem("Tools/YJW/FixWindow 데이터 연결")]
+    private static void Connect()
+    {
+        const string title = "FixWindow 데이터 연결";
+
+        Scene scene = SceneManager.GetActiveScene();
+        Transform window = FindFixWindow(scene);
+        if (scene.name != SceneName || window == null || window.Find(RepairPanelName) == null)
+        {
+            EditorUtility.DisplayDialog(title, "YJW 씬을 열고, FixWindow 화면을 먼저 배치한 상태에서 실행하세요.", "확인");
+            return;
+        }
+
+        string missing = PrepareSprites();
+        if (missing != null)
+        {
+            EditorUtility.DisplayDialog(title, $"스프라이트를 불러오지 못했습니다.\n{missing}", "확인");
+            return;
+        }
+
+        FixWindowController controller = window.GetComponent<FixWindowController>();
+        if (controller == null)
+            controller = Undo.AddComponent<FixWindowController>(window.gameObject);
+
+        var so = new SerializedObject(controller);
+        so.FindProperty("_statusCool").objectReferenceValue = Sprites["ic_status_cool"];
+        so.FindProperty("_statusWarm").objectReferenceValue = Sprites["ic_status_warm"];
+        so.FindProperty("_statusHot").objectReferenceValue = Sprites["ic_status_hot"];
+        so.FindProperty("_cellGood").objectReferenceValue = Sprites["bg_statusButton_good_enabled"];
+        so.FindProperty("_cellWarning").objectReferenceValue = Sprites["bg_statusButton_warning_enabled"];
+        so.FindProperty("_cellBad").objectReferenceValue = Sprites["bg_statusButton_bad_enabled"];
+        so.FindProperty("_cellEmpty").objectReferenceValue = Sprites["swatch_v2"];
+        so.FindProperty("_badgeNeutral").objectReferenceValue = Sprites["bg_statusButton_neutral_enabled"];
+        so.FindProperty("_badgeCyan").objectReferenceValue = Sprites["bg_miniButton_secondary_enabled"];
+        so.FindProperty("_badgeOrange").objectReferenceValue = Sprites["bg_statusButton_warning_enabled"];
+        so.FindProperty("_badgeYellow").objectReferenceValue = Sprites["bg_miniButton_primary_pressed"];
+        so.FindProperty("_badgeRed").objectReferenceValue = Sprites["bg_statusButton_bad_enabled"];
+        so.FindProperty("_badgeGreen").objectReferenceValue = Sprites["bg_statusButton_good_enabled"];
+        so.FindProperty("_rowNormal").objectReferenceValue = Sprites["bg_selectItem_enabled"];
+        so.FindProperty("_rowSelected").objectReferenceValue = Sprites["bg_selectItem_hover"];
+        so.FindProperty("_slotNormal").objectReferenceValue = Sprites["bg_button_secondary_enabled"];
+        so.FindProperty("_slotSelected").objectReferenceValue = Sprites["bg_button_primary_enabled"];
+        so.FindProperty("_localTimeSystem").objectReferenceValue = EnsureLocalTimeSystem(window);
+        so.ApplyModifiedProperties();
+
+        EditorSceneManager.MarkSceneDirty(scene);
+        Debug.Log($"[{title}] 완료. Ctrl+S로 저장하세요.");
+    }
+
+    // YJW 씬에는 시간 시스템이 없어 단독 실행용을 꺼둔 채로 둔다. 켜는 건 FixWindowController가 정한다
+    private static GameObject EnsureLocalTimeSystem(Transform window)
+    {
+        const string name = "LocalTimeSystem";
+
+        Transform found = window.Find(name);
+        GameObject go = found != null ? found.gameObject : new GameObject(name);
+        if (found == null)
+        {
+            Undo.RegisterCreatedObjectUndo(go, UndoName);
+            go.transform.SetParent(window, false);
+        }
+
+        TimeSystemManager time = go.GetComponent<TimeSystemManager>();
+        if (time == null)
+            time = Undo.AddComponent<TimeSystemManager>(go);
+
+        Transform date = window.Find("Date");
+        CanvasGroup group = date.GetComponent<CanvasGroup>();
+        if (group == null)
+            group = Undo.AddComponent<CanvasGroup>(date.gameObject);
+
+        Undo.RecordObject(time, UndoName);
+        time.timeText = date.GetComponentInChildren<TextMeshProUGUI>(true);
+        time.timeCanvasGroup = group;
+        EditorUtility.SetDirty(time);
+
+        go.SetActive(false);
+        return go;
+    }
+
     private static Transform FindFixWindow(Scene scene)
     {
         foreach (RectTransform rect in Object.FindObjectsByType<RectTransform>(FindObjectsInactive.Include, FindObjectsSortMode.None))

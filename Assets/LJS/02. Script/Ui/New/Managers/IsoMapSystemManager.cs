@@ -127,6 +127,13 @@ public class IsoMapSystemManager : MonoBehaviour
     {
         if (selectedElement != null)
         {
+            // 불안정한 코어로는 전투 씬에 바로 들어갈 수 없다
+            if (selectedElement.targetSceneName == "Battle" && InventoryHost.Instance != null && !InventoryHost.Instance.CanSortie)
+            {
+                confirmText.text = "코어가 불안정합니다.\n코어를 복구해야 출전할 수 있습니다.";
+                return;
+            }
+
             LoadingManager.Instance.LoadScene(selectedElement.targetSceneName); // 씬 이동
             TimeSystemManager.Instance.PassTime(selectedElement.useHours); // 
             ToggleMapUI();

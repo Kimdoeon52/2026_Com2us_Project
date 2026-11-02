@@ -8,6 +8,7 @@ public class PartsInstance
     [SerializeField] private string _definitionId;
     [SerializeField] private Vector2Int _origin;
     [SerializeField] private bool _isDestroyed;
+    [SerializeField] private int _lostDurability;   // 잃은 내구도. 0이면 최대치
 
     [NonSerialized] private PartsDefinition _definition;
 
@@ -16,6 +17,8 @@ public class PartsInstance
     public bool IsDestroyed => _isDestroyed;
 
     public int Durability => _isDestroyed ? 0 : _definition.Durability;
+    public int CurrentDurability => _isDestroyed ? 0 : Mathf.Max(0, _definition.Durability - _lostDurability);
+    public int LostDurability { get => _lostDurability; set => _lostDurability = Mathf.Max(0, value); }
     public int Cost => _isDestroyed ? 0 : _definition.Cost;
 
     public PartsInstance() { }

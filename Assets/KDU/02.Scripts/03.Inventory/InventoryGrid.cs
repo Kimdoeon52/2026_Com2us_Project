@@ -210,7 +210,9 @@ public class InventoryGrid
                 if (instance == null)
                     continue;
 
-                PartsDefinition definition = catalog.Find(instance.Definition.Id);
+                // 파일에서 읽은 인스턴스는 정의 참조가 비어 있다
+                instance.Resolve(catalog);
+                PartsDefinition definition = instance.Definition;
                 if (definition == null || !CanPlace(definition.Shape, instance.Origin))
                     continue;
 

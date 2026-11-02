@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 
 // 인벤토리 데이터 보유. 씬 전환에도 유지되며 UI는 Instance로 Grid/Save를 읽어간다
@@ -31,6 +32,9 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     private InventoryGrid _grid;
     private InventorySaveData _save;
     private string _snapshot;
+    private bool _saveDirty;
+
+    private static string SavePath => Path.Combine(Application.persistentDataPath, "inventory.json");
 
     public InventoryDefinition Definition => _inventoryDefinition;
     public InventoryGrid Grid => _grid;
@@ -42,6 +46,9 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     // 장착 코어. 코어 칸은 비지 않는다
     public CoreDefinition Core => _coreCatalog != null ? _coreCatalog.Find(_save.Core.Id) : null;
     public int CoreLevel => _save.Core.Level;
+
+    // 불안정한 코어는 복구 전까지 출전할 수 없다
+    public bool CanSortie => !_save.Core.IsUnstable;
 
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
@@ -76,20 +83,246 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             return;
 
         _rng = new Rng(_seed);
-        _save = new InventorySaveData();
-        _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
-        EnsureCore();
 
-        for (int i = 0; i < _startingParts; i++)
+        if (!LoadFromFile())
         {
-            GiveRandomPart();
+            _save = new InventorySaveData();
+            _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
+            EnsureCore();
+
+            for (int i = 0; i < _startingParts; i++)
+            {
+                GiveRandomPart();
+            }
         }
+
+        Changed += MarkSaveDirty;
+    }
+
+    private void Start()
+    {
+        if (Instance != this)
+            return;
+
+        BattleSettlementProcessor.OnSettlementCompleted += ApplySettlement;
+
+        // 첫 씬에서 자동 생성되면 전투 데이터 허브의 Awake보다 늦는다
+        if (CombatDataHub.Instance != null)
+            InventoryBattleBridge.ApplyTo(CombatDataHub.Instance.PlayerSnapshot);
+    }
+
+    protected override void OnDestroy()
+    {
+        BattleSettlementProcessor.OnSettlementCompleted -= ApplySettlement;
+        base.OnDestroy();
     }
 
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Q))
             GiveDebugComponents();
+    }
+
+    // 한 프레임에 여러 번 바뀌어도 파일은 한 번만 쓴다
+    private void LateUpdate()
+    {
+        if (_saveDirty)
+            SaveToFile();
+    }
+
+    private void OnApplicationQuit()
+    {
+        if (Instance == this && _saveDirty)
+            SaveToFile();
+    }
+
+    private void MarkSaveDirty() => _saveDirty = true;
+
+    private bool LoadFromFile()
+    {
+        if (!File.Exists(SavePath))
+            return false;
+
+        try
+        {
+            InventorySaveData loaded = JsonUtility.FromJson<InventorySaveData>(File.ReadAllText(SavePath));
+            if (loaded == null)
+                return false;
+
+            _save = loaded;
+            _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
+            _save.RestoreTo(_grid, _catalog);
+            EnsureCore();
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"인벤토리 세이브를 읽지 못해 새로 시작한다. {SavePath}\n{e.Message}", this);
+            return false;
+        }
+    }
+
+    private void SaveToFile()
+    {
+        _saveDirty = false;
+
+        try
+        {
+            _save.CaptureFrom(_grid);
+            File.WriteAllText(SavePath, JsonUtility.ToJson(_save, true));
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"인벤토리 세이브에 실패했다. {SavePath}\n{e.Message}", this);
+        }
+    }
+
+    [ContextMenu("세이브 파일 삭제")]
+    private void DeleteSaveFile()
+    {
+        _saveDirty = false;
+        if (File.Exists(SavePath))
+            File.Delete(SavePath);
+    }
+
+    // 전투 결과를 장착 파츠 내구도, 잔해, 코어 상태에 반영한다
+    private void ApplySettlement(BattleSettlementResult result)
+    {
+        for (int i = 0; i < EquipmentSaveData.SlotCount; i++)
+        {
+            string id = _save.Equipment.Get((Slot)i);
+            if (id != null && result.FinalPartDurabilities.TryGetValue(id, out int durability))
+                SetDurability((Slot)i, durability);
+        }
+
+        if (result.CoreUnstable)
+            _save.Core.IsUnstable = true;
+
+        RemoveDestroyed(result.DestroyedPartIDs);
+        Changed?.Invoke();
+    }
+
+    public int GetDurability(Slot slot)
+    {
+        PartsDefinition equipped = GetEquipped(slot);
+        return equipped != null ? Mathf.Max(0, equipped.Durability - _save.Equipment.GetLostDurability(slot)) : 0;
+    }
+
+    public void SetDurability(Slot slot, int durability)
+    {
+        PartsDefinition equipped = GetEquipped(slot);
+        if (equipped != null)
+            _save.Equipment.SetLostDurability(slot, equipped.Durability - Mathf.Clamp(durability, 0, equipped.Durability));
+
+        _saveDirty = true;
+    }
+
+    // 수리. 비용과 시간은 호출하는 쪽에서 처리한다
+    public void RepairSlot(Slot slot)
+    {
+        _save.Equipment.SetLostDurability(slot, 0);
+        Changed?.Invoke();
+    }
+
+    // 잔해를 내구도 100%로 되돌린다. 해당 부위가 비었으면 장착, 아니면 그리드로. 둘 다 안 되면 false
+    public bool RestoreWreck(string partId)
+    {
+        PartsDefinition definition = _catalog != null ? _catalog.Find(partId) : null;
+        if (definition == null || !_save.Wrecks.Contains(partId))
+            return false;
+
+        if (GetEquipped(definition.Slot) == null)
+            _save.Equipment.Set(definition.Slot, partId);
+        else if (!_grid.TryAutoPlaceParts(definition, out int _))
+            return false;
+
+        _save.Wrecks.Remove(partId);
+        Changed?.Invoke();
+        return true;
+    }
+
+    public void DiscardWreck(string partId)
+    {
+        if (_save.Wrecks.Remove(partId))
+            Changed?.Invoke();
+    }
+
+    public void RestoreCore()
+    {
+        _save.Core.IsUnstable = false;
+        Changed?.Invoke();
+    }
+
+    // 특정 등급 부품의 총 보유 수
+    public int CountComponents(PartGrade grade)
+    {
+        if (_componentCatalog == null || _componentCatalog.Components == null)
+            return 0;
+
+        int count = 0;
+        foreach (ComponentDefinition component in _componentCatalog.Components)
+        {
+            if (component != null && component.Grade == grade)
+                count += _save.Components.Get(component.Id);
+        }
+        return count;
+    }
+
+    // 특정 등급 부품을 보유한 것부터 소모한다
+    public bool ConsumeComponents(PartGrade grade, int amount)
+    {
+        if (CountComponents(grade) < amount)
+            return false;
+
+        foreach (ComponentDefinition component in _componentCatalog.Components)
+        {
+            if (amount <= 0)
+                break;
+            if (component == null || component.Grade != grade)
+                continue;
+
+            int use = Mathf.Min(amount, _save.Components.Get(component.Id));
+            if (use > 0 && ConsumeComponent(component.Id, use))
+                amount -= use;
+        }
+        return amount <= 0;
+    }
+
+    // 부위를 비운 내구도 그대로 그리드에 놓는다
+    private bool PlaceWithLost(PartsDefinition definition, Vector2Int? origin, int lost)
+    {
+        bool placed;
+        int index;
+        if (origin.HasValue)
+            placed = _grid.TryPlaceParts(definition, origin.Value, out index);
+        else
+            placed = _grid.TryAutoPlaceParts(definition, out index);
+
+        if (placed && _grid.TryGetEntry(index, out InventoryGrid.Entry entry) && entry.Parts != null)
+            entry.Parts.LostDurability = lost;
+
+        return placed;
+    }
+
+    [ContextMenu("테스트: 장착 파츠 손상")]
+    private void DebugDamageEquipped()
+    {
+        for (int i = 0; i < EquipmentSaveData.SlotCount; i++)
+        {
+            PartsDefinition equipped = GetEquipped((Slot)i);
+            if (equipped != null)
+                SetDurability((Slot)i, Mathf.Max(1, equipped.Durability * (i + 1) / (EquipmentSaveData.SlotCount + 1)));
+        }
+        Changed?.Invoke();
+    }
+
+    [ContextMenu("테스트: 패배 (첫 장착 파츠 잔해, 코어 불안정)")]
+    private void DebugLose()
+    {
+        _save.Core.IsUnstable = true;
+        IReadOnlyList<string> ids = GetEquippedPartIds();
+        RemoveDestroyed(ids.Count > 0 ? new[] { ids[0] } : new string[0]);
+        Changed?.Invoke();
     }
 
     // 지정 파츠를 빈자리에 배치
@@ -179,16 +412,19 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             return false;
 
         PartsDefinition previous = GetEquipped(slot);
+        int previousLost = _save.Equipment.GetLostDurability(slot);
+        int lost = entry.Parts != null ? entry.Parts.LostDurability : 0;
         _grid.Remove(index);
 
         // 기존 파츠를 둘 자리가 없으면 되돌린다
-        if (previous != null && !_grid.TryPlaceParts(previous, entry.Origin, out int _) && !_grid.TryAutoPlaceParts(previous, out int _))
+        if (previous != null && !PlaceWithLost(previous, entry.Origin, previousLost) && !PlaceWithLost(previous, null, previousLost))
         {
-            _grid.TryPlaceParts(entry.Definition, entry.Origin, out int _);
+            PlaceWithLost(entry.Definition, entry.Origin, lost);
             return false;
         }
 
         _save.Equipment.Set(slot, entry.Definition.Id);
+        _save.Equipment.SetLostDurability(slot, lost);
         Changed?.Invoke();
         return true;
     }
@@ -205,8 +441,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         if (equipped == null || _grid == null)
             return false;
 
-        bool placed = origin.HasValue ? _grid.TryPlaceParts(equipped, origin.Value, out int _) : _grid.TryAutoPlaceParts(equipped, out int _);
-        if (!placed)
+        if (!PlaceWithLost(equipped, origin, _save.Equipment.GetLostDurability(slot)))
             return false;
 
         _save.Equipment.Set(slot, null);
@@ -259,6 +494,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
                     continue;
 
                 _save.Equipment.Set((Slot)i, null);
+                _save.Wrecks.Add(partId);
                 removed = true;
                 break;
             }
@@ -353,6 +589,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         _save.Components.Clear();
         _save.Equipment.Clear();
         _save.Core.Clear();
+        _save.Wrecks.Clear();
         EnsureCore();
         _grid.Clear();
         Changed?.Invoke();

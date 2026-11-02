@@ -7,6 +7,7 @@ namespace RealSteel.Dialogue
 {
     public class DialogueBoxMotion : MonoBehaviour
     {
+        private const string InState = "In";
         private const string OutState = "Out";
         private const string FinishedState = "Finished";
 
@@ -21,6 +22,7 @@ namespace RealSteel.Dialogue
         private Coroutine closing;
 
         public bool IsClosing => closing != null;
+
 
         private void Awake()
         {
@@ -50,6 +52,11 @@ namespace RealSteel.Dialogue
             StopClosing();
             style.AnimationSpeed = speed;
             style.PlayIn();
+            if (animator.isActiveAndEnabled)
+            {
+                animator.Play(InState, 0, 0f);
+                animator.Update(0f);
+            }
         }
 
         public void PlayClose(Action onHidden)

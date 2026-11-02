@@ -25,7 +25,13 @@ namespace RealSteel.Dialogue
         [SerializeField, Min(0.1f)] private float interactRadius = 1.5f;
         [SerializeField] private Vector3 promptOffset = new Vector3(0f, 1.8f, 0f);
 
+        [Header("클로즈업 카메라")]
+        [SerializeField] private Vector3 closeUpFocusOffset = new Vector3(0f, 1.5f, 0f);
+        [SerializeField] private Transform closeUpPoint;
+
         public NpcRole Role => role;
+        public Vector3 CloseUpFocus => transform.position + closeUpFocusOffset;
+        public Transform CloseUpPoint => closeUpPoint;
         public string PoolId => poolId;
         public string SpeakerId => speakerId;
         public float InteractRadius => interactRadius;
@@ -47,6 +53,8 @@ namespace RealSteel.Dialogue
             Gizmos.DrawWireSphere(transform.position, interactRadius);
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(transform.position, PromptPosition);
+            Gizmos.color = Color.magenta;
+            Gizmos.DrawWireSphere(CloseUpFocus, 0.1f);
         }
     }
 }

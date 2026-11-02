@@ -11,12 +11,14 @@ namespace RealSteel.Dialogue
         [SerializeField] private NpcChoiceMenu menu;
         [SerializeField] private TMP_Text prompt;
         [SerializeField] private Camera worldCamera;
+        [SerializeField] private NpcTalkCamera talkCamera;
 
         private NpcInteractable current;
         private NpcInteractable shownFor;
 
         public NpcInteractable Current => current;
-        public bool IsBusy => (menu != null && menu.IsBusy) || (manager != null && manager.IsTalking);
+        public bool IsBusy => (menu != null && menu.IsBusy) || (manager != null && manager.IsTalking) ||
+                              (talkCamera != null && talkCamera.IsBusy);
 
         private void Start()
         {
@@ -54,7 +56,8 @@ namespace RealSteel.Dialogue
             if (interact)
             {
                 HidePrompt();
-                menu.Open(current);
+                bool camera = talkCamera != null && talkCamera.isActiveAndEnabled && talkCamera.Play(current, transform);
+                if (!camera) menu.Open(current);
             }
         }
 

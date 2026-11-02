@@ -58,6 +58,7 @@ namespace RealSteel.Dialogue
         public bool EndedThisFrame => endedFrame == Time.frameCount;
 
         public event Action<NpcInteractable, NpcAction> ActionChosen;
+        public event Action Ended;
 
         private void Awake()
         {
@@ -284,6 +285,7 @@ namespace RealSteel.Dialogue
             state = State.Closed;
             UiStack.Remove(this);
             endedFrame = Time.frameCount;
+            Ended?.Invoke();
         }
 
         private static void ClearUiSelection()

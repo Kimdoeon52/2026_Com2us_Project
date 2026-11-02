@@ -337,6 +337,7 @@ namespace RealSteel.Boss.JunkWheeler
                 // 3단계: 당구 3쿠션 바운스 루프
                 int bounceCount = 0;
                 float cooldownDamage = 0f;
+                float bounceVfxCooldown = 0f;
 
                 while (bounceCount < maxBounceCount)
                 {
@@ -346,21 +347,23 @@ namespace RealSteel.Boss.JunkWheeler
                     GetArenaBounds(out minX, out maxX, out minY, out maxY);
 
                     float dt = Time.deltaTime;
+                    if (bounceVfxCooldown > 0f) bounceVfxCooldown -= dt;
+
                     Vector3 currentPos = OwnerBoss.transform.position;
                     Vector3 nextPos = currentPos + (Vector3)(moveDir * (rushSpeed * dt));
 
                     bool bounced = false;
                     Vector2 impactNormal = Vector2.zero;
 
-                    // 좌/우 벽면 충돌 체크
-                    if (nextPos.x <= minX)
+                    // 좌/우 벽면 충돌 체크 (실제로 해당 벽을 향해 진행 중일 때만 바운스 인정하여 카메라 수축에 의한 2연속 중복 바운스 차단)
+                    if (nextPos.x <= minX && moveDir.x < 0f)
                     {
                         nextPos.x = minX;
                         moveDir.x = Mathf.Abs(moveDir.x);
                         bounced = true;
                         impactNormal = Vector2.right;
                     }
-                    else if (nextPos.x >= maxX)
+                    else if (nextPos.x >= maxX && moveDir.x > 0f)
                     {
                         nextPos.x = maxX;
                         moveDir.x = -Mathf.Abs(moveDir.x);
@@ -368,15 +371,15 @@ namespace RealSteel.Boss.JunkWheeler
                         impactNormal = Vector2.left;
                     }
 
-                    // 상단 천장 / 하단 지면 충돌 체크
-                    if (nextPos.y >= maxY)
+                    // 상단 천장 / 하단 지면 충돌 체크 (출발 직후 상승 중이거나 이미 튕긴 후 카메라 경계 변동으로 인한 중복 바운스 차단)
+                    if (nextPos.y >= maxY && moveDir.y > 0f)
                     {
                         nextPos.y = maxY;
                         moveDir.y = -Mathf.Abs(moveDir.y);
                         bounced = true;
                         impactNormal = Vector2.down;
                     }
-                    else if (nextPos.y <= minY)
+                    else if (nextPos.y <= minY && moveDir.y < 0f)
                     {
                         nextPos.y = minY;
                         moveDir.y = Mathf.Abs(moveDir.y);
@@ -392,9 +395,13 @@ namespace RealSteel.Boss.JunkWheeler
                         bounceCount++;
                         Debug.Log($"<color=yellow>[JunkWheelerRicochet] 당구 바운스 #{bounceCount}/{maxBounceCount}! 법선: {impactNormal}</color>");
 
-                        // [VFX 1] 벽/천장/바닥 바운스 임팩트 스폰 (충돌 법선 방향으로 회전)
-                        float rotZ = Mathf.Atan2(impactNormal.y, impactNormal.x) * Mathf.Rad2Deg;
-                        SpawnVfx(bounceImpactVfxPrefab, nextPos, Quaternion.Euler(0f, 0f, rotZ));
+                        // [VFX 1] 벽/천장/바닥 바운스 임팩트 스폰 (모서리 코너 동시 충돌 시 중복 스폰 방지 쿨타임 적용)
+                        if (bounceVfxCooldown <= 0f)
+                        {
+                            bounceVfxCooldown = 0.08f;
+                            float rotZ = Mathf.Atan2(impactNormal.y, impactNormal.x) * Mathf.Rad2Deg;
+                            SpawnVfx(bounceImpactVfxPrefab, nextPos, Quaternion.Euler(0f, 0f, rotZ));
+                        }
 
                         // 이동 방향에 맞춰 스프라이트 반전
                         OwnerBoss.Animation?.FaceDirection(moveDir.x);

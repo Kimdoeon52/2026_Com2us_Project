@@ -1858,6 +1858,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 512307155976557277, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: bulletHitVfxPrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.85
@@ -1906,6 +1910,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss1_JunkWheeler
       objectReference: {fileID: 0}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: bladeHitVfxPrefab
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957008211139764899, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: hitVfxPrefab
+      value: 
+      objectReference: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -4460,7 +4472,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 33.596313, y: 18.653015}
+  m_LightCookieOffset: {x: 35.399055, y: 29.208704}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

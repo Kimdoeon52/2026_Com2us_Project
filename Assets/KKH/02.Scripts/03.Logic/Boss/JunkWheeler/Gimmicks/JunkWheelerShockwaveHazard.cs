@@ -112,20 +112,30 @@ namespace RealSteel.Boss.JunkWheeler
                 _baseScaleY = 1.0f;
                 _baseScaleZ = 1.0f;
                 _visualInstance.transform.localScale = new Vector3(
-                    _baseScaleX * (_directionX < 0 ? -1f : 1f),
+                    _baseScaleX,
                     _baseScaleY,
                     _baseScaleZ
                 );
 
                 BossVfxHelper.ConfigureVisualOnly(_visualInstance);
 
-                // 지면보다 앞쪽으로 나오도록 Sorting Order 보정
+                // 지면보다 앞쪽으로 나오도록 Sorting Order 보정 및 좌측(-1) 진행 시 빌보드 파티클/스프라이트 정식 좌우 반전
                 var renderers = _visualInstance.GetComponentsInChildren<Renderer>(true);
                 foreach (var r in renderers)
                 {
-                    if (r != null)
+                    if (r == null) continue;
+                    r.sortingOrder = Mathf.Max(r.sortingOrder, 5);
+
+                    if (_directionX < 0f)
                     {
-                        r.sortingOrder = Mathf.Max(r.sortingOrder, 5);
+                        if (r is ParticleSystemRenderer psr)
+                        {
+                            psr.flip = new Vector3(1f, psr.flip.y, psr.flip.z);
+                        }
+                        else if (r is SpriteRenderer sr)
+                        {
+                            sr.flipX = !sr.flipX;
+                        }
                     }
                 }
             }
@@ -175,7 +185,7 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 float dynamicScaleX = _baseScaleX * (1f + progress * dynamicXExpandRatio);
                 _visualInstance.transform.localScale = new Vector3(
-                    dynamicScaleX * (_directionX < 0 ? -1f : 1f),
+                    dynamicScaleX,
                     _baseScaleY,
                     _baseScaleZ
                 );

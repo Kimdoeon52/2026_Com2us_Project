@@ -367,6 +367,13 @@ namespace RealSteel.Boss.Core
                 _initialGroundY = transform.position.y;
                 _hasInitialGroundY = true;
             }
+
+            // 전투 진입 전 BattleManager.SetPreBattleDifficulty()로 예약된 난이도가 있다면 최우선 반영
+            if (BattleManager.HasPreBattleDifficulty)
+            {
+                selectedDifficulty = BattleManager.PreBattleDifficulty;
+            }
+
             SetupSnapshot();
             SetupAnimationController();
 
@@ -422,6 +429,7 @@ namespace RealSteel.Boss.Core
 
                 OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
                 ApplyDifficultyToGimmicks();
+                BuildPhasePatternPool(Snapshot.currentPhase);
                 Debug.Log($"<color=cyan>[BossControllerBase] 보스 난이도 전환 완료: {difficulty} (HP: {Snapshot.maxHp}, 공격배율: {layer.attackMultiplier}x, 패턴수: {layer.maxAllowedPatterns}, 2페이즈: {layer.allowPhase2}, 패시브수: {layer.passiveCount})</color>");
             }
         }

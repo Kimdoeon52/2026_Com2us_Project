@@ -54,15 +54,57 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private BossDifficulty selectedDifficulty = BossDifficulty.Normal;
     public BossDifficulty SelectedDifficulty => selectedDifficulty;
 
+    // 전투 씬 로드 전(로비/맵/출전 UI 등) 타 파트에서 난이도를 미리 지정할 수 있는 정적 브릿지
+    private static bool s_hasPreBattleDifficulty = false;
+    private static BossDifficulty s_preBattleDifficulty = BossDifficulty.Normal;
+    public static bool HasPreBattleDifficulty => s_hasPreBattleDifficulty;
+    public static BossDifficulty PreBattleDifficulty => s_preBattleDifficulty;
+
+    /// <summary>
+    /// [타 파트 연동용 정적 API] 전투 씬 진입 전(로비, 맵, 배팅/출전 UI 등)에 호출하여 보스전 난이도를 설정함.
+    /// 전투 씬이 로드될 때 BossController와 BattleManager가 자동으로 이 난이도를 읽어 초기화함.
+    /// </summary>
+    public static void SetPreBattleDifficulty(BossDifficulty difficulty)
+    {
+        s_hasPreBattleDifficulty = true;
+        s_preBattleDifficulty = difficulty;
+        Debug.Log($"<color=yellow>[BattleManager] 전투 진입 전 보스 난이도 설정됨: {difficulty}</color>");
+
+        if (instance != null)
+        {
+            instance.SetBossDifficulty(difficulty);
+        }
+    }
+
+    /// <summary>
+    /// [타 파트 연동용 오버로드] 정수값(0: VeryEasy ~ 4: Hell)으로 난이도를 설정함 (UI Button/Dropdown 연동용).
+    /// </summary>
+    public static void SetPreBattleDifficulty(int difficultyIndex)
+    {
+        BossDifficulty clamped = (BossDifficulty)Mathf.Clamp(difficultyIndex, 0, 4);
+        SetPreBattleDifficulty(clamped);
+    }
+
     public void SetBossDifficulty(BossDifficulty difficulty)
     {
         selectedDifficulty = difficulty;
+        s_hasPreBattleDifficulty = true;
+        s_preBattleDifficulty = difficulty;
+
         var bossCtrl = (enemyRobotObject != null ? enemyRobotObject.GetComponent<RealSteel.Boss.Core.BossControllerBase>() : null)
                        ?? FindFirstObjectByType<RealSteel.Boss.Core.BossControllerBase>();
         if (bossCtrl != null)
         {
             bossCtrl.SetDifficulty(difficulty);
         }
+    }
+
+    /// <summary>
+    /// UI Button OnClick(int) 또는 TMP_Dropdown OnValueChanged(int)에 인스펙터에서 직접 연결할 수 있는 인스턴스 메서드.
+    /// </summary>
+    public void SetBossDifficultyByIndex(int difficultyIndex)
+    {
+        SetBossDifficulty((BossDifficulty)Mathf.Clamp(difficultyIndex, 0, 4));
     }
 
     // ========================================================================
@@ -86,6 +128,12 @@ public class BattleManager : MonoBehaviour
         else if (instance != this)
         {
             Destroy(gameObject);
+            return;
+        }
+
+        if (s_hasPreBattleDifficulty)
+        {
+            selectedDifficulty = s_preBattleDifficulty;
         }
     }
 

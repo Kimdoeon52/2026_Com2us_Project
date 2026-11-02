@@ -21,7 +21,6 @@ GameObject:
   - component: {fileID: 7090729570231879717}
   - component: {fileID: 8812345678901234501}
   - component: {fileID: 8812345678901234502}
-  - component: {fileID: 7233592415585027435}
   - component: {fileID: 8957008211139764899}
   m_Layer: 0
   m_Name: Boss1_JunkWheeler
@@ -240,7 +239,7 @@ MonoBehaviour:
   squashFastInDuration: 0.04
   restoreElasticDuration: 0.25
   muzzleFlashVfxPrefab: {fileID: 0}
-  bulletHitVfxPrefab: {fileID: 4258062595959007045, guid: c1f1eed2dff912943b49de20df219f5e, type: 3}
+  bulletHitVfxPrefab: {fileID: 0}
   landImpactVfxPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
 --- !u!114 &8211426203969925326
 MonoBehaviour:
@@ -284,7 +283,7 @@ MonoBehaviour:
       m_Calls: []
   chargeLaunchVfxPrefab: {fileID: 3876671205774786224, guid: c70a3985a41a89442a87c7e2bf32905c, type: 3}
   wallImpactVfxPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
-  playerHitVfxPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
+  playerHitVfxPrefab: {fileID: 0}
   fireTrailHazardPrefab: {fileID: 820598447203043087, guid: 159df74232cdc05418dd609306f6b489, type: 3}
 --- !u!114 &371741583458075138
 MonoBehaviour:
@@ -312,7 +311,7 @@ MonoBehaviour:
   restoreElasticDuration: 0.28
   groundImpactVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
-  nailPunctureVfxPrefab: {fileID: 605366958336811197, guid: 25dd5c7bc22d88f4998a761f6cf19616, type: 3}
+  nailPunctureVfxPrefab: {fileID: 0}
 --- !u!114 &8152764038469079320
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -426,72 +425,8 @@ MonoBehaviour:
   - {fileID: 21300303, guid: c776be3f298dcea47ad9b6e66266e3f4, type: 3}
   bladeLocalOffset: {x: 0, y: 0.375, z: -0.05}
   bounceImpactVfxPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
-  bladeHitVfxPrefab: {fileID: 4258062595959007045, guid: c1f1eed2dff912943b49de20df219f5e, type: 3}
+  bladeHitVfxPrefab: {fileID: 0}
   landImpactVfxPrefab: {fileID: 0}
---- !u!114 &7233592415585027435
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3268763706634737369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 93e187f0565a0594b937f57973edd36b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  patternData: {fileID: 11400000, guid: 3a415ac28e0d44d298dc4b7f5406a94b, type: 2}
-  tellCrackDuration: 0.6
-  crackWarningColor: {r: 1, g: 0.28, b: 0.08, a: 0.95}
-  crackWidth: 2.4
-  roundConfigs:
-  - jumpHeight: 0.45
-    jumpDuration: 0.16
-    fallDuration: 0.12
-    shockwaveMaxDistance: 2.5
-    shockwaveHitWidth: 0.2
-    shockwaveScaleX: 1
-    shockwaveSpeed: 6.5
-    coreDamage: 20
-    legDamage: 15
-    landSquashScale: {x: 1.2, y: 0.75}
-  - jumpHeight: 0.65
-    jumpDuration: 0.18
-    fallDuration: 0.13
-    shockwaveMaxDistance: 4.5
-    shockwaveHitWidth: 0.26
-    shockwaveScaleX: 1.6
-    shockwaveSpeed: 7
-    coreDamage: 25
-    legDamage: 20
-    landSquashScale: {x: 1.28, y: 0.7}
-  - jumpHeight: 0.85
-    jumpDuration: 0.2
-    fallDuration: 0.14
-    shockwaveMaxDistance: 6.5
-    shockwaveHitWidth: 0.32
-    shockwaveScaleX: 2.3
-    shockwaveSpeed: 8
-    coreDamage: 30
-    legDamage: 25
-    landSquashScale: {x: 1.35, y: 0.65}
-  - jumpHeight: 1.15
-    jumpDuration: 0.24
-    fallDuration: 0.16
-    shockwaveMaxDistance: 10.5
-    shockwaveHitWidth: 0.38
-    shockwaveScaleX: 3.2
-    shockwaveSpeed: 9.5
-    coreDamage: 40
-    legDamage: 35
-    landSquashScale: {x: 1.48, y: 0.52}
-  pauseBetweenDribbles: 0.1
-  postLandVulnerableDelay: 0.8
-  shockwaveVisualPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
-  dribbleLandVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
-  jumpDustVfxPrefab: {fileID: 605366958336811197, guid: 25dd5c7bc22d88f4998a761f6cf19616, type: 3}
-  tellCrackVfxPrefab: {fileID: 1323618065715081469, guid: 6592df7d1457e02409f105dcfa33d2d9, type: 3}
-  hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}
 --- !u!114 &8957008211139764899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -553,6 +488,6 @@ MonoBehaviour:
   postLandVulnerableDelay: 0.8
   shockwaveVisualPrefab: {fileID: 5716823169876094026, guid: 9921032e39990284e891e4126dab3c3c, type: 3}
   dribbleLandVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
-  jumpDustVfxPrefab: {fileID: 605366958336811197, guid: 25dd5c7bc22d88f4998a761f6cf19616, type: 3}
+  jumpDustVfxPrefab: {fileID: 0}
   tellCrackVfxPrefab: {fileID: 1323618065715081469, guid: 6592df7d1457e02409f105dcfa33d2d9, type: 3}
   hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}

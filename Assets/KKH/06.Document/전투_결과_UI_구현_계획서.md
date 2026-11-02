@@ -1,247 +1,278 @@
-# 전투 결과 UI (BattleResultUI) 구현 계획서
+# 전투 결과 & 일일 결산 UI (`BattleResultUI` - Daily Report 스타일) 개편 구현 가이드
 
-## 1. 개요 및 목적
-본 계획서는 리얼스틸 프로젝트의 핵심 기획 요소인 **하드코어 정산(판돈 골드, 코어 성장 EXP, 파츠 잔여 내구도 및 영구 파괴)**을 플레이어에게 극적으로 전달하는 전투 피날레 화면인 **`BattleResultUI`**의 설계, 연출 및 **유니티 UI 오브젝트 생성 경로, 부착 컴포넌트, 세부 인스펙터 설정 규격**을 정의한다.
-
-백엔드 정산기(`BattleSettlementProcessor`)가 산출한 `BattleSettlementResult` 데이터를 정적 이벤트(`BattleManager.OnBattleFinished`)를 통해 수신하여, 승리/패배에 맞춘 역동적인 비주얼 연출과 정보를 표시한다.
+## 1. 개요 및 개편 방향
+본 문서는 기존의 좌/우 2단 분할형 결과창을 레퍼런스 시안(**DAILY REPORT / 다크 택티컬 리포트 카드 스타일**)에 맞춰 전면 개편하기 위한 **에셋 파일명 규격, Unity Hierarchy 오브젝트 구조, 인스펙터 수치 레시피, 그리고 `BattleResultUI.cs` 바인딩 설계**를 정의한다.
 
 ---
 
-## 2. 연동 데이터 및 인터페이스 계약
+## 2. 화면 구성 요소 분해 및 에셋/오브젝트 파일명 정리
 
-### 2.1 이벤트 소스 (`BattleManager.cs`)
-```csharp
-public static event Action<bool, string, BattleSettlementResult> OnBattleFinished;
-```
+레퍼런스 이미지를 구성하는 모든 시각 요소를 **프리팹(Prefab), 스프라이트(Sprite), 스크립트(Script), Hierarchy 오브젝트명**으로 일대일 매칭한 표준 파일명 규격이다.
 
-### 2.2 입력 데이터 DTO (`BattleSettlementResult.cs`)
-| 필드명 | 타입 | 기획 및 화면 표시 역할 |
-|---|---|---|
-| `PlayerWon` | `bool` | 승리(VICTORY - 네온 골드/시안) / 패배(DEFEAT - 크림슨 레드/노이즈) 분기 |
-| `GoldDelta` | `int` | 판돈 골드 획득/차감 (+100G 또는 -100G) 수치 롤링 표시 |
-| `CoreExpGained` | `int` | 코어 획득 EXP 수치 및 코어 레벨업 게이지 상승 애니메이션 |
-| `CoreUnstable` | `bool` | 패배 시 코어 방전 및 불안정(Unstable) 경고 뱃지 |
-| `FinalPartDurabilities` | `Dictionary<string, int>` | 머리, 코어, 왼팔, 오른팔, 다리 5개 부위의 최종 잔여 내구도 표시 (승리 시 파손 부위는 1로 응급 복구) |
-| `DestroyedPartIDs` | `List<string>` | 패배 시 하드코어 확률로 영구 파괴(소멸)된 부품 ID 목록 (붉은 해골 경고) |
-| `SummaryMessage` | `string` | 정산 결과 한 줄 요약 텍스트 |
+### 2.1 프로젝트 폴더별 파일명 규격 (File Naming Convention)
 
----
-
-## 3. UI/UX 화면 구성 및 시퀀스 연출
-
-### 3.1 화면 레이아웃 와이어프레임
-```
-+-------------------------------------------------------------+
-|                        [ DARK DIMMED ]                      |
-|                                                             |
-|                ★ ★ ★   V I C T O R Y   ★ ★ ★               |
-|                    "정크 휠러 격파 완료!"                     |
-|                                                             |
-|  +---------------------------+  +------------------------+  |
-|  |     [ 보상 및 성장 ]      |  |   [ 하드코어 파츠 상태 ] |  |
-|  |                           |  |                        |  |
-|  | • 획득 골드: +150 G       |  |  [머리] [코어] [왼팔]   |  |
-|  | • 코어 EXP:  +85 EXP      |  |  [오른팔] [다리]        |  |
-|  |   [=========>     ] Lv.4  |  |                        |  |
-|  +---------------------------+  | ※ 영구 파괴 부품 없음   |  |
-|                                 +------------------------+  |
-|                                                             |
-|          [  정비소(거점)로 복귀  ]     [  재 도 전  ]        |
-+-------------------------------------------------------------+
-```
-
-### 3.2 단계별 연출 타임라인 (DOTween 기반)
-1. **[Phase 1] 0.0s ~ 0.3s (화면 암전 및 배너 강타)**:
-   - 배경 딤드(CanvasGroup Alpha: 0 ➔ 1) 페이드인.
-   - `VICTORY` / `DEFEAT` 배너가 화면 중앙에 도장 찍히듯 스케일 펀치(`DOPunchScale`).
-2. **[Phase 2] 0.3s ~ 0.9s (보상 숫자 카운팅 롤링)**:
-   - 획득 골드 및 코어 EXP 수치가 `0`에서 목표 수치까지 빠르게 카운팅 롤링(`DOVirtual.Int`).
-   - 코어 경험치 슬라이더 게이지가 전진 애니메이션.
-3. **[Phase 3] 0.9s ~ 1.5s (파츠 상태 및 영구 파괴 슬롯 공개)**:
-   - 5개 부위 파츠의 잔여 내구도 슬롯이 좌측부터 순차 등장(`DOFade`).
-   - 패배 시 영구 파괴 부품이 존재할 경우 붉은색 경고 점멸 연출.
-4. **[Phase 4] 1.5s 이후 (인터랙션 버튼 활성화)**:
-   - `[기지로 귀환]` 버튼이 팝업되며 클릭 가능 상태로 전환 (재도전은 기획 변경으로 제거).
+| 분류 | 권장 경로 (`Assets/KKH/...`) | 파일명 (File Name) | 역할 및 설명 |
+|---|---|---|---|
+| **메인 프리팹** | `04.Prefab/UI/` | `BattleResultCanvas.prefab` | 결과 UI 전체를 담는 최상위 프리팹 |
+| **행(Row) 프리팹** | `04.Prefab/UI/` | `UI_ReportMetricRow.prefab` | 상단 4개 지표 행 (수입 / 지출 / 기체 마모 / 활동 시간) 재사용 템플릿 |
+| **하단 알림 프리팹** | `04.Prefab/UI/` | `UI_ReportBriefingItem.prefab` | 하단 3개 컬러 바 브리핑 항목 (`D-2`, `OMEN`, `SHOP` 등) 템플릿 |
+| **컨트롤러 스크립트** | `02.Scripts/05.UI/` | `BattleResultUI.cs` | 이벤트 수신, 정산 데이터 매핑, DOTween 롤링 연출 제어 |
+| **데이터 DTO** | `02.Scripts/03.Logic/` | `BattleSettlementProcessor.cs` | `BattleSettlementResult` 정산 결과 데이터 구조체/클래스 |
+| **스프라이트 (아이콘)** | `05.Sprites/UI/Result/` | `Spr_Icon_DiamondYellow.png` | 헤더 좌측 노란색 마름모(`◆`) 포인트 아이콘 |
+| **스프라이트 (프레임)** | `05.Sprites/UI/Result/` | `Spr_Frame_CornerBracket_L.png` | 우측 상단 / 우측 하단 노란색 `ㄱ`, `ㅢ` 형태 코너 브래킷(`L`자 테두리) |
+| **스프라이트 (바코드)** | `05.Sprites/UI/Result/` | `Spr_Deco_ReportBarcode.png` | 우측 하단 리포트 스탬프 내부 바코드 그래픽 (`\|\|\|\|\|\|\|\|`) |
+| **스프라이트 (박스)** | `05.Sprites/UI/Result/` | `Spr_Box_ThinOutline.png` | 1px 얇은 외곽선이 들어간 9-Slice 다크 패널 프레임 (`#121417`, 보더 `#2A2D32`) |
+| **스프라이트 (배경문자)** | `05.Sprites/UI/Result/` | `Spr_Bg_Watermark_DAY.png` | 배경 상단에 희미하게 깔리는 대형 아웃라인 워터마크 이미지 (또는 TMP 텍스트로 대체 가능) |
 
 ---
 
-## 4. 유니티 오브젝트 생성 경로 및 컴포넌트 구조 (Hierarchy Recipe)
+### 2.2 레퍼런스 UI 영역별 오브젝트 매핑표
 
-유니티 Hierarchy 창에서 우클릭 메뉴(`UI > ...` 또는 `Create Empty`)를 통해 생성해야 하는 경로와 부착할 컴포넌트 목록:
+```
++-----------------------------------------------------------------------------------+
+|                                [ Bg_WatermarkText ]                               |
+|  +-----------------------------------------------------------------------------+ ┐|
+|  | ◆ DAILY REPORT     DAY 12 결산                                  (HeaderBar) | ||
+|  +-----------------------------------------------------------------------------+  |
+|  | INCOME                                                                      |  |
+|  | 수입                                                                +1,200  |  |
+|  | --------------------------------------------------------------------------- |  |
+|  | EXPENSE                                                                     |  |
+|  | 지출                                                                  -350  |  |
+|  | --------------------------------------------------------------------------- |  |
+|  | WEAR                                                                        |  |
+|  | 기체 마모                                                              +6%  |  |
+|  | --------------------------------------------------------------------------- |  |
+|  | ACTIVITY                                                                    |  |
+|  | 활동 시간                                                          20H 00M  |  |
+|  |                                                                             |  |
+|  | TODAY · DAY 13                                                              |  |
+|  | ┃ D-2      3부 리그 2라운드 · 경기장                                        |  |
+|  | ┃ OMEN     고물상: 회로 부품 무더기 · 재료 +28%                             |  |
+|  | ┃ SHOP     상점 재입고 (오전 9시)                                           |  |
+|  +-----------------------------------------------------------------------------+ ┘|
+|                                                        +------------------------+ |
+|                                                        | REPORT NO.     DR-0012 | |
+|                                                        | |||||||||||||||||||||| | |
+|  화면 아무 곳이나 눌러 계속...                         | AUTO SAVE // DAY 13    | |
++-----------------------------------------------------------------------------------+
+```
+
+| 레퍼런스 화면 요소 | Hierarchy 오브젝트명 | 텍스트/이미지 초기값 예시 | 컬러 코드 (HEX) |
+|---|---|---|---|
+| **배경 암전 + 전체 클릭 영역** | `DimmedBackground` | 단색 Image + `Button` (전체 화면 클릭 진행) | `#0B0D10` (Alpha `235`) |
+| **상단 배경 워터마크** | `Txt_BgWatermark` | `"DAY"` (또는 `"REPORT"`, Outline 전용) | `#FFFFFF` (Alpha `12`) |
+| **메인 리포트 카드 프레임** | `ReportWindowFrame` | 다크 차콜 패널 + 1px 테두리 | 배경 `#121417` / 선 `#282C34` |
+| **우상단/우하단 노란 꺾쇠** | `Img_CornerBracket_TR`, `BR` | `ㄱ`, `┘` 모양 코너 장식 | `#EAB308` (택티컬 옐로우) |
+| **상단 헤더 바** | `HeaderBar` | 상단 어두운 타이틀 스트립 | `#090A0C` |
+| **헤더 마름모 아이콘** | `Img_HeaderDiamond` | `◆` (회전된 정사각형 Image 가능) | `#FACC15` (네온 옐로우) |
+| **헤더 영문 타이틀** | `Txt_HeaderTitle` | `"DAILY REPORT"` (전투 시 `"BATTLE REPORT"`) | `#F3F4F6` (화이트 그레이) |
+| **헤더 한글 서브타이틀** | `Txt_HeaderSubtitle` | `"DAY 12 결산"` (또는 `"전투 정산 결과"`) | `#9CA3AF` (뮤트 그레이) |
+| **지표 1: 수입 (판돈 획득)** | `Row_Income` | `"INCOME"` / `"수입"` / `"+1,200"` | 수치: `#34D399` (에메랄드 그린) |
+| **지표 2: 지출 (수리/판돈손실)** | `Row_Expense` | `"EXPENSE"` / `"지출"` / `"-350"` | 수치: `#F87171` (코랄 레드) |
+| **지표 3: 기체 마모 (내구도 손상)**| `Row_Wear` | `"WEAR"` / `"기체 마모"` / `"+6%"` | 수치: `#FB923C` (앰버 오렌지) |
+| **지표 4: 활동 시간 (전투 시간)** | `Row_Activity` | `"ACTIVITY"` / `"활동 시간"` / `"20H 00M"` | 수치: `#F9FAFB` (퓨어 화이트) |
+| **하단 섹션 소제목** | `Txt_BriefingHeader` | `"TODAY · DAY 13"` | `#EAB308` (택티컬 옐로우) |
+| **브리핑 항목 1 (일정/경고)** | `BriefingItem_1_Schedule` | 좌측 바 + `"D-2"` + `"3부 리그 2라운드 · 경기장"` | 좌측 바: `#EF4444` (레드) |
+| **브리핑 항목 2 (징조/파츠)** | `BriefingItem_2_Omen` | 좌측 바 + `"OMEN"` + `"고물상: 회로 부품 무더기 · 재료 +28%"` | 좌측 바: `#F97316` (오렌지) |
+| **브리핑 항목 3 (상점/코어)** | `BriefingItem_3_Shop` | 좌측 바 + `"SHOP"` + `"상점 재입고 (오전 9시)"` | 좌측 바: `#06B6D4` (시안 블루) |
+| **우하단 바코드 박스** | `BarcodeStampBox` | `"REPORT NO. DR-0012"` / 바코드 / `"AUTO SAVE..."` | 테두리 `#374151` / 텍스트 `#9CA3AF` |
+| **좌하단 계속 안내 문구** | `Txt_ContinuePrompt` | `"화면 아무 곳이나 눌러 계속..."` | `#4ADE80` 또는 `#9CA3AF` (점멸) |
+
+---
+
+## 3. Unity Hierarchy 전체 트리 구조 (생成 레시피)
+
+유니티 에디터에서 그대로 따라 만들 수 있는 계층 구조다.
 
 ```text
-Canvas (우클릭 > UI > Canvas)
-[컴포넌트: Canvas, Canvas Scaler, Graphic Raycaster]
-└── BattleResultPanel (우클릭 > Create Empty)
-    [컴포넌트: RectTransform, Canvas Group, BattleResultUI (스크립트)]
-      ├── DimmedBackground (우클릭 > UI > Image)
-      │   [컴포넌트: RectTransform, Image]
-      └── WindowFrame (우클릭 > UI > Image)
-          [컴포넌트: RectTransform, Image, Outline (선택)]
-            ├── HeaderGroup (우클릭 > Create Empty)
-            │   [컴포넌트: RectTransform]
-            │     ├── BannerBackground (우클릭 > UI > Image)
-            │     │   [컴포넌트: RectTransform, Image]
-            │     ├── TitleText (우클릭 > UI > Text - TextMeshPro)
-            │     │   [컴포넌트: RectTransform, TextMeshPro - Text (UI)]
-            │     └── SubtitleText (우클릭 > UI > Text - TextMeshPro)
-            │         [컴포넌트: RectTransform, TextMeshPro - Text (UI)]
-            ├── ContentGroup (우클릭 > Create Empty)
-            │   [컴포넌트: RectTransform]
-            │     ├── LeftSection_Rewards (우클릭 > Create Empty)
-            │     │   [컴포넌트: RectTransform]
-            │     │     ├── SectionHeader (우클릭 > UI > Text - TextMeshPro)
-            │     │     │   [컴포넌트: TextMeshPro - Text (UI)]
-            │     │     ├── DividerLine (우클릭 > UI > Image)
-            │     │     │   [컴포넌트: Image]
-            │     │     ├── GoldRow (우클릭 > Create Empty)
-            │     │     │   [컴포넌트: RectTransform, Horizontal Layout Group]
-            │     │     │     ├── GoldLabel (우클릭 > UI > Text - TextMeshPro)
-            │     │     │     └── GoldValueText (우클릭 > UI > Text - TextMeshPro)
-            │     │     ├── ExpRow (우클릭 > Create Empty)
-            │     │     │   [컴포넌트: RectTransform, Horizontal Layout Group]
-            │     │     │     ├── ExpLabel (우클릭 > UI > Text - TextMeshPro)
-            │     │     │     └── ExpValueText (우클릭 > UI > Text - TextMeshPro)
-            │     │     ├── CoreExpSlider (우클릭 > UI > Slider)
-            │     │     │   [컴포넌트: RectTransform, Slider]
-            │     │     └── CoreStatusText (우클릭 > UI > Text - TextMeshPro)
-            │     │         [컴포넌트: TextMeshPro - Text (UI)]
-            │     └── RightSection_HardcoreParts (우클릭 > Create Empty)
-            │         [컴포넌트: RectTransform]
-            │           ├── SectionHeader (우클릭 > UI > Text - TextMeshPro)
-            │           │   [컴포넌트: TextMeshPro - Text (UI)]
-            │           ├── DividerLine (우클릭 > UI > Image)
-            │           │   [컴포넌트: Image]
-            │           ├── PartSlotContainer (우클릭 > Create Empty)
-            │           │   [컴포넌트: RectTransform, Grid Layout Group]
-            │           └── WarningGroup (우클릭 > UI > Image)
-            │               [컴포넌트: RectTransform, Image]
-            │                 └── DestroyedWarningText (우클릭 > UI > Text - TextMeshPro)
-            │                     [컴포넌트: TextMeshPro - Text (UI)]
-            └── ButtonGroup (우클릭 > Create Empty)
-                [컴포넌트: RectTransform]
-                  └── Btn_ReturnBase (우클릭 > UI > Button - TextMeshPro)
-                      [컴포넌트: RectTransform, Image, Button, 자식 Text (TMP)]
+BattleResultCanvas (Canvas, CanvasScaler, GraphicRaycaster)
+└── BattleResultPanel (RectTransform, CanvasGroup, BattleResultUI)
+    ├── DimmedBackground (Image, Button -> 화면 아무 곳이나 클릭 시 닫기/귀환 연동)
+    ├── Txt_BgWatermark (TextMeshProUGUI -> 상단 배경 거대 "DAY" 워터마크)
+    │
+    ├── ReportWindowContainer (RectTransform -> 중앙 메인 리포트 영역, 1280 x 720)
+    │   ├── Img_CornerBracket_TR (Image -> 우상단 노란색 ㄱ자 브래킷)
+    │   ├── Img_CornerBracket_BR (Image -> 우하단 노란색 ┘자 브래킷)
+    │   │
+    │   └── ReportWindowFrame (Image, Outline -> 본체 다크 박스 #121417)
+    │       ├── HeaderBar (Image -> 상단 헤더 바 #090A0C, Height: 64)
+    │       │   ├── Img_HeaderDiamond (Image -> 14x14, Rotation Z: 45, #FACC15)
+    │       │   ├── Txt_HeaderTitle (TextMeshProUGUI -> "DAILY REPORT")
+    │       │   └── Txt_HeaderSubtitle (TextMeshProUGUI -> "DAY 12 결산")
+    │       │
+    │       ├── MetricsListGroup (RectTransform, VerticalLayoutGroup -> 상단 4행 지표)
+    │       │   ├── Row_Income (RectTransform -> Height: 88)
+    │       │   │   ├── LabelGroup (RectTransform)
+    │       │   │   │   ├── Txt_EnLabel (TextMeshProUGUI -> "INCOME")
+    │       │   │   │   └── Txt_KrLabel (TextMeshProUGUI -> "수입")
+    │       │   │   ├── Txt_IncomeValue (TextMeshProUGUI -> "+1,200")
+    │       │   │   └── Img_Divider (Image -> 하단 1px 구분선 #24282E)
+    │       │   │
+    │       │   ├── Row_Expense (RectTransform -> Height: 88)
+    │       │   │   ├── LabelGroup (Txt_EnLabel "EXPENSE" / Txt_KrLabel "지출")
+    │       │   │   ├── Txt_ExpenseValue (TextMeshProUGUI -> "-350")
+    │       │   │   └── Img_Divider (Image -> 하단 1px 구분선 #24282E)
+    │       │   │
+    │       │   ├── Row_Wear (RectTransform -> Height: 88)
+    │       │   │   ├── LabelGroup (Txt_EnLabel "WEAR" / Txt_KrLabel "기체 마모")
+    │       │   │   ├── Txt_WearValue (TextMeshProUGUI -> "+6%")
+    │       │   │   └── Img_Divider (Image -> 하단 1px 구분선 #24282E)
+    │       │   │
+    │       │   └── Row_Activity (RectTransform -> Height: 88)
+    │       │       ├── LabelGroup (Txt_EnLabel "ACTIVITY" / Txt_KrLabel "활동 시간")
+    │       │       └── Txt_ActivityValue (TextMeshProUGUI -> "20H 00M")
+    │       │
+    │       └── BriefingGroup (RectTransform -> 하단 TODAY 브리핑 영역)
+    │           ├── Txt_BriefingHeader (TextMeshProUGUI -> "TODAY · DAY 13")
+    │           ├── BriefingList (RectTransform, VerticalLayoutGroup)
+    │           │   ├── BriefingItem_1_Schedule (RectTransform -> Height: 42)
+    │           │   │   ├── Img_AccentBar (Image -> Width: 4, #EF4444 레드)
+    │           │   │   ├── Txt_Tag (TextMeshProUGUI -> "D-2")
+    │           │   │   └── Txt_Desc (TextMeshProUGUI -> "3부 리그 2라운드 · 경기장")
+    │           │   ├── BriefingItem_2_Omen (RectTransform -> Height: 42)
+    │           │   │   ├── Img_AccentBar (Image -> Width: 4, #F97316 오렌지)
+    │           │   │   ├── Txt_Tag (TextMeshProUGUI -> "OMEN")
+    │           │   │   └── Txt_Desc (TextMeshProUGUI -> "고물상: 회로 부품 무더기 · 재료 +28%")
+    │           │   └── BriefingItem_3_Shop (RectTransform -> Height: 42)
+    │           │       ├── Img_AccentBar (Image -> Width: 4, #06B6D4 시안)
+    │           │       ├── Txt_Tag (TextMeshProUGUI -> "SHOP")
+    │           │       └── Txt_Desc (TextMeshProUGUI -> "상점 재입고 (오전 9시)")
+    │
+    ├── BarcodeStampBox (Image, Outline -> 우하단 바코드 스탬프 영역)
+    │   ├── Txt_ReportNoLabel (TextMeshProUGUI -> "REPORT NO.")
+    │   ├── Txt_ReportNoValue (TextMeshProUGUI -> "DR-0012")
+    │   ├── Img_Barcode (Image -> 바코드 텍스처 또는 스트라이프)
+    │   └── Txt_AutoSaveInfo (TextMeshProUGUI -> "AUTO SAVE // DAY 13 06:00")
+    │
+    └── Txt_ContinuePrompt (TextMeshProUGUI -> 좌하단 "화면 아무 곳이나 눌러 계속...")
 ```
 
 ---
 
-## 5. UI 오브젝트별 세부 생성 및 인스펙터 설정 레시피
+## 4. 오브젝트별 인스펙터 수치 레시피 (1920x1080 기준)
 
-### 5.1 캔버스 및 루트 패널
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **Canvas** | Hierarchy 우클릭 ➔ `UI > Canvas` | `Canvas`<br>`CanvasScaler`<br>`GraphicRaycaster` | • Render Mode: `Screen Space - Overlay`<br>• Sort Order: `100`<br>• UI Scale Mode: `Scale With Screen Size`<br>• Reference Resolution: `1920 x 1080`<br>• Match: `0.5` (Width-Height 균등) |
-| **BattleResultPanel** | Canvas 우클릭 ➔ `Create Empty` | `RectTransform`<br>`CanvasGroup`<br>`BattleResultUI` | • Anchor: `Stretch - Stretch` (Min: 0, 0 / Max: 1, 1)<br>• Left/Top/Right/Bottom: `0, 0, 0, 0`<br>• Pivot: `(0.5, 0.5)`<br>• CanvasGroup: Alpha `1.0`, Blocks Raycasts `true`<br>• BattleResultUI 스크립트 연결 |
+### 4.1 메인 리포트 프레임 & 헤더 (`ReportWindowContainer`)
+| 오브젝트명 | Anchor / Pivot | Pos (X, Y) | Size (W, H) | 컬러 및 폰트 디테일 |
+|---|---|---|---|---|
+| **ReportWindowContainer** | `Middle - Center` `(0.5, 0.5)` | `(-20, 25)` | `1360 x 740` | 투명 컨테이너 |
+| **ReportWindowFrame** | `Stretch - Stretch` | `(0, 0, 0, 0)` | 전체 채움 | `Image`: `#121417` (Alpha `248`)<br>`Outline`: `#2A2E35`, Distance `(1, -1)` |
+| **Img_CornerBracket_TR** | `Top - Right` `(1, 1)` | `(18, 18)` | `28 x 28` | 우상단 바깥쪽 노란 꺾쇠 `#EAB308` |
+| **Img_CornerBracket_BR** | `Bottom - Right` `(1, 0)` | `(18, -18)` | `28 x 28` | 우하단 바깥쪽 노란 꺾쇠 `#EAB308` |
+| **HeaderBar** | `Top - Stretch` `(0.5, 1)` | `PosY: 0` | `Height: 68` | `Image`: `#090B0E` (완전 다크 블랙) |
+| **Img_HeaderDiamond** | `Middle - Left` `(0, 0.5)` | `(32, 0)` | `12 x 12` | 기본 흰색 Image에 `Rotation Z = 45`, Color `#FACC15` |
+| **Txt_HeaderTitle** | `Middle - Left` `(0, 0.5)` | `(58, 0)` | `280 x 40` | Font Size `24`, Bold, Character Spacing `12`, Color `#F3F4F6` |
+| **Txt_HeaderSubtitle** | `Middle - Left` `(0, 0.5)` | `(320, 0)` | `300 x 40` | Font Size `20`, Regular, Color `#D1D5DB` |
 
-### 5.2 배경 암전 및 윈도우 프레임
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **DimmedBackground** | Panel 우클릭 ➔ `UI > Image` | `RectTransform`<br>`Image` | • Anchor: `Stretch - Stretch` (0,0 ~ 1,1)<br>• Left/Top/Right/Bottom: `0, 0, 0, 0`<br>• Image Color: `#000000` (검정), Alpha: `220` (`#000000DC`)<br>• Raycast Target: `true` (배경 클릭 차단) |
-| **WindowFrame** | Panel 우클릭 ➔ `UI > Image` | `RectTransform`<br>`Image`<br>`Outline` (선택) | • Anchor: `Middle - Center`<br>• Width: `1000`, Height: `680`, PosX: `0`, PosY: `0`<br>• Image Color: `#12161E` (다크 메탈 네이비)<br>• Outline Effect Color: `#283648`, Distance: `(2, -2)` |
+### 4.2 상단 4대 지표 리스트 (`MetricsListGroup`)
+* **위치 및 레이아웃**:
+  - Anchor: `Top - Stretch`, Left `48`, Right `48`, PosY `-88`, Height `360`
+  - `VerticalLayoutGroup`: Spacing `0`, Child Alignment `Upper Center`, Control Child Size (`Width: ON, Height: OFF`)
+* **개별 행(`Row_Income`, `Row_Expense`, `Row_Wear`, `Row_Activity`) 내부 규격 (Height: `88`)**:
+  - **`Txt_EnLabel`** (좌상단): Anchor `Top-Left`, Pos `(0, -14)`, Font Size `13`, Character Spacing `8`, Color `#7A828E`
+  - **`Txt_KrLabel`** (좌하단): Anchor `Bottom-Left`, Pos `(0, 16)`, Font Size `22`, Bold, Color `#E5E7EB`
+  - **`Txt_Value`** (우측 수치): Anchor `Middle-Right`, Pos `(0, 0)`, Width `400`, Alignment `Right/Middle`, Font Size `36`, Bold
+    - 수입(`Txt_IncomeValue`): `#34D399` (`"+1,200"`)
+    - 지출(`Txt_ExpenseValue`): `#F87171` (`"-350"`)
+    - 기체 마모(`Txt_WearValue`): `#FB923C` (`"+6%"`)
+    - 활동 시간(`Txt_ActivityValue`): `#FFFFFF` (`"20H 00M"`)
+  - **`Img_Divider`** (하단 구분선, 1~3행에만 존재): Anchor `Bottom-Stretch`, PosY `0`, Height `1`, Color `#24282E`
 
-### 5.3 상단 배너 그룹 (`HeaderGroup`)
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **HeaderGroup** | WindowFrame 우클릭 ➔ `Create Empty` | `RectTransform` | • Anchor: `Top - Center`<br>• Width: `900`, Height: `130`, PosX: `0`, PosY: `-75` |
-| **BannerBackground** | HeaderGroup 우클릭 ➔ `UI > Image` | `RectTransform`<br>`Image` | • Anchor: `Middle - Center`<br>• Width: `820`, Height: `95`<br>• Image Color: `#1AF3B3` (승리용) 또는 `#FF3838` (패배용), Alpha: `60` |
-| **TitleText** | HeaderGroup 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Anchor: `Top - Center`<br>• Width: `800`, Height: `65`, PosY: `-10`<br>• Font Size: `56`, Font Style: `Bold`<br>• Alignment: `Center/Middle`<br>• Text: `"VICTORY"` (초기값)<br>• Color: `#1AF3B3` (네온 민트) |
-| **SubtitleText** | HeaderGroup 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Anchor: `Bottom - Center`<br>• Width: `800`, Height: `35`, PosY: `15`<br>• Font Size: `18`, Alignment: `Center/Middle`<br>• Color: `#A6B8CA`, Text: `"작전 성공 — 목표 대상을 완파했습니다."` |
+### 4.3 하단 브리핑 리스트 (`BriefingGroup`)
+* **위치**: Anchor `Bottom - Stretch`, Left `48`, Right `48`, PosY `36`, Height `210`
+* **`Txt_BriefingHeader`**:
+  - Anchor `Top - Left`, Pos `(0, 0)`, Font Size `15`, Bold, Character Spacing `10`, Color `#EAB308` (`"TODAY · DAY 13"`)
+* **개별 브리핑 아이템 (`BriefingItem_1~3`, Height: `44`, Spacing: `12`)**:
+  - **`Img_AccentBar`**: Anchor `Stretch - Left`, Width `4`, PosX `0`, Color:
+    - 1번 바: `#EF4444` (레드)
+    - 2번 바: `#F97316` (오렌지)
+    - 3번 바: `#06B6D4` (시안)
+  - **`Txt_Tag`**: Anchor `Top - Left`, Pos `(18, -2)`, Font Size `15`, Bold, Character Spacing `6`, Color `#E5E7EB` (`"D-2"`, `"OMEN"`, `"SHOP"`)
+  - **`Txt_Desc`**: Anchor `Bottom - Left`, Pos `(110, 4)`, Font Size `20`, Medium, Color `#F3F4F6`
 
-### 5.4 좌측 보상 및 성장 섹션 (`LeftSection_Rewards`)
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **LeftSection_Rewards** | ContentGroup 우클릭 ➔ `Create Empty` | `RectTransform` | • Anchor: `Middle - Left`<br>• Width: `430`, Height: `340`, PosX: `225`, PosY: `-20` |
-| **SectionHeader** | LeftSection 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `22`, Font Style: `Bold`<br>• Color: `#E0ECF8`, Text: `"보상 및 코어 성장"` |
-| **DividerLine** | LeftSection 우클릭 ➔ `UI > Image` | `Image` | • Width: `410`, Height: `2`, Color: `#2A3644` |
-| **GoldRow** | LeftSection 우클릭 ➔ `Create Empty` | `RectTransform`<br>`HorizontalLayoutGroup` | • Width: `410`, Height: `45`<br>• Child Alignment: `Middle Left`, Spacing: `10` |
-| **GoldLabel** | GoldRow 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `18`, Color: `#B0C0D0`, Text: `"획득 판돈 :"` |
-| **GoldValueText** | GoldRow 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `28`, Font Style: `Bold`<br>• Color: `#FFD700` (골드), Text: `"+150 G"` |
-| **ExpRow** | LeftSection 우클릭 ➔ `Create Empty` | `RectTransform`<br>`HorizontalLayoutGroup` | • Width: `410`, Height: `45`<br>• Child Alignment: `Middle Left`, Spacing: `10` |
-| **ExpLabel** | ExpRow 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `18`, Color: `#B0C0D0`, Text: `"코어 경험치 :"` |
-| **ExpValueText** | ExpRow 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `26`, Font Style: `Bold`<br>• Color: `#00E5FF` (시안), Text: `"+120 EXP"` |
-| **CoreExpSlider** | LeftSection 우클릭 ➔ `UI > Slider` | `Slider`<br>(*Handle 자식은 Delete 삭제) | • Width: `390`, Height: `22`<br>• Interactable: `false`, Transition: `None`<br>• Background Image Color: `#151B24`<br>• Fill Area/Fill Image Color: `#00E5FF` |
-| **CoreStatusText** | LeftSection 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `17`, Font Style: `Bold`<br>• Text: `"● 코어 정상 가동 (Stable)"` |
-
-### 5.5 우측 하드코어 파츠 섹션 (`RightSection_HardcoreParts`)
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **RightSection_HardcoreParts** | ContentGroup 우클릭 ➔ `Create Empty` | `RectTransform` | • Anchor: `Middle - Right`<br>• Width: `450`, Height: `340`, PosX: `-225`, PosY: `-20` |
-| **SectionHeader** | RightSection 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Font Size: `22`, Font Style: `Bold`<br>• Color: `#E0ECF8`, Text: `"부품 내구도 & 하드코어 정산"` |
-| **DividerLine** | RightSection 우클릭 ➔ `UI > Image` | `Image` | • Width: `430`, Height: `2`, Color: `#2A3644` |
-| **PartSlotContainer** | RightSection 우클릭 ➔ `Create Empty` | `RectTransform`<br>`GridLayoutGroup` | • Width: `430`, Height: `160`<br>• Cell Size: `(210, 46)`, Spacing: `(10, 8)`<br>• Constraint: `Fixed Column Count = 2` |
-| **WarningGroup** | RightSection 우클릭 ➔ `UI > Image` | `RectTransform`<br>`Image` | • Width: `430`, Height: `65`<br>• Image Color: `#381010` (다크 레드 경고창) |
-| **DestroyedWarningText** | WarningGroup 우클릭 ➔ `UI > Text - TextMeshPro` | `TextMeshProUGUI` | • Anchor: `Stretch - Stretch`<br>• Font Size: `15`, Font Style: `Bold`<br>• Color: `#FF4D4D`, Alignment: `Center/Middle`<br>• Wrapping: `Enabled` |
-
-### 5.6 하단 인터랙션 버튼 (`ButtonGroup`)
-| 오브젝트명 | 유니티 생성 경로 (Menu Path) | 필수 부착 컴포넌트 (Add Component) | 세부 프로퍼티 설정값 |
-|---|---|---|---|
-| **ButtonGroup** | WindowFrame 우클릭 ➔ `Create Empty` | `RectTransform` | • Anchor: `Bottom - Center`, PosY: `45`<br>• Width: `400`, Height: `65` |
-| **Btn_ReturnBase** | ButtonGroup 우클릭 ➔ `UI > Button - TextMeshPro` | `Button`<br>`Image`<br>자식 `TextMeshProUGUI` | • Anchor: `Middle - Center`, Width: `320`, Height: `52`<br>• Normal Color: `#233244`, Highlighted: `#33465E`<br>• 자식 Text: `"기지로 귀환"`, Font Size: `22`, Bold |
+### 4.4 우하단 바코드 스탬프 (`BarcodeStampBox`) & 계속 프롬프트
+* **`BarcodeStampBox`**:
+  - Anchor: `Bottom - Right` `(1, 0)`, Pos `(-50, 28)`, Size `390 x 110`
+  - `Image`: `#0D0F12` (Alpha `230`), `Outline`: `#374151` `(1, -1)`
+  - **`Txt_ReportNoLabel`**: 좌상단 `(16, -10)`, Font Size `12`, Color `#6B7280`, Text `"REPORT NO."`
+  - **`Txt_ReportNoValue`**: 우상단 `(-16, -10)`, Font Size `13`, Bold, Color `#E5E7EB`, Text `"DR-0012"`
+  - **`Img_Barcode`**: 중앙 `(0, -4)`, Size `356 x 42`, Color `#D1D5DB`
+  - **`Txt_AutoSaveInfo`**: 좌하단 `(16, 8)`, Font Size `11`, Character Spacing `4`, Color `#6B7280`, Text `"AUTO SAVE // DAY 13 06:00"`
+* **`Txt_ContinuePrompt`**:
+  - Anchor: `Bottom - Left` `(0, 0)`, Pos `(42, 24)`, Size `500 x 36`
+  - Font Size `20`, Color `#6EE7B7` (또는 `#9CA3AF`), DOTween `DOFade(0.25f, 0.8f).SetLoops(-1, LoopType.Yoyo)`로 부드럽게 점멸.
 
 ---
 
-## 6. `BattleResultUI.cs` 인스펙터 필드 바인딩 매핑
+## 5. 전투 정산 데이터(`BattleSettlementResult`) ↔ Daily Report UI 매핑 규격
 
-`BattleResultPanel`에 붙어 있는 `BattleResultUI` 컴포넌트의 인스펙터 필드에 드래그하여 연결할 대상 오브젝트:
+기존 전투 정산 데이터와 일일 결산 데이터를 모두 호환할 수 있도록 다음과 같이 매핑한다.
 
-| 인스펙터 필드명 (`BattleResultUI`) | 연결할 대상 Hierarchy 오브젝트 | 필수 컴포넌트 타입 |
+| UI 필드 (레퍼런스 기준) | 전투 정산(`BattleSettlementResult`) 연동 시 | 일일 결산(`DailyReportData`) 연동 시 |
 |---|---|---|
-| `resultPanelRoot` | `BattleResultPanel` | `GameObject` |
-| `mainCanvasGroup` | `BattleResultPanel` | `CanvasGroup` |
-| `titleText` | `TitleText` | `TextMeshProUGUI` |
-| `subtitleText` | `SubtitleText` | `TextMeshProUGUI` |
-| `bannerBackgroundImage` | `BannerBackground` | `Image` |
-| `goldValueText` | `GoldValueText` | `TextMeshProUGUI` |
-| `expValueText` | `ExpValueText` | `TextMeshProUGUI` |
-| `coreExpSlider` | `CoreExpSlider` | `Slider` |
-| `coreStatusText` | `CoreStatusText` | `TextMeshProUGUI` |
-| `partSlotContainer` | `PartSlotContainer` | `Transform` |
-| `partSlotPrefab` | `PartSlotItem.prefab` (아래 7장 참조) | `GameObject` (프리팹) |
-| `destroyedWarningText` | `DestroyedWarningText` | `TextMeshProUGUI` |
-| `destroyedWarningPanel` | `WarningGroup` | `GameObject` |
-| `btnReturnBase` | `Btn_ReturnBase` | `Button` |
-| `lobbySceneName` | `"Lobby"` | `string` |
+| **`Txt_HeaderTitle`** | `"DAILY REPORT"` (또는 `"BATTLE REPORT"`) | `"DAILY REPORT"` |
+| **`Txt_HeaderSubtitle`** | `"DAY {currentDay} 결산"` (승/패 표시 포함 가능) | `"DAY {currentDay} 결산"` |
+| **`Txt_IncomeValue` (수입)** | 승리 보상 골드 (`+{IncomeGold:N0}`) | 일일 총 수입 (`+{IncomeGold:N0}`) |
+| **`Txt_ExpenseValue` (지출)** | 패배 판돈 차감 또는 수리비 (`-{ExpenseGold:N0}`) | 일일 총 지출 (`-{ExpenseGold:N0}`) |
+| **`Txt_WearValue` (기체 마모)** | 전투 전후 5부위 총 내구도 손실률 (`+{WearPercent}%`) | 일일 기체 마모도 증가량 (`+{WearPercent}%`) |
+| **`Txt_ActivityValue` (활동 시간)**| 전투 소요 시간 또는 활동 시간 (`"{Hours:00}H {Minutes:00}M"`) | 당일 누적 활동 시간 (`"20H 00M"`) |
+| **`BriefingItem_1` (레드 바)** | 다음 리그 일정 (`D-2`) 또는 **영구 파괴 부품/코어 불안정 경고** | `D-2` 다음 경기 일정 안내 |
+| **`BriefingItem_2` (오렌지 바)** | `OMEN` 고물상/파츠 상태 브리핑 | `OMEN` 고물상 재료/시세 이벤트 |
+| **`BriefingItem_3` (시안 바)** | `SHOP` 상점 재입고 / 코어 EXP 성장 요약 | `SHOP` 상점 재입고 안내 |
+| **`Txt_ReportNoValue`** | `"DR-{currentDay:0000}"` | `"DR-{currentDay:0000}"` |
 
 ---
 
-## 7. 부품 슬롯 템플릿 프리팹 제작 규격 (`PartSlotItem.prefab`)
+## 6. `BattleResultUI.cs` 개편 인스펙터 변수 설계안
 
-부품 슬롯은 `PartSlotContainer` 하위에 동적으로 생성되는 개별 파츠 내구도 카드입니다.
+구현 시 `BattleResultUI.cs`의 직렬화 필드를 아래 구조로 정리하면 인스펙터에서 1:1로 깔끔하게 연결된다.
 
-* **제작 방법**:
-  1. Hierarchy에서 우클릭 ➔ `Create Empty` 선택 후 이름을 `PartSlotItem`으로 변경.
-  2. `Add Component` ➔ `Image` 추가:
-     - Color: `#161D26` (어두운 메탈 그레이 슬롯 배경)
-     - Width: `210`, Height: `46`
-  3. `Add Component` ➔ `Horizontal Layout Group` 추가:
-     - Padding: `Left 12, Right 12, Top 0, Bottom 0`
-     - Child Alignment: `Middle Left`
-     - Child Force Expand: `Width/Height 둘 다 OFF`
-  4. 자식 1 생성: `PartSlotItem` 우클릭 ➔ `UI > Text - TextMeshPro` (이름: `PartNameText`)
-     - Width: `95`, Height: `30`
-     - Font Size: `16`, Color: `#9BB0C4`, Text: `"HEAD"`
-  5. 자식 2 생성: `PartSlotItem` 우클릭 ➔ `UI > Text - TextMeshPro` (이름: `PartDurabilityText`)
-     - Width: `85`, Height: `30`
-     - Font Size: `18`, Font Style: `Bold`, Alignment: `Right/Middle`
-     - Text: `"35/35"`
-  6. 완성된 `PartSlotItem` 오브젝트를 `Assets/KKH/04.Prefab/` 폴더로 드래그하여 프리팹화 후 씬의 오브젝트는 삭제.
+```csharp
+[Header("=== 1. 루트 패널 및 배경 클릭 ===")]
+[SerializeField] private GameObject resultPanelRoot;
+[SerializeField] private CanvasGroup mainCanvasGroup;
+[SerializeField] private Button btnFullScreenContinue; // DimmedBackground 또는 전체 화면 클릭 버튼
+[SerializeField] private TextMeshProUGUI txtContinuePrompt; // "화면 아무 곳이나 눌러 계속..."
+
+[Header("=== 2. 상단 헤더 바 (DAILY REPORT) ===")]
+[SerializeField] private TextMeshProUGUI txtHeaderTitle;    // "DAILY REPORT"
+[SerializeField] private TextMeshProUGUI txtHeaderSubtitle; // "DAY 12 결산"
+[SerializeField] private TextMeshProUGUI txtBgWatermark;    // 배경 "DAY" 워터마크
+
+[Header("=== 3. 4대 핵심 결산 지표 (수입 / 지출 / 마모 / 활동시간) ===")]
+[SerializeField] private TextMeshProUGUI txtIncomeValue;    // "+1,200" (#34D399)
+[SerializeField] private TextMeshProUGUI txtExpenseValue;   // "-350" (#F87171)
+[SerializeField] private TextMeshProUGUI txtWearValue;      // "+6%" (#FB923C)
+[SerializeField] private TextMeshProUGUI txtActivityValue;  // "20H 00M" (#FFFFFF)
+
+[Header("=== 4. 하단 TODAY 브리핑 섹션 ===")]
+[SerializeField] private TextMeshProUGUI txtBriefingHeader; // "TODAY · DAY 13"
+[SerializeField] private Image imgBriefingBar1;             // #EF4444
+[SerializeField] private TextMeshProUGUI txtBriefingTag1;   // "D-2"
+[SerializeField] private TextMeshProUGUI txtBriefingDesc1;  // "3부 리그 2라운드 · 경기장"
+[SerializeField] private Image imgBriefingBar2;             // #F97316
+[SerializeField] private TextMeshProUGUI txtBriefingTag2;   // "OMEN"
+[SerializeField] private TextMeshProUGUI txtBriefingDesc2;  // "고물상: 회로 부품 무더기 · 재료 +28%"
+[SerializeField] private Image imgBriefingBar3;             // #06B6D4
+[SerializeField] private TextMeshProUGUI txtBriefingTag3;   // "SHOP"
+[SerializeField] private TextMeshProUGUI txtBriefingDesc3;  // "상점 재입고 (오전 9시)"
+
+[Header("=== 5. 우하단 바코드 스탬프 ===")]
+[SerializeField] private TextMeshProUGUI txtReportNoValue;  // "DR-0012"
+[SerializeField] private TextMeshProUGUI txtAutoSaveInfo;   // "AUTO SAVE // DAY 13 06:00"
+```
 
 ---
 
-## 8. 실기 검증 절차 (`Battle_Test_KKH.unity`)
+## 7. DOTween 시퀀스 연출 가이드
 
-1. **에디터 플레이 모드 실행**:
-   - `Assets/KKH/01.Scene/Battle_Test_KKH.unity` 씬 실행.
-2. **원클릭 결과창 호출 검증**:
-   - **`F5`** 입력 (또는 OnGUI `[F5] 승리 결과 UI 테스트` 클릭):
-     - 네온 민트빛 `VICTORY` 배너 강타 연출 확인
-     - 판돈 `+150 G`, 코어 경험치 `+120 EXP` 실시간 롤링 확인
-     - 5개 부위 파츠 정상 내구도 및 영구 파괴 없음 확인
-   - **`F6`** 입력 (또는 OnGUI `[F6] 패배 결과 UI 테스트` 클릭):
-     - 크림슨 레드 `DEFEAT` 배너 연출 확인
-     - 판돈 `-100 G`, 코어 경험치 `+20 EXP` 확인
-     - 코어 상태 `<color=red>● 코어 불안정 (Unstable)</color>` 확인
-     - 붉은색 경고 패널: `[경고] 영구 파손된 부품 소멸: PART_ARM_L_01` 정상 노출 확인
-3. **버튼 인터랙션 검증**:
-   - `[기지로 귀환]` 클릭 시 콘솔 안내 및 거점(Lobby) 씬 전환 정상 작동 확인.
+1. **0.0s ~ 0.25s (리포트 창 오픈)**:
+   - `mainCanvasGroup.DOFade(1f, 0.25f)`와 동시에 `ReportWindowContainer`가 Y축 아래에서 위로 짧게 슬라이드(`DOAnchorPosY(25f, 0.25f).From(new Vector2(-20f, -15f)).SetEase(Ease.OutCubic)`).
+2. **0.25s ~ 0.85s (4대 지표 카운팅 롤링)**:
+   - `txtIncomeValue`: `0` ➔ `+1,200` (`DOVirtual.Int` 천 단위 콤마 포맷 `"+{0:N0}"`)
+   - `txtExpenseValue`: `0` ➔ `-350` (`DOVirtual.Int` `"-{0:N0}"`)
+   - `txtWearValue`: `0%` ➔ `+6%` (`DOVirtual.Int` `"+{0}%"`)
+3. **0.75s ~ 1.15s (하단 TODAY 브리핑 순차 등장)**:
+   - `BriefingItem_1` ➔ `BriefingItem_2` ➔ `BriefingItem_3`가 0.12초 간격으로 좌측에서 우측으로 페이드 슬라이드 등장.
+4. **1.15s 이후 (바코드 스탬프 & 계속 안내 활성화)**:
+   - 우하단 `BarcodeStampBox`가 스탬프 찍히듯 등장하고, 좌하단 `Txt_ContinuePrompt`(`"화면 아무 곳이나 눌러 계속..."`)가 점멸을 시작하며 화면 클릭(`btnFullScreenContinue`)이 활성화됨.

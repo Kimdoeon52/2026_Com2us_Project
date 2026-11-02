@@ -1,18 +1,16 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using static UiBuildKit;
 
 // 열린 씬의 Tab 인벤토리 창을 장착 / 그리드 / 스펙·스킬 3단으로 배치하고 SYS/UI로 입힌다.
 // 계층 이름으로 찾아 재사용하므로 다시 실행해도 쌓이지 않는다
 public static class InventoryWindowBuilder
 {
     private const string Title = "인벤토리 창 스타일 적용";
-    private const string UiRoot = "Assets/SYS/UI/";
-    private const string FontPath = "Assets/KDU/05.Font/NeoDunggeunmoPro-Regular SDF.asset";
     private const string SkillCatalogPath = "Assets/KDU/03.SOData/03.LegSkill/PartSkillCatalog.asset";
     private const string GridCellPath = "Assets/KDU/04.Prefab/GridCell.prefab";
 
@@ -29,27 +27,7 @@ public static class InventoryWindowBuilder
     private const int MaxCostPips = 5;
     private const int InventorySortingOrder = 4;
 
-    private static readonly Color Yellow = FromHex("FFE800");
-    private static readonly Color Cyan = FromHex("35D0DE");
-    private static readonly Color Bone = FromHex("EEEDE8");
-    private static readonly Color Neutral = FromHex("B4B9C0");
-    private static readonly Color Ink = FromHex("1A1B1D");
-    private static readonly Color Ghost = new Color(0.71f, 0.73f, 0.75f, 0.3f);
     private static readonly Color CellColor = new Color(1f, 1f, 1f, 0.35f);
-
-    private static readonly Dictionary<string, string> SpritePaths = new Dictionary<string, string>
-    {
-        { "bg_panelLarge", "BG/Panel/bg_panelLarge.png" },
-        { "bg_panelWide_chamfer", "BG/Panel/bg_panelWide_chamfer.png" },
-        { "swatch_v2", "BG/Swatch/swatch_v2.png" },
-        { "swatch_v3", "BG/Swatch/swatch_v3.png" },
-        { "bg_selectItem_enabled", "BG/Button/selectItem/bg_selectItem_enabled.png" },
-        { "bg_statusButton_warning_enabled", "BG/Button/statusButton/bg_statusButton_warning_enabled.png" },
-        { "bg_iconButton_v1_sm_enabled", "BG/Button/iconButton/bg_iconButton_v1_sm_enabled.png" },
-        { "frame_panelLarge_v3", "Frame/Panel/panelLarge/frame_panelLarge_v3.png" },
-        { "frame_panelMedium_v4", "Frame/Panel/panelMedium/frame_panelMedium_v4.png" },
-        { "frame_panelMedium_v8", "Frame/Panel/panelMedium/frame_panelMedium_v8.png" },
-    };
 
     // 장착 칸 이름, 라벨, 좌상단 위치
     private static readonly (string name, string label, Vector2 pos)[] SlotLayout =
@@ -73,13 +51,10 @@ public static class InventoryWindowBuilder
         (Slot.RightLeg, "R.LEG · R"),
     };
 
-    private static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
-    private static TMP_FontAsset _font;
-
     [MenuItem("KDU/인벤토리/인벤토리 창 스타일 적용")]
     public static void Apply()
     {
-        string missing = LoadResources();
+        string missing = Load();
         if (missing != null)
         {
             EditorUtility.DisplayDialog(Title, $"리소스를 불러오지 못했습니다.\n{missing}", "확인");
@@ -429,37 +404,6 @@ public static class InventoryWindowBuilder
         gridRect.anchoredPosition = position;
     }
 
-    //================================ 공용 ================================
-    private static string LoadResources()
-    {
-        _font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
-        if (_font == null)
-            return FontPath;
-
-        Sprites.Clear();
-        foreach (KeyValuePair<string, string> pair in SpritePaths)
-        {
-            Sprite sprite = AssetDatabase.LoadAssetAtPath<Sprite>(UiRoot + pair.Value);
-            if (sprite == null)
-                return UiRoot + pair.Value;
-
-            Sprites[pair.Key] = sprite;
-        }
-
-        return null;
-    }
-
-    private static GameObject FindRoot(Scene scene, string name)
-    {
-        foreach (GameObject root in scene.GetRootGameObjects())
-        {
-            if (root.name == name)
-                return root;
-        }
-
-        return null;
-    }
-
     // 섹션 패널: 어두운 바탕 + 모서리 프레임
     private static Transform Section(Transform window, string name, float x, float width, string frame = "frame_panelMedium_v8")
     {
@@ -468,109 +412,5 @@ public static class InventoryWindowBuilder
         SetImage(panel, "swatch_v2", Color.white, 1f);
         Overlay(panel.transform, frame, 3f);
         return panel.transform;
-    }
-
-    private static GameObject FindOrCreate(Transform parent, string name)
-    {
-        Transform found = parent.Find(name);
-        if (found != null)
-            return found.gameObject;
-
-        var go = new GameObject(name, typeof(RectTransform));
-        Undo.RegisterCreatedObjectUndo(go, Title);
-        go.transform.SetParent(parent, false);
-        go.layer = parent.gameObject.layer;
-        return go;
-    }
-
-    // 맨 앞 자식으로 깔아 내용을 가리지 않는다
-    private static void Overlay(Transform parent, string frame, float multiplier)
-    {
-        GameObject go = FindOrCreate(parent, "SkinFrame");
-        go.transform.SetAsFirstSibling();
-        Stretch(go.GetComponent<RectTransform>());
-        SetImage(go, frame, Color.white, multiplier);
-        go.GetComponent<Image>().raycastTarget = false;
-    }
-
-    private static void SetImage(GameObject go, string sprite, Color color, float multiplier)
-    {
-        Image image = go.GetComponent<Image>();
-        if (image == null)
-            image = Undo.AddComponent<Image>(go);
-
-        image.sprite = Sprites[sprite];
-        image.type = Image.Type.Sliced;
-        image.pixelsPerUnitMultiplier = multiplier;
-        image.color = color;
-    }
-
-    private static GameObject PlaceBox(Transform parent, string name, Color color, float x, float y, float w, float h)
-    {
-        GameObject go = FindOrCreate(parent, name);
-        PlaceRect(go, x, y, w, h);
-
-        Image image = go.GetComponent<Image>();
-        if (image == null)
-            image = Undo.AddComponent<Image>(go);
-
-        image.sprite = null;
-        image.color = color;
-        image.raycastTarget = false;
-        return go;
-    }
-
-    private static TextMeshProUGUI PlaceLabel(Transform parent, string name, string value, float size, Color color, TextAlignmentOptions alignment, float x, float y, float w, float h)
-    {
-        GameObject go = FindOrCreate(parent, name);
-        PlaceRect(go, x, y, w, h);
-
-        TextMeshProUGUI text = go.GetComponent<TextMeshProUGUI>();
-        if (text == null)
-            text = Undo.AddComponent<TextMeshProUGUI>(go);
-
-        text.font = _font;
-        text.text = value;
-        text.fontSize = size;
-        text.color = color;
-        text.alignment = alignment;
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.raycastTarget = false;
-        return text;
-    }
-
-    // 부모 좌상단 기준 배치
-    private static void PlaceRect(GameObject go, float x, float y, float w, float h)
-    {
-        RectTransform rect = go.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(x, -y);
-        rect.sizeDelta = new Vector2(w, h);
-        rect.localRotation = Quaternion.identity;
-        rect.localScale = Vector3.one;
-    }
-
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
-
-    private static void ApplyFont(GameObject root)
-    {
-        foreach (TMP_Text text in root.GetComponentsInChildren<TMP_Text>(true))
-        {
-            text.font = _font;
-        }
-    }
-
-    private static Color FromHex(string rgb)
-    {
-        ColorUtility.TryParseHtmlString($"#{rgb}", out Color color);
-        return color;
     }
 }

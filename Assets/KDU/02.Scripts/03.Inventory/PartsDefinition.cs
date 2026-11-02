@@ -84,8 +84,8 @@ public class PartsDefinition : ScriptableObject
     private float _critDamageReduction;
 
     [Header("스킬 연동")]
-    [Tooltip("파츠 장착 시 부여되는 고유 액티브 스킬 ID")]
-    private int _activeSkillId = -1;
+    [Tooltip("액티브 스킬 ID")]
+    [SerializeField] private string _activeSkillId = "";
 
     [Tooltip("기믹 파훼 태그")]
     private GimmickTag _gimmickTag = GimmickTag.None;
@@ -109,7 +109,7 @@ public class PartsDefinition : ScriptableObject
     public float MoveSpeedBonus => _moveSpeedBonus;
     public float CritResistance => _critResistance;
     public float CritDamageReduction => _critDamageReduction;
-    public int ActiveSkillId => _activeSkillId;
+    public string ActiveSkillId => _activeSkillId;
     public GimmickTag GimmickTag => _gimmickTag;
     public int SkillCost => _skillCost;
 

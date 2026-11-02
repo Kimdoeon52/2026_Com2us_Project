@@ -27,7 +27,7 @@ namespace RealSteel.Dialogue
                 return;
             }
 
-            Debug.Log("[Step18] O: 가짜 지도 UI 열기/닫기 (T3) / I: 가짜 토벌 신청 UI 열기/닫기 (T9) — 처음 열 때만 튜토리얼이 UI 위에서 바로 재생");
+            Debug.Log("[Step18] P: 가짜 지도 UI 열기/닫기 (T3) / I: 가짜 토벌 신청 UI 열기/닫기 (T9) — 처음 열 때만 튜토리얼이 UI 위에서 바로 재생");
         }
 
         private void Update()
@@ -35,7 +35,7 @@ namespace RealSteel.Dialogue
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !manager.IsReady || manager.IsTalking) return;
 
-            if (keyboard.oKey.wasPressedThisFrame) Toggle(mapUi, ref mapOpen, "지도", mapTutorialId);
+            if (keyboard.pKey.wasPressedThisFrame) Toggle(mapUi, ref mapOpen, "지도", mapTutorialId);
             else if (keyboard.iKey.wasPressedThisFrame) Toggle(huntApplyUi, ref huntApplyOpen, "토벌 신청", huntApplyTutorialId);
         }
 

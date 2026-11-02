@@ -16,6 +16,10 @@ namespace RealSteel.Dialogue
         [SerializeField] private DialogueEventQueue queue;
         [SerializeField] private string battleTutorialId = "tutorial_t10_battle";
 
+        [Header("보스 목록(BossRaceSelectUI) · 난이도 선택 UI (비우면 1~5키 난이도로 바로 진입)")]
+        [SerializeField] private RealSteel.BossRace.BossRaceSelectUI bossSelect;
+        [SerializeField] private RealSteel.BossRace.BossDifficultySelectUI difficultySelect;
+
         private bool inBattle;
         private string battleBoss;
 
@@ -42,6 +46,8 @@ namespace RealSteel.Dialogue
         {
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || !manager.IsReady || manager.IsTalking || entry.IsPlaying) return;
+            if (bossSelect != null && bossSelect.IsOpen) return;
+            if (difficultySelect != null && difficultySelect.IsOpen) return;
 
             if (inBattle)
             {
@@ -56,7 +62,41 @@ namespace RealSteel.Dialogue
 
         private void OnActionChosen(NpcInteractable npc, NpcAction action)
         {
-            if (action == NpcAction.HuntApply && !inBattle) StartEntry();
+            if (action != NpcAction.HuntApply || inBattle) return;
+
+            string seasonBoss = debug.TargetBoss;
+            RealSteel.BossRace.BossRaceEntry target = FindEntry(seasonBoss);
+
+            if (difficultySelect != null && difficultySelect.isActiveAndEnabled && target != null &&
+                difficultySelect.Open(debug, target, debug, debug.SelectedDifficulty, OnDifficultyChosen, OnHuntCancelled, "길드 접수처"))
+            {
+                Debug.Log($"[Step11] 토벌 신청 → 이번 시즌 보스 {target.bossName}({seasonBoss}) 난이도 선택");
+                return;
+            }
+
+            Debug.Log($"[Step11] 난이도 선택 UI 없음{(target == null ? $" (보스 목록에 '{seasonBoss}' 없음)" : "")} → 현재 난이도 {debug.SelectedDifficulty}(1~5키)로 진입");
+            StartEntry();
+        }
+
+        private RealSteel.BossRace.BossRaceEntry FindEntry(string bossId)
+        {
+            if (bossSelect == null) return null;
+            foreach (RealSteel.BossRace.BossRaceEntry item in bossSelect.Entries)
+            {
+                if (item != null && item.bossId == bossId) return item;
+            }
+            return null;
+        }
+
+        private void OnHuntCancelled()
+        {
+            Debug.Log("[Step11] 토벌 신청 취소 → 필드");
+        }
+
+        private void OnDifficultyChosen(string difficulty)
+        {
+            debug.SetDifficulty(difficulty);
+            StartEntry();
         }
 
         private void StartEntry()

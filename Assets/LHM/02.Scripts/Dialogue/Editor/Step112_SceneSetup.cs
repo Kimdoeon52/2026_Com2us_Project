@@ -39,9 +39,9 @@ namespace RealSteel.Dialogue.EditorTools
                 return;
             }
 
-            var clock = Object.FindFirstObjectByType<DummyUiStack>(FindObjectsInactive.Include);
+            var clock = Object.FindFirstObjectByType<TimeSystemUiStack>(FindObjectsInactive.Include);
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬에 00시 트리거와 이벤트 큐를 배치합니다.\n- DialogueManager 대사 풀에 events 추가\n- {ObjectName} 생성\n{(clock == null ? "- 주의: DummyUiStack이 없어 시계 연동 없이 T키로만 확인합니다 (10-1단계 배치 권장)\n" : "")}씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬에 00시 트리거와 이벤트 큐를 배치합니다.\n- DialogueManager 대사 풀에 events 추가\n- {ObjectName} 생성\n{(clock == null ? "- 주의: LJS 시간 연결이 없어 시계 연동 없이 T키로만 확인합니다 (LJS 시간 시스템 연결 권장)\n" : "")}씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }

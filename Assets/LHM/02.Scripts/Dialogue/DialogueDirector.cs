@@ -57,6 +57,7 @@ namespace RealSteel.Dialogue
         private bool isFading;
 
         private AudioClip fallbackClip;
+        private Camera defaultCamera;
 
         public float MaxWaitSeconds => maxWaitSeconds;
         public string CurrentBgmId { get; private set; }
@@ -64,6 +65,7 @@ namespace RealSteel.Dialogue
         private void Awake()
         {
             if (targetCamera == null) targetCamera = Camera.main;
+            defaultCamera = targetCamera;
 
             if (fadeOverlay != null)
             {
@@ -148,6 +150,24 @@ namespace RealSteel.Dialogue
             cameraBaseSize = targetCamera.orthographic ? targetCamera.orthographicSize : targetCamera.fieldOfView;
             currentZoom = 1f;
             hasCameraBase = true;
+        }
+
+        public void UseCamera(Camera camera)
+        {
+            Camera next = camera != null ? camera : defaultCamera;
+            if (next == targetCamera) return;
+
+            StopShake();
+            if (targetCamera != null && hasCameraBase && (isZooming || !Mathf.Approximately(currentZoom, 1f)))
+            {
+                currentZoom = 1f;
+                ApplyCameraSize();
+            }
+
+            isZooming = false;
+            currentZoom = 1f;
+            hasCameraBase = false;
+            targetCamera = next;
         }
 
         public void ZoomTo(float target, float duration)

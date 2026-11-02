@@ -50,8 +50,59 @@ namespace RealSteel.Dialogue
 
         public bool IsOpen => isOpen;
         public bool IsAutoMode => autoMode;
+        public bool IsHolding => holding;
+        public bool IsClosingMotion => motion != null && motion.IsClosing;
 
         public event Action Closed;
+
+        private readonly Dictionary<string, string> textArguments = new Dictionary<string, string>();
+        private bool holdOnLastLine;
+        private bool holding;
+        private Action holdReached;
+
+        public void SetTextArgument(string key, string value)
+        {
+            if (string.IsNullOrEmpty(key)) return;
+            textArguments[key] = value ?? "";
+        }
+
+        public void ClearTextArguments()
+        {
+            textArguments.Clear();
+        }
+
+        public void HoldOnLastLine(Action onReached)
+        {
+            holdOnLastLine = true;
+            holding = false;
+            holdReached = onReached;
+        }
+
+        public void CancelHold()
+        {
+            holdOnLastLine = false;
+            holding = false;
+            holdReached = null;
+        }
+
+        private string Format(string text)
+        {
+            if (string.IsNullOrEmpty(text) || textArguments.Count == 0) return text;
+            foreach (KeyValuePair<string, string> pair in textArguments) text = text.Replace("{" + pair.Key + "}", pair.Value);
+            return text;
+        }
+
+        private void EnterHold()
+        {
+            if (holding) return;
+
+            holding = true;
+            typewriter.Complete();
+            Debug.Log("[DialogueBox] 마지막 줄에서 대기 (선택지)");
+            Action callback = holdReached;
+            holdReached = null;
+            callback?.Invoke();
+        }
 
         private void Awake()
         {
@@ -82,7 +133,7 @@ namespace RealSteel.Dialogue
 
         private void Update()
         {
-            if (!isOpen) return;
+            if (!isOpen || holding) return;
 
             float deltaTime = Time.unscaledDeltaTime;
 
@@ -135,6 +186,12 @@ namespace RealSteel.Dialogue
             }
 
             typewriter.Tick(deltaTime);
+
+            if (holdOnLastLine && index == current.Count - 1 && !typewriter.IsTyping)
+            {
+                EnterHold();
+                return;
+            }
 
             if (autoMode && !typewriter.IsTyping)
             {
@@ -203,6 +260,7 @@ namespace RealSteel.Dialogue
             HideSkipConfirm();
             RefreshStatus(false);
             if (backlog != null) backlog.Close();
+            CancelHold();
 
             if (portrait != null) portrait.Hide();
             if (stage != null) stage.Exit();
@@ -220,6 +278,12 @@ namespace RealSteel.Dialogue
         private void Next()
         {
             if (readLog != null) readLog.MarkRead(current[index].textKey);
+
+            if (holdOnLastLine && index >= current.Count - 1)
+            {
+                EnterHold();
+                return;
+            }
 
             index++;
 
@@ -249,28 +313,30 @@ namespace RealSteel.Dialogue
                 speakerTitleText.text = hasTitle ? line.speakerTitle : "";
             }
 
+            string text = Format(line.text);
+
             if (voice != null) voice.SetSpeaker(line.speakerId);
             if (portrait != null) portrait.Show(line.speakerId, line.expression);
-            if (backlog != null) backlog.Add(line.speaker, line.text);
+            if (backlog != null) backlog.Add(line.speaker, text);
 
             float wait = director != null ? director.Play(line.effects) : 0f;
 
             if (wait > 0f)
             {
                 effectWait = wait;
-                pendingText = line.text;
+                pendingText = text;
                 typewriter.Begin("", 0f);
             }
             else
             {
                 effectWait = 0f;
                 pendingText = null;
-                typewriter.Begin(line.text, charactersPerSecond);
+                typewriter.Begin(text, charactersPerSecond);
             }
 
             string effectLog = line.effects != null && line.effects.Count > 0 ? $" [연출: {string.Join(", ", line.effects)}]" : "";
             string readMark = IsLineRead(index) ? " (읽음)" : "";
-            Debug.Log($"[DialogueBox] {index + 1}/{current.Count}{readMark} {(hasSpeaker ? line.speaker : "(내레이션)")}: {line.text}{effectLog}");
+            Debug.Log($"[DialogueBox] {index + 1}/{current.Count}{readMark} {(hasSpeaker ? line.speaker : "(내레이션)")}: {text}{effectLog}");
         }
 
         private void RequestSkip()
@@ -316,6 +382,18 @@ namespace RealSteel.Dialogue
 
         private void Skip()
         {
+            if (holdOnLastLine)
+            {
+                Debug.Log($"[DialogueBox] 스킵 — 선택지가 있어 마지막 줄로 이동 ({current.Count - 1 - index}줄 건너뜀)");
+                index = current.Count - 1;
+                ShowLine();
+                if (pendingText != null) typewriter.Begin(pendingText, charactersPerSecond);
+                effectWait = 0f;
+                pendingText = null;
+                EnterHold();
+                return;
+            }
+
             Debug.Log($"[DialogueBox] 스킵 — {current.Count - index}줄 건너뜀");
             Close();
         }

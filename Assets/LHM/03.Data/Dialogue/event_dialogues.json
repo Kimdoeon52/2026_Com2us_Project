@@ -77,6 +77,28 @@
       "lines": [
         { "speaker": "receptionist", "textKey": "event.bubble_guild_after_defeat_wheel.1" }
       ]
+    },
+    {
+      "id": "season_call_question",
+      "band": "Story",
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.season_call_question.1" },
+        { "speaker": "receptionist", "textKey": "event.season_call_question.2" }
+      ]
+    },
+    {
+      "id": "season_call_confirm",
+      "band": "Story",
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.season_call_confirm.1" }
+      ]
+    },
+    {
+      "id": "season_call_accept",
+      "band": "Story",
+      "lines": [
+        { "speaker": "receptionist", "textKey": "event.season_call_accept.1" }
+      ]
     }
   ]
 }

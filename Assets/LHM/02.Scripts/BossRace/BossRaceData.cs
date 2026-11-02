@@ -44,6 +44,7 @@ namespace RealSteel.BossRace
         bool IsRegionCleared(string bossId);
         int BestDifficulty(string bossId);
         int LosesOf(string bossId);
+        int AttemptsOf(string bossId);
         int SeasonDaysLeft { get; }
         string RankText { get; }
         string ScoreText { get; }

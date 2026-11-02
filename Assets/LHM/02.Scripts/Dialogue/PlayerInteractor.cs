@@ -33,6 +33,12 @@ namespace RealSteel.Dialogue
             HidePrompt();
         }
 
+        private void OnDisable()
+        {
+            current = null;
+            HidePrompt();
+        }
+
         private void Update()
         {
             if (!manager.IsReady || IsBusy || menu.EndedThisFrame)

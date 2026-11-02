@@ -64,6 +64,9 @@ namespace RealSteel.Dialogue
         {
             if (action != NpcAction.HuntApply || inBattle) return;
 
+            var departure = FindFirstObjectByType<RealSteel.BossRace.HuntDeparture>();
+            if (departure != null && departure.isActiveAndEnabled) return;
+
             string seasonBoss = debug.TargetBoss;
             RealSteel.BossRace.BossRaceEntry target = FindEntry(seasonBoss);
 

@@ -39,6 +39,9 @@ namespace RealSteel.Dialogue
         [SerializeField] private Button optionTemplate;
         [SerializeField] private GameObject shopPanel;
 
+        [Header("외부 상점 창 (연결하면 임시 상점 대신 이 창을 연다)")]
+        [SerializeField] private GameObject shopWindow;
+
         [Header("표시")]
         [SerializeField] private Color normalColor = Color.white;
         [SerializeField] private Color selectedColor = new Color(1f, 0.85f, 0.3f);
@@ -226,8 +229,17 @@ namespace RealSteel.Dialogue
 
                 case NpcAction.Shop:
                     ChangeState(State.Shop);
-                    if (shopPanel != null) shopPanel.SetActive(true);
-                    Debug.Log("[NPC] 상점 열림 (임시) — Esc 또는 E로 닫기");
+                    if (shopWindow != null)
+                    {
+                        shopWindow.SetActive(true);
+                        Debug.Log($"[NPC] 상점 열림 ({shopWindow.name}) — 창의 닫기 버튼 또는 Esc로 닫으면 대화 종료");
+                        if (!shopWindow.activeInHierarchy) Debug.LogWarning($"[NPC] '{shopWindow.name}'의 부모가 꺼져 있어 화면에 보이지 않습니다.", shopWindow);
+                    }
+                    else
+                    {
+                        if (shopPanel != null) shopPanel.SetActive(true);
+                        Debug.Log("[NPC] 상점 열림 (임시) — Esc 또는 E로 닫기");
+                    }
                     break;
 
                 case NpcAction.Exit:
@@ -243,6 +255,19 @@ namespace RealSteel.Dialogue
 
         private void HandleShopInput()
         {
+            if (shopWindow != null)
+            {
+                bool escape = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+                if (escape && shopWindow.activeSelf) shopWindow.SetActive(false);
+
+                if (!shopWindow.activeSelf)
+                {
+                    Debug.Log($"[NPC] 상점 닫힘 ({shopWindow.name}) → 대화 종료");
+                    End();
+                }
+                return;
+            }
+
             bool close;
             InputModeController input = InputModeController.Current;
 
@@ -275,10 +300,17 @@ namespace RealSteel.Dialogue
             stateFrame = Time.frameCount;
         }
 
+        public GameObject ShopWindow
+        {
+            get => shopWindow;
+            set => shopWindow = value;
+        }
+
         private void End()
         {
             panel.SetActive(false);
             if (shopPanel != null) shopPanel.SetActive(false);
+            if (state == State.Shop && shopWindow != null && shopWindow.activeSelf) shopWindow.SetActive(false);
 
             Debug.Log($"[NPC] 상호작용 종료 ({(npc != null ? npc.name : "-")})");
             npc = null;

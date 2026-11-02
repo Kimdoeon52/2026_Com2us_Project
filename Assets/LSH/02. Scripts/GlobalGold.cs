@@ -32,7 +32,7 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         // 저장할 디렉터리 경로 및 파일 경로 설정
         string basePath;
 #if UNITY_EDITOR
-        basePath = Path.Combine(Application.dataPath, "LSH", "06. JSon");
+        basePath = Path.Combine(Application.dataPath,  "..", "SaveData");
 #else
         basePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "JSonGoldData"); //빌드하면 저장경로에 저거 이름으로 만들어짐
 #endif

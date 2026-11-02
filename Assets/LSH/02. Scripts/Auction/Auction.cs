@@ -115,7 +115,15 @@ public class Auction : Singleton<Auction>
     //===================================경매 탈출 버튼===================
     [SerializeField] private Button getOutAuction;
 
+    //===================================상점=============================
+    [Header("상점 UI")]
+    [SerializeField] private GameObject shopPanel; //상점 창
+    [SerializeField] private Button shopButton; //모드 선택 화면의 상점 열기 버튼
+    [SerializeField] private Button shopCloseButton; //상점 닫기 버튼
+
     private UniTaskCompletionSource<AuctionType> modeSelectTcs;
+    private bool isSelectingMode = false; //모드 선택 대기 중인지 체크 (상점은 이때만 열 수 있음)
+    private bool IsShopOpen => shopPanel != null && shopPanel.activeSelf;
     //===============================ai 슬롯 위치====================
     [Header("AI 슬롯")]
     [SerializeField] private List<RectTransform> aiSlots;
@@ -220,10 +228,13 @@ public class Auction : Singleton<Auction>
         BindButton(raiseButton, OnRaiseButton);
         BindButton(giveUpButton, GiveUpButton);
         BindButton(getOutAuction, OnGGAuction);
+        BindButton(shopButton, OnOpenShop);
+        BindButton(shopCloseButton, OnCloseShop);
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
         EnableFistAuctionUI(false);
         EnableModeSelectUI(false); // 버튼 비활
+        if (shopPanel != null) shopPanel.SetActive(false); // 상점은 닫힌 채로 시작
     }
 
     private void BindButton(Button button, UnityEngine.Events.UnityAction action)
@@ -533,26 +544,57 @@ public class Auction : Singleton<Auction>
         if (modeSelectPanel != null) modeSelectPanel.SetActive(active);
     }
 
-    public void OnSelectNormalMode() => modeSelectTcs?.TrySetResult(AuctionType.Normal);
-    public void OnSelectFistMode() => modeSelectTcs?.TrySetResult(AuctionType.Fist);
+    public void OnSelectNormalMode()
+    {
+        if (IsShopOpen) return; // 상점이 열려 있으면 경매 시작 안 함
+        modeSelectTcs?.TrySetResult(AuctionType.Normal);
+    }
+
+    public void OnSelectFistMode()
+    {
+        if (IsShopOpen) return;
+        modeSelectTcs?.TrySetResult(AuctionType.Fist);
+    }
 
     public async UniTask<AuctionType> WaitPlayerSelectModeAsync()
     {
         // 이전 대사 넘기기용 스페이스바/마우스 클릭 신호가 씹히도록 1프레임 대기
         await UniTask.Yield();
 
+        // 버튼이 보이기 전에 신호기부터 준비 (패널이 켜진 프레임에 눌러도 씹히지 않게)
+        modeSelectTcs = new UniTaskCompletionSource<AuctionType>();
+        isSelectingMode = true;
+
         // 모드 선택 패널 활성화
         EnableModeSelectUI(true);
-
-        modeSelectTcs = new UniTaskCompletionSource<AuctionType>();
 
         // 유저가 모드 선택 버튼을 누를 때까지 대기
         AuctionType selectedType = await modeSelectTcs.Task;
 
         // 선택 완료 후 패널 비활성화
+        isSelectingMode = false;
         EnableModeSelectUI(false);
+        if (shopPanel != null) shopPanel.SetActive(false); // 혹시 열려 있으면 같이 닫기
 
         return selectedType;
+    }
+
+    //=========================상점 열기/닫기===================
+    public void OnOpenShop()
+    {
+        if (!isSelectingMode || IsShopOpen || shopPanel == null) return; // 모드 선택 중에만 열 수 있음
+
+        EnableModeSelectUI(false); // 상점 뒤에서 경매 버튼이 눌리지 않게 숨김
+        shopPanel.SetActive(true);
+    }
+
+    public void OnCloseShop()
+    {
+        if (!IsShopOpen) return;
+
+        shopPanel.SetActive(false);
+        UpdateGoldDisplay(); // 상점에서 판매한 골드 반영
+        if (isSelectingMode) EnableModeSelectUI(true); // 다시 경매 모드를 고를 수 있게
     }
 
     // --- 경매 마감 및 차감 로직 ---

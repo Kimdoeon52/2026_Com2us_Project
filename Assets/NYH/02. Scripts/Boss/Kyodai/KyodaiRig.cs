@@ -110,6 +110,9 @@ public class KyodaiRig : MonoBehaviour
         clipTime = t;
     }
 
+    /// <summary>지금 걸려 있는 온몸 애니메이션 (없으면 null)</summary>
+    public AnimationClip Clip => clip;
+
     /// <summary>
     /// 클립을 t초로 샘플링한다. 게임과 편집 미리보기 공용.
     /// 루트와 클립 제외 뼈는 샘플링 전 자세로 되돌린다 — 클립에 키가 남아 있으면 모델이 밀리거나 머리가 돌아가기 때문

@@ -470,42 +470,7 @@ public static class KyodaiPlaceholderBuilder
 
         var master = new SerializedObject(boss).FindProperty("masterData").objectReferenceValue as BossMasterData;
         GroundTelegraph telegraph = boss.GetComponentInChildren<GroundTelegraph>(true);
-        foreach (var p in patterns)
-        {
-            var data = LoadOrCreate<BossPatternData>($"{DataFolder}/Kyodai_{p.name.Replace(" ", "")}.asset", d =>
-            {
-                d.patternID = p.id;
-                d.patternName = p.name;
-                d.tellDuration = 1f;           // 모션 안의 예고와 별개로 저지 판정 시간만 뜻한다. 저지는 끔
-                d.hasDpsCheck = false;
-                d.targetPlayerPart = BodyPart.Core;
-                d.partDurabilityDamage = 0;
-                // baseDamage는 기획 수치 없음 — KKH 기본값 그대로(TODO)
-            });
-            if (master != null && !master.patterns.Contains(data))
-            {
-                master.patterns.Add(data);
-                EditorUtility.SetDirty(master);
-            }
-
-            Transform found = boss.transform.Find(p.name);
-            GameObject go = found != null ? found.gameObject : new GameObject(p.name);
-            if (found == null)
-            {
-                Undo.RegisterCreatedObjectUndo(go, "애니메이션 패턴 구성");
-                go.transform.SetParent(boss.transform, false);
-            }
-            go.SetActive(true);
-
-            var pattern = go.GetComponent<KyodaiMotionPattern>();
-            if (pattern == null) pattern = go.AddComponent<KyodaiMotionPattern>();
-            SetFields(pattern, so =>
-            {
-                so.FindProperty("patternData").objectReferenceValue = data;
-                so.FindProperty("motion").objectReferenceValue = p.motion;
-                so.FindProperty("telegraph").objectReferenceValue = telegraph;
-            });
-        }
+        foreach (var p in patterns) AddClipPattern(boss, master, telegraph, p.name, p.id, p.motion);
 
         if (deathClip != null) SetFields(boss, so => so.FindProperty("deathClip").objectReferenceValue = deathClip);
 
@@ -514,18 +479,99 @@ public static class KyodaiPlaceholderBuilder
         Debug.Log("[Kyodai] 애니메이션 패턴 3종 구성 완료 — 씬을 저장하고 플레이하면 왼손 → 오른손 → 휘두르기 순서로 나온다.");
     }
 
-    // linger가 0이면 잔류 없이 공격에서 바로 복귀로 넘어간다
+    // 2026-11-02: 나중에 만든 클립 연결. 이미 있는 패턴은 그대로 두고 양손 패턴 2개를 더하고, 그로기 클립을 보스에 건다.
+    // 레이어 시각은 클립 키 기준(공격 = 내려가기 시작, 잔류 = 닿아서 멈춘 구간, 복귀 = 들어 올리기 시작).
+    // 양손이라 조준(한 팔만 지원)과 바닥 그림자는 넣지 않는다 — 휘두르기와 같이 클립 자리 그대로 친다
+    [MenuItem("NYH/쿄다이/새 애니메이션 연결 (양손 패턴·그로기)")]
+    private static void BuildMoreClipPatterns()
+    {
+        var boss = Object.FindAnyObjectByType<KyodaiBossController>();
+        if (boss == null) { EditorUtility.DisplayDialog("쿄다이", "씬에 쿄다이가 없습니다. Battle2 씬을 여세요.", "확인"); return; }
+
+        var slamClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_양손내려찍기.anim");
+        var clapClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_양손손뼉치기.anim");
+        var groggyClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_그로기.anim");
+        if (slamClip == null || clapClip == null)
+        {
+            EditorUtility.DisplayDialog("쿄다이", $"{ClipFolder}에서 양손 클립을 못 찾았습니다. 파일 이름을 확인하세요.", "확인");
+            return;
+        }
+
+        string[] both = { "왼팔", "오른팔" };
+        var slam = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_양손내려찍기_모션.asset", m =>
+            FillMotion(m, slamClip, both, attack: 0.9667f, linger: 1.3833f, back: 2.2167f));
+        var clap = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_양손손뼉치기_모션.asset", m =>
+            FillMotion(m, clapClip, both, attack: 0.4167f, linger: 0.55f, back: 1.1833f));
+
+        var master = new SerializedObject(boss).FindProperty("masterData").objectReferenceValue as BossMasterData;
+        GroundTelegraph telegraph = boss.GetComponentInChildren<GroundTelegraph>(true);
+        AddClipPattern(boss, master, telegraph, "양손 내려찍기", "KYODAI_BOTH_SLAM", slam);
+        AddClipPattern(boss, master, telegraph, "양손 손뼉치기", "KYODAI_BOTH_CLAP", clap);
+
+        if (groggyClip != null) SetFields(boss, so => so.FindProperty("groggyClip").objectReferenceValue = groggyClip);
+
+        AssetDatabase.SaveAssets();
+        EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
+        Debug.Log("[Kyodai] 새 애니메이션 연결 완료 — 양손 내려찍기·양손 손뼉치기 패턴 추가, 그로기 클립 연결. 씬을 저장하세요.");
+    }
+
+    // 패턴 데이터(없으면 만들고 마스터에 등록) + 보스 자식 오브젝트의 KyodaiMotionPattern을 맞춘다
+    private static void AddClipPattern(KyodaiBossController boss, BossMasterData master, GroundTelegraph telegraph,
+                                       string patternName, string id, KyodaiMotionData motion)
+    {
+        var data = LoadOrCreate<BossPatternData>($"{DataFolder}/Kyodai_{patternName.Replace(" ", "")}.asset", d =>
+        {
+            d.patternID = id;
+            d.patternName = patternName;
+            d.tellDuration = 1f;           // 모션 안의 예고와 별개로 저지 판정 시간만 뜻한다. 저지는 끔
+            d.hasDpsCheck = false;
+            d.targetPlayerPart = BodyPart.Core;
+            d.partDurabilityDamage = 0;
+            // baseDamage는 기획 수치 없음 — KKH 기본값 그대로(TODO)
+        });
+        if (master != null && !master.patterns.Contains(data))
+        {
+            master.patterns.Add(data);
+            EditorUtility.SetDirty(master);
+        }
+
+        Transform found = boss.transform.Find(patternName);
+        GameObject go = found != null ? found.gameObject : new GameObject(patternName);
+        if (found == null)
+        {
+            Undo.RegisterCreatedObjectUndo(go, "애니메이션 패턴 구성");
+            go.transform.SetParent(boss.transform, false);
+        }
+        go.SetActive(true);
+
+        var pattern = go.GetComponent<KyodaiMotionPattern>();
+        if (pattern == null) pattern = go.AddComponent<KyodaiMotionPattern>();
+        SetFields(pattern, so =>
+        {
+            so.FindProperty("patternData").objectReferenceValue = data;
+            so.FindProperty("motion").objectReferenceValue = motion;
+            so.FindProperty("telegraph").objectReferenceValue = telegraph;
+        });
+    }
+
+    // linger가 0이면 잔류 없이 공격에서 바로 복귀로 넘어간다. 부위를 여럿 주면 같은 레이어 시각으로 트랙을 하나씩 만든다
     private static void FillMotion(KyodaiMotionData motion, AnimationClip clip, string partId, float attack, float linger, float back)
+        => FillMotion(motion, clip, new[] { partId }, attack, linger, back);
+
+    private static void FillMotion(KyodaiMotionData motion, AnimationClip clip, string[] partIds, float attack, float linger, float back)
     {
         motion.clip = clip;
         motion.duration = clip.length;
-        var track = new KyodaiMotionTrack { partId = partId };
-        track.layers.Add(new KyodaiLayerMark { time = 0f, layer = LimbLayer.Transition });
-        track.layers.Add(new KyodaiLayerMark { time = attack, layer = LimbLayer.Attack });
-        if (linger > 0f) track.layers.Add(new KyodaiLayerMark { time = linger, layer = LimbLayer.Linger });
-        track.layers.Add(new KyodaiLayerMark { time = back, layer = LimbLayer.Return });
-        track.layers.Add(new KyodaiLayerMark { time = clip.length, layer = LimbLayer.Background });
-        motion.tracks.Add(track);
+        foreach (string partId in partIds)
+        {
+            var track = new KyodaiMotionTrack { partId = partId };
+            track.layers.Add(new KyodaiLayerMark { time = 0f, layer = LimbLayer.Transition });
+            track.layers.Add(new KyodaiLayerMark { time = attack, layer = LimbLayer.Attack });
+            if (linger > 0f) track.layers.Add(new KyodaiLayerMark { time = linger, layer = LimbLayer.Linger });
+            track.layers.Add(new KyodaiLayerMark { time = back, layer = LimbLayer.Return });
+            track.layers.Add(new KyodaiLayerMark { time = clip.length, layer = LimbLayer.Background });
+            motion.tracks.Add(track);
+        }
     }
 
     private static void AddTelegraph(KyodaiMotionData motion, float show, float hide)

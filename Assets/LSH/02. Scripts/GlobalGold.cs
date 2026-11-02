@@ -32,7 +32,7 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         // 저장할 디렉터리 경로 및 파일 경로 설정
         string basePath;
 #if UNITY_EDITOR
-        basePath = Path.Combine(Application.dataPath,  "..", "SaveData");
+        basePath = Path.Combine(Application.dataPath, "LSH", "06. JSon");
 #else
         basePath = Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "JSonGoldData"); //빌드하면 저장경로에 저거 이름으로 만들어짐
 #endif
@@ -43,9 +43,9 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
 
         // 최종 파일 경로: LSH/06.JSon/mainGold.json
-        mainSavePath = Path.GetFullPath(Path.Combine(basePath, "mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
+        mainSavePath = Path.GetFullPath(Path.Combine(basePath, ".mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
 
-        stageSavePath = Path.GetFullPath(Path.Combine(basePath, "stageProgress.json"));
+        stageSavePath = Path.GetFullPath(Path.Combine(basePath, ".stageProgress.json"));
 
         Debug.Log($"[저장 경로] {mainSavePath}");
         LoadGame();

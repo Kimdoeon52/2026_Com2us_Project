@@ -50,6 +50,13 @@ public static class KyodaiMotionPlayer
         foreach (var l in boss.Limbs) if (l.Ready) l.SetIKWeight(0f);
     }
 
+    /// <summary>지금 온몸 애니메이션이 이 클립인지 — 다른 패턴이 자세를 가져갔는지 확인용</summary>
+    public static bool IsPlayingClip(AnimationClip clip, KyodaiBossController boss)
+    {
+        KyodaiRig rig = boss != null ? FindRig(boss) : null;
+        return rig != null && rig.Clip == clip;
+    }
+
     /// <summary>모션이 끝났을 때: 온몸 애니메이션을 풀고 대기 자세로 (패턴 정리·미리보기 끝)</summary>
     public static void Clear(KyodaiBossController boss)
     {

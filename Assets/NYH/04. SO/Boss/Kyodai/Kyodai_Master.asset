@@ -14,15 +14,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bossID: BOSS_REGION_02_KYODAI
   bossName: "\uCFC4\uB2E4\uC774"
+  regionIndex: 1
+  regionBasePrice: 500
+  regionLevelCap: 10
   maxHp: 4000
   baseDefense: 40
   patternPostDelay: 1
+  difficultyLayers: []
   gimmickParts: []
   patterns:
   - {fileID: 11400000, guid: 0b143a42a566263488e474c3d64228cf, type: 2}
   - {fileID: 11400000, guid: a4c171e07ed2e2e4ab9afdabc3a9ebf3, type: 2}
   - {fileID: 11400000, guid: 130b7f1f7f6b08b41bb40ef5b909562f, type: 2}
   - {fileID: 11400000, guid: a9427d4df35e013499864af3754ab11e, type: 2}
+  - {fileID: 11400000, guid: 39f1ee653334a1f47a8f2c99b02fde42, type: 2}
+  - {fileID: 11400000, guid: c8b0dbdbbe8a0ec41879112a77fa9ead, type: 2}
   phases:
   - phaseIndex: 1
     hpThresholdRatio: 1

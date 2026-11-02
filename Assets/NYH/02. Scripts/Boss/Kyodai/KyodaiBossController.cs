@@ -30,6 +30,16 @@ public class KyodaiBossController : BossControllerBase
     [Tooltip("격파 때 재생할 온몸 애니메이션. 비우면 재생 안 함")]
     [SerializeField] private AnimationClip deathClip;
 
+    [Tooltip("그로기 동안 재생할 온몸 애니메이션. 비우면 재생 안 함")]
+    [SerializeField] private AnimationClip groggyClip;
+
+    [Tooltip("그로기 클립에서 쓰러진 자세가 끝나는 시각(초, 클립 키 기준) — 그로기가 길면 여기서 멈춰 있고, 풀리면 여기서부터 일어난다")]
+    [SerializeField] private float groggyHoldEnd = 4.1833f;
+
+    private Coroutine groggyRoutine;
+    private bool groggyActive;
+    private bool defeated;
+
     // 등록된 패턴 전부 — 페이즈가 바뀌면 여기서 다시 골라 activePatternPool을 채운다
     private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
 
@@ -135,10 +145,61 @@ public class KyodaiBossController : BossControllerBase
         Debug.Log($"[Kyodai] 페이즈 {prevPhase} → {newPhase}");
     }
 
+    // InitializeBoss가 다시 불려도 두 번 걸리지 않게 빼고 건다
+    protected override void OnBossInitialized()
+    {
+        defeated = false;
+        OnGroggyChanged -= HandleGroggyChanged;
+        OnGroggyChanged += HandleGroggyChanged;
+    }
+
+    protected override void OnDestroy()
+    {
+        OnGroggyChanged -= HandleGroggyChanged;
+        base.OnDestroy();
+    }
+
     protected override void OnBossDefeated()
     {
         Debug.Log("[Kyodai] 쿄다이 격파");
+        defeated = true;
+        if (groggyRoutine != null) StopCoroutine(groggyRoutine);
+        groggyRoutine = null;
         if (deathClip != null) StartCoroutine(PlayDeath());
+    }
+
+    private void HandleGroggyChanged(bool groggy, float duration)
+    {
+        groggyActive = groggy;
+        if (!groggy || groggyClip == null || defeated) return;
+        if (groggyRoutine != null) StopCoroutine(groggyRoutine);
+        groggyRoutine = StartCoroutine(PlayGroggy());
+    }
+
+    // 쓰러짐 → (그로기 동안) 유지 구간 끝에서 멈춤 → 풀리면 일어나기.
+    // 그로기 중에는 끊긴 패턴의 정리가 늦게 돌 수 있어 매 프레임 다시 걸고, 일어나는 중에 다음 패턴이 자세를 가져가면 멈춘다
+    private IEnumerator PlayGroggy()
+    {
+        float holdEnd = Mathf.Clamp(groggyHoldEnd, 0f, groggyClip.length);
+        float t = 0f;
+        while (groggyActive)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(groggyClip, Mathf.Min(t, holdEnd), this);
+            yield return null;
+            t += Time.deltaTime;
+        }
+
+        // 쓰러지는 도중에 풀렸으면 유지 구간 끝에서 일어나기 시작한다 — 반대로 재생하지 않게
+        t = Mathf.Max(t, holdEnd);
+        while (t < groggyClip.length - Time.fixedDeltaTime)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(groggyClip, t, this);
+            yield return null;
+            if (!KyodaiMotionPlayer.IsPlayingClip(groggyClip, this)) { groggyRoutine = null; yield break; }
+            t += Time.deltaTime;
+        }
+        KyodaiMotionPlayer.Clear(this);
+        groggyRoutine = null;
     }
 
     // 패턴 정리(KyodaiMotionPlayer.Clear)가 다음 프레임에 돌 수 있어서 매 프레임 다시 건다

@@ -12350,7 +12350,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 23.362747, y: 24.28476}
+  m_LightCookieOffset: {x: 1.6320648, y: 30.122208}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -28781,10 +28781,6 @@ PrefabInstance:
       propertyPath: timeOfDay
       value: 
       objectReference: {fileID: 411684200}
-    - target: {fileID: 5777577882280700771, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
-      propertyPath: m_Size
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 7805140482852692383, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: m_SizeDelta.y
       value: 0

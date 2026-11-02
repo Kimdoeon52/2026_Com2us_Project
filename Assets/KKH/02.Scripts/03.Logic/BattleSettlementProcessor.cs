@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 /// <summary>
@@ -357,8 +358,39 @@ public static class BattleSettlementProcessor
         }
 
         // ====================================================================
-        // 대외 브로드캐스팅 처리
+        // 대외 브로드캐스팅 및 영구 데이터(세이브) 동기화 처리 (타 파트 스크립트 수정 0줄)
         // ====================================================================
+
+        // 1. 코어 경험치 및 레벨 영구 세이브 데이터 동기화 (KDU InventoryHost 연동)
+        if (player != null)
+        {
+            // 씬에 InventoryHost가 없다면 Resources에서 로드 시도 (단독 씬 테스트 지원)
+            if (InventoryHost.Instance == null)
+            {
+                var hostPrefab = Resources.Load<GameObject>("InventoryHost");
+                if (hostPrefab != null)
+                {
+                    UnityEngine.Object.Instantiate(hostPrefab);
+                }
+            }
+
+            if (InventoryHost.Instance != null && InventoryHost.Instance.Save?.Core != null)
+            {
+                var coreSave = InventoryHost.Instance.Save.Core;
+                var coreType = typeof(CoreSaveData);
+
+                // 리플렉션으로 _level, _exp 안전하게 주입 (KDU 스크립트 수정 0줄)
+                var fieldLevel = coreType.GetField("_level", BindingFlags.NonPublic | BindingFlags.Instance);
+                var fieldExp = coreType.GetField("_exp", BindingFlags.NonPublic | BindingFlags.Instance);
+
+                if (fieldLevel != null) fieldLevel.SetValue(coreSave, player.coreLevel);
+                if (fieldExp != null) fieldExp.SetValue(coreSave, player.currentCoreExp);
+
+                Debug.Log($"<color=cyan>[정산기] KDU 인벤토리 코어 세이브 데이터 동기화 완료: Lv.{player.coreLevel}, Exp.{player.currentCoreExp}</color>");
+            }
+        }
+
+        // 2. 대외 브로드캐스팅 처리 (KDU InventoryHost가 파츠 내구도/파괴를 처리하고 inventory.json 자동 저장)
         OnSettlementCompleted?.Invoke(result);
 
         if (result.DestroyedPartIDs.Count > 0)
@@ -369,7 +401,7 @@ public static class BattleSettlementProcessor
         OnGoldReward?.Invoke(result.GoldDelta);
         OnCoreStateChanged?.Invoke(result.CoreUnstable);
 
-        // LSH 골드 파트 GlobalGold 싱글톤 연동
+        // 3. LSH 골드 파트 GlobalGold 싱글톤 연동 및 디스크 파일(.mainGold.json) 즉시 영구 저장
         if (GlobalGold.Instance != null && result.GoldDelta != 0)
         {
             const int playerId = 0;
@@ -377,6 +409,14 @@ public static class BattleSettlementProcessor
                 GlobalGold.Instance.GetGold(playerId, result.GoldDelta);
             else
                 GlobalGold.Instance.UseGold(playerId, Mathf.Abs(result.GoldDelta));
+
+            // 변경된 골드 디스크 즉시 저장 호출
+            GlobalGold.Instance.SaveGame();
+            Debug.Log($"<color=yellow>[정산기] LSH GlobalGold 골드 변동({result.GoldDelta:+#;-#;0}G) 적용 및 SaveGame() 디스크 저장 완료 (현재 잔고: {GlobalGold.Instance.PlayerGold}G)</color>");
+        }
+        else if (GlobalGold.Instance == null && result.GoldDelta != 0)
+        {
+            Debug.LogWarning($"[정산기] GlobalGold.Instance가 씬에 없어 골드 변동({result.GoldDelta:+#;-#;0}G)이 디스크에 기록되지 않았습니다 (단독 씬 테스트 환경).");
         }
 
         return result;

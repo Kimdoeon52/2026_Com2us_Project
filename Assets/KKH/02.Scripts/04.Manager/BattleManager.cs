@@ -275,6 +275,23 @@ public class BattleManager : MonoBehaviour
 
         OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
         Debug.Log($"[BattleManager] 전투 종료 완료됨: 승자={winnerId}, {settlement.SummaryMessage}");
+
+        // 씬 내에 비활성화된 채 배치된 BattleResultUI가 있다면 강제 활성화 및 팝업 보장 (작업자가 인스펙터에서 Canvas를 꺼둔 경우 대응)
+        if (RealSteel.UI.BattleResultUI.Instance == null || !RealSteel.UI.BattleResultUI.Instance.gameObject.activeInHierarchy)
+        {
+            var resultUI = FindFirstObjectByType<RealSteel.UI.BattleResultUI>(FindObjectsInactive.Include);
+            if (resultUI != null)
+            {
+                var rootCanvas = resultUI.GetComponentInParent<Canvas>(true);
+                if (rootCanvas != null && !rootCanvas.gameObject.activeSelf)
+                {
+                    rootCanvas.gameObject.SetActive(true);
+                }
+                resultUI.gameObject.SetActive(true);
+                resultUI.ShowResult(settlement, playerWon);
+                Debug.Log("<color=green>[BattleManager] 비활성화 상태의 BattleResultUI 및 Canvas를 감지하여 강제 활성화 및 결과창 팝업 완료!</color>");
+            }
+        }
     }
 
     private void SetState(BattleState newState)

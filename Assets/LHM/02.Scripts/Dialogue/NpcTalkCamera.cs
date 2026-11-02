@@ -25,6 +25,9 @@ namespace RealSteel.Dialogue
         [SerializeField, Min(0f)] private float fadeInSeconds = 0.35f;
         [SerializeField] private bool disableMainCamera = true;
 
+        [Header("플레이어")]
+        [SerializeField] private bool hidePlayer = true;
+
         [Header("시작 위치 (플레이어 근처)")]
         [SerializeField] private TalkCameraApproach approach = TalkCameraApproach.PlayerSide;
         [SerializeField, Min(0f)] private float startBehindPlayer = 1.2f;
@@ -37,6 +40,7 @@ namespace RealSteel.Dialogue
         [SerializeField] private float closeUpAngle = 20f;
         [SerializeField] private Vector3 lookOffset = new Vector3(0f, -0.15f, 0f);
         [SerializeField, Range(0f, 120f)] private float closeUpFieldOfView = 40f;
+        [SerializeField, Min(0.01f)] private float maxNearClip = 0.1f;
 
         [Header("이동")]
         [SerializeField, Min(0.05f)] private float moveSeconds = 1.2f;
@@ -52,6 +56,18 @@ namespace RealSteel.Dialogue
         private bool listening;
 
         private readonly List<Canvas> movedCanvases = new List<Canvas>();
+        private readonly List<Renderer> hiddenRenderers = new List<Renderer>();
+
+        private const string FocusTypeName = "RSAutoFocus";
+
+        private struct FocusOverride
+        {
+            public MonoBehaviour behaviour;
+            public Camera camera;
+            public Transform target;
+        }
+
+        private readonly List<FocusOverride> focusOverrides = new List<FocusOverride>();
 
         private Vector3 focus;
         private Vector3 baseDirection;
@@ -180,6 +196,11 @@ namespace RealSteel.Dialogue
             startFov = mainCamera != null ? mainCamera.fieldOfView : closeUpCamera.fieldOfView;
             closeUpCamera.gameObject.SetActive(true);
             closeUpCamera.enabled = true;
+            if (closeUpCamera.nearClipPlane > maxNearClip)
+            {
+                Debug.Log($"[TalkCam] 클로즈업 카메라 near clip {closeUpCamera.nearClipPlane:0.##}m → {maxNearClip:0.##}m (가까운 NPC가 잘리지 않게)");
+                closeUpCamera.nearClipPlane = maxNearClip;
+            }
 
             if (mainCamera != null && mainCamera != closeUpCamera)
             {
@@ -196,7 +217,68 @@ namespace RealSteel.Dialogue
             }
 
             if (director != null) director.UseCamera(closeUpCamera);
+            HidePlayer();
+            RetargetFocus();
             closeUpActive = true;
+        }
+
+        private void RetargetFocus()
+        {
+            focusOverrides.Clear();
+            if (target == null) return;
+
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
+            {
+                if (behaviour == null || behaviour.GetType().Name != FocusTypeName) continue;
+
+                System.Type type = behaviour.GetType();
+                var camField = type.GetField("cam");
+                var targetField = type.GetField("target");
+                if (camField == null || targetField == null || camField.FieldType != typeof(Camera) || targetField.FieldType != typeof(Transform)) continue;
+
+                focusOverrides.Add(new FocusOverride
+                {
+                    behaviour = behaviour,
+                    camera = camField.GetValue(behaviour) as Camera,
+                    target = targetField.GetValue(behaviour) as Transform,
+                });
+                camField.SetValue(behaviour, closeUpCamera);
+                targetField.SetValue(behaviour, target.transform);
+            }
+        }
+
+        private void RestoreFocus()
+        {
+            foreach (FocusOverride item in focusOverrides)
+            {
+                if (item.behaviour == null) continue;
+                System.Type type = item.behaviour.GetType();
+                type.GetField("cam").SetValue(item.behaviour, item.camera);
+                type.GetField("target").SetValue(item.behaviour, item.target);
+            }
+            focusOverrides.Clear();
+        }
+
+        private void HidePlayer()
+        {
+            hiddenRenderers.Clear();
+            if (!hidePlayer || player == null) return;
+
+            foreach (Renderer renderer in player.GetComponentsInChildren<Renderer>())
+            {
+                if (!renderer.enabled) continue;
+                renderer.enabled = false;
+                hiddenRenderers.Add(renderer);
+            }
+        }
+
+        private void ShowPlayer()
+        {
+            foreach (Renderer renderer in hiddenRenderers)
+            {
+                if (renderer != null) renderer.enabled = true;
+            }
+            hiddenRenderers.Clear();
         }
 
         private void SwitchToMain()
@@ -213,6 +295,8 @@ namespace RealSteel.Dialogue
             }
             movedCanvases.Clear();
             mainDisabledByUs = false;
+            ShowPlayer();
+            RestoreFocus();
             closeUpActive = false;
         }
 

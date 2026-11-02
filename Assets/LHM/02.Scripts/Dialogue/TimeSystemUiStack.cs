@@ -38,7 +38,7 @@ namespace RealSteel.Dialogue
 
         private void Start()
         {
-            if (Clock == null) Debug.LogError("[UiStack] TimeSystemManager가 씬에 없습니다. 시간 정지·00시 처리가 동작하지 않습니다.", this);
+            if (Clock == null) Debug.LogWarning("[UiStack] 이 씬에 LJS TimeSystemManager가 없어 열린 UI 목록만 관리합니다 (게임 시간 정지·00시 처리 없음).", this);
             else Debug.Log($"[UiStack] LJS 시간 시스템 연결 ({Describe(Clock)})", this);
         }
 

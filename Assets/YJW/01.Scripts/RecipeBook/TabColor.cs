@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,11 @@ public class TabColor : MonoBehaviour
     private Image background;
     [SerializeField] private Color onColor = Color.gray;
     [SerializeField] private Color offColor = Color.white;
+
+    [Tooltip("탭 글자색도 바꿀 때만 연결")]
+    [SerializeField] private TMP_Text label;
+    [SerializeField] private Color onLabelColor = Color.black;
+    [SerializeField] private Color offLabelColor = Color.white;
 
     private Toggle toggle;
 
@@ -21,5 +27,7 @@ public class TabColor : MonoBehaviour
     private void UpdateColor(bool isOn)
     {
         background.color = isOn ? onColor : offColor;
+        if (label != null)
+            label.color = isOn ? onLabelColor : offLabelColor;
     }
 }

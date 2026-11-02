@@ -23619,7 +23619,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 4.6065764, y: 1.8845084}
+  m_LightCookieOffset: {x: 11.536322, y: 4.719404}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -27403,15 +27403,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _shortcuts:
   - Key: 282
-    SceneName: Map_Test
+    SceneName: JunkShop_Map_Jin
   - Key: 283
-    SceneName: UiTest
+    SceneName: Tester
   - Key: 284
-    SceneName: Auction
+    SceneName: Battle_Boss_Test
   - Key: 285
-    SceneName: JunkShop_11
+    SceneName: 
   - Key: 286
-    SceneName: Battle
+    SceneName: 
   _shortcutEnabled: 0
 --- !u!4 &922658061
 Transform:
@@ -35765,7 +35765,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 374884d3082244c47b5d7fc9b786f28e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  font: {fileID: 0}
+  font: {fileID: 11400000, guid: 829fb2e36f0275847a523398d930376b, type: 2}
   sortingOrder: 300
   columns: 3
 --- !u!4 &1223554378
@@ -61058,6 +61058,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2312508128229402373, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2688333068476250589, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -61168,6 +61172,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3540930331562910840, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3585679831746761658, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_Enabled
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3640777433820881389, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}

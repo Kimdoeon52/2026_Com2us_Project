@@ -356,7 +356,7 @@ public class RSSimpleCharacter : MonoBehaviour
             if (kb.eKey.wasPressedThisFrame) rot += 1f;
             if (kb.rKey.isPressed) tilt += 1f;
             if (kb.fKey.isPressed) tilt -= 1f;
-            resetCam |= kb.homeKey.wasPressedThisFrame;
+            resetCam |= kb.homeKey.wasPressedThisFrame && kb.shiftKey.isPressed;
             if (kb.equalsKey.isPressed || kb.numpadPlusKey.isPressed) scroll += zoomKeySpeed * Time.deltaTime;
             if (kb.minusKey.isPressed || kb.numpadMinusKey.isPressed) scroll -= zoomKeySpeed * Time.deltaTime;
         }
@@ -397,7 +397,7 @@ public class RSSimpleCharacter : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.E)) rot += 1f;
         if (Input.GetKey(KeyCode.R)) tilt += 1f;
         if (Input.GetKey(KeyCode.F)) tilt -= 1f;
-        resetCam = Input.GetKeyDown(KeyCode.Home);
+        resetCam = Input.GetKeyDown(KeyCode.Home) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift));
         scroll = Mathf.Clamp(Input.mouseScrollDelta.y, -3f, 3f);
         if (Input.GetKey(KeyCode.Equals) || Input.GetKey(KeyCode.KeypadPlus)) scroll += zoomKeySpeed * Time.deltaTime;
         if (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus)) scroll -= zoomKeySpeed * Time.deltaTime;

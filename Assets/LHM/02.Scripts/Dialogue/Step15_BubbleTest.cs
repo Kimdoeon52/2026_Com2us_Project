@@ -21,7 +21,7 @@ namespace RealSteel.Dialogue
                 return;
             }
 
-            Debug.Log("[Step15] H: 귀가 처리(트리거 평가 → 반응 말풍선 대기) / J: 관중 켜기·끄기 / K: 관중 말풍선 1개 바로 / Shift+K: 대기 목록 / Shift+H: 토벌 난이도(none→veryEasy→hell) / Shift+J: 기본 파츠 사용 전환");
+            Debug.Log("[Step15] H: 귀가 처리(트리거 평가 → 반응 말풍선 대기) / J: 관중 켜기·끄기 / Shift+K: 관중 말풍선 1개 바로 / Shift+L: 대기 목록 / Shift+H: 토벌 난이도(none→veryEasy→hell) / Shift+J: 기본 파츠 사용 전환");
         }
 
         private void Update()
@@ -54,16 +54,13 @@ namespace RealSteel.Dialogue
                 crowd.Running = !crowd.Running;
                 Debug.Log($"[Step15] 관중 말풍선 {(crowd.Running ? "켜짐" : "꺼짐")}");
             }
-            else if (keyboard.kKey.wasPressedThisFrame)
+            else if (keyboard.lKey.wasPressedThisFrame && shift)
             {
-                if (shift)
-                {
-                    Debug.Log($"[Step15] 이벤트 큐 대기: {(queue != null ? queue.Dump() : "(큐 없음)")} / 반응 말풍선 대기 {(npcBubbles != null ? npcBubbles.PendingCount : 0)}개");
-                }
-                else if (crowd != null && !crowd.ShowOne())
-                {
-                    Debug.Log("[Step15] 관중 말풍선 생략 (동시 3개 / 빈 관중 없음)");
-                }
+                Debug.Log($"[Step15] 이벤트 큐 대기: {(queue != null ? queue.Dump() : "(큐 없음)")} / 반응 말풍선 대기 {(npcBubbles != null ? npcBubbles.PendingCount : 0)}개");
+            }
+            else if (keyboard.kKey.wasPressedThisFrame && shift)
+            {
+                if (crowd != null && !crowd.ShowOne()) Debug.Log("[Step15] 관중 말풍선 생략 (동시 3개 / 빈 관중 없음)");
             }
         }
 #endif

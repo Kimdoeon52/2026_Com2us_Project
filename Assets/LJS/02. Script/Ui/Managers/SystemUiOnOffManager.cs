@@ -42,7 +42,7 @@ public class SystemUiOnOffManager : MonoBehaviour
             }
         }
 
-        else if (Input.GetKeyDown(KeyCode.R))
+        else if (Input.GetKeyDown(KeyCode.R) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
         {
             if (isRankingActive)
             {

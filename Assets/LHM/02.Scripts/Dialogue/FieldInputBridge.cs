@@ -17,6 +17,12 @@ namespace RealSteel.Dialogue
         [SerializeField] private Behaviour[] interactions = new Behaviour[0];
         [SerializeField] private GameObject[] hiddenPrompts = new GameObject[0];
 
+        [Header("대화 중 끌 다른 UI 단축키 (인벤토리 Tab·I, 제작 C, 상점 K 등). 상점 창이 열린 동안은 끄지 않음")]
+        [SerializeField] private NpcChoiceMenu menu;
+        [SerializeField] private Behaviour[] uiHotkeys = new Behaviour[0];
+
+        private readonly List<Behaviour> disabledHotkeys = new List<Behaviour>();
+
         private readonly List<Behaviour> disabledMovement = new List<Behaviour>();
         private readonly List<Behaviour> disabledInteractions = new List<Behaviour>();
         private readonly List<GameObject> hiddenPromptObjects = new List<GameObject>();
@@ -28,6 +34,7 @@ namespace RealSteel.Dialogue
         {
             if (blocked) Unblock();
             RestoreInteractions();
+            RestoreHotkeys();
             if (interactorDisabledByUs && interactor != null) interactor.enabled = true;
             interactorDisabledByUs = false;
         }
@@ -56,6 +63,10 @@ namespace RealSteel.Dialogue
 
             if (blocked || nearNpc) SuppressInteractions();
             else RestoreInteractions();
+
+            bool hotkeysOff = uiOpen && (menu == null || !menu.IsShopOpen);
+            if (hotkeysOff) SuppressHotkeys();
+            else RestoreHotkeys();
 
             bool otherSystemBlocking = !blocked && ScrapInputGate.IsBlocked;
             if (interactor != null && otherSystemBlocking != interactorDisabledByUs)
@@ -89,6 +100,26 @@ namespace RealSteel.Dialogue
                 }
             }
             disabledMovement.Clear();
+        }
+
+        private void SuppressHotkeys()
+        {
+            foreach (Behaviour behaviour in uiHotkeys)
+            {
+                if (behaviour == null || !behaviour.enabled) continue;
+                behaviour.enabled = false;
+                disabledHotkeys.Add(behaviour);
+            }
+        }
+
+        private void RestoreHotkeys()
+        {
+            if (disabledHotkeys.Count == 0) return;
+            foreach (Behaviour behaviour in disabledHotkeys)
+            {
+                if (behaviour != null) behaviour.enabled = true;
+            }
+            disabledHotkeys.Clear();
         }
 
         private void SuppressInteractions()

@@ -120,7 +120,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Q))
+        if (Input.GetKeyDown(KeyCode.Q) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
             GiveDebugComponents();
     }
 

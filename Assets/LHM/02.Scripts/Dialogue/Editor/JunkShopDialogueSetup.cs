@@ -185,6 +185,7 @@ namespace RealSteel.Dialogue.EditorTools
                 BindShopWindow(target, log);
                 RealSteel.BossRace.EditorTools.HuntDepartureSetup.Create(target, log);
                 AddBridge(interactor, player, target, log);
+                ApplyShortcuts(target, log);
                 DisableSceneShortcuts(target, log);
             }
             finally
@@ -310,6 +311,55 @@ namespace RealSteel.Dialogue.EditorTools
             }
         }
 
+        private const string HelpName = "[Help] ShortcutHelp";
+        private static readonly string[] UiHotkeyTypes = { "InventoryToggle", "CraftingUIManager" };
+
+        [MenuItem("Tools/Dialogue/단축키 정리 적용 (Home 안내 · 대화 중 UI 키 잠금)")]
+        private static void ApplyShortcutsMenu()
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            var log = new StringBuilder($"[단축키 정리] {scene.path}\n");
+            Undo.IncrementCurrentGroup();
+            Undo.SetCurrentGroupName("단축키 정리 적용");
+            int group = Undo.GetCurrentGroup();
+
+            ApplyShortcuts(scene, log);
+
+            Undo.CollapseUndoOperations(group);
+            EditorSceneManager.MarkSceneDirty(scene);
+            log.AppendLine("완료. Ctrl+S로 저장 후 Play → Home.");
+            Debug.Log(log.ToString());
+            EditorUtility.DisplayDialog("단축키 정리 적용", log.ToString(), "확인");
+        }
+
+        internal static void ApplyShortcuts(Scene scene, StringBuilder log)
+        {
+            if (!FindInScene<ShortcutHelpOverlay>(scene).Any())
+            {
+                var go = new GameObject(HelpName);
+                SceneManager.MoveGameObjectToScene(go, scene);
+                Undo.RegisterCreatedObjectUndo(go, "단축키 정리 적용");
+                go.AddComponent<ShortcutHelpOverlay>();
+                log.AppendLine($"- {HelpName} 생성 (Home: 지금 씬의 단축키 안내)");
+            }
+            else
+            {
+                log.AppendLine($"- {HelpName} 이미 있음");
+            }
+
+            var hotkeys = FindInScene<Behaviour>(scene).Where(b => UiHotkeyTypes.Contains(b.GetType().Name)).ToArray();
+            var menu = FindInScene<NpcChoiceMenu>(scene).FirstOrDefault();
+            foreach (FieldInputBridge bridge in FindInScene<FieldInputBridge>(scene))
+            {
+                var so = new SerializedObject(bridge);
+                Undo.RecordObject(bridge, "단축키 정리 적용");
+                so.FindProperty("menu").objectReferenceValue = menu;
+                SetArray(so.FindProperty("uiHotkeys"), hotkeys);
+                so.ApplyModifiedProperties();
+                log.AppendLine($"- {bridge.name}: 대화 중 잠글 UI 단축키 {hotkeys.Length}개 ({string.Join(", ", hotkeys.Select(h => h.GetType().Name))}), 상점 창이 열린 동안은 잠그지 않음");
+            }
+        }
+
         private const string ShopWindowName = "ShopWindow";
 
         private static GameObject FindShopWindow(Scene scene)
@@ -372,7 +422,7 @@ namespace RealSteel.Dialogue.EditorTools
             foreach (GameObject root in target.GetRootGameObjects())
             {
                 NpcInteractable npc = root.GetComponent<NpcInteractable>();
-                bool ours = CopyRoots.Contains(root.name) || root.name == BridgeName || root.name == RealSteel.BossRace.EditorTools.HuntDepartureSetup.RootName ||
+                bool ours = CopyRoots.Contains(root.name) || root.name == BridgeName || root.name == HelpName || root.name == RealSteel.BossRace.EditorTools.HuntDepartureSetup.RootName ||
                             (npc != null && NpcSpeakers.Contains(npc.SpeakerId));
                 if (!ours) continue;
 

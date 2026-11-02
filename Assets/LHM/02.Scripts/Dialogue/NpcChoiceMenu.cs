@@ -58,6 +58,7 @@ namespace RealSteel.Dialogue
         private DialogueBox subscribedBox;
 
         public bool IsBusy => state != State.Closed;
+        public bool IsShopOpen => state == State.Shop;
         public bool EndedThisFrame => endedFrame == Time.frameCount;
 
         public event Action<NpcInteractable, NpcAction> ActionChosen;

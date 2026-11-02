@@ -34,7 +34,7 @@ namespace RealSteel.Dialogue
             }
 
             if (menu != null) menu.ActionChosen += OnActionChosen;
-            Debug.Log("[Step11] B 또는 접수원 '토벌 신청' → 보스 진입 / 전투 중: N 패배, M 승리 / 난이도 1~5, 대상 보스 G (Step09)");
+            Debug.Log("[Step11] B(테스트 진입) → 보스 진입 / 전투 중: N 패배, M 승리 / 난이도 1~5, 대상 보스 Shift+G (Step09)");
         }
 
         private void OnDestroy()
@@ -54,7 +54,7 @@ namespace RealSteel.Dialogue
                 if (keyboard.nKey.wasPressedThisFrame) EndBattle("lose");
                 else if (keyboard.mKey.wasPressedThisFrame) EndBattle("win");
             }
-            else if (keyboard.bKey.wasPressedThisFrame && (menu == null || !menu.IsBusy))
+            else if (keyboard.bKey.wasPressedThisFrame && !keyboard.shiftKey.isPressed && (menu == null || !menu.IsBusy))
             {
                 StartEntry();
             }

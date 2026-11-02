@@ -23619,7 +23619,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 0.3837913, y: 0.15700553}
+  m_LightCookieOffset: {x: 4.6065764, y: 1.8845084}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -29338,6 +29338,10 @@ MonoBehaviour:
   - {fileID: 675667785}
   hiddenPrompts:
   - {fileID: 521559066}
+  menu: {fileID: 1065471914}
+  uiHotkeys:
+  - {fileID: 587948289}
+  - {fileID: 1801191074}
 --- !u!4 &984121756
 Transform:
   m_ObjectHideFlags: 0
@@ -35732,6 +35736,53 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1222264970}
   m_Mesh: {fileID: 0}
+--- !u!1 &1223554376
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1223554378}
+  - component: {fileID: 1223554377}
+  m_Layer: 0
+  m_Name: '[Help] ShortcutHelp'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1223554377
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223554376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 374884d3082244c47b5d7fc9b786f28e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  font: {fileID: 0}
+  sortingOrder: 300
+  columns: 3
+--- !u!4 &1223554378
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1223554376}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1234061861
 GameObject:
   m_ObjectHideFlags: 0
@@ -50743,6 +50794,17 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &1801191074 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 609481441342189533, guid: e570290dcf1d67a44a59ffbb8893b138, type: 3}
+  m_PrefabInstance: {fileID: 521559052}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f2a41c7b8e34d5a9c1e7b3d5f802110, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1803486442
 GameObject:
   m_ObjectHideFlags: 0
@@ -52735,6 +52797,18 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2520481465794881985, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+      propertyPath: m_text
+      value: "\uB2E8\uCD95\uD0A4"
+      objectReference: {fileID: 0}
+    - target: {fileID: 2993970742736463609, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 78
+      objectReference: {fileID: 0}
+    - target: {fileID: 2993970742736463609, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 160.5
+      objectReference: {fileID: 0}
     - target: {fileID: 4603838451972503675, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
       propertyPath: m_Name
       value: Canvas_FieldHUD
@@ -52743,6 +52817,14 @@ PrefabInstance:
       propertyPath: _detector
       value: 
       objectReference: {fileID: 675667783}
+    - target: {fileID: 5275648847877034154, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 92.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5991381387610899121, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+      propertyPath: m_text
+      value: Home
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -61605,3 +61687,4 @@ SceneRoots:
   - {fileID: 636274853}
   - {fileID: 984121756}
   - {fileID: 522012738}
+  - {fileID: 1223554378}

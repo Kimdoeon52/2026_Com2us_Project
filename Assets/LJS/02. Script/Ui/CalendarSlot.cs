@@ -41,8 +41,8 @@ public class CalendarSlot : MonoBehaviour, IPointerClickHandler, IPointerEnterHa
         bool isScrapRestoreDay = (day == 1); // 매달 1일
         bool isMartDay = (day % 7 == 1); // 1, 8, 15, 22일
 
-        martIcon.SetActive(isMartDay);
-        scrapRestoreIcon.SetActive(isScrapRestoreDay);
+        //martIcon.SetActive(isMartDay);
+        //scrapRestoreIcon.SetActive(isScrapRestoreDay);
     }
 
     public void OnPointerEnter(PointerEventData eventData)

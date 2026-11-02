@@ -14,6 +14,10 @@ public class TabColor : MonoBehaviour
     [SerializeField] private Color onLabelColor = Color.black;
     [SerializeField] private Color offLabelColor = Color.white;
 
+    [Tooltip("탭 배경 이미지도 바꿀 때만 연결")]
+    [SerializeField] private Sprite onSprite;
+    [SerializeField] private Sprite offSprite;
+
     private Toggle toggle;
 
     private void Awake()
@@ -29,5 +33,7 @@ public class TabColor : MonoBehaviour
         background.color = isOn ? onColor : offColor;
         if (label != null)
             label.color = isOn ? onLabelColor : offLabelColor;
+        if (onSprite != null && offSprite != null)
+            background.sprite = isOn ? onSprite : offSprite;
     }
 }

@@ -753,6 +753,7 @@ public class Auction : Singleton<Auction>
                 }
 
                 // 생성된 AI 스폰 리스트에 등록
+                spawnedAi.OnGiveUpTrue += () => SetImageAlpha(npcs[index], 0.1f); // 포기 시 NPC 이미지 반투명 처리
                 spawnedAiList.Add(spawnedAi);
             }
 

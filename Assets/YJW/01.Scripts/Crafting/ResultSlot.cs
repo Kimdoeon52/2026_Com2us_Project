@@ -14,6 +14,11 @@ public class ResultSlot : MonoBehaviour
         bool has = part != null;
         _icon.enabled = has;
         _icon.sprite = has ? part.Sprite : null;
+
+        // 프리팹에서 빈 칸이 하얗게 보이지 않도록 알파를 0으로 두었으므로 결과가 있을 때 다시 보이게 한다
+        Color c = _icon.color;
+        c.a = has ? 1f : 0f;
+        _icon.color = c;
         _part = part;
     }
 

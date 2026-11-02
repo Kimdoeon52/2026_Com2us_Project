@@ -46,6 +46,12 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     {
         data = recipe;
         image.sprite = icon;
+
+        // 프리팹에서 빈 칸 아이콘은 알파 0이므로 데이터가 들어오면 보이게 한다
+        Color c = image.color;
+        c.a = recipe != null ? 1f : 0f;
+        image.color = c;
+
         RefreshColor();
     }
 

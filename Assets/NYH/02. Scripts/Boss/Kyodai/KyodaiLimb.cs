@@ -81,6 +81,19 @@ public class KyodaiLimb : MonoBehaviour
     [SerializeField] private Color attackColor = new Color(1f, 0.55f, 0.55f, 1f);
     [SerializeField] private Color lingerColor = new Color(1.6f, 1.6f, 1.6f, 1f);
 
+    [Header("피격 연출")]
+    [SerializeField] private Color hitFlashColor = new Color(2f, 0.15f, 0.15f, 1f);
+
+    [Tooltip("맞았을 때 빨갛게 유지되는 시간(초)")]
+    [Min(0.01f)] [SerializeField] private float hitFlashSeconds = 0.12f;
+
+    [Header("팔 판정 (리깅 모델) — 기획 수치 없음(임시)")]
+    [Tooltip("TODO: 기획 수치 없음. 팔 판정 두께(월드)")]
+    [Min(0.1f)] [SerializeField] private float armThickness = 1.2f;
+
+    [Tooltip("TODO: 기획 수치 없음. 손목에서 손끝까지 판정을 더 늘릴 길이(월드)")]
+    [Min(0f)] [SerializeField] private float handReach = 1f;
+
     private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
     private static readonly int ColorId = Shader.PropertyToID("_Color");
 
@@ -98,6 +111,17 @@ public class KyodaiLimb : MonoBehaviour
     private float ikWeight = 1f;                         // 0 = 애니메이션 그대로, 1 = 손이 effector에 정확히
     private Vector3 upperRestScale;
     private float baseArmLength; // 커지기 전 위팔 + 아래팔 길이(월드)
+    private float aimX;      // 화면에서 손을 맞출 경기장 x
+    private float aimWeight; // 0 = 조준 안 함
+
+    // 팔 판정: [0] 아래팔~손끝, [1] 위팔. 경기장 평면에 놓인 회전 상자
+    private BossHurtZone[] armZones = new BossHurtZone[0];
+    private readonly Vector2[] armCenters = new Vector2[2];
+    private readonly Vector2[] armSizes = new Vector2[2];
+    private readonly float[] armAngles = new float[2];
+
+    private float flashUntil;
+    private bool flashing;
     private bool RigMode => rig != null && upper != null && lower != null && end != null;
 
     public string PartId => partId;
@@ -135,8 +159,36 @@ public class KyodaiLimb : MonoBehaviour
         if (effector == null) { Debug.LogError($"[KyodaiLimb] {partId}: effector가 없음"); enabled = false; return; }
         restPosition = effector.position;
         restRotation = effector.rotation;
+        SetupArmZones();
         ready = true;
         SetLayer(LimbLayer.Background);
+    }
+
+    // 씬에 있는 피격 자리는 아래팔에 쓰고, 위팔용은 복제해서 부위 이름·배율을 그대로 받는다
+    private void SetupArmZones()
+    {
+        if (hurtZone == null) return;
+        if (RigMode)
+        {
+            var upperZone = Instantiate(hurtZone, hurtZone.transform.parent);
+            upperZone.name = $"{hurtZone.name} (위팔)";
+            armZones = new[] { hurtZone, upperZone };
+        }
+        else armZones = new[] { hurtZone };
+
+        foreach (var zone in armZones) zone.OnHit += OnArmHit;
+    }
+
+    private void OnDestroy()
+    {
+        foreach (var zone in armZones) if (zone != null) zone.OnHit -= OnArmHit;
+    }
+
+    private void OnArmHit(BossHurtZone zone, int damage)
+    {
+        flashing = true;
+        flashUntil = Time.time + hitFlashSeconds;
+        ApplyCurrentTint();
     }
 
     private void SetupBox()
@@ -182,18 +234,45 @@ public class KyodaiLimb : MonoBehaviour
     private void LateUpdate()
     {
         if (!ready) return;
-        if (!RigMode) StretchSegment();
+        if (flashing && Time.time >= flashUntil)
+        {
+            flashing = false;
+            ApplyCurrentTint();
+        }
+        if (RigMode) return; // 리깅 모델의 판정은 SolveRig가 뼈 자세가 끝난 뒤 옮긴다
+        StretchSegment();
         if (hurtZone != null) hurtZone.transform.position = (Vector3)WorldPosition + Vector3.forward * hurtZone.transform.position.z;
     }
 
     public void SetLayer(LimbLayer layer)
     {
         Layer = layer;
-        Color tint = layer == LimbLayer.Attack ? attackColor : layer == LimbLayer.Linger ? lingerColor : Color.white;
+        ApplyCurrentTint();
+        foreach (var zone in armZones) zone.Vulnerable = layer == LimbLayer.Linger;
+    }
+
+    private void ApplyCurrentTint()
+    {
+        Color tint = flashing ? hitFlashColor : Layer == LimbLayer.Attack ? attackColor : Layer == LimbLayer.Linger ? lingerColor : Color.white;
         foreach (var r in renderers) ApplyTint(r, tint);
         if (segment != null) foreach (var r in segment.GetComponentsInChildren<Renderer>(true)) ApplyTint(r, tint);
+    }
 
-        if (hurtZone != null) hurtZone.Vulnerable = layer == LimbLayer.Linger;
+    /// <summary>팔 판정이 플레이어에 닿았는지. 리깅 모델 전용 — 지금 보이는 팔 자리 기준</summary>
+    public bool TryTouchPlayer(out GameObject player)
+    {
+        player = null;
+        if (!RigMode || !ready) return false;
+        for (int i = 0; i < armCenters.Length; i++)
+        {
+            foreach (var hit in Physics2D.OverlapBoxAll(armCenters[i], armSizes[i], armAngles[i]))
+            {
+                if (!hit.CompareTag("Player")) continue;
+                player = hit.gameObject;
+                return true;
+            }
+        }
+        return false;
     }
 
     /// <summary>경기장 worldPoint 자리로 손을 duration 동안 옮긴다 (경기장 평면에서 foregroundOffset만큼 앞)</summary>
@@ -218,6 +297,7 @@ public class KyodaiLimb : MonoBehaviour
         KillTweens();
         handOffset = Quaternion.identity;
         ikWeight = 1f;
+        aimWeight = 0f;
         if (effector != null) effector.SetPositionAndRotation(restPosition, restRotation);
         SetLayer(LimbLayer.Background);
     }
@@ -235,6 +315,13 @@ public class KyodaiLimb : MonoBehaviour
 
     /// <summary>IK 세기만 바꾼다 (0 = 애니메이션 그대로)</summary>
     public void SetIKWeight(float weight) => ikWeight = Mathf.Clamp01(weight);
+
+    /// <summary>어깨 조준: 위팔을 돌려 화면에 보이는 손을 경기장 x에 맞춘다. weight = 0이면 끔</summary>
+    public void SetAim(float playX, float weight)
+    {
+        aimX = playX;
+        aimWeight = Mathf.Clamp01(weight);
+    }
 
     private async UniTask Play(Tween tween, CancellationToken token)
     {
@@ -269,6 +356,7 @@ public class KyodaiLimb : MonoBehaviour
     public void SolveRig()
     {
         if (!RigMode || !ready) return;
+        ApplyAim();
         Quaternion endBase = end.localRotation;
         if (ikWeight > 0f)
         {
@@ -285,6 +373,62 @@ public class KyodaiLimb : MonoBehaviour
             }
         }
         end.localRotation = endBase * handOffset; // 손목: 애니메이션 손목 위에 모션 키 회전
+        SyncArmZones();
+    }
+
+    // 어깨를 중심으로 손이 움직일 수 있는 구와 "목표 x를 지나는 시선"이 만나는 자리로 손을 돌린다.
+    // 위팔만 돌리므로 애니메이션의 팔 모양이 그대로 남는다
+    private void ApplyAim()
+    {
+        if (aimWeight <= 0f) return;
+        Vector3 shoulderPos = upper.position, handPos = end.position;
+        Vector2 seen = boss.ToPlayPlane(handPos);
+        if (!boss.TryGetSightRay(new Vector2(aimX, seen.y), out Ray sight)) return;
+
+        Vector3 toOrigin = sight.origin - shoulderPos;
+        float radius = (handPos - shoulderPos).magnitude;
+        float b = Vector3.Dot(toOrigin, sight.direction);
+        float disc = b * b - (toOrigin.sqrMagnitude - radius * radius);
+
+        // 시선이 구에 안 닿으면 가장 가까운 자리까지만 돌린다
+        float distance = -b;
+        if (disc > 0f)
+        {
+            float root = Mathf.Sqrt(disc);
+            float near = -b - root, far = -b + root;
+            distance = (sight.GetPoint(near) - handPos).sqrMagnitude < (sight.GetPoint(far) - handPos).sqrMagnitude ? near : far;
+        }
+
+        Quaternion turn = Quaternion.FromToRotation(handPos - shoulderPos, sight.GetPoint(distance) - shoulderPos);
+        upper.rotation = Quaternion.Slerp(Quaternion.identity, turn, aimWeight) * upper.rotation;
+    }
+
+    // 뼈 자세가 끝난 뒤, 화면에 보이는 팔 자리로 판정 상자를 옮긴다
+    private void SyncArmZones()
+    {
+        Vector2 shoulderSeen = boss.ToPlayPlane(upper.position);
+        Vector2 elbowSeen = boss.ToPlayPlane(lower.position);
+        Vector2 wristSeen = boss.ToPlayPlane(end.position);
+        Vector2 forearm = wristSeen - elbowSeen;
+        Vector2 handSeen = wristSeen + (forearm.sqrMagnitude > 1e-6f ? forearm.normalized * handReach : Vector2.zero);
+
+        SetArmBox(0, elbowSeen, handSeen);
+        SetArmBox(1, shoulderSeen, elbowSeen);
+    }
+
+    private void SetArmBox(int index, Vector2 from, Vector2 to)
+    {
+        Vector2 d = to - from;
+        armCenters[index] = (from + to) * 0.5f;
+        armSizes[index] = new Vector2(Mathf.Max(d.magnitude, armThickness), armThickness);
+        armAngles[index] = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+
+        if (index >= armZones.Length) return;
+        BossHurtZone zone = armZones[index];
+        zone.transform.SetPositionAndRotation(
+            (Vector3)armCenters[index] + Vector3.forward * zone.transform.position.z,
+            Quaternion.Euler(0f, 0f, armAngles[index]));
+        zone.SetWorldSize(armSizes[index]);
     }
 
     // ── 임시 상자 모델 ──

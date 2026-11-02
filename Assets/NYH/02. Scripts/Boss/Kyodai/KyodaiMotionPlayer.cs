@@ -38,6 +38,16 @@ public static class KyodaiMotionPlayer
                           out Vector3 pos, out Quaternion hand, out float weight);
             limb.SetPose(pos, hand, weight);
         }
+
+        if (motion.UsesAim) boss.FindLimb(motion.aimPartId)?.SetAim(target.x, motion.AimWeightAt(t));
+    }
+
+    /// <summary>온몸 애니메이션만 t초 자세로 (IK·조준 없음). 사망 모션용</summary>
+    public static void ApplyClipOnly(AnimationClip clip, float t, KyodaiBossController boss)
+    {
+        if (boss == null) return;
+        FindRig(boss)?.SetClip(clip, t);
+        foreach (var l in boss.Limbs) if (l.Ready) l.SetIKWeight(0f);
     }
 
     /// <summary>모션이 끝났을 때: 온몸 애니메이션을 풀고 대기 자세로 (패턴 정리·미리보기 끝)</summary>

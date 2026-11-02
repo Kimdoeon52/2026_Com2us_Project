@@ -408,6 +408,132 @@ public static class KyodaiPlaceholderBuilder
         foreach (Transform c in t) SetLayerRecursive(c, layer);
     }
 
+    // 2026-11-02: 만들어 둔 온몸 애니메이션을 패턴 3개로 세운다. 시각은 클립 키 기준이고 이미 있는 에셋은 덮어쓰지 않는다.
+    // 다른 모션 패턴은 끈다(지우지 않음). 손 키 없는 트랙이라 IK는 쓰지 않고 레이어·조준만 얹는다
+    private const string ClipFolder = "Assets/NYH/08.Anim/08-3.Boss2Anim";
+
+    [MenuItem("NYH/쿄다이/애니메이션 패턴 3종 구성")]
+    private static void BuildClipPatterns()
+    {
+        var boss = Object.FindAnyObjectByType<KyodaiBossController>();
+        if (boss == null) { EditorUtility.DisplayDialog("쿄다이", "씬에 쿄다이가 없습니다. Battle2 씬을 여세요.", "확인"); return; }
+
+        var leftClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_왼손손바닥찍기.anim");
+        var rightClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_오른손내려찍기.anim");
+        var swingClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_오른손휘두르면서한바퀴돌아서돌아오기.anim");
+        var deathClip = AssetDatabase.LoadAssetAtPath<AnimationClip>($"{ClipFolder}/Boss2_Die.anim");
+        if (leftClip == null || rightClip == null || swingClip == null)
+        {
+            EditorUtility.DisplayDialog("쿄다이", $"{ClipFolder}에서 클립을 못 찾았습니다. 파일 이름을 확인하세요.", "확인");
+            return;
+        }
+
+        var left = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_왼손손바닥찍기_모션.asset", m =>
+        {
+            FillMotion(m, leftClip, "왼팔", attack: 2.15f, linger: 2.3333f, back: 3.6833f);
+            m.aimPartId = "왼팔";
+            m.aimStart = 0.9f;      // 대기 구간 시작
+            m.aimFadeIn = 0.3f;
+            m.followEnd = 2.15f;    // 내려찍기 직전
+            m.aimReleaseStart = 3.6833f;
+            m.aimEnd = 4.0833f;
+            m.targetMargin = 3f;
+            AddTelegraph(m, 0.9f, 2.2667f);
+        });
+        var right = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_오른손내려찍기_모션.asset", m =>
+        {
+            FillMotion(m, rightClip, "오른팔", attack: 1f, linger: 1.4333f, back: 2.2167f);
+            m.aimPartId = "오른팔";
+            m.aimStart = 0.2f;
+            m.aimFadeIn = 0.5f;
+            m.followEnd = 0.2f;     // 추적 없음: 패턴을 시작한 자리를 노린다
+            m.aimReleaseStart = 2.2167f;
+            m.aimEnd = 2.8833f;
+            m.targetMargin = 3f;
+            AddTelegraph(m, 0.2f, 1.3667f);
+        });
+        var swing = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_오른손휘두르기_모션.asset", m =>
+            FillMotion(m, swingClip, "오른팔", attack: 1.7833f, linger: 0f, back: 2.2f));
+
+        var patterns = new[]
+        {
+            (name: "왼손 손바닥 찍기", id: "KYODAI_LEFT_PALM_SLAM", motion: left),
+            (name: "오른손 내려찍기", id: "KYODAI_RIGHT_SLAM", motion: right),
+            (name: "오른손 휘두르기", id: "KYODAI_RIGHT_SWING", motion: swing),
+        };
+
+        foreach (var old in boss.GetComponentsInChildren<KyodaiMotionPattern>(true))
+        {
+            Undo.RecordObject(old.gameObject, "애니메이션 패턴 구성");
+            old.gameObject.SetActive(false);
+        }
+
+        var master = new SerializedObject(boss).FindProperty("masterData").objectReferenceValue as BossMasterData;
+        GroundTelegraph telegraph = boss.GetComponentInChildren<GroundTelegraph>(true);
+        foreach (var p in patterns)
+        {
+            var data = LoadOrCreate<BossPatternData>($"{DataFolder}/Kyodai_{p.name.Replace(" ", "")}.asset", d =>
+            {
+                d.patternID = p.id;
+                d.patternName = p.name;
+                d.tellDuration = 1f;           // 모션 안의 예고와 별개로 저지 판정 시간만 뜻한다. 저지는 끔
+                d.hasDpsCheck = false;
+                d.targetPlayerPart = BodyPart.Core;
+                d.partDurabilityDamage = 0;
+                // baseDamage는 기획 수치 없음 — KKH 기본값 그대로(TODO)
+            });
+            if (master != null && !master.patterns.Contains(data))
+            {
+                master.patterns.Add(data);
+                EditorUtility.SetDirty(master);
+            }
+
+            Transform found = boss.transform.Find(p.name);
+            GameObject go = found != null ? found.gameObject : new GameObject(p.name);
+            if (found == null)
+            {
+                Undo.RegisterCreatedObjectUndo(go, "애니메이션 패턴 구성");
+                go.transform.SetParent(boss.transform, false);
+            }
+            go.SetActive(true);
+
+            var pattern = go.GetComponent<KyodaiMotionPattern>();
+            if (pattern == null) pattern = go.AddComponent<KyodaiMotionPattern>();
+            SetFields(pattern, so =>
+            {
+                so.FindProperty("patternData").objectReferenceValue = data;
+                so.FindProperty("motion").objectReferenceValue = p.motion;
+                so.FindProperty("telegraph").objectReferenceValue = telegraph;
+            });
+        }
+
+        if (deathClip != null) SetFields(boss, so => so.FindProperty("deathClip").objectReferenceValue = deathClip);
+
+        AssetDatabase.SaveAssets();
+        EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
+        Debug.Log("[Kyodai] 애니메이션 패턴 3종 구성 완료 — 씬을 저장하고 플레이하면 왼손 → 오른손 → 휘두르기 순서로 나온다.");
+    }
+
+    // linger가 0이면 잔류 없이 공격에서 바로 복귀로 넘어간다
+    private static void FillMotion(KyodaiMotionData motion, AnimationClip clip, string partId, float attack, float linger, float back)
+    {
+        motion.clip = clip;
+        motion.duration = clip.length;
+        var track = new KyodaiMotionTrack { partId = partId };
+        track.layers.Add(new KyodaiLayerMark { time = 0f, layer = LimbLayer.Transition });
+        track.layers.Add(new KyodaiLayerMark { time = attack, layer = LimbLayer.Attack });
+        if (linger > 0f) track.layers.Add(new KyodaiLayerMark { time = linger, layer = LimbLayer.Linger });
+        track.layers.Add(new KyodaiLayerMark { time = back, layer = LimbLayer.Return });
+        track.layers.Add(new KyodaiLayerMark { time = clip.length, layer = LimbLayer.Background });
+        motion.tracks.Add(track);
+    }
+
+    private static void AddTelegraph(KyodaiMotionData motion, float show, float hide)
+    {
+        motion.events.Add(new KyodaiMotionEvent { time = show, type = KyodaiMotionEventType.TelegraphShow, center = Vector2.zero, size = new Vector2(6f, 0.5f) });
+        motion.events.Add(new KyodaiMotionEvent { time = hide, type = KyodaiMotionEventType.TelegraphHide });
+    }
+
     private static void SetFields(Object target, System.Action<SerializedObject> edit)
     {
         var so = new SerializedObject(target);

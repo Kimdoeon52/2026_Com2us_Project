@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using RealSteel.Boss.Core;
 using UnityEngine;
@@ -25,6 +26,9 @@ public class KyodaiBossController : BossControllerBase
 
     [Tooltip("바닥 높이 y(월드) — 플레이어가 서 있는 높이")]
     [SerializeField] private float groundY;
+
+    [Tooltip("격파 때 재생할 온몸 애니메이션. 비우면 재생 안 함")]
+    [SerializeField] private AnimationClip deathClip;
 
     // 등록된 패턴 전부 — 페이즈가 바뀌면 여기서 다시 골라 activePatternPool을 채운다
     private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
@@ -85,6 +89,26 @@ public class KyodaiBossController : BossControllerBase
     /// <summary>경기장 point 자리에서 카메라 쪽(-z)으로 forward만큼 나온 3D 좌표 (손 목표·IK 타깃)</summary>
     public Vector3 PlayPoint(Vector2 point, float forward) => new Vector3(point.x, point.y, playZ - forward);
 
+    /// <summary>화면에서 경기장 point 자리를 지나는 시선. 카메라가 없으면 false</summary>
+    public bool TryGetSightRay(Vector2 point, out Ray ray)
+    {
+        Camera cam = TargetCamera;
+        ray = default;
+        if (cam == null) return false;
+        ray = cam.ScreenPointToRay(cam.WorldToScreenPoint(PlayPoint(point, 0f)));
+        return true;
+    }
+
+    /// <summary>3D 좌표가 화면에서 겹쳐 보이는 경기장 평면 자리 — 모델이 경기장 뒤에 있어서 xy를 그대로 쓰면 보이는 자리와 어긋난다</summary>
+    public Vector2 ToPlayPlane(Vector3 world)
+    {
+        Camera cam = TargetCamera;
+        if (cam == null) return world;
+        Ray ray = cam.ScreenPointToRay(cam.WorldToScreenPoint(world));
+        var plane = new Plane(Vector3.back, new Vector3(0f, 0f, playZ));
+        return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : world;
+    }
+
     /// <summary>경기장 안으로 x를 자른다. halfWidth만큼 안쪽 여유를 둔다(넓은 공격이 벽 밖으로 안 나가게)</summary>
     public float ClampToArena(float x, float halfWidth = 0f)
     {
@@ -101,6 +125,23 @@ public class KyodaiBossController : BossControllerBase
     protected override void OnBossDefeated()
     {
         Debug.Log("[Kyodai] 쿄다이 격파");
+        if (deathClip != null) StartCoroutine(PlayDeath());
+    }
+
+    // 패턴 정리(KyodaiMotionPlayer.Clear)가 다음 프레임에 돌 수 있어서 매 프레임 다시 건다
+    private IEnumerator PlayDeath()
+    {
+        for (float t = 0f; t < deathClip.length; t += Time.deltaTime)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(deathClip, t, this);
+            yield return null;
+        }
+        // 반복 클립은 끝 시각에서 첫 자세로 돌아가므로 끝 직전에 멈춘다
+        while (true)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(deathClip, deathClip.length - Time.fixedDeltaTime, this);
+            yield return null;
+        }
     }
 
 #if UNITY_EDITOR

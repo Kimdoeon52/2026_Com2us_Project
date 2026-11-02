@@ -41,6 +41,9 @@ public class KyodaiRig : MonoBehaviour
     [Tooltip("몸이 따라가는 빠르기 (클수록 빨리 붙는다)")]
     [Min(0f)] [SerializeField] private float bodyFollowSpeed = 8f;
 
+    [Tooltip("온몸 애니메이션을 적용하지 않고 기본 자세를 유지할 뼈 이름. 클립마다 Neck이 회전 0으로 키되어 있어서, 빼면 공격할 때 머리가 돌아가 눈과 어긋난다")]
+    [SerializeField] private List<string> clipIgnoredBones = new List<string> { "Neck" };
+
     private readonly Dictionary<string, Transform> bones = new Dictionary<string, Transform>();
     private readonly Dictionary<string, SkinnedMeshRenderer> partRenderers = new Dictionary<string, SkinnedMeshRenderer>();
     private readonly List<KyodaiLimb> limbs = new List<KyodaiLimb>();
@@ -57,6 +60,9 @@ public class KyodaiRig : MonoBehaviour
     private AnimationClip clip;
     private float clipTime;
     private GameObject clipRoot;
+    private Transform[] keptBones;
+    private Vector3[] keptPos = new Vector3[0];
+    private Quaternion[] keptRot = new Quaternion[0];
 
     public SkinnedMeshRenderer BodyRenderer { get; private set; }
 
@@ -101,6 +107,33 @@ public class KyodaiRig : MonoBehaviour
         clipTime = t;
     }
 
+    /// <summary>
+    /// 클립을 t초로 샘플링한다. 게임과 편집 미리보기 공용.
+    /// 루트와 클립 제외 뼈는 샘플링 전 자세로 되돌린다 — 클립에 키가 남아 있으면 모델이 밀리거나 머리가 돌아가기 때문
+    /// </summary>
+    public void SampleClip(AnimationClip c, GameObject root, float t)
+    {
+        keptBones ??= FindKeptBones(root.transform);
+        int count = keptBones.Length;
+        if (keptPos.Length != count)
+        {
+            keptPos = new Vector3[count];
+            keptRot = new Quaternion[count];
+        }
+
+        for (int i = 0; i < count; i++) keptBones[i].GetLocalPositionAndRotation(out keptPos[i], out keptRot[i]);
+        c.SampleAnimation(root, Mathf.Clamp(t, 0f, c.length));
+        for (int i = 0; i < count; i++) keptBones[i].SetLocalPositionAndRotation(keptPos[i], keptRot[i]);
+    }
+
+    private Transform[] FindKeptBones(Transform root)
+    {
+        var kept = new List<Transform> { root };
+        foreach (var t in root.GetComponentsInChildren<Transform>(true))
+            if (clipIgnoredBones.Contains(t.name)) kept.Add(t);
+        return kept.ToArray();
+    }
+
     private void CaptureRestPose()
     {
         var list = new List<Transform>(source.bones);
@@ -129,7 +162,7 @@ public class KyodaiRig : MonoBehaviour
         }
 
         // 2) 온몸 애니메이션 (손가락·팔꿈치·몸통). IK는 이 자세에서 출발한다
-        if (clip != null) clip.SampleAnimation(clipRoot, Mathf.Clamp(clipTime, 0f, clip.length));
+        if (clip != null) SampleClip(clip, clipRoot, clipTime);
 
         // 3) 몸 따라오기: 팔이 모자란 만큼을 합쳐서 몸을 옮긴다
         Vector3 wanted = Vector3.zero;

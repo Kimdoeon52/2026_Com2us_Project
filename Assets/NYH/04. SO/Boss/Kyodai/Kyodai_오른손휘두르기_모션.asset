@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b0509b1f46db0946ae1a2ea3b0a90d5, type: 3}
+  m_Name: "Kyodai_\uC624\uB978\uC190\uD718\uB450\uB974\uAE30_\uBAA8\uC158"
+  m_EditorClassIdentifier: 
+  duration: 2.4666667
+  targetMargin: 0
+  clip: {fileID: 7400000, guid: 598d0b2bb596bed4aa6c0870ab5d89e7, type: 2}
+  aimPartId: 
+  aimStart: 0
+  aimFadeIn: 0.2
+  followEnd: 0
+  aimReleaseStart: 0
+  aimEnd: 0
+  followTime: 0.35
+  maxFollowSpeed: 8
+  tracks:
+  - partId: "\uC624\uB978\uD314"
+    keys: []
+    layers:
+    - time: 0
+      layer: 1
+    - time: 1.7833
+      layer: 2
+    - time: 2.2
+      layer: 4
+    - time: 2.4666667
+      layer: 0
+    hurtSize: {x: 4, y: 1.5}
+  events: []

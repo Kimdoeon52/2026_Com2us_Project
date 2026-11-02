@@ -25,6 +25,10 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     private KyodaiBossController kyodai;
     private Vector2 target;
     private bool finished;
+    private Transform player;
+    private float followVelocity;
+    private float telegraphOffsetX;
+    private bool contactHit; // 팔 접촉 피해는 패턴당 1번
 
     public KyodaiMotionData Motion => motion;
 
@@ -39,6 +43,11 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     {
         finished = false;
         target = PickTarget(kyodai, motion);
+        var found = GameObject.FindWithTag("Player");
+        player = found != null ? found.transform : null;
+        followVelocity = 0f;
+        telegraphOffsetX = 0f;
+        contactHit = false;
     }
 
     /// <summary>플레이어 발밑 x를 경기장 안으로 자른 자리. 모션 창 미리보기도 같은 규칙</summary>
@@ -67,8 +76,10 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
         {
             while (true)
             {
+                FollowPlayer(t);
                 KyodaiMotionPlayer.ApplyPose(motion, t, target, kyodai);
                 KyodaiMotionPlayer.FireEvents(motion, prev, t, OnEvent);
+                CheckArmContact();
                 if (t >= motion.duration) break;
                 prev = t;
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
@@ -77,6 +88,28 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
             finished = true;
         }
         catch (OperationCanceledException) { }
+    }
+
+    // 추적 구간에만 목표가 플레이어를 늦게 따라간다. 구간이 끝나면 그 자리에 고정되고 판정·그림자도 거기로 간다
+    private void FollowPlayer(float t)
+    {
+        if (player == null || !motion.IsFollowing(t)) return;
+        float wanted = kyodai.ClampToArena(player.position.x, motion.targetMargin);
+        target.x = Mathf.SmoothDamp(target.x, wanted, ref followVelocity, motion.followTime, motion.maxFollowSpeed, Time.deltaTime);
+        if (telegraph != null) telegraph.MoveTo(target.x + telegraphOffsetX);
+    }
+
+    // 공격 레이어의 팔에 닿으면 맞는다 (KKH: 회피 무적 검사 + 패턴 데이터의 데미지·부위 피해)
+    private void CheckArmContact()
+    {
+        if (contactHit) return;
+        foreach (var limb in kyodai.Limbs)
+        {
+            if (limb.Layer != LimbLayer.Attack || !limb.TryTouchPlayer(out GameObject touched)) continue;
+            contactHit = true;
+            ApplyDamageToPlayer(touched);
+            return;
+        }
     }
 
     private void OnEvent(KyodaiMotionEvent e)
@@ -92,6 +125,7 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
                 }
                 break;
             case KyodaiMotionEventType.TelegraphShow:
+                telegraphOffsetX = e.center.x;
                 if (telegraph != null) telegraph.Show(target.x + e.center.x, kyodai.GroundY, e.size.x);
                 break;
             case KyodaiMotionEventType.TelegraphHide:

@@ -43,6 +43,13 @@ public class GroundTelegraph : MonoBehaviour
         shownAt = Time.time;
     }
 
+    /// <summary>켜진 그림자의 중심 x만 옮긴다 (플레이어를 따라가는 패턴)</summary>
+    public void MoveTo(float centerX)
+    {
+        Vector3 p = transform.position;
+        transform.position = new Vector3(centerX, p.y, p.z);
+    }
+
     public void Hide() => spriteRenderer.enabled = false;
 
     private void Update()

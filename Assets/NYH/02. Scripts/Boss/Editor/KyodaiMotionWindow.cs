@@ -256,6 +256,18 @@ public class KyodaiMotionWindow : EditorWindow
             if (motion.clip != null && GUILayout.Button("길이 맞추기", GUILayout.Width(80))) motion.duration = Mathf.Max(0.1f, motion.clip.length);
         }
 
+        motion.aimPartId = EditorGUILayout.TextField(new GUIContent("어깨 조준 부위", "위팔을 돌려 손을 목표에 맞출 부위. 비우면 안 씀. 게임에서만 적용되고 미리보기에는 안 나온다"), motion.aimPartId);
+        if (motion.UsesAim)
+        {
+            motion.aimStart = Mathf.Max(0f, EditorGUILayout.FloatField("조준 시작(초)", motion.aimStart));
+            motion.aimFadeIn = Mathf.Max(0f, EditorGUILayout.FloatField("조준 섞이는 시간(초)", motion.aimFadeIn));
+            motion.followEnd = Mathf.Max(0f, EditorGUILayout.FloatField("목표 고정(초)", motion.followEnd));
+            motion.aimReleaseStart = Mathf.Max(0f, EditorGUILayout.FloatField("조준 풀기 시작(초)", motion.aimReleaseStart));
+            motion.aimEnd = Mathf.Max(0f, EditorGUILayout.FloatField("조준 풀기 끝(초)", motion.aimEnd));
+            motion.followTime = Mathf.Max(0.01f, EditorGUILayout.FloatField("따라붙는 시간(초)", motion.followTime));
+            motion.maxFollowSpeed = Mathf.Max(0.01f, EditorGUILayout.FloatField("최대 추적 속도", motion.maxFollowSpeed));
+        }
+
         using (new EditorGUILayout.HorizontalScope())
         {
             target = EditorGUILayout.Vector2Field(new GUIContent("목표 지점(미리보기)", "게임에서는 플레이어 발밑. Scene 뷰의 노란 십자를 끌어도 됨"), target);

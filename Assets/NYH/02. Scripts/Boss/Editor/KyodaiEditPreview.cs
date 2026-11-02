@@ -27,6 +27,7 @@ public class KyodaiEditPreview
     }
 
     private GameObject clipRoot;          // 애니메이션 클립을 샘플링할 오브젝트(애니메이터 자리)
+    private KyodaiRig previewRig;
     private Transform[] poseBones = new Transform[0];
     private Vector3[] restPos;
     private Quaternion[] restRot;
@@ -46,6 +47,7 @@ public class KyodaiEditPreview
         var bones = new List<Transform>();
         KyodaiRig rig = null;
         foreach (var l in boss.Limbs) if (l.Rig != null) { rig = l.Rig; break; }
+        previewRig = rig;
         var byName = new Dictionary<string, Transform>();
         if (rig != null)
         {
@@ -126,7 +128,7 @@ public class KyodaiEditPreview
         Restore();
 
         // 2) 온몸 애니메이션
-        if (motion.clip != null && clipRoot != null) motion.clip.SampleAnimation(clipRoot, Mathf.Clamp(t, 0f, motion.clip.length));
+        if (motion.clip != null && clipRoot != null && previewRig != null) previewRig.SampleClip(motion.clip, clipRoot, t);
 
         // 3) 손 키 IK (세기만큼)
         foreach (var track in motion.tracks)

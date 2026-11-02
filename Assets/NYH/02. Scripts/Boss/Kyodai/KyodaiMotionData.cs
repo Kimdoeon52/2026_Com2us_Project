@@ -27,8 +27,51 @@ public class KyodaiMotionData : ScriptableObject
     [Tooltip("온몸 애니메이션 클립 (리깅 모델 루트에서 녹화한 것). 모션 0초 = 클립 0초")]
     public AnimationClip clip;
 
+    // 2026-11-02: 애니메이션 자세는 그대로 두고 위팔만 돌려서, 화면에 보이는 손의 x를 목표에 맞춘다
+    [Tooltip("어깨로 조준할 부위 이름. 비우면 조준 안 함")]
+    public string aimPartId;
+
+    [Tooltip("조준 시작 시각(초). 이때부터 목표가 플레이어를 따라간다")]
+    [Min(0f)] public float aimStart;
+
+    [Tooltip("조준이 애니메이션에 섞여 들어가는 시간(초)")]
+    [Min(0f)] public float aimFadeIn = 0.2f;
+
+    [Tooltip("목표 고정 시각(초). 이후로는 플레이어를 안 따라간다 — 보통 내려찍기 직전. aimStart와 같으면 처음 자리만 노림")]
+    [Min(0f)] public float followEnd;
+
+    [Tooltip("조준이 풀리기 시작하는 시각(초)")]
+    [Min(0f)] public float aimReleaseStart;
+
+    [Tooltip("조준이 다 풀리는 시각(초)")]
+    [Min(0f)] public float aimEnd;
+
+    [Tooltip("목표가 플레이어에게 따라붙는 시간(초). 클수록 관성이 크다")]
+    [Min(0.01f)] public float followTime = 0.35f;
+
+    [Tooltip("목표의 최대 추적 속도(월드/초)")]
+    [Min(0.01f)] public float maxFollowSpeed = 8f;
+
     public List<KyodaiMotionTrack> tracks = new List<KyodaiMotionTrack>();
     public List<KyodaiMotionEvent> events = new List<KyodaiMotionEvent>();
+
+    public bool UsesAim => !string.IsNullOrEmpty(aimPartId);
+
+    public bool IsFollowing(float t) => UsesAim && t >= aimStart && t < followEnd;
+
+    /// <summary>t초의 조준 세기(0~1)</summary>
+    public float AimWeightAt(float t)
+    {
+        if (!UsesAim) return 0f;
+        return Ramp(aimStart, aimStart + aimFadeIn, t) * (1f - Ramp(aimReleaseStart, aimEnd, t));
+    }
+
+    private static float Ramp(float from, float to, float t)
+    {
+        if (t >= to) return 1f;
+        if (t <= from) return 0f;
+        return Mathf.SmoothStep(0f, 1f, (t - from) / (to - from));
+    }
 
     public void SortAll()
     {

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // FixWindow의 수리·복구 화면을 InventoryHost, GlobalGold, TimeSystemManager와 연결한다
-// 씬 오브젝트는 FixWindowBuilder가 만든 이름으로 찾는다
+// 씬 오브젝트는 이름으로 찾으므로 패널 이름을 바꾸면 여기도 같이 고친다
 public class FixWindowController : MonoBehaviour
 {
     private const int PlayerId = 0;
@@ -99,7 +99,7 @@ public class FixWindowController : MonoBehaviour
         _restore = transform.Find("RestorePanel");
         if (_repair == null || _restore == null)
         {
-            Debug.LogError("[FixWindow] RepairPanel, RestorePanel을 찾을 수 없다. FixWindow 배치 메뉴를 먼저 실행해야 한다.", this);
+            Debug.LogError("[FixWindow] RepairPanel, RestorePanel을 찾을 수 없다.", this);
             return;
         }
 

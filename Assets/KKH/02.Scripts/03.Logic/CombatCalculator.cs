@@ -1,10 +1,10 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 /// <summary>
 /// [순수 C# 전투 수치 판정기 (CombatCalculator)]
 /// 기획서 공식에 입각하여 유니티 물리와 독립적으로 동작하는 순수 수치 연산 코어임.
 /// 1:1 대전 모드 이원화(Robot vs Robot / Robot vs Boss), 방어력 감쇄, D 기본기 실린더 충전,
-/// 부위 피격 시 스킬 봉인 및 보스 기믹 파훼를 총괄 연산함.
+/// 부위 피격 시 스킬 봉인 및 보스 기믹 파훼, CSH 스킬/장비 효과(ResolvedModifiers) 보정을 총괄 연산함.
 /// </summary>
 public static class CombatCalculator
 {
@@ -111,7 +111,7 @@ public static class CombatCalculator
     }
 
     // ========================================================================
-    // 1-1. [NYH HitDetection 전용 연동 오버로드]
+    // 1-1. [NYH HitDetection 전용 연동 오버로드 - CSH ResolvedModifiers 지원]
     // ========================================================================
     public static HitResolutionResult EvaluateRobotAttack(
         CombatantSnapshot attacker,
@@ -119,24 +119,41 @@ public static class CombatCalculator
         ActionData attackAction,
         bool isGuarding,
         bool isDefenderInvincible,
-        BodyPart targetPart = BodyPart.Core)
+        BodyPart targetPart = BodyPart.Core,
+        ResolvedModifiers modifiers = null)
     {
         if (attackAction == null) return new HitResolutionResult();
 
         bool isBasicAttackD = attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed;
         float rawDamage = attackAction.Damage > 0f ? attackAction.Damage : 10f;
+        float knockback = attackAction.KnockbackDistance;
+        int partDamageAmount = (targetPart != BodyPart.Core) ? 15 : 0;
+
+        // CSH 스킬 및 장비 보정치(ResolvedModifiers) 적용
+        if (modifiers != null)
+        {
+            if (!isBasicAttackD)
+            {
+                rawDamage = modifiers.Apply(SkillParamId.Damage, rawDamage);
+            }
+            knockback = modifiers.Apply(SkillParamId.KnockbackDistance, knockback);
+            if (partDamageAmount > 0)
+            {
+                partDamageAmount = Mathf.RoundToInt(modifiers.Apply(SkillParamId.PartDamage, partDamageAmount));
+            }
+        }
 
         var result = EvaluateRobotAttack(
             attacker,
             defender,
             rawDamage,
             targetPart,
-            partDamageAmount: (targetPart != BodyPart.Core) ? 15 : 0,
+            partDamageAmount: partDamageAmount,
             isDefenderInvincible: isDefenderInvincible,
             isBasicAttackD: isBasicAttackD
         );
 
-        result.KnockbackDistance = attackAction.KnockbackDistance;
+        result.KnockbackDistance = knockback;
         result.isGuarded = isGuarding;
         return result;
     }
@@ -185,7 +202,7 @@ public static class CombatCalculator
     }
 
     // ========================================================================
-    // 3. [모드 2-B] 플레이어 -> 보스 공격 판정 (보스전 및 기믹 파훼)
+    // 3. [모드 2-B] 플레이어 -> 보스 공격 판정 (보스전 및 기믹 파훼 - CSH ResolvedModifiers 지원)
     // ========================================================================
     public static HitResolutionResult EvaluatePlayerAttackOnBoss(
         CombatantSnapshot player,
@@ -193,7 +210,8 @@ public static class CombatCalculator
         float skillBaseDamage,
         bool isBasicAttackD,
         GimmickTag attackTag = GimmickTag.None,
-        string targetGimmickID = null)
+        string targetGimmickID = null,
+        ResolvedModifiers modifiers = null)
     {
         var result = new HitResolutionResult();
 
@@ -205,6 +223,12 @@ public static class CombatCalculator
         {
             player.AddCylinder(1);
             result.cylinderGained = true;
+        }
+
+        // CSH 스킬 보정치(Damage) 적용
+        if (modifiers != null && !isBasicAttackD)
+        {
+            skillBaseDamage = modifiers.Apply(SkillParamId.Damage, skillBaseDamage);
         }
 
         // 2) 그로기 상태 피해 배율 적용 (BossSnapshot.currentDamageMultiplier 반영)
@@ -272,6 +296,4 @@ public static class CombatCalculator
 
         return true;
     }
-
-   
 }

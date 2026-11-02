@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -51,7 +51,10 @@ public class CombatDataHub : MonoBehaviour
         : (BossSnapshot == null || !BossSnapshot.IsAlive);
 
     // 부품 마스터 데이터 룩업 캐시 (ID -> PartMasterData)
-    private Dictionary<string, PartMasterData> partMasterLookup = new Dictionary<string, PartMasterData>();
+    private Dictionary<string, PartMasterData> partMasterLookup = new Dictionary<string, PartMasterData>(StringComparer.OrdinalIgnoreCase);
+
+    // 씬 내 등록된 ActionExecutor 캐시 (FighterId -> ActionExecutor)
+    private readonly Dictionary<string, ActionExecutor> executorLookup = new(StringComparer.OrdinalIgnoreCase);
 
     // ========================================================================
     // 브로드캐스팅 이벤트 (UI, 사운드, 연출, 타 파트 구독용)
@@ -92,6 +95,7 @@ public class CombatDataHub : MonoBehaviour
         }
 
         ValidateAndRepairSnapshots();
+        CacheSnapshotsPartMasters();
     }
 
     private void ValidateAndRepairSnapshots()
@@ -135,6 +139,9 @@ public class CombatDataHub : MonoBehaviour
         EnemySnapshot = enemyRobot;
         BossSnapshot = null;
 
+        CacheSnapshotPartMasters(player);
+        CacheSnapshotPartMasters(enemyRobot);
+
         Debug.Log($"[CombatDataHub] 1:1 로봇 대전 초기화 완료 - Player({player?.fighterID}) vs Enemy({enemyRobot?.fighterID})");
         BroadcastFullState();
     }
@@ -146,6 +153,8 @@ public class CombatDataHub : MonoBehaviour
         PlayerSnapshot = player;
         BossSnapshot = boss;
         SyncBossToEnemyProxy();
+
+        CacheSnapshotPartMasters(player);
 
         Debug.Log($"[CombatDataHub] 1:1 보스 토벌전 초기화 완료 - Player({player?.fighterID}) vs Boss({boss?.bossName})");
         BroadcastFullState();
@@ -184,13 +193,168 @@ public class CombatDataHub : MonoBehaviour
             PlayerSnapshot = combatant;
         else
             EnemySnapshot = combatant;
+
+        CacheSnapshotPartMasters(combatant);
+    }
+
+    // ========================================================================
+    // 파츠 마스터 및 스킬 캐시 / 질의 API (CSH / NYH 스킬 파트 연동)
+    // ========================================================================
+    public void CachePartMaster(PartMasterData part)
+    {
+        if (part == null || string.IsNullOrEmpty(part.partID)) return;
+        partMasterLookup[part.partID] = part;
+    }
+
+    public void CachePartMasters(IEnumerable<PartMasterData> parts)
+    {
+        if (parts == null) return;
+        foreach (var p in parts) CachePartMaster(p);
+    }
+
+    private void CacheSnapshotsPartMasters()
+    {
+        CacheSnapshotPartMasters(PlayerSnapshot);
+        CacheSnapshotPartMasters(EnemySnapshot);
+    }
+
+    private void CacheSnapshotPartMasters(CombatantSnapshot snapshot)
+    {
+        if (snapshot == null || snapshot.partStates == null) return;
+        foreach (var kvp in snapshot.partStates)
+        {
+            if (kvp.Value?.masterData != null)
+            {
+                CachePartMaster(kvp.Value.masterData);
+            }
+        }
+    }
+
+    /// <summary>partID 기반 PartMasterData 조회 (없을 시 null)</summary>
+    public PartMasterData GetPartMaster(string partId)
+    {
+        if (string.IsNullOrEmpty(partId)) return null;
+        partMasterLookup.TryGetValue(partId, out var data);
+        return data;
+    }
+
+    /// <summary>전체 등록된 PartMasterData 룩업 딕셔너리 반환 (정산기 연동용)</summary>
+    public Dictionary<string, PartMasterData> GetPartMasterLookup() => partMasterLookup;
+
+    /// <summary>전투원의 장착된 부품 원장 목록 반환</summary>
+    public IEnumerable<PartMasterData> GetEquippedParts(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        if (s == null) return Array.Empty<PartMasterData>();
+        return s.EquippedPartMasters;
+    }
+
+    /// <summary>전투원의 특정 부위 장착 부품 원장 반환</summary>
+    public PartMasterData GetEquippedPartMaster(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        return s?.GetPartMaster(part);
+    }
+
+    /// <summary>전투원의 특정 부위 액티브 스킬 ID 반환 (파손 시 -1)</summary>
+    public int GetEquippedActiveSkillId(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        return s != null ? s.GetActiveSkillId(part) : -1;
+    }
+
+    /// <summary>전투원의 사용 가능한 모든 패시브 스킬 ID 목록 반환</summary>
+    public List<int> GetEquippedPassiveSkillIds(string fighterId)
+    {
+        var s = GetSnapshot(fighterId);
+        return s != null ? s.GetPassiveSkillIds() : new List<int>();
+    }
+
+    /// <summary>전투원의 특정 부위 기믹 파훼 태그 반환</summary>
+    public GimmickTag GetEquippedGimmickTag(string fighterId, BodyPart part)
+    {
+        var s = GetSnapshot(fighterId);
+        return s != null ? s.GetGimmickTag(part) : GimmickTag.None;
+    }
+
+    // ========================================================================
+    // ActionExecutor 등록 및 장비 효과 / 스킬 자동 바인딩
+    // ========================================================================
+    public void RegisterExecutor(ActionExecutor executor)
+    {
+        if (executor == null || string.IsNullOrEmpty(executor.FighterId)) return;
+        executorLookup[executor.FighterId] = executor;
+    }
+
+    public void UnregisterExecutor(ActionExecutor executor)
+    {
+        if (executor == null || string.IsNullOrEmpty(executor.FighterId)) return;
+        executorLookup.Remove(executor.FighterId);
+    }
+
+    public ActionExecutor GetExecutor(string fighterId)
+    {
+        if (string.IsNullOrEmpty(fighterId)) return null;
+        if (executorLookup.TryGetValue(fighterId, out var exec) && exec != null)
+            return exec;
+
+        // 폴백: 씬 내 탐색
+        foreach (var e in FindObjectsByType<ActionExecutor>(FindObjectsSortMode.None))
+        {
+            if (e != null && e.FighterId.Equals(fighterId, StringComparison.OrdinalIgnoreCase))
+            {
+                executorLookup[fighterId] = e;
+                return e;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 로봇(ActionExecutor)에게 장착된 파츠 목록의 스킬 및 효과를 자동 등록함.
+    /// 1. CSH EquipmentEffectTable을 통해 EquipmentEffectApplier.Apply 호출
+    /// 2. PartMasterData.activeSkillAction이 존재할 경우 PlayerSkillLoadout 슬롯(Q/W/E/R) 자동 바인딩
+    /// </summary>
+    public void ApplyEquipmentEffects(ActionExecutor executor, EquipmentEffectTable table = null)
+    {
+        if (executor == null) return;
+
+        var parts = GetEquippedParts(executor.FighterId);
+        if (table != null)
+        {
+            EquipmentEffectApplier.Apply(executor, parts, table);
+        }
+
+        // 파츠에 지정된 activeSkillAction이 있으면 PlayerSkillLoadout에 자동 장착
+        var loadout = executor.GetComponent<PlayerSkillLoadout>();
+        if (loadout != null && parts != null)
+        {
+            foreach (var part in parts)
+            {
+                if (part == null || part.activeSkillAction == null) continue;
+                ActionSlot slot = part.slotType switch
+                {
+                    BodyPart.LeftArm => ActionSlot.LeftArm,
+                    BodyPart.RightArm => ActionSlot.RightArm,
+                    BodyPart.LeftLeg => ActionSlot.LeftLeg,
+                    BodyPart.RightLeg => ActionSlot.RightLeg,
+                    _ => (ActionSlot)(-1)
+                };
+
+                if ((int)slot >= 0)
+                {
+                    loadout.SetSlot(slot, part.activeSkillAction);
+                    Debug.Log($"[CombatDataHub] {executor.FighterId} {slot} 슬롯에 스킬 '{part.activeSkillAction.ActionName}' 자동 장착 완료!");
+                }
+            }
+        }
     }
 
     // ========================================================================
     // 실시간 피격 및 연산 질의 (NYH HitDetection 호출 Façade)
     // ========================================================================
     /// <summary>
-    /// [NYH HitDetection 전용 1:1 대전 통합 타격 처리]
+    /// [NYH HitDetection 전용 1:1 대전 통합 타격 처리 - CSH ResolvedModifiers 지원]
     /// </summary>
     public HitResolutionResult ProcessHit(
         string attackerId,
@@ -198,10 +362,21 @@ public class CombatDataHub : MonoBehaviour
         ActionData attackAction,
         bool isGuarding,
         bool isWeaving,
-        BodyPart hitPart = BodyPart.Core)
+        BodyPart hitPart = BodyPart.Core,
+        ResolvedModifiers modifiers = null)
     {
         var attacker = GetSnapshot(attackerId);
         var defender = GetSnapshot(defenderId);
+
+        // 공격자 ActionExecutor의 ResolvedModifiers 자동 감지
+        if (modifiers == null)
+        {
+            var exec = GetExecutor(attackerId);
+            if (exec != null && exec.State != null)
+            {
+                modifiers = exec.State.Resolved;
+            }
+        }
 
         HitResolutionResult result = null;
 
@@ -209,7 +384,7 @@ public class CombatDataHub : MonoBehaviour
         if (currentBattleMode == BattleMode.RobotVsRobot && attacker != null && defender != null)
         {
             result = CombatCalculator.EvaluateRobotAttack(
-                attacker, defender, attackAction, isGuarding, isWeaving, hitPart);
+                attacker, defender, attackAction, isGuarding, isWeaving, hitPart, modifiers);
 
             // 상태 변경 브로드캐스팅
             NotifyHpAndCylinder(attacker, defender);
@@ -223,8 +398,11 @@ public class CombatDataHub : MonoBehaviour
                 // 플레이어 -> 보스 타격
                 bool isD = attackAction != null && (attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed);
                 float dmg = attackAction != null ? attackAction.Damage : 10f;
-                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD);
-                result.KnockbackDistance = attackAction != null ? attackAction.KnockbackDistance : 0f;
+                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD, modifiers: modifiers);
+                
+                float kb = attackAction != null ? attackAction.KnockbackDistance : 0f;
+                if (modifiers != null) kb = modifiers.Apply(SkillParamId.KnockbackDistance, kb);
+                result.KnockbackDistance = kb;
 
                 SyncBossToEnemyProxy();
                 OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);

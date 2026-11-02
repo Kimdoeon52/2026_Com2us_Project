@@ -15,12 +15,34 @@ public class PartRuntimeState
     public int maxDurability;       // 최대 내구도 (baseDurability + 강화치)
     public bool isBroken => currentDurability <= 0; // 부품 파손 여부 (true: 파손 및 스킬 봉인)
 
-    public PartRuntimeState(string partID, BodyPart partType, int maxDurability)
+    // 스킬 및 파츠 마스터 연동 필드
+    public int activeSkillId = -1;
+    public List<int> passiveSkillIds = new List<int>();
+    public GimmickTag gimmickTag = GimmickTag.None;
+    public int cylinderCost = 1;
+    [NonSerialized] public PartMasterData masterData;
+
+    public PartRuntimeState(string partID, BodyPart partType, int maxDurability, PartMasterData master = null)
     {
         this.partID = partID;
         this.partType = partType;
         this.maxDurability = maxDurability;
         this.currentDurability = maxDurability;
+        this.masterData = master;
+
+        if (master != null)
+        {
+            this.activeSkillId = master.activeSkillId;
+            if (master.passiveSkillIds != null)
+                this.passiveSkillIds = new List<int>(master.passiveSkillIds);
+            this.gimmickTag = master.gimmickTag;
+            this.cylinderCost = master.cylinderCost;
+        }
+    }
+
+    public PartRuntimeState(string partID, BodyPart partType, int maxDurability)
+        : this(partID, partType, maxDurability, null)
+    {
     }
 
     /// <summary>부품 내구도 소모 처리 (0 이하로 내려가지 않도록 제한)</summary>
@@ -58,6 +80,7 @@ public class CombatantSnapshot
     public int baseDefense;             // 코어 본체 방어력
     public int coreLevel = 1;           // 코어 레벨 (1 ~ 30)
     public int currentCoreExp;          // 현재 누적 코어 경험치 (플레이어 전용)
+    [NonSerialized] public CoreMasterData coreMasterData; // 코어 마스터 데이터 참조
 
     /// <summary>생존 여부 (코어 HP > 0)</summary>
     public bool IsAlive => currentHp > 0;
@@ -111,7 +134,6 @@ public class CombatantSnapshot
         return state;
     }
 
-
     /// <summary>
     /// 내구도가 0 이하(파손)인지 검사 (스킬 봉인 판정)
     /// </summary>
@@ -143,6 +165,79 @@ public class CombatantSnapshot
         {
             state.Repair(amount);
         }
+    }
+
+    // ========================================================================
+    // 파츠 마스터 및 스킬 연동 헬퍼 메서드 (CSH / NYH 스킬 시스템 연동)
+    // ========================================================================
+    /// <summary>장착된 5부위 부품 원장 목록 (null 제외)</summary>
+    public IEnumerable<PartMasterData> EquippedPartMasters
+    {
+        get
+        {
+            foreach (var kvp in partStates)
+            {
+                if (kvp.Value != null && kvp.Value.masterData != null)
+                    yield return kvp.Value.masterData;
+            }
+        }
+    }
+
+    /// <summary>특정 부위의 부품 원장 데이터 조회</summary>
+    public PartMasterData GetPartMaster(BodyPart part)
+    {
+        return partStates.TryGetValue(part, out var state) ? state.masterData : null;
+    }
+
+    /// <summary>특정 부위의 액티브 스킬 ID 조회 (파손 시 -1 반환)</summary>
+    public int GetActiveSkillId(BodyPart part, bool checkBroken = true)
+    {
+        if (!partStates.TryGetValue(part, out var state)) return -1;
+        if (checkBroken && state.isBroken) return -1;
+        return state.activeSkillId;
+    }
+
+    /// <summary>장착된 모든 패시브 스킬 ID 목록 조회 (기본: 파손 부품 제외)</summary>
+    public List<int> GetPassiveSkillIds(bool includeBroken = false)
+    {
+        var list = new List<int>();
+        foreach (var kvp in partStates)
+        {
+            var state = kvp.Value;
+            if (state == null) continue;
+            if (!includeBroken && state.isBroken) continue;
+            if (state.passiveSkillIds != null)
+            {
+                list.AddRange(state.passiveSkillIds);
+            }
+        }
+        return list;
+    }
+
+    /// <summary>장착된 모든 스킬 ID(액티브 + 패시브) 목록 조회</summary>
+    public List<int> GetAllSkillIds(bool includeBroken = false)
+    {
+        var list = new List<int>();
+        foreach (var kvp in partStates)
+        {
+            var state = kvp.Value;
+            if (state == null) continue;
+            if (!includeBroken && state.isBroken) continue;
+
+            if (state.activeSkillId >= 0)
+                list.Add(state.activeSkillId);
+            if (state.passiveSkillIds != null)
+                list.AddRange(state.passiveSkillIds);
+        }
+        return list;
+    }
+
+    /// <summary>특정 부위의 기믹 파훼 태그 조회</summary>
+    public GimmickTag GetGimmickTag(BodyPart part, bool checkBroken = true)
+    {
+        if (!partStates.TryGetValue(part, out var state)) return GimmickTag.None;
+        if (checkBroken && state.isBroken) return GimmickTag.None;
+        return state.gimmickTag;
     }
 
     // ========================================================================

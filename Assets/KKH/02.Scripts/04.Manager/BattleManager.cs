@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -203,7 +203,10 @@ public class BattleManager : MonoBehaviour
             : null;
 
         var settlement = BattleSettlementProcessor.ProcessSettlement(
-            playerWon, player, enemy, betGold, bossMaster: bossMaster);
+            playerWon, player, enemy, betGold,
+            coreMaster: (player != null ? player.coreMasterData : null),
+            partMasterLookup: (hub != null ? hub.GetPartMasterLookup() : null),
+            bossMaster: bossMaster);
 
         OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
         Debug.Log($"[BattleManager] 전투 종료 완료됨: 승자={winnerId}, {settlement.SummaryMessage}");

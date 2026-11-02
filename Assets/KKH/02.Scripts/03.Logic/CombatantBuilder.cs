@@ -37,7 +37,8 @@ public static class CombatantBuilder
             maxHp = coreHp,
             baseDefense = coreDef,
             coreLevel = core != null ? core.coreLevel : 1,
-            currentCylinder = 1
+            currentCylinder = 1,
+            coreMasterData = core
         };
 
         // 부위별 파츠 추출
@@ -65,7 +66,8 @@ public static class CombatantBuilder
                 snapshot.partStates[part.slotType] = new PartRuntimeState(
                     part.partID,
                     part.slotType,
-                    part.baseDurability
+                    part.baseDurability,
+                    part
                 );
             }
         }

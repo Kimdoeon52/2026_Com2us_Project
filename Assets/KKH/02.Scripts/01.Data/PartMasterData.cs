@@ -78,6 +78,9 @@ public class PartMasterData : ScriptableObject
     [Tooltip("파츠 장착 시 부여되는 고유 액티브 스킬 ID (스킬 없을 시 -1)")]
     public int activeSkillId = -1;
 
+    [Tooltip("슬롯에 직접 장착될 스킬 액션 (PlayerSkillLoadout Q/W/E/R 연동용, 미지정 시 CSH EffectTable 매핑 사용)")]
+    public ActionData activeSkillAction;
+
     [Tooltip("기획서 §6.20.4 기믹 파훼 태그")]
     public GimmickTag gimmickTag = GimmickTag.None;
 
@@ -86,6 +89,9 @@ public class PartMasterData : ScriptableObject
 
     [Tooltip("기획서 부위별 고유 패시브 스킬 ID 목록 (머리 자동 장전 장치 등)")]
     public List<int> passiveSkillIds = new List<int>();
+
+    [Tooltip("파츠 자체에 할당된 추가 장비 효과 목록 (미지정 시 EffectTable 매핑 사용)")]
+    public EquipmentEffect[] customEffects;
 }
 
 /// <summary>

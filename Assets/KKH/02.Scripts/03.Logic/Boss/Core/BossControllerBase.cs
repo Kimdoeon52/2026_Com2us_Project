@@ -12,6 +12,10 @@ namespace RealSteel.Boss.Core
         [Header("1. 보스 데이터 원장 에셋")]
         [SerializeField] protected BossMasterData masterData;
 
+        [Header("1-1. 난이도 레이어 설정 (기획서 §6.10.4)")]
+        [SerializeField] protected BossDifficulty selectedDifficulty = BossDifficulty.Normal;
+        public BossDifficulty SelectedDifficulty => selectedDifficulty;
+
         [Header("2. 디버그 모니터링")]
         [SerializeField] protected string currentStateName;
         [SerializeField] protected int currentHpView;
@@ -28,7 +32,7 @@ namespace RealSteel.Boss.Core
         /// <summary>
         /// 보스의 기본 지면 Y 좌표 (공중 패턴 종료/캔슬 후 바닥 복귀 기준점)
         /// </summary>
-        public float GroundY
+        public virtual float GroundY
         {
             get
             {
@@ -382,10 +386,44 @@ namespace RealSteel.Boss.Core
 
             SetupStateMachine();
             RegisterGimmicks(); // 구체 보스 훅
+            ApplyDifficultyToGimmicks(); // 난이도 레이어별 활성 기믹 수 필터링
             BuildPhasePatternPool(Snapshot.currentPhase);
             OnBossInitialized(); // 구체 보스 훅
 
             StartCombatLoop();
+        }
+
+        /// <summary>
+        /// 런타임 보스 난이도 동적 변경 (기획서 §6.10.4)
+        /// </summary>
+        public virtual void SetDifficulty(BossDifficulty difficulty)
+        {
+            selectedDifficulty = difficulty;
+            if (masterData != null)
+            {
+                var layer = masterData.GetDifficultyLayer(difficulty);
+                if (Snapshot == null)
+                {
+                    SetupSnapshot();
+                }
+                else
+                {
+                    Snapshot.difficulty = difficulty;
+                    Snapshot.maxHp = Mathf.RoundToInt(masterData.maxHp * layer.hpMultiplier);
+                    Snapshot.currentHp = Snapshot.maxHp;
+                    Snapshot.attackMultiplier = layer.attackMultiplier;
+                    Snapshot.tellDurationMultiplier = layer.tellDurationMultiplier;
+                    Snapshot.maxAllowedPatterns = layer.maxAllowedPatterns;
+                    Snapshot.maxActiveGimmicks = layer.maxActiveGimmicks;
+                    Snapshot.allowPhase2 = layer.allowPhase2;
+                    Snapshot.allowPatternChain = layer.allowPatternChain;
+                    Snapshot.passiveCount = layer.passiveCount;
+                }
+
+                OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
+                ApplyDifficultyToGimmicks();
+                Debug.Log($"<color=cyan>[BossControllerBase] 보스 난이도 전환 완료: {difficulty} (HP: {Snapshot.maxHp}, 공격배율: {layer.attackMultiplier}x, 패턴수: {layer.maxAllowedPatterns}, 2페이즈: {layer.allowPhase2}, 패시브수: {layer.passiveCount})</color>");
+            }
         }
 
         protected virtual void AutoWireSceneSystems()
@@ -447,16 +485,27 @@ namespace RealSteel.Boss.Core
                 return;
             }
 
+            var layer = masterData.GetDifficultyLayer(selectedDifficulty);
+            int scaledHp = Mathf.RoundToInt(masterData.maxHp * layer.hpMultiplier);
+
             Snapshot = new BossSnapshot
             {
                 bossID = masterData.bossID,
                 bossName = masterData.bossName,
-                maxHp = masterData.maxHp,
-                currentHp = masterData.maxHp,
+                maxHp = scaledHp,
+                currentHp = scaledHp,
                 baseDefense = masterData.baseDefense,
                 currentPhase = 1,
                 isGroggy = false,
-                currentDamageMultiplier = 1.0f
+                currentDamageMultiplier = 1.0f,
+                difficulty = selectedDifficulty,
+                attackMultiplier = layer.attackMultiplier,
+                tellDurationMultiplier = layer.tellDurationMultiplier,
+                maxAllowedPatterns = layer.maxAllowedPatterns,
+                maxActiveGimmicks = layer.maxActiveGimmicks,
+                allowPhase2 = layer.allowPhase2,
+                allowPatternChain = layer.allowPatternChain,
+                passiveCount = layer.passiveCount
             };
 
             foreach (var gimmick in masterData.gimmickParts)
@@ -600,8 +649,12 @@ namespace RealSteel.Boss.Core
         {
             if (activePatternPool.Count == 0) return null;
 
-            var validPool = activePatternPool.FindAll(p => p != null && !Snapshot.IsSkillSealed(p.GimmickID));
-            if (validPool.Count == 0) validPool = activePatternPool;
+            // 기획서 §6.10.4: 난이도별 최대 허용 패턴 수로 풀 제한 (아주쉬움: 2종, 쉬움: 3종, 보통 이상: 4종)
+            int allowedCount = Snapshot != null ? Mathf.Clamp(Snapshot.maxAllowedPatterns, 1, activePatternPool.Count) : activePatternPool.Count;
+            var poolToUse = activePatternPool.GetRange(0, allowedCount);
+
+            var validPool = poolToUse.FindAll(p => p != null && !Snapshot.IsSkillSealed(p.GimmickID));
+            if (validPool.Count == 0) validPool = poolToUse;
 
             var pattern = validPool[_patternIndex % validPool.Count];
             _patternIndex++;
@@ -622,10 +675,9 @@ namespace RealSteel.Boss.Core
 
         public virtual void NotifyDPSCheckProgress(int currentDamage, int requiredDamage)
         {
-            // DPS 체크 저지 게이지 UI 연동 및 하위 보스 클래스 오버라이드용 훅
-            // Debug.Log($"[DPS Check] {currentDamage} / {requiredDamage}");
             NotifyDpsCheckProgress(currentDamage, requiredDamage);
         }
+
         public CancellationToken RenewStateCancellationToken()
         {
             CancelCurrentStateToken();
@@ -649,6 +701,7 @@ namespace RealSteel.Boss.Core
         protected virtual void CheckPhaseTransition()
         {
             if (masterData == null || masterData.phases == null) return;
+            if (Snapshot == null || !Snapshot.allowPhase2) return; // 기획서 §6.10.4: 어려움/헬 난이도만 2페이즈 허용
 
             float currentRatio = (float)Snapshot.currentHp / Snapshot.maxHp;
             foreach (var phase in masterData.phases)
@@ -675,6 +728,7 @@ namespace RealSteel.Boss.Core
         // 하위 클래스 확장용 훅(Hook) 메서드
         // ========================================================================
         protected abstract void RegisterGimmicks();
+        protected virtual void ApplyDifficultyToGimmicks() { }
         protected virtual void OnBossInitialized() { }
         protected virtual int OnPreTakeDamage(int rawDamage) => rawDamage;
         protected virtual void OnPhaseChanged(int prevPhase, int newPhase) { }

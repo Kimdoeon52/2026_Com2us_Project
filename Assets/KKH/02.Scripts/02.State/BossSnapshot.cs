@@ -29,8 +29,8 @@ public class BossGimmickRuntimeState
 
 /// <summary>
 /// [보스 런타임 스냅샷 클래스 (BossSnapshot)]
-/// 보스 다변화(지역 1 폐타이어/폐엔진 및 향후 보스들)를 수용하는 범용 기믹 런타임 DTO임.
-/// 5파츠 조립 로봇이 아니므로 '본체 HP + 페이즈 + gimmickStates 딕셔너리'로 유연하게 동작함.
+/// 기획서 §6.10 난이도 레이어 시스템을 지원하는 범용 기믹 런타임 DTO임.
+/// 보스 본체 HP, 난이도별 스탯/전조/패턴/패시브 배율 및 gimmickStates 딕셔너리를 관리함.
 /// </summary>
 [Serializable]
 public class BossSnapshot
@@ -49,18 +49,36 @@ public class BossSnapshot
     public bool IsAlive => currentHp > 0;
 
     // ========================================================================
-    // 2. 상태 이상 및 피해 배율 플래그
+    // 2. 난이도 레이어 런타임 수치 (기획서 §6.10.4)
+    // ========================================================================
+    public BossDifficulty difficulty = BossDifficulty.Normal;
+    public float attackMultiplier = 1.0f;          // 공격력 배율 (0.6, 0.8, 1.0, 1.3, 1.6)
+    public float tellDurationMultiplier = 1.0f;     // 전조 시간 배율 (아주 쉬움: 1.5배, 그 외 1.0배)
+    public int maxAllowedPatterns = 4;             // 패턴 풀 제한 (2, 3, 4, 4, 4)
+    public int maxActiveGimmicks = 2;              // 필드 기믹 수 (0~1, 1, 2, 3, 4)
+    public bool allowPhase2 = false;               // 페이즈 2 개방 (어려움, 헬)
+    public bool allowPatternChain = false;         // 헬 전용 페이즈 2 후딜 0.4초 초고속 연계
+    public int passiveCount = 0;                   // 패시브 수 (어려움: 1, 헬: 2)
+
+    /// <summary>패시브 1: 과열 가속 (어려움, 헬) - 이동속도 +15%, 딜타임 후딜 -20%</summary>
+    public bool hasOverheatAcceleration => passiveCount >= 1;
+
+    /// <summary>패시브 2: 배기 잔화 (헬) - 돌진 시 2초간 화염 지대 생성</summary>
+    public bool hasFireTrailHazard => passiveCount >= 2;
+
+    // ========================================================================
+    // 3. 상태 이상 및 피해 배율 플래그
     // ========================================================================
     public bool isGroggy = false;          // 기믹 파훼 시 4초 무력화 (받는 피해 1.5배)
     public float currentDamageMultiplier = 1.0f;
 
     // ========================================================================
-    // 3. 보스 다변화 대비 범용 기믹 런타임 맵
+    // 4. 보스 다변화 대비 범용 기믹 런타임 맵
     // ========================================================================
     public Dictionary<string, BossGimmickRuntimeState> gimmickStates = new();
 
     // ========================================================================
-    // 4. 기믹 파훼로 인해 영구 봉인된 보스 스킬 패턴 목록
+    // 5. 기믹 파훼로 인해 영구 봉인된 보스 스킬 패턴 목록
     // ========================================================================
     public HashSet<string> sealedSkills = new();
 

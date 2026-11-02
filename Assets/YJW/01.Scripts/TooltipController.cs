@@ -6,12 +6,12 @@ public class TooltipController : MonoBehaviour, IPointerEnterHandler, IPointerEx
 {
     [SerializeField] private GameObject toolTipBox;
     [SerializeField] private TextMeshProUGUI tmp;
-    private PartsDefinition? part;
-    private ComponentDefinition? component;
+    private PartsDefinition part;
+    private ComponentDefinition component;
 
-    private ResultSlot? r_slot;
-    private CombinationSlot? c_slot;
-    private RecipeSlot? re_slot;
+    private ResultSlot r_slot;
+    private CombinationSlot c_slot;
+    private RecipeSlot re_slot;
 
 
     private void Start()

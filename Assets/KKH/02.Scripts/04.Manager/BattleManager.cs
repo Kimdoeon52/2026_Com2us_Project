@@ -50,6 +50,21 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private float timeLimit = 99f;
     private float currentTimer;
 
+    [Header("보스전 난이도 레이어 설정 (기획서 §6.10.4)")]
+    [SerializeField] private BossDifficulty selectedDifficulty = BossDifficulty.Normal;
+    public BossDifficulty SelectedDifficulty => selectedDifficulty;
+
+    public void SetBossDifficulty(BossDifficulty difficulty)
+    {
+        selectedDifficulty = difficulty;
+        var bossCtrl = (enemyRobotObject != null ? enemyRobotObject.GetComponent<RealSteel.Boss.Core.BossControllerBase>() : null)
+                       ?? FindFirstObjectByType<RealSteel.Boss.Core.BossControllerBase>();
+        if (bossCtrl != null)
+        {
+            bossCtrl.SetDifficulty(difficulty);
+        }
+    }
+
     // ========================================================================
     // 남윤호(NYH) 및 UI 파트 구독용 이벤트
     // ========================================================================
@@ -201,12 +216,14 @@ public class BattleManager : MonoBehaviour
         BossMasterData bossMaster = (hub != null && hub.CurrentBattleMode == BattleMode.RobotVsBoss && bossCtrl != null)
             ? bossCtrl.MasterData
             : null;
+        BossDifficulty activeDifficulty = bossCtrl != null ? bossCtrl.SelectedDifficulty : selectedDifficulty;
 
         var settlement = BattleSettlementProcessor.ProcessSettlement(
             playerWon, player, enemy, betGold,
             coreMaster: (player != null ? player.coreMasterData : null),
             partMasterLookup: (hub != null ? hub.GetPartMasterLookup() : null),
-            bossMaster: bossMaster);
+            bossMaster: bossMaster,
+            difficulty: activeDifficulty);
 
         OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
         Debug.Log($"[BattleManager] 전투 종료 완료됨: 승자={winnerId}, {settlement.SummaryMessage}");

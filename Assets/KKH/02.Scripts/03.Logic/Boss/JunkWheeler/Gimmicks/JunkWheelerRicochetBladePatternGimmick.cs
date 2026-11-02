@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -42,6 +42,8 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float groundPaddingY = 0.1f;
         [Tooltip("사선 발사 수직 각도 (도)")]
         [SerializeField] private float initialAngleDeg = 40.0f;
+        [Tooltip("회전 톱날 당구 돌진 시 플레이어 피격 감지 반경 (VFX 크기와 무관하게 엄격히 고정되는 기획 반경)")]
+        [SerializeField] private float bladeHitRadius = 1.2f;
 
         [Header("비선형 전조(Tell) 파라미터")]
         [SerializeField] private Color flashColor = new Color(1.0f, 0.2f, 0.1f, 1f);
@@ -59,6 +61,14 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private Sprite[] retractSprites;
         [SerializeField] private Vector3 bladeLocalOffset = new Vector3(0f, 0.375f, -0.05f);
 
+        [Header("시각 효과(VFX) 프리팹 (인스펙터 할당)")]
+        [Tooltip("당구 3쿠션 벽/천장/바닥 충돌 시 발생하는 충격/스파크 VFX (예: FX_Flipbook_ImpactAir, FX_Flipbook_StarShock)")]
+        [SerializeField] private GameObject bounceImpactVfxPrefab;
+        [Tooltip("회전 톱날로 플레이어 타격 시 발생하는 참격/타격 VFX (예: FX_Flipbook_OrangeSlash, FX_Flipbook_SplashHit4)")]
+        [SerializeField] private GameObject bladeHitVfxPrefab;
+        [Tooltip("3쿠션 종료 후 지면 착지 충격파 VFX (예: FX_Flipbook_Blast_Ground, FX_Flipbook_GroundShock)")]
+        [SerializeField] private GameObject landImpactVfxPrefab;
+
         // 런타임 제어 변수
         private GameObject _bladeVfxObj;
         private SpriteRenderer _bladeRenderer;
@@ -69,6 +79,7 @@ namespace RealSteel.Boss.JunkWheeler
         private Vector3 _baseWorldPosBeforeTell;
         private Color _originalColor = Color.white;
         private bool _isActionRunning = false;
+        public bool IsActionRunning => _isActionRunning;
         private bool _isBladeSpinning = false;
         private float _currentSpinInterval = 0.045f;
         private float _spinFrameTimer = 0f;
@@ -381,6 +392,10 @@ namespace RealSteel.Boss.JunkWheeler
                         bounceCount++;
                         Debug.Log($"<color=yellow>[JunkWheelerRicochet] 당구 바운스 #{bounceCount}/{maxBounceCount}! 법선: {impactNormal}</color>");
 
+                        // [VFX 1] 벽/천장/바닥 바운스 임팩트 스폰 (충돌 법선 방향으로 회전)
+                        float rotZ = Mathf.Atan2(impactNormal.y, impactNormal.x) * Mathf.Rad2Deg;
+                        SpawnVfx(bounceImpactVfxPrefab, nextPos, Quaternion.Euler(0f, 0f, rotZ));
+
                         // 이동 방향에 맞춰 스프라이트 반전
                         OwnerBoss.Animation?.FaceDirection(moveDir.x);
 
@@ -428,6 +443,9 @@ namespace RealSteel.Boss.JunkWheeler
                     }
                 }
                 OwnerBoss.transform.position = landTargetPos;
+
+                // [VFX 3] 지면 착지 충격파 스폰
+                SpawnVfx(landImpactVfxPrefab, landTargetPos);
 
                 // 5단계: 착지 임팩트 펀치 & 톱날 수납 & 롤 감속
                 OwnerBoss.Animation?.PlaySlamLand();
@@ -521,10 +539,14 @@ namespace RealSteel.Boss.JunkWheeler
             var player = OwnerBoss.PlayerTransform;
             if (player == null) return false;
 
+            // [판정 분리]: VFX 크기와 무관하게 원본 고정 반경(bladeHitRadius)만 검사
             float dist = Vector2.Distance(OwnerBoss.transform.position, player.position);
-            if (dist <= 1.35f)
+            if (dist <= Mathf.Max(0.1f, bladeHitRadius))
             {
                 Debug.Log("<color=red>[JunkWheelerRicochet] 회전 톱날 돌진 ➔ 플레이어 피격 충돌!</color>");
+                // [VFX 2] 플레이어 피격 참격 이펙트 스폰
+                Vector3 hitPos = (OwnerBoss.transform.position + player.position) * 0.5f;
+                SpawnVfx(bladeHitVfxPrefab, hitPos);
                 ApplyDamageToPlayer(player.gameObject);
                 return true;
             }
@@ -678,8 +700,8 @@ namespace RealSteel.Boss.JunkWheeler
             _bladeVfxObj.transform.localScale = Vector3.zero;
 
             float deployDuration = 0.24f;
-            _bladeVfxObj.transform.DOLocalMove(bladeLocalOffset, deployDuration).SetEase(Ease.OutCubic);
-            _bladeVfxObj.transform.DOScale(Vector3.one, deployDuration).SetEase(Ease.OutBack);
+            _ = _bladeVfxObj.transform.DOLocalMove(bladeLocalOffset, deployDuration).SetEase(Ease.OutCubic);
+            _ = _bladeVfxObj.transform.DOScale(Vector3.one, deployDuration).SetEase(Ease.OutBack);
 
             // Step 2: Deploy sprite sequence (4 frames)
             float elapsed = 0f;
@@ -751,8 +773,8 @@ namespace RealSteel.Boss.JunkWheeler
             _bladeVfxObj.transform.localRotation = Quaternion.identity;
             float retractDuration = 0.22f;
             Vector3 hiddenLocalPos = bladeLocalOffset - new Vector3(0f, 0.18f, 0f);
-            _bladeVfxObj.transform.DOLocalMove(hiddenLocalPos, retractDuration).SetEase(Ease.InQuad);
-            _bladeVfxObj.transform.DOScale(Vector3.zero, retractDuration).SetEase(Ease.InBack);
+            _ = _bladeVfxObj.transform.DOLocalMove(hiddenLocalPos, retractDuration).SetEase(Ease.InQuad);
+            _ = _bladeVfxObj.transform.DOScale(Vector3.zero, retractDuration).SetEase(Ease.InBack);
 
             // 2단계: 수납 프레임 재생
             if (_bladeAnimator != null && _bladeAnimator.HasState(0, AnimHashRetract))
@@ -785,6 +807,14 @@ namespace RealSteel.Boss.JunkWheeler
             _bladeVfxObj.transform.localScale = Vector3.one;
             _bladeVfxObj.transform.localRotation = Quaternion.identity;
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            // 회전 톱날 피격 판정 범위 (기획 고정 반경)
+            Gizmos.color = new Color(1f, 0.1f, 0.1f, 0.75f);
+            Gizmos.DrawWireSphere(transform.position, bladeHitRadius);
+        }
+#endif
     }
 }
-

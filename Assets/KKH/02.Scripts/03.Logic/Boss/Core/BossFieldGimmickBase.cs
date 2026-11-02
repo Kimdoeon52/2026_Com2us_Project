@@ -8,6 +8,7 @@ namespace RealSteel.Boss.Core
     public abstract class BossFieldGimmickBase : MonoBehaviour
     {
         public abstract string FieldGimmickID { get; }
+        public virtual string GimmickName => FieldGimmickID;
         public bool IsInteractable { get; protected set; } = true;
 
         public void TriggerInteraction(GameObject actor)

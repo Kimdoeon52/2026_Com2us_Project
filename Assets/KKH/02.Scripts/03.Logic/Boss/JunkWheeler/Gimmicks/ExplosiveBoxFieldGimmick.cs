@@ -1,9 +1,10 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Core;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.JunkWheeler
 {
@@ -26,6 +27,10 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float explosionRadius = 2.5f;
         [SerializeField] private float fuseDuration = 1.5f;
         [SerializeField] private ParticleSystem explosionParticle;
+
+        [Header("시각 효과(VFX) 프리팹 (인스펙터 할당)")]
+        [Tooltip("자폭 시 발생하는 폭발 VFX 프리팹 (예: FX_Flipbook_BombExp, FX_Flipbook_CartoonExp)")]
+        [SerializeField] private GameObject explosionVfxPrefab;
 
         private Collider2D _collider;
         private SpriteRenderer _spriteRenderer;
@@ -69,7 +74,10 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (_spriteRenderer != null)
             {
-                _flashTween = _spriteRenderer.DOColor(Color.red, 0.12f).SetLoops(-1, LoopType.Yoyo);
+                // 1.5초 동안 점점 빨라지는 점멸
+                _flashTween = _spriteRenderer.DOColor(Color.red, 0.15f)
+                    .SetLoops(-1, LoopType.Yoyo)
+                    .SetEase(Ease.Flash);
             }
 
             try
@@ -88,6 +96,12 @@ namespace RealSteel.Boss.JunkWheeler
             if (_flashTween != null && _flashTween.IsActive())
             {
                 _flashTween.Kill();
+            }
+
+            // [VFX] 폭발 프리팹 스폰
+            if (explosionVfxPrefab != null)
+            {
+                BossVfxHelper.SpawnVfx(explosionVfxPrefab, transform.position);
             }
 
             Vector2 center = transform.position;
@@ -159,5 +173,14 @@ namespace RealSteel.Boss.JunkWheeler
                 _flashTween.Kill();
             }
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            // 폭발 피해 판정 범위 (기획 고정 반경)
+            Gizmos.color = new Color(1f, 0.4f, 0f, 0.6f);
+            Gizmos.DrawWireSphere(transform.position, explosionRadius);
+        }
+#endif
     }
 }

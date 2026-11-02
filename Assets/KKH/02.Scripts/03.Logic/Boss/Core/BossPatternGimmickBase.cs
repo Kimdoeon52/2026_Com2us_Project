@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.Core
 {
@@ -16,7 +17,7 @@ namespace RealSteel.Boss.Core
         public BossPatternData PatternData => patternData;
 
         public override string GimmickID => patternData != null ? patternData.patternID : "UNKNOWN_PATTERN";
-        public override string GimmickName => patternData != null?patternData.patternName : "미지정 패턴";
+        public override string GimmickName => patternData != null ? patternData.patternName : "미지정 패턴";
 
         protected int _accumulatedTellDamage = 0;
         protected bool _isTellPhase = false;
@@ -35,7 +36,7 @@ namespace RealSteel.Boss.Core
                 // step1 : 사전 준비 (방향정렬, 웅크림 등등)
                 OnPreExecute();
 
-                // step2 : 2.0초 전조 & DPS 체크 실행
+                // step2 : 전조 & DPS 체크 실행 (아주 쉬움 난이도는 tellDurationMultiplier 1.5배 적용)
                 bool tellSuccess = await ExecuteTellPhaseAsync(linkedToken);
                 if (!tellSuccess)
                 {
@@ -62,19 +63,22 @@ namespace RealSteel.Boss.Core
                 {
                     _patternCTS.Dispose();
                     _patternCTS = null;
-
                 }
             }
         }
+
         private async UniTask<bool> ExecuteTellPhaseAsync(CancellationToken token)
         {
             _isTellPhase = true;
             _accumulatedTellDamage = 0;   
             OnTellStarted();
 
-            float duration = patternData != null ? patternData.tellDuration : 2.0f;
+            float baseDuration = patternData != null ? patternData.tellDuration : 2.0f;
+            float multiplier = (OwnerBoss != null && OwnerBoss.Snapshot != null) ? OwnerBoss.Snapshot.tellDurationMultiplier : 1.0f;
+            float duration = baseDuration * multiplier;
+
             float elapsed = 0f;
-            while(elapsed < duration)
+            while (elapsed < duration)
             {
                 // 외부 취소는 저지 성공(false)이 아니므로 예외로 전파하여 Cancelled 처리 (불필요한 스턴 덮어쓰기 방지)
                 token.ThrowIfCancellationRequested();
@@ -97,19 +101,20 @@ namespace RealSteel.Boss.Core
             float postDelay = patternData != null ? patternData.postDelay : 1.0f;
             if (postDelay > 0f)
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(postDelay), cancellationToken : token);
+                await UniTask.Delay(TimeSpan.FromSeconds(postDelay), cancellationToken: token);
             }
         }
 
         protected override void OnDamageTaken(int damage)
         {
-            if(_isTellPhase && patternData != null && patternData.hasDpsCheck)
+            if (_isTellPhase && patternData != null && patternData.hasDpsCheck)
             {
                 _accumulatedTellDamage += damage;
                 OnDPSCheckProgress(_accumulatedTellDamage, patternData.requiredDamageToInterrupt);
                 OwnerBoss?.NotifyDPSCheckProgress(_accumulatedTellDamage, patternData.requiredDamageToInterrupt);
             }
         }
+
         public virtual void InterruptPattern(InterruptReason reason)
         {
             if (_patternCTS != null && !_patternCTS.IsCancellationRequested)
@@ -127,16 +132,31 @@ namespace RealSteel.Boss.Core
         //===============================================================================================
         // 하위 클래스 확장용 훅 메서드
 
-        protected virtual void OnPreExecute(){ }
-        public virtual void OnTellStarted(){ }
-        public virtual void OnTellEnded(){ }
-        protected virtual void OnDPSCheckProgress(int currentDamage, int requiredDamage){ }
+        protected virtual void OnPreExecute() { }
+        public virtual void OnTellStarted() { }
+        public virtual void OnTellEnded() { }
+        protected virtual void OnDPSCheckProgress(int currentDamage, int requiredDamage) { }
         protected abstract UniTask ExecuteActionAsync(CancellationToken token);
         protected virtual void OnInterrupted(InterruptReason reason) { }
-        protected virtual void CleanupEffects(){ }
-        
+        protected virtual void CleanupEffects() { }
+
         //===============================================================================================
         // 공통 연동 헬퍼
+
+        /// <summary>
+        /// 지정 위치에 이펙트 프리팹을 생성하고 수명 종료 시 자동 파괴 처리함.
+        /// </summary>
+        protected GameObject SpawnVfx(
+            GameObject vfxPrefab,
+            Vector3 position,
+            Quaternion rotation = default,
+            Vector3? scale = null,
+            float defaultLifetime = 2.0f,
+            Transform parent = null)
+        {
+            return BossVfxHelper.SpawnVfx(vfxPrefab, position, rotation, scale, defaultLifetime, parent);
+        }
+
         public bool IsPlayerInvincible(GameObject playerObj)
         {
             if (playerObj == null)
@@ -161,6 +181,14 @@ namespace RealSteel.Boss.Core
             int dmg = patternData != null ? patternData.baseDamage : 50;
             BodyPart targetPart = patternData != null ? patternData.targetPlayerPart : BodyPart.Core;
             int partDmg = patternData != null ? patternData.partDurabilityDamage : 0;
+
+            // 기획서 §6.10.4: 난이도별 보스 공격 배율(attackMultiplier) 반영
+            if (OwnerBoss != null && OwnerBoss.Snapshot != null)
+            {
+                float mult = OwnerBoss.Snapshot.attackMultiplier;
+                dmg = Mathf.RoundToInt(dmg * mult);
+                partDmg = Mathf.RoundToInt(partDmg * mult);
+            }
 
             ApplyPlayerPartHit(dmg, targetPart, partDmg);
         }

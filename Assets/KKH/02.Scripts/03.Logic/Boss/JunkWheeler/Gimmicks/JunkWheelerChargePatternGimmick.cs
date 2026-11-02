@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -10,13 +10,16 @@ namespace RealSteel.Boss.JunkWheeler
 {
     /// <summary>
     /// [정크 휠러 돌진 패턴 기믹 (JunkWheelerChargePatternGimmick)]
-    /// 기획서 §6.18 및 §3.2 (3):
+    /// 기획서 §6.18, §6.10.4 및 §6.16:
     /// 1. 2.0초 전조 동안 300 DPS 저지 체크 (저지 성공 시 3초 스턴).
     /// 2. 본 액션: 맵 한쪽 끝에서 반대편 끝까지 가로지르는 고속 횡단 돌진.
     /// 3. 타이어 부위 파괴 시 돌진 속도 영구 감속 (11.0 m/s ➔ 5.5 m/s).
     /// 4. 플레이어 충돌 시 Space 회피 무적 판정: 무적 중이면 통과, 아니면 피해.
     /// 5. 폭발 화물 상자 충돌 시 상자 자폭 및 보스 2초 스턴 즉시 인터럽트.
     /// 6. 충돌 종료 후 등 뒤의 플레이어를 향해 스프라이트 반전.
+    /// 7. 난이도별 패시브:
+    ///    - 어려움/헬 2페이즈: 과열 가속 (돌진 속도 +15%)
+    ///    - 헬: 배기 잔화 (돌진 경로에 2초간 화염 바닥 장판 생성)
     /// </summary>
     public class JunkWheelerChargePatternGimmick : BossPatternGimmickBase
     {
@@ -25,8 +28,11 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float brokenTireSpeed = 5.5f;
         [SerializeField] private float anticipatedDuration = 0.2f;
         [SerializeField] private float wallStunDelay = 0.3f;
+        public float WallStunDelay => wallStunDelay;
         [SerializeField] private float maxMapDistance = 20.0f;
         [SerializeField] private float wallEdgePadding = 0.50f;
+        [Tooltip("돌진 중 플레이어 및 오브젝트 충돌 감지 반경 (VFX 크기와 무관하게 엄격히 고정되는 기획 반경)")]
+        [SerializeField] private float chargeCollisionRadius = 1.0f;
 
         [Header("비선형 전조(Tell) 가속 파라미터")]
         [Tooltip("전조 점멸 목표 색상 (기본: 빨간색 Color.red)")]
@@ -87,6 +93,18 @@ namespace RealSteel.Boss.JunkWheeler
             maxShakeVibrato = newVibrato;
         }
 
+        [Header("시각 효과(VFX) 프리팹 (인스펙터 할당)")]
+        [Tooltip("돌진 발사/질주 궤적 VFX (예: FX_Flipbook_SlashGround)")]
+        [SerializeField] private GameObject chargeLaunchVfxPrefab;
+        [Tooltip("반대편 벽면 충돌 시 발생하는 충격파/폭발 VFX (예: FX_Flipbook_Blast, FX_Flipbook_GroundShock)")]
+        [SerializeField] private GameObject wallImpactVfxPrefab;
+        [Tooltip("돌진 중 플레이어 충돌 타격 시 발생하는 피격 VFX (예: FX_Flipbook_YellowHit, FX_Flipbook_SplashHit)")]
+        [SerializeField] private GameObject playerHitVfxPrefab;
+
+        [Header("패시브: 배기 잔화 프리팹 (미할당 시 런타임 동적 생성)")]
+        [Tooltip("헬 난이도 돌진 화염 장판 프리팹")]
+        [SerializeField] private GameObject fireTrailHazardPrefab;
+
         private Tweener _currentTween;
         private Tweener _flashTween;
         private Tweener _shakeTween;
@@ -136,7 +154,9 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (OwnerBoss != null)
             {
-                float tellDur = patternData != null ? patternData.tellDuration : 2.0f;
+                float baseDur = patternData != null ? patternData.tellDuration : 2.0f;
+                float multiplier = OwnerBoss.Snapshot != null ? OwnerBoss.Snapshot.tellDurationMultiplier : 1.0f;
+                float tellDur = baseDur * multiplier;
 
                 // 전조 시작 직후 차지 루프로 부드럽게 전이
                 TransitToChargeLoopAsync(tellDur).Forget();
@@ -277,12 +297,23 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 isTireBroken = true;
             }
-            float finalSpeed = isTireBroken ? brokenTireSpeed : chargeSpeed;
+
+            // 기획서 §6.10.4: 과열 가속 패시브 (어려움/헬 2페이즈 시 돌진 속도 +15%)
+            float speedMult = 1.0f;
+            if (OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.currentPhase >= 2 && OwnerBoss.Snapshot.hasOverheatAcceleration)
+            {
+                speedMult = 1.15f;
+            }
+            float finalSpeed = (isTireBroken ? brokenTireSpeed : chargeSpeed) * speedMult;
 
             // 3단계: 반대편 카메라 벽 경계까지 실시간 추적 돌진 주행
             // (CombatCamera가 이동/줌아웃에 따라 카메라 화면 경계를 실시간 확장하므로 매 프레임 화면 끝을 추적함)
             float initialTargetX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
-            Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed}m/s, 목표 벽 X: {initialTargetX:F2})</color>");
+            Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed:F1}m/s, 가속배율: {speedMult}x, 목표 벽 X: {initialTargetX:F2})</color>");
+
+            // [VFX 1] 돌진 발사 궤적 이펙트 스폰
+            Quaternion launchRot = Quaternion.Euler(0f, 0f, _chargeDirection > 0f ? 0f : 180f);
+            SpawnVfx(chargeLaunchVfxPrefab, OwnerBoss.transform.position, launchRot);
 
             // 돌진 발사 순간 애니메이션 ➔ 주행 루프
             if (OwnerBoss.Animation != null)
@@ -294,6 +325,7 @@ namespace RealSteel.Boss.JunkWheeler
             bool hitExplosive = false;
             float maxChargeTime = 3.0f;
             float chargeElapsed = 0f;
+            float fireTrailTimer = 0f;
 
             while (chargeElapsed < maxChargeTime)
             {
@@ -307,6 +339,17 @@ namespace RealSteel.Boss.JunkWheeler
 
                 float dt = Time.deltaTime;
                 chargeElapsed += dt;
+
+                // 기획서 §6.16: 헬 난이도 패시브 "배기 잔화" (돌진 시 2초간 화염 지대 장판 투하)
+                if (OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.hasFireTrailHazard)
+                {
+                    fireTrailTimer += dt;
+                    if (fireTrailTimer >= 0.15f)
+                    {
+                        fireTrailTimer = 0f;
+                        SpawnFireTrailHazard(OwnerBoss.transform.position);
+                    }
+                }
 
                 // 매 프레임 현재 카메라 뷰포트의 실제 좌/우 끝 벽 좌표를 실시간 조회
                 float dynamicWallX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
@@ -333,6 +376,10 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 4단계: 반대편 벽 충돌 임팩트 및 탄성 반동(Elastic Rebound)
             Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 접촉! (콰앙!)</color>");
+
+            // [VFX 2] 벽 충돌 폭발/충격파 이펙트 스폰 (벽면 안쪽을 향하도록 회전)
+            Quaternion wallRot = Quaternion.Euler(0f, 0f, _chargeDirection > 0f ? 180f : 0f);
+            SpawnVfx(wallImpactVfxPrefab, OwnerBoss.transform.position, wallRot);
 
             // [Step 4-A] 벽면 극단적 가로 압착 (Squash & Stretch Fast-In / Elastic-Out)
             UniTask squashTask = UniTask.CompletedTask;
@@ -386,6 +433,20 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
+        private void SpawnFireTrailHazard(Vector3 position)
+        {
+            if (fireTrailHazardPrefab != null)
+            {
+                Instantiate(fireTrailHazardPrefab, position, Quaternion.identity);
+            }
+            else
+            {
+                var go = new GameObject("FireTrailHazard_Runtime");
+                go.transform.position = position;
+                go.AddComponent<JunkWheelerFireTrailHazard>();
+            }
+        }
+
         private async UniTaskVoid TransitToChargeRunAsync()
         {
             // Boss_Charge_Release 클립 길이(3프레임 @15fps = 0.2초) 이후 주행 루프로 전이
@@ -403,8 +464,9 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (OwnerBoss == null) return false;
 
+            // [판정 분리]: VFX 크기와 무관하게 원본 고정 반경(chargeCollisionRadius)만 검사
             Vector2 center = OwnerBoss.transform.position;
-            Collider2D[] hits = Physics2D.OverlapCircleAll(center, 1.2f);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, Mathf.Max(0.1f, chargeCollisionRadius));
 
             foreach (var hit in hits)
             {
@@ -440,6 +502,8 @@ namespace RealSteel.Boss.JunkWheeler
                 if (!_hasHitPlayer && hit.CompareTag("Player"))
                 {
                     _hasHitPlayer = true;
+                    // [VFX 3] 플레이어 피격 히트 이펙트 스폰
+                    SpawnVfx(playerHitVfxPrefab, hit.transform.position);
                     ApplyDamageToPlayer(hit.gameObject);
                 }
             }
@@ -509,7 +573,7 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (_playerTransform == null || OwnerBoss == null) return false;
             Vector2 center = OwnerBoss.transform.position;
-            Collider2D[] hits = Physics2D.OverlapCircleAll(center, 1.2f);
+            Collider2D[] hits = Physics2D.OverlapCircleAll(center, Mathf.Max(0.1f, chargeCollisionRadius));
             foreach (var hit in hits)
             {
                 if (hit.CompareTag("Player")) return true;
@@ -585,5 +649,14 @@ namespace RealSteel.Boss.JunkWheeler
                 _spriteRenderer.color = _originalColor;
             }
         }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            // 돌진 충돌 피격 판정 범위 (기획 고정 반경)
+            Gizmos.color = new Color(1f, 0.5f, 0f, 0.75f);
+            Gizmos.DrawWireSphere(transform.position, chargeCollisionRadius);
+        }
+#endif
     }
 }

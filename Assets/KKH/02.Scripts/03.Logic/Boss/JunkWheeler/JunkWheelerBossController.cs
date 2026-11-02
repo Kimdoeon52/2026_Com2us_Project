@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using RealSteel.Boss.Core;
 
@@ -6,10 +6,10 @@ namespace RealSteel.Boss.JunkWheeler
 {
     /// <summary>
     /// [지역 1 보스 "정크 휠러" 구체 컨트롤러 (JunkWheelerBossController)]
-    /// 기획서 §6.18 및 §3.2 (1), §5.1:
+    /// 기획서 §6.18, §6.10.4 및 §3.2 (1), §5.1:
     /// 1. BossController를 상속하여 기존 도구(BossFSMTester, BattleManager) 및 씬 직렬화 100% 호환 보장.
     /// 2. 폐타이어 부위 기믹, 돌진 기믹, 탄막 기믹, 3단 내려찍기 기믹, 회전 톱날 당구 돌진 기믹을 컴포지션(Composition)으로 조립/제어.
-    /// 3. 정크 휠러 스프라이트 반전(FaceDirection) 및 페이즈 전환(2페이즈 엔진 과열/불꽃) 연출 담당.
+    /// 3. 난이도 레이어 시스템에 따른 필드 기믹(못판/Spike, 폭발상자) 수 활성화 제어 및 2페이즈 엔진 과열 불꽃 연출 담당.
     /// </summary>
     public class JunkWheelerBossController : BossController
     {
@@ -59,6 +59,11 @@ namespace RealSteel.Boss.JunkWheeler
 #endif
         }
 
+        protected override void AutoWireSceneSystems()
+        {
+            base.AutoWireSceneSystems();
+        }
+
         protected override void RegisterGimmicks()
         {
             // 1. 타이어 부위 기믹 탐색 및 부착
@@ -77,9 +82,35 @@ namespace RealSteel.Boss.JunkWheeler
             RegisterGimmick(barragePatternGimmick);
             RegisterGimmick(slamPatternGimmick);
             RegisterGimmick(ricochetBladePatternGimmick);
+        }
 
-            // 3. 기타 씬 내 추가 기믹(전장 기물 등) 자동 등록
-            base.RegisterGimmicks();
+        protected override void ApplyDifficultyToGimmicks()
+        {
+            base.ApplyDifficultyToGimmicks();
+            if (Snapshot == null) return;
+
+            // 기획서 §6.10.4: 활성 필드 기믹 수 제한 (아주쉬움: 0~1, 쉬움: 1, 보통: 2, 어려움: 3, 헬: 4)
+            int maxGimmicks = Snapshot.maxActiveGimmicks;
+            var sceneGimmicks = FindObjectsByType<BossFieldGimmickBase>(FindObjectsSortMode.None);
+            if (sceneGimmicks != null && sceneGimmicks.Length > 0)
+            {
+                // 못판(NailBoard)이 우선적으로 켜지도록 정렬
+                Array.Sort(sceneGimmicks, (a, b) =>
+                {
+                    bool aIsNail = a is NailBoardFieldGimmick;
+                    bool bIsNail = b is NailBoardFieldGimmick;
+                    if (aIsNail && !bIsNail) return -1;
+                    if (!aIsNail && bIsNail) return 1;
+                    return 0;
+                });
+
+                for (int i = 0; i < sceneGimmicks.Length; i++)
+                {
+                    bool enable = i < maxGimmicks;
+                    sceneGimmicks[i].gameObject.SetActive(enable);
+                }
+                Debug.Log($"<color=cyan>[JunkWheelerBossController] 필드 기믹 수 조정: {Mathf.Min(sceneGimmicks.Length, maxGimmicks)} / {sceneGimmicks.Length}개 활성화 (난이도: {Snapshot.difficulty})</color>");
+            }
         }
 
         private T GetOrAddComponent<T>() where T : Component
@@ -145,8 +176,6 @@ namespace RealSteel.Boss.JunkWheeler
             base.OnBossInitialized();
             Debug.Log("<color=green>[JunkWheelerBossController] 정크 휠러 초기화 완료! 엔진 가동 시작!</color>");
         }
-
-        // 좌우 반전은 BossControllerBase.FaceDirection 단일 경로로 통일 (역부호 중복 선언 제거)
 
         protected override void OnPhaseChanged(int prevPhase, int newPhase)
         {

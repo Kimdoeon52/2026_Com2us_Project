@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -45,6 +45,14 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private Vector2 landSquashScale = new Vector2(1.40f, 0.55f);
         [SerializeField] private float squashFastInDuration = 0.04f;
         [SerializeField] private float restoreElasticDuration = 0.25f;
+
+        [Header("시각 효과(VFX) 프리팹 (인스펙터 할당)")]
+        [Tooltip("탄환 발사 시 머즐 플래시 VFX (예: FX_Flipbook_FlashShotB, FX_Flipbook_Gun)")]
+        [SerializeField] private GameObject muzzleFlashVfxPrefab;
+        [Tooltip("탄환 착탄/충돌 시 폭발 VFX (예: FX_Flipbook_Blast, FX_Flipbook_BombExp)")]
+        [SerializeField] private GameObject bulletHitVfxPrefab;
+        [Tooltip("탄막 후 지면 착지 충격파 VFX (예: FX_Flipbook_Blast_Ground, FX_Flipbook_GroundShock)")]
+        [SerializeField] private GameObject landImpactVfxPrefab;
 
         private Tweener _bossMoveTween;
         private Tweener _bossPunchTween;
@@ -167,6 +175,9 @@ namespace RealSteel.Boss.JunkWheeler
             _bossMoveTween = OwnerBoss.transform.DOMove(landPos, landDuration).SetEase(Ease.InQuad);
             await _bossMoveTween.ToUniTask(cancellationToken: token);
 
+            // [VFX 3] 지면 착지 충격파 스폰
+            SpawnVfx(landImpactVfxPrefab, landPos);
+
             // 5단계: 착지 충격 연출 및 Idle 복귀
             if (OwnerBoss.Animation != null)
             {
@@ -221,6 +232,10 @@ namespace RealSteel.Boss.JunkWheeler
             float rad = angleDeg * Mathf.Deg2Rad;
             Vector3 dir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f).normalized;
 
+            // [VFX 1] 탄환 발사 머즐 플래시 스폰
+            Quaternion muzzleRot = Quaternion.Euler(0f, 0f, angleDeg);
+            SpawnVfx(muzzleFlashVfxPrefab, originPos, muzzleRot);
+
             GameObject bullet;
             if (bulletPrefab != null)
             {
@@ -244,9 +259,9 @@ namespace RealSteel.Boss.JunkWheeler
                 fallbackRb2d.gravityScale = 0f;
             }
 
-            // 탄환 히트 트리거 부착
+            // 탄환 히트 트리거 부착 및 착탄 VFX 전달
             var trigger = bullet.AddComponent<BossBulletHitTrigger>();
-            trigger.Initialize(this);
+            trigger.Initialize(this, bulletHitVfxPrefab);
 
             float rotAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             bullet.transform.rotation = Quaternion.Euler(0f, 0f, rotAngle);
@@ -309,11 +324,13 @@ namespace RealSteel.Boss.JunkWheeler
     public class BossBulletHitTrigger : MonoBehaviour
     {
         private JunkWheelerBarragePatternGimmick _ownerPattern;
+        private GameObject _hitVfxPrefab;
         private bool _hasHit = false;
 
-        public void Initialize(JunkWheelerBarragePatternGimmick pattern)
+        public void Initialize(JunkWheelerBarragePatternGimmick pattern, GameObject hitVfxPrefab)
         {
             _ownerPattern = pattern;
+            _hitVfxPrefab = hitVfxPrefab;
         }
 
         private void OnTriggerEnter2D(Collider2D collision)
@@ -323,12 +340,14 @@ namespace RealSteel.Boss.JunkWheeler
             if (collision.CompareTag("Player"))
             {
                 _hasHit = true;
+                if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
                 _ownerPattern.ApplyDamageToPlayer(collision.gameObject);
                 Destroy(gameObject);
             }
             else if (collision.CompareTag("Wall") || collision.CompareTag("Ground"))
             {
                 _hasHit = true;
+                if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
                 Destroy(gameObject);
             }
         }

@@ -10,6 +10,9 @@ using UnityEngine;
 public class BattleSettlementResult
 {
     public bool PlayerWon;
+    public BossDifficulty SelectedDifficulty = BossDifficulty.Normal;
+    public int RankingScoreGained;
+    public int EntryFeePaid;
     public int GoldDelta;
     public List<string> DestroyedPartIDs = new List<string>();
     public Dictionary<string, int> FinalPartDurabilities = new Dictionary<string, int>(); // [YJW 연동] 부품별 최종 잔여 내구도
@@ -20,7 +23,9 @@ public class BattleSettlementResult
 
 /// <summary>
 /// [하드코어 승패 정산기 (BattleSettlementProcessor)]
-/// 전투 종료 시 승패 규칙에 따라 긴급 복구, 영구 파괴 롤링 및 외부 파트로 데이터를 브로드캐스팅하는 정산기임.
+/// 기획서 §6.10.5 및 §6.6:
+/// 전투 종료 시 난이도별 보스 토벌 규칙(점수, 처치 골드, 신청비, 코어 EXP 배율, 파괴 확률 감쇄/증폭, 코어 불안정 여부) 및
+/// 일반전 정산 규칙에 따라 긴급 복구, 영구 파괴 롤링 및 외부 파트로 데이터를 브로드캐스팅하는 정산기임.
 /// </summary>
 public static class BattleSettlementProcessor
 {
@@ -43,8 +48,8 @@ public static class BattleSettlementProcessor
     /// 기획서 §6.5.6 경험치 획득 공식:
     /// 획득 EXP = 지역 기준가 * 0.2 * 경기 배율 * 레벨차 보정 (패배 시 20% 위로금)
     /// </summary>
-    public static int CalculateGainedEXP
-    (int regionBasePrice, float matchMultiplier = 1.0f, float levelDiffMultiplier = 1.0f, bool isWin = true)
+    public static int CalculateGainedEXP(
+        int regionBasePrice, float matchMultiplier = 1.0f, float levelDiffMultiplier = 1.0f, bool isWin = true)
     {
         float baseExp = regionBasePrice * 0.2f * matchMultiplier * levelDiffMultiplier;
         return isWin ? Mathf.RoundToInt(baseExp) : Mathf.RoundToInt(baseExp * 0.2f);
@@ -115,7 +120,7 @@ public static class BattleSettlementProcessor
     }
 
     /// <summary>
-    /// 기획서 공식: 등급별 영구 파괴 확률 반환함
+    /// 기획서 공식: 등급별 기본 영구 파괴 확률 반환함
     /// 일반(70%), 레어(45%), 에픽(20%), 전설(5%), 프로토타입(1%)
     /// </summary>
     public static float GetDestructionProbability(PartGrade grade)
@@ -145,116 +150,214 @@ public static class BattleSettlementProcessor
         CombatantSnapshot player,
         CombatantSnapshot enemy,
         int betGold = 0,
-        int regionBasePrice = 1000, //(500G ~ 3000G)
+        int regionBasePrice = 500, // 레이스 1 기본가: 500G
         CoreMasterData coreMaster = null,
         Dictionary<string, PartMasterData> partMasterLookup = null,
-        BossMasterData bossMaster = null)
+        BossMasterData bossMaster = null,
+        BossDifficulty difficulty = BossDifficulty.Normal)
     {
         var result = new BattleSettlementResult
         {
-            PlayerWon = playerWon
+            PlayerWon = playerWon,
+            SelectedDifficulty = difficulty
         };
 
-        if (playerWon)
+        // ====================================================================
+        // 1. 보스전 특화 정산 분기 (기획서 §6.10.5 난이도 레이어 테이블 적용)
+        // ====================================================================
+        if (bossMaster != null)
         {
-            // ────────────────────────────────────────────────────────────────
-            // [승리 시 정산]
-            // 1. 일반전: 판돈 2배 지급 / 보스전: 보스 토벌 고정 보상(rewardGold) 지급
-            // 2. 코어 EXP 획득 (보스전은 rewardCoreExp 우선 적용)
-            // 3. 파손된(내구도 0) 부품은 긴급 응급복구 (내구도 1로 복구함)
-            // ────────────────────────────────────────────────────────────────
-            result.GoldDelta = (bossMaster != null && bossMaster.rewardGold > 0) ? bossMaster.rewardGold : betGold * 2;
-            result.CoreExpGained = (bossMaster != null && bossMaster.rewardCoreExp > 0)
-                ? bossMaster.rewardCoreExp
-                : CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
-            result.CoreUnstable = false;
-            if (coreMaster != null)
-            {
-                ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-            }
+            var layer = bossMaster.GetDifficultyLayer(difficulty);
+            int basePrice = bossMaster.regionBasePrice > 0 ? bossMaster.regionBasePrice : GetRegionBasePrice(bossMaster.regionIndex);
+            int levelCap = bossMaster.regionLevelCap > 0 ? bossMaster.regionLevelCap : 10;
+            int playerLevel = player != null ? player.coreLevel : 1;
+            float levelDiffMultiplier = GetLevelDiffMultiplier(playerLevel, levelCap);
 
-            // 코어 경험치 반영 및 레벨업 처리
-            if (player != null)
+            int entryFee = Mathf.RoundToInt(basePrice * layer.entryFeeMultiplier);
+            result.EntryFeePaid = entryFee;
+
+            if (playerWon)
             {
-                foreach (var kvp in player.partStates)
+                // [승리 시]
+                // 1. 랭킹 점수 획득 (10, 30, 80, 200, 500점)
+                // 2. 처치 골드 획득 (50G, 125G, 250G, 450G, 750G)
+                // 3. 코어 EXP 획득 (50, 80, 120, 180, 300 EXP * 레벨차 보정)
+                // 4. 코어 불안정 없음
+                // 5. 파손 부품 긴급 응급복구 (내구도 1)
+                result.RankingScoreGained = layer.rankingScore;
+                result.GoldDelta = Mathf.RoundToInt(basePrice * layer.killGoldMultiplier);
+                result.CoreExpGained = CalculateGainedEXP(basePrice, layer.coreExpMultiplier, levelDiffMultiplier, isWin: true);
+                result.CoreUnstable = false;
+
+                if (coreMaster != null)
                 {
-                    var partState = kvp.Value;
-                    if (partState.isBroken)
-                    {
-                        partState.Repair(1);
-                        Debug.Log($"[정산기] 승리 응급복구 완료: {kvp.Key} (ID: {partState.partID}) 내구도 1로 복구됨");
-                    }
-                    result.FinalPartDurabilities[partState.partID] = partState.currentDurability;
+                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
                 }
-            }
 
-            result.SummaryMessage = $"전투 승리! 판돈 {result.GoldDelta}G 획득 및 코어 EXP {result.CoreExpGained} 누적됨";
+                if (player != null)
+                {
+                    foreach (var kvp in player.partStates)
+                    {
+                        var partState = kvp.Value;
+                        if (partState.isBroken)
+                        {
+                            partState.Repair(1);
+                            Debug.Log($"[정산기] 승리 응급복구 완료: {kvp.Key} (ID: {partState.partID}) 내구도 1로 복구됨");
+                        }
+                        result.FinalPartDurabilities[partState.partID] = partState.currentDurability;
+                    }
+                }
+
+                result.SummaryMessage = $"[보스 토벌 성공! ({difficulty})] 랭킹 점수 +{result.RankingScoreGained}점, 처치 골드 +{result.GoldDelta}G, 코어 EXP +{result.CoreExpGained} (레벨차 보정: {levelDiffMultiplier}x)";
+            }
+            else
+            {
+                // [패배 시]
+                // 1. 랭킹 점수 0점
+                // 2. 신청비 몰수 (반환 없음)
+                // 3. 위로 코어 EXP (승리 EXP의 20%: 10, 16, 24, 36, 60 EXP)
+                // 4. 코어 불안정: 아주쉬움/쉬움은 false, 보통 이상은 true
+                // 5. 부품 파괴: 아주쉬움은 내구도 0만 (파괴 판정 없음 0%), 쉬움 0.5x, 보통/어려움 1.0x, 헬 1.3x
+                result.RankingScoreGained = 0;
+                result.GoldDelta = -entryFee;
+                result.CoreExpGained = CalculateGainedEXP(basePrice, layer.coreExpMultiplier, levelDiffMultiplier, isWin: false);
+                result.CoreUnstable = layer.coreUnstableOnLoss;
+
+                if (coreMaster != null)
+                {
+                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+                }
+
+                if (player != null)
+                {
+                    foreach (var kvp in player.partStates)
+                    {
+                        var partState = kvp.Value;
+                        if (partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
+                        {
+                            Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
+                            continue;
+                        }
+
+                        partState.currentDurability = 0; // 전 부품 내구도 0 강제 세팅
+                        result.FinalPartDurabilities[partState.partID] = 0;
+
+                        // 기획서 §6.10.5: 아주 쉬움은 파괴 판정 없음!
+                        if (layer.destructionMultiplier <= 0f)
+                        {
+                            Debug.Log($"[정산기] [아주 쉬움 난이도] 부품 파괴 면제: {kvp.Key} (내구도 0만 적용)");
+                            continue;
+                        }
+
+                        // 등급별 파괴 확률 롤링 (난이도 파괴 배율 적용)
+                        PartGrade grade = PartGrade.Common;
+                        if (partMasterLookup != null && partMasterLookup.TryGetValue(partState.partID, out var masterData))
+                        {
+                            grade = masterData.partGrade;
+                        }
+                        else if (InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null)
+                        {
+                            PartsDefinition definition = InventoryHost.Instance.Catalog.Find(partState.partID);
+                            if (definition != null)
+                                grade = definition.Grade;
+                        }
+
+                        float baseChance = GetDestructionProbability(grade);
+                        float finalChance = Mathf.Clamp01(baseChance * layer.destructionMultiplier);
+                        float roll = UnityEngine.Random.value;
+
+                        if (roll < finalChance)
+                        {
+                            result.DestroyedPartIDs.Add(partState.partID);
+                            Debug.Log($"[정산기] 부품 영구 파괴됨: {kvp.Key} (ID: {partState.partID}, 등급: {grade}, 확률: {finalChance:P0}, 롤: {roll:F2})");
+                        }
+                        else
+                        {
+                            Debug.Log($"[정산기] 부품 파괴 면제(보존됨): {kvp.Key} (ID: {partState.partID}, 등급: {grade})");
+                        }
+                    }
+                }
+
+                result.SummaryMessage = $"[보스 토벌 실패 ({difficulty})] 신청비 {entryFee}G 몰수, 코어 불안정: {result.CoreUnstable}, 파괴된 부품: {result.DestroyedPartIDs.Count}개, 위로 EXP: {result.CoreExpGained}";
+            }
         }
         else
         {
-            // ────────────────────────────────────────────────────────────────
-            // [패배 시 정산]
-            // 1. 판돈 전액 몰수됨
-            // 2. 코어 Unstable(불안정) 전환됨 (수리 전까지 출격 불가함)
-            // 3. 모든 장착 파츠 내구도 0 강제 전환됨
-            // 4. 등급별 확률 롤링으로 영구 파괴(삭제) 목록 결정함
-            // ────────────────────────────────────────────────────────────────
-            result.GoldDelta = -betGold;
-            result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: false);
-            result.CoreUnstable = true;
-
-            if (coreMaster != null)
+            // ====================================================================
+            // 2. 일반 로봇 대전 정산 분기 (레거시/PVP 호환)
+            // ====================================================================
+            if (playerWon)
             {
-                ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-            }
+                result.GoldDelta = betGold * 2;
+                result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
+                result.CoreUnstable = false;
 
-            if (player != null)
-            {
-                foreach (var kvp in player.partStates)
+                if (coreMaster != null)
                 {
-                    var partState = kvp.Value;
-                    if (partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
-                    {
-                        Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
-                        continue;
-                    }
-                    partState.currentDurability = 0; // 전 부품 내구도 0 강제 세팅함
-                    result.FinalPartDurabilities[partState.partID] = 0;
+                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+                }
 
-                    // 등급별 영구 파괴 롤링함
-                    PartGrade grade = PartGrade.Common;
-                    if (partMasterLookup != null && partMasterLookup.TryGetValue(partState.partID, out var masterData))
+                if (player != null)
+                {
+                    foreach (var kvp in player.partStates)
                     {
-                        grade = masterData.partGrade;
-                    }
-                    else if (InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null)
-                    {
-                        // 마스터 데이터가 없는 인벤토리 파츠는 파츠 정의의 등급을 쓴다
-                        PartsDefinition definition = InventoryHost.Instance.Catalog.Find(partState.partID);
-                        if (definition != null)
-                            grade = definition.Grade;
-                    }
-
-                    float destroyChance = GetDestructionProbability(grade);
-                    float roll = UnityEngine.Random.value;
-
-                    if (roll < destroyChance)
-                    {
-                        result.DestroyedPartIDs.Add(partState.partID);
-                        Debug.Log($"[정산기] 부품 영구 파괴됨: {kvp.Key} (ID: {partState.partID}, 등급: {grade}, 확률: {destroyChance:P0}, 롤: {roll:F2})");
-                    }
-                    else
-                    {
-                        Debug.Log($"[정산기] 부품 파괴 면제(보존됨): {kvp.Key} (ID: {partState.partID}, 등급: {grade})");
+                        var partState = kvp.Value;
+                        if (partState.isBroken)
+                        {
+                            partState.Repair(1);
+                        }
+                        result.FinalPartDurabilities[partState.partID] = partState.currentDurability;
                     }
                 }
-            }
 
-            result.SummaryMessage = $"전투 패배! 판돈 몰수, 코어 손상(Unstable), 파괴된 부품: {result.DestroyedPartIDs.Count}개임";
+                result.SummaryMessage = $"일반전 승리! 판돈 {result.GoldDelta}G 획득 및 코어 EXP {result.CoreExpGained} 누적됨";
+            }
+            else
+            {
+                result.GoldDelta = -betGold;
+                result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: false);
+                result.CoreUnstable = true;
+
+                if (coreMaster != null)
+                {
+                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+                }
+
+                if (player != null)
+                {
+                    foreach (var kvp in player.partStates)
+                    {
+                        var partState = kvp.Value;
+                        if (partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase)) continue;
+
+                        partState.currentDurability = 0;
+                        result.FinalPartDurabilities[partState.partID] = 0;
+
+                        PartGrade grade = PartGrade.Common;
+                        if (partMasterLookup != null && partMasterLookup.TryGetValue(partState.partID, out var masterData))
+                        {
+                            grade = masterData.partGrade;
+                        }
+                        else if (InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null)
+                        {
+                            PartsDefinition definition = InventoryHost.Instance.Catalog.Find(partState.partID);
+                            if (definition != null) grade = definition.Grade;
+                        }
+
+                        float destroyChance = GetDestructionProbability(grade);
+                        if (UnityEngine.Random.value < destroyChance)
+                        {
+                            result.DestroyedPartIDs.Add(partState.partID);
+                        }
+                    }
+                }
+
+                result.SummaryMessage = $"일반전 패배! 판돈 몰수, 코어 손상(Unstable), 파괴된 부품: {result.DestroyedPartIDs.Count}개임";
+            }
         }
 
         // ====================================================================
-        // 외부 파트 브로드캐스팅 처리함
+        // 대외 브로드캐스팅 처리
         // ====================================================================
         OnSettlementCompleted?.Invoke(result);
 
@@ -266,10 +369,10 @@ public static class BattleSettlementProcessor
         OnGoldReward?.Invoke(result.GoldDelta);
         OnCoreStateChanged?.Invoke(result.CoreUnstable);
 
-        // LSH 골드 파트 GlobalGold 싱글톤 연동 (프로젝트 내에 존재할 경우 안전하게 반영함)
+        // LSH 골드 파트 GlobalGold 싱글톤 연동
         if (GlobalGold.Instance != null && result.GoldDelta != 0)
         {
-            const int playerId = 0; // GlobalGold 플레이어 ID (0번)
+            const int playerId = 0;
             if (result.GoldDelta > 0)
                 GlobalGold.Instance.GetGold(playerId, result.GoldDelta);
             else

@@ -37,7 +37,7 @@ public class KyodaiBossController : BossControllerBase
     public float ArenaMinX => arenaMinX;
     public float ArenaMaxX => arenaMaxX;
     public float ArenaWidth => arenaMaxX - arenaMinX;
-    public float GroundY => groundY;
+    public override float GroundY => groundY;
 
     private KyodaiLimb[] limbs;
 

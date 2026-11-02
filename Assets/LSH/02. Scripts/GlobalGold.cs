@@ -86,7 +86,7 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         //    AddGoldAllNpc(100);
         //}
         //// S: 수동 저장
-        if (Input.GetKeyDown(KeyCode.S))
+        if (Input.GetKeyDown(KeyCode.S) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
         {
             SaveGame();
         }

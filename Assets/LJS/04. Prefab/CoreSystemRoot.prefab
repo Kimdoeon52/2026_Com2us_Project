@@ -3586,7 +3586,6 @@ GameObject:
   m_Component:
   - component: {fileID: 3965338362146577369}
   - component: {fileID: 6668867757014758448}
-  - component: {fileID: 4960545356109007336}
   - component: {fileID: 1962705071211122878}
   m_Layer: 0
   m_Name: MapCamera
@@ -3661,14 +3660,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!81 &4960545356109007336
-AudioListener:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2641982749115529500}
-  m_Enabled: 1
 --- !u!114 &1962705071211122878
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
     [SerializeField] private Vector2 inventoryPosition = new Vector2(-581f, 0f);
 
     [SerializeField] private GameObject shopWindow;
+    [SerializeField] private GameObject fixWindow;
 
     private void Update()
     {
@@ -16,6 +17,8 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
             OpenCraftingWindow();
         if (Input.GetKeyDown(KeyCode.K))
             OpenShopWindow();
+        if (Input.GetKeyDown(KeyCode.L))
+            OpenFixWindow();
     }
 
     private void OpenCraftingWindow()
@@ -48,5 +51,15 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
     public void CloseShopWindow()
     {
         shopWindow.SetActive(false);
+    }
+
+    private void OpenFixWindow()
+    {
+        fixWindow.SetActive(true);
+    }
+
+    public void CloseFixWindow()
+    {
+        fixWindow.SetActive(false);
     }
 }

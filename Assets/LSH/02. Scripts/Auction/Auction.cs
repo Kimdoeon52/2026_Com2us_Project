@@ -261,6 +261,8 @@ public class Auction : Singleton<Auction>
     // 경매를 totalAuctionRounds번 연속 진행하고, 끝나면 다음 씬으로 이동
     private async UniTask RunAuctionSessionAsync()
     {
+        SettleConsignments(); // 플레이어 위탁품 판매 정산
+
         for (currentRound = 1; currentRound <= totalAuctionRounds; currentRound++)
         {
             if (!PrepareRound()) return; // 물품이 없으면 중단
@@ -271,6 +273,15 @@ public class Auction : Singleton<Auction>
 
         GlobalGold.Instance.AdvanceStage(stageData.StageCount); // 세션이 끝나면 다음 스테이지로
         MoveToNextScene(1000).Forget();
+    }
+
+    // 위탁 창에서 맡긴 파츠를 고정 낙찰가로 팔고 골드 지급
+    private void SettleConsignments()
+    {
+        foreach (ConsignedPart part in ConsignmentSettlement.Settle())
+        {
+            AppendConsoleLog($"[위탁 판매] {ConsignmentSettlement.NameOf(part)} 낙찰 +{part.Price}G");
+        }
     }
 
     // 현재 스테이지의 보스 명단 가져오기

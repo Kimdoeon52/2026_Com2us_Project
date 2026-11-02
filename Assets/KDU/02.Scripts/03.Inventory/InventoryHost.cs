@@ -339,8 +339,11 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return placed;
     }
 
-    // 인벤토리에서 해당 파츠 1개 제거. 없으면 false
-    public bool RemovePart(PartsDefinition definition)
+    // 세이브 데이터를 밖에서 고친 뒤 저장·화면 갱신을 요청한다
+    public void NotifyChanged() => Changed?.Invoke();
+
+    // 인벤토리에서 해당 파츠 1개 제거. 없으면 false. fullOnly면 내구도가 가득 찬 것만
+    public bool RemovePart(PartsDefinition definition, bool fullOnly = false)
     {
         if (_grid == null || definition == null)
             return false;
@@ -352,6 +355,9 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
                 continue;
 
             if (entry.Parts == null || entry.Parts.IsDestroyed)   // 파괴된 파츠는 판매 대상에서 제외
+                continue;
+
+            if (fullOnly && entry.Parts.LostDurability > 0)
                 continue;
 
             _grid.Remove(i);

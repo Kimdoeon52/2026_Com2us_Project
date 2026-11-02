@@ -11,12 +11,14 @@ public class InventorySaveData
     [SerializeField] private EquipmentSaveData _equipment = new EquipmentSaveData();
     [SerializeField] private CoreSaveData _core = new CoreSaveData();
     [SerializeField] private List<string> _wrecks = new List<string>();   // 패배로 파괴된 파츠 ID (잔해)
+    [SerializeField] private ConsignmentSaveData _consignment = new ConsignmentSaveData();
 
     public ComponentStock Components => _components;
     public List<PartsInstance> Parts => _parts;
     public EquipmentSaveData Equipment => _equipment;
     public CoreSaveData Core => _core;
     public List<string> Wrecks => _wrecks;
+    public ConsignmentSaveData Consignment => _consignment;
 
     public void CaptureFrom(InventoryGrid grid)
     {

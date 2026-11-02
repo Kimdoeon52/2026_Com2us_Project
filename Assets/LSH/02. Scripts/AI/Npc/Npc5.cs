@@ -14,7 +14,7 @@ public class Npc5 : NpcAiBase
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {
         if (IsGiveUp || data == null) return false;
-        int NextPrice = actionPrise + 100;
+        int NextPrice = actionPrise + 10;
         if (NextPrice > data.npcGold * actionRate || Auction.Instance.stuffGrade == PartGrade.Common)
         {
             IsGiveUp = true;

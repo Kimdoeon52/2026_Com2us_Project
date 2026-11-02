@@ -19,9 +19,10 @@ public class BossAiBase : AllAiBase
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
     public override int NPCID => data != null ? data.mainCharacterID : -1;
-    public override float SkillChance { get; set; } = 0.2f; // 보스는 스킬 발동 확률 높게 (기본값 20%)
     //public override bool IsGiveUp { get; set; } = false;
 
+    protected virtual int SkillCount { get; set; } = 0; //스킬 사용 횟수
+    protected virtual float SkillChance { get; set; } = 50f; //스킬 사용 확률
     public static event Func<string, string, Sprite, Sprite, Color, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 
     [Header("컷씬 배너 이미지")]
@@ -29,19 +30,18 @@ public class BossAiBase : AllAiBase
     [SerializeField] private Color cutsceneBGcolor; //컷씬 백그라운드 색상
     [SerializeField] private Sprite cutsceneCharacter; //배너 캐릭터 모습
 
-    [SerializeField] public int bigRaiseGold = 1000; //큰 레이즈가 생기면 얼마를 올릴 것인지.
-
-    [SerializeField] private int bigRaisetimes = 1; // 횟수
+    [SerializeField] private int RaiseThinkRatio = 3; 
     //================================기본 세팅=================================
     public override void Start()
     {
         base.Start();
+        RaiseThinkRatio = UnityEngine.Random.Range(3, 6); //가격의 3배~5배까지 올릴 수 있음
     }
 
     public override void ReadyForAction()
     {
         IsGiveUp = false;
-        RaiseGold = 100;
+        RaiseGold = 10;
     }
 
     //==================================판단===================================
@@ -49,13 +49,18 @@ public class BossAiBase : AllAiBase
     { //현재는 단순히 골드보유로만
         if (IsGiveUp || data == null) return false;
 
-        foreach(PartGrade myparts in data.parts)
+        foreach(PartGrade myparts in data.parts) // 기본적으로 장착한 부품 등급보다 낮은 등급의 아이템이 나오면 포기하도록 설정
         {
             if(myparts > stuffGrade)
             {
                 IsGiveUp = true;
                 return false;
             }
+        }
+        if(Auction.Instance.CurrentCost > Auction.Instance.stuff.Cost * RaiseThinkRatio)
+        {
+            IsGiveUp = true;
+            return false;
         }
         int NextPrice = actionPrise + RaiseGold;
 
@@ -78,12 +83,11 @@ public class BossAiBase : AllAiBase
     }
     public virtual bool IsBigRaiseThink(int currentPrice, int baseCost) //큰레이즈 조건 판단
     {
-        if (!GlobalGold.Instance.CanUseGold(NPCID, currentPrice + bigRaiseGold) || bigRaisetimes < 1) //체크한번 해주고
+        if (!GlobalGold.Instance.CanUseGold(NPCID, currentPrice) || SkillCount < 1) //체크한번 해주고
         {
             return false;
         }
-        bigRaisetimes--;
-        return currentPrice >= (int)(baseCost * 1.5f);
+        return CanUseSkill();
     }
     public virtual async UniTask TriggerCutscene(string bossName, string skill)
     {
@@ -100,12 +104,20 @@ public class BossAiBase : AllAiBase
 
     //============================= 큰 레이즈가 생기면 얼마를 올릴 것인지, 보스 맨트 ==========================
 
-    public virtual int BigRaiseGold() //큰 레이즈가 생기면 얼마를 올릴 것인지.
-    {
-        return bigRaiseGold;
-    }
     public virtual string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
     {
         return "고작 이정도야? 크게 걸어보자고.";
+    }
+
+    //=========================보스 스킬 확률 및 횟수 설정 함수===================
+    protected virtual void SetSkillChance(float chance, int count)
+    {
+        SkillChance = chance;
+        SkillCount = count;
+    }
+    protected virtual bool CanUseSkill()
+    {
+         bool canUseSkill = UnityEngine.Random.value < SkillChance;
+         return canUseSkill && SkillCount > 0;
     }
 }

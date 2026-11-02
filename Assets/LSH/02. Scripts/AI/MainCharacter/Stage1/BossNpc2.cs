@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+// 다른 한명을 강제로 포기하게 만드는 능력. 1회 (확률형)
 public class BossNpc2 : BossAiBase
 {
     [Range(0.1f, 1f)]
@@ -10,7 +11,8 @@ public class BossNpc2 : BossAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 300;
+        SetSkillChance(10, 1); //10% 확률로 스킬 발동, 1회만 발동
+        RaiseGold = 10;
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {

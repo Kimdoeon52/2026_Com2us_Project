@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// 경매시간을 반으로 줄이는 능력 1회 (확률형)
 public class BossNpc3 : BossAiBase
 {
     [Range(0.1f, 1f)]
@@ -9,7 +10,8 @@ public class BossNpc3 : BossAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 400;
+        SetSkillChance(30, 1); //30% 확률로 스킬 발동, 1회만 발동
+        RaiseGold = 5;
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {
@@ -18,9 +20,10 @@ public class BossNpc3 : BossAiBase
     public override bool IsBigRaiseThink(int currentPrice, int baseCost)
     {
         return base.IsBigRaiseThink(currentPrice, baseCost);
-    }// Start is called once before the first execution of Update after the MonoBehaviour is created
+    }
     public override void UseBigSkill(Auction manager)
     {
+        SkillCount--;
         manager.RemainingTime /= 2; //시간을 절반으로
     }
     public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트

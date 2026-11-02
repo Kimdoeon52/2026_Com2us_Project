@@ -5,7 +5,7 @@ public class Npc2: NpcAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 150; // 초기 레이즈 금액 설정
+        RaiseGold = 15; // 초기 레이즈 금액 설정
     }
     
 }

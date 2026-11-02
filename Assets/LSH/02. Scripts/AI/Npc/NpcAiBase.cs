@@ -23,7 +23,7 @@ public class NpcAiBase : AllAiBase
     public override void ReadyForAction()
     {
         IsGiveUp = false;
-        RaiseGold = 100;
+        RaiseGold = 10;
         ResetThinkBubble();
     }
 

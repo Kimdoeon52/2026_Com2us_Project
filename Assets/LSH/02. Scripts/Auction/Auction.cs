@@ -132,7 +132,7 @@ public class Auction : Singleton<Auction>
     public int WinnerID { get; set; } = -1; //승자 ID를 저장할 변수
     public bool IfPlayerWin { get; set; } = false; //플레이어가 이겼는지 체크하는 변수
 
-    private PartsDefinition stuff; //현재 경매 물품을 저장할 용도
+    public PartsDefinition stuff; //현재 경매 물품을 저장할 용도
     public PartGrade stuffGrade; //경매 물품 등급을 저장할 용도
     private Vector2 errorMessagePos; //에러 메시지가 나올 초기 위치
     private bool isPlayerGiveUp = false; //플레이가 포기했는지 체크하는 용도
@@ -145,7 +145,7 @@ public class Auction : Singleton<Auction>
 
     //======================슬롯 이미지=====================
     [Header("플레이어 및 NPC 슬롯")]
-    [SerializeField] private Image[] npcs;
+    [SerializeField] public Image[] npcs;
     [SerializeField] private Image playerImage;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
@@ -668,7 +668,7 @@ public class Auction : Singleton<Auction>
             return;
         }
         Debug.Log($"[비교 확인] WinnerID: '{WinnerID}' / PlayerID: '{GlobalGold.Instance.mainCharacterdata[0].mainCharacterID}'");
-        int needGold = CurrentCost + 100;
+        int needGold = CurrentCost + 15;
         if (GlobalGold.Instance.CanUseGold(GlobalGold.Instance.mainCharacterdata[0].mainCharacterID, needGold))
         {
             CurrentCost = needGold;
@@ -832,7 +832,7 @@ public class Auction : Singleton<Auction>
         }
     }
 
-    private void SetImageAlpha(Image image, float alpha)
+    public void SetImageAlpha(Image image, float alpha)
     {
         Color color = image.color;
         color.a = alpha;

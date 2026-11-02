@@ -1,5 +1,6 @@
 using UnityEngine;
 
+// 경매 아이템이 안보이는 능력 1회 (시작 확률형)
 public class BossNpc4 : BossAiBase
 {
     [Range(0.1f, 1f)]
@@ -9,7 +10,8 @@ public class BossNpc4 : BossAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 400;
+        SetSkillChance(40, 1);//40% 확률로 스킬 발동, 1회만 발동
+        RaiseGold = 10;
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {

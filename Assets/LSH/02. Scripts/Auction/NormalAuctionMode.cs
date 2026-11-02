@@ -102,6 +102,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             else
             {
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
+                
                 manager.SetChat($"{ai.NPCName} 님이 입찰을 포기했습니다.");
             }
 

@@ -9,7 +9,8 @@ public class BossNpc5 : BossAiBase
     public override void Start()
     {
         base.Start();
-        RaiseGold = 400;
+        SetSkillChance(40, 1);//40% 확률로 스킬 발동, 1회만 발동
+        RaiseGold = 10;
     }
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
     {

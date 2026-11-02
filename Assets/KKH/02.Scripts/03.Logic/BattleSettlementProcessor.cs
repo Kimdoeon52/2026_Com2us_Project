@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -79,12 +79,12 @@ public static class BattleSettlementProcessor
         }
     }
 
-/// <summary>
-/// 코어 경험치 누적 및 레벨업 처리 (최대 30레벨)
-/// </summary> 
-public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreMasterData coreMaster)
+    /// <summary>
+    /// 코어 경험치 누적 및 레벨업 처리 (최대 30레벨)
+    /// </summary> 
+    public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreMasterData coreMaster)
     {
-        if(player ==  null || coreMaster == null)
+        if (player == null || coreMaster == null)
         {
             Debug.LogError("[정산기] 코어 경험치 처리 실패: player 또는 coreMaster가 null임");
             return;
@@ -112,7 +112,6 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
                 reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
             }
         }
-
     }
 
     /// <summary>
@@ -174,7 +173,6 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
                 ProcessCoreExp(player, result.CoreExpGained, coreMaster);
             }
 
-
             // 코어 경험치 반영 및 레벨업 처리
             if (player != null)
             {
@@ -215,9 +213,9 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
                 foreach (var kvp in player.partStates)
                 {
                     var partState = kvp.Value;
-                    if(partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
+                    if (partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
                     {
-                         Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
+                        Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
                         continue;
                     }
                     partState.currentDurability = 0; // 전 부품 내구도 0 강제 세팅함
@@ -264,10 +262,11 @@ public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreM
         // LSH 골드 파트 GlobalGold 싱글톤 연동 (프로젝트 내에 존재할 경우 안전하게 반영함)
         if (GlobalGold.Instance != null && result.GoldDelta != 0)
         {
+            const int playerId = 0; // GlobalGold 플레이어 ID (0번)
             if (result.GoldDelta > 0)
-                GlobalGold.Instance.GetGold("골드 정산", result.GoldDelta);
+                GlobalGold.Instance.GetGold(playerId, result.GoldDelta);
             else
-                GlobalGold.Instance.UseGold("골드 정산", Mathf.Abs(result.GoldDelta));
+                GlobalGold.Instance.UseGold(playerId, Mathf.Abs(result.GoldDelta));
         }
 
         return result;

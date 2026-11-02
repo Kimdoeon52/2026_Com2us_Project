@@ -10,6 +10,8 @@ public class ShopSlot : MonoBehaviour
     [SerializeField] private Image _icon;
     [SerializeField] private TextMeshProUGUI _cost;
     [SerializeField] private Image buttonBG;
+    [SerializeField] private Color canSellColor = Color.yellow;
+    [SerializeField] private Color cannotSellColor = Color.white;
     private PartsDefinition _part;
     private int Gold;
 
@@ -66,8 +68,8 @@ public class ShopSlot : MonoBehaviour
 
     private void CanSell()
     {
-        if (hasPart(_part) == true) buttonBG.color = Color.yellow;
-        else buttonBG.color = Color.white;
+        if (hasPart(_part) == true) buttonBG.color = canSellColor;
+        else buttonBG.color = cannotSellColor;
     }
 
     public void OnSellButton()

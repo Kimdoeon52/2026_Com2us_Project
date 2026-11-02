@@ -29,7 +29,7 @@ public static class FixWindowBuilder
     private static readonly Color Neutral = Hex("B4B9C0");
     private static readonly Color Ink = Hex("1A1B1D");
 
-    private static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
+    internal static readonly Dictionary<string, Sprite> Sprites = new Dictionary<string, Sprite>();
     private static TMP_FontAsset _font;
 
     [MenuItem("Tools/YJW/FixWindow 수리·복구 화면 배치")]
@@ -103,7 +103,7 @@ public static class FixWindowBuilder
 
     //================================ 스프라이트 준비 ================================
     // 쓰는 파일만 Single + 9-slice로 임포트한다. 경계값은 PNG 픽셀을 재서 정했다
-    private static string PrepareSprites()
+    internal static string PrepareSprites()
     {
         var table = new Dictionary<string, Vector4>();
 
@@ -118,7 +118,8 @@ public static class FixWindowBuilder
         AddStates(table, "BG/Button/statusButton/bg_statusButton_warning", 6, 16, "enabled");
         AddStates(table, "BG/Button/statusButton/bg_statusButton_neutral", 6, 16, "enabled");
         AddStates(table, "BG/Button/iconButton/bg_iconButton_v1_sm", 20, 20, "enabled", "hover", "pressed");
-        AddStates(table, "BG/Button/iconButton/bg_iconButton_v1_lg", 20, 20, "disabled");
+        AddStates(table, "BG/Button/iconButton/bg_iconButton_v1_lg", 20, 20, "enabled", "disabled");
+        AddStates(table, "BG/Button/picker/bg_picker", 24, 24, "populated");
 
         table["BG/Panel/bg_panelLarge"] = Uniform(6);
         table["BG/Panel/bg_panelSmall"] = Uniform(90);
@@ -134,7 +135,7 @@ public static class FixWindowBuilder
         table["Frame/Panel/panelMedium/frame_panelMedium_v8"] = new Vector4(220, 216, 220, 216);
         table["Frame/Panel/panelMedium/frame_panelMedium_v9"] = new Vector4(282, 267, 282, 267);
 
-        foreach (string icon in new[] { "ic_done", "ic_center_focus_strong", "ic_notifications_none", "ic_cancel", "ic_delete_outline" })
+        foreach (string icon in new[] { "ic_done", "ic_center_focus_strong", "ic_notifications_none", "ic_cancel", "ic_delete_outline", "ic_keyboard_arrow_down" })
             table[$"Icon/Material/{icon}"] = Vector4.zero;
         foreach (string icon in new[] { "ic_status_cool", "ic_status_warm", "ic_status_hot" })
             table[$"Icon/Status/{icon}"] = Vector4.zero;

@@ -36,6 +36,14 @@ public class KyodaiBossController : BossControllerBase
     [Tooltip("그로기 클립에서 쓰러진 자세가 끝나는 시각(초, 클립 키 기준) — 그로기가 길면 여기서 멈춰 있고, 풀리면 여기서부터 일어난다")]
     [SerializeField] private float groggyHoldEnd = 4.1833f;
 
+    [Tooltip("남은 HP 비율이 이 값 이하로 처음 내려갈 때마다 그로기에 빠진다. 큰 값부터 (2026-11-02 사용자 지정: 80%·40%·20%). " +
+             "그로기 시간·받는 피해 배율은 KKH InterruptToGroggy 기본값")]
+    [SerializeField] private float[] groggyHpRatios = { 0.8f, 0.4f, 0.2f };
+
+    [Tooltip("임시 체력 표시(KyodaiHpDebugView)를 시작할 때 붙인다 — 정식 UI가 생기면 끈다")]
+    [SerializeField] private bool showDebugHp = true;
+
+    private int groggyStep; // 이미 지난 문턱 수
     private Coroutine groggyRoutine;
     private bool groggyActive;
     private bool defeated;
@@ -44,6 +52,7 @@ public class KyodaiBossController : BossControllerBase
     private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
 
     public float PlayZ => playZ;
+    public IReadOnlyList<float> GroggyHpRatios => groggyHpRatios;
     public float ArenaMinX => arenaMinX;
     public float ArenaMaxX => arenaMaxX;
     public float ArenaWidth => arenaMaxX - arenaMinX;
@@ -149,8 +158,10 @@ public class KyodaiBossController : BossControllerBase
     protected override void OnBossInitialized()
     {
         defeated = false;
+        groggyStep = 0;
         OnGroggyChanged -= HandleGroggyChanged;
         OnGroggyChanged += HandleGroggyChanged;
+        if (showDebugHp && GetComponent<KyodaiHpDebugView>() == null) gameObject.AddComponent<KyodaiHpDebugView>();
     }
 
     protected override void OnDestroy()
@@ -166,6 +177,30 @@ public class KyodaiBossController : BossControllerBase
         if (groggyRoutine != null) StopCoroutine(groggyRoutine);
         groggyRoutine = null;
         if (deathClip != null) StartCoroutine(PlayDeath());
+    }
+
+    // 허브 경유(HitDetection)든 TakeDamage든 피해 뒤에는 여기를 지난다
+    protected override void ProcessPostDamageReactions(int finalDamage)
+    {
+        base.ProcessPostDamageReactions(finalDamage);
+        TryHpGroggy();
+    }
+
+    // 한 방에 문턱을 여러 개 넘으면 그로기는 한 번만. 이미 그로기 중에 넘은 문턱은 그냥 지나간다
+    private void TryHpGroggy()
+    {
+        if (defeated || Snapshot == null || Snapshot.maxHp <= 0 || Snapshot.currentHp <= 0) return;
+        float ratio = Snapshot.currentHp / (float)Snapshot.maxHp;
+        bool crossed = false;
+        while (groggyStep < groggyHpRatios.Length && ratio <= groggyHpRatios[groggyStep])
+        {
+            groggyStep++;
+            crossed = true;
+        }
+        if (!crossed || Snapshot.isGroggy) return;
+
+        Debug.Log($"[Kyodai] HP {ratio:P0} — 그로기");
+        InterruptToGroggy();
     }
 
     private void HandleGroggyChanged(bool groggy, float duration)

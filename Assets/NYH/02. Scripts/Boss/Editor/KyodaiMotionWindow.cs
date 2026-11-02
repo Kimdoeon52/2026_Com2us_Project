@@ -379,8 +379,16 @@ public class KyodaiMotionWindow : EditorWindow
             var e = motion.events[ei];
             float x = TimeToX(r, e.time);
             Rect d = new Rect(x - 7f, evRow.y + 2f, 14f, 16f);
-            GUI.color = ei == selEvent ? Color.yellow : e.type == KyodaiMotionEventType.Hit ? new Color(1f, 0.3f, 0.3f) : new Color(0.7f, 0.7f, 0.7f);
-            GUI.Label(d, e.type == KyodaiMotionEventType.Hit ? "✖" : e.type == KyodaiMotionEventType.TelegraphShow ? "▼" : "▲", CenteredBig());
+            bool damaging = e.type == KyodaiMotionEventType.Hit || e.type == KyodaiMotionEventType.GroundShock;
+            GUI.color = ei == selEvent ? Color.yellow : damaging ? new Color(1f, 0.3f, 0.3f) : new Color(0.7f, 0.7f, 0.7f);
+            string icon = e.type switch
+            {
+                KyodaiMotionEventType.Hit => "✖",
+                KyodaiMotionEventType.TelegraphShow => "▼",
+                KyodaiMotionEventType.GroundShock => "◆",
+                _ => "▲",
+            };
+            GUI.Label(d, icon, CenteredBig());
             GUI.color = Color.white;
             hits.Add((d, Drag.Event, -1, ei));
         }
@@ -530,6 +538,7 @@ public class KyodaiMotionWindow : EditorWindow
             if (GUILayout.Button("✖ 판정", GUILayout.Width(60))) AddEvent(KyodaiMotionEventType.Hit);
             if (GUILayout.Button("▼ 그림자 켜기", GUILayout.Width(90))) AddEvent(KyodaiMotionEventType.TelegraphShow);
             if (GUILayout.Button("▲ 그림자 끄기", GUILayout.Width(90))) AddEvent(KyodaiMotionEventType.TelegraphHide);
+            if (GUILayout.Button("◆ 바닥 충격", GUILayout.Width(80))) AddEvent(KyodaiMotionEventType.GroundShock);
             using (new EditorGUI.DisabledScope(selEvent < 0 || selEvent >= motion.events.Count))
                 if (GUILayout.Button("이벤트 삭제", GUILayout.Width(80))) { motion.events.RemoveAt(selEvent); selEvent = -1; MarkDirty(); GUIUtility.ExitGUI(); }
         }
@@ -646,8 +655,10 @@ public class KyodaiMotionWindow : EditorWindow
             using (new EditorGUI.IndentLevelScope())
             {
                 e.time = Mathf.Clamp(EditorGUILayout.FloatField("시각(초)", e.time), 0f, motion.duration);
-                e.type = (KyodaiMotionEventType)EditorGUILayout.Popup("종류", (int)e.type, new[] { "판정", "그림자 켜기", "그림자 끄기" });
-                if (e.type != KyodaiMotionEventType.TelegraphHide)
+                e.type = (KyodaiMotionEventType)EditorGUILayout.Popup("종류", (int)e.type, new[] { "판정", "그림자 켜기", "그림자 끄기", "바닥 충격" });
+                if (e.type == KyodaiMotionEventType.GroundShock)
+                    e.launchVelocity = Mathf.Max(0f, EditorGUILayout.FloatField(new GUIContent("띄우는 속도", "땅에 있던 플레이어를 이 위쪽 속도로 띄운다. 0 = 안 띄움"), e.launchVelocity));
+                else if (e.type != KyodaiMotionEventType.TelegraphHide)
                 {
                     e.center = EditorGUILayout.Vector2Field(new GUIContent("중심(목표 기준)", "그림자는 x만 씀"), e.center);
                     e.size = EditorGUILayout.Vector2Field(new GUIContent("크기", "그림자는 x = 너비"), e.size);
@@ -719,7 +730,8 @@ public class KyodaiMotionWindow : EditorWindow
                 Handles.DrawSolidRectangleWithOutline(rect, new Color(0f, 0f, 0f, 0.25f), new Color(0f, 0f, 0f, 0.7f));
             }
         }
-        if (selEvent >= 0 && selEvent < motion.events.Count && motion.events[selEvent].type != KyodaiMotionEventType.TelegraphHide)
+        if (selEvent >= 0 && selEvent < motion.events.Count && motion.events[selEvent].type != KyodaiMotionEventType.TelegraphHide
+            && motion.events[selEvent].type != KyodaiMotionEventType.GroundShock)
         {
             var e = motion.events[selEvent];
             EditorGUI.BeginChangeCheck();

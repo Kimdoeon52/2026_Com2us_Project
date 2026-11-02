@@ -147,6 +147,7 @@ public enum KyodaiMotionEventType
     Hit,           // 판정 — 그 순간 범위 안의 플레이어가 맞는다(KKH ApplyDamageToPlayer: 회피 무적 검사 포함)
     TelegraphShow, // 바닥 그림자 켜기 (중심 x = 목표 + center.x, 너비 = size.x)
     TelegraphHide, // 바닥 그림자 끄기
+    GroundShock,   // 바닥 충격 — 그 순간 땅에 서 있는 플레이어는 자리와 상관없이 맞고 위로 뜬다(점프로 피함)
 }
 
 [Serializable]
@@ -160,4 +161,7 @@ public class KyodaiMotionEvent
 
     [Tooltip("범위 크기(월드). 판정이면 박스, 그림자면 x = 너비")]
     public Vector2 size = new Vector2(6f, 3f);
+
+    [Tooltip("바닥 충격 전용: 맞은 플레이어를 띄우는 위쪽 속도(RobotMover.Launch). 0이면 안 띄움")]
+    [Min(0f)] public float launchVelocity;
 }

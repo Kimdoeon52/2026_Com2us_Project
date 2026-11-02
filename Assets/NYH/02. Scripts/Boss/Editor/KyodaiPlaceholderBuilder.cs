@@ -500,6 +500,19 @@ public static class KyodaiPlaceholderBuilder
         string[] both = { "왼팔", "오른팔" };
         var slam = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_양손내려찍기_모션.asset", m =>
             FillMotion(m, slamClip, both, attack: 0.9667f, linger: 1.3833f, back: 2.2167f));
+        // 손이 바닥에 닿는 순간(잔류 시작) 바닥 충격 — 이미 만든 에셋에도 없으면 넣는다
+        if (!slam.events.Exists(e => e.type == KyodaiMotionEventType.GroundShock))
+        {
+            Undo.RecordObject(slam, "바닥 충격 추가");
+            slam.events.Add(new KyodaiMotionEvent
+            {
+                time = 1.3833f,
+                type = KyodaiMotionEventType.GroundShock,
+                launchVelocity = 5f, // TODO: 기획 수치 없음. 적 어퍼컷(Enemy_Skill3)과 같은 값을 임시로 씀
+            });
+            slam.SortAll();
+            EditorUtility.SetDirty(slam);
+        }
         var clap = LoadOrCreate<KyodaiMotionData>($"{DataFolder}/Kyodai_양손손뼉치기_모션.asset", m =>
             FillMotion(m, clapClip, both, attack: 0.4167f, linger: 0.55f, back: 1.1833f));
 

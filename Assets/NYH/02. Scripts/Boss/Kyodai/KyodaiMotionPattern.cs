@@ -155,7 +155,22 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
             case KyodaiMotionEventType.TelegraphHide:
                 if (telegraph != null) telegraph.Hide();
                 break;
+            case KyodaiMotionEventType.GroundShock:
+                GroundShock(e.launchVelocity);
+                break;
         }
+    }
+
+    // 땅에 서 있으면 자리와 상관없이 맞고 뜬다. 팔 접촉과 합쳐 패턴당 1번만 맞는다
+    private void GroundShock(float launchVelocity)
+    {
+        if (contactHit || player == null) return;
+        RobotMover mover = player.GetComponentInParent<RobotMover>();
+        if (mover == null) mover = player.GetComponentInChildren<RobotMover>();
+        if (mover != null && !mover.IsGrounded) return;
+
+        contactHit = true;
+        if (ApplyDamageToPlayer(player.gameObject) && mover != null) mover.Launch(launchVelocity);
     }
 
     protected override void CleanupEffects()

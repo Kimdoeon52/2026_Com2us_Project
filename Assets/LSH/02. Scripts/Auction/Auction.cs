@@ -57,7 +57,7 @@ NPC가 입찰할수있는 최대 자금
 
  */
 
-public class Auction : PersistentSingleton<Auction>
+public class Auction : Singleton<Auction>
 {
     [Header("경매 설정")]
     [SerializeField] public AuctionType currentAuctionType = AuctionType.Normal; //현재 경매 모드

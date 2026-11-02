@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AuctionPlayer : PersistentSingleton<AuctionPlayer>
+public class AuctionPlayer : Singleton<AuctionPlayer>
 {
     [Header("플레이어 말풍선 나오는 곳")]
     [SerializeField] private Image playerThinkImage;

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CraftingUIManager : PersistentSingleton<CraftingUIManager>
+public class CraftingUIManager : Singleton<CraftingUIManager>
 {
     [SerializeField] private GameObject craftingWindow;
     [SerializeField] private Toggle leftArmToggle;

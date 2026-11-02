@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChatList : PersistentSingleton<ChatList>
+public class ChatList : Singleton<ChatList>
 {
     private Dictionary<string, List<string>> chatDictionary = new Dictionary<string, List<string>>();
 

@@ -88,6 +88,10 @@ Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속�
     Kyodai/     KyodaiBossController.cs  KyodaiLimb.cs(부위 = 레이어 규칙)  KyodaiRig.cs(리깅 모델: 뼈 기준 메쉬 쪼개기 + 몸 따라오기 + IK 순서, 2026-10-29)  KyodaiPalmPressPattern.cs(패턴은 1개당 1클래스 — KKH 기믹 방식)
                 KyodaiMotionData.cs(동작 에셋: 손 키·레이어 띠·이벤트)  KyodaiMotionPlayer.cs(재생 — 게임·미리보기 공용)
                 KyodaiMotionPattern.cs(모션 에셋 재생 범용 패턴 — 이후 패턴은 에셋만 추가, 2026-10-29)
+    Kyodai/ (2026-11-04 2D 개편) KyodaiBossController.cs(2D)  KyodaiHand.cs  KyodaiHandMotion.cs  KyodaiHandFeel.cs  KyodaiHandPattern.cs
+                KyodaiHpDebugView.cs  KyodaiCameraShake.cs   — 아래 3D 파일들은 전부 Kyodai/_Legacy3D/로 옮김(보관)
+    Editor/     Kyodai2DBuilder.cs(메뉴 NYH/쿄다이/2D 임시 보스 만들기)
+    (이하 3D 보관분 — 2026-11-04 이전 기록)
     Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)  KyodaiEditPreview.cs(플레이 전 실제 로봇 자세 미리보기)  KyodaiBonePicker.cs(Scene 뷰 뼈 선택)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
@@ -691,7 +695,8 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 30. 🔶 (2026-11-02) 쿄다이 추가 애니메이션 — 메뉴 `NYH/쿄다이/새 애니메이션 연결 (양손 패턴·그로기)`가 기존 패턴은 두고 `양손 내려찍기`·`양손 손뼉치기`(양팔 트랙, 조준·그림자 없음)를 더하고 `groggyClip`을 건다. 그로기는 KKH `OnGroggyChanged`로 재생하며 `groggyHoldEnd`(클립 키 4.18초)에서 멈췄다가 풀리면 일어난다. 클립 녹화 때 본체 `Tarvos+Mech_rigged`를 움직이지 말 것 — 본체 위치 키가 남으면 미리보기에서 모델이 밀린다. `Boss2_왼손휘두르면서한바퀴`는 미완성(0.48초)이라 미연결. ⬜ 플레이 검증 아직
 31. 🔶 (2026-11-02) 쿄다이 그로기·바닥 충격·임시 체력 표시 — 그로기는 남은 HP 80%·40%·20%를 처음 지날 때(`KyodaiBossController.groggyHpRatios`, 사용자 지정, 시간·배율은 KKH `InterruptToGroggy` 기본 4초·1.5배). 모션 이벤트 `GroundShock`(바닥 충격): 그 순간 땅에 서 있는 플레이어는 자리와 상관없이 패턴 데미지 + `RobotMover.Launch`(팔 접촉과 합쳐 패턴당 1번). 양손 내려찍기에는 메뉴 `새 애니메이션 연결`이 1.38초에 넣는다(띄우는 속도 5 임시). `KyodaiHpDebugView`(OnGUI 임시, `showDebugHp`로 자동 부착): 화면 위 보스 HP·그로기 눈금, 부위를 맞히면 맞은 자리 위에 부위 게이지(`partGaugeMax` 1000 임시, 기획서의 무력화 게이지 자리 — 봉인 효과 없음). ⬜ 플레이 검증 아직
 32. 🔶 (2026-11-04) 쿄다이 접촉 — `KyodaiContacts`: 뼈별 접촉 구(뼈+오프셋+반지름, Grow 따라 커짐). 못 뚫게 = 애니메이션·IK 뒤 바닥(화면에 보이는 groundY 선 — `ToPlayPlane` 기준, PlayZ ± groundDepth 안의 점만)·물체(3D 충돌체 레이어)에서 손목을 밀어내고 팔 재해석(`KyodaiLimb.PushHand`, 편집 미리보기 같은 계산). 먼지 = 처음 닿을 때 들어온 속도로 크기·흔들림(`KyodaiCameraShake`), 닿은 채 미끄러지면 끌리는 먼지. 피격 판정은 여전히 모션 이벤트(타이밍 고정). 이펙트 프리팹 미정(도트 플립북 권장), 수치는 임시값
-33. ⬜ (2026-11-04) **쿄다이 2D 전면 개편** — 3D 리깅 모델·ProPixelizer·IK·`KyodaiContacts`·어깨 조준 전제 폐기, 보스를 2D 스프라이트로 교체. 본체는 뒤, 손(주먹/펼친 손바닥 2종)이 떠다니며 **항상 피격**. 다리 공격·해킹·기존 기물(냉각탑 등)·3페이즈 삭제. 신규: 플레이어를 노리는 본체 레이저가 팔에 닿으면 팔 4초 정지, 촉수(3개부터 디버프, 최대 10개, 파괴 대상, 2D 뼈대 애니메이션), 플레이어를 노리는 내려찍는 기물 1개. 상세·미정 항목은 `쿄다이_보스전_제작_가이드.md` 맨 위 절. 기존 3D 코드는 아직 지우지 않음 — 정리 범위 확인 후 진행
+33. ⬜ (2026-11-04) **쿄다이 2D 전면 개편** — 3D 리깅 모델·ProPixelizer·IK·`KyodaiContacts`·어깨 조준 전제 폐기, 보스를 2D 스프라이트로 교체. 본체는 뒤, 손(주먹/펼친 손바닥 2종)이 떠다니며 **항상 피격**. 다리 공격·해킹·기존 기물(냉각탑 등)·3페이즈 삭제. 신규: 플레이어를 노리는 본체 레이저가 팔에 닿으면 팔 4초 정지, 촉수(3개부터 디버프, 최대 10개, 파괴 대상, 2D 뼈대 애니메이션), 플레이어를 노리는 내려찍는 기물 1개. 상세·미정 항목은 `쿄다이_보스전_제작_가이드.md` 맨 위 절. **(같은 날 결정)** 3D 코드는 `Boss/Kyodai/_Legacy3D/`로 보관(옛 컨트롤러 = `KyodaiBossController3D`, 메뉴 `NYH/쿄다이(3D 보관)/`), 손 동작은 SO 키 + 코드 움직임 4겹(키 → 스프링/이징은 틱, 떠다니기·표정은 `Visual` 자식), 촉수는 가까이 오면 휘두름, 페이즈는 HP 비율 2페이즈(50% 임시)
+34. 🔶 (2026-11-04) 쿄다이 2D 1단계 — `KyodaiBossController`(2D 새로 작성), `KyodaiHand`(손 하나: 틱 = 키 재생·스프링/이징·판정·정지, Update = 떠다니기·기울기·찌그러짐·그림자), `KyodaiHandMotion`(SO 키), `KyodaiHandFeel`(SO 움직임 느낌), `KyodaiHandPattern`(모션 하나 재생 범용 패턴), 메뉴 `NYH/쿄다이/2D 임시 보스 만들기`. `CombatClock.InterpolationAlpha`(틱 사이 보간 비율) 추가. ⬜ 플레이 검증 아직
 
 ---
 

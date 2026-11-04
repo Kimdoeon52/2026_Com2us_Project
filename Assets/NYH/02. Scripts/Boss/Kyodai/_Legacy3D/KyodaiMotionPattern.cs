@@ -22,7 +22,7 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     [Tooltip("바닥 예고 그림자 (모션의 그림자 이벤트가 켜고 끈다)")]
     [SerializeField] private GroundTelegraph telegraph;
 
-    private KyodaiBossController kyodai;
+    private KyodaiBossController3D kyodai;
     private Vector2 target;
     private bool finished;
     private Transform player;
@@ -35,8 +35,8 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
 
     protected override void OnAttached()
     {
-        kyodai = OwnerBoss as KyodaiBossController;
-        if (kyodai == null) Debug.LogError("[KyodaiMotionPattern] KyodaiBossController 밑에 있어야 함");
+        kyodai = OwnerBoss as KyodaiBossController3D;
+        if (kyodai == null) Debug.LogError("[KyodaiMotionPattern] KyodaiBossController3D 밑에 있어야 함");
         if (motion == null) Debug.LogWarning($"[KyodaiMotionPattern] {name}: 모션이 비어 있음");
     }
 
@@ -64,7 +64,7 @@ public class KyodaiMotionPattern : BossPatternGimmickBase
     }
 
     /// <summary>플레이어 발밑 x를 경기장 안으로 자른 자리. 모션 창 미리보기도 같은 규칙</summary>
-    public static Vector2 PickTarget(KyodaiBossController boss, KyodaiMotionData motion)
+    public static Vector2 PickTarget(KyodaiBossController3D boss, KyodaiMotionData motion)
     {
         var player = GameObject.FindWithTag("Player");
         float x = player != null ? player.transform.position.x : (boss.ArenaMinX + boss.ArenaMaxX) * 0.5f;

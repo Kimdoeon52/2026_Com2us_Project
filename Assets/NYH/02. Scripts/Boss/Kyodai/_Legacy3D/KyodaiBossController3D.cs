@@ -1,0 +1,271 @@
+using System.Collections;
+using System.Collections.Generic;
+using RealSteel.Boss.Core;
+using UnityEngine;
+
+/// <summary>
+/// [3D 보관본 — 2026-11-04 2D 개편으로 _Legacy3D에 보관. 새 작업은 2D KyodaiBossController에서]
+/// 지역 2 보스 "쿄다이" (2026-10-28, 기획서10_28 §지역 2 보스). KKH BossControllerBase를 그대로 탄다 —
+/// HP·페이즈·FSM(딜타임 → 패턴 → 딜타임)·그로기/스턴은 KKH 것, 여기는 쿄다이 전용 부분만.
+///
+///   · 패턴·부위는 자식에 붙은 기믹 컴포넌트를 전부 자동 등록한다(정크 휠러와 달리 이름 매칭 없음)
+///   · 페이즈별 패턴: BossMasterData.phases의 availableSkillIDs(= 패턴 ID)로 거른다. 비어 있으면 전부
+///   · 경기장 범위·바닥 높이: 패턴들이 "경기장 1/3", "화면 양 끝" 같은 자리를 계산할 때 쓴다
+///   · 그림: 3D 모델을 경기장 뒤(z+)에 그대로 두고 메인 카메라가 찍는다(픽셀화는 ProPixelizer 머티리얼, 2026-10-30).
+///     부위 하나하나는 KyodaiLimb
+/// </summary>
+public class KyodaiBossController3D : BossControllerBase
+{
+    [Tooltip("경기장 평면 z(월드) — 플레이어가 있는 평면. 모션 키의 '앞으로 나온 거리'는 여기서 카메라 쪽(-z)으로 잰다")]
+    [SerializeField] private float playZ;
+
+    [Tooltip("경기장 왼쪽 끝 x(월드)")]
+    [SerializeField] private float arenaMinX = -10f;
+
+    [Tooltip("경기장 오른쪽 끝 x(월드)")]
+    [SerializeField] private float arenaMaxX = 10f;
+
+    [Tooltip("바닥 높이 y(월드) — 플레이어가 서 있는 높이")]
+    [SerializeField] private float groundY;
+
+    [Tooltip("격파 때 재생할 온몸 애니메이션. 비우면 재생 안 함")]
+    [SerializeField] private AnimationClip deathClip;
+
+    [Tooltip("그로기 동안 재생할 온몸 애니메이션. 비우면 재생 안 함")]
+    [SerializeField] private AnimationClip groggyClip;
+
+    [Tooltip("그로기 클립에서 쓰러진 자세가 끝나는 시각(초, 클립 키 기준) — 그로기가 길면 여기서 멈춰 있고, 풀리면 여기서부터 일어난다")]
+    [SerializeField] private float groggyHoldEnd = 4.1833f;
+
+    [Tooltip("남은 HP 비율이 이 값 이하로 처음 내려갈 때마다 그로기에 빠진다. 큰 값부터 (2026-11-02 사용자 지정: 80%·40%·20%). " +
+             "그로기 시간·받는 피해 배율은 KKH InterruptToGroggy 기본값")]
+    [SerializeField] private float[] groggyHpRatios = { 0.8f, 0.4f, 0.2f };
+
+    [Tooltip("임시 체력 표시(KyodaiHpDebugView)를 시작할 때 붙인다 — 정식 UI가 생기면 끈다")]
+    [SerializeField] private bool showDebugHp = true;
+
+    private int groggyStep; // 이미 지난 문턱 수
+    private Coroutine groggyRoutine;
+    private bool groggyActive;
+    private bool defeated;
+
+    // 등록된 패턴 전부 — 페이즈가 바뀌면 여기서 다시 골라 activePatternPool을 채운다
+    private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
+
+    public float PlayZ => playZ;
+    public IReadOnlyList<float> GroggyHpRatios => groggyHpRatios;
+    public float ArenaMinX => arenaMinX;
+    public float ArenaMaxX => arenaMaxX;
+    public float ArenaWidth => arenaMaxX - arenaMinX;
+    public override float GroundY => groundY;
+
+    private KyodaiLimb[] limbs;
+
+    /// <summary>부위 이름으로 KyodaiLimb 찾기 (모션 재생·미리보기용)</summary>
+    public KyodaiLimb FindLimb(string partId)
+    {
+        if (limbs == null || limbs.Length == 0) limbs = GetComponentsInChildren<KyodaiLimb>(true);
+        foreach (var limb in limbs) if (limb != null && limb.PartId == partId) return limb;
+        return null;
+    }
+
+    public KyodaiLimb[] Limbs
+    {
+        get
+        {
+            if (limbs == null || limbs.Length == 0) limbs = GetComponentsInChildren<KyodaiLimb>(true);
+            return limbs;
+        }
+    }
+
+    protected override void RegisterGimmicks()
+    {
+        // 꺼둔 패턴(오브젝트 비활성·컴포넌트 체크 해제)은 등록하지 않는다 — 옛 패턴을 끄고 새 패턴만 쓰게
+        foreach (var gimmick in GetComponentsInChildren<BossGimmickBase>(false))
+            if (gimmick.enabled) RegisterGimmick(gimmick);
+
+        allPatterns.Clear();
+        allPatterns.AddRange(activePatternPool);
+        if (allPatterns.Count == 0)
+            Debug.LogWarning("[Kyodai] 자식에 패턴 기믹이 하나도 없음 — 딜타임만 반복한다");
+    }
+
+    protected override void BuildPhasePatternPool(int phase)
+    {
+        BossPhaseData phaseData = masterData != null && masterData.phases != null
+            ? masterData.phases.Find(p => p.phaseIndex == phase)
+            : null;
+
+        activePatternPool.Clear();
+        foreach (var pattern in allPatterns)
+        {
+            bool allowed = phaseData == null || phaseData.availableSkillIDs == null || phaseData.availableSkillIDs.Count == 0
+                           || phaseData.availableSkillIDs.Contains(pattern.GimmickID);
+            if (allowed) activePatternPool.Add(pattern);
+        }
+        _patternIndex = 0;
+    }
+
+    // 팔마다 몸 중심 기준 자기 쪽만 맡으므로, 플레이어 반대쪽 팔의 패턴은 건너뛴다
+    public override BossPatternGimmickBase GetNextPatternGimmick()
+    {
+        BossPatternGimmickBase first = base.GetNextPatternGimmick();
+        BossPatternGimmickBase next = first;
+        for (int i = 0; i < activePatternPool.Count && next != null; i++)
+        {
+            if (!(next is KyodaiMotionPattern motionPattern) || motionPattern.CanReachPlayer()) return next;
+            next = base.GetNextPatternGimmick();
+        }
+        return first;
+    }
+
+    /// <summary>경기장 point 자리에서 카메라 쪽(-z)으로 forward만큼 나온 3D 좌표 (손 목표·IK 타깃)</summary>
+    public Vector3 PlayPoint(Vector2 point, float forward) => new Vector3(point.x, point.y, playZ - forward);
+
+    /// <summary>화면에서 경기장 point 자리를 지나는 시선. 카메라가 없으면 false</summary>
+    public bool TryGetSightRay(Vector2 point, out Ray ray)
+    {
+        Camera cam = TargetCamera;
+        ray = default;
+        if (cam == null) return false;
+        ray = cam.ScreenPointToRay(cam.WorldToScreenPoint(PlayPoint(point, 0f)));
+        return true;
+    }
+
+    /// <summary>3D 좌표가 화면에서 겹쳐 보이는 경기장 평면 자리 — 모델이 경기장 뒤에 있어서 xy를 그대로 쓰면 보이는 자리와 어긋난다</summary>
+    public Vector2 ToPlayPlane(Vector3 world)
+    {
+        Camera cam = TargetCamera;
+        if (cam == null) return world;
+        Ray ray = cam.ScreenPointToRay(cam.WorldToScreenPoint(world));
+        var plane = new Plane(Vector3.back, new Vector3(0f, 0f, playZ));
+        return plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : world;
+    }
+
+    /// <summary>경기장 안으로 x를 자른다. halfWidth만큼 안쪽 여유를 둔다(넓은 공격이 벽 밖으로 안 나가게)</summary>
+    public float ClampToArena(float x, float halfWidth = 0f)
+    {
+        float min = arenaMinX + halfWidth;
+        float max = arenaMaxX - halfWidth;
+        return min > max ? (arenaMinX + arenaMaxX) * 0.5f : Mathf.Clamp(x, min, max);
+    }
+
+    protected override void OnPhaseChanged(int prevPhase, int newPhase)
+    {
+        Debug.Log($"[Kyodai] 페이즈 {prevPhase} → {newPhase}");
+    }
+
+    // InitializeBoss가 다시 불려도 두 번 걸리지 않게 빼고 건다
+    protected override void OnBossInitialized()
+    {
+        defeated = false;
+        groggyStep = 0;
+        OnGroggyChanged -= HandleGroggyChanged;
+        OnGroggyChanged += HandleGroggyChanged;
+        if (showDebugHp)
+        {
+            var view = GetComponent<KyodaiHpDebugView>();
+            if (view == null) view = gameObject.AddComponent<KyodaiHpDebugView>();
+            view.SetGroggyMarks(groggyHpRatios);
+        }
+    }
+
+    protected override void OnDestroy()
+    {
+        OnGroggyChanged -= HandleGroggyChanged;
+        base.OnDestroy();
+    }
+
+    protected override void OnBossDefeated()
+    {
+        Debug.Log("[Kyodai] 쿄다이 격파");
+        defeated = true;
+        if (groggyRoutine != null) StopCoroutine(groggyRoutine);
+        groggyRoutine = null;
+        if (deathClip != null) StartCoroutine(PlayDeath());
+    }
+
+    // 허브 경유(HitDetection)든 TakeDamage든 피해 뒤에는 여기를 지난다
+    protected override void ProcessPostDamageReactions(int finalDamage)
+    {
+        base.ProcessPostDamageReactions(finalDamage);
+        TryHpGroggy();
+    }
+
+    // 한 방에 문턱을 여러 개 넘으면 그로기는 한 번만. 이미 그로기 중에 넘은 문턱은 그냥 지나간다
+    private void TryHpGroggy()
+    {
+        if (defeated || Snapshot == null || Snapshot.maxHp <= 0 || Snapshot.currentHp <= 0) return;
+        float ratio = Snapshot.currentHp / (float)Snapshot.maxHp;
+        bool crossed = false;
+        while (groggyStep < groggyHpRatios.Length && ratio <= groggyHpRatios[groggyStep])
+        {
+            groggyStep++;
+            crossed = true;
+        }
+        if (!crossed || Snapshot.isGroggy) return;
+
+        Debug.Log($"[Kyodai] HP {ratio:P0} — 그로기");
+        InterruptToGroggy();
+    }
+
+    private void HandleGroggyChanged(bool groggy, float duration)
+    {
+        groggyActive = groggy;
+        if (!groggy || groggyClip == null || defeated) return;
+        if (groggyRoutine != null) StopCoroutine(groggyRoutine);
+        groggyRoutine = StartCoroutine(PlayGroggy());
+    }
+
+    // 쓰러짐 → (그로기 동안) 유지 구간 끝에서 멈춤 → 풀리면 일어나기.
+    // 그로기 중에는 끊긴 패턴의 정리가 늦게 돌 수 있어 매 프레임 다시 걸고, 일어나는 중에 다음 패턴이 자세를 가져가면 멈춘다
+    private IEnumerator PlayGroggy()
+    {
+        float holdEnd = Mathf.Clamp(groggyHoldEnd, 0f, groggyClip.length);
+        float t = 0f;
+        while (groggyActive)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(groggyClip, Mathf.Min(t, holdEnd), this);
+            yield return null;
+            t += Time.deltaTime;
+        }
+
+        // 쓰러지는 도중에 풀렸으면 유지 구간 끝에서 일어나기 시작한다 — 반대로 재생하지 않게
+        t = Mathf.Max(t, holdEnd);
+        while (t < groggyClip.length - Time.fixedDeltaTime)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(groggyClip, t, this);
+            yield return null;
+            if (!KyodaiMotionPlayer.IsPlayingClip(groggyClip, this)) { groggyRoutine = null; yield break; }
+            t += Time.deltaTime;
+        }
+        KyodaiMotionPlayer.Clear(this);
+        groggyRoutine = null;
+    }
+
+    // 패턴 정리(KyodaiMotionPlayer.Clear)가 다음 프레임에 돌 수 있어서 매 프레임 다시 건다
+    private IEnumerator PlayDeath()
+    {
+        for (float t = 0f; t < deathClip.length; t += Time.deltaTime)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(deathClip, t, this);
+            yield return null;
+        }
+        // 반복 클립은 끝 시각에서 첫 자세로 돌아가므로 끝 직전에 멈춘다
+        while (true)
+        {
+            KyodaiMotionPlayer.ApplyClipOnly(deathClip, deathClip.length - Time.fixedDeltaTime, this);
+            yield return null;
+        }
+    }
+
+#if UNITY_EDITOR
+    private void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawLine(new Vector3(arenaMinX, groundY), new Vector3(arenaMaxX, groundY));
+        Gizmos.DrawLine(new Vector3(arenaMinX, groundY), new Vector3(arenaMinX, groundY + 3f));
+        Gizmos.DrawLine(new Vector3(arenaMaxX, groundY), new Vector3(arenaMaxX, groundY + 3f));
+    }
+#endif
+}

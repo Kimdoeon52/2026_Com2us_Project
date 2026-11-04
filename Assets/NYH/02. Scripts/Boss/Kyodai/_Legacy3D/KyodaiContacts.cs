@@ -41,7 +41,7 @@ public class KyodaiContacts : MonoBehaviour
         public bool effects = true;
     }
 
-    [SerializeField] private KyodaiBossController boss;
+    [SerializeField] private KyodaiBossController3D boss;
     [SerializeField] private List<Point> points = new List<Point>();
 
     [Header("바닥·물체")]
@@ -83,7 +83,7 @@ public class KyodaiContacts : MonoBehaviour
     public IReadOnlyList<Point> Points => points;
     public float GroundDepth => groundDepth;
     public LayerMask ObstacleMask => obstacleMask;
-    public KyodaiBossController Boss => boss != null ? boss : boss = GetComponentInParent<KyodaiBossController>();
+    public KyodaiBossController3D Boss => boss != null ? boss : boss = GetComponentInParent<KyodaiBossController3D>();
 
     private readonly Dictionary<string, Transform> boneCache = new Dictionary<string, Transform>();
     private Transform[] pointBones;
@@ -109,9 +109,9 @@ public class KyodaiContacts : MonoBehaviour
 
     /// <summary>
     /// 화면 기준 바닥: 3D 점 p가 경기장 평면에 겹쳐 보이는 자리(seen)와, 그 깊이에서 경기장 평면 1만큼이 실제로 몇인지(ratio).
-    /// 경기장 바닥은 2D라서 뒤에 있는 손도 "보이는 높이"로 바닥에 닿아야 한다 (KyodaiBossController.ToPlayPlane과 같은 기준)
+    /// 경기장 바닥은 2D라서 뒤에 있는 손도 "보이는 높이"로 바닥에 닿아야 한다 (KyodaiBossController3D.ToPlayPlane과 같은 기준)
     /// </summary>
-    public static Vector2 SeenOnPlane(KyodaiBossController boss, Vector3 p, out float ratio)
+    public static Vector2 SeenOnPlane(KyodaiBossController3D boss, Vector3 p, out float ratio)
     {
         Vector2 seen = boss.ToPlayPlane(p);
         Camera cam = boss.TargetCamera;
@@ -130,7 +130,7 @@ public class KyodaiContacts : MonoBehaviour
     /// 바닥 = 화면에서 groundY 선 — 경기장 평면(PlayZ) ± depth 안에 있는 점만 친다(뒤에 서 있는 몸은 안 걸리게).
     /// 물체 = mask 레이어의 3D 충돌체
     /// </summary>
-    public static Vector3 Penetration(KyodaiBossController boss, Vector3 p, float r, float depth, int mask)
+    public static Vector3 Penetration(KyodaiBossController3D boss, Vector3 p, float r, float depth, int mask)
     {
         Vector3 push = Vector3.zero;
         if (Mathf.Abs(p.z - boss.PlayZ) <= depth)
@@ -188,7 +188,7 @@ public class KyodaiContacts : MonoBehaviour
 
     private void Start()
     {
-        if (Boss == null) { Debug.LogError("[KyodaiContacts] KyodaiBossController 밑에 있어야 함"); enabled = false; return; }
+        if (Boss == null) { Debug.LogError("[KyodaiContacts] KyodaiBossController3D 밑에 있어야 함"); enabled = false; return; }
         pointBones = new Transform[points.Count];
         restScale = new float[points.Count];
         prev = new Vector3[points.Count];

@@ -39,7 +39,7 @@ public class KyodaiLimb : MonoBehaviour
     [Tooltip("부위 이름 (왼팔/오른팔/왼다리/오른다리/메인렌즈). 리깅 모델이면 KyodaiRig의 Parts와 같은 이름")]
     [SerializeField] private string partId = "오른팔";
 
-    [SerializeField] private KyodaiBossController boss;
+    [SerializeField] private KyodaiBossController3D boss;
 
     [Tooltip("손 목표점. 임시 상자 모델은 손 상자, 리깅 모델이면 비워두면 IK 타깃을 손 위치에 자동으로 만든다")]
     [SerializeField] private Transform effector;
@@ -158,7 +158,7 @@ public class KyodaiLimb : MonoBehaviour
 
     private void Awake()
     {
-        if (boss == null) boss = GetComponentInParent<KyodaiBossController>();
+        if (boss == null) boss = GetComponentInParent<KyodaiBossController3D>();
         block = new MaterialPropertyBlock();
     }
 

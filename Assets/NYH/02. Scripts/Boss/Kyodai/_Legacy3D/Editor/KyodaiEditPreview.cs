@@ -40,9 +40,9 @@ public class KyodaiEditPreview
     private float[] contactRestScale = new float[0];
 
     public bool Active => Boss != null;
-    public KyodaiBossController Boss { get; private set; }
+    public KyodaiBossController3D Boss { get; private set; }
 
-    public bool Begin(KyodaiBossController boss)
+    public bool Begin(KyodaiBossController3D boss)
     {
         End();
         if (boss == null) return false;

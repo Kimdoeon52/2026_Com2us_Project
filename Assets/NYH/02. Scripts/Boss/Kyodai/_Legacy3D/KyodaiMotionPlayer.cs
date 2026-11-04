@@ -10,7 +10,7 @@ using UnityEngine;
 public static class KyodaiMotionPlayer
 {
     /// <summary>t초의 온몸 애니메이션·손 위치·손목·레이어를 적용. target = 목표 지점(경기장 월드)</summary>
-    public static void ApplyPose(KyodaiMotionData motion, float t, Vector2 target, KyodaiBossController boss)
+    public static void ApplyPose(KyodaiMotionData motion, float t, Vector2 target, KyodaiBossController3D boss)
     {
         if (motion == null || boss == null) return;
 
@@ -43,7 +43,7 @@ public static class KyodaiMotionPlayer
     }
 
     /// <summary>온몸 애니메이션만 t초 자세로 (IK·조준 없음). 사망 모션용</summary>
-    public static void ApplyClipOnly(AnimationClip clip, float t, KyodaiBossController boss)
+    public static void ApplyClipOnly(AnimationClip clip, float t, KyodaiBossController3D boss)
     {
         if (boss == null) return;
         FindRig(boss)?.SetClip(clip, t);
@@ -51,21 +51,21 @@ public static class KyodaiMotionPlayer
     }
 
     /// <summary>지금 온몸 애니메이션이 이 클립인지 — 다른 패턴이 자세를 가져갔는지 확인용</summary>
-    public static bool IsPlayingClip(AnimationClip clip, KyodaiBossController boss)
+    public static bool IsPlayingClip(AnimationClip clip, KyodaiBossController3D boss)
     {
         KyodaiRig rig = boss != null ? FindRig(boss) : null;
         return rig != null && rig.Clip == clip;
     }
 
     /// <summary>모션이 끝났을 때: 온몸 애니메이션을 풀고 대기 자세로 (패턴 정리·미리보기 끝)</summary>
-    public static void Clear(KyodaiBossController boss)
+    public static void Clear(KyodaiBossController3D boss)
     {
         if (boss == null) return;
         FindRig(boss)?.SetClip(null, 0f);
         foreach (var l in boss.Limbs) if (l.Ready) l.SnapToRest();
     }
 
-    private static KyodaiRig FindRig(KyodaiBossController boss)
+    private static KyodaiRig FindRig(KyodaiBossController3D boss)
     {
         foreach (var l in boss.Limbs) if (l.Rig != null) return l.Rig;
         return null;
@@ -90,7 +90,7 @@ public static class KyodaiMotionPlayer
         key.rest ? rest : toWorld(target + key.offset, key.forward);
 
     /// <summary>
-    /// 트랙의 t초 손 위치(월드)와 손목 회전. toWorld = 경기장 좌표 + 앞으로 나온 거리 → 3D 좌표(KyodaiBossController.PlayPoint), rest = 대기 손 자리.
+    /// 트랙의 t초 손 위치(월드)와 손목 회전. toWorld = 경기장 좌표 + 앞으로 나온 거리 → 3D 좌표(KyodaiBossController3D.PlayPoint), rest = 대기 손 자리.
     /// 게임과 편집 미리보기가 같은 계산을 한다
     /// </summary>
     public static void EvaluateTrack(KyodaiMotionTrack track, float t, Vector2 target, Func<Vector2, float, Vector3> toWorld,

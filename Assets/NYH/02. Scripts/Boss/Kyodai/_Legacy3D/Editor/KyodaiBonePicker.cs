@@ -13,7 +13,7 @@ using UnityEngine;
 public static class KyodaiBonePicker
 {
     private const string PrefKey = "NYH.Kyodai.BonePicker";
-    private const string MenuPath = "NYH/쿄다이/뼈 선택 표시";
+    private const string MenuPath = "NYH/쿄다이(3D 보관)/뼈 선택 표시";
 
     private static SkinnedMeshRenderer cachedSmr;
     private static Transform cachedFor;

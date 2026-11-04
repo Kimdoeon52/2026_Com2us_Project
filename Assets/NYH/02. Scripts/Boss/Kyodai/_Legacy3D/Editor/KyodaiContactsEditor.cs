@@ -10,11 +10,11 @@ using UnityEngine;
 [CustomEditor(typeof(KyodaiContacts))]
 public class KyodaiContactsEditor : Editor
 {
-    [MenuItem("NYH/쿄다이/접촉(못 뚫기·먼지) 붙이기")]
+    [MenuItem("NYH/쿄다이(3D 보관)/접촉(못 뚫기·먼지) 붙이기")]
     private static void AddToBoss()
     {
-        var boss = Object.FindAnyObjectByType<KyodaiBossController>();
-        if (boss == null) { EditorUtility.DisplayDialog("쿄다이", "씬에 쿄다이(KyodaiBossController)가 없습니다.", "확인"); return; }
+        var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();
+        if (boss == null) { EditorUtility.DisplayDialog("쿄다이", "씬에 쿄다이(KyodaiBossController3D)가 없습니다.", "확인"); return; }
         var contacts = boss.GetComponent<KyodaiContacts>();
         if (contacts == null) contacts = Undo.AddComponent<KyodaiContacts>(boss.gameObject);
         if (contacts.Points.Count == 0) FillDefaults(contacts);

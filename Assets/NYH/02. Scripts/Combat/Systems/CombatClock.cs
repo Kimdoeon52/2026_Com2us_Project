@@ -47,6 +47,12 @@ public class CombatClock : MonoBehaviour
     // 구독 해제할 땐 "진짜 있으면 있는 거 쓰고, 없으면 그냥 포기"가 맞는 동작이라 null도 그대로 반환하는 이 프로퍼티를 따로 둔다
     public static CombatClock Existing => instance;
 
+    /// <summary>
+    /// 마지막 틱 이후 다음 틱까지 얼마나 왔는지(0~1). 그림만 쓰는 값 — 틱 위치(이전 → 현재)를 이 비율로 섞으면
+    /// 144Hz 모니터에서도 60Hz 계단 없이 부드럽게 보인다(2026-11-04, 쿄다이 손). 로직 판단에 쓰지 말 것
+    /// </summary>
+    public static float InterpolationAlpha => instance != null ? Mathf.Clamp01(instance.accumulator / TICK) : 1f;
+
     /// <summary>1/60초마다 1회 발생. 로직은 전부 여기서 돈다</summary>
     public event Action OnCombatTick;
 

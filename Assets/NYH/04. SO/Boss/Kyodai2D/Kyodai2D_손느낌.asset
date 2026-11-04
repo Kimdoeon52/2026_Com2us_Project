@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 592a93f94305b0243b69b554cfda8c9f, type: 3}
+  m_Name: "Kyodai2D_\uC190\uB290\uB08C"
+  m_EditorClassIdentifier: 
+  floatAmplitude: {x: 0.18, y: 0.32}
+  floatPeriodA: 2.7
+  floatPeriodB: 4.3
+  noiseAmplitude: 0.12
+  noiseSpeed: 0.35
+  floatRotation: 4
+  floatBlendSpeed: 2.5
+  velocitySmoothing: 12
+  leanPerSpeed: 1.6
+  maxLean: 22
+  stretchPerSpeed: 0.012
+  maxStretch: 0.22
+  rotationSmoothTime: 0.12
+  scaleSmoothTime: 0.1
+  impactSquash: 0.32
+  squashFrequency: 5
+  squashDamping: 0.28
+  squashWiden: 0.7
+  posePop: 1.6
+  hitKick: 1.2
+  hitFlashSeconds: 0.08
+  hitFlashColor: {r: 1, g: 0.55, b: 0.55, a: 1}
+  idleFrequency: 1.1
+  idleDamping: 0.65
+  downHeight: 1
+  downFloatWeight: 0.15
+  downTint: {r: 0.55, g: 0.55, b: 0.6, a: 1}
+  frozenTint: {r: 0.6, g: 0.75, b: 1, a: 1}
+  frozenShake: 0.04
+  shadowSize: {x: 2.4, y: 0.5}
+  shadowMinScale: 0.45
+  shadowFadeHeight: 7
+  shadowMaxAlpha: 0.5
+  shadowMinAlpha: 0.15
+  shakeSeconds: 0.3
+  hurtScale: 0.85

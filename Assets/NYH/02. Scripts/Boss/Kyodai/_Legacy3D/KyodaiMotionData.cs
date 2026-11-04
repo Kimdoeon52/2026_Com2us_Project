@@ -13,7 +13,7 @@ using UnityEngine;
 /// 이벤트 = 그 시각에 한 번 일어나는 일: 판정(플레이어가 범위 안이면 맞음), 바닥 그림자 켜기/끄기
 /// 기술이 늘어도 클래스는 안 늘어난다 — 새 패턴은 이 에셋을 하나 더 만든다(§1 원칙)
 /// </summary>
-[CreateAssetMenu(menuName = "NYH/Boss/Kyodai Motion", fileName = "KyodaiMotion")]
+[CreateAssetMenu(menuName = "NYH/Boss/Kyodai Motion (3D 보관)", fileName = "KyodaiMotion")]
 public class KyodaiMotionData : ScriptableObject
 {
     [Tooltip("동작 전체 길이(초)")]

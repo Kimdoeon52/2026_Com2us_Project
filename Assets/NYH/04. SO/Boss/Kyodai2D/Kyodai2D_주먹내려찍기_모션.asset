@@ -1,0 +1,240 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c69bbb98bf8bf11489d439b54eafe4dc, type: 3}
+  m_Name: "Kyodai2D_\uC8FC\uBA39\uB0B4\uB824\uCC0D\uAE30_\uBAA8\uC158"
+  m_EditorClassIdentifier: 
+  keys:
+  - label: "\uB530\uB77C\uC624\uBA70 \uC870\uC900"
+    frames: 50
+    anchor: 1
+    offset: {x: 0, y: 5.5}
+    mirrorByDirection: 0
+    clampToArena: 1
+    trackPlayer: 1
+    move: 0
+    springFrequency: 1.6
+    springDamping: 0.75
+    easeCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    pose: 0
+    rotation: 0
+    scale: 1
+    floatWeight: 0.6
+    hitActive: 0
+    hitSize: {x: 2, y: 2}
+    hitOffset: {x: 0, y: 0}
+    telegraphWidth: 2.6
+    impactOnEnd: 0
+    impactShake: 0.3
+    impactFreezeFrames: 4
+  - label: "\uB04C\uC5B4\uC62C\uB9AC\uAE30"
+    frames: 16
+    anchor: 5
+    offset: {x: 0, y: 6.8}
+    mirrorByDirection: 0
+    clampToArena: 1
+    trackPlayer: 0
+    move: 0
+    springFrequency: 3
+    springDamping: 0.5
+    easeCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    pose: 0
+    rotation: 0
+    scale: 1.12
+    floatWeight: 0.1
+    hitActive: 0
+    hitSize: {x: 2, y: 2}
+    hitOffset: {x: 0, y: 0}
+    telegraphWidth: 2.6
+    impactOnEnd: 0
+    impactShake: 0.3
+    impactFreezeFrames: 4
+  - label: "\uB0B4\uB824\uCC0D\uAE30"
+    frames: 7
+    anchor: 5
+    offset: {x: 0, y: 1}
+    mirrorByDirection: 0
+    clampToArena: 1
+    trackPlayer: 0
+    move: 1
+    springFrequency: 2
+    springDamping: 0.7
+    easeCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 2.6
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    pose: 0
+    rotation: 0
+    scale: 1
+    floatWeight: 0
+    hitActive: 1
+    hitSize: {x: 2, y: 1.8}
+    hitOffset: {x: 0, y: 0}
+    telegraphWidth: 2.6
+    impactOnEnd: 1
+    impactShake: 0.35
+    impactFreezeFrames: 5
+  - label: "\uBC15\uD798"
+    frames: 60
+    anchor: 5
+    offset: {x: 0, y: 1}
+    mirrorByDirection: 0
+    clampToArena: 1
+    trackPlayer: 0
+    move: 0
+    springFrequency: 6
+    springDamping: 0.9
+    easeCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    pose: 0
+    rotation: 0
+    scale: 1
+    floatWeight: 0.05
+    hitActive: 0
+    hitSize: {x: 2, y: 2}
+    hitOffset: {x: 0, y: 0}
+    telegraphWidth: 0
+    impactOnEnd: 0
+    impactShake: 0.3
+    impactFreezeFrames: 4
+  - label: "\uBF51\uAE30"
+    frames: 14
+    anchor: 5
+    offset: {x: 0, y: 2.4}
+    mirrorByDirection: 0
+    clampToArena: 1
+    trackPlayer: 0
+    move: 0
+    springFrequency: 2.5
+    springDamping: 0.6
+    easeCurve:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 0
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 0
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    pose: 0
+    rotation: 0
+    scale: 1
+    floatWeight: 0.3
+    hitActive: 0
+    hitSize: {x: 2, y: 2}
+    hitOffset: {x: 0, y: 0}
+    telegraphWidth: 0
+    impactOnEnd: 0
+    impactShake: 0.3
+    impactFreezeFrames: 4

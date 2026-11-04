@@ -16,7 +16,7 @@ using UnityEngine;
 /// </summary>
 public class KyodaiMotionWindow : EditorWindow
 {
-    [MenuItem("NYH/쿄다이/모션 창")]
+    [MenuItem("NYH/쿄다이(3D 보관)/모션 창")]
     private static void Open() => GetWindow<KyodaiMotionWindow>("쿄다이 모션");
 
     private static readonly Color[] LayerColors =
@@ -31,7 +31,7 @@ public class KyodaiMotionWindow : EditorWindow
     private static readonly Color[] TrackColors = { new Color(0.3f, 0.9f, 1f), new Color(1f, 0.5f, 0.9f), new Color(0.6f, 1f, 0.4f), new Color(1f, 0.7f, 0.3f) };
 
     private KyodaiMotionData motion;
-    private KyodaiBossController boss;
+    private KyodaiBossController3D boss;
     private float time;
     private bool playing;
     private bool loop = true;
@@ -168,9 +168,9 @@ public class KyodaiMotionWindow : EditorWindow
         else if (editPreview.Active) editPreview.End();
     }
 
-    private KyodaiBossController FindBoss()
+    private KyodaiBossController3D FindBoss()
     {
-        if (boss == null) boss = Object.FindAnyObjectByType<KyodaiBossController>();
+        if (boss == null) boss = Object.FindAnyObjectByType<KyodaiBossController3D>();
         return boss;
     }
 
@@ -213,7 +213,7 @@ public class KyodaiMotionWindow : EditorWindow
             if (m != motion) { motion = m; selKey = selEvent = selMark = -1; selTrack = 0; }
             if (GUILayout.Button("새 모션", GUILayout.Width(60))) CreateMotion();
         }
-        boss = (KyodaiBossController)EditorGUILayout.ObjectField("보스", boss, typeof(KyodaiBossController), true);
+        boss = (KyodaiBossController3D)EditorGUILayout.ObjectField("보스", boss, typeof(KyodaiBossController3D), true);
 
         if (motion == null)
         {

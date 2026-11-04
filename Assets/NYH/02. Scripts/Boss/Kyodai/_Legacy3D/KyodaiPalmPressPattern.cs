@@ -42,14 +42,14 @@ public class KyodaiPalmPressPattern : BossPatternGimmickBase
     [Tooltip("TODO: 기획 수치 없음. 짓누르는 판정 높이(바닥에서 위로, 월드)")]
     [Min(0.1f)] [SerializeField] private float crushHeight = 3f;
 
-    private KyodaiBossController kyodai;
+    private KyodaiBossController3D kyodai;
     private float centerX;
     private float width;
 
     protected override void OnAttached()
     {
-        kyodai = OwnerBoss as KyodaiBossController;
-        if (kyodai == null) Debug.LogError("[손바닥 압착] KyodaiBossController 밑에 있어야 함");
+        kyodai = OwnerBoss as KyodaiBossController3D;
+        if (kyodai == null) Debug.LogError("[손바닥 압착] KyodaiBossController3D 밑에 있어야 함");
     }
 
     // 1) 자리 정하기: 플레이어가 있는 곳을 중심으로 경기장 1/3. 벽 밖으로 안 나가게 자른다
@@ -110,7 +110,7 @@ public class KyodaiPalmPressPattern : BossPatternGimmickBase
 #if UNITY_EDITOR
     private void OnDrawGizmosSelected()
     {
-        var k = GetComponentInParent<KyodaiBossController>();
+        var k = GetComponentInParent<KyodaiBossController3D>();
         if (k == null) return;
         float w = k.ArenaWidth * areaRatio;
         Gizmos.color = new Color(1f, 0.3f, 0.3f, 0.6f);

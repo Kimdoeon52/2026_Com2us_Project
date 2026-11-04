@@ -1536,6 +1536,11 @@ MonoBehaviour:
   deathClip: {fileID: 7400000, guid: e2791b2c1ddf3644a94e851a47bb8e8c, type: 2}
   groggyClip: {fileID: 7400000, guid: 14440082fb9d518408641a5e8ca362a0, type: 2}
   groggyHoldEnd: 4.1833
+  groggyHpRatios:
+  - 0.8
+  - 0.4
+  - 0.2
+  showDebugHp: 1
 --- !u!4 &923149673
 Transform:
   m_ObjectHideFlags: 0
@@ -2886,8 +2891,8 @@ Transform:
   m_GameObject: {fileID: 1328636925}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.2776, y: -3.26, z: 0.0162}
-  m_LocalScale: {x: 9.066198, y: 5.5357337, z: 4.0370526}
+  m_LocalPosition: {x: 1.2776, y: -2.1134, z: 0.0162}
+  m_LocalScale: {x: 9.066198, y: 3.242279, z: 4.0370526}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -3738,7 +3743,6 @@ GameObject:
   - component: {fileID: 1831109083}
   - component: {fileID: 1831109082}
   - component: {fileID: 1831109081}
-  - component: {fileID: 1831109084}
   m_Layer: 0
   m_Name: CAM_Stage
   m_TagString: MainCamera
@@ -3755,7 +3759,7 @@ Transform:
   m_GameObject: {fileID: 1831109079}
   serializedVersion: 2
   m_LocalRotation: {x: 0.29222357, y: 0.030987361, z: 0.0074188435, w: 0.95581913}
-  m_LocalPosition: {x: -0.6, y: 9.6, z: -12.7}
+  m_LocalPosition: {x: -0.96, y: 10.56, z: -14.34}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3874,31 +3878,6 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
---- !u!114 &1831109084
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1831109079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 26454fb84fe9ab04282f0a27d6900aca, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  playerA: {fileID: 1270632114}
-  playerB: {fileID: 0}
-  minX: -3
-  maxX: 3
-  framingPadding: 1.5
-  closeZ: -8
-  farZ: -12
-  minOrthoSize: 14
-  maxOrthoSize: 1.9
-  positionSmoothTime: 0.025
-  zoomInSmoothTime: 0.2
-  fixedY: 1
-  fighterEdgeInset: 0.25
 --- !u!4 &1861464615 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -5568657746741595509, guid: d9858ce1d92e81b4d8acee45b3ef30bd, type: 3}

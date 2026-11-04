@@ -1,5 +1,5 @@
 // 인벤토리 장착 상태를 전투 스냅샷 부위에 덮어쓴다. 정산 결과가 파츠 ID로 인벤토리에 돌아오게 하는 연결점
-// 정식 조립기가 생기기 전까지 스탯은 스냅샷 값을 그대로 쓰고, 파츠 ID와 내구도만 바꾼다
+// 정식 조립기가 생기기 전까지 스탯은 스냅샷 값을 그대로 쓰고, 코어 레벨·경험치와 파츠 ID·내구도만 바꾼다
 public static class InventoryBattleBridge
 {
     private static CombatantSnapshot _applied;
@@ -12,6 +12,10 @@ public static class InventoryBattleBridge
             return;
 
         _applied = snapshot;
+
+        // 정산이 스냅샷 값을 세이브에 덮어쓰므로 세이브 값으로 시작한다
+        snapshot.coreLevel = host.CoreLevel;
+        snapshot.currentCoreExp = host.Save.Core.Exp;
 
         Apply(snapshot, host, Slot.Head, BodyPart.Head, 42);
         Apply(snapshot, host, Slot.LeftArm, BodyPart.LeftArm, 70);

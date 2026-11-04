@@ -16,31 +16,37 @@ MonoBehaviour:
   - Id: SK_LEG_DASH
     DisplayName: "부스터 대시"
     TypeLabel: "사거리 4.0 · 공중 가능"
+    Description: "전방으로 돌진하며 경로상의 적을 관통해 1회 타격한다."
     Action: {fileID: 11400000, guid: 35156193a7d44aba8c13e3d9c5673c0b, type: 2}
     CanLevelUp: 1
   - Id: SK_LEG_SHIELD
     DisplayName: "에너지 방어막"
     TypeLabel: "전진 1.0 · 충격파 3.0"
+    Description: "앞으로 전진하며 전방에 방어막을 펼친다. 투사체를 소멸시키고 근접 피해를 줄이며, 끝날 때 충격파를 일으킨다."
     Action: {fileID: 11400000, guid: 3c9ecd82b83a41e5ab27baec7a2b4d99, type: 2}
     CanLevelUp: 1
   - Id: SK_LEG_HIJUMP
     DisplayName: "하이 점프"
     TypeLabel: "높이 4.0"
+    Description: "수직으로 높이 도약하며 상승 경로의 적을 타격한다."
     Action: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
     CanLevelUp: 1
   - Id: SK_LEG_STOMP
     DisplayName: "스톰프"
     TypeLabel: "반경 3.0 · 공중 전용"
+    Description: "급강하해 착지 충격파를 일으키고, 착지 순간 잠시 무적이 된다. 지상에서 쓰면 작은 점프 후 발동한다."
     Action: {fileID: 11400000, guid: 072ac5274d1e4fc0aa545cf75f02ef73, type: 2}
     CanLevelUp: 1
   - Id: SK_LEG_BACKBOOST
     DisplayName: "백 부스트"
     TypeLabel: "후방 3.0 · 공중 가능"
+    Description: "뒤로 도약하며 전방으로 발차기를 날린다. 도약 순간 잠시 무적이 된다."
     Action: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
     CanLevelUp: 1
   - Id: SK_LEG_BOOSTER
     DisplayName: "부스터"
     TypeLabel: "3초 이동속도 +100%"
+    Description: "잠시 이동속도가 크게 증가하고 달리기 판정을 유지한다."
     Action: {fileID: 11400000, guid: 21d6f658e99b44b1a8a94dfe520b7b1f, type: 2}
   - Id: SK_ARM_BOOSTSHOT
     DisplayName: "부스터 샷"

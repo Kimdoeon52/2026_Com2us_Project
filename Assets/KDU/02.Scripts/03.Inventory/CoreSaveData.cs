@@ -25,6 +25,12 @@ public class CoreSaveData
         _isUnstable = false;
     }
 
+    public void SetLevel(int level)
+    {
+        _level = Mathf.Max(1, level);
+        _exp = 0;
+    }
+
     public void Clear()
     {
         Set(null);

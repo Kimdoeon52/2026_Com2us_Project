@@ -13,6 +13,7 @@ public static class SkillWindowBuilder
     private const string CanvasName = "Canvas_SkillWindow";
     private const string CatalogPath = "Assets/KDU/03.SOData/03.LegSkill/PartSkillCatalog.asset";
     private const string PlayerControlType = "RSSimpleCharacter";
+    private const string LoadoutTitle = "전투 로드아웃 연결";
     private const int SortingOrder = 6;
     private const int RowCount = 4;
 
@@ -34,7 +35,7 @@ public static class SkillWindowBuilder
     private static readonly Color ButtonDisabled = new Color(1f, 1f, 1f, 0.25f);
 
     [MenuItem("KDU/스킬/스킬 창 생성")]
-    private static void BuildWindow()
+    public static void BuildWindow()
     {
         string missing = Load();
         if (missing != null)
@@ -44,11 +45,19 @@ public static class SkillWindowBuilder
         }
 
         Scene scene = SceneManager.GetActiveScene();
+
+        // 이미 있으면 손으로 고친 배치·글자를 덮어쓰지 않는다
+        if (FindRoot(scene, CanvasName) != null)
+        {
+            Debug.Log($"{CanvasName}이 이미 있어 건너뛴다. 다시 만들려면 지우고 실행할 것.");
+            return;
+        }
+
         GameObject canvas = BuildCanvas(scene);
         GameObject window = BuildFrame(canvas.transform);
 
         Transform list = BuildList(window.transform, out TextMeshProUGUI points, out GameObject empty, out RectTransform rows);
-        BuildDetail(window.transform);
+        BuildDetail(window.transform, out TextMeshProUGUI skillName, out TextMeshProUGUI description);
         BindOpenEffect(window, rows);
 
         SkillWindowView view = GetOrAdd<SkillWindowView>(canvas);
@@ -56,6 +65,8 @@ public static class SkillWindowBuilder
         so.FindProperty("_panel").objectReferenceValue = window;
         so.FindProperty("_pointsLabel").objectReferenceValue = points;
         so.FindProperty("_emptyNotice").objectReferenceValue = empty;
+        so.FindProperty("_skillNameLabel").objectReferenceValue = skillName;
+        so.FindProperty("_descriptionLabel").objectReferenceValue = description;
         so.ApplyModifiedProperties();
 
         BindInputGate(canvas);
@@ -70,7 +81,7 @@ public static class SkillWindowBuilder
         PlayerSkillLoadout fallback = Object.FindFirstObjectByType<PlayerSkillLoadout>(FindObjectsInactive.Include);
         if (fallback == null)
         {
-            Debug.LogError("PlayerSkillLoadout을 찾지 못했다. 전투 씬을 열고 실행할 것.");
+            EditorUtility.DisplayDialog(LoadoutTitle, "이 씬에 PlayerSkillLoadout이 없습니다.\n전투 씬을 연 상태로 실행하세요.", "확인");
             return;
         }
 
@@ -93,7 +104,7 @@ public static class SkillWindowBuilder
         }
 
         EditorSceneManager.MarkSceneDirty(player.scene);
-        Debug.Log("전투 로드아웃 연결 완료. 씬을 저장하세요.", player);
+        EditorUtility.DisplayDialog(LoadoutTitle, $"{player.name}에 연결했습니다. 씬을 저장하세요.", "확인");
     }
 
     private static int IndexOf(GameObject go, Component target)
@@ -230,12 +241,17 @@ public static class SkillWindowBuilder
     }
 
     //================================ 오른쪽: GIF·설명 자리 ================================
-    private static void BuildDetail(Transform window)
+    private static void BuildDetail(Transform window, out TextMeshProUGUI skillName, out TextMeshProUGUI description)
     {
         Transform panel = Section(window, "DetailPanel", DetailX, DetailWidth);
-        PlaceLabel(panel, "Caption", "SKILL PREVIEW", 14, Cyan, TextAlignmentOptions.Left, 28f, 28f, 200f, 20f);
-        PlacePanel(panel, "PreviewArea", "swatch_v3", Color.white, 1f, 28f, 66f, DetailWidth - 56f, SectionHeight - 94f);
-        PlaceLabel(panel, "Placeholder", "스킬 GIF · 설명", 22, Dim, TextAlignmentOptions.Center, 28f, 280f, DetailWidth - 56f, 40f);
+        skillName = PlaceLabel(panel, "Caption", "SKILL NAME", 32, Cyan, TextAlignmentOptions.Left, 28f, 20f, DetailWidth - 56f, 44f);
+
+        GameObject preview = PlacePanel(panel, "PreviewArea", "swatch_v3", Color.white, 1f, 28f, 72f, DetailWidth - 56f, 270f);
+        PlaceLabel(preview.transform, "Placeholder", "스킬 GIF", 22, Dim, TextAlignmentOptions.Center, 0f, 115f, DetailWidth - 56f, 40f);
+
+        description = PlaceLabel(panel, "Description", "설명", 22, Bone, TextAlignmentOptions.TopLeft, 28f, 360f, DetailWidth - 56f, 200f);
+        description.textWrappingMode = TextWrappingModes.Normal;
+        description.overflowMode = TextOverflowModes.Overflow;
     }
 
     //================================ 입력 차단 ================================

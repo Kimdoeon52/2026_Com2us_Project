@@ -83,6 +83,13 @@ public class InventoryToggle : MonoBehaviour
         }
     }
 
+    // 밖에서 닫을 때. 키로 닫을 때와 같은 처리를 한다
+    public void CloseAll()
+    {
+        if (_current != null)
+            Close(true);
+    }
+
     private void Open(Mode mode)
     {
         _current = mode;

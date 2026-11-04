@@ -16,6 +16,12 @@ public class SkillWindowView : MonoBehaviour
     [Tooltip("표시할 스킬이 없을 때 안내")]
     [SerializeField] private GameObject _emptyNotice;
 
+    [Tooltip("선택한 스킬 이름")]
+    [SerializeField] private TextMeshProUGUI _skillNameLabel;
+
+    [Tooltip("선택한 스킬 설명")]
+    [SerializeField] private TextMeshProUGUI _descriptionLabel;
+
     [Tooltip("열고 닫는 키")]
     [SerializeField] private KeyCode _toggleKey = KeyCode.V;
 
@@ -76,7 +82,7 @@ public class SkillWindowView : MonoBehaviour
         _panel.SetActive(true);
     }
 
-    private void Close()
+    public void Close()
     {
         Release();
         _panel.SetActive(false);
@@ -133,6 +139,22 @@ public class SkillWindowView : MonoBehaviour
         {
             _rows[i].SetSelected(_rows[i] == row);
         }
+
+        ShowDetail(row);
+    }
+
+    // 선택한 줄이 없으면 비운다
+    private void ShowDetail(SkillRowView row)
+    {
+        PartSkillCatalog.Entry entry = default;
+        if (row != null)
+            _system.TryGetSkill(row.Slot, out entry);
+
+        if (_skillNameLabel != null)
+            _skillNameLabel.text = entry.DisplayName;
+
+        if (_descriptionLabel != null)
+            _descriptionLabel.text = entry.Description;
     }
 
     private void Select(SkillRowView row)

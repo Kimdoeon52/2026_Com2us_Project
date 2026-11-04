@@ -18,6 +18,10 @@ public class PartSkillCatalog : ScriptableObject
         [Tooltip("스킬 종류 태그")]
         public string TypeLabel;
 
+        [Tooltip("스킬 설명")]
+        [TextArea]
+        public string Description;
+
         [Tooltip("행동. 비우면 표시만")]
         public ActionData Action;
 

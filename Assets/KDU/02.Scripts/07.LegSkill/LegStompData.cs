@@ -29,6 +29,24 @@ public class LegStompData : SkillData
     public int MaxDiveFrames => maxDiveFrames;
     public ActionData LandingAction => landingAction;
 
+    // 착지 행동도 같이 복제한다
+    public override ActionData CreateSlotInstance(BodyPart part)
+    {
+        LegStompData clone = (LegStompData)base.CreateSlotInstance(part);
+        if (landingAction != null)
+            clone.landingAction = landingAction.CreateSlotInstance(part);
+
+        return clone;
+    }
+
+    // 데미지는 착지 행동에 있다
+    public override void SetRuntimeDamageScale(float scale)
+    {
+        base.SetRuntimeDamageScale(scale);
+        if (landingAction != null)
+            landingAction.SetRuntimeDamageScale(scale);
+    }
+
     public override SkillRunner CreateRunner() => new Runner(this);
 
     private sealed class Runner : SkillRunner

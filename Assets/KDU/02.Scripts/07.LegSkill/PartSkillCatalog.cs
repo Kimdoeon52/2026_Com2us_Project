@@ -20,6 +20,9 @@ public class PartSkillCatalog : ScriptableObject
 
         [Tooltip("행동. 비우면 표시만")]
         public ActionData Action;
+
+        [Tooltip("스킬 레벨업 가능")]
+        public bool CanLevelUp;
     }
 
     [Tooltip("매핑 목록")]

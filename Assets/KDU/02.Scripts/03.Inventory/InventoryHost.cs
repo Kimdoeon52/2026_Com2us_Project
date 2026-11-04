@@ -98,6 +98,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         }
 
         Changed += MarkSaveDirty;
+        gameObject.GetOrAddComponent<SkillLevelSystem>();
     }
 
     private void Start()

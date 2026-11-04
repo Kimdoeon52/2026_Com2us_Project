@@ -16,7 +16,7 @@ MonoBehaviour:
   source: 1
   requiredPart: 3
   startupFrames: 4
-  activeFrames: 15
+  activeFrames: 5
   recoveryFrames: 10
   isInvincibleDuringActive: 1
   isGuardable: 0
@@ -31,7 +31,7 @@ MonoBehaviour:
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
-  advanceDistance: -0.75
+  advanceDistance: -1
   advanceDuringActiveOnly: 1
   trailAfterImageInterval: 2
   groundOnly: 0
@@ -72,7 +72,7 @@ MonoBehaviour:
     damageScale: 0
     anchor: 3
     startOffset: 0
-    length: 6
+    length: 0
     startFrame: 0
     endFrame: 0
   chargedVariant: {fileID: 0}

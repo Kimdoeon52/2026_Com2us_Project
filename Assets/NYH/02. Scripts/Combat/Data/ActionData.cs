@@ -210,6 +210,9 @@ public class ActionData : ScriptableObject
     [Tooltip("Hit/Hurt/Push 박스 목록. startFrame~endFrame은 ActionState.GlobalFrame 기준(1부터, endFrame 포함)")]
     [SerializeField] private FrameBox[] frameBoxes = new FrameBox[0];
 
+    // 저장되지 않는 값 — 슬롯 복제본의 스킬 레벨 배율 (2026-11-04 추가, KDU)
+    [System.NonSerialized] private float runtimeDamageScale = 1f;
+
     // ---- 읽기 전용 접근자 — 런타임(2층)과 시스템(3층)은 이 값을 읽기만 하고 절대 쓰지 않는다 ----
     // 프로퍼티(=>)로만 노출하고 public 필드로 안 만든 이유: 외부에서 실수로라도 값을 대입하지 못하게
     // 막기 위해서다. ActionData는 "불변 데이터"인데 public 필드였다면 누구든 런타임에 값을 바꿔버릴 수 있었을 것
@@ -236,7 +239,8 @@ public class ActionData : ScriptableObject
 
     public int StaggerValue => staggerValue;
     public float KnockbackDistance => knockbackDistance;
-    public float Damage => damage;
+    // 2026-11-04 추가 (KDU): 스킬 레벨 배율. 원본 에셋은 항상 1이고 슬롯 복제본(CreateSlotInstance)에만 값이 들어간다
+    public float Damage => damage * runtimeDamageScale;
     public int HitIntervalFrames => hitIntervalFrames;
     public float HitStopScale => hitStopScale;
 
@@ -265,6 +269,21 @@ public class ActionData : ScriptableObject
 
     public virtual FrameBox[] FrameBoxes => frameBoxes;
     protected FrameBox[] StoredFrameBoxes => frameBoxes;
+
+    /// <summary>슬롯 전용 런타임 복제본을 만든다. 쿨타임·부위 파손·데미지가 슬롯별로 갈린다 (2026-11-04 추가, KDU)</summary>
+    // 호출: PartSkillLoadout. 받음: 이 복제본이 속할 부위
+    public virtual ActionData CreateSlotInstance(BodyPart part)
+    {
+        ActionData clone = Instantiate(this);
+        clone.requiredPart = part;
+        return clone;
+    }
+
+    /// <summary>복제본의 데미지 배율을 바꾼다. 원본 에셋에는 부르지 않는다 (2026-11-04 추가, KDU)</summary>
+    public virtual void SetRuntimeDamageScale(float scale)
+    {
+        runtimeDamageScale = scale;
+    }
 
     /// <summary>
     /// 지정한 전체-타임라인 프레임(ActionState.GlobalFrame 기준)에 활성화된 박스만 반환한다.

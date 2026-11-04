@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// 수직 도약 스킬. 활성 진입 시 도약, 정점에서 활성 종료
+// 수직 도약 스킬. 활성 프레임 동안 도약 높이까지 상승
 [CreateAssetMenu(menuName = "KDU/LegSkill/Leap Skill", fileName = "LeapSkill")]
 public class LeapSkillData : TapSkillData
 {
@@ -8,11 +8,7 @@ public class LeapSkillData : TapSkillData
     [Tooltip("도약 높이")]
     [Min(0f)][SerializeField] private float leapHeight;
 
-    [Tooltip("상승 최대 프레임")]
-    [Min(1)][SerializeField] private int maxRiseFrames = 120;
-
     public float LeapHeight => leapHeight;
-    public int MaxRiseFrames => maxRiseFrames;
 
     public override SkillRunner CreateRunner() => new Runner(this);
 
@@ -25,30 +21,39 @@ public class LeapSkillData : TapSkillData
             this.data = data;
         }
 
-        protected override int GetPhaseLength(SkillPhase phase)
-        {
-            if (phase == SkillPhase.Active)
-                return data.maxRiseFrames;
-
-            return base.GetPhaseLength(phase);
-        }
-
+        // 이륙. 수평 이동 잠금
         protected override void OnPhaseEnter(SkillPhase phase)
         {
             if (phase != SkillPhase.Active || Ctx.Mover == null)
                 return;
 
-            Ctx.Mover.Leap(0f, MoverPhysics.JumpVelocityFor(Ctx.Mover, data.leapHeight));
+            Ctx.Mover.Leap(0f, RiseVelocity(1));
         }
 
-        // 상승이 끝나면 후딜로
-        protected override void OnInput(in SkillInputFrame input)
+        // 매 틱 상승 속도 지정 (RobotMover가 이어서 중력을 더하므로 그만큼 보정)
+        protected override void OnPhaseTick(SkillPhase phase, in SkillInputFrame input)
         {
-            if (Phase != SkillPhase.Active || PhaseFrame < 1)
+            if (phase != SkillPhase.Active || Ctx.Mover == null)
                 return;
 
-            if (Ctx.Mover == null || Ctx.Mover.VerticalVelocity <= 0f)
-                RequestPhaseExit();
+            Ctx.Mover.SetVerticalVelocity(RiseVelocity(PhaseFrame) - Ctx.Mover.Gravity * CombatClock.TICK);
+        }
+
+        // 정점에서 정지. 이후 중력으로 낙하
+        protected override void OnPhaseExit(SkillPhase phase)
+        {
+            if (phase == SkillPhase.Active && Ctx.Mover != null)
+                Ctx.Mover.SetVerticalVelocity(0f);
+        }
+
+        // tick번째 틱의 속도. 등감속으로 활성 마지막 틱에 정확히 도약 높이 도달
+        private float RiseVelocity(int tick)
+        {
+            int frames = Timeline != null ? Timeline.ActiveFrames : 0;
+            if (frames <= 0)
+                return 0f;
+
+            return 2f * data.leapHeight * (frames - tick + 1) / (CombatClock.TICK * frames * (frames + 1));
         }
     }
 }

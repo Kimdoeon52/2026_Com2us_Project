@@ -67,7 +67,9 @@ namespace RealSteel.Boss.FSM
         private void ReturnToIdle()
         {
             var token = boss.RenewStateCancellationToken();
-            float postDelay = boss.MasterData != null ? boss.MasterData.patternPostDelay : 1.0f;
+            float postDelay = (_gimmick != null && _gimmick.PatternData != null && _gimmick.PatternData.postDelay > 0f)
+                ? _gimmick.PatternData.postDelay
+                : (boss.MasterData != null ? boss.MasterData.patternPostDelay : 1.0f);
             boss.StateMachine.ChangeState(new BossIdleState(boss, token, postDelay));
         }
 

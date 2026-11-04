@@ -106,24 +106,31 @@ namespace RealSteel.Boss.JunkWheeler
 
             Vector2 center = transform.position;
             Collider2D[] hits = Physics2D.OverlapCircleAll(center, explosionRadius);
+            bool hasDamagedBoss = false;
+            bool hasDamagedPlayer = false;
 
             foreach (var hit in hits)
             {
                 if (hit.gameObject == gameObject) continue;
 
-                // 1. 보스 적중 처리: 150 대미지 및 2초 스턴
-                var boss = hit.GetComponent<BossControllerBase>() ?? hit.GetComponentInParent<BossControllerBase>();
-                if (boss != null)
+                // 1. 보스 적중 처리: 150 대미지 및 2초 스턴 (다중 콜라이더 중복 방지)
+                if (!hasDamagedBoss)
                 {
-                    Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 폭발로 보스에게 {bossDamage} 피해 및 {bossStunDuration}초 스턴 부여!</color>");
-                    boss.TakeDamage(bossDamage);
-                    boss.InterruptToStun(bossStunDuration);
-                    continue;
+                    var boss = hit.GetComponent<BossControllerBase>() ?? hit.GetComponentInParent<BossControllerBase>();
+                    if (boss != null)
+                    {
+                        hasDamagedBoss = true;
+                        Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 폭발로 보스에게 {bossDamage} 피해 및 {bossStunDuration}초 스턴 부여!</color>");
+                        boss.TakeDamage(bossDamage);
+                        boss.InterruptToStun(bossStunDuration);
+                        continue;
+                    }
                 }
 
-                // 2. 플레이어 적중 처리: 80 피해 (Space 무적 회피 검사)
-                if (hit.CompareTag("Player"))
+                // 2. 플레이어 적중 처리: 80 피해 (Space 무적 회피 검사 및 다중 콜라이더 중복 방지)
+                if (!hasDamagedPlayer && (hit.CompareTag("Player") || (hit.transform.root != null && hit.transform.root.CompareTag("Player"))))
                 {
+                    hasDamagedPlayer = true;
                     bool isInvincible = false;
                     var executor = hit.GetComponent<ActionExecutor>() ?? hit.GetComponentInParent<ActionExecutor>();
                     if (executor != null && executor.State != null && executor.State.CurrentAction != null)

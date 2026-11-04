@@ -2217,10 +2217,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 371741583458075138, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: nailPunctureVfxPrefab
+      value: 
+      objectReference: {fileID: 4190246949986612809, guid: 141de425b875475f98c35e49d1b2e24e, type: 3}
     - target: {fileID: 512307155976557277, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: bulletHitVfxPrefab
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
     - target: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_LocalPosition.x
       value: 4.85
@@ -2269,18 +2273,46 @@ PrefabInstance:
       propertyPath: m_Name
       value: Boss1_JunkWheeler
       objectReference: {fileID: 0}
+    - target: {fileID: 3468832547808010039, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: flatTireParticle
+      value: 
+      objectReference: {fileID: 4098287523298509685, guid: 141de425b875475f98c35e49d1b2e24e, type: 3}
     - target: {fileID: 8152764038469079320, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 8211426203969925326, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: playerHitVfxPrefab
+      value: 
+      objectReference: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
+    - target: {fileID: 8211426203969925326, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: wallImpactVfxPrefab
+      value: 
+      objectReference: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
     - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: bladeHitVfxPrefab
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: landImpactVfxPrefab
+      value: 
+      objectReference: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
+    - target: {fileID: 8812345678901234502, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: bounceImpactVfxPrefab
+      value: 
+      objectReference: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
     - target: {fileID: 8957008211139764899, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: hitVfxPrefab
       value: 
-      objectReference: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}
+      objectReference: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
+    - target: {fileID: 8957008211139764899, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: dribbleLandVfxPrefab
+      value: 
+      objectReference: {fileID: 820598447203043087, guid: 159df74232cdc05418dd609306f6b489, type: 3}
+    - target: {fileID: 8957008211139764899, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: shockwaveVisualPrefab
+      value: 
+      objectReference: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -3581,6 +3613,63 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1001 &1035851789
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 117528, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_Name
+      value: FX_Steam
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 428568, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: de0fb8fabb4497b4fb140cddb057abbf, type: 3}
 --- !u!1 &1048134557 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 3268763706634737369, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
@@ -4846,7 +4935,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 33.784416, y: 7.27544}
+  m_LightCookieOffset: {x: 4.934194, y: 2.018534}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -6604,3 +6693,4 @@ SceneRoots:
   - {fileID: 7773390440731881315}
   - {fileID: 1846829714}
   - {fileID: 1669171338}
+  - {fileID: 1035851789}

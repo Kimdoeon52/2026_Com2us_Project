@@ -273,6 +273,12 @@ namespace RealSteel.Boss.JunkWheeler
 
         private void ApplyHitToPlayer(GameObject playerObj)
         {
+            // 동일 회차(roundIndex)에서 좌/우 충격파에 연달아 2번 피격되는 현상 차단
+            if (_owner != null && !_owner.TryRegisterRoundHit(_roundIndex))
+            {
+                return;
+            }
+
             var hub = CombatDataHub.Instance;
             string attackerId = (_owner != null && _owner.OwnerBoss != null && _owner.OwnerBoss.Snapshot != null)
                 ? _owner.OwnerBoss.Snapshot.bossID

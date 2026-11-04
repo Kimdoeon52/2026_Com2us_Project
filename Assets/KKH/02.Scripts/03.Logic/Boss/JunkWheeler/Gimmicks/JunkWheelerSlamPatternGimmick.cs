@@ -52,6 +52,8 @@ namespace RealSteel.Boss.JunkWheeler
         private Transform _playerTransform;
 
         public bool IsSlamActive { get; private set; } = false;
+        public int CurrentSlamRound { get; private set; } = 0;
+        public bool CanTriggerNailBoard => IsSlamActive && CurrentSlamRound > 1;
 
         protected override void OnPreExecute()
         {
@@ -76,12 +78,14 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (OwnerBoss == null) return;
             IsSlamActive = true;
+            CurrentSlamRound = 0;
 
             try
             {
                 for (int round = 1; round <= slamRounds; round++)
                 {
                     token.ThrowIfCancellationRequested();
+                    CurrentSlamRound = round;
 
                     Debug.Log($"<color=yellow>[JunkWheelerSlamPattern] ▶ 내려찍기 {round}/{slamRounds}회차 개시!</color>");
 
@@ -135,12 +139,15 @@ namespace RealSteel.Boss.JunkWheeler
                     // 3단계: 급강하 직전 공중 정지 (예고) - 회전 루프 유지
                     await UniTask.Delay(TimeSpan.FromSeconds(hoverDuration), cancellationToken: token);
 
-                    // 못판 위로 낙하하는지 사전 감지하여 낙하와 동시에 못판 나오는 애니메이션 선제 가동!
-                    var targetNailBoard = FindNailBoardNear(OwnerBoss.transform.position.x);
-                    if (targetNailBoard != null)
+                    // 기획 변경: 최초 1회차(1회차 도약)는 못판 판정 무시 (2회차부터 못판 선제 가동 및 판정 적용)
+                    if (CanTriggerNailBoard)
                     {
-                        Debug.Log("<color=cyan>[JunkWheelerSlamPattern] 못판 위치 급강하 감지! 못판 나오는 애니메이션 선제 가동!</color>");
-                        targetNailBoard.TriggerEmerge();
+                        var targetNailBoard = FindNailBoardNear(OwnerBoss.transform.position.x);
+                        if (targetNailBoard != null)
+                        {
+                            Debug.Log("<color=cyan>[JunkWheelerSlamPattern] 못판 위치 급강하 감지! 못판 나오는 애니메이션 선제 가동!</color>");
+                            targetNailBoard.TriggerEmerge();
+                        }
                     }
 
                     // 4단계: 급강하 내려찍기 (지면 충돌) - 실제 낙하 시점에 낙하 루프 재생
@@ -151,8 +158,8 @@ namespace RealSteel.Boss.JunkWheeler
                     // [착지 VFX]: 충돌 프레임 0에 지면 충격파 이펙트 스폰!
                     SpawnVfx(groundImpactVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
 
-                    // [지면 충돌 즉시 판정 (Frame 0)]: 충돌하는 그 순간 딜레이 없이 못판 및 피격 판정!
-                    if (CheckNailBoardInteraction())
+                    // [지면 충돌 즉시 판정 (Frame 0)]: 최초 1회차는 못판 판정 무시, 2회차부터 못판 상호작용 판정!
+                    if (CanTriggerNailBoard && CheckNailBoardInteraction())
                     {
                         Debug.Log("<color=red>[JunkWheelerSlamPattern] ▶ 고철 못판 착지 감지! 패턴 즉시 중단 및 4초 그로기 전이!</color>");
                         SpawnVfx(nailPunctureVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
@@ -187,6 +194,7 @@ namespace RealSteel.Boss.JunkWheeler
             finally
             {
                 IsSlamActive = false;
+                CurrentSlamRound = 0;
             }
 
             // 모든 회차 종료 후 스케일 완전 복원 및 플레이어 응시 후 Idle 복귀
@@ -286,6 +294,7 @@ namespace RealSteel.Boss.JunkWheeler
         {
             base.OnInterrupted(reason);
             IsSlamActive = false;
+            CurrentSlamRound = 0;
             KillCurrentTween();
             ResetToGround();
             OwnerBoss?.Animation?.ResetScale();

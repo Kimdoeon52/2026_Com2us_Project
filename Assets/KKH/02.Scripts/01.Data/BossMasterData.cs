@@ -145,7 +145,7 @@ public class BossDifficultyLayer
                     hpMultiplier = 1.5f,
                     attackMultiplier = 1.3f,
                     tellDurationMultiplier = 1.0f,
-                    maxAllowedPatterns = 4,
+                    maxAllowedPatterns = 5,
                     maxActiveGimmicks = 3,
                     allowPhase2 = true,
                     allowPatternChain = false,
@@ -165,7 +165,7 @@ public class BossDifficultyLayer
                     hpMultiplier = 2.2f,
                     attackMultiplier = 1.6f,
                     tellDurationMultiplier = 1.0f,
-                    maxAllowedPatterns = 4,
+                    maxAllowedPatterns = 5,
                     maxActiveGimmicks = 4,
                     allowPhase2 = true,
                     allowPatternChain = true,     // 2페이즈 패턴 연계 후딜 0.4초

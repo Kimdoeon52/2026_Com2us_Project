@@ -97,6 +97,10 @@ namespace RealSteel.Boss.Visual
                 {
                     if (ps == null) continue;
                     var main = ps.main;
+                    if (main.loop)
+                    {
+                        main.loop = false;
+                    }
                     if (!ps.isPlaying && main.playOnAwake)
                     {
                         ps.Play();

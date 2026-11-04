@@ -44,10 +44,8 @@ namespace RealSteel.Boss.Core
                     InterruptPattern(InterruptReason.DpsCheckStun);
                     return PatternExecutionResult.Interrupted;
                 }
-                // step3 : 본 공격 액션 시전
+                // step3 : 본 공격 액션 시전 (완료 후 확정 딜타임 후딜은 BossIdleState가 전담)
                 await ExecuteActionAsync(linkedToken);
-                // step4 : 1.0초 확정 딜타임 복귀 전 후딜
-                await ExecutePostDelayPhaseAsync(linkedToken);
 
                 return PatternExecutionResult.Completed;
             }

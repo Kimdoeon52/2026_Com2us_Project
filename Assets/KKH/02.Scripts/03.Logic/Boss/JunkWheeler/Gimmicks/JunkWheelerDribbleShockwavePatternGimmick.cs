@@ -67,63 +67,63 @@ namespace RealSteel.Boss.JunkWheeler
         [Header("전조(Tell) 바닥 균열 파라미터 (기획서: 0.6초)")]
         [SerializeField] private float tellCrackDuration = 0.6f;
         [SerializeField] private Color crackWarningColor = new Color(1.0f, 0.28f, 0.08f, 0.95f);
-        [SerializeField] private float crackWidth = 3.0f;
+        [SerializeField] private float crackWidth = 1.2f;
 
-        [Header("드리블 4회 라운드 설정 (X축 점진적 범위 확장)")]
+        [Header("드리블 4회 라운드 설정 (X축 점진적 범위 확장 - 전 회차 반경 50% 축소)")]
         [SerializeField]
         private DribbleRoundConfig[] roundConfigs = new DribbleRoundConfig[4]
         {
-            // 1회차: 소형 (X사거리 3.0m, X판정 반폭 0.20m, X스케일 1.0x)
+            // 1회차: 소형 (X사거리 1.25m, X판정 반폭 0.15m, X스케일 0.8x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.45f,
                 jumpDuration = 0.16f,
                 fallDuration = 0.12f,
-                shockwaveMaxDistance = 3.0f,
-                shockwaveHitWidth = 0.20f,
-                shockwaveScaleX = 1.0f,
+                shockwaveMaxDistance = 1.25f,
+                shockwaveHitWidth = 0.15f,
+                shockwaveScaleX = 0.8f,
                 shockwaveSpeed = 6.5f,
                 coreDamage = 20,
                 legDamage = 15,
                 landSquashScale = new Vector2(1.20f, 0.75f)
             },
-            // 2회차: 중형 (X사거리 6.0m, X판정 반폭 0.25m, X스케일 1.6x)
+            // 2회차: 중형 (X사거리 2.25m, X판정 반폭 0.18m, X스케일 1.1x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.48f,
                 jumpDuration = 0.17f,
                 fallDuration = 0.12f,
-                shockwaveMaxDistance = 6.0f,
-                shockwaveHitWidth = 0.25f,
-                shockwaveScaleX = 1.6f,
+                shockwaveMaxDistance = 2.25f,
+                shockwaveHitWidth = 0.18f,
+                shockwaveScaleX = 1.1f,
                 shockwaveSpeed = 7.0f,
                 coreDamage = 25,
                 legDamage = 20,
                 landSquashScale = new Vector2(1.28f, 0.70f)
             },
-            // 3회차: 대형 (X사거리 9.0m, X판정 반폭 0.30m, X스케일 2.3x)
+            // 3회차: 대형 (X사거리 3.25m, X판정 반폭 0.22m, X스케일 1.4x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.50f,
                 jumpDuration = 0.18f,
                 fallDuration = 0.13f,
-                shockwaveMaxDistance = 9.0f,
-                shockwaveHitWidth = 0.30f,
-                shockwaveScaleX = 2.3f,
+                shockwaveMaxDistance = 3.25f,
+                shockwaveHitWidth = 0.22f,
+                shockwaveScaleX = 1.4f,
                 shockwaveSpeed = 8.0f,
                 coreDamage = 30,
                 legDamage = 25,
                 landSquashScale = new Vector2(1.35f, 0.65f)
             },
-            // 4회차: 특대형 (X사거리 13.5m / 전장 횡단, X판정 반폭 0.38m, X스케일 3.2x)
+            // 4회차: 특대형 (X사거리 5.25m, X판정 반폭 0.26m, X스케일 1.8x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.55f,
                 jumpDuration = 0.20f,
                 fallDuration = 0.14f,
-                shockwaveMaxDistance = 13.5f,
-                shockwaveHitWidth = 0.38f,
-                shockwaveScaleX = 3.2f,
+                shockwaveMaxDistance = 5.25f,
+                shockwaveHitWidth = 0.26f,
+                shockwaveScaleX = 1.8f,
                 shockwaveSpeed = 9.5f,
                 coreDamage = 40,
                 legDamage = 35,
@@ -153,6 +153,7 @@ namespace RealSteel.Boss.JunkWheeler
         private Tweener _currentTween;
         private GameObject _activeCrackIndicator;
         private readonly List<JunkWheelerShockwaveHazard> _activeHazards = new List<JunkWheelerShockwaveHazard>();
+        private readonly HashSet<int> _hitRounds = new HashSet<int>();
 
         private void Awake()
         {
@@ -191,7 +192,17 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.SnapToGroundY();
                 OwnerBoss.FacePlayer();
             }
+            _hitRounds.Clear();
+
             ClearActiveHazards();
+        }
+
+        /// <summary>
+        /// 동일 드리블 회차에서 좌/우 충격파 중 한찪에 이미 피격되었는지 확인하고 최초 1회만 등록함.
+        /// </summary>
+        public bool TryRegisterRoundHit(int roundIndex)
+        {
+            return _hitRounds.Add(roundIndex);
         }
 
         /// <summary>

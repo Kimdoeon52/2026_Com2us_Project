@@ -264,6 +264,12 @@ namespace RealSteel.Boss.JunkWheeler
         public void TriggerBySlam(GameObject bossActor)
         {
             if (IsConsumed || !IsInteractable || bossActor == null) return;
+            var boss = bossActor.GetComponent<BossControllerBase>() ?? bossActor.GetComponentInParent<BossControllerBase>();
+            if (boss != null)
+            {
+                var slam = boss.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
+                if (slam != null && !slam.CanTriggerNailBoard) return;
+            }
             ExecuteGimmickEffect(bossActor);
             OnPostInteract();
         }
@@ -275,10 +281,14 @@ namespace RealSteel.Boss.JunkWheeler
             var boss = actor.GetComponent<BossControllerBase>() ?? actor.GetComponentInParent<BossControllerBase>();
             if (boss == null) return false;
 
+            // 회전 칼날 당구 패턴(Ricochet) 중에는 못판 상호작용 완전 배제
+            var ricochet = boss.GetGimmick<JunkWheelerRicochetBladePatternGimmick>(JunkWheelerRicochetBladePatternGimmick.PatternRicochetBladeID);
+            if (ricochet != null && ricochet.IsActionRunning) return false;
+
             if (onlyActivateOnSlam)
             {
                 var slam = boss.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
-                if (slam != null && !slam.IsSlamActive)
+                if (slam != null && !slam.CanTriggerNailBoard)
                 {
                     return false;
                 }
@@ -371,6 +381,14 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (other == null || IsConsumed) return;
 
+            // 보스가 회전 칼날 당구(Ricochet) 바운스 비행 중이면 지면 못판 트리거 무시
+            var bossCtrl = other.GetComponent<BossControllerBase>() ?? other.GetComponentInParent<BossControllerBase>();
+            if (bossCtrl != null)
+            {
+                var ricochet = bossCtrl.GetGimmick<JunkWheelerRicochetBladePatternGimmick>(JunkWheelerRicochetBladePatternGimmick.PatternRicochetBladeID);
+                if (ricochet != null && ricochet.IsActionRunning) return;
+            }
+
             // [내려찍기(Slam) 전용 모드]
             if (onlyActivateOnSlam)
             {
@@ -379,7 +397,7 @@ namespace RealSteel.Boss.JunkWheeler
                 if (bossObj != null && IsInteractable && !IsConsumed)
                 {
                     var slam = bossObj.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
-                    if (slam != null && slam.IsSlamActive)
+                    if (slam != null && slam.CanTriggerNailBoard)
                     {
                         TriggerEmerge(() => ExecuteGimmickEffect(bossObj.gameObject));
                     }

@@ -40,6 +40,8 @@ namespace RealSteel.Boss.Visual
         private float _baseScaleX = 1f;
         private float _baseScaleY = 1f;
         private float _baseScaleZ = 1f;
+        private int _squashVersion = 0;
+        private Tweener _scaleTween;
 
         public Animator Animator => animator;
         public SpriteRenderer SpriteRenderer => spriteRenderer;
@@ -75,14 +77,27 @@ namespace RealSteel.Boss.Visual
             if (Mathf.Approximately(_baseScaleZ, 0f)) _baseScaleZ = 1f;
         }
 
+        private void KillScaleTween()
+        {
+            if (_scaleTween != null && _scaleTween.IsActive())
+            {
+                _scaleTween.Kill();
+            }
+            _scaleTween = null;
+        }
+
         /// <summary>
         /// 보스의 스케일을 원래의 불변 기본 스케일로 즉시 복원함.
+        /// (target.DOKill() 대신 스케일 전용 트윈만 종료하여 보스의 이동 트윈 DOMoveX/Y가 끊기지 않도록 보호)
         /// </summary>
         public void ResetScale(Transform target = null)
         {
+            _squashVersion++;
+            KillScaleTween();
             Transform t = target != null ? target : transform;
-            t.DOKill();
+            if (t == null) return;
             float signX = Mathf.Sign(t.localScale.x);
+            if (Mathf.Approximately(signX, 0f)) signX = 1f;
             t.localScale = new Vector3(_baseScaleX * signX, _baseScaleY, _baseScaleZ);
         }
 
@@ -163,7 +178,9 @@ namespace RealSteel.Boss.Visual
 
         /// <summary>
         /// 비대칭 비선형 펀치감 연출 (특정 대상 Transform 지정)
-        /// 불변 기본 스케일(_baseScaleX, _baseScaleY)을 기준으로 연산하여 연속 호출 시에도 스케일 왜곡 누적 방지.
+        /// 1. 불변 기본 스케일(_baseScaleX, _baseScaleY)을 기준으로 연산하여 연속 호출 시에도 스케일 왜곡 누적 방지.
+        /// 2. target.DOKill() 대신 _scaleTween만 단독 제어하여 보스의 이동 트윈(DOMoveX/DOMoveY)을 절대 끊지 않음.
+        /// 3. 버전 카운터(_squashVersion)를 통해 후속 스쿼시가 이전 스쿼시를 덮어썼을 때 예외가 상위 패턴으로 오전파되는 현상 차단.
         /// </summary>
         public async UniTask PlayImpactSquashAndStretchAsync(
             Transform target,
@@ -174,12 +191,15 @@ namespace RealSteel.Boss.Visual
         {
             if (target == null) return;
 
-            // 진행 중인 이전 스케일 트윈 즉시 중단 (트윈 중첩 간섭 방지)
-            target.DOKill();
+            int currentVersion = ++_squashVersion;
+
+            // 진행 중인 이전 스케일 트윈만 즉시 중단 (이동 트윈 DOMove 간섭 원천 방지)
+            KillScaleTween();
 
             float signX = Mathf.Sign(target.localScale.x);
+            if (Mathf.Approximately(signX, 0f)) signX = 1f;
+
             // 영구 불변 기본 스케일을 기준으로 원본 스케일 및 압착 스케일 산출
-            Vector3 originalScale = new Vector3(_baseScaleX * signX, _baseScaleY, _baseScaleZ);
             Vector3 squashedScale = new Vector3(
                 _baseScaleX * squashScaleRatio.x * signX,
                 _baseScaleY * squashScaleRatio.y,
@@ -189,30 +209,43 @@ namespace RealSteel.Boss.Visual
             try
             {
                 // 1단계: 초고속 압착 (Fast In)
-                await target.DOScale(squashedScale, inDuration)
-                    .SetEase(Ease.InQuad)
-                    .ToUniTask(cancellationToken: token);
+                _scaleTween = target.DOScale(squashedScale, inDuration).SetEase(Ease.InQuad);
+                await _scaleTween.ToUniTask(cancellationToken: token);
+
+                if (_squashVersion != currentVersion || target == null) return;
+
+                // 도중에 FaceDirection으로 좌우가 반전되었을 수 있으므로 현재 부호 재확인
+                float outSignX = Mathf.Sign(target.localScale.x);
+                if (Mathf.Approximately(outSignX, 0f)) outSignX = signX;
+                Vector3 originalScale = new Vector3(_baseScaleX * outSignX, _baseScaleY, _baseScaleZ);
 
                 // 2단계: 탄성 로그 감쇠 복원 (Elastic Out)
-                await target.DOScale(originalScale, outDuration)
-                    .SetEase(Ease.OutElastic)
-                    .ToUniTask(cancellationToken: token);
+                _scaleTween = target.DOScale(originalScale, outDuration).SetEase(Ease.OutElastic);
+                await _scaleTween.ToUniTask(cancellationToken: token);
             }
             catch (OperationCanceledException)
             {
-                if (target != null)
+                if (token.IsCancellationRequested)
                 {
-                    target.DOKill();
-                    target.localScale = originalScale;
+                    if (target != null && _squashVersion == currentVersion)
+                    {
+                        KillScaleTween();
+                        float currentSignX = Mathf.Sign(target.localScale.x);
+                        if (Mathf.Approximately(currentSignX, 0f)) currentSignX = signX;
+                        target.localScale = new Vector3(_baseScaleX * currentSignX, _baseScaleY, _baseScaleZ);
+                    }
+                    throw;
                 }
-                throw;
+                return;
             }
             finally
             {
-                if (target != null)
+                if (target != null && _squashVersion == currentVersion)
                 {
-                    target.DOKill();
-                    target.localScale = originalScale;
+                    KillScaleTween();
+                    float currentSignX = Mathf.Sign(target.localScale.x);
+                    if (Mathf.Approximately(currentSignX, 0f)) currentSignX = signX;
+                    target.localScale = new Vector3(_baseScaleX * currentSignX, _baseScaleY, _baseScaleZ);
                 }
             }
         }
@@ -251,4 +284,3 @@ namespace RealSteel.Boss.Visual
         }
     }
 }
-

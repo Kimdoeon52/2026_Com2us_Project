@@ -248,14 +248,17 @@ namespace RealSteel.Boss.JunkWheeler
             }
             finally
             {
-                _isTellVisualRunning = false;
-                if (OwnerBoss != null)
+                if (_isTellVisualRunning)
                 {
-                    OwnerBoss.transform.position = _baseWorldPosBeforeTell;
-                }
-                if (_spriteRenderer != null)
-                {
-                    _spriteRenderer.color = _originalColor;
+                    _isTellVisualRunning = false;
+                    if (OwnerBoss != null)
+                    {
+                        OwnerBoss.transform.position = _baseWorldPosBeforeTell;
+                    }
+                    if (_spriteRenderer != null)
+                    {
+                        _spriteRenderer.color = _originalColor;
+                    }
                 }
             }
         }

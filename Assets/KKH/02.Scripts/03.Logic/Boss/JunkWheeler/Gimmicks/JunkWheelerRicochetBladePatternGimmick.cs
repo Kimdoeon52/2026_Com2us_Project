@@ -113,7 +113,21 @@ namespace RealSteel.Boss.JunkWheeler
 
             float dt = Time.deltaTime;
 
-            // 1) 물리적 Z축 연속 고속 회전 (전조 진동/점멸 중에도 매 프레임 끊김 없이 회전 보장)
+            // 1) 자식 오브젝트의 부모 스케일 왜곡 방지:
+            // 보스가 좌우 반전(scale.x = -1)되거나 임팩트 스쿼시(scale.y = 0.55)될 때
+            // 원형 톱날 회전 VFX가 타원형으로 찌그러지지 않고 월드 상에서 정원(1, 1, 1)을 유지하도록 보정
+            Transform parent = _bladeVfxObj.transform.parent;
+            if (parent != null)
+            {
+                Vector3 parentScale = parent.localScale;
+                float px = Mathf.Approximately(parentScale.x, 0f) ? 1f : Mathf.Abs(parentScale.x);
+                float py = Mathf.Approximately(parentScale.y, 0f) ? 1f : Mathf.Abs(parentScale.y);
+                float pz = Mathf.Approximately(parentScale.z, 0f) ? 1f : Mathf.Abs(parentScale.z);
+                float sign = parentScale.x < 0f ? -1f : 1f;
+                _bladeVfxObj.transform.localScale = new Vector3(sign / px, 1f / py, 1f / pz);
+            }
+
+            // 2) 물리적 Z축 연속 고속 회전 (전조 진동/점멸 중에도 매 프레임 끊김 없이 회전 보장)
             float rotSpeed = _currentSpinInterval <= 0.045f ? -1080f : -540f;
             _bladeVfxObj.transform.Rotate(0f, 0f, rotSpeed * dt);
 
@@ -193,7 +207,9 @@ namespace RealSteel.Boss.JunkWheeler
 
             StopTellVisuals();
             _tellCts = new CancellationTokenSource();
-            float tellDuration = PatternData != null ? PatternData.tellDuration : 1.8f;
+            float baseDur = PatternData != null ? PatternData.tellDuration : 1.8f;
+            float multiplier = (OwnerBoss != null && OwnerBoss.Snapshot != null) ? OwnerBoss.Snapshot.tellDurationMultiplier : 1.0f;
+            float tellDuration = baseDur * multiplier;
             RunTellSequenceAsync(tellDuration, _tellCts.Token).Forget();
         }
 
@@ -288,12 +304,17 @@ namespace RealSteel.Boss.JunkWheeler
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: ct);
                 }
             }
+            catch (OperationCanceledException)
+            {
+                // 외부 인터럽트 또는 OnTellEnded 시 정상 종료
+            }
             finally
             {
                 if (sr != null) sr.color = _originalColor;
                 if (OwnerBoss != null && _baseWorldPosBeforeTell != Vector3.zero)
                 {
                     OwnerBoss.transform.position = _baseWorldPosBeforeTell;
+                    _baseWorldPosBeforeTell = Vector3.zero;
                 }
             }
         }
@@ -334,12 +355,13 @@ namespace RealSteel.Boss.JunkWheeler
 
                 Debug.Log($"<color=cyan>[JunkWheelerRicochet] 회전 톱날 당구 돌진 개시! 속도: {rushSpeed}m/s, 경계: X[{minX:F1}~{maxX:F1}], Y[{minY:F1}~{maxY:F1}]</color>");
 
-                // 3단계: 당구 3쿠션 바운스 루프
+                // 3단계: 당구 3쿠션 바운스 루프 (최대 5회 안전 클램프)
+                int bounceLimit = Mathf.Clamp(maxBounceCount, 1, 5);
                 int bounceCount = 0;
-                float cooldownDamage = 0f;
                 float bounceVfxCooldown = 0f;
+                bool hasHitInCurrentSegment = false;
 
-                while (bounceCount < maxBounceCount)
+                while (bounceCount < bounceLimit)
                 {
                     token.ThrowIfCancellationRequested();
 
@@ -393,7 +415,8 @@ namespace RealSteel.Boss.JunkWheeler
                     if (bounced)
                     {
                         bounceCount++;
-                        Debug.Log($"<color=yellow>[JunkWheelerRicochet] 당구 바운스 #{bounceCount}/{maxBounceCount}! 법선: {impactNormal}</color>");
+                        hasHitInCurrentSegment = false; // 벽에 튕겨 새로운 궤적이 시작될 때만 재피격 허용
+                        Debug.Log($"<color=yellow>[JunkWheelerRicochet] 당구 바운스 #{bounceCount}/{bounceLimit}! 법선: {impactNormal}</color>");
 
                         // [VFX 1] 벽/천장/바닥 바운스 임팩트 스폰 (모서리 코너 동시 충돌 시 중복 스폰 방지 쿨타임 적용)
                         if (bounceVfxCooldown <= 0f)
@@ -403,7 +426,7 @@ namespace RealSteel.Boss.JunkWheeler
                             SpawnVfx(bounceImpactVfxPrefab, nextPos, Quaternion.Euler(0f, 0f, rotZ));
                         }
 
-                        // 이동 방향에 맞춰 스프라이트 반전
+                        // 이동 방향에 맞춰 스프라이트 반전 (스케일 부호 먼저 동기화)
                         OwnerBoss.Animation?.FaceDirection(moveDir.x);
 
                         // 벽 충돌 비대칭 임팩트 스쿼시 (충돌 법선 축으로 찌그러짐)
@@ -414,14 +437,10 @@ namespace RealSteel.Boss.JunkWheeler
                         TriggerBounceSquash(squashScale, token).Forget();
                     }
 
-                    // 플레이어 충돌 검사
-                    cooldownDamage -= dt;
-                    if (cooldownDamage <= 0f)
+                    // 플레이어 충돌 검사 (동일 직선 구간 내 다단 히트 및 이펙트 2회 발생 차단)
+                    if (!hasHitInCurrentSegment && CheckPlayerCollision())
                     {
-                        if (CheckPlayerCollision())
-                        {
-                            cooldownDamage = 0.5f;
-                        }
+                        hasHitInCurrentSegment = true;
                     }
 
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);

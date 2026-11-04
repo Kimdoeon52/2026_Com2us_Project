@@ -55,7 +55,6 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private GameObject landImpactVfxPrefab;
 
         private Tweener _bossMoveTween;
-        private Tweener _bossPunchTween;
         private bool _isTireBrokenDebuffed = false;
         private float _groundY;
 
@@ -307,7 +306,6 @@ namespace RealSteel.Boss.JunkWheeler
         {
             base.CleanupEffects();
             if (_bossMoveTween != null && _bossMoveTween.IsActive()) _bossMoveTween.Kill();
-            if (_bossPunchTween != null && _bossPunchTween.IsActive()) _bossPunchTween.Kill();
 
             if (OwnerBoss != null)
             {

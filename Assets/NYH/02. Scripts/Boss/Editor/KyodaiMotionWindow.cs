@@ -153,8 +153,8 @@ public class KyodaiMotionWindow : EditorWindow
         if (!Application.isPlaying && editPreviewOn && FindBoss() != null)
         {
             if (!editPreview.Active || editPreview.Boss != boss) { editPreview.Begin(boss); previewDirty = true; }
-            // 클립이 있으면 애니메이션 창에서 키를 고친 것도 따라오게 가끔 다시 적용한다
-            if (motion.clip != null && now - lastClipRefresh > 0.25) { previewDirty = true; lastClipRefresh = now; }
+            // 애니메이션 창에서 고친 키·접촉점 설정도 따라오게 가끔 다시 적용한다
+            if (now - lastClipRefresh > 0.25) { previewDirty = true; lastClipRefresh = now; }
             if (editPreview.Active && (previewDirty || playing || renderedTime != time || renderedTarget != target))
             {
                 editPreview.Apply(motion, time, target);

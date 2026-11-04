@@ -460,6 +460,21 @@ public class KyodaiLimb : MonoBehaviour
         zone.SetWorldSize(armSizes[index]);
     }
 
+    // 호출: KyodaiContacts(자세가 다 잡힌 뒤). 손목을 delta만큼 옮기도록 팔을 다시 꺾는다 — 바닥·물체를 못 뚫게.
+    // 손 방향(월드)은 그대로 둔다
+    public void PushHand(Vector3 delta)
+    {
+        if (!ready || delta.sqrMagnitude < 1e-10f) return;
+        if (RigMode)
+        {
+            Quaternion endWorld = end.rotation;
+            KyodaiIK.SolveTwoBone(upper, lower, end, end.position + delta, elbowHint);
+            end.rotation = endWorld;
+            SyncArmZones(); // 판정 상자도 밀린 팔 자리로
+        }
+        else if (effector != null) effector.position += delta;
+    }
+
     // ── 임시 상자 모델 ──
 
     private void StretchSegment()

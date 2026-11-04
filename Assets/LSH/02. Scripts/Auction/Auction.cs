@@ -84,6 +84,8 @@ public class Auction : Singleton<Auction>
     [Header("주먹 경매 입력 UI")] //값을 입력해서 모두가 동시에 땅!
     [SerializeField] public TMP_InputField fistBidInputField; // 값입력할 곳
     [SerializeField] public Button fistSubmitButton; // 확인 버튼
+    [SerializeField] private float fistBidTime = 20f; // 주먹 경매 입력 제한 시간 (시간 초과 시 자동 0원)
+    public float FistBidTime => fistBidTime;
 
     [Header("참여 AI 리스트")]
     [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록
@@ -129,6 +131,7 @@ public class Auction : Singleton<Auction>
     [SerializeField] private List<RectTransform> aiSlots;
 
     private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
+    private List<GameObject> roundUiList = new List<GameObject>(); // 회차마다 지울 연출용 UI (주먹 경매 명패 등)
 
 
     // --- 프로퍼티 & 캡슐화 변수 ---
@@ -155,6 +158,7 @@ public class Auction : Singleton<Auction>
     [Header("플레이어 및 NPC 슬롯")]
     [SerializeField] public Image[] npcs;
     [SerializeField] private Image playerImage;
+    public RectTransform PlayerSlot => playerImage != null ? playerImage.rectTransform : null;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -230,6 +234,11 @@ public class Auction : Singleton<Auction>
         BindButton(getOutAuction, OnGGAuction);
         BindButton(shopButton, OnOpenShop);
         BindButton(shopCloseButton, OnCloseShop);
+        if (fistBidInputField != null)
+        {
+            fistBidInputField.onSubmit.RemoveAllListeners();
+            fistBidInputField.onSubmit.AddListener(_ => OnSubmitFistBid()); // 엔터로도 제출
+        }
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
         EnableFistAuctionUI(false);
@@ -330,6 +339,7 @@ public class Auction : Singleton<Auction>
         isPlayerGiveUp = false;
         IsTimeRunning = false;
 
+        ClearRoundUI(); // 이전 회차 명패 제거
         NPCImageOff();
         UpdateGoldDisplay(); // 골드 업데이트
         DayOfAuctionEnter(); // 그 회차 경매할 인원 정하기
@@ -517,26 +527,85 @@ public class Auction : Singleton<Auction>
     // --- 주먹 경매 UI 입출력 ---
     public void EnableFistAuctionUI(bool active) // 주먹 경매용 버튼
     {
-        if (fistBidInputField != null) fistBidInputField.gameObject.SetActive(active);
-        if (fistSubmitButton != null) fistSubmitButton.gameObject.SetActive(active);
+        if (fistBidInputField != null)
+        {
+            fistBidInputField.gameObject.SetActive(active);
+            fistBidInputField.text = "";
+            fistBidInputField.interactable = active;
+        }
+        if (fistSubmitButton != null)
+        {
+            fistSubmitButton.gameObject.SetActive(active);
+            fistSubmitButton.interactable = active;
+        }
     }
 
     public async UniTask<int> WaitPlayerFistBidAsync() //플레이어 입력 대기
     {
         fistBidTcs = new UniTaskCompletionSource<int>();
+        if (fistBidInputField != null) fistBidInputField.ActivateInputField(); // 바로 타이핑 가능하게
         return await fistBidTcs.Task;
     }
 
     public void OnSubmitFistBid() // 주먹 경매용
     {
-        if (fistBidInputField != null && int.TryParse(fistBidInputField.text, out int bid)) // 값 입력을 제대로 했다면
+        if (fistBidTcs == null || fistBidInputField == null) return; // 입력 대기 중이 아님
+
+        string text = fistBidInputField.text.Trim();
+        if (!int.TryParse(text, out int bid)) // 빈칸/문자/너무 큰 수
         {
-            fistBidTcs?.TrySetResult(bid); // bid값 삽입
+            RetryFistBid("금액을 입력해주세요. (포기는 0)");
+            return;
         }
-        else
+        if (bid < 0) // 음수는 다시 입력
         {
-            fistBidTcs?.TrySetResult(0); //입력 제대로 못할 시 0원 삽입
+            RetryFistBid("음수는 입력할 수 없습니다. 다시 입력해주세요.");
+            return;
         }
+        int playerGold = GlobalGold.Instance != null ? GlobalGold.Instance.PlayerGold : 0;
+        if (bid > playerGold) // 낙찰돼도 지불 못하는 금액은 다시 입력
+        {
+            RetryFistBid($"보유 골드({playerGold:N0}G)를 초과했습니다.");
+            return;
+        }
+
+        ForceFistBid(bid);
+    }
+
+    public void ForceFistBid(int bid) // 입찰 확정 (시간 초과 시 0원 강제 제출에도 사용)
+    {
+        if (fistBidTcs == null) return;
+        UniTaskCompletionSource<int> tcs = fistBidTcs;
+        fistBidTcs = null; // 중복 제출 방지
+
+        if (fistBidInputField != null) fistBidInputField.interactable = false;
+        if (fistSubmitButton != null) fistSubmitButton.interactable = false;
+        tcs.TrySetResult(bid);
+    }
+
+    private void RetryFistBid(string message)
+    {
+        ShowErrorMessage(message).Forget();
+        fistBidInputField.text = "";
+        fistBidInputField.ActivateInputField();
+        RectTransform fieldRect = (RectTransform)fistBidInputField.transform;
+        fieldRect.DOKill(true);
+        fieldRect.DOShakeAnchorPos(0.3f, 10f, 20); // 잘못 입력했다는 흔들림
+    }
+
+    //=========================회차 연출 UI===================
+    public void RegisterRoundUI(GameObject go)
+    {
+        if (go != null) roundUiList.Add(go);
+    }
+
+    public void ClearRoundUI()
+    {
+        foreach (var go in roundUiList)
+        {
+            if (go != null) Destroy(go);
+        }
+        roundUiList.Clear();
     }
     //=========================모드 선택 관련 함수들===================
     public void EnableModeSelectUI(bool active)

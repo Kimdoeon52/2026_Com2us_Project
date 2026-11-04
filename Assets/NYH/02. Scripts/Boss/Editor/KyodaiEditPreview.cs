@@ -34,6 +34,11 @@ public class KyodaiEditPreview
     private Vector3[] restScale;
     private readonly List<LimbProxy> limbs = new List<LimbProxy>();
 
+    // 접촉점(못 뚫게) — 게임의 KyodaiContacts와 같은 계산 (2026-11-04)
+    private KyodaiContacts contacts;
+    private Transform[] contactBones = new Transform[0];
+    private float[] contactRestScale = new float[0];
+
     public bool Active => Boss != null;
     public KyodaiBossController Boss { get; private set; }
 
@@ -108,6 +113,19 @@ public class KyodaiEditPreview
         return p != null ? (Vector2)p.restWorld : (Vector2?)null;
     }
 
+    // 접촉점 뼈와 기본 크기 — 인스펙터에서 접촉점을 고쳐도 따라오게 매번(기본 자세일 때) 다시 읽는다
+    private void RefreshContacts()
+    {
+        contacts = Boss.GetComponentInChildren<KyodaiContacts>();
+        int n = contacts != null ? contacts.Points.Count : 0;
+        if (contactBones.Length != n) { contactBones = new Transform[n]; contactRestScale = new float[n]; }
+        for (int i = 0; i < n; i++)
+        {
+            contactBones[i] = contacts.FindBone(contacts.Points[i].bone);
+            if (contactBones[i] != null) contactRestScale[i] = Mathf.Max(contactBones[i].lossyScale.x, 1e-6f);
+        }
+    }
+
     private void Restore()
     {
         for (int i = 0; i < poseBones.Length; i++)
@@ -126,6 +144,7 @@ public class KyodaiEditPreview
 
         // 1) 처음 자세로
         Restore();
+        RefreshContacts();
 
         // 2) 온몸 애니메이션
         if (motion.clip != null && clipRoot != null && previewRig != null) previewRig.SampleClip(motion.clip, clipRoot, t);
@@ -160,6 +179,31 @@ public class KyodaiEditPreview
                 if (p.segment != null && p.shoulder != null) KyodaiIK.Stretch(p.segment, p.shoulder.position, pos);
             }
         }
+
+        // 4) 못 뚫게 — 접촉점이 바닥·물체 안이면 손목을 밀어내고 팔을 다시 꺾는다
+        if (contacts == null) return;
+        for (int i = 0; i < contactBones.Length; i++)
+        {
+            var pt = contacts.Points[i];
+            if (!pt.solid || contactBones[i] == null || string.IsNullOrEmpty(pt.partId)) continue;
+            var p = limbs.Find(x => x.partId == pt.partId);
+            if (p == null) continue;
+            float s = contactBones[i].lossyScale.x / contactRestScale[i];
+            Vector3 push = KyodaiContacts.Penetration(Boss, KyodaiContacts.PointWorld(contactBones[i], pt.offset, s), pt.radius * s,
+                                                     contacts.GroundDepth, contacts.ObstacleMask.value);
+            if (push.sqrMagnitude < 1e-10f) continue;
+            if (p.rig)
+            {
+                Quaternion endWorld = p.end.rotation;
+                KyodaiIK.SolveTwoBone(p.upper, p.lower, p.end, p.end.position + push, p.elbowHint);
+                p.end.rotation = endWorld;
+            }
+            else if (p.box != null)
+            {
+                p.box.position += push;
+                if (p.segment != null && p.shoulder != null) KyodaiIK.Stretch(p.segment, p.shoulder.position, p.box.position);
+            }
+        }
     }
 
     /// <summary>원래 자세로만 돌린다 (기본 자세 기록은 유지 — 애니메이션 창이 로봇을 쓰는 동안)</summary>
@@ -175,6 +219,8 @@ public class KyodaiEditPreview
         clipRoot = null;
         poseBones = new Transform[0];
         limbs.Clear();
+        contacts = null;
+        contactBones = new Transform[0];
         Boss = null;
     }
 }

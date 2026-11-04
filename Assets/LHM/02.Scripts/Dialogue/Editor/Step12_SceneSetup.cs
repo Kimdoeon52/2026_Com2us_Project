@@ -10,27 +10,21 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step12_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "12단계 배치";
         private const string StatusName = "StatusText";
         private const string ConfirmName = "SkipConfirm";
         private const string ConfirmMessage = "안 읽은 대사가 있습니다.\nEsc: 스킵    Space: 계속 읽기";
 
-        [MenuItem("Tools/Dialogue/12단계 배치 (스킵 · 오토 · 빨리감기)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             DialogueBox dialogueBox = manager != null ? new SerializedObject(manager).FindProperty("dialogueBox").objectReferenceValue as DialogueBox : null;
             if (dialogueBox == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueManager 또는 연결된 DialogueBox가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueManager 또는 연결된 DialogueBox가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
                 return;
             }
 
@@ -39,11 +33,11 @@ namespace RealSteel.Dialogue.EditorTools
             var speaker = boxSo.FindProperty("speakerNameText").objectReferenceValue as TMP_Text;
             if (boxObject == null || boxObject.GetComponent<RectTransform>() == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueBox의 Box 칸이 비어 있거나 UI 오브젝트가 아닙니다.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueBox의 Box 칸이 비어 있거나 UI 오브젝트가 아닙니다.", "확인");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬의 대화창({boxObject.name})에 다음을 만듭니다.\n- {StatusName}: AUTO / 빨리감기 표시 (오른쪽 위)\n- {ConfirmName}: 스킵 확인 창 (가운데)\n이미 연결되어 있으면 건너뜁니다. 씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!SetupKit.Dialog(UndoName, $"'{scene.name}' 씬의 대화창({boxObject.name})에 다음을 만듭니다.\n- {StatusName}: AUTO / 빨리감기 표시 (오른쪽 위)\n- {ConfirmName}: 스킵 확인 창 (가운데)\n이미 연결되어 있으면 건너뜁니다. 씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }

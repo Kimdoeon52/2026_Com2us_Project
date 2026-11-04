@@ -10,7 +10,6 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step15_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "15단계 배치";
         private const string SystemName = "[Step15] BubbleSystem";
         private const string UiRootName = "[Step15] Bubbles";
@@ -20,42 +19,37 @@ namespace RealSteel.Dialogue.EditorTools
         private static readonly float[] CrowdX = { -8f, -4f, 0f, 4f, 8f };
         private const float CrowdY = 1.5f;
 
-        [MenuItem("Tools/Dialogue/15단계 배치 (비강제 말풍선)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             DialogueBox dialogueBox = manager != null ? new SerializedObject(manager).FindProperty("dialogueBox").objectReferenceValue as DialogueBox : null;
             var interactor = Object.FindFirstObjectByType<PlayerInteractor>(FindObjectsInactive.Include);
             if (dialogueBox == null || interactor == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueManager(대화창 연결) 또는 PlayerInteractor가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueManager(대화창 연결) 또는 PlayerInteractor가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
                 return;
             }
 
             if (Object.FindFirstObjectByType<BubbleManager>(FindObjectsInactive.Include) != null)
             {
-                EditorUtility.DisplayDialog(UndoName, "BubbleManager가 이미 씬에 있습니다. 배치를 건너뜁니다.", "확인");
+                SetupKit.Dialog(UndoName, "BubbleManager가 이미 씬에 있습니다. 배치를 건너뜁니다.", "확인");
                 return;
             }
 
             Canvas canvas = dialogueBox.GetComponentInParent<Canvas>(true);
             if (canvas == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "대화창이 들어 있는 Canvas를 찾지 못했습니다.", "확인");
+                SetupKit.Dialog(UndoName, "대화창이 들어 있는 Canvas를 찾지 못했습니다.", "확인");
                 return;
             }
             canvas = canvas.rootCanvas;
 
             var queue = Object.FindFirstObjectByType<DialogueEventQueue>(FindObjectsInactive.Include);
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬에 비강제 말풍선을 배치합니다.\n- 대사 풀 추가: {string.Join(", ", PoolFiles)}\n- '{canvas.name}' 아래 {UiRootName} (말풍선 틀)\n- {SystemName} (BubbleManager + NpcBubbles + Step15_BubbleTest)\n- {CrowdName} (테스트용 관중 {CrowdX.Length}명, y={CrowdY})\n{(queue == null ? "- 주의: DialogueEventQueue가 없어 반응 말풍선은 받지 않습니다 (11-2단계 배치 권장)\n" : "")}씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!SetupKit.Dialog(UndoName, $"'{scene.name}' 씬에 비강제 말풍선을 배치합니다.\n- 대사 풀 추가: {string.Join(", ", PoolFiles)}\n- '{canvas.name}' 아래 {UiRootName} (말풍선 틀)\n- {SystemName} (BubbleManager + NpcBubbles + Step15_BubbleTest)\n- {CrowdName} (테스트용 관중 {CrowdX.Length}명, y={CrowdY})\n{(queue == null ? "- 주의: DialogueEventQueue가 없어 반응 말풍선은 받지 않습니다 (11-2단계 배치 권장)\n" : "")}씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }
@@ -109,9 +103,6 @@ namespace RealSteel.Dialogue.EditorTools
 
         private static void AddPools(DialogueManager manager, StringBuilder log)
         {
-            var so = new SerializedObject(manager);
-            SerializedProperty pools = so.FindProperty("poolJsons");
-
             foreach (string file in PoolFiles)
             {
                 string path = DataFolder + file + ".json";
@@ -122,20 +113,8 @@ namespace RealSteel.Dialogue.EditorTools
                     continue;
                 }
 
-                bool exists = false;
-                for (int i = 0; i < pools.arraySize; i++) exists |= pools.GetArrayElementAtIndex(i).objectReferenceValue == asset;
-                if (exists)
-                {
-                    log.AppendLine($"- {file}는 이미 대사 풀 목록에 있음");
-                    continue;
-                }
-
-                pools.arraySize++;
-                pools.GetArrayElementAtIndex(pools.arraySize - 1).objectReferenceValue = asset;
-                log.AppendLine($"- 대사 풀에 {file} 추가");
+                SetupKit.AddPool(manager, asset, log);
             }
-
-            so.ApplyModifiedProperties();
         }
 
         private static BubbleView CreateTemplate(Transform canvas, TMP_FontAsset font)

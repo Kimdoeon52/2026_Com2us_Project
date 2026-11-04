@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using RealSteel.Dialogue;
+using RealSteel.Dialogue.EditorTools;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -13,7 +14,6 @@ namespace RealSteel.BossRace.EditorTools
 {
     public static class BossRaceSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "보스 레이스 선택 UI 배치";
         private const string RootName = "[BossRace] Canvas";
 
@@ -32,27 +32,22 @@ namespace RealSteel.BossRace.EditorTools
         internal static TMP_FontAsset font;
         internal static int uiLayer;
 
-        [MenuItem("Tools/Dialogue/보스 레이스 선택 UI 배치")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var existing = Object.FindFirstObjectByType<BossRaceSelectUI>(FindObjectsInactive.Include);
             if (existing != null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"보스 레이스 선택 UI가 이미 있습니다. ({existing.name})\n다시 만들려면 지우고 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, $"보스 레이스 선택 UI가 이미 있습니다. ({existing.name})\n다시 만들려면 지우고 실행하세요.", "확인");
                 return;
             }
 
             var bossTest = Object.FindFirstObjectByType<Step11_BossEntryTest>(FindObjectsInactive.Include);
             var debug = Object.FindFirstObjectByType<Step09_DialogueDebug>(FindObjectsInactive.Include);
 
-            if (!EditorUtility.DisplayDialog(UndoName,
+            if (!SetupKit.Dialog(UndoName,
                     $"'{scene.name}' 씬에 보스 레이스 · 지역 보스 선택 화면을 만듭니다.\n" +
                     $"- {RootName} (화면 전체, 평소에는 꺼짐)\n" +
                     $"- 이미지 생성: {BossRaceArt.Folder}\n" +

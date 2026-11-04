@@ -56,7 +56,7 @@ namespace RealSteel.Dialogue
 
             if (panel == null || viewport == null || contentText == null)
             {
-                Debug.LogWarning("[Backlog] Panel, Viewport, Content Text 중 연결되지 않은 칸이 있습니다. 13단계 배치 메뉴를 실행하세요.", this);
+                Debug.LogWarning("[Backlog] Panel, Viewport, Content Text 중 연결되지 않은 칸이 있습니다. 대화 툴의 13단계 항목을 실행하세요.", this);
                 return false;
             }
 

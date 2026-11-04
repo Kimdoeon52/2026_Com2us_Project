@@ -93,7 +93,7 @@ namespace RealSteel.Dialogue
         {
             if (manager == null || subtitle == null)
             {
-                Debug.LogWarning("[Bark] Manager 또는 Subtitle이 연결되지 않았습니다. 14단계 배치 메뉴를 실행하세요.", this);
+                Debug.LogWarning("[Bark] Manager 또는 Subtitle이 연결되지 않았습니다. 대화 툴의 14단계 항목을 실행하세요.", this);
                 return false;
             }
 

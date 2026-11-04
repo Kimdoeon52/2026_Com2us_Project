@@ -12,7 +12,6 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step09_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string DataFolder = "Assets/LHM/03.Data/Dialogue/";
         private const string UndoName = "9단계 배치";
         private const string FieldRootName = "[Step09] Field";
@@ -34,17 +33,12 @@ namespace RealSteel.Dialogue.EditorTools
             new NpcSpec { name = "NPC_경매장", role = NpcRole.Other, poolId = "auction_npc", speakerId = "auctioneer", position = new Vector3(6f, -3.5f, 0f) },
         };
 
-        [MenuItem("Tools/Dialogue/9단계 배치")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬에 9단계 오브젝트를 배치합니다.\n씬은 자동 저장하지 않습니다. 결과를 보고 Ctrl+S로 저장하세요.\n(Ctrl+Z로 한 번에 되돌릴 수 있습니다)", "배치", "취소"))
+            if (!SetupKit.Dialog(UndoName, $"'{scene.name}' 씬에 9단계 오브젝트를 배치합니다.\n씬은 자동 저장하지 않습니다. 결과를 보고 Ctrl+S로 저장하세요.\n(Ctrl+Z로 한 번에 되돌릴 수 있습니다)", "배치", "취소"))
             {
                 return;
             }

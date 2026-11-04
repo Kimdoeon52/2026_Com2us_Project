@@ -12,12 +12,11 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class HadesDialogueStyleSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "하데스 스타일 대화창";
         private const string SpriteFolder = "Assets/LHM/09.Asset/DialogueUI";
         private const string FramePath = SpriteFolder + "/hades_frame.png";
         private const string PlatePath = SpriteFolder + "/hades_nameplate.png";
-        private const string StyleRootName = "[Hades] Style";
+        internal const string StyleRootName = "[Hades] Style";
 
         private static readonly Vector2 BoxAnchorMin = new Vector2(0.30f, 0.05f);
         private static readonly Vector2 BoxAnchorMax = new Vector2(0.88f, 0.31f);
@@ -41,15 +40,10 @@ namespace RealSteel.Dialogue.EditorTools
         private static readonly Color BodyColor = Hex("2E2318");
         private static readonly Color StatusColor = Hex("7A5A34");
 
-        [MenuItem("Tools/Dialogue/하데스 스타일 대화창 적용")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             DialogueBox dialogueBox = manager != null ? new SerializedObject(manager).FindProperty("dialogueBox").objectReferenceValue as DialogueBox : null;
@@ -72,7 +66,7 @@ namespace RealSteel.Dialogue.EditorTools
 
             if (boxRect.Find(StyleRootName) != null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"이미 적용되어 있습니다 ('{StyleRootName}'). 다시 적용하려면 Ctrl+Z로 되돌리거나 그 오브젝트를 지우고 이름·본문 칸을 원래 텍스트로 되돌린 뒤 실행하세요.\n\n색·크기만 바꾸려면 '하데스 스타일 이미지 다시 만들기' 메뉴를 쓰세요.", "확인");
+                EditorUtility.DisplayDialog(UndoName, $"이미 적용되어 있습니다 ('{StyleRootName}'). 다시 적용하려면 Ctrl+Z로 되돌리거나 그 오브젝트를 지우고 이름·본문 칸을 원래 텍스트로 되돌린 뒤 실행하세요.\n\n색·크기만 바꾸려면 대화 툴의 'UI 이미지 다시 만들기'를 쓰세요.", "확인");
                 return;
             }
 
@@ -223,8 +217,7 @@ namespace RealSteel.Dialogue.EditorTools
             Debug.Log(log.ToString());
         }
 
-        [MenuItem("Tools/Dialogue/하데스 스타일 이미지 다시 만들기")]
-        private static void Rebuild()
+        internal static void Rebuild()
         {
             Scene scene = SceneManager.GetActiveScene();
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);

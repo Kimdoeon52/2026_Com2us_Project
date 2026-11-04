@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -9,7 +10,6 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class NpcSpriteSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "NPC 스프라이트 적용";
         private const string OutputFolder = "Assets/LHM/09.Asset/NPC";
         private const string SpriteChildName = "Sprite";
@@ -28,13 +28,12 @@ namespace RealSteel.Dialogue.EditorTools
             new NpcArt { speakerId = "junkdealer", source = "Assets/Sprites/imsinpc/mobcha-C.png", height = 1.9f },
         };
 
-        [MenuItem("Tools/Dialogue/NPC 스프라이트 적용 (접수원 · 고물상 아저씨)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
             if (!EditorUtility.DisplayDialog(UndoName,
                     $"'{scene.name}' 씬({(string.IsNullOrEmpty(scene.path) ? "저장 안 된 씬" : scene.path)})의 NPC에 스프라이트를 적용합니다.\n" +
-                    (scene.path.StartsWith(AllowedFolder) ? "" : "※ LHM 밖의 씬입니다. Speaker Id가 receptionist / junkdealer인 NPC만 바뀝니다.\n") +
+                    (SetupKit.IsLhmScene(scene) ? "" : "※ LHM 밖의 씬입니다. Speaker Id가 receptionist / junkdealer인 NPC만 바뀝니다.\n") +
                     "- 길드 접수원 ← 소녀.png / 고물상 아저씨 ← mobcha-C.png\n" +
                     $"- 원본은 그대로 두고 {OutputFolder}로 복사 (투명 여백 자르기, 픽셀아트 설정, 발밑 기준점)\n" +
                     "- 필드: 캡슐은 숨기기만 하고 자식 'Sprite' 추가 (플레이어와 같은 RS 빌보드 머티리얼), [E]·클로즈업 높이를 그림에 맞춤\n" +
@@ -55,6 +54,15 @@ namespace RealSteel.Dialogue.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             log.AppendLine("완료. Ctrl+S로 저장 후 Play.");
             Debug.Log(log.ToString());
+        }
+
+        internal static bool IsApplied()
+        {
+            Scene active = SceneManager.GetActiveScene();
+            NpcInteractable[] targets = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Where(npc => npc.gameObject.scene == active && Arts.Any(art => art.speakerId == npc.SpeakerId))
+                .ToArray();
+            return targets.Length > 0 && targets.All(npc => npc.transform.Find(SpriteChildName) != null);
         }
 
         internal static void Apply(StringBuilder log)

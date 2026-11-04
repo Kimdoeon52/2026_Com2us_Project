@@ -24,8 +24,7 @@ namespace RealSteel.Dialogue.EditorTools
 
         private static string StringsPath => DialogueDataTools.DataFolder + "/" + DialogueDataTools.StringsFile;
 
-        [MenuItem("Tools/Dialogue/CSV 내보내기 (JSON → CSV)", priority = 20)]
-        private static void ExportMenu()
+        internal static void ExportMenu()
         {
             List<string> pools = PoolJsonPaths().ToList();
             int existing = pools.Count(p => File.Exists(CsvPathFor(p)));
@@ -70,8 +69,7 @@ namespace RealSteel.Dialogue.EditorTools
             EditorUtility.DisplayDialog("CSV 내보내기", $"{SheetFolder}에 내보냈습니다.\n엑셀은 'CSV UTF-8'로, 구글 시트는 '.csv'로 저장하세요.", "확인");
         }
 
-        [MenuItem("Tools/Dialogue/CSV 가져오기 (CSV → JSON, 전체)", priority = 21)]
-        private static void ImportAllMenu()
+        internal static void ImportAllMenu()
         {
             if (!Directory.Exists(SheetFolder))
             {

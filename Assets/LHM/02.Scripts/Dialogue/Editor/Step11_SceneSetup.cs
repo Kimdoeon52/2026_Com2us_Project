@@ -8,37 +8,31 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step11_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "11단계 배치";
         private const string ObjectName = "[Step11] BossEntry";
         private const string PoolPath = "Assets/LHM/03.Data/Dialogue/boss_entry.json";
 
-        [MenuItem("Tools/Dialogue/11단계 배치 (보스 진입)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             var debug = Object.FindFirstObjectByType<Step09_DialogueDebug>(FindObjectsInactive.Include);
             if (manager == null || debug == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueManager 또는 Step09_DialogueDebug가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueManager 또는 Step09_DialogueDebug가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
                 return;
             }
 
             var pool = AssetDatabase.LoadAssetAtPath<TextAsset>(PoolPath);
             if (pool == null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"대사 풀을 찾지 못했습니다.\n{PoolPath}", "확인");
+                SetupKit.Dialog(UndoName, $"대사 풀을 찾지 못했습니다.\n{PoolPath}", "확인");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬에 보스 진입 대사를 배치합니다.\n- DialogueManager 대사 풀에 boss_entry 추가\n- {ObjectName} 생성\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!SetupKit.Dialog(UndoName, $"'{scene.name}' 씬에 보스 진입 대사를 배치합니다.\n- DialogueManager 대사 풀에 boss_entry 추가\n- {ObjectName} 생성\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }
@@ -48,7 +42,7 @@ namespace RealSteel.Dialogue.EditorTools
             int group = Undo.GetCurrentGroup();
             var log = new StringBuilder($"[Step11 배치] {scene.path}\n");
 
-            AddPool(manager, pool, log);
+            SetupKit.AddPool(manager, pool, log);
 
             if (Object.FindFirstObjectByType<BossEntryDialogue>(FindObjectsInactive.Include) != null)
             {
@@ -81,24 +75,5 @@ namespace RealSteel.Dialogue.EditorTools
             Debug.Log(log.ToString());
         }
 
-        private static void AddPool(DialogueManager manager, TextAsset pool, StringBuilder log)
-        {
-            var so = new SerializedObject(manager);
-            SerializedProperty pools = so.FindProperty("poolJsons");
-
-            for (int i = 0; i < pools.arraySize; i++)
-            {
-                if (pools.GetArrayElementAtIndex(i).objectReferenceValue == pool)
-                {
-                    log.AppendLine("- boss_entry는 이미 대사 풀 목록에 있음");
-                    return;
-                }
-            }
-
-            pools.arraySize++;
-            pools.GetArrayElementAtIndex(pools.arraySize - 1).objectReferenceValue = pool;
-            so.ApplyModifiedProperties();
-            log.AppendLine($"- DialogueManager 대사 풀에 boss_entry 추가 (총 {pools.arraySize}개)");
-        }
     }
 }

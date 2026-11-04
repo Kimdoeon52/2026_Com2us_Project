@@ -10,25 +10,19 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step13_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "13단계 배치";
         private const string RootName = "[Step13] Backlog";
 
-        [MenuItem("Tools/Dialogue/13단계 배치 (백로그)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             DialogueBox dialogueBox = manager != null ? new SerializedObject(manager).FindProperty("dialogueBox").objectReferenceValue as DialogueBox : null;
             if (dialogueBox == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueManager 또는 연결된 DialogueBox가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueManager 또는 연결된 DialogueBox가 없습니다. 9단계 배치를 먼저 실행하세요.", "확인");
                 return;
             }
 
@@ -36,7 +30,7 @@ namespace RealSteel.Dialogue.EditorTools
             SerializedProperty backlogProp = boxSo.FindProperty("backlog");
             if (backlogProp.objectReferenceValue != null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"DialogueBox에 백로그가 이미 연결되어 있습니다. ({backlogProp.objectReferenceValue.name})\n배치를 건너뜁니다.", "확인");
+                SetupKit.Dialog(UndoName, $"DialogueBox에 백로그가 이미 연결되어 있습니다. ({backlogProp.objectReferenceValue.name})\n배치를 건너뜁니다.", "확인");
                 return;
             }
 
@@ -45,12 +39,12 @@ namespace RealSteel.Dialogue.EditorTools
             if (canvas == null && boxObject != null) canvas = boxObject.GetComponentInParent<Canvas>(true);
             if (canvas == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "대화창이 들어 있는 Canvas를 찾지 못했습니다.", "확인");
+                SetupKit.Dialog(UndoName, "대화창이 들어 있는 Canvas를 찾지 못했습니다.", "확인");
                 return;
             }
             canvas = canvas.rootCanvas;
 
-            if (!EditorUtility.DisplayDialog(UndoName, $"'{scene.name}' 씬의 '{canvas.name}' 맨 위에 백로그 창을 만들고 대화창에 연결합니다.\n- {RootName} (DialogueBacklog)\n  └ Panel (평소에는 꺼져 있음) / Title / Viewport / Content\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!SetupKit.Dialog(UndoName, $"'{scene.name}' 씬의 '{canvas.name}' 맨 위에 백로그 창을 만들고 대화창에 연결합니다.\n- {RootName} (DialogueBacklog)\n  └ Panel (평소에는 꺼져 있음) / Title / Viewport / Content\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }

@@ -34,15 +34,14 @@ namespace RealSteel.Dialogue.EditorTools
         private const string MonologuePrefix = "mono_";
 
         [MenuItem("Tools/Dialogue/데이터 검사", priority = 1)]
-        private static void CheckMenu()
+        internal static void CheckMenu()
         {
             DialogueCheckResult result = Check();
             Log(result, "데이터 검사");
             EditorUtility.DisplayDialog("대사 데이터 검사", Summary(result, 12), "확인");
         }
 
-        [MenuItem("Tools/Dialogue/데이터 패킹 (빌드용 파일 만들기)", priority = 2)]
-        private static void PackMenu()
+        internal static void PackMenu()
         {
             if (TryPack(out string message)) EditorUtility.DisplayDialog("대사 데이터 패킹", message, "확인");
             else EditorUtility.DisplayDialog("대사 데이터 패킹 실패", message, "확인");

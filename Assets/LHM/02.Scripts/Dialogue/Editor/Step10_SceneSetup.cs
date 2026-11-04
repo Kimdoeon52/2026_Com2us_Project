@@ -10,43 +10,29 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class Step10_SceneSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
-        private const string UndoName = "10-1단계 배치";
-        private const string StackName = "[Step10] UiStack";
         private const string InputName = "[Step10] Input";
         private const string InputAssetPath = "Assets/LHM/03.Data/Input/RealSteelInput.inputactions";
 
-        [MenuItem("Tools/Dialogue/10-1단계 배치 (UI 스택)")]
-        private static void Setup()
-        {
-            TimeSystemSetup.Setup();
-        }
-
-        [MenuItem("Tools/Dialogue/10-2단계 배치 (입력 상태)")]
-        private static void SetupInput()
+        internal static void SetupInput()
         {
             const string inputUndo = "10-2단계 배치";
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(inputUndo, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, inputUndo)) return;
 
             if (Object.FindFirstObjectByType<InputModeController>(FindObjectsInactive.Include) != null)
             {
-                EditorUtility.DisplayDialog(inputUndo, "InputModeController가 이미 씬에 있습니다. 배치를 건너뜁니다.", "확인");
+                SetupKit.Dialog(inputUndo, "InputModeController가 이미 씬에 있습니다. 배치를 건너뜁니다.", "확인");
                 return;
             }
 
             var asset = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputAssetPath);
             if (asset == null)
             {
-                EditorUtility.DisplayDialog(inputUndo, $"입력 파일을 찾지 못했습니다.\n{InputAssetPath}", "확인");
+                SetupKit.Dialog(inputUndo, $"입력 파일을 찾지 못했습니다.\n{InputAssetPath}", "확인");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(inputUndo, $"'{scene.name}' 씬에 입력 상태 전환(InputModeController)과 테스트 스크립트를 배치합니다.\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
+            if (!SetupKit.Dialog(inputUndo, $"'{scene.name}' 씬에 입력 상태 전환(InputModeController)과 테스트 스크립트를 배치합니다.\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "배치", "취소"))
             {
                 return;
             }

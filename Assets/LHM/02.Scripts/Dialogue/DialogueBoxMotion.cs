@@ -31,7 +31,7 @@ namespace RealSteel.Dialogue
 
             if (style == null || animator == null)
             {
-                Debug.LogError("[BoxMotion] Style(StyleManager)과 Animator가 필요합니다. 대화창 모션 적용 메뉴를 다시 실행하세요.", this);
+                Debug.LogError("[BoxMotion] Style(StyleManager)과 Animator가 필요합니다. 대화 툴의 대화창 모션 항목을 다시 실행하세요.", this);
                 enabled = false;
                 return;
             }

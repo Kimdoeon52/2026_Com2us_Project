@@ -11,21 +11,15 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class DialogueBoxMotionSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "대화창 모션 적용";
         private const string PrefabPath = "Assets/Motion Titles Pack/Prefabs/MTP-2.prefab";
         private const string RootName = "DialogueBoxMotion (MTP-2)";
         private const string MaskPath = "Content/Mask Content";
 
-        [MenuItem("Tools/Dialogue/대화창 모션 적용 (Motion Titles MTP-2)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var manager = Object.FindFirstObjectByType<DialogueManager>(FindObjectsInactive.Include);
             DialogueBox dialogueBox = manager != null ? new SerializedObject(manager).FindProperty("dialogueBox").objectReferenceValue as DialogueBox : null;

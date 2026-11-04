@@ -8,20 +8,14 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class TimeSystemSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "LJS 시간 시스템 연결";
         private const string PrefabPath = "Assets/LJS/04. Prefab/CoreSystemRoot.prefab";
         private const string StackName = "[Step10] UiStack (LJS 시간)";
 
-        [MenuItem("Tools/Dialogue/LJS 시간 시스템 연결 (임시 시계 교체)")]
         public static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var existingBridge = Object.FindFirstObjectByType<TimeSystemUiStack>(FindObjectsInactive.Include);
             var timeSystem = Object.FindFirstObjectByType<TimeSystemManager>(FindObjectsInactive.Include);
@@ -29,18 +23,18 @@ namespace RealSteel.Dialogue.EditorTools
 
             if (existingBridge != null && timeSystem != null && dummies.Length == 0)
             {
-                EditorUtility.DisplayDialog(UndoName, $"이미 연결되어 있습니다. ({existingBridge.name} → {timeSystem.name})\n배치를 건너뜁니다.", "확인");
+                SetupKit.Dialog(UndoName, $"이미 연결되어 있습니다. ({existingBridge.name} → {timeSystem.name})\n배치를 건너뜁니다.", "확인");
                 return;
             }
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             if (timeSystem == null && prefab == null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"씬에 TimeSystemManager가 없고, LJS 프리팹도 찾지 못했습니다.\n{PrefabPath}", "확인");
+                SetupKit.Dialog(UndoName, $"씬에 TimeSystemManager가 없고, LJS 프리팹도 찾지 못했습니다.\n{PrefabPath}", "확인");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(UndoName,
+            if (!SetupKit.Dialog(UndoName,
                     $"'{scene.name}' 씬의 임시 시계를 LJS 시간 시스템으로 교체합니다.\n" +
                     (timeSystem == null ? $"- LJS CoreSystemRoot 프리팹 배치 (시간·달력·랭킹·지도·뉴스)\n  프리팹 원본은 수정하지 않음\n" : $"- 씬의 TimeSystemManager 사용 ({timeSystem.name})\n") +
                     "- GameSceneManager의 F1~F5 씬 전환 단축키를 이 씬에서만 끔 (대화 테스트 키와 겹침)\n" +

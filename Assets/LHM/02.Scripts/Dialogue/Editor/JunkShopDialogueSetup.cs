@@ -37,8 +37,7 @@ namespace RealSteel.Dialogue.EditorTools
         private static readonly string[] InteractionTypes = { "ScrapInteractor" };
         private static readonly string[] PromptTypes = { "ScrapInteractPrompt" };
 
-        [MenuItem("Tools/Dialogue/고물상 맵 배치 (길드 접수원 · 고물상 아저씨 + 대화 시스템)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene target = SceneManager.GetActiveScene();
 
@@ -314,8 +313,7 @@ namespace RealSteel.Dialogue.EditorTools
         private const string HelpName = "[Help] ShortcutHelp";
         private static readonly string[] UiHotkeyTypes = { "InventoryToggle", "CraftingUIManager" };
 
-        [MenuItem("Tools/Dialogue/단축키 정리 적용 (Home 안내 · 대화 중 UI 키 잠금)")]
-        private static void ApplyShortcutsMenu()
+        internal static void ApplyShortcutsMenu()
         {
             Scene scene = SceneManager.GetActiveScene();
             var log = new StringBuilder($"[단축키 정리] {scene.path}\n");
@@ -399,8 +397,7 @@ namespace RealSteel.Dialogue.EditorTools
             return true;
         }
 
-        [MenuItem("Tools/Dialogue/고물상 맵 — 상점 창(ShopWindow) 연결")]
-        private static void BindShopWindowMenu()
+        internal static void BindShopWindowMenu()
         {
             Scene scene = SceneManager.GetActiveScene();
             var log = new StringBuilder($"[상점 창 연결] {scene.path}\n");
@@ -568,8 +565,18 @@ namespace RealSteel.Dialogue.EditorTools
                    FindInScene<Camera>(scene).FirstOrDefault(c => c.CompareTag("MainCamera"));
         }
 
-        [MenuItem("Tools/Dialogue/고물상 맵 — 대화 카메라 다시 연결")]
-        private static void RebindCameras()
+        internal static void RepairLinks()
+        {
+            Undo.IncrementCurrentGroup();
+            int group = Undo.GetCurrentGroup();
+
+            if (RebindCameras()) BindShopWindowMenu();
+
+            Undo.SetCurrentGroupName("연결 복구");
+            Undo.CollapseUndoOperations(group);
+        }
+
+        private static bool RebindCameras()
         {
             Scene scene = SceneManager.GetActiveScene();
             GameObject player = FindPlayer(scene);
@@ -577,7 +584,7 @@ namespace RealSteel.Dialogue.EditorTools
             if (gameplay == null || !FindInScene<DialogueManager>(scene).Any())
             {
                 EditorUtility.DisplayDialog("대화 카메라 다시 연결", "이 씬에 대화 시스템이 없거나, 플레이어가 쓰는 카메라를 찾지 못했습니다.", "확인");
-                return;
+                return false;
             }
 
             var talkCameras = FindInScene<NpcTalkCamera>(scene).ToList();
@@ -591,7 +598,7 @@ namespace RealSteel.Dialogue.EditorTools
                     $"대화 시스템이 '{string.Join(", ", wrong.Select(c => c.name))}'를 가리키는 연결을 모두 '{gameplay.name}'으로 바꾸고,\n" +
                     "클로즈업 카메라 설정·그리는 순서를 다시 맞춥니다.\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "다시 연결", "취소"))
             {
-                return;
+                return false;
             }
 
             Undo.IncrementCurrentGroup();
@@ -634,6 +641,7 @@ namespace RealSteel.Dialogue.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             log.AppendLine("완료. Ctrl+S로 저장 후 Play → NPC 앞 E.");
             Debug.Log(log.ToString());
+            return true;
         }
 
         private static GameObject FindPlayer(Scene scene)

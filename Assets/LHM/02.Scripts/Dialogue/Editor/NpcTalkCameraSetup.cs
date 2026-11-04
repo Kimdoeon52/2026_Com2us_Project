@@ -9,20 +9,14 @@ namespace RealSteel.Dialogue.EditorTools
 {
     public static class NpcTalkCameraSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "NPC 클로즈업 카메라 배치";
         private const string RootName = "[TalkCam] NpcTalkCamera";
         private const string FadeName = "[TalkCam] Fade";
 
-        [MenuItem("Tools/Dialogue/NPC 클로즈업 카메라 배치")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var interactor = Object.FindFirstObjectByType<PlayerInteractor>(FindObjectsInactive.Include);
             var menu = Object.FindFirstObjectByType<NpcChoiceMenu>(FindObjectsInactive.Include);

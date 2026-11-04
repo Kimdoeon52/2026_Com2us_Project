@@ -24,7 +24,7 @@ namespace RealSteel.Dialogue
         {
             if (template == null || !template.IsValid)
             {
-                Debug.LogError("[Bubble] Template이 없거나 Template의 Group·Text 칸이 비어 있습니다. 15단계 배치 메뉴를 실행하세요.", this);
+                Debug.LogError("[Bubble] Template이 없거나 Template의 Group·Text 칸이 비어 있습니다. 대화 툴의 15단계 항목을 실행하세요.", this);
                 enabled = false;
                 return;
             }

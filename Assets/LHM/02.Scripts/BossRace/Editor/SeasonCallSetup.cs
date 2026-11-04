@@ -1,5 +1,6 @@
 using System.Text;
 using RealSteel.Dialogue;
+using RealSteel.Dialogue.EditorTools;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -12,7 +13,6 @@ namespace RealSteel.BossRace.EditorTools
 {
     public static class SeasonCallSetup
     {
-        private const string AllowedFolder = "Assets/LHM/";
         private const string UndoName = "시즌 시작 전화 배치";
         private const string CanvasName = "[SeasonCall] Canvas";
         private const string CallName = "[SeasonCall] SeasonRaceCall";
@@ -22,20 +22,15 @@ namespace RealSteel.BossRace.EditorTools
         private static readonly Color TextMain = new Color32(0xF0, 0xF1, 0xF3, 0xFF);
         private static readonly Color TextSub = new Color32(0x9A, 0x9E, 0xA4, 0xFF);
 
-        [MenuItem("Tools/Dialogue/시즌 시작 전화 배치 (벨소리 · 지역 선택 · 예/아니요)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
-            if (!scene.path.StartsWith(AllowedFolder))
-            {
-                EditorUtility.DisplayDialog(UndoName, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}", "확인");
-                return;
-            }
+            if (!SetupKit.RequireLhmScene(scene, UndoName)) return;
 
             var existing = Object.FindFirstObjectByType<SeasonRaceCall>(FindObjectsInactive.Include);
             if (existing != null)
             {
-                EditorUtility.DisplayDialog(UndoName, $"이미 배치되어 있습니다. ({existing.name})\n다시 만들려면 {CallName}와 {CanvasName}를 지우고 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, $"이미 배치되어 있습니다. ({existing.name})\n다시 만들려면 {CallName}와 {CanvasName}를 지우고 실행하세요.", "확인");
                 return;
             }
 
@@ -44,11 +39,11 @@ namespace RealSteel.BossRace.EditorTools
             var debug = Object.FindFirstObjectByType<Step09_DialogueDebug>(FindObjectsInactive.Include);
             if (manager == null || selectUI == null || debug == null)
             {
-                EditorUtility.DisplayDialog(UndoName, "DialogueManager, 보스 레이스 선택 UI, Step09_DialogueDebug가 모두 필요합니다.\n9단계 배치와 '보스 레이스 선택 UI 배치'를 먼저 실행하세요.", "확인");
+                SetupKit.Dialog(UndoName, "DialogueManager, 보스 레이스 선택 UI, Step09_DialogueDebug가 모두 필요합니다.\n9단계 배치와 '보스 레이스 선택 UI 배치'를 먼저 실행하세요.", "확인");
                 return;
             }
 
-            if (!EditorUtility.DisplayDialog(UndoName,
+            if (!SetupKit.Dialog(UndoName,
                     $"'{scene.name}' 씬에 시즌 시작 전화를 배치합니다.\n" +
                     $"- {CanvasName}: 전화 알림 창, 예/아니요 선택지\n" +
                     $"- {CallName}: 벨소리(코드로 생성), 흐름 관리\n" +
@@ -149,24 +144,13 @@ namespace RealSteel.BossRace.EditorTools
             log.AppendLine($"- {CallName} (받기 키 Z, 벨소리는 코드 생성 — 효과음 파일을 Ring Clip에 넣으면 교체)");
 
             var poolAsset = AssetDatabase.LoadAssetAtPath<TextAsset>("Assets/LHM/03.Data/Dialogue/event_dialogues.json");
-            var managerSo = new SerializedObject(manager);
-            SerializedProperty pools = managerSo.FindProperty("poolJsons");
-            if (pools != null && poolAsset != null)
+            if (poolAsset != null)
             {
-                bool found = false;
-                for (int i = 0; i < pools.arraySize; i++) found |= pools.GetArrayElementAtIndex(i).objectReferenceValue == poolAsset;
-                if (!found)
-                {
-                    Undo.RecordObject(manager, UndoName);
-                    pools.arraySize++;
-                    pools.GetArrayElementAtIndex(pools.arraySize - 1).objectReferenceValue = poolAsset;
-                    managerSo.ApplyModifiedProperties();
-                    log.AppendLine("- DialogueManager 대사 풀에 event_dialogues 추가");
-                }
+                SetupKit.AddPool(manager, poolAsset, log);
             }
             else
             {
-                log.AppendLine("- 주의: DialogueManager의 대사 풀 칸(poolJsons)을 찾지 못함 — event_dialogues가 연결되어 있는지 직접 확인");
+                log.AppendLine("- 주의: event_dialogues.json을 찾지 못함 — 대사 풀에 연결되어 있는지 직접 확인");
             }
 
             foreach (Step112_MidnightTest test in Object.FindObjectsByType<Step112_MidnightTest>(FindObjectsInactive.Include, FindObjectsSortMode.None))

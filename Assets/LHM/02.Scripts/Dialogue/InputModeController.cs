@@ -57,7 +57,7 @@ namespace RealSteel.Dialogue
         {
             if (UiStack.Current == null)
             {
-                Debug.LogWarning("[InputMode] UI 스택이 없어 대화 상태로 전환할 수 없습니다. Tools > Dialogue > LJS 시간 시스템 연결을 실행하세요.", this);
+                Debug.LogWarning("[InputMode] UI 스택이 없어 대화 상태로 전환할 수 없습니다. Tools > Dialogue > 대화 툴 열기에서 LJS 시간 항목을 실행하세요.", this);
             }
         }
 

@@ -25,7 +25,6 @@ namespace RealSteel.BossRace.EditorTools
         public static Sprite Hazard => Load("hazard");
         public static Sprite Alert => Load("icon_alert");
 
-        [MenuItem("Tools/Dialogue/보스 레이스 UI 이미지 다시 만들기")]
         public static void Generate()
         {
             Directory.CreateDirectory(Folder);

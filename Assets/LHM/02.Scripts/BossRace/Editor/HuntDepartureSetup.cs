@@ -13,8 +13,7 @@ namespace RealSteel.BossRace.EditorTools
         public const string RootName = "[Hunt] HuntDeparture";
         private const string UndoName = "토벌 출발 배치";
 
-        [MenuItem("Tools/Dialogue/토벌 출발 배치 (토벌 신청 → 난이도 → 대사 → 전투 씬)")]
-        private static void Setup()
+        internal static void Setup()
         {
             Scene scene = SceneManager.GetActiveScene();
             if (!EditorUtility.DisplayDialog(UndoName,

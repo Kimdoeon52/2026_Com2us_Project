@@ -14,6 +14,7 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
     [SerializeField] private CanvasGroup thinkCanvasGroup; // 말풍선 전체 투명도 제어용
     private Sequence thinkSequence; // DOTween 트윈 중첩 방지용
     private Vector3 originalLocalPos; // 원래 말풍선 위치 저장
+    private SpeechBubbleFitter bubbleFitter; // 텍스트 길이에 맞춰 말풍선 크기 조절
 
 
     private void Start()
@@ -26,6 +27,7 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
                 thinkCanvasGroup = playerThinkImage.gameObject.AddComponent<CanvasGroup>();
             }
             originalLocalPos = new Vector3(0f, 200f, 0f);
+            bubbleFitter = SpeechBubbleFitter.Attach(playerThinkImage, playerThinkChat); // 글이 길면 말풍선이 늘어나게
 
             // 초기 상태 비활성화 및 초기화
             ResetThinkBubble();
@@ -42,7 +44,8 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         thinkSequence?.Kill();
 
         // 텍스트 적용 및 초기 상태 설정
-        playerThinkChat.text = message;
+        if (bubbleFitter != null) bubbleFitter.Fit(message);
+        else playerThinkChat.text = message;
         playerThinkImage.gameObject.SetActive(true);
         playerThinkImage.transform.localPosition = originalLocalPos;
         playerThinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작

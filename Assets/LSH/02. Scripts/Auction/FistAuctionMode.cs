@@ -202,8 +202,9 @@ public class FistAuctionMode : IAuctionMode
 
     private int CalculateAiFistBid(AllAiBase ai, int baseCost)
     {
-        // AI 예산 내에서 물건 원가의 0.8배 ~ 1.5배 사이로 비밀 입찰
-        int maxPossible = (int)(baseCost * Random.Range(0.8f, 1.5f));
+        // 보스는 원가의 0.8배 ~ 1.5배, 일반 NPC(조무레기)는 기준가의 20% ~ 50%만 비밀 입찰
+        float ratio = ai is NpcAiBase ? Random.Range(0.2f, 0.5f) : Random.Range(0.8f, 1.5f);
+        int maxPossible = (int)(baseCost * ratio);
 
         // 보유 골드 검증
         if (!GlobalGold.Instance.CanUseGold(ai.NPCID, maxPossible))

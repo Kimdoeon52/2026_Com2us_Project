@@ -41,6 +41,7 @@ public abstract class AllAiBase : MonoBehaviour
     [SerializeField] protected CanvasGroup thinkCanvasGroup; // 말풍선 전체 투명도 제어용
     protected Sequence thinkSequence; // DOTween 트윈 중첩 방지용
     protected Vector3 originalLocalPos; // 원래 말풍선 위치 저장
+    protected SpeechBubbleFitter bubbleFitter; // 텍스트 길이에 맞춰 말풍선 크기 조절
 
 
 
@@ -65,6 +66,7 @@ public abstract class AllAiBase : MonoBehaviour
                 thinkCanvasGroup = thinkImage.gameObject.AddComponent<CanvasGroup>();
             }
             originalLocalPos = new Vector3(0f, 200f, 0f);
+            bubbleFitter = SpeechBubbleFitter.Attach(thinkImage, npcThinkChat); // 글이 길면 말풍선이 늘어나게
             OnGiveUpTrue += HandleGiveUp;
             // 초기 상태 비활성화 및 초기화
             ResetThinkBubble();
@@ -95,7 +97,8 @@ public abstract class AllAiBase : MonoBehaviour
         thinkSequence?.Kill();
 
         // 텍스트 적용 및 초기 상태 설정
-        npcThinkChat.text = message;
+        if (bubbleFitter != null) bubbleFitter.Fit(message);
+        else npcThinkChat.text = message;
         thinkImage.gameObject.SetActive(true);
         thinkImage.transform.localPosition = originalLocalPos;
         thinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작

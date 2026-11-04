@@ -1,0 +1,761 @@
+fileFormatVersion: 2
+guid: 39871322c1e938f49b5d053aee4288ba
+TextureImporter:
+  internalIDToNameTable: []
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 0
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 0
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 4096
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1078
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10abe925303e973408be618bbad94c0d
+      internalID: -783144811
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_1
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 1078
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: bc6428d63cfac18409a24112d55c851b
+      internalID: -1668249407
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_2
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 1078
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f2cf82b5094c7cb4b89219aa0b0e4252
+      internalID: -906124132
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_3
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 1078
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: e79e06a89d42e7b4499f1c85215188e5
+      internalID: -517079319
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 924
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4bdc16fb8fb40754280caff38b57534e
+      internalID: -326216594
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_5
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 924
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 5f56b648f0a9ad546b8c9505870a2522
+      internalID: -2075480216
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_6
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 924
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1a34b823ecbd00f47979b37eeb8293e7
+      internalID: 1739649902
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_7
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 924
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 14c0dbdd817fa334fa1533b250aef787
+      internalID: -1355851805
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 770
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: dae38d33c52a7f44f8613e2eb6fcbaaf
+      internalID: 1566020589
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_9
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 770
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f5e4279cc84c2e94b8fd79a4cec573b8
+      internalID: -1275011692
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_10
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 770
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 86b4d33f331119d48b0bb1f6418d55d0
+      internalID: 889598415
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_11
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 770
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c8a93b1450a43f34ba6eabcfb5a35baf
+      internalID: 768975309
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 616
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2c650e40e400ae048b556e7b6ce96dd9
+      internalID: 240056778
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_13
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 616
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 1275a5a7115af3a4b8e63c7f40ba99a7
+      internalID: 1209856095
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_14
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 616
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: df554842f1350214b8e4612c31f49434
+      internalID: -493131566
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_15
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 616
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 32c0fe38ee12ddb4393687503b905856
+      internalID: 814316669
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 462
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: a2903785075d2f44c952b947e5281e96
+      internalID: 1663853408
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_17
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 462
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 527af4e0441659045831bba5bbb7dc44
+      internalID: 665148719
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_18
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 462
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: c49120080a0911d48b47d0c9399c7d0c
+      internalID: -2090642953
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_19
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 462
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: be7de6baaa6f1164ca4d62636c46dc54
+      internalID: -1901059313
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_20
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 308
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: ec50b56e6ecb07147ad9d8948d365275
+      internalID: 855547603
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_21
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 308
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 60fe1ed4a77a11149ad5bfbe2a185ec1
+      internalID: 1579855755
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_22
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 308
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 10b78d350a1de2747b884cd9140b2a1f
+      internalID: 1929205031
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_23
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 308
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 841c9d23e32ecaa4fbcb64f3af49cf89
+      internalID: -259487273
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_24
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 154
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 0b6042f14f63abf47b77022e385e996b
+      internalID: 1005835684
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_25
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 154
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 9725c8494cbb81e438268692a082ddc9
+      internalID: -1348223204
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_26
+      rect:
+        serializedVersion: 2
+        x: 720
+        y: 154
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f02298be2ad1f814aad44548d4ec91be
+      internalID: -1686728362
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Vfx_Slam_Sprak_27
+      rect:
+        serializedVersion: 2
+        x: 1080
+        y: 154
+        width: 360
+        height: 154
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 2a638ef79e0017c4687b8d693eb91da6
+      internalID: -1216353634
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: fbedbb834518514448598d1b950655b7
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      Vfx_Slam_Sprak_0: -783144811
+      Vfx_Slam_Sprak_1: -1668249407
+      Vfx_Slam_Sprak_10: 889598415
+      Vfx_Slam_Sprak_11: 768975309
+      Vfx_Slam_Sprak_12: 240056778
+      Vfx_Slam_Sprak_13: 1209856095
+      Vfx_Slam_Sprak_14: -493131566
+      Vfx_Slam_Sprak_15: 814316669
+      Vfx_Slam_Sprak_16: 1663853408
+      Vfx_Slam_Sprak_17: 665148719
+      Vfx_Slam_Sprak_18: -2090642953
+      Vfx_Slam_Sprak_19: -1901059313
+      Vfx_Slam_Sprak_2: -906124132
+      Vfx_Slam_Sprak_20: 855547603
+      Vfx_Slam_Sprak_21: 1579855755
+      Vfx_Slam_Sprak_22: 1929205031
+      Vfx_Slam_Sprak_23: -259487273
+      Vfx_Slam_Sprak_24: 1005835684
+      Vfx_Slam_Sprak_25: -1348223204
+      Vfx_Slam_Sprak_26: -1686728362
+      Vfx_Slam_Sprak_27: -1216353634
+      Vfx_Slam_Sprak_3: -517079319
+      Vfx_Slam_Sprak_4: -326216594
+      Vfx_Slam_Sprak_5: -2075480216
+      Vfx_Slam_Sprak_6: 1739649902
+      Vfx_Slam_Sprak_7: -1355851805
+      Vfx_Slam_Sprak_8: 1566020589
+      Vfx_Slam_Sprak_9: -1275011692
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

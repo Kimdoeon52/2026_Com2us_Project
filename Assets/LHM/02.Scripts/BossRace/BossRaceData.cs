@@ -13,14 +13,18 @@ namespace RealSteel.BossRace
     [Serializable]
     public class BossRaceEntry
     {
+        public const int FinalRegion = 4;
+
         public string bossId = "boss.wheel";
-        public string regionLabel = "지역 1";
+        public int regionLabel = 1;
         public string bossName = "호이루";
         public string typeLabel = "바퀴형";
         public string tags = "바퀴형 · 튀어오르기 / 돌진 / 내려찍기";
         [TextArea(2, 4)] public string description = "";
         public Sprite icon;
         public string targetParts = "";
+
+        public string RegionText => regionLabel == FinalRegion ? "최종" : $"지역 {regionLabel}";
     }
 
     [Serializable]

@@ -73,7 +73,7 @@ namespace RealSteel.BossRace
             State = state;
             bool locked = state == BossRaceCardState.Locked;
 
-            SetText(regionText, entry.regionLabel);
+            SetText(regionText, entry.RegionText);
             SetText(nameText, entry.bossName);
             SetText(tagsText, entry.tags);
             if (icon != null)

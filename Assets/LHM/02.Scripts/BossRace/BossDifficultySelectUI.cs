@@ -127,7 +127,7 @@ namespace RealSteel.BossRace
             int initial = difficulties.FindIndex(d => d.id == initialDifficulty);
             Select(initial >= 0 ? initial : Mathf.Min(2, difficulties.Count - 1));
 
-            Debug.Log($"[Difficulty] 난이도 선택 열림 — {boss.regionLabel} {boss.bossName}");
+            Debug.Log($"[Difficulty] 난이도 선택 열림 — {boss.RegionText} {boss.bossName}");
             return true;
         }
 
@@ -197,7 +197,7 @@ namespace RealSteel.BossRace
 
         private void RefreshBoss()
         {
-            SetText(regionTagText, $"{boss.regionLabel} 보스");
+            SetText(regionTagText, $"{boss.RegionText} 보스");
             SetText(bossNameText, boss.bossName);
             SetText(bossTagsText, boss.tags);
             if (bossIcon != null)

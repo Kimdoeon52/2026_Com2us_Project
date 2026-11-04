@@ -79,7 +79,7 @@ namespace RealSteel.BossRace
             if (!difficultySelect.Open(Progress, entry, Parts, lastDifficulty, OnDifficultyChosen, OnCancelled, backLabel)) return false;
 
             busy = true;
-            Debug.Log($"[Hunt] 토벌 신청 — 이번 시즌 보스 {entry.regionLabel} {entry.bossName}({bossId}) 난이도 선택");
+            Debug.Log($"[Hunt] 토벌 신청 — 이번 시즌 보스 {entry.RegionText} {entry.bossName}({bossId}) 난이도 선택");
             return true;
         }
 

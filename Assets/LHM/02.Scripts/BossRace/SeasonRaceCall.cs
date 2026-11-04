@@ -211,7 +211,7 @@ namespace RealSteel.BossRace
             if (box != null)
             {
                 box.SetTextArgument("boss", entry != null ? entry.bossName : bossId);
-                box.SetTextArgument("region", entry != null ? entry.regionLabel : "");
+                box.SetTextArgument("region", entry != null ? entry.RegionText : "");
             }
 
             phase = Phase.Confirming;
@@ -297,7 +297,7 @@ namespace RealSteel.BossRace
             }
 
             if (progressSource is Step09_DialogueDebug debug && !string.IsNullOrEmpty(bossId)) debug.SetTargetBoss(bossId);
-            Debug.Log($"[SeasonCall] 새 시즌 시작 — {(entry != null ? $"{entry.regionLabel} {entry.bossName}" : bossId)} 레이스 (race.id={(index >= 0 && index < raceIds.Length ? raceIds[index] : "-")}, 시즌 1일차)");
+            Debug.Log($"[SeasonCall] 새 시즌 시작 — {(entry != null ? $"{entry.RegionText} {entry.bossName}" : bossId)} 레이스 (race.id={(index >= 0 && index < raceIds.Length ? raceIds[index] : "-")}, 시즌 1일차)");
         }
 
         private void StopRing()

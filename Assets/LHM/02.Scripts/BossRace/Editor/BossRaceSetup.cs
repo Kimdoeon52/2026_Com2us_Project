@@ -154,7 +154,7 @@ namespace RealSteel.BossRace.EditorTools
             {
                 SerializedProperty e = entriesProp.GetArrayElementAtIndex(i);
                 e.FindPropertyRelative("bossId").stringValue = entries[i].bossId;
-                e.FindPropertyRelative("regionLabel").stringValue = entries[i].regionLabel;
+                e.FindPropertyRelative("regionLabel").intValue = entries[i].regionLabel;
                 e.FindPropertyRelative("bossName").stringValue = entries[i].bossName;
                 e.FindPropertyRelative("typeLabel").stringValue = entries[i].typeLabel;
                 e.FindPropertyRelative("tags").stringValue = entries[i].tags;
@@ -287,28 +287,28 @@ namespace RealSteel.BossRace.EditorTools
             {
                 new BossRaceEntry
                 {
-                    bossId = "boss.wheel", regionLabel = "지역 1", bossName = "호이루", typeLabel = "바퀴형",
+                    bossId = "boss.wheel", regionLabel = 1, bossName = "호이루", typeLabel = "바퀴형",
                     tags = "바퀴형 · 튀어오르기 / 돌진 / 내려찍기",
                     description = "바닥과 천장을 튀어 오르며 360도 투사체를 뿌리고, 맵 끝까지 돌진합니다. 돌진 전에 피해를 누적하면 스턴을 노릴 수 있습니다.",
                     icon = BossRaceArt.Wheel,
                 },
                 new BossRaceEntry
                 {
-                    bossId = "boss.kyodai", regionLabel = "지역 2", bossName = "쿄다이", typeLabel = "거대 로봇형",
+                    bossId = "boss.kyodai", regionLabel = 2, bossName = "쿄다이", typeLabel = "거대 로봇형",
                     tags = "거대 로봇 · 본체는 배경, 팔·다리·렌즈만 피격",
                     description = "거대한 본체는 배경에 있고 팔·다리와 메인 렌즈만 공격할 수 있습니다. 냉각탑과 안테나를 부수면 틈이 생깁니다.",
                     icon = BossRaceArt.Robot,
                 },
                 new BossRaceEntry
                 {
-                    bossId = "boss.region3", regionLabel = "지역 3", bossName = "[지역 3 보스명]", typeLabel = "상자형",
+                    bossId = "boss.region3", regionLabel = 3, bossName = "[지역 3 보스명]", typeLabel = "상자형",
                     tags = "상자형 몸통 · 기물 파괴 2 + 부위 파괴 1",
                     description = "보스 기획 후 추가 예정입니다.",
                     icon = BossRaceArt.Box,
                 },
                 new BossRaceEntry
                 {
-                    bossId = "boss.final", regionLabel = "최종", bossName = "???", typeLabel = "미공개",
+                    bossId = "boss.final", regionLabel = BossRaceEntry.FinalRegion, bossName = "???", typeLabel = "미공개",
                     tags = "길드 레이스 최종 보스",
                     description = "정체가 알려지지 않은 길드 레이스의 최종 보스입니다.",
                     icon = BossRaceArt.Unknown,

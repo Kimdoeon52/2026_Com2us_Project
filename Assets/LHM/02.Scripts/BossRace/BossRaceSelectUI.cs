@@ -229,7 +229,7 @@ namespace RealSteel.BossRace
             bool hint = loses >= BossRaceDifficulty.HintLoseCount;
 
             SetText(detailNameText, entry.bossName);
-            SetText(detailSubText, $"{entry.regionLabel} · {entry.typeLabel}");
+            SetText(detailSubText, $"{entry.RegionText} · {entry.typeLabel}");
             SetText(detailDescriptionText, entry.description);
             SetText(detailStatsText,
                 $"최고 클리어 <color=#FFFFFF><b>{BossRaceDifficulty.Label(best)}</b></color>      " +
@@ -260,10 +260,10 @@ namespace RealSteel.BossRace
 
         private void ShowLockHint(int index)
         {
-            string previous = index > 0 && index - 1 < entries.Count ? entries[index - 1].regionLabel : "이전 지역";
+            string previous = index > 0 && index - 1 < entries.Count ? entries[index - 1].RegionText : "이전 지역";
             SetRouteHint($"잠김 — {previous} 레이스 시즌 1위 달성 시 개방", HintLocked);
             hintUntil = Time.unscaledTime + lockHintSeconds;
-            Debug.Log($"[BossRace] 잠긴 지역 선택 시도: {(index < entries.Count ? entries[index].regionLabel : index.ToString())} (선택 불가)");
+            Debug.Log($"[BossRace] 잠긴 지역 선택 시도: {(index < entries.Count ? entries[index].RegionText : index.ToString())} (선택 불가)");
         }
 
         private void Confirm()
@@ -308,7 +308,7 @@ namespace RealSteel.BossRace
             var parts = new List<string>();
             for (int i = 0; i < entries.Count; i++)
             {
-                parts.Add($"{entries[i].regionLabel} {entries[i].bossName}: {StateOf(i)}");
+                parts.Add($"{entries[i].RegionText} {entries[i].bossName}: {StateOf(i)}");
             }
             return string.Join(" / ", parts);
         }

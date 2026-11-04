@@ -4,6 +4,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+// 2026-11-04: 3D 보관 메뉴는 숨김 — 다시 보려면 Player Settings > Scripting Define Symbols에 KYODAI_3D_MENU 추가
+
 /// <summary>
 /// 메뉴 한 번으로 지금 열린 씬에 "임시 쿄다이"를 세운다 (2026-10-28). 3D 에셋을 구하기 전까지 상자 로봇으로 패턴을 맞춰보는 용도.
 ///
@@ -19,7 +21,9 @@ public static class KyodaiPlaceholderBuilder
     private const string DataFolder = "Assets/NYH/04. SO/Boss/Kyodai";
     private const float BackZ = 15f; // 몸·대기 중인 팔이 경기장 평면 뒤로 떨어진 거리(월드)
 
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/임시 보스 만들기 (현재 씬)")]
+#endif
     private static void Build()
     {
         if (Object.FindAnyObjectByType<KyodaiBossController3D>() != null &&
@@ -110,7 +114,9 @@ public static class KyodaiPlaceholderBuilder
 
     // 2026-10-29: 쿄다이 밑에 넣은 리깅 모델을 선택하고 누르면 — KyodaiRig를 붙이고, 양팔 KyodaiLimb를 그 모델의 뼈로 연결하고,
     // 임시 상자 로봇(몸·머리·손·팔)을 끈다. 뼈 이름은 Unity 표준(RightUpperArm 등) 기준
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/선택한 리깅 모델 연결")]
+#endif
     private static void ConnectRig()
     {
         var model = Selection.activeGameObject;
@@ -176,7 +182,9 @@ public static class KyodaiPlaceholderBuilder
     // 2026-10-30: 예전 방식(쿄다이 스튜디오 → 픽셀 판)으로 만든 씬을 옮긴다.
     // 스튜디오 안의 모델들을 쿄다이 밑으로 옮겨 경기장 뒤(z+)에 세우고, 스튜디오(카메라 포함)는 지운다.
     // 크기·위치는 대략(메인 카메라 화면 높이의 70%, 경기장 가운데, 발이 바닥) — 그다음 직접 맞추면 된다
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/스튜디오 걷어내기 (원본 모델 직접 표시)")]
+#endif
     private static void RemoveStudio()
     {
         var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();
@@ -236,7 +244,9 @@ public static class KyodaiPlaceholderBuilder
 
     // 2026-10-29: 코드로 짠 손바닥 압착(KyodaiPalmPressPattern)을 같은 타이밍의 모션 에셋 + KyodaiMotionPattern으로 바꾼다.
     // 옛 패턴 오브젝트는 끈다(지우지 않음). 그다음부터는 모션 창에서 손으로 다듬는다
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/손바닥 압착을 모션 패턴으로 바꾸기")]
+#endif
     private static void ConvertPalmPress()
     {
         var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();
@@ -412,7 +422,9 @@ public static class KyodaiPlaceholderBuilder
     // 다른 모션 패턴은 끈다(지우지 않음). 손 키 없는 트랙이라 IK는 쓰지 않고 레이어·조준만 얹는다
     private const string ClipFolder = "Assets/NYH/08.Anim/08-3.Boss2Anim";
 
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/애니메이션 패턴 3종 구성")]
+#endif
     private static void BuildClipPatterns()
     {
         var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();
@@ -482,7 +494,9 @@ public static class KyodaiPlaceholderBuilder
     // 2026-11-02: 나중에 만든 클립 연결. 이미 있는 패턴은 그대로 두고 양손 패턴 2개를 더하고, 그로기 클립을 보스에 건다.
     // 레이어 시각은 클립 키 기준(공격 = 내려가기 시작, 잔류 = 닿아서 멈춘 구간, 복귀 = 들어 올리기 시작).
     // 양손이라 조준(한 팔만 지원)과 바닥 그림자는 넣지 않는다 — 휘두르기와 같이 클립 자리 그대로 친다
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/새 애니메이션 연결 (양손 패턴·그로기)")]
+#endif
     private static void BuildMoreClipPatterns()
     {
         var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();

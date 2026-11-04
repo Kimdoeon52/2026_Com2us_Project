@@ -28,16 +28,22 @@ public class KyodaiHpDebugView : MonoBehaviour
         public int damage;
         public float shownUntil;
         public Vector3 worldPoint;
+        public KyodaiHand hand; // 쿄다이 손이면 진짜 무력화 게이지(손이 들고 있음)를 그린다
     }
 
     private BossControllerBase boss;
     private IReadOnlyList<float> groggyMarks;
+    private KyodaiTentacleSpawner tentacles; // 있으면 촉수 수·이동속도 배율도 표시 (2026-11-04)
     private readonly Dictionary<string, PartGauge> parts = new Dictionary<string, PartGauge>();
     private readonly List<BossHurtZone> zones = new List<BossHurtZone>();
     private GUIStyle label;
     private float nextScan;
 
-    private void Awake() => boss = GetComponent<BossControllerBase>();
+    private void Awake()
+    {
+        boss = GetComponent<BossControllerBase>();
+        tentacles = GetComponentInChildren<KyodaiTentacleSpawner>(true);
+    }
 
     /// <summary>HP 막대에 그릴 그로기 문턱(남은 HP 비율)</summary>
     public void SetGroggyMarks(IReadOnlyList<float> marks) => groggyMarks = marks;
@@ -66,6 +72,7 @@ public class KyodaiHpDebugView : MonoBehaviour
         if (!parts.TryGetValue(id, out var gauge)) parts[id] = gauge = new PartGauge();
         gauge.damage = Mathf.Min(partGaugeMax, gauge.damage + Mathf.Max(0, damage));
         gauge.shownUntil = Time.time + partShowSeconds;
+        if (gauge.hand == null) gauge.hand = zone.GetComponentInParent<KyodaiHand>();
 
         // 맞은 자리 = 판정 상자에서 플레이어와 가장 가까운 점 (때린 Hit박스 위치는 이벤트로 안 넘어온다)
         var player = GameObject.FindWithTag("Player");
@@ -95,7 +102,11 @@ public class KyodaiHpDebugView : MonoBehaviour
                 Fill(new Rect(rect.x + rect.width * mark - 1f, rect.y, 2f, rect.height), Color.white);
 
         string state = s.isGroggy ? " 그로기" : "";
-        GUI.Label(new Rect(rect.x, rect.yMax, rect.width, 20f), $"{s.bossName} HP {s.currentHp} / {s.maxHp} ({ratio:P0}){state}", label);
+        string phase = s.currentPhase >= 2 ? " · 2페이즈" : "";
+        GUI.Label(new Rect(rect.x, rect.yMax, rect.width, 20f), $"{s.bossName} HP {s.currentHp} / {s.maxHp} ({ratio:P0}){state}{phase}", label);
+        if (tentacles != null)
+            GUI.Label(new Rect(rect.x, rect.yMax + 18f, rect.width, 20f),
+                      $"촉수 {tentacles.Count}/{tentacles.MaxCount} · 이동속도 ×{tentacles.SpeedMultiplier:0.00}", label);
     }
 
     private void DrawPartBars()
@@ -112,12 +123,21 @@ public class KyodaiHpDebugView : MonoBehaviour
             if (screen.z <= 0f) continue;
             float alpha = Mathf.Clamp01(left / 0.3f); // 끝날 때 0.3초 동안 흐려진다
             var rect = new Rect(screen.x - 50f, Screen.height - screen.y - 6f, 100f, 10f);
-            float ratio = 1f - gauge.damage / (float)partGaugeMax;
+            // 쿄다이 손: 무력화 게이지(2026-11-04) — 남은 양 = 기준 − 누적, 누워 있는 동안은 0
+            int max = partGaugeMax, remain = partGaugeMax - gauge.damage;
+            string title = pair.Key;
+            if (gauge.hand != null && boss is KyodaiBossController kyodai && kyodai.ArmDisableDamage > 0)
+            {
+                max = kyodai.ArmDisableDamage;
+                remain = gauge.hand.IsFrozen ? 0 : Mathf.Max(0, max - gauge.hand.DisableDamage);
+                title = gauge.hand.IsFrozen ? $"{pair.Key} 무력화" : pair.Key;
+            }
+            float ratio = remain / (float)Mathf.Max(1, max);
 
             Fill(rect, new Color(0f, 0f, 0f, 0.7f * alpha));
             Fill(new Rect(rect.x, rect.y, rect.width * ratio, rect.height), new Color(0.3f, 0.9f, 1f, alpha));
             GUI.color = new Color(1f, 1f, 1f, alpha);
-            GUI.Label(new Rect(rect.x - 20f, rect.y - 20f, rect.width + 40f, 18f), $"{pair.Key} {partGaugeMax - gauge.damage}/{partGaugeMax}", label);
+            GUI.Label(new Rect(rect.x - 20f, rect.y - 20f, rect.width + 40f, 18f), $"{title} {remain}/{max}", label);
             GUI.color = Color.white;
         }
     }

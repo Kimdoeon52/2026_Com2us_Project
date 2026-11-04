@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b43851e520484954eb72d932b02c54b0, type: 3}
+  m_Name: "Kyodai2D_\uAE30\uBB3C_\uC124\uC815"
+  m_EditorClassIdentifier: 
+  firstDelayFrames: 120
+  intervalFrames: 360
+  descendFrames: 70
+  lockFrames: 24
+  slamFrames: 6
+  stuckFrames: 45
+  riseFrames: 50
+  trackFrequency: 1.2
+  trackDamping: 0.85
+  hoverHeight: 4
+  contactHeight: 1
+  lockShake: 0.06
+  hitSize: {x: 2.2, y: 1.8}
+  telegraphWidth: 2.6
+  impactShake: 0.45
+  impactFreezeFrames: 5

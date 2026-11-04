@@ -90,11 +90,26 @@ public class KyodaiHandFeel : ScriptableObject
     [Range(0f, 1f)] public float downFloatWeight = 0.15f;
     public Color downTint = new Color(0.55f, 0.55f, 0.6f);
 
-    [Header("정지 (레이어에 맞음)")]
+    [Header("레이저에 맞음 — 바닥으로 떨어져 누움 (2026-11-04)")]
     public Color frozenTint = new Color(0.6f, 0.75f, 1f);
 
-    [Tooltip("정지 중 덜덜 떨리는 크기(월드)")]
+    [Tooltip("누워 있는 동안 지직거리는 크기(보스 단위)")]
     [Min(0f)] public float frozenShake = 0.04f;
+
+    [Tooltip("떨어지는 중력(보스 단위/초², 음수)")]
+    public float fallGravity = -45f;
+
+    [Tooltip("바닥에서 튕기는 비율 (0 = 안 튕김)")]
+    [Range(0f, 0.9f)] public float fallBounce = 0.3f;
+
+    [Tooltip("이 속도(보스 단위/초)보다 느리게 닿으면 더 안 튕기고 눕는다")]
+    [Min(0f)] public float fallBounceMinSpeed = 2f;
+
+    [Tooltip("처음 바닥에 닿을 때 화면 흔들림(월드)")]
+    [Min(0f)] public float fallShake = 0.2f;
+
+    [Tooltip("누운 손의 기울기(도) — 왼손·오른손이 서로 반대로")]
+    public float fallRotation = 25f;
 
     [Header("바닥 그림자")]
     [Tooltip("손이 바닥에 붙었을 때 그림자 크기(월드)")]

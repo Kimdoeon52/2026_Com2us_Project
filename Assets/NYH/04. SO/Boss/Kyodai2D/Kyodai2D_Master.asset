@@ -24,12 +24,24 @@ MonoBehaviour:
   gimmickParts: []
   patterns:
   - {fileID: 11400000, guid: b6fdce26e304da64bbee423c79066135, type: 2}
+  - {fileID: 11400000, guid: e712cbf1f22e38f47a7b2beed5c76cc7, type: 2}
+  - {fileID: 11400000, guid: a3d873ed5d5fa04499e7489ebb6677cf, type: 2}
+  - {fileID: 11400000, guid: cb24b780ca3d12a49bf1cc77124b252f, type: 2}
+  - {fileID: 11400000, guid: 74250e1594445644499fa1432a59eb75, type: 2}
   phases:
   - phaseIndex: 1
     hpThresholdRatio: 1
-    availableSkillIDs: []
+    availableSkillIDs:
+    - KYODAI2D_FIST_SLAM
+    - KYODAI2D_PALM_PUSH
+    - KYODAI2D_LASER
   - phaseIndex: 2
     hpThresholdRatio: 0.5
-    availableSkillIDs: []
+    availableSkillIDs:
+    - KYODAI2D_FIST_SLAM
+    - KYODAI2D_PALM_PUSH
+    - KYODAI2D_LASER
+    - KYODAI2D_DUAL_CLAP
+    - KYODAI2D_DUAL_BARRAGE
   rewardGold: 250
   rewardCoreExp: 120

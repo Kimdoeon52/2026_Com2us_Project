@@ -61,6 +61,26 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     private int speedBuffTicks;
     private bool speedBuffKeepRunning;
 
+    // 2026-11-04 추가 (쿄다이 촉수 디버프): 지속형 이동속도 배율 — 거는 쪽이 이름(key)으로 넣고 빼며, 전부 곱해서 쓴다.
+    // 위 부스터 버프(틱 수로 끝남)와 별개 — 촉수처럼 "있는 동안 계속"인 효과용
+    private readonly System.Collections.Generic.Dictionary<string, float> speedModifiers = new System.Collections.Generic.Dictionary<string, float>();
+    private float speedModifierProduct = 1f;
+
+    /// <summary>지속형 이동속도 배율을 건다(같은 key면 덮어씀). 1이면 뺀 것과 같다</summary>
+    public void SetSpeedModifier(string key, float multiplier)
+    {
+        if (Mathf.Approximately(multiplier, 1f)) speedModifiers.Remove(key);
+        else speedModifiers[key] = Mathf.Max(0f, multiplier);
+        speedModifierProduct = 1f;
+        foreach (var m in speedModifiers.Values) speedModifierProduct *= m;
+    }
+
+    /// <summary>지속형 이동속도 배율을 뺀다</summary>
+    public void ClearSpeedModifier(string key) => SetSpeedModifier(key, 1f);
+
+    /// <summary>지금 걸린 지속형 이동속도 배율의 곱 (표시용)</summary>
+    public float SpeedModifier => speedModifierProduct;
+
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
@@ -178,7 +198,7 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
             // 대시(더블탭) 중이면 moveSpeed에 배율을 곱한다 — 기획서 §6-12 "←←/→→ 달리기"
             // 부스터 버프의 "달리기 판정 유지"면 더블탭 없이도 대시 배율이 붙는다
             bool isDashing = (inputSource?.GetDashInput() ?? false) || (speedBuffed && speedBuffKeepRunning);
-            float speedMultiplier = (isDashing ? dashSpeedMultiplier : 1f) * (speedBuffed ? speedBuffMultiplier : 1f);
+            float speedMultiplier = (isDashing ? dashSpeedMultiplier : 1f) * (speedBuffed ? speedBuffMultiplier : 1f) * speedModifierProduct;
             moveVelocity = moveInput * moveSpeed * speedMultiplier;
         }
         else if (isGrounded && !slowedByHitStop)

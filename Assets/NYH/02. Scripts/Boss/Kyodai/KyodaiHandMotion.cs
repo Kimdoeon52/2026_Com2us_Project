@@ -13,7 +13,10 @@ public enum KyodaiHandAnchor
     ArenaFar,    // 경기장에서 플레이어 반대쪽 끝
     ArenaNear,   // 경기장에서 플레이어 쪽 끝
     ArenaCenter, // 경기장 가운데
-    Keep         // 앞 키의 목표 x 그대로
+    Keep,        // 앞 키의 목표 x 그대로
+    ArenaLeft,   // 경기장 왼쪽 끝 (2026-11-04, 양손 협공 — 플레이어 위치와 무관한 고정 끝)
+    ArenaRight   // 경기장 오른쪽 끝
+    // 새 값은 맨 뒤에만 추가할 것 — 에셋에 숫자로 저장된다
 }
 
 /// <summary>목표까지 가는 방식</summary>
@@ -71,6 +74,9 @@ public class KyodaiHandKey
     [Tooltip("손 크기 배율. 부드럽게 따라 커진다")]
     [Min(0.1f)] public float scale = 1f;
 
+    [Tooltip("가로만 더 늘리는 배율 (손바닥 압착처럼 넓게 덮는 동작). 맞는 자리도 같이 넓어진다")]
+    [Min(0.1f)] public float widthScale = 1f;
+
     [Tooltip("떠다니는 흔들림 세기 (0 = 멈춤, 1 = 대기 중과 같음). 공격 순간엔 줄인다")]
     [Range(0f, 1f)] public float floatWeight = 1f;
 
@@ -88,6 +94,9 @@ public class KyodaiHandKey
     [Tooltip("0보다 크면 이 키 동안 목표 자리 바닥에 이 너비의 예고 그림자")]
     [Min(0f)] public float telegraphWidth;
 
+    [Tooltip("켜면 예고 그림자를 경기장 전체(가운데·전체 너비)에 깐다 — 바닥을 쓸고 지나가는 동작. telegraphWidth는 무시")]
+    public bool telegraphFullArena;
+
     [Tooltip("키가 끝나는 순간 충격 (잠깐 멈춤·찌그러짐·화면 흔들림·먼지)")]
     public bool impactOnEnd;
 
@@ -96,6 +105,9 @@ public class KyodaiHandKey
 
     [Tooltip("충격 순간 손이 멈추는 프레임 (히트스톱)")]
     [Min(0)] public int impactFreezeFrames = 4;
+
+    [Tooltip("켜면 이 키 끝의 충격에서 충격파가 바닥을 따라 좌우로 퍼진다 (충격파 내려치기 — 점프로 넘는다)")]
+    public bool spawnShockwave;
 }
 
 /// <summary>

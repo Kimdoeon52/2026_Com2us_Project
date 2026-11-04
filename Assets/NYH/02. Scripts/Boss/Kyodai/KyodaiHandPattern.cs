@@ -4,7 +4,7 @@ using RealSteel.Boss.Core;
 using UnityEngine;
 
 /// <summary>패턴이 쓸 손</summary>
-public enum KyodaiHandChoice { Left, Right, NearestToPlayer, Alternate }
+public enum KyodaiHandChoice { Left, Right, NearestToPlayer, Alternate, FarthestFromPlayer }
 
 /// <summary>
 /// 손 동작 에셋(KyodaiHandMotion) 하나를 재생하는 범용 쿄다이 패턴 (2026-11-04 2D 개편).

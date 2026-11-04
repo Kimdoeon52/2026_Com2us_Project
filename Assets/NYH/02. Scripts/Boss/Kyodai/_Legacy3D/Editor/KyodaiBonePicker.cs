@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
+// 2026-11-04: 3D 보관 메뉴는 숨김 — 다시 보려면 Player Settings > Scripting Define Symbols에 KYODAI_3D_MENU 추가
+
 /// <summary>
 /// Scene 뷰에 리깅 모델의 뼈를 선과 점으로 그리고, 점을 누르면 그 뼈를 선택한다 (2026-10-29).
 /// 애니메이션 창에서 키를 찍을 때 뼈 50개를 Hierarchy에서 찾지 않으려고 — 점 클릭 → E(회전 도구)로 돌리면 녹화된다.
@@ -21,7 +23,9 @@ public static class KyodaiBonePicker
 
     static KyodaiBonePicker()
     {
+#if KYODAI_3D_MENU // 3D 보관 도구 — 메뉴를 숨기면 Scene 뷰 뼈 그리기도 끈다
         SceneView.duringSceneGui += OnScene;
+#endif
     }
 
     private static bool Enabled
@@ -30,14 +34,18 @@ public static class KyodaiBonePicker
         set => EditorPrefs.SetBool(PrefKey, value);
     }
 
+#if KYODAI_3D_MENU
     [MenuItem(MenuPath)]
+#endif
     private static void Toggle()
     {
         Enabled = !Enabled;
         SceneView.RepaintAll();
     }
 
+#if KYODAI_3D_MENU
     [MenuItem(MenuPath, true)]
+#endif
     private static bool ToggleValidate()
     {
         Menu.SetChecked(MenuPath, Enabled);

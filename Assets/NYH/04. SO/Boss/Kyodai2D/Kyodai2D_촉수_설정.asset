@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf86a895dd1824a41b9a1d86a3ebcdb3, type: 3}
+  m_Name: "Kyodai2D_\uCD09\uC218_\uC124\uC815"
+  m_EditorClassIdentifier: 
+  maxCount: 10
+  debuffStartCount: 3
+  firstSpawnFrames: 600
+  spawnIntervalFrames: 480
+  phase2SpawnIntervalFrames: 300
+  minPlayerDistance: 3
+  minSpacing: 2
+  speedPenaltyPerTentacle: 0.06
+  minSpeedMultiplier: 0.6
+  hp: 40
+  emergeFrames: 30
+  dieFrames: 30
+  triggerRange: 2.8
+  windUpFrames: 30
+  swingFrames: 10
+  swingHitStart: 2
+  swingHitEnd: 7
+  recoverFrames: 25
+  cooldownFrames: 120
+  swingReach: {x: 2.6, y: 2.6}
+  maxBend: 30
+  swayAngle: 9
+  swaySpeed: 2.2
+  hurtSize: {x: 1, y: 3.4}
+  hitFlashColor: {r: 1, g: 0.55, b: 0.55, a: 1}

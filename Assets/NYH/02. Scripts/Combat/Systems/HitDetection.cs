@@ -50,6 +50,9 @@ public class HitDetection : MonoBehaviour
     private static readonly List<Collider2D> overlapBuffer = new List<Collider2D>(16);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
 
+    // 2026-11-04: 보스 쪽 "체력이 따로 있는" 대상(IPlayerHitTarget — 쿄다이 촉수). 한 행동에 겹친 대상들을 모으는 버퍼
+    private static readonly List<IPlayerHitTarget> targetBuffer = new List<IPlayerHitTarget>(8);
+
     // 씬의 로봇 전부 — 보스전에선 Player 하나뿐이다
     private readonly List<ActionExecutor> fighters = new List<ActionExecutor>(4);
 
@@ -352,11 +355,14 @@ public class HitDetection : MonoBehaviour
         BossControllerBase target = null;
         BossHurtZone targetZone = null;
         float weight = 0f;
+        targetBuffer.Clear();
+        Vector2 hitPoint = attacker.transform.position;
 
         foreach (var hitBox in attacker.State.GetActiveBoxes())
         {
             if (hitBox.type != BoxType.Hit) continue;
             WorldBox worldHit = BoxResolver.ToWorldBox(attacker.transform.position, hitBox, facingRight);
+            if (CollectHitTargets(worldHit, targetBuffer)) hitPoint = worldHit.Center;
             BossControllerBase boss = FindBoss(worldHit, out BossHurtZone zone);
             if (boss == null || (target != null && boss != target)) continue;
 
@@ -367,6 +373,36 @@ public class HitDetection : MonoBehaviour
         }
 
         if (target != null) ResolveBossHit(attacker, target, targetZone, action, weight);
+        if (targetBuffer.Count > 0) ResolveTargetHits(attacker, action, targetBuffer, hitPoint, bossAlsoHit: target != null);
+    }
+
+    // 박스 자리에 겹친 IPlayerHitTarget(촉수 등)을 모은다. 하나라도 있으면 true
+    private static bool CollectHitTargets(in WorldBox box, List<IPlayerHitTarget> into)
+    {
+        float angle = box.IsRotated ? Mathf.Atan2(box.AxisX.y, box.AxisX.x) * Mathf.Rad2Deg : 0f;
+        int count = Physics2D.OverlapBox(box.Center, box.Half * 2f, angle, overlapFilter, overlapBuffer);
+        bool any = false;
+        for (int i = 0; i < count; i++)
+        {
+            var t = overlapBuffer[i].GetComponentInParent<IPlayerHitTarget>();
+            if (t == null || !t.IsHittable || into.Contains(t)) continue;
+            into.Add(t);
+            any = true;
+        }
+        return any;
+    }
+
+    // 촉수 등에 데미지 = 공격 데미지 그대로. 보스도 같이 맞았으면 1히트 표시·히트스톱은 보스 쪽이 이미 했다
+    private void ResolveTargetHits(ActionExecutor attacker, ActionData action, List<IPlayerHitTarget> targets, Vector2 point, bool bossAlsoHit)
+    {
+        float damage = action.Damage > 0f ? action.Damage : 10f; // ResolveHit과 같은 규칙
+        foreach (var t in targets) t.TakePlayerHit(damage, point);
+        if (bossAlsoHit) return;
+
+        bool isRepeatHit = attacker.State.HasHitThisAction;
+        attacker.State.MarkHit();
+        var result = new HitResolutionResult { DamageToHp = Mathf.RoundToInt(damage) };
+        HitStopSystem.ApplyAttackerOnly(hitStopSettings, attacker, action, result, 1f, fromProjectile: false, isRepeatHit);
     }
 
     // 박스 자리에 겹친 콜라이더 중 살아있는 보스를 찾는다. 보스 자식 콜라이더(부위)여도 부모의 BossControllerBase로 올라간다.
@@ -378,6 +414,8 @@ public class HitDetection : MonoBehaviour
         int count = Physics2D.OverlapBox(box.Center, box.Half * 2f, angle, overlapFilter, overlapBuffer);
         for (int i = 0; i < count; i++)
         {
+            // 체력이 따로 있는 대상(촉수)은 보스 밑에 있어도 보스 HP로 안 보낸다 — ResolveTargetHits가 따로 처리
+            if (overlapBuffer[i].GetComponentInParent<IPlayerHitTarget>() != null) continue;
             var boss = overlapBuffer[i].GetComponentInParent<BossControllerBase>();
             if (boss == null || boss.Snapshot == null || !boss.Snapshot.IsAlive) continue;
             zone = overlapBuffer[i].GetComponent<BossHurtZone>();
@@ -425,6 +463,18 @@ public class HitDetection : MonoBehaviour
     private void TryProjectileHitBoss(Projectile projectile)
     {
         if (projectile.Owner == null || projectile.SourceAction == null) return;
+
+        // 촉수 등 체력이 따로 있는 대상이 먼저 — 맞으면 총알이 거기서 터진다
+        targetBuffer.Clear();
+        var projectileBox = new WorldBox(projectile.GetWorldHitBox(), 0f);
+        if (CollectHitTargets(projectileBox, targetBuffer))
+        {
+            float damage = projectile.SourceAction.Damage > 0f ? projectile.SourceAction.Damage : 10f;
+            targetBuffer[0].TakePlayerHit(damage, projectileBox.Center);
+            projectile.Explode();
+            return;
+        }
+
         BossControllerBase boss = FindBoss(new WorldBox(projectile.GetWorldHitBox(), 0f), out BossHurtZone zone);
         if (boss == null) return;
 

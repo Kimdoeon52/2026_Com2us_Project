@@ -2,6 +2,8 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+// 2026-11-04: 3D 보관 메뉴는 숨김 — 다시 보려면 Player Settings > Scripting Define Symbols에 KYODAI_3D_MENU 추가
+
 /// <summary>
 /// KyodaiContacts 인스펙터 + Scene 뷰 핸들 (2026-11-04).
 ///   · 쿄다이를 선택하고 메뉴 NYH/쿄다이/접촉(못 뚫기·먼지) 붙이기 → 팔마다 손목(못 뚫게+먼지)·팔꿈치(먼지만) 접촉점을 만든다
@@ -10,7 +12,9 @@ using UnityEngine;
 [CustomEditor(typeof(KyodaiContacts))]
 public class KyodaiContactsEditor : Editor
 {
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/접촉(못 뚫기·먼지) 붙이기")]
+#endif
     private static void AddToBoss()
     {
         var boss = Object.FindAnyObjectByType<KyodaiBossController3D>();

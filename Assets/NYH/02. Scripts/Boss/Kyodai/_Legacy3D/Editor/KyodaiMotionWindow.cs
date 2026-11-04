@@ -3,6 +3,8 @@ using DG.Tweening;
 using UnityEditor;
 using UnityEngine;
 
+// 2026-11-04: 3D 보관 메뉴는 숨김 — 다시 보려면 Player Settings > Scripting Define Symbols에 KYODAI_3D_MENU 추가
+
 /// <summary>
 /// 쿄다이 동작을 만드는 창 (2026-10-29, 메뉴 NYH/쿄다이/모션 창).
 ///
@@ -16,7 +18,9 @@ using UnityEngine;
 /// </summary>
 public class KyodaiMotionWindow : EditorWindow
 {
+#if KYODAI_3D_MENU
     [MenuItem("NYH/쿄다이(3D 보관)/모션 창")]
+#endif
     private static void Open() => GetWindow<KyodaiMotionWindow>("쿄다이 모션");
 
     private static readonly Color[] LayerColors =

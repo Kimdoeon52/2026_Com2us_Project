@@ -21,23 +21,34 @@ public class GroundTelegraph : MonoBehaviour
 
     private void Awake()
     {
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        EnsureSprite();
+        spriteRenderer.enabled = false;
+    }
+
+    // 에디터 미리보기(쿄다이 패턴 미리보기 창)에서는 Awake가 안 돌아서 Show에서도 확인한다.
+    // 흰 1픽셀 그림은 저장하지 않는다(HideAndDontSave) — 씬에 빈 참조가 남지 않게
+    private void EnsureSprite()
+    {
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
         if (whiteSprite == null)
         {
-            var tex = new Texture2D(1, 1) { filterMode = FilterMode.Point };
+            var tex = new Texture2D(1, 1) { filterMode = FilterMode.Point, hideFlags = HideFlags.HideAndDontSave };
             tex.SetPixel(0, 0, Color.white);
             tex.Apply();
             whiteSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f), 1f);
+            whiteSprite.hideFlags = HideFlags.HideAndDontSave;
         }
         spriteRenderer.sprite = whiteSprite;
-        spriteRenderer.enabled = false;
     }
 
     /// <summary>바닥 groundY 위에 centerX를 중심으로 width만큼 그림자를 편다</summary>
     public void Show(float centerX, float groundY, float width)
     {
+        EnsureSprite();
         transform.position = new Vector3(centerX, groundY, transform.position.z);
-        transform.localScale = new Vector3(width, thickness, 1f);
+        // 너비·두께는 월드 값 — 부모(보스 루트)가 줄어 있어도 판정과 같은 너비로 보이게 부모 크기로 나눈다 (2026-11-04)
+        Vector3 ps = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
+        transform.localScale = new Vector3(width / Mathf.Max(0.0001f, Mathf.Abs(ps.x)), thickness / Mathf.Max(0.0001f, Mathf.Abs(ps.y)), 1f);
         spriteRenderer.color = color;
         spriteRenderer.enabled = true;
         shownAt = Time.time;
@@ -50,7 +61,11 @@ public class GroundTelegraph : MonoBehaviour
         transform.position = new Vector3(centerX, p.y, p.z);
     }
 
-    public void Hide() => spriteRenderer.enabled = false;
+    public void Hide()
+    {
+        if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer.enabled = false;
+    }
 
     private void Update()
     {

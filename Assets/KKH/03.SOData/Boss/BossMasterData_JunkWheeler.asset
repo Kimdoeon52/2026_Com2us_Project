@@ -54,6 +54,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 74250e1594445644499fa1432a59eb75, type: 2}
   - {fileID: 11400000, guid: faaac36f568602e46bb23443bfd8437b, type: 2}
   - {fileID: 11400000, guid: 8d4e99a68206e7e459be0e0300195fc6, type: 2}
+  - {fileID: 11400000, guid: 5a0b4e058d1f17346a11fdcc04023ec8, type: 2}
   phases:
   - phaseIndex: 1
     hpThresholdRatio: 1
@@ -86,5 +87,6 @@ MonoBehaviour:
     - KYODAI2D_DUAL_CLAP
     - KYODAI2D_DUAL_BARRAGE
     - KYODAI2D_DUAL_SLAM
+    - KYODAI2D_LASER_CROSS
   rewardGold: 1500
   rewardCoreExp: 500

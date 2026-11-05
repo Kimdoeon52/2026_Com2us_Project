@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf74882b1ef4d54488010624ac3e289d, type: 3}
+  m_Name: "Kyodai2D_\uB808\uC774\uC800X\uC790_\uC124\uC815"
+  m_EditorClassIdentifier: 
+  aimFrames: 80
+  lockFrames: 20
+  fireFrames: 24
+  fadeFrames: 12
+  aimFrequency: 1.2
+  aimDamping: 0.9
+  aimHeight: 1
+  beamWidth: 0.8
+  maxLength: 40
+  handFreezeFrames: 240
+  blockedByHand: 1
+  aimStartWidth: 0.6
+  aimEndWidth: 0.06
+  aimColor: {r: 1, g: 0.15, b: 0.1, a: 0.55}
+  beamColor: {r: 1, g: 0.2, b: 0.12, a: 1}
+  coreColor: {r: 1, g: 0.95, b: 0.85, a: 1}
+  fireShake: 0.25
+  chargeFx: {fileID: 11400000, guid: e5b33bbf34a0e75418ac5122f9dc27af, type: 2}
+  fireFx: {fileID: 11400000, guid: bd5a69c0d9403ee49aba99079467553f, type: 2}
+  endFx: {fileID: 11400000, guid: 6ba21494e967a28468b8a341e97c820e, type: 2}
+  contactFx: {fileID: 11400000, guid: a63553a1cfc5ba74db3a9a427218707c, type: 2}
+  contactFxInterval: 4
+  sweepLength: 0
+  sweepStartBehind: 0.25
+  sweepFullArena: 0
+  sweepFrames: 60
+  crossSweep: 1
+  crossStart: 0.3
+  explosionDelayFrames: 72
+  explosionSpacing: 0.8
+  explosionIntervalFrames: 12
+  explosionSize: {x: 1.6, y: 2}
+  explosionHitFrames: 6
+  explosionVisualFrames: 20
+  explosionShake: 0.18
+  scorchThickness: 0.25
+  explosionFx: {fileID: 11400000, guid: 77d2ddef492c7c84496b65e22e8e1bd4, type: 2}
+  scorchColor: {r: 0.55, g: 0.12, b: 0.08, a: 0.9}
+  explosionColor: {r: 1, g: 0.55, b: 0.15, a: 1}

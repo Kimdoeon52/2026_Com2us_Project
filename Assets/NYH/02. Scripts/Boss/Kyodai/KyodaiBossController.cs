@@ -110,6 +110,7 @@ public class KyodaiBossController : BossControllerBase
     public override float GroundY => groundY;
     public IReadOnlyList<float> GroggyHpRatios => groggyHpRatios;
     public IReadOnlyList<KyodaiHand> Hands => hands;
+    public IReadOnlyList<KyodaiLaser> Lasers => lasers;
 
     /// <summary>플레이어 x. 플레이어가 없으면 경기장 가운데. 미리보기 중엔 가상 플레이어 x</summary>
     public float PlayerX => PlayerXOverride ?? (PlayerTransform != null ? PlayerTransform.position.x : ArenaCenterX);
@@ -168,6 +169,7 @@ public class KyodaiBossController : BossControllerBase
             if (gimmick.enabled) RegisterGimmick(gimmick);
 
         // 상시 위협(내려찍는 기물·촉수 생성기)은 데미지 방식만 패턴과 같고, 패턴 순서에는 안 넣는다 — 따로 돈다
+        // (2026-11-05 사용자: 기물은 패턴 중간에 끼어드는 난이도 요소 — 겹치기 금지의 예외)
         activePatternPool.RemoveAll(p => p is IKyodaiHazard);
 
         allPatterns.Clear();
@@ -398,6 +400,25 @@ public class KyodaiBossController : BossControllerBase
         if (first == null) first = second;
         if (first != null && !IsFree(first) && second != null && IsFree(second)) return second;
         return first != null ? first : hands[0];
+    }
+
+    /// <summary>
+    /// 어깨 레이저 번갈아 (2026-11-05): 왼쪽(시작점 x가 작은 쪽) → 오른쪽 → ... 쏘는 중인 쪽은 피한다.
+    /// alternate: 번갈아 쓰기용 카운터 (패턴마다 따로)
+    /// </summary>
+    public KyodaiLaser PickLaser(ref int alternate)
+    {
+        KyodaiLaser left = null, right = null;
+        foreach (var l in lasers)
+        {
+            if (l == null) continue;
+            if (left == null || l.Eye.x < left.Eye.x) left = l;
+            if (right == null || l.Eye.x > right.Eye.x) right = l;
+        }
+        if (left == null) return null;
+        KyodaiLaser first = alternate % 2 == 0 ? left : right, second = first == left ? right : left;
+        alternate++;
+        return first.IsActive && !second.IsActive ? second : first;
     }
 
     private static bool IsFree(KyodaiHand hand) => !hand.IsPlaying && !hand.IsFrozen && !hand.IsDown;

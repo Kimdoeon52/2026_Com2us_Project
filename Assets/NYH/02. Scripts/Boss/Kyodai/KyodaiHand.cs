@@ -343,7 +343,7 @@ public class KyodaiHand : MonoBehaviour
         wantRotation = mirror ? -key.rotation : key.rotation;
         wantScale = key.scale;
         wantWidth = key.widthScale;
-        flip = mirror;
+        flip = FaceFlip(key);
         SetPose(key.pose, true);
         FitHurtZone(key.scale, key.widthScale); // 크게 키운 손(손바닥 압착)도 보이는 만큼 맞게
     }
@@ -459,6 +459,18 @@ public class KyodaiHand : MonoBehaviour
         flip = false;
         SetPose(KyodaiHandPose.Fist, true);
         FitHurtZone(1f, 1f);
+    }
+
+    // 그림 뒤집기(스케일 -1) 여부. 씬에서 손 그림에 Flip X를 켜 둔 손(왼손 — 대기 때 주먹이 바깥을 보게)은 그만큼 거꾸로 —
+    // 방향이 정해진 키는 Flip X와 상관없이 그 방향을 보게 한다 (2026-11-05: 왼손이 밀 때 손바닥이 뒤로 나오던 것)
+    private bool FaceFlip(KyodaiHandKey key)
+    {
+        bool artFlipped = spriteRenderer != null && spriteRenderer.flipX;
+        bool faceLeft;
+        if (key.facing == KyodaiHandFacing.Inward) faceLeft = side == KyodaiHandSide.Right;
+        else if (key.mirrorByDirection) faceLeft = dir < 0;
+        else return false;
+        return faceLeft != artFlipped;
     }
 
     private void SetPose(KyodaiHandPose next, bool pop)

@@ -13,6 +13,9 @@ using UnityEngine;
 /// 쓸기 모드 (2026-11-04, KyodaiLaserData.sweepLength > 0): 조준점이 플레이어 뒤쪽 바닥을 따라오다 고정 → 레이저가 바닥을
 /// 가로로 쓸고 지나감(그을음이 남음) → 쓸고 난 뒤 explosionDelayFrames(사용자: 약 1.2초) 지나서 쓸고 간 방향을 따라
 /// 그을음 자리에서 천천히 하나씩 폭발. 쓸고 가다 손에 막히면 그 손은 떨어지고, 막힌 동안은 바닥에 그을음이 안 남는다.
+///
+/// 2026-11-05 어깨 레이저: 눈 레일건 대신 양어깨 팔(KyodaiLaserArm) 끝 레일건마다 이 컴포넌트가 하나씩(왼어깨·오른어깨).
+/// 어느 쪽이 쏠지는 KyodaiLaserPattern이 고른다(번갈아 / 둘 다 — X자 쓸기 crossSweep).
 /// </summary>
 public class KyodaiLaser : MonoBehaviour
 {
@@ -24,6 +27,9 @@ public class KyodaiLaser : MonoBehaviour
     [Tooltip("본체 렌즈 (2026-11-05, 본체 자식 — 같이 오르내림). 있으면 레이저가 경기장 뒤 본체에서 3D로 뻗어 나오고, " +
              "판정 시작점은 렌즈가 화면에서 겹쳐 보이는 경기장 평면 자리. 비우면 이 오브젝트 자리(평면)에서")]
     [SerializeField] private Transform lens;
+
+    [Tooltip("어깨 레이저 팔 (2026-11-05). 있으면 팔이 조준·반동·흔들림을 맡고(렌즈 = 팔 끝 레일건 총구), 아래 레일건 회전축은 안 쓴다")]
+    [SerializeField] private KyodaiLaserArm arm;
 
     [Tooltip("레일건 회전축 (2026-11-05, 본체 자식 — 받침대의 빨간 원 자리). 있으면 조준 방향으로 돌고, 렌즈(총구)는 이 축의 자식. 비우면 안 돎")]
     [SerializeField] private Transform gunPivot;
@@ -66,9 +72,13 @@ public class KyodaiLaser : MonoBehaviour
     private readonly List<SpriteRenderer> explosionRenderers = new List<SpriteRenderer>();
     private int lastExplodedIndex = -1;
 
-    private bool Sweep => data != null && data.sweepLength > 0f;
+    private bool Sweep => data != null && (data.sweepLength > 0f || data.crossSweep);
 
     public bool IsActive => phase != Phase.Idle;
+
+    // 선(조준선·레이저)이 화면에 보이는 단계 — 쓸기의 Burn은 처음 fadeFrames 동안만 레이저가 사라지며 보인다
+    private bool BeamVisible => phase == Phase.Aim || phase == Phase.Lock || phase == Phase.Fire || phase == Phase.Fade
+                                || (phase == Phase.Burn && data != null && frame < data.fadeFrames);
 
     // 보스 크기(루트 스케일) — 굵기 값은 보스 단위라 쓸 때 곱한다. 조준 높이(플레이어 가슴)·최대 길이는 월드 그대로
     private float S => owner != null ? owner.Size : 1f;
@@ -108,11 +118,18 @@ public class KyodaiLaser : MonoBehaviour
     }
 
 
+    // 팔에 넘기는 투영 (고정 자리 보정 포함)
+    private Vector2? ProjectFixed(Vector3 world)
+    {
+        if (owner != null) world += owner.Anchor - owner.transform.position;
+        return TryProjectToPlane(world, out Vector2 p) ? p : (Vector2?)null;
+    }
+
     // 레일건을 target(경기장 평면 위 점) 쪽으로 — 화면에서 축 → 목표 방향. 왼쪽을 볼 땐 위아래를 뒤집어 몸통이 위로 오게.
-    // 총구(렌즈)가 축의 자식이라 판정 시작점(Eye)도 같이 움직인다 → 틱에서 부른다
+    // 총구(렌즈)가 축의 자식이라 판정 시작점(Eye)도 같이 움직인다 → 틱에서 부른다. 팔이 있으면 팔이 Tick에서 맡는다
     private void AimGun(Vector2 target)
     {
-        if (gunPivot == null) return;
+        if (gunPivot == null || arm != null) return;
         Vector3 pivot = gunPivot.position + (owner != null ? owner.Anchor - owner.transform.position : Vector3.zero);
         if (!TryProjectToPlane(pivot, out Vector2 p)) return;
         Vector2 d = target - p;
@@ -125,7 +142,7 @@ public class KyodaiLaser : MonoBehaviour
     // 쉴 때: 쉬는 각도로 천천히 (그림만 — 판정에 안 쓰일 때)
     private void ReturnGun(float dt)
     {
-        if (gunPivot == null) return;
+        if (gunPivot == null || arm != null) return;
         float from = float.IsNaN(gunAngle) ? gunRestAngle : gunAngle;
         if (Mathf.Approximately(Mathf.DeltaAngle(from, gunRestAngle), 0f) && !float.IsNaN(gunAngle)) return;
         SetGunAngle(Mathf.MoveTowardsAngle(from, gunRestAngle, gunReturnSpeed * dt));
@@ -172,8 +189,10 @@ public class KyodaiLaser : MonoBehaviour
         ClearExplosions();
         if (Sweep)
         {
-            // 플레이어 쪽에서 경기장 가운데 방향으로 쓴다 — 벽에 붙어 있어도 쓸 자리가 남게
-            sweepDir = owner.PlayerX < owner.ArenaCenterX ? 1 : -1;
+            // 플레이어 쪽에서 경기장 가운데 방향으로 쓴다 — 벽에 붙어 있어도 쓸 자리가 남게.
+            // X자: 반대편 바깥쪽으로 (왼어깨 → 오른쪽 끝)
+            sweepDir = data.crossSweep ? (Eye.x < owner.ArenaCenterX ? 1 : -1)
+                                       : (owner.PlayerX < owner.ArenaCenterX ? 1 : -1);
             aim = SweepStartGoal();
         }
         else aim = PlayerAimPoint();
@@ -182,7 +201,7 @@ public class KyodaiLaser : MonoBehaviour
         phase = Phase.Aim;
         frame = 0;
         StopCharge();
-        if (Application.isPlaying) charge = PixelFx.Play(data.chargeFx, EyeFxPosition(), LensDepthScale());
+        if (Application.isPlaying) charge = FollowLens(PixelFx.Play(data.chargeFx, EyeFxPosition(), LensDepthScale()));
     }
 
     public void Stop()
@@ -203,6 +222,9 @@ public class KyodaiLaser : MonoBehaviour
     /// <summary>호출: KyodaiBossController(CombatClock.OnCombatTick), 손 Tick 다음</summary>
     public void Tick()
     {
+        // 팔은 쉴 때도 흔들린다 — 레이저가 보이는 동안(조준·고정·발사·사라짐) 조준점을 노린다(한 틱 전 조준점).
+        // 사라지는 동안에도 붙잡는다: 팔이 먼저 쉬는 자세로 돌아가면 사라지는 선이 엉뚱한 쪽으로 남았다(2026-11-05 버그)
+        if (arm != null) arm.Tick(data != null && BeamVisible, aim, ProjectFixed);
         if (phase == Phase.Idle || data == null) return;
         frame++;
         switch (phase)
@@ -220,6 +242,7 @@ public class KyodaiLaser : MonoBehaviour
                 }
                 break;
             case Phase.Lock:
+                UpdateDirection(); // 팔이 출렁여 시작점이 움직여도 조준점은 그대로
                 end = TraceEnd(out _);
                 if (frame >= data.lockFrames) Next(Phase.Fire);
                 break;
@@ -228,8 +251,9 @@ public class KyodaiLaser : MonoBehaviour
                 {
                     KyodaiCameraShake.Shake(data.fireShake, 0.2f);
                     StopCharge();
-                    PixelFx.Play(data.fireFx, EyeFxPosition(), LensDepthScale());
+                    FollowLens(PixelFx.Play(data.fireFx, EyeFxPosition(), LensDepthScale()));
                 }
+                if (frame == 1 && arm != null) arm.Recoil(aim, ProjectFixed);
                 if (Sweep)
                 {
                     // 바닥을 따라 시작 → 끝으로 (천천히 출발해 천천히 멈춤)
@@ -247,14 +271,22 @@ public class KyodaiLaser : MonoBehaviour
                 }
                 else
                 {
+                    UpdateDirection(); // 반동으로 시작점이 움직여도 끝은 조준점에
                     FireTick();
                     if (frame >= data.fireFrames) Next(data.fadeFrames > 0 ? Phase.Fade : Phase.Idle);
                 }
                 break;
             case Phase.Fade:
+                UpdateDirection();
+                end = TraceEnd(out _);
                 if (frame >= data.fadeFrames) Next(Phase.Idle);
                 break;
             case Phase.Burn:
+                if (BeamVisible)
+                {
+                    UpdateDirection();
+                    end = TraceEnd(out _);
+                }
                 if (TickExplosions()) Next(Phase.Idle);
                 break;
         }
@@ -275,14 +307,24 @@ public class KyodaiLaser : MonoBehaviour
     // 쓸기 시작점: 플레이어보다 조금 뒤쪽 바닥 (쓸고 가면서 플레이어 자리를 지나간다). 전체 쓸기면 플레이어 쪽 경기장 끝
     private Vector2 SweepStartGoal()
     {
+        if (data.crossSweep) return new Vector2(CrossStartX, owner.GroundY);
         float x = data.sweepFullArena
             ? (sweepDir > 0 ? owner.ArenaMinX : owner.ArenaMaxX)
             : owner.ClampToArena(owner.PlayerX - sweepDir * data.sweepLength * data.sweepStartBehind);
         return new Vector2(x, owner.GroundY);
     }
 
+    // X자 쓸기 시작점: 가운데에서 쓸어 나갈 쪽으로 crossStart만큼
+    private float CrossStartX => owner.ArenaCenterX + sweepDir * data.crossStart * owner.ArenaWidth * 0.5f;
+
     private void LockSweep()
     {
+        if (data.crossSweep)
+        {
+            sweepStartX = CrossStartX;
+            sweepEndX = sweepDir > 0 ? owner.ArenaMaxX : owner.ArenaMinX;
+            return;
+        }
         if (data.sweepFullArena)
         {
             // 조준 스프링이 덜 따라왔어도 끝에서 끝까지 쓸게 고정
@@ -353,14 +395,32 @@ public class KyodaiLaser : MonoBehaviour
         aim += aimVel * CombatClock.TICK;
     }
 
+    // 레이저 방향. 팔이 있으면 레일건 포신 방향(팔꿈치 → 총구, 화면 기준) — 포신이 조준점으로 돌아가는 동안에도 선이 포신에서
+    // 곧게 나간다 (2026-11-05 버그: 총구 → 조준점으로 계산해 포신과 다른 쪽으로 선이 튀었다)
     private void UpdateDirection()
     {
+        if (arm != null && arm.Elbow != null && lens != null)
+        {
+            Vector2? e = ProjectFixed(arm.Elbow.position), m = ProjectFixed(lens.position);
+            if (e.HasValue && m.HasValue && (m.Value - e.Value).sqrMagnitude > 0.0001f)
+            {
+                dir = (m.Value - e.Value).normalized;
+                return;
+            }
+        }
         Vector2 d = aim - Eye;
         if (d.sqrMagnitude > 0.0001f) dir = d.normalized;
     }
 
     // 눈 이펙트 자리: 렌즈가 있으면 본체 깊이(3D)에, 없으면 평면 위 눈
     private Vector3 EyeFxPosition() => lens != null ? LensWorld : new Vector3(Eye.x, Eye.y, PlaneZ);
+
+    // 총구 이펙트는 총구를 따라간다 — 팔이 움직이고 반동으로 튕겨도 레일건 끝에 붙어 있게 (2026-11-05 버그: 생긴 자리에 남았다)
+    private PixelFx FollowLens(PixelFx fx)
+    {
+        if (fx != null && lens != null) fx.Follow(lens);
+        return fx;
+    }
 
     private void StopCharge()
     {
@@ -418,6 +478,9 @@ public class KyodaiLaser : MonoBehaviour
         blocker = null;
         float maxT = data.maxLength;
         if (dir.y < -0.0001f) maxT = Mathf.Min(maxT, (owner.GroundY - Eye.y) / dir.y);
+        // 바닥에 안 닿는 방향(총구가 조준 높이보다 낮을 때 등)이면 경기장 벽에서 끝낸다 — 화면 밖으로 날아가지 않게
+        if (dir.x > 0.0001f) maxT = Mathf.Min(maxT, Mathf.Max(0f, owner.ArenaMaxX - Eye.x) / dir.x);
+        else if (dir.x < -0.0001f) maxT = Mathf.Min(maxT, Mathf.Max(0f, owner.ArenaMinX - Eye.x) / dir.x);
 
         float best = maxT;
         foreach (var hand in owner.Hands)
@@ -493,6 +556,8 @@ public class KyodaiLaser : MonoBehaviour
                 float width = Mathf.Lerp(data.aimStartWidth, data.aimEndWidth, k * k) * S;
                 Color c = data.aimColor;
                 c.a *= Mathf.Lerp(0.5f, 1f, k) * (0.85f + 0.15f * Mathf.Sin(time * 30f));
+                // 팔: 포신이 아직 조준점으로 돌아가는 중이면 선을 숨긴다 — 쉬던 방향(아래 등)으로 선이 휙 지나가는 게 튀어 보였다
+                if (arm != null) c.a *= Mathf.InverseLerp(25f, 8f, Vector2.Angle(dir, aim - Eye));
                 Line(aimLine, length, width, angle, c);
                 break;
             }

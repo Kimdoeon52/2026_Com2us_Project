@@ -84,6 +84,14 @@ public class KyodaiLaserData : ScriptableObject
     [Tooltip("TODO: 기획 수치 없음. 쓸고 가는 시간(프레임) — 쓸기 모드에선 fireFrames 대신 이것")]
     [Min(1)] public int sweepFrames = 50;
 
+    [Header("X자 쓸기 (2026-11-05 양어깨 동시 — 켜면 쓸기 모드)")]
+    [Tooltip("켜면 반대편 바닥을 쓴다 — 왼어깨는 경기장 오른쪽, 오른어깨는 왼쪽. 가운데 근처에서 바깥 끝까지 쓸고 터진다. " +
+             "두 어깨가 같이 쏘면 레이저가 가운데 위에서 X자로 엇갈린다. sweepLength·sweepFullArena는 무시")]
+    public bool crossSweep;
+
+    [Tooltip("TODO: 임시값. X자 쓸기 시작점 — 가운데에서 경기장 끝까지의 비율 (0 = 가운데, 1 = 끝). 안쪽은 안 쓸어서 피할 자리")]
+    [Range(0f, 1f)] public float crossStart = 0.3f;
+
     [Header("쓸고 난 뒤 바닥 폭발")]
     [Tooltip("쓸기가 끝나고 첫 폭발까지 (사용자: 약 1.2초 = 72f)")]
     [Min(0)] public int explosionDelayFrames = 72;

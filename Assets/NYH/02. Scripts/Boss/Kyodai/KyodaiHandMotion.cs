@@ -19,6 +19,14 @@ public enum KyodaiHandAnchor
     // 새 값은 맨 뒤에만 추가할 것 — 에셋에 숫자로 저장된다
 }
 
+/// <summary>손 그림이 바라보는 쪽 (2026-11-05)</summary>
+public enum KyodaiHandFacing
+{
+    Auto,   // 방향 키(mirrorByDirection)면 공격 방향, 아니면 손 원래 방향(씬에서 정한 Flip X 그대로)
+    Inward  // 반대 손 쪽 — 왼손은 오른쪽, 오른손은 왼쪽 (양손 협공처럼 가운데로 모으는 동작)
+    // 새 값은 맨 뒤에만 추가할 것 — 에셋에 숫자로 저장된다
+}
+
 /// <summary>목표까지 가는 방식</summary>
 public enum KyodaiHandMove
 {
@@ -46,6 +54,9 @@ public class KyodaiHandKey
 
     [Tooltip("켜면 오프셋 x·회전·판정 위치를 공격 방향(플레이어 쪽)에 맞춰 뒤집는다 — 밀기처럼 방향이 있는 동작")]
     public bool mirrorByDirection;
+
+    [Tooltip("그림이 바라보는 쪽. 그림 기준 방향 = 손가락·주먹이 오른쪽")]
+    public KyodaiHandFacing facing = KyodaiHandFacing.Auto;
 
     [Tooltip("켜면 목표 x를 경기장 안으로 자른다. 화면 밖에서 들어오는 동작은 끈다")]
     public bool clampToArena = true;

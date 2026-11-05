@@ -18,6 +18,7 @@ MonoBehaviour:
     anchor: 6
     offset: {x: -1.2, y: 1.45}
     mirrorByDirection: 0
+    facing: 1
     clampToArena: 0
     trackPlayer: 0
     move: 0
@@ -50,6 +51,7 @@ MonoBehaviour:
     pose: 1
     rotation: 0
     scale: 1
+    widthScale: 1
     floatWeight: 0.5
     hitActive: 0
     hitSize: {x: 2, y: 2}
@@ -59,11 +61,13 @@ MonoBehaviour:
     impactOnEnd: 0
     impactShake: 0.3
     impactFreezeFrames: 4
+    spawnShockwave: 0
   - label: "\uC816\uD788\uAE30"
     frames: 16
     anchor: 5
     offset: {x: -0.9, y: 1.7}
     mirrorByDirection: 0
+    facing: 1
     clampToArena: 0
     trackPlayer: 0
     move: 0
@@ -96,6 +100,7 @@ MonoBehaviour:
     pose: 1
     rotation: 10
     scale: 1.1
+    widthScale: 1
     floatWeight: 0.1
     hitActive: 0
     hitSize: {x: 2, y: 2}
@@ -105,11 +110,13 @@ MonoBehaviour:
     impactOnEnd: 0
     impactShake: 0.3
     impactFreezeFrames: 4
+    spawnShockwave: 0
   - label: "\uBAA8\uC73C\uAE30"
     frames: 30
     anchor: 1
     offset: {x: -0.75, y: 1.45}
     mirrorByDirection: 0
+    facing: 1
     clampToArena: 1
     trackPlayer: 0
     move: 1
@@ -142,6 +149,7 @@ MonoBehaviour:
     pose: 1
     rotation: -6
     scale: 1.05
+    widthScale: 1
     floatWeight: 0
     hitActive: 1
     hitSize: {x: 1.8, y: 2.4}
@@ -151,11 +159,13 @@ MonoBehaviour:
     impactOnEnd: 1
     impactShake: 0.4
     impactFreezeFrames: 6
+    spawnShockwave: 0
   - label: "\uB9DE\uBD99\uC74C"
     frames: 40
     anchor: 5
     offset: {x: 0, y: 1.45}
     mirrorByDirection: 0
+    facing: 1
     clampToArena: 1
     trackPlayer: 0
     move: 0
@@ -188,6 +198,7 @@ MonoBehaviour:
     pose: 1
     rotation: 0
     scale: 1
+    widthScale: 1
     floatWeight: 0.05
     hitActive: 0
     hitSize: {x: 2, y: 2}
@@ -197,11 +208,13 @@ MonoBehaviour:
     impactOnEnd: 0
     impactShake: 0.3
     impactFreezeFrames: 4
+    spawnShockwave: 0
   - label: "\uC62C\uB77C\uAC00\uAE30"
     frames: 20
     anchor: 5
     offset: {x: 0, y: 5}
     mirrorByDirection: 0
+    facing: 1
     clampToArena: 1
     trackPlayer: 0
     move: 0
@@ -234,6 +247,7 @@ MonoBehaviour:
     pose: 1
     rotation: 0
     scale: 1
+    widthScale: 1
     floatWeight: 0.6
     hitActive: 0
     hitSize: {x: 2, y: 2}
@@ -243,3 +257,4 @@ MonoBehaviour:
     impactOnEnd: 0
     impactShake: 0.3
     impactFreezeFrames: 4
+    spawnShockwave: 0

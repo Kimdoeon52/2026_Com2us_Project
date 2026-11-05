@@ -15,9 +15,9 @@ MonoBehaviour:
   actionName: Player_Dodge
   source: 0
   requiredPart: 5
-  startupFrames: 3
-  activeFrames: 18
-  recoveryFrames: 0
+  startupFrames: 2
+  activeFrames: 10
+  recoveryFrames: 2
   isInvincibleDuringActive: 1
   isGuardable: 0
   causesKnockdown: 0
@@ -31,9 +31,9 @@ MonoBehaviour:
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
-  advanceDistance: 4
+  advanceDistance: 1.5
   advanceDuringActiveOnly: 1
-  trailAfterImageInterval: 2
+  trailAfterImageInterval: 4
   groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15

@@ -21,7 +21,7 @@ public static class Kyodai2DBuilder
     private const string DataFolder = "Assets/NYH/04. SO/Boss/Kyodai2D";
     private const string ImageFolder = "Assets/NYH/03. Image/Boss/Kyodai2D";
     private const float BodyBackZ = 6f; // 본체가 경기장 평면 뒤로 떨어진 거리(월드)
-    private const float DefaultSize = 0.4f; // 새로 만들 때 보스 크기(루트 스케일) — 2026-11-04 사용자: 플레이어에 맞춰 0.4
+    private const float DefaultSize = 0.32f; // 새로 만들 때 보스 크기(루트 스케일) — 2026-11-04 사용자: 0.4 → 11-05 "좀 줄여야 함" 0.32(임시)
     private const float BodyHeight = 6.5f;  // 본체 중심의 바닥 위 높이(보스 단위)
 
     // 메뉴 순서: 만들기·갱신(0) → 미리보기(1, Kyodai2DPreviewWindow) │ 임시 그림 다시 그리기(20)
@@ -73,6 +73,13 @@ public static class Kyodai2DBuilder
             added.Add("보스");
         }
         Transform root = boss.transform;
+        // 예전 기본 크기(0.4) 그대로면 새 기본 크기로 (손으로 다른 값을 넣었으면 안 건드린다). 본체 자리는 아래 3에서 다시 맞춘다
+        if (Mathf.Approximately(root.localScale.x, 0.4f) && !Mathf.Approximately(DefaultSize, 0.4f))
+        {
+            Undo.RecordObject(root, "2D 쿄다이 크기");
+            root.localScale = Vector3.one * DefaultSize;
+            added.Add($"보스 크기 0.4 → {DefaultSize}");
+        }
         var bossSo = new SerializedObject(boss);
 
         if (bossSo.FindProperty("masterData").objectReferenceValue == null)
@@ -126,8 +133,8 @@ public static class Kyodai2DBuilder
         foreach (var spec in Patterns)
             if (EnsurePattern(boss, telegraph, master, spec)) added.Add(spec.name);
         if (EnsureLaser(boss, master)) added.Add("레이저");
-        if (EnsureGun(boss)) added.Add("레일건(받침대·회전축·총구 = 레이저 시작점)");
-        if (EnsureLens(boss)) added.Add("레이저 렌즈(본체에서 3D로 나오는 시작점)");
+        EnsureArms(boss, added);
+        UpdateArmArt(boss, added);
 
         // ── 6. 내려찍는 기물(1페이즈부터) · 2페이즈: 양손 패턴·전환 동작·페이즈별 패턴 목록 ──
         var secondTelegraph = EnsureTelegraph(boss, SecondTelegraphName, added);
@@ -137,7 +144,9 @@ public static class Kyodai2DBuilder
         if (EnsureTentacles(boss)) added.Add("촉수 생성기");
         if (EnsureShockwave(boss)) added.Add("충격파");
         if (EnsureLaserSweep(boss, master)) added.Add("레이저 쓸기");
+        if (EnsureLaserCross(boss, master)) added.Add("어깨 레이저 X자");
         EnsureTransitionMotion(boss, added);
+        EnsureClapFacing(added);
         SyncPhases(master, added);
         EnsureEffects(feel, added);
         ApplyArt(boss, added);
@@ -164,78 +173,127 @@ public static class Kyodai2DBuilder
     // (본체 중심 바닥 위 6.5 + 임시 그림 렌즈가 중심에서 29px 위 / 10ppu = 2.9)
     private static readonly Vector2 EyeLocal = new Vector2(0f, 9.4f);
 
-    // 렌즈: 본체 자식, 본체 중심에서 2.9 위(본체 로컬 — 임시 그림 렌즈 29px / 10ppu). 평면에 투영하면 EyeLocal과 같은 자리
-    private static readonly Vector3 LensLocal = new Vector3(0f, 2.9f, 0f);
-
-    // 레일건 (2026-11-05 사용자 그림): 본체 렌즈 자리에 받침대(고정) + 회전축 → 레일건 그림 + 총구(= 레이저 렌즈).
-    // 레이저가 조준 방향으로 축을 돌리고, 총구에서 레이저가 나간다. 예전 렌즈(본체 바로 밑)가 있으면 지운다
+    // 어깨 레이저 팔 (2026-11-05 사용자: 눈 레일건을 없애고 어깨로 2개 — 3_bracket_front는 팔꿈치 부품).
+    // 어깨(본체 자식, KyodaiLaserArm) → 윗팔(Robot_Arm_Parts — 사용자가 윗팔 + 팔꿈치 받침대를 합친 그림, 어깨 = 왼쪽 원판,
+    // 오른쪽 끝 빨간 원 = 팔꿈치) → 레일건(팔꿈치에서 돎) → 총구(= 레이저 렌즈). 같은 도트 밀도(손과 같은 29ppu)
     private const string ArtRailgun = "2_railgun.png";
-    private const string ArtBracket = "3_bracket_front.png";
+    private const string ArtUpperArm = "Kyodai2D/Robot_Arm_Parts.png"; // 142×64
     private static readonly Vector2 RailgunPivot = new Vector2(21f / 116f, 0.5f);       // 붉은 몸통 가운데 (21, 24)px — 여기서 돈다
-    private static readonly Vector2 BracketPivot = new Vector2(123f / 144f, 1f - 32.6f / 64f); // 받침대 빨간 원(회전축) 가운데
+    private static readonly Vector2 UpperArmPivot = new Vector2(22f / 142f, 31.5f / 64f);      // 왼쪽 원판(어깨 관절) 가운데 (22, 32.5)px
     private const float RailgunMuzzle = (110f - 21f) / 29f; // 몸통 가운데 → 포신 끝(110px) 거리(축 로컬)
+    // 어깨 → 팔꿈치: 빨간 원 가운데(128.5, 33.5)px까지 106.5px (세로 1px 차이는 무시 — 왼팔은 그림을 위아래로 뒤집으니)
+    private const float ElbowDistance = 106.5f / 29f;
+    // 어깨 자리(본체 로컬, 임시 본체 12×11 기준 위쪽 양 모서리) — 본체 그림이 나오면 다시 맞출 것
+    private static readonly Vector2 ShoulderLocal = new Vector2(5.2f, 2.5f);
 
-    private static bool EnsureGun(KyodaiBossController boss)
+    private static bool EnsureArms(KyodaiBossController boss, System.Collections.Generic.List<string> added)
     {
-        var laser = boss.GetComponentInChildren<KyodaiLaser>(true);
         var body = (Transform)new SerializedObject(boss).FindProperty("body").objectReferenceValue;
-        if (laser == null || body == null) return false;
-        var lso = new SerializedObject(laser);
-        if (lso.FindProperty("gunPivot").objectReferenceValue != null) return false;
+        var first = boss.GetComponentInChildren<KyodaiLaser>(true);
+        if (body == null || first == null) return false;
+        if (body.GetComponentInChildren<KyodaiLaserArm>(true) != null) return false;
         var gun = PrepareArt(ArtRailgun, HandPpu, RailgunPivot);
-        if (gun == null) return false;
-        var bracket = PrepareArt(ArtBracket, HandPpu, BracketPivot);
+        var upper = PrepareArt(ArtUpperArm, HandPpu, UpperArmPivot);
+        if (gun == null || upper == null) return false;
 
-        if (bracket != null)
+        // 눈 레일건·예전 렌즈 정리
+        foreach (string old in new[] { "레일건 받침대", "레일건 회전축", "렌즈 (레이저 시작점)" })
         {
-            var b = new GameObject("레일건 받침대", typeof(SpriteRenderer));
-            Undo.RegisterCreatedObjectUndo(b, "2D 쿄다이 레일건");
-            b.transform.SetParent(body, false);
-            b.transform.localPosition = LensLocal;
-            var br = b.GetComponent<SpriteRenderer>();
-            br.sprite = bracket;
-            br.sortingOrder = -19; // 본체(-20) 앞
+            Transform t = body.Find(old);
+            if (t != null) Undo.DestroyObjectImmediate(t.gameObject);
         }
-        var pivot = new GameObject("레일건 회전축").transform;
-        Undo.RegisterCreatedObjectUndo(pivot.gameObject, "2D 쿄다이 레일건");
-        pivot.SetParent(body, false);
-        pivot.localPosition = LensLocal;
-        var g = new GameObject("레일건", typeof(SpriteRenderer));
-        g.transform.SetParent(pivot, false);
-        var gr = g.GetComponent<SpriteRenderer>();
-        gr.sprite = gun;
-        gr.sortingOrder = -18; // 받침대 앞
-        var muzzle = new GameObject("총구 (레이저 시작점)").transform;
-        muzzle.SetParent(pivot, false);
-        muzzle.localPosition = new Vector3(RailgunMuzzle, 0f, 0f);
 
-        // 예전 렌즈(본체 바로 밑에 만든 것) 정리
-        var oldLens = (Transform)lso.FindProperty("lens").objectReferenceValue;
-        if (oldLens != null && oldLens.parent == body && oldLens.GetComponents<Component>().Length == 1)
-            Undo.DestroyObjectImmediate(oldLens.gameObject);
+        // 레이저(KyodaiLaser) 둘: 원래 눈 = 왼어깨, 오른어깨는 새로 (판정 평면 자리는 같다 — 시작점은 렌즈가 정함)
+        Undo.RecordObject(first.gameObject, "2D 쿄다이 어깨 레이저");
+        first.gameObject.name = "왼어깨 레이저";
+        var rightGo = new GameObject("오른어깨 레이저");
+        Undo.RegisterCreatedObjectUndo(rightGo, "2D 쿄다이 어깨 레이저");
+        rightGo.transform.SetParent(first.transform.parent, false);
+        rightGo.transform.localPosition = first.transform.localPosition;
+        var second = rightGo.AddComponent<KyodaiLaser>();
 
-        SetFields(laser, so =>
-        {
-            so.FindProperty("lens").objectReferenceValue = muzzle;
-            so.FindProperty("gunPivot").objectReferenceValue = pivot;
-        });
+        BuildArm(body, "왼어깨 팔", -1, upper, gun, first);
+        BuildArm(body, "오른어깨 팔", +1, upper, gun, second);
+
+        // 일반·쓸기 레이저는 양어깨 번갈아
+        foreach (var p in boss.GetComponentsInChildren<KyodaiLaserPattern>(true))
+            if (p.Emitter == KyodaiLaserChoice.Fixed)
+                SetFields(p, so => so.FindProperty("emitter").enumValueIndex = (int)KyodaiLaserChoice.Alternate);
+        added.Add("어깨 레이저 팔 2개 (눈 레일건 → 어깨, 레이저 번갈아)");
         return true;
     }
 
-    // 레이저가 경기장 뒤 본체 렌즈에서 3D로 뻗어 나오게 렌즈를 만들어 연결 (2026-11-05). 새로 붙였으면 true
-    private static bool EnsureLens(KyodaiBossController boss)
+    // 2026-11-05 따로 붙였던 윗팔 + 팔꿈치 받침대 → 합친 그림(Robot_Arm_Parts)으로 바꾸고 팔꿈치 자리도 새 그림에 맞춘다
+    private static void UpdateArmArt(KyodaiBossController boss, System.Collections.Generic.List<string> added)
     {
-        var laser = boss.GetComponentInChildren<KyodaiLaser>(true);
-        var body = (Transform)new SerializedObject(boss).FindProperty("body").objectReferenceValue;
-        if (laser == null || body == null) return false;
-        if (new SerializedObject(laser).FindProperty("lens").objectReferenceValue != null) return false;
+        var upper = PrepareArt(ArtUpperArm, HandPpu, UpperArmPivot);
+        if (upper == null) return;
+        foreach (var arm in boss.GetComponentsInChildren<KyodaiLaserArm>(true))
+        {
+            var so = new SerializedObject(arm);
+            var art = (Transform)so.FindProperty("upperArt").objectReferenceValue;
+            var elbow = (Transform)so.FindProperty("elbow").objectReferenceValue;
+            var r = art != null ? art.GetComponentInChildren<SpriteRenderer>(true) : null;
+            if (r == null || r.sprite == upper) continue;
+            Undo.RecordObject(r, "쿄다이 팔 그림");
+            r.sprite = upper;
+            Transform bracket = art.Find("팔꿈치 받침대");
+            if (bracket != null) Undo.DestroyObjectImmediate(bracket.gameObject);
+            if (elbow != null)
+            {
+                Undo.RecordObject(elbow, "쿄다이 팔 그림");
+                elbow.localPosition = new Vector3(ElbowDistance, 0f, 0f);
+            }
+            added.Add($"{arm.name} 그림(합친 팔)");
+        }
+    }
 
-        var lens = new GameObject("렌즈 (레이저 시작점)");
-        Undo.RegisterCreatedObjectUndo(lens, "2D 쿄다이 렌즈");
-        lens.transform.SetParent(body, false);
-        lens.transform.localPosition = LensLocal;
-        SetFields(laser, so => so.FindProperty("lens").objectReferenceValue = lens.transform);
-        return true;
+    // side -1 = 왼어깨(팔이 왼쪽 아래로), +1 = 오른어깨
+    private static void BuildArm(Transform body, string name, int side, Sprite upper, Sprite gun, KyodaiLaser laser)
+    {
+        var shoulder = new GameObject(name);
+        Undo.RegisterCreatedObjectUndo(shoulder, "2D 쿄다이 어깨 레이저");
+        shoulder.transform.SetParent(body, false);
+        shoulder.transform.localPosition = new Vector3(ShoulderLocal.x * side, ShoulderLocal.y, 0f);
+        var arm = shoulder.AddComponent<KyodaiLaserArm>();
+
+        var upperArm = new GameObject("윗팔 (어깨 관절)").transform;
+        upperArm.SetParent(shoulder.transform, false);
+        var art = new GameObject("윗팔 그림").transform; // 왼쪽을 볼 때 위아래 뒤집는 묶음
+        art.SetParent(upperArm, false);
+        var ur = new GameObject("윗팔", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+        ur.transform.SetParent(art, false);
+        ur.sprite = upper;
+        ur.sortingOrder = -18; // 본체(-20) 앞
+        var elbow = new GameObject("팔꿈치 (레일건 축)").transform;
+        elbow.SetParent(upperArm, false);
+        elbow.localPosition = new Vector3(ElbowDistance, 0f, 0f);
+        var gr = new GameObject("레일건", typeof(SpriteRenderer)).GetComponent<SpriteRenderer>();
+        gr.transform.SetParent(elbow, false);
+        gr.sprite = gun;
+        gr.sortingOrder = -17;
+        var muzzle = new GameObject("총구 (레이저 시작점)").transform;
+        muzzle.SetParent(elbow, false);
+        muzzle.localPosition = new Vector3(RailgunMuzzle, 0f, 0f);
+
+        // 쉬는 자세: 윗팔은 바깥 아래로(오른 -50°, 왼 -130°), 레일건은 아래 — 에디터에서도 그 자세로 보이게 미리 돌려둔다
+        float rest = side > 0 ? -50f : -130f;
+        upperArm.localRotation = Quaternion.Euler(0f, 0f, rest);
+        if (side < 0) art.localScale = new Vector3(1f, -1f, 1f);
+        elbow.rotation = Quaternion.Euler(0f, 0f, -90f);
+
+        var aso = new SerializedObject(arm);
+        aso.FindProperty("upperArm").objectReferenceValue = upperArm;
+        aso.FindProperty("upperArt").objectReferenceValue = art;
+        aso.FindProperty("elbow").objectReferenceValue = elbow;
+        aso.FindProperty("restAngle").floatValue = rest;
+        aso.ApplyModifiedPropertiesWithoutUndo();
+        SetFields(laser, so =>
+        {
+            so.FindProperty("lens").objectReferenceValue = muzzle;
+            so.FindProperty("arm").objectReferenceValue = arm;
+            so.FindProperty("gunPivot").objectReferenceValue = null;
+        });
     }
 
     // 눈(KyodaiLaser)과 레이저 패턴이 없으면 만든다. 새로 붙였으면 true
@@ -291,6 +349,7 @@ public static class Kyodai2DBuilder
             so.FindProperty("patternData").objectReferenceValue = data;
             so.FindProperty("laser").objectReferenceValue = laser;
             so.FindProperty("laserData").objectReferenceValue = laserData;
+            so.FindProperty("emitter").enumValueIndex = (int)KyodaiLaserChoice.Alternate;
             so.FindProperty("telegraph").objectReferenceValue = FindTelegraph(boss, MainTelegraphName);
         });
         SetCompanion(pattern, companion);
@@ -677,6 +736,25 @@ public static class Kyodai2DBuilder
             move = KyodaiHandMove.Spring, springFrequency = 2f, springDamping = 0.7f,
             pose = KyodaiHandPose.Palm, floatWeight = 0.6f
         });
+        foreach (var key in m.keys) key.facing = KyodaiHandFacing.Inward; // 손바닥이 서로 마주 보게
+    }
+
+    // 2026-11-05 이전에 만든 양손 협공 동작은 두 손바닥이 같은 쪽을 봤다 → 마주 보게 바꾼다
+    private static void EnsureClapFacing(System.Collections.Generic.List<string> added)
+    {
+        bool changed = false;
+        foreach (string hand in new[] { "왼손", "오른손" })
+        {
+            var m = AssetDatabase.LoadAssetAtPath<KyodaiHandMotion>($"{DataFolder}/Kyodai2D_양손협공_{hand}_모션.asset");
+            if (m == null) continue;
+            bool dirty = false;
+            foreach (var key in m.keys)
+                if (key.facing == KyodaiHandFacing.Auto) { key.facing = KyodaiHandFacing.Inward; dirty = true; }
+            if (!dirty) continue;
+            EditorUtility.SetDirty(m);
+            changed = true;
+        }
+        if (changed) added.Add("양손 협공 손바닥 마주 보기");
     }
 
     // 빠른 내려찍기 한 번 (70f): 조준 30 → 끌어올림 10 → 찍기 6(판정·충격) → 박힘 14 → 뽑기 10
@@ -1074,6 +1152,61 @@ public static class Kyodai2DBuilder
             so.FindProperty("patternData").objectReferenceValue = data;
             so.FindProperty("laser").objectReferenceValue = laser;
             so.FindProperty("laserData").objectReferenceValue = sweepData;
+            so.FindProperty("emitter").enumValueIndex = (int)KyodaiLaserChoice.Alternate;
+        });
+        return true;
+    }
+
+    // 어깨 레이저 X자 (2026-11-05 사용자: 양어깨가 동시에 X자로 터지는 패턴). 2페이즈(양손 패턴과 같이). 수치는 쓸기 기준 임시값
+    private const string CrossDataFile = "Kyodai2D_레이저X자_설정.asset";
+    private const string CrossPatternId = "KYODAI2D_LASER_CROSS";
+
+    private static bool EnsureLaserCross(KyodaiBossController boss, BossMasterData master)
+    {
+        var laser = boss.GetComponentInChildren<KyodaiLaser>(true);
+        if (laser == null) return false;
+
+        var crossData = LoadOrCreate<KyodaiLaserData>($"{DataFolder}/{CrossDataFile}", d =>
+        {
+            d.crossSweep = true;
+            d.crossStart = 0.3f;    // 가운데 30%는 안 쓴다 = 피할 자리 (임시)
+            d.sweepFrames = 60;     // 반쪽만 쓰니 전체 쓸기(84f)보다 짧게 (임시)
+            d.aimFrames = 80;       // 두 줄이 X자로 엇갈려 자리 잡는 걸 볼 시간 (임시)
+            d.lockFrames = 20;
+            d.beamWidth = 0.8f;
+            d.explosionSpacing = 0.8f;
+        });
+        var data = LoadOrCreate<BossPatternData>($"{DataFolder}/Kyodai2D_레이저X자.asset", p =>
+        {
+            p.patternID = CrossPatternId;
+            p.patternName = "어깨 레이저 X자";
+            p.description = "2페이즈: 양어깨 레일건이 동시에 반대편 바닥을 노려(왼어깨 → 오른쪽, 오른어깨 → 왼쪽) 가운데 위에서 X자로 엇갈림 → " +
+                            "가운데 근처에서 바깥 끝까지 쓸고 → 쓸고 간 바닥이 펑 펑 터짐. 가운데가 피할 자리. 손에 맞으면 그 손이 떨어진다";
+            p.tellDuration = (crossData.aimFrames + crossData.lockFrames) / 60f;
+            p.postDelay = 1f;
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.Core;
+            p.partDurabilityDamage = 0;
+            // baseDamage는 기획 수치 없음 — KKH 기본값 그대로(TODO)
+        });
+        if (master != null && !master.patterns.Contains(data))
+        {
+            master.patterns.Add(data);
+            EditorUtility.SetDirty(master);
+        }
+        foreach (var existing in boss.GetComponentsInChildren<KyodaiLaserPattern>(true))
+            if (existing.PatternData == data) return false;
+
+        var go = new GameObject("어깨 레이저 X자");
+        Undo.RegisterCreatedObjectUndo(go, "2D 쿄다이 패턴 추가");
+        go.transform.SetParent(boss.transform, false);
+        var pattern = go.AddComponent<KyodaiLaserPattern>();
+        SetFields(pattern, so =>
+        {
+            so.FindProperty("patternData").objectReferenceValue = data;
+            so.FindProperty("laser").objectReferenceValue = laser;
+            so.FindProperty("laserData").objectReferenceValue = crossData;
+            so.FindProperty("emitter").enumValueIndex = (int)KyodaiLaserChoice.Both;
         });
         return true;
     }
@@ -1097,11 +1230,13 @@ public static class Kyodai2DBuilder
             added.Add("손 이펙트(충격·피격)");
         }
         var sweepData = AssetDatabase.LoadAssetAtPath<KyodaiLaserData>($"{DataFolder}/Kyodai2D_레이저쓸기_설정.asset");
-        if (sweepData != null && sweepData.explosionFx == null && explosion != null)
+        var crossData = AssetDatabase.LoadAssetAtPath<KyodaiLaserData>($"{DataFolder}/{CrossDataFile}");
+        foreach (var d in new[] { sweepData, crossData })
         {
-            sweepData.explosionFx = explosion;
-            EditorUtility.SetDirty(sweepData);
-            added.Add("레이저 쓸기 폭발 이펙트");
+            if (d == null || d.explosionFx != null || explosion == null) continue;
+            d.explosionFx = explosion;
+            EditorUtility.SetDirty(d);
+            added.Add($"{d.name} 폭발 이펙트");
         }
 
         // 레이저 공통 (일반·쓸기): 눈 차지 → 발사 번쩍임 → 끝(흰 심이 끓는 자리, 반복) + 불티
@@ -1110,7 +1245,7 @@ public static class Kyodai2DBuilder
         var contact = LoadFx("Fx_레이저불티");
         var beamEnd = LoadFx("Fx_레이저끝");
         var normalData = AssetDatabase.LoadAssetAtPath<KyodaiLaserData>($"{DataFolder}/Kyodai2D_레이저_설정.asset");
-        foreach (var d in new[] { normalData, sweepData })
+        foreach (var d in new[] { normalData, sweepData, crossData })
         {
             if (d == null) continue;
             bool changed = false;
@@ -1371,6 +1506,7 @@ public static class Kyodai2DBuilder
         var phase2 = new System.Collections.Generic.List<string>(phase1);
         foreach (var spec in Patterns) if (spec.minPhase >= 2) phase2.Add(spec.id);
         foreach (var spec in DualPatterns) phase2.Add(spec.id);
+        phase2.Add(CrossPatternId);
 
         bool changed = false;
         foreach (string id in phase1) if (!p1.availableSkillIDs.Contains(id)) { p1.availableSkillIDs.Add(id); changed = true; }

@@ -126,6 +126,7 @@ public static class Kyodai2DBuilder
         foreach (var spec in Patterns)
             if (EnsurePattern(boss, telegraph, master, spec)) added.Add(spec.name);
         if (EnsureLaser(boss, master)) added.Add("레이저");
+        if (EnsureGun(boss)) added.Add("레일건(받침대·회전축·총구 = 레이저 시작점)");
         if (EnsureLens(boss)) added.Add("레이저 렌즈(본체에서 3D로 나오는 시작점)");
 
         // ── 6. 내려찍는 기물(1페이즈부터) · 2페이즈: 양손 패턴·전환 동작·페이즈별 패턴 목록 ──
@@ -139,6 +140,7 @@ public static class Kyodai2DBuilder
         EnsureTransitionMotion(boss, added);
         SyncPhases(master, added);
         EnsureEffects(feel, added);
+        ApplyArt(boss, added);
 
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
         Selection.activeGameObject = boss.gameObject;
@@ -164,6 +166,61 @@ public static class Kyodai2DBuilder
 
     // 렌즈: 본체 자식, 본체 중심에서 2.9 위(본체 로컬 — 임시 그림 렌즈 29px / 10ppu). 평면에 투영하면 EyeLocal과 같은 자리
     private static readonly Vector3 LensLocal = new Vector3(0f, 2.9f, 0f);
+
+    // 레일건 (2026-11-05 사용자 그림): 본체 렌즈 자리에 받침대(고정) + 회전축 → 레일건 그림 + 총구(= 레이저 렌즈).
+    // 레이저가 조준 방향으로 축을 돌리고, 총구에서 레이저가 나간다. 예전 렌즈(본체 바로 밑)가 있으면 지운다
+    private const string ArtRailgun = "2_railgun.png";
+    private const string ArtBracket = "3_bracket_front.png";
+    private static readonly Vector2 RailgunPivot = new Vector2(21f / 116f, 0.5f);       // 붉은 몸통 가운데 (21, 24)px — 여기서 돈다
+    private static readonly Vector2 BracketPivot = new Vector2(123f / 144f, 1f - 32.6f / 64f); // 받침대 빨간 원(회전축) 가운데
+    private const float RailgunMuzzle = (110f - 21f) / 29f; // 몸통 가운데 → 포신 끝(110px) 거리(축 로컬)
+
+    private static bool EnsureGun(KyodaiBossController boss)
+    {
+        var laser = boss.GetComponentInChildren<KyodaiLaser>(true);
+        var body = (Transform)new SerializedObject(boss).FindProperty("body").objectReferenceValue;
+        if (laser == null || body == null) return false;
+        var lso = new SerializedObject(laser);
+        if (lso.FindProperty("gunPivot").objectReferenceValue != null) return false;
+        var gun = PrepareArt(ArtRailgun, HandPpu, RailgunPivot);
+        if (gun == null) return false;
+        var bracket = PrepareArt(ArtBracket, HandPpu, BracketPivot);
+
+        if (bracket != null)
+        {
+            var b = new GameObject("레일건 받침대", typeof(SpriteRenderer));
+            Undo.RegisterCreatedObjectUndo(b, "2D 쿄다이 레일건");
+            b.transform.SetParent(body, false);
+            b.transform.localPosition = LensLocal;
+            var br = b.GetComponent<SpriteRenderer>();
+            br.sprite = bracket;
+            br.sortingOrder = -19; // 본체(-20) 앞
+        }
+        var pivot = new GameObject("레일건 회전축").transform;
+        Undo.RegisterCreatedObjectUndo(pivot.gameObject, "2D 쿄다이 레일건");
+        pivot.SetParent(body, false);
+        pivot.localPosition = LensLocal;
+        var g = new GameObject("레일건", typeof(SpriteRenderer));
+        g.transform.SetParent(pivot, false);
+        var gr = g.GetComponent<SpriteRenderer>();
+        gr.sprite = gun;
+        gr.sortingOrder = -18; // 받침대 앞
+        var muzzle = new GameObject("총구 (레이저 시작점)").transform;
+        muzzle.SetParent(pivot, false);
+        muzzle.localPosition = new Vector3(RailgunMuzzle, 0f, 0f);
+
+        // 예전 렌즈(본체 바로 밑에 만든 것) 정리
+        var oldLens = (Transform)lso.FindProperty("lens").objectReferenceValue;
+        if (oldLens != null && oldLens.parent == body && oldLens.GetComponents<Component>().Length == 1)
+            Undo.DestroyObjectImmediate(oldLens.gameObject);
+
+        SetFields(laser, so =>
+        {
+            so.FindProperty("lens").objectReferenceValue = muzzle;
+            so.FindProperty("gunPivot").objectReferenceValue = pivot;
+        });
+        return true;
+    }
 
     // 레이저가 경기장 뒤 본체 렌즈에서 3D로 뻗어 나오게 렌즈를 만들어 연결 (2026-11-05). 새로 붙였으면 true
     private static bool EnsureLens(KyodaiBossController boss)
@@ -816,13 +873,23 @@ public static class Kyodai2DBuilder
     }
 
     // 손바닥 압착: 경기장 1/3 너비를 덮게 손바닥을 키우고 가로로 늘린다(widthScale). 그림자 1.2초 → 짓누름 → 3초 잔류 (원본 기획 수치)
-    private const float PalmW = 44f / 18f, PalmH = 52f / 18f; // 임시 손바닥 그림 크기(보스 단위)
+    // 손바닥 그림 크기(보스 단위) — 진짜 그림이 있으면 그 크기, 없으면 임시 그림(44×52px / 18ppu)
+    private static Vector2 PalmSize()
+    {
+        var art = AssetDatabase.LoadAssetAtPath<Sprite>($"{ArtFolder}/{ArtPalm}");
+        return art != null ? art.rect.size / art.pixelsPerUnit : new Vector2(44f / 18f, 52f / 18f);
+    }
+
+    private static float PalmPressWidth(KyodaiBossController boss, float scale) =>
+        Mathf.Max(1f, (boss != null ? boss.ArenaWidth / 3f / boss.Size : 8f) / (PalmSize().x * scale));
+
     private static void FillPalmPress(KyodaiHandMotion m, KyodaiBossController boss)
     {
         const float scale = 2f;
+        float palmH = PalmSize().y;
         float third = boss != null ? boss.ArenaWidth / 3f / boss.Size : 8f; // 경기장 1/3(보스 단위)
-        float width = Mathf.Max(1f, third / (PalmW * scale));
-        float contactY = PalmH * scale * 0.5f;
+        float width = PalmPressWidth(boss, scale);
+        float contactY = palmH * scale * 0.5f;
         m.keys.Clear();
         m.keys.Add(new KyodaiHandKey
         {
@@ -841,7 +908,7 @@ public static class Kyodai2DBuilder
             label = "짓누름", frames = 8, anchor = KyodaiHandAnchor.Keep, offset = new Vector2(0f, contactY),
             move = KyodaiHandMove.Ease, easeCurve = new AnimationCurve(new Keyframe(0f, 0f, 0f, 0f), new Keyframe(1f, 1f, 2.6f, 0f)),
             pose = KyodaiHandPose.Palm, scale = scale, widthScale = width, floatWeight = 0f, telegraphWidth = third,
-            hitActive = true, hitSize = new Vector2(third, PalmH * scale * 0.9f),
+            hitActive = true, hitSize = new Vector2(third, palmH * scale * 0.9f),
             impactOnEnd = true, impactShake = 0.55f, impactFreezeFrames = 7
         });
         m.keys.Add(new KyodaiHandKey
@@ -1064,6 +1131,132 @@ public static class Kyodai2DBuilder
         string png = $"{EffectImageFolder}/{name}.png";
         if (AssetDatabase.LoadAssetAtPath<Texture2D>(png) != null) return PixelFxImporter.Import(png);
         return AssetDatabase.LoadAssetAtPath<PixelFxData>($"Assets/NYH/04. SO/Effect/{name}.asset");
+    }
+
+    // ───────────────────────── 진짜 그림 (2026-11-05) ─────────────────────────
+    // 03. Image/Boss/에 그림이 있으면 임시 그림 대신 쓴다 — 이미 있는 손·촉수 원본도 바꾼다(없는 그림은 임시 그대로).
+    // 본체는 아직 그림이 없어 임시 그대로.
+
+    private const string ArtFolder = "Assets/NYH/03. Image/Boss";
+    private const string ArtFist = "C_flat_clean_alt_128x64.png";        // 위에서 본 쥔 주먹 (손목 왼쪽 → 주먹 오른쪽, 임시 그림과 같은 방향)
+    private const string ArtPalm = "C_side_final_alt_160x64.png";        // 옆에서 본 펼친 손 (손가락 오른쪽 — 미는 방향으로 뒤집힌다)
+    private const string ArtTentacleBase = "base.png";                   // 촉수 부품은 가로 그림(사슬이 오른쪽으로) — 90° 돌려 위로 세운다
+    private const string ArtTentacleSegment = "segment.png";
+    private const string ArtClawClosed = "claw_closed.png";
+    private const string ArtClawOpen = "claw_open.png";
+
+    // 주먹 높이 64px ÷ 29 ≈ 2.2(보스 단위) = 임시 주먹 높이 — 찍기 키 높이 1.1(그림 아래 끝이 바닥)이 그대로 맞는다
+    private const float HandPpu = 29f;
+    // 주먹 기준점 = 주먹 덩어리(손등·손가락) 가운데 (100, 32)px / 128×64 — 손목·추진기 말고 주먹이 손 자리에 오게 (사용자 요청).
+    // 찍기·피격 이펙트·맞는 자리가 전부 이 점 기준이 된다
+    private static readonly Vector2 FistPivot = new Vector2(100f / 128f, 0.5f);
+    // 촉수 전체(뿌리 30 + 마디 29×5 + 집게 64 ≈ 239px) ÷ 50 ≈ 4.8 = 임시 촉수 길이와 비슷하게
+    private const float TentaclePpu = 50f;
+
+    private static void ApplyArt(KyodaiBossController boss, System.Collections.Generic.List<string> added)
+    {
+        var fist = PrepareArt(ArtFist, HandPpu, FistPivot);
+        var palm = PrepareArt(ArtPalm, HandPpu, new Vector2(0.5f, 0.5f));
+        if (fist != null || palm != null)
+        {
+            foreach (var hand in boss.GetComponentsInChildren<KyodaiHand>(true))
+            {
+                var so = new SerializedObject(hand);
+                var fistProp = so.FindProperty("fistSprite");
+                var palmProp = so.FindProperty("palmSprite");
+                bool changed = false;
+                if (fist != null && fistProp.objectReferenceValue != fist) { fistProp.objectReferenceValue = fist; changed = true; }
+                if (palm != null && palmProp.objectReferenceValue != palm) { palmProp.objectReferenceValue = palm; changed = true; }
+                if (!changed) continue;
+                so.ApplyModifiedPropertiesWithoutUndo();
+                var renderer = (SpriteRenderer)so.FindProperty("spriteRenderer").objectReferenceValue;
+                if (renderer != null && fist != null) { renderer.sprite = fist; EditorUtility.SetDirty(renderer); } // 대기 = 주먹
+                added.Add($"{hand.name} 그림");
+            }
+        }
+
+        // 손바닥 압착은 손바닥 그림 폭으로 가로 배율을 정했으니, 그림이 바뀌어 배율이 달라졌으면 동작을 다시 채운다(경기장 1/3 유지)
+        var press = AssetDatabase.LoadAssetAtPath<KyodaiHandMotion>($"{DataFolder}/Kyodai2D_손바닥압착_모션.asset");
+        if (palm != null && press != null && press.keys.Count > 0 && !Mathf.Approximately(press.keys[0].widthScale, PalmPressWidth(boss, 2f)))
+        {
+            FillPalmPress(press, boss);
+            EditorUtility.SetDirty(press);
+            added.Add("손바닥 압착 크기(새 손바닥 폭 기준)");
+        }
+
+        var baseArt = PrepareArt(ArtTentacleBase, TentaclePpu, new Vector2(0f, 0.5f)); // 왼쪽 끝 = 사슬 시작
+        var segment = PrepareArt(ArtTentacleSegment, TentaclePpu, new Vector2(0f, 0.5f));
+        var clawClosed = PrepareArt(ArtClawClosed, TentaclePpu, new Vector2(0f, 0.5f));
+        var clawOpen = PrepareArt(ArtClawOpen, TentaclePpu, new Vector2(0f, 0.5f));
+        var spawner = boss.GetComponentInChildren<KyodaiTentacleSpawner>(true);
+        if (spawner == null || segment == null || clawClosed == null) return;
+        var template = (KyodaiTentacle)new SerializedObject(spawner).FindProperty("template").objectReferenceValue;
+        if (template == null) return;
+
+        var tso = new SerializedObject(template);
+        var bonesProp = tso.FindProperty("bones");
+        int n = bonesProp.arraySize;
+        SpriteRenderer clawRenderer = null;
+        float prevLength = 0f;
+        bool tentacleChanged = false;
+        for (int i = 0; i < n; i++)
+        {
+            var bone = (Transform)bonesProp.GetArrayElementAtIndex(i).objectReferenceValue;
+            if (bone == null) continue;
+            SpriteRenderer renderer = null; // 이 뼈 바로 밑의 그림 (다음 뼈의 그림은 제외)
+            foreach (Transform child in bone)
+                if (child.TryGetComponent(out SpriteRenderer r)) { renderer = r; break; }
+            if (renderer == null) continue;
+            bool isTip = i == n - 1;
+            Sprite art = isTip ? clawClosed : i == 0 && baseArt != null ? baseArt : segment;
+            if (renderer.sprite != art) tentacleChanged = true;
+
+            // 뼈 간격 = 앞 부품 그림 길이(사슬 방향 = 그림 가로) — 마디가 이어 붙게
+            if (i > 0) bone.localPosition = new Vector3(0f, prevLength, 0f);
+            prevLength = art.rect.width / art.pixelsPerUnit;
+
+            renderer.sprite = art;
+            renderer.transform.localPosition = Vector3.zero;
+            renderer.transform.localRotation = Quaternion.Euler(0f, 0f, 90f); // 가로 그림 → 위로
+            // 끝으로 갈수록 가늘게 — 돌렸으니 굵기는 그림의 세로(로컬 y). 뿌리·집게는 그대로
+            float taper = isTip || i == 0 ? 1f : Mathf.Lerp(1f, 0.75f, i / (n - 1f));
+            renderer.transform.localScale = new Vector3(1f, taper, 1f);
+            EditorUtility.SetDirty(renderer);
+            EditorUtility.SetDirty(bone);
+            if (isTip) clawRenderer = renderer;
+        }
+        tso.FindProperty("claw").objectReferenceValue = clawRenderer;
+        tso.FindProperty("clawClosed").objectReferenceValue = clawClosed;
+        tso.FindProperty("clawOpen").objectReferenceValue = clawOpen;
+        tso.ApplyModifiedPropertiesWithoutUndo();
+        if (tentacleChanged) added.Add("촉수 그림(뿌리·마디·집게)");
+    }
+
+    // 그림 가져오기 설정: 한 장(Single)·Point·무압축·PPU·기준점. 그림이 없으면 null
+    private static Sprite PrepareArt(string file, float ppu, Vector2 pivot)
+    {
+        string path = $"{ArtFolder}/{file}";
+        var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+        if (importer == null) return null;
+        bool dirty = importer.textureType != TextureImporterType.Sprite || importer.spriteImportMode != SpriteImportMode.Single ||
+                     importer.filterMode != FilterMode.Point || importer.textureCompression != TextureImporterCompression.Uncompressed ||
+                     !Mathf.Approximately(importer.spritePixelsPerUnit, ppu) || importer.spritePivot != pivot || importer.mipmapEnabled;
+        if (dirty)
+        {
+            importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single;
+            importer.filterMode = FilterMode.Point;
+            importer.textureCompression = TextureImporterCompression.Uncompressed;
+            importer.mipmapEnabled = false;
+            importer.spritePixelsPerUnit = ppu;
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.spriteAlignment = (int)SpriteAlignment.Custom;
+            settings.spritePivot = pivot;
+            importer.SetTextureSettings(settings);
+            importer.SaveAndReimport();
+        }
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
     }
 
     // ───────────────────────── 촉수 ─────────────────────────

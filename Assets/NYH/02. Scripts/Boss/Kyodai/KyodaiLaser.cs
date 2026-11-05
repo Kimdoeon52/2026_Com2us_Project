@@ -25,6 +25,18 @@ public class KyodaiLaser : MonoBehaviour
              "판정 시작점은 렌즈가 화면에서 겹쳐 보이는 경기장 평면 자리. 비우면 이 오브젝트 자리(평면)에서")]
     [SerializeField] private Transform lens;
 
+    [Tooltip("레일건 회전축 (2026-11-05, 본체 자식 — 받침대의 빨간 원 자리). 있으면 조준 방향으로 돌고, 렌즈(총구)는 이 축의 자식. 비우면 안 돎")]
+    [SerializeField] private Transform gunPivot;
+
+    [Tooltip("쉴 때 레일건 각도(도, 0 = 오른쪽, -90 = 아래)")]
+    [SerializeField] private float gunRestAngle = -90f;
+
+    [Tooltip("쉴 때 그 각도로 돌아가는 빠르기(도/초)")]
+    [Min(1f)] [SerializeField] private float gunReturnSpeed = 120f;
+
+    [Tooltip("조준할 때 도는 최대 빠르기(도/초) — 조준 시작에 휙 돌지 않게")]
+    [Min(1f)] [SerializeField] private float gunAimSpeed = 360f;
+
     private static Sprite lineSprite, dotSprite;
     private static readonly List<Collider2D> overlap = new List<Collider2D>(8);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
@@ -43,6 +55,7 @@ public class KyodaiLaser : MonoBehaviour
     private SpriteRenderer aimLine, beam, core, flash, scorch;
     private PixelFx charge;  // 조준·고정 동안 눈의 차지 이펙트 (반복)
     private PixelFx endLoop; // 발사 중 레이저 끝 이펙트 (반복, 끝을 따라감)
+    private float gunAngle = float.NaN; // 레일건 지금 각도 (NaN = 아직 안 정함)
 
     // 쓸기 모드
     private class Explosion { public float x; public int trigger; public bool hit; }
@@ -78,15 +91,53 @@ public class KyodaiLaser : MonoBehaviour
     private bool TryLensOnPlane(out Vector2 p)
     {
         p = default;
-        if (lens == null) return false;
+        return lens != null && TryProjectToPlane(LensWorld, out p);
+    }
+
+    // 3D 점이 화면에서 겹쳐 보이는 경기장 평면 위 점
+    private bool TryProjectToPlane(Vector3 world, out Vector2 p)
+    {
+        p = default;
         var cam = Camera.main;
         if (cam == null) return false;
-        Vector3 l = LensWorld;
-        if (cam.orthographic) { p = l; return true; }
+        if (cam.orthographic) { p = world; return true; }
         Vector3 c = cam.transform.position;
-        if (Mathf.Abs(l.z - c.z) < 0.0001f) return false;
-        p = c + (l - c) * ((PlaneZ - c.z) / (l.z - c.z));
+        if (Mathf.Abs(world.z - c.z) < 0.0001f) return false;
+        p = c + (world - c) * ((PlaneZ - c.z) / (world.z - c.z));
         return true;
+    }
+
+
+    // 레일건을 target(경기장 평면 위 점) 쪽으로 — 화면에서 축 → 목표 방향. 왼쪽을 볼 땐 위아래를 뒤집어 몸통이 위로 오게.
+    // 총구(렌즈)가 축의 자식이라 판정 시작점(Eye)도 같이 움직인다 → 틱에서 부른다
+    private void AimGun(Vector2 target)
+    {
+        if (gunPivot == null) return;
+        Vector3 pivot = gunPivot.position + (owner != null ? owner.Anchor - owner.transform.position : Vector3.zero);
+        if (!TryProjectToPlane(pivot, out Vector2 p)) return;
+        Vector2 d = target - p;
+        if (d.sqrMagnitude < 0.0001f) return;
+        float want = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
+        float from = float.IsNaN(gunAngle) ? gunRestAngle : gunAngle;
+        SetGunAngle(Mathf.MoveTowardsAngle(from, want, gunAimSpeed * CombatClock.TICK));
+    }
+
+    // 쉴 때: 쉬는 각도로 천천히 (그림만 — 판정에 안 쓰일 때)
+    private void ReturnGun(float dt)
+    {
+        if (gunPivot == null) return;
+        float from = float.IsNaN(gunAngle) ? gunRestAngle : gunAngle;
+        if (Mathf.Approximately(Mathf.DeltaAngle(from, gunRestAngle), 0f) && !float.IsNaN(gunAngle)) return;
+        SetGunAngle(Mathf.MoveTowardsAngle(from, gunRestAngle, gunReturnSpeed * dt));
+    }
+
+    private void SetGunAngle(float angle)
+    {
+        gunAngle = angle;
+        gunPivot.rotation = Quaternion.Euler(0f, 0f, angle);
+        Vector3 s = gunPivot.localScale;
+        s.y = Mathf.Abs(s.y) * (Mathf.Cos(angle * Mathf.Deg2Rad) < 0f ? -1f : 1f);
+        gunPivot.localScale = s;
     }
 
     // 렌즈 깊이에 놓인 그림이 평면에서와 같은 크기로 보이게 하는 배율 (멀수록 크게)
@@ -126,6 +177,7 @@ public class KyodaiLaser : MonoBehaviour
             aim = SweepStartGoal();
         }
         else aim = PlayerAimPoint();
+        AimGun(aim);
         UpdateDirection();
         phase = Phase.Aim;
         frame = 0;
@@ -158,6 +210,7 @@ public class KyodaiLaser : MonoBehaviour
             case Phase.Aim:
                 if (Sweep) FollowGoal(SweepStartGoal());
                 else FollowPlayer();
+                AimGun(aim);
                 UpdateDirection();
                 end = TraceEnd(out _);
                 if (frame >= data.aimFrames)
@@ -182,6 +235,7 @@ public class KyodaiLaser : MonoBehaviour
                     // 바닥을 따라 시작 → 끝으로 (천천히 출발해 천천히 멈춤)
                     float k = Mathf.SmoothStep(0f, 1f, frame / (float)Mathf.Max(1, data.sweepFrames));
                     aim = new Vector2(Mathf.Lerp(sweepStartX, sweepEndX, k), owner.GroundY);
+                    AimGun(aim);
                     UpdateDirection();
                     KyodaiHand blocker = FireTick();
                     if (blocker == null || !data.blockedByHand) RecordBurn(end.x);
@@ -417,7 +471,13 @@ public class KyodaiLaser : MonoBehaviour
     public void UpdateVisual(float time)
     {
         EnsureRenderers();
-        if (phase == Phase.Idle || data == null) { SetVisible(false); if (scorch != null) scorch.enabled = false; return; }
+        if (phase == Phase.Idle || data == null)
+        {
+            SetVisible(false);
+            if (scorch != null) scorch.enabled = false;
+            if (Application.isPlaying) ReturnGun(Time.deltaTime);
+            return;
+        }
         if (Sweep) DrawSweepExtras(time);
 
         float length = Vector2.Distance(Eye, end);

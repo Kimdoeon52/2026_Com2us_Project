@@ -354,8 +354,17 @@ public class KyodaiHand : MonoBehaviour
         Sprite sprite = pose == KyodaiHandPose.Palm ? palmSprite : fistSprite;
         if (hurtZone == null || sprite == null) return;
         float h = feel != null ? feel.hurtScale : 0.85f;
-        Vector2 size = sprite.bounds.size;
+        Vector2 size = PivotCenteredSize(sprite);
         hurtZone.SetWorldSize(new Vector2(size.x * keyWidth, size.y) * keyScale * h * S);
+    }
+
+    // 맞는 자리 크기: 기준점(피벗)을 가운데로 그림 안에 들어가는 대칭 상자 — 맞는 자리는 루트(= 피벗) 가운데라서.
+    // 피벗이 가운데인 그림은 그림 크기 그대로, 주먹처럼 피벗을 주먹 덩어리로 옮긴 그림은 손목 쪽을 뺀 주먹 부분만 (2026-11-05)
+    private static Vector2 PivotCenteredSize(Sprite sprite)
+    {
+        Rect r = sprite.rect;
+        Vector2 p = sprite.pivot; // 픽셀, 그림 왼쪽 아래 기준
+        return new Vector2(2f * Mathf.Min(p.x, r.width - p.x), 2f * Mathf.Min(p.y, r.height - p.y)) / sprite.pixelsPerUnit;
     }
 
     private float ResolveX(KyodaiHandKey key)
@@ -459,7 +468,7 @@ public class KyodaiHand : MonoBehaviour
         Sprite sprite = pose == KyodaiHandPose.Palm ? palmSprite : fistSprite;
         if (spriteRenderer != null) spriteRenderer.sprite = sprite;
         if (hurtZone != null && sprite != null)
-            hurtZone.SetWorldSize(sprite.bounds.size * (feel != null ? feel.hurtScale : 0.85f) * S); // 그림이 보스 크기만큼 작게 보이니 맞는 자리도
+            hurtZone.SetWorldSize(PivotCenteredSize(sprite) * (feel != null ? feel.hurtScale : 0.85f) * S); // 그림이 보스 크기만큼 작게 보이니 맞는 자리도
         // 그림이 바뀌는 순간을 톡 튀는 움직임으로 가린다
         if (changed && pop && feel != null) squashVel += feel.posePop;
     }
@@ -470,9 +479,9 @@ public class KyodaiHand : MonoBehaviour
         {
             flashUntil = Time.time + feel.hitFlashSeconds;
             squashVel -= feel.hitKick;
-            // 손 그림의 실제 가운데(떠다니기·기울기 포함)에 내고, 이펙트가 끝날 때까지 손을 따라간다 — 손 위·아래로 어긋나지 않게
+            // 손 그림의 기준점(주먹은 주먹 덩어리 가운데, 떠다니기 포함)에 내고, 이펙트가 끝날 때까지 손을 따라간다 — 손 위·아래로 어긋나지 않게
             Transform follow = spriteRenderer != null ? spriteRenderer.transform : (visual != null ? visual : transform);
-            Vector3 at = spriteRenderer != null ? spriteRenderer.bounds.center : follow.position;
+            Vector3 at = follow.position;
             var fx = PixelFx.Play(feel.hitFx, at, 1f, owner != null && owner.PlayerX < at.x); // 플레이어 쪽에서 맞은 방향으로
             if (fx != null) fx.Follow(follow);
         }

@@ -21,6 +21,13 @@ public class KyodaiTentacle : MonoBehaviour, IPlayerHitTarget
     [Tooltip("맞는 자리 (이 오브젝트의 BoxCollider2D, 트리거)")]
     [SerializeField] private BoxCollider2D hurtBox;
 
+    [Header("집게 (2026-11-05 — 비우면 그림 안 바꿈)")]
+    [Tooltip("끝 뼈의 집게 그림")]
+    [SerializeField] private SpriteRenderer claw;
+    [SerializeField] private Sprite clawClosed;
+    [Tooltip("젖히기(예고)·휘두르기 동안")]
+    [SerializeField] private Sprite clawOpen;
+
     private static readonly List<Collider2D> overlap = new List<Collider2D>(8);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
 
@@ -215,6 +222,10 @@ public class KyodaiTentacle : MonoBehaviour, IPlayerHitTarget
                         + Mathf.Sin(swayClock + seed + i * 0.6f) * data.swayAngle * w * swayWeight;
             bones[i].localRotation = Quaternion.Euler(0f, 0f, rot);
         }
+
+        // 집게: 젖혀 예고할 때 벌리고, 휘두르고 나면 다문다
+        if (claw != null && clawClosed != null && clawOpen != null)
+            claw.sprite = state == State.WindUp || state == State.Swing ? clawOpen : clawClosed;
 
         bool flash = Time.time < flashUntil;
         float alpha = state == State.Dying ? Mathf.Clamp01(g * 1.5f) : 1f;

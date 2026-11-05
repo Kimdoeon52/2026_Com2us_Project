@@ -55,12 +55,31 @@ public class KyodaiLaserData : ScriptableObject
     [Tooltip("발사 순간 화면 흔들림(월드)")]
     [Min(0f)] public float fireShake = 0.25f;
 
+    [Header("이펙트 (2026-11-05 pixelfx 도트 플립북 — 비우면 없음)")]
+    [Tooltip("조준·고정 동안 눈에서 반복 — 힘을 모으는 구슬")]
+    public PixelFxData chargeFx;
+
+    [Tooltip("발사 순간 눈에서 한 번 — 번쩍임·고리")]
+    public PixelFxData fireFx;
+
+    [Tooltip("발사 중 레이저 끝에 붙어 다니는 반복 이펙트 — 흰 심이 바닥·손에 닿아 끓는 자리")]
+    public PixelFxData endFx;
+
+    [Tooltip("발사 중 레이저 끝(바닥·막은 손)에서 contactFxInterval마다 — 불티")]
+    public PixelFxData contactFx;
+
+    [Tooltip("불티 간격(프레임)")]
+    [Min(1)] public int contactFxInterval = 4;
+
     [Header("쓸기 모드 (2026-11-04 레이저 쓸기 — 0이면 일반 조준 레이저)")]
     [Tooltip("바닥을 가로로 쓸고 가는 길이(월드). 0보다 크면 쓸기 모드 — 조준은 플레이어 뒤쪽 바닥을 따라오고, 발사 때 쓸고 간다")]
     [Min(0f)] public float sweepLength;
 
     [Tooltip("쓸기 시작점이 플레이어보다 얼마나 뒤인지 (쓸기 길이에 대한 비율) — 쓸고 가며 플레이어 자리를 지나간다")]
     [Range(0f, 1f)] public float sweepStartBehind = 0.25f;
+
+    [Tooltip("켜면 경기장 바닥 전체를 끝에서 끝까지 쓴다(플레이어 쪽 끝 → 반대쪽 끝) — sweepLength·sweepStartBehind는 무시 (2026-11-05 사용자)")]
+    public bool sweepFullArena;
 
     [Tooltip("TODO: 기획 수치 없음. 쓸고 가는 시간(프레임) — 쓸기 모드에선 fireFrames 대신 이것")]
     [Min(1)] public int sweepFrames = 50;
@@ -89,6 +108,9 @@ public class KyodaiLaserData : ScriptableObject
 
     [Tooltip("바닥 그을음 두께(보스 단위)")]
     [Min(0.01f)] public float scorchThickness = 0.25f;
+
+    [Tooltip("폭발 그림 (2026-11-05 pixelfx 도트 플립북). 비우면 예전 임시 그림(돌아가는 네모)")]
+    public PixelFxData explosionFx;
 
     public Color scorchColor = new Color(0.55f, 0.12f, 0.08f, 0.9f);
     public Color explosionColor = new Color(1f, 0.55f, 0.15f, 1f);

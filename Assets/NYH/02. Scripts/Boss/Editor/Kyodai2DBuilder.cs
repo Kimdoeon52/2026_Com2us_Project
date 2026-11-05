@@ -126,6 +126,7 @@ public static class Kyodai2DBuilder
         foreach (var spec in Patterns)
             if (EnsurePattern(boss, telegraph, master, spec)) added.Add(spec.name);
         if (EnsureLaser(boss, master)) added.Add("레이저");
+        if (EnsureLens(boss)) added.Add("레이저 렌즈(본체에서 3D로 나오는 시작점)");
 
         // ── 6. 내려찍는 기물(1페이즈부터) · 2페이즈: 양손 패턴·전환 동작·페이즈별 패턴 목록 ──
         var secondTelegraph = EnsureTelegraph(boss, SecondTelegraphName, added);
@@ -137,6 +138,7 @@ public static class Kyodai2DBuilder
         if (EnsureLaserSweep(boss, master)) added.Add("레이저 쓸기");
         EnsureTransitionMotion(boss, added);
         SyncPhases(master, added);
+        EnsureEffects(feel, added);
 
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
         Selection.activeGameObject = boss.gameObject;
@@ -159,6 +161,25 @@ public static class Kyodai2DBuilder
     // 본체 렌즈가 화면에서 겹쳐 보이는 경기장 평면 자리 = 보스 루트 기준 (0, 9.4)
     // (본체 중심 바닥 위 6.5 + 임시 그림 렌즈가 중심에서 29px 위 / 10ppu = 2.9)
     private static readonly Vector2 EyeLocal = new Vector2(0f, 9.4f);
+
+    // 렌즈: 본체 자식, 본체 중심에서 2.9 위(본체 로컬 — 임시 그림 렌즈 29px / 10ppu). 평면에 투영하면 EyeLocal과 같은 자리
+    private static readonly Vector3 LensLocal = new Vector3(0f, 2.9f, 0f);
+
+    // 레이저가 경기장 뒤 본체 렌즈에서 3D로 뻗어 나오게 렌즈를 만들어 연결 (2026-11-05). 새로 붙였으면 true
+    private static bool EnsureLens(KyodaiBossController boss)
+    {
+        var laser = boss.GetComponentInChildren<KyodaiLaser>(true);
+        var body = (Transform)new SerializedObject(boss).FindProperty("body").objectReferenceValue;
+        if (laser == null || body == null) return false;
+        if (new SerializedObject(laser).FindProperty("lens").objectReferenceValue != null) return false;
+
+        var lens = new GameObject("렌즈 (레이저 시작점)");
+        Undo.RegisterCreatedObjectUndo(lens, "2D 쿄다이 렌즈");
+        lens.transform.SetParent(body, false);
+        lens.transform.localPosition = LensLocal;
+        SetFields(laser, so => so.FindProperty("lens").objectReferenceValue = lens.transform);
+        return true;
+    }
 
     // 눈(KyodaiLaser)과 레이저 패턴이 없으면 만든다. 새로 붙였으면 true
     private static bool EnsureLaser(KyodaiBossController boss, BossMasterData master)
@@ -948,7 +969,9 @@ public static class Kyodai2DBuilder
 
         var sweepData = LoadOrCreate<KyodaiLaserData>($"{DataFolder}/Kyodai2D_레이저쓸기_설정.asset", d =>
         {
-            d.sweepLength = boss.ArenaWidth * 0.6f; // 경기장 너비의 60% (임시)
+            d.sweepLength = boss.ArenaWidth;       // 쓸기 모드 켜기용 (전체 쓸기면 길이는 안 씀)
+            d.sweepFullArena = true;               // 바닥 전체를 끝에서 끝까지 (2026-11-05 사용자)
+            d.sweepFrames = 84;                    // 60% 쓸기(50f)와 같은 속도 (임시)
             d.aimFrames = 70;                      // 쓸기는 조준이 짧다 (임시)
             d.lockFrames = 15;
             d.beamWidth = 0.8f;
@@ -986,6 +1009,61 @@ public static class Kyodai2DBuilder
             so.FindProperty("laserData").objectReferenceValue = sweepData;
         });
         return true;
+    }
+
+    // ───────────────────────── 이펙트 (2026-11-05 pixelfx) ─────────────────────────
+
+    private const string EffectImageFolder = "Assets/NYH/03. Image/Effect/pixelfx";
+
+    // pixelfx 시트(PNG+JSON)가 있으면 가져와서(PixelFxImporter) 비어 있는 이펙트 칸만 채운다 — 손으로 바꾼 칸은 그대로
+    private static void EnsureEffects(KyodaiHandFeel feel, System.Collections.Generic.List<string> added)
+    {
+        var impact = LoadFx("Fx_주먹충격");
+        var hit = LoadFx("Fx_손피격");
+        var explosion = LoadFx("Fx_바닥폭발");
+
+        if (feel != null && ((feel.impactFx == null && impact != null) || (feel.hitFx == null && hit != null)))
+        {
+            if (feel.impactFx == null) feel.impactFx = impact;
+            if (feel.hitFx == null) feel.hitFx = hit;
+            EditorUtility.SetDirty(feel);
+            added.Add("손 이펙트(충격·피격)");
+        }
+        var sweepData = AssetDatabase.LoadAssetAtPath<KyodaiLaserData>($"{DataFolder}/Kyodai2D_레이저쓸기_설정.asset");
+        if (sweepData != null && sweepData.explosionFx == null && explosion != null)
+        {
+            sweepData.explosionFx = explosion;
+            EditorUtility.SetDirty(sweepData);
+            added.Add("레이저 쓸기 폭발 이펙트");
+        }
+
+        // 레이저 공통 (일반·쓸기): 눈 차지 → 발사 번쩍임 → 끝(흰 심이 끓는 자리, 반복) + 불티
+        var charge = LoadFx("Fx_레이저차지");
+        var fire = LoadFx("Fx_레이저발사");
+        var contact = LoadFx("Fx_레이저불티");
+        var beamEnd = LoadFx("Fx_레이저끝");
+        var normalData = AssetDatabase.LoadAssetAtPath<KyodaiLaserData>($"{DataFolder}/Kyodai2D_레이저_설정.asset");
+        foreach (var d in new[] { normalData, sweepData })
+        {
+            if (d == null) continue;
+            bool changed = false;
+            if (d.chargeFx == null && charge != null) { d.chargeFx = charge; changed = true; }
+            if (d.fireFx == null && fire != null) { d.fireFx = fire; changed = true; }
+            if (d.contactFx == null && contact != null) { d.contactFx = contact; changed = true; }
+            if (d.endFx == null && beamEnd != null) { d.endFx = beamEnd; changed = true; }
+            if (!changed) continue;
+            EditorUtility.SetDirty(d);
+            added.Add($"{d.name} 이펙트(차지·발사·끝·불티)");
+        }
+        AssetDatabase.SaveAssets();
+    }
+
+    // 시트가 있으면 매번 다시 가져온다 — 다시 뽑은 시트(칸 수·도트 배율)가 바로 반영되고, 에셋의 조정 값(크기·속도 등)은 그대로
+    private static PixelFxData LoadFx(string name)
+    {
+        string png = $"{EffectImageFolder}/{name}.png";
+        if (AssetDatabase.LoadAssetAtPath<Texture2D>(png) != null) return PixelFxImporter.Import(png);
+        return AssetDatabase.LoadAssetAtPath<PixelFxData>($"Assets/NYH/04. SO/Effect/{name}.asset");
     }
 
     // ───────────────────────── 촉수 ─────────────────────────

@@ -1,0 +1,70 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6ae5f715350b40d419e040d0a457981f, type: 3}
+  m_Name: "Fx_\uB808\uC774\uC800\uBC1C\uC0AC"
+  m_EditorClassIdentifier: 
+  frames:
+  - {fileID: -1520539283, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 899485369, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 41448216, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1538424721, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -445412306, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -404953671, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1274100093, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1115013100, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 625016252, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -305223859, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -562141221, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1328620290, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1548672088, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 199667060, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -231487715, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 619980935, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -223190605, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1399752205, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 659998589, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1243943654, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1270514746, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1053981345, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -427121904, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -848633727, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 657481207, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1087024713, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1084043088, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1863509719, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1086663999, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1681838918, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -421949446, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1293918549, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 984772082, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1248306784, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 785258814, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1520067379, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 955456108, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -510263480, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1184276914, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1200965407, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -452765789, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1386032384, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -1216146603, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -914143938, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 1757558556, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: 326469208, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  - {fileID: -481037658, guid: b32181885aabaf04f958903690338ca6, type: 3}
+  fps: 30
+  loop: 0
+  source: arcane/mana-burst
+  scale: 1
+  fadeOutFrames: 8
+  speed: 1
+  tint: {r: 1, g: 1, b: 1, a: 1}
+  sortingOrder: 9

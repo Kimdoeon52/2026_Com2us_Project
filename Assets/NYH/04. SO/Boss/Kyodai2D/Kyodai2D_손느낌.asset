@@ -41,6 +41,11 @@ MonoBehaviour:
   downTint: {r: 0.55, g: 0.55, b: 0.6, a: 1}
   frozenTint: {r: 0.6, g: 0.75, b: 1, a: 1}
   frozenShake: 0.04
+  fallGravity: -45
+  fallBounce: 0.3
+  fallBounceMinSpeed: 2
+  fallShake: 0.2
+  fallRotation: 25
   shadowSize: {x: 2.4, y: 0.5}
   shadowMinScale: 0.45
   shadowFadeHeight: 7
@@ -48,3 +53,5 @@ MonoBehaviour:
   shadowMinAlpha: 0.15
   shakeSeconds: 0.3
   hurtScale: 0.85
+  impactFx: {fileID: 11400000, guid: b86678d0bf078e84baaec42aaa6bf07a, type: 2}
+  hitFx: {fileID: 11400000, guid: 37087537fc8c0bd45805d8bc82e693f7, type: 2}

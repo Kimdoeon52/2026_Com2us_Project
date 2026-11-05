@@ -44,6 +44,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a3c486bf9ea12e646abf92087d5e3a30, type: 2}
   - {fileID: 11400000, guid: 8f1e29a43a0d11ef88b100155d000401, type: 2}
   - {fileID: 11400000, guid: 3a415ac28e0d44d298dc4b7f5406a94b, type: 2}
+  - {fileID: 11400000, guid: b6fdce26e304da64bbee423c79066135, type: 2}
+  - {fileID: 11400000, guid: e712cbf1f22e38f47a7b2beed5c76cc7, type: 2}
+  - {fileID: 11400000, guid: cb11836ace0a01349a4acee0bab4d5ae, type: 2}
+  - {fileID: 11400000, guid: e85e3a250591c8f40992f22a2e3277c6, type: 2}
+  - {fileID: 11400000, guid: 8e19ef51e352c804da6496de5d91c7a2, type: 2}
+  - {fileID: 11400000, guid: a3d873ed5d5fa04499e7489ebb6677cf, type: 2}
+  - {fileID: 11400000, guid: cb24b780ca3d12a49bf1cc77124b252f, type: 2}
+  - {fileID: 11400000, guid: 74250e1594445644499fa1432a59eb75, type: 2}
+  - {fileID: 11400000, guid: faaac36f568602e46bb23443bfd8437b, type: 2}
+  - {fileID: 11400000, guid: 8d4e99a68206e7e459be0e0300195fc6, type: 2}
   phases:
   - phaseIndex: 1
     hpThresholdRatio: 1
@@ -53,6 +63,11 @@ MonoBehaviour:
     - PATTERN_SLAM
     - PATTERN_BLADE_RICOCHET
     - PATTERN_DRIBBLE_SHOCKWAVE
+    - KYODAI2D_FIST_SLAM
+    - KYODAI2D_PALM_PUSH
+    - KYODAI2D_FIST_COMBO
+    - KYODAI2D_LASER
+    - KYODAI2D_LASER_SWEEP
   - phaseIndex: 2
     hpThresholdRatio: 0.5
     availableSkillIDs:
@@ -61,5 +76,15 @@ MonoBehaviour:
     - PATTERN_SLAM
     - PATTERN_BLADE_RICOCHET
     - PATTERN_DRIBBLE_SHOCKWAVE
+    - KYODAI2D_FIST_SLAM
+    - KYODAI2D_PALM_PUSH
+    - KYODAI2D_FIST_COMBO
+    - KYODAI2D_LASER
+    - KYODAI2D_LASER_SWEEP
+    - KYODAI2D_PALM_PRESS
+    - KYODAI2D_SHOCK_SLAM
+    - KYODAI2D_DUAL_CLAP
+    - KYODAI2D_DUAL_BARRAGE
+    - KYODAI2D_DUAL_SLAM
   rewardGold: 1500
   rewardCoreExp: 500

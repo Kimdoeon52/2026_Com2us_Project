@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: "Kyodai2D_\uB808\uC774\uC800\uC4F8\uAE30"
+  m_EditorClassIdentifier: 
+  patternID: KYODAI2D_LASER_SWEEP
+  patternName: "\uB808\uC774\uC800 \uC4F8\uAE30"
+  description: "\uC0C8 \uD328\uD134: \uC870\uC900\uC120\uC774 \uD50C\uB808\uC774\uC5B4
+    \uB4A4\uCABD \uBC14\uB2E5\uC744 \uB530\uB77C\uC624\uB2E4 \uACE0\uC815 \u2192
+    \uB808\uC774\uC800\uAC00 \uBC14\uB2E5\uC744 \uAC00\uB85C\uB85C \uC4F8\uACE0 \uC9C0\uB098\uAC10(\uADF8\uC744\uC74C)
+    \u2192 \uC57D 1.2\uCD08 \uB4A4 \uC4F8\uACE0 \uAC04 \uBC29\uD5A5\uC73C\uB85C \uBC14\uB2E5\uC774
+    \uD391 \uD391 \uD391 \uD130\uC9D0. \uC4F8\uACE0 \uAC00\uB294 \uAE38\uC5D0 \uC190\uC774
+    \uC788\uC73C\uBA74 \uADF8 \uC190\uC774 \uB5A8\uC5B4\uC9C4\uB2E4"
+  tellDuration: 1.4166666
+  postDelay: 1
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 5
+  partDurabilityDamage: 0
+  baseDamage: 50
+  damageRatio: 100
+  actionData: {fileID: 0}

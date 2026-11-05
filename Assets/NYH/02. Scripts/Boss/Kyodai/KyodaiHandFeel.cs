@@ -130,4 +130,11 @@ public class KyodaiHandFeel : ScriptableObject
 
     [Tooltip("맞는 자리 크기 = 그림 크기 × 이 값")]
     [Range(0.2f, 1.2f)] public float hurtScale = 0.85f;
+
+    [Header("이펙트 (2026-11-05 pixelfx 도트 플립북 — 비우면 없음)")]
+    [Tooltip("충격(찍기) 순간 바닥에 — 먼지·충격파·돌 튐")]
+    public PixelFxData impactFx;
+
+    [Tooltip("플레이어에게 맞은 순간 손 위에")]
+    public PixelFxData hitFx;
 }

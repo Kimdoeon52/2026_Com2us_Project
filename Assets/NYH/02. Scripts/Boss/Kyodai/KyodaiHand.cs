@@ -40,9 +40,6 @@ public class KyodaiHand : MonoBehaviour
     [Tooltip("맞는 자리 (루트 자식 — 항상 켜짐)")]
     [SerializeField] private BossHurtZone hurtZone;
 
-    [Tooltip("충격 때 바닥에 생성할 먼지 (비우면 없음 — 도트 플립북 프리팹 예정)")]
-    [SerializeField] private GameObject impactDustPrefab;
-
     /// <summary>충격 순간 (바닥 위치). 소리·이펙트용</summary>
     public event Action<KyodaiHand, Vector2> OnImpact;
 
@@ -436,8 +433,7 @@ public class KyodaiHand : MonoBehaviour
 
         KyodaiCameraShake.Shake(key.impactShake, feel != null ? feel.shakeSeconds : 0.3f);
         if (key.spawnShockwave) owner.SpawnShockwave(ground.x, onTouch); // 충격파 내려치기 — 바닥을 따라 좌우로
-        if (impactDustPrefab != null)
-            Destroy(Instantiate(impactDustPrefab, new Vector3(ground.x, ground.y, transform.position.z), Quaternion.identity), 3f);
+        if (feel != null) PixelFx.Play(feel.impactFx, new Vector3(ground.x, ground.y, transform.position.z));
         OnImpact?.Invoke(this, ground);
     }
 
@@ -474,6 +470,11 @@ public class KyodaiHand : MonoBehaviour
         {
             flashUntil = Time.time + feel.hitFlashSeconds;
             squashVel -= feel.hitKick;
+            // 손 그림의 실제 가운데(떠다니기·기울기 포함)에 내고, 이펙트가 끝날 때까지 손을 따라간다 — 손 위·아래로 어긋나지 않게
+            Transform follow = spriteRenderer != null ? spriteRenderer.transform : (visual != null ? visual : transform);
+            Vector3 at = spriteRenderer != null ? spriteRenderer.bounds.center : follow.position;
+            var fx = PixelFx.Play(feel.hitFx, at, 1f, owner != null && owner.PlayerX < at.x); // 플레이어 쪽에서 맞은 방향으로
+            if (fx != null) fx.Follow(follow);
         }
 
         // 팔 무력화 (기획서 "부위 구성 HP 구조": 팔 무력화 = 8초간 그 팔 패턴 봉인). 떨어져 누워 있는 동안은 안 쌓인다.

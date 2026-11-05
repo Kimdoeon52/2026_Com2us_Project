@@ -3,6 +3,7 @@ using DG.Tweening;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 /*
 
@@ -66,6 +67,7 @@ public class Auction : Singleton<Auction>
     [SerializeField] private int totalAuctionRounds = 3; //연속으로 진행할 경매 횟수
     [SerializeField] private string nextSceneName = ""; //경매 전부 끝난 뒤 이동할 씬 (비워두면 이동 안 함)
     private int currentRound = 0; //현재 진행 중인 회차
+    [SerializeField] [Min(1f)] private float giveUpTimeScale = 3f; //플레이어가 포기하면 경매를 n배속으로 진행 (빠른 종료 유도)
 
     [Header("물건 정보 UI")]
     [SerializeField] public TextMeshProUGUI auctionName; //물건 이름
@@ -207,6 +209,7 @@ public class Auction : Singleton<Auction>
     private void OnDisable()
     {
         BossAiBase.OnBossBigRaiseCutscene -= HandleBossBigRaiseCutscene; // 컷씬 옵져버 해제
+        ResetGameSpeed(); // 배속 상태로 씬을 떠나도 다음 씬에 배속이 남지 않게 복구
     }
 
     private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite, Color newColor) //컷씬 대기용 함수
@@ -346,6 +349,7 @@ public class Auction : Singleton<Auction>
         IfPlayerWin = false;
         isPlayerGiveUp = false;
         IsTimeRunning = false;
+        ResetGameSpeed(); // 이전 회차에서 포기로 걸린 배속 해제
 
         ClearRoundUI(); // 이전 회차 명패 제거
         NPCImageOff();
@@ -682,6 +686,7 @@ public class Auction : Singleton<Auction>
     {
         IsAuctioningFin = true; //끝났음 true
         IsTimeRunning = false; // 시간끝
+        ResetGameSpeed(); // 낙찰 대사는 정상 속도로
         //버튼 전체 false
         NormalAuctionButtonReady(false);
         EnableFistAuctionUI(false);
@@ -770,10 +775,29 @@ public class Auction : Singleton<Auction>
         }
     }
 
-    private async UniTask WaitInput() // 입력대기
+    private async UniTask WaitInput() // 입력대기 (스페이스바 또는 마우스 왼쪽 클릭)
     {
         await UniTask.Yield();
-        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space));
+        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || (Input.GetMouseButtonDown(0) && !IsPointerOverButton()));
+    }
+
+    private bool IsPointerOverButton() // 버튼을 누른 클릭은 대사 넘김으로 치지 않음 (경매 나가기 등 오작동 방지)
+    {
+        if (EventSystem.current == null) return false;
+
+        PointerEventData pointer = new PointerEventData(EventSystem.current) { position = Input.mousePosition };
+        List<RaycastResult> results = new List<RaycastResult>();
+        EventSystem.current.RaycastAll(pointer, results);
+        foreach (RaycastResult result in results)
+        {
+            if (result.gameObject.GetComponentInParent<Selectable>() != null) return true;
+        }
+        return false;
+    }
+
+    private void ResetGameSpeed()
+    {
+        if (!Mathf.Approximately(Time.timeScale, 1f)) Time.timeScale = 1f;
     }
 
     private void NormalAuctionButtonReady(bool active) // 일반 경매 버튼 활성화
@@ -802,7 +826,8 @@ public class Auction : Singleton<Auction>
         PlaySound(giveUpEffect);
         if (AuctionPlayer.Instance != null)
             AuctionPlayer.Instance.ShowThinkChatWithText("못해먹겠네. 안해.");
-        ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
+        ShowErrorMessage($"입찰을 포기하셨습니다. ({giveUpTimeScale:0.#}배속)").Forget();
+        Time.timeScale = giveUpTimeScale; // 포기했으니 남은 경매는 빠르게 진행 (AI 고민/타이머/연출 모두 배속)
         if (CheckAllGiveUp()) IsTimeRunning = false;
     }
 

@@ -29,3 +29,23 @@ MonoBehaviour:
   beamColor: {r: 1, g: 0.2, b: 0.12, a: 1}
   coreColor: {r: 1, g: 0.95, b: 0.85, a: 1}
   fireShake: 0.25
+  chargeFx: {fileID: 11400000, guid: e5b33bbf34a0e75418ac5122f9dc27af, type: 2}
+  fireFx: {fileID: 11400000, guid: bd5a69c0d9403ee49aba99079467553f, type: 2}
+  endFx: {fileID: 11400000, guid: 6ba21494e967a28468b8a341e97c820e, type: 2}
+  contactFx: {fileID: 11400000, guid: a63553a1cfc5ba74db3a9a427218707c, type: 2}
+  contactFxInterval: 4
+  sweepLength: 0
+  sweepStartBehind: 0.25
+  sweepFullArena: 0
+  sweepFrames: 50
+  explosionDelayFrames: 72
+  explosionSpacing: 1
+  explosionIntervalFrames: 12
+  explosionSize: {x: 1.6, y: 2}
+  explosionHitFrames: 6
+  explosionVisualFrames: 20
+  explosionShake: 0.18
+  scorchThickness: 0.25
+  explosionFx: {fileID: 0}
+  scorchColor: {r: 0.55, g: 0.12, b: 0.08, a: 0.9}
+  explosionColor: {r: 1, g: 0.55, b: 0.15, a: 1}

@@ -21,6 +21,10 @@ public class KyodaiLaser : MonoBehaviour
     [Tooltip("그림 순서 — 손(5)보다 앞")]
     [SerializeField] private int sortingOrder = 8;
 
+    [Tooltip("본체 렌즈 (2026-11-05, 본체 자식 — 같이 오르내림). 있으면 레이저가 경기장 뒤 본체에서 3D로 뻗어 나오고, " +
+             "판정 시작점은 렌즈가 화면에서 겹쳐 보이는 경기장 평면 자리. 비우면 이 오브젝트 자리(평면)에서")]
+    [SerializeField] private Transform lens;
+
     private static Sprite lineSprite, dotSprite;
     private static readonly List<Collider2D> overlap = new List<Collider2D>(8);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
@@ -37,6 +41,8 @@ public class KyodaiLaser : MonoBehaviour
     private readonly HashSet<KyodaiHand> frozenThisShot = new HashSet<KyodaiHand>();
 
     private SpriteRenderer aimLine, beam, core, flash, scorch;
+    private PixelFx charge;  // 조준·고정 동안 눈의 차지 이펙트 (반복)
+    private PixelFx endLoop; // 발사 중 레이저 끝 이펙트 (반복, 끝을 따라감)
 
     // 쓸기 모드
     private class Explosion { public float x; public int trigger; public bool hit; }
@@ -53,8 +59,44 @@ public class KyodaiLaser : MonoBehaviour
 
     // 보스 크기(루트 스케일) — 굵기 값은 보스 단위라 쓸 때 곱한다. 조준 높이(플레이어 가슴)·최대 길이는 월드 그대로
     private float S => owner != null ? owner.Size : 1f;
-    // 루트 기준 상대 자리 + 고정 자리(Anchor) — KKH가 루트를 프레임 중간에 옮겨도 눈 위치가 흔들리지 않게
-    public Vector2 Eye => owner != null ? (Vector2)(owner.Anchor + (transform.position - owner.transform.position)) : (Vector2)transform.position;
+    // 판정 시작점(경기장 평면). 렌즈가 있으면 렌즈가 화면에서 겹쳐 보이는 평면 자리(본체가 오르내리면 같이 움직임),
+    // 없으면 이 오브젝트 자리. 루트 기준 상대 자리 + 고정 자리(Anchor) — KKH가 루트를 프레임 중간에 옮겨도 흔들리지 않게
+    public Vector2 Eye
+    {
+        get
+        {
+            if (TryLensOnPlane(out Vector2 p)) return p;
+            return owner != null ? (Vector2)(owner.Anchor + (transform.position - owner.transform.position)) : (Vector2)transform.position;
+        }
+    }
+
+    private float PlaneZ => transform.position.z;
+
+    // 렌즈의 실제 3D 자리 (고정 자리 보정)
+    private Vector3 LensWorld => lens.position + (owner != null ? owner.Anchor - owner.transform.position : Vector3.zero);
+
+    private bool TryLensOnPlane(out Vector2 p)
+    {
+        p = default;
+        if (lens == null) return false;
+        var cam = Camera.main;
+        if (cam == null) return false;
+        Vector3 l = LensWorld;
+        if (cam.orthographic) { p = l; return true; }
+        Vector3 c = cam.transform.position;
+        if (Mathf.Abs(l.z - c.z) < 0.0001f) return false;
+        p = c + (l - c) * ((PlaneZ - c.z) / (l.z - c.z));
+        return true;
+    }
+
+    // 렌즈 깊이에 놓인 그림이 평면에서와 같은 크기로 보이게 하는 배율 (멀수록 크게)
+    private float LensDepthScale()
+    {
+        var cam = Camera.main;
+        if (lens == null || cam == null || cam.orthographic) return 1f;
+        float dPlane = PlaneZ - cam.transform.position.z;
+        return Mathf.Abs(dPlane) < 0.0001f ? 1f : (LensWorld.z - cam.transform.position.z) / dPlane;
+    }
     public Vector2 BeamEnd => end;
 
     /// <summary>손 하나가 레이저에 맞아 정지할 때 (소리·이펙트용)</summary>
@@ -87,6 +129,8 @@ public class KyodaiLaser : MonoBehaviour
         UpdateDirection();
         phase = Phase.Aim;
         frame = 0;
+        StopCharge();
+        if (Application.isPlaying) charge = PixelFx.Play(data.chargeFx, EyeFxPosition(), LensDepthScale());
     }
 
     public void Stop()
@@ -94,6 +138,8 @@ public class KyodaiLaser : MonoBehaviour
         phase = Phase.Idle;
         frame = 0;
         onTouch = null;
+        StopCharge();
+        StopEndLoop();
         SetVisible(false);
         ClearExplosions();
         burnPoints.Clear();
@@ -125,7 +171,12 @@ public class KyodaiLaser : MonoBehaviour
                 if (frame >= data.lockFrames) Next(Phase.Fire);
                 break;
             case Phase.Fire:
-                if (frame == 1 && Application.isPlaying) KyodaiCameraShake.Shake(data.fireShake, 0.2f);
+                if (frame == 1 && Application.isPlaying)
+                {
+                    KyodaiCameraShake.Shake(data.fireShake, 0.2f);
+                    StopCharge();
+                    PixelFx.Play(data.fireFx, EyeFxPosition(), LensDepthScale());
+                }
                 if (Sweep)
                 {
                     // 바닥을 따라 시작 → 끝으로 (천천히 출발해 천천히 멈춤)
@@ -157,6 +208,7 @@ public class KyodaiLaser : MonoBehaviour
 
     private void Next(Phase next)
     {
+        if (phase == Phase.Fire) StopEndLoop();
         phase = next;
         frame = 0;
         if (next == Phase.Idle) Stop();
@@ -166,12 +218,24 @@ public class KyodaiLaser : MonoBehaviour
 
     private void FollowPlayer() => FollowGoal(PlayerAimPoint());
 
-    // 쓸기 시작점: 플레이어보다 조금 뒤쪽 바닥 (쓸고 가면서 플레이어 자리를 지나간다)
-    private Vector2 SweepStartGoal() =>
-        new Vector2(owner.ClampToArena(owner.PlayerX - sweepDir * data.sweepLength * data.sweepStartBehind), owner.GroundY);
+    // 쓸기 시작점: 플레이어보다 조금 뒤쪽 바닥 (쓸고 가면서 플레이어 자리를 지나간다). 전체 쓸기면 플레이어 쪽 경기장 끝
+    private Vector2 SweepStartGoal()
+    {
+        float x = data.sweepFullArena
+            ? (sweepDir > 0 ? owner.ArenaMinX : owner.ArenaMaxX)
+            : owner.ClampToArena(owner.PlayerX - sweepDir * data.sweepLength * data.sweepStartBehind);
+        return new Vector2(x, owner.GroundY);
+    }
 
     private void LockSweep()
     {
+        if (data.sweepFullArena)
+        {
+            // 조준 스프링이 덜 따라왔어도 끝에서 끝까지 쓸게 고정
+            sweepStartX = sweepDir > 0 ? owner.ArenaMinX : owner.ArenaMaxX;
+            sweepEndX = sweepDir > 0 ? owner.ArenaMaxX : owner.ArenaMinX;
+            return;
+        }
         sweepStartX = owner.ClampToArena(aim.x);
         sweepEndX = owner.ClampToArena(sweepStartX + sweepDir * data.sweepLength);
     }
@@ -203,7 +267,11 @@ public class KyodaiLaser : MonoBehaviour
             if (frame == e.trigger)
             {
                 lastExplodedIndex = i;
-                if (Application.isPlaying) KyodaiCameraShake.Shake(data.explosionShake, 0.15f);
+                if (Application.isPlaying)
+                {
+                    KyodaiCameraShake.Shake(data.explosionShake, 0.15f);
+                    PixelFx.Play(data.explosionFx, new Vector3(e.x, owner.GroundY, transform.position.z), 1f, i % 2 == 1); // 번갈아 뒤집어 반복이 덜 보이게
+                }
             }
             if (frame < e.trigger || frame >= e.trigger + data.explosionHitFrames || e.hit || onTouch == null) continue;
             int count = Physics2D.OverlapBox(new Vector2(e.x, owner.GroundY + size.y * 0.5f), size, 0f, overlapFilter, overlap);
@@ -237,10 +305,36 @@ public class KyodaiLaser : MonoBehaviour
         if (d.sqrMagnitude > 0.0001f) dir = d.normalized;
     }
 
+    // 눈 이펙트 자리: 렌즈가 있으면 본체 깊이(3D)에, 없으면 평면 위 눈
+    private Vector3 EyeFxPosition() => lens != null ? LensWorld : new Vector3(Eye.x, Eye.y, PlaneZ);
+
+    private void StopCharge()
+    {
+        if (charge != null) charge.Stop();
+        charge = null;
+    }
+
+    private void StopEndLoop()
+    {
+        if (endLoop != null) endLoop.Stop();
+        endLoop = null;
+    }
+
     // 반환: 이번 틱에 길을 막은 손 (없으면 null)
     private KyodaiHand FireTick()
     {
         end = TraceEnd(out KyodaiHand blocker);
+
+        if (Application.isPlaying)
+        {
+            var endPos = new Vector3(end.x, end.y, PlaneZ);
+            // 레이저 끝에 붙어 다니는 흰 심 이펙트 (반복)
+            if (endLoop == null) endLoop = PixelFx.Play(data.endFx, endPos);
+            else endLoop.transform.position = endPos;
+            // 불티 — 레이저가 오는 쪽으로 튄다(그림은 오른쪽으로 튀는 게 기본)
+            if ((frame - 1) % data.contactFxInterval == 0)
+                PixelFx.Play(data.contactFx, endPos, 1f, Eye.x < end.x);
+        }
 
         // 손에 맞음 → 정지 (한 발에 손마다 한 번)
         if (blocker != null && frozenThisShot.Add(blocker))
@@ -407,7 +501,7 @@ public class KyodaiLaser : MonoBehaviour
             var e = explosions[i];
             var r = explosionRenderers[i];
             int age = frame - e.trigger;
-            bool show = age >= 0 && age < data.explosionVisualFrames;
+            bool show = age >= 0 && age < data.explosionVisualFrames && data.explosionFx == null; // 플립북이 있으면 그쪽이 그림
             r.enabled = show;
             if (!show) continue;
             float t = age / (float)Mathf.Max(1, data.explosionVisualFrames);
@@ -427,11 +521,32 @@ public class KyodaiLaser : MonoBehaviour
     private void Line(SpriteRenderer r, float length, float width, float angle, Color color)
     {
         r.enabled = true;
+        r.color = color;
+        float d = LocalScaleDivisor();
+        var cam = Camera.main;
+        if (lens != null && cam != null)
+        {
+            // 3D: 경기장 뒤 렌즈 → 경기장 평면의 끝. 판(스프라이트)의 x축을 그 방향으로, 면은 카메라 쪽으로 세운다.
+            // 화면에서는 평면 위 눈 → 끝 선과 겹치고(눈 = 렌즈의 화면 투영), 원근 때문에 렌즈 쪽이 자연히 가늘어진다
+            Vector3 a = LensWorld;
+            Vector3 b = new Vector3(Eye.x, Eye.y, PlaneZ) + (Vector3)(dir * length);
+            Vector3 axis = b - a;
+            float len3 = axis.magnitude;
+            if (len3 > 0.0001f)
+            {
+                Vector3 x = axis / len3;
+                Vector3 toCam = cam.transform.position - (a + b) * 0.5f;
+                Vector3 z = -(toCam - Vector3.Dot(toCam, x) * x);
+                if (z.sqrMagnitude < 0.0001f) z = Vector3.forward;
+                z.Normalize();
+                r.transform.SetPositionAndRotation(a, Quaternion.LookRotation(z, Vector3.Cross(z, x)));
+                r.transform.localScale = new Vector3(len3 / d, width / d, 1f);
+                return;
+            }
+        }
         r.transform.position = new Vector3(Eye.x, Eye.y, transform.position.z);
         r.transform.rotation = Quaternion.Euler(0f, 0f, angle);
-        float d = LocalScaleDivisor();
         r.transform.localScale = new Vector3(length / d, width / d, 1f);
-        r.color = color;
     }
 
     private void SetVisible(bool visible)

@@ -234,11 +234,11 @@ MonoBehaviour:
   sweepRounds: 1
   bulletSpeed: 4
   bulletCountPerSweep: 7
-  bulletPrefab: {fileID: 0}
+  bulletPrefab: {fileID: 1000000000000001, guid: 3c4d5e6f7a8b90123456789abcdef012, type: 3}
   landSquashScale: {x: 1.4, y: 0.55}
   squashFastInDuration: 0.04
   restoreElasticDuration: 0.25
-  muzzleFlashVfxPrefab: {fileID: 0}
+  muzzleFlashVfxPrefab: {fileID: 1556358949724385718, guid: 8f02ab2fb6e453649b1c339f0b3c288f, type: 3}
   bulletHitVfxPrefab: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
   landImpactVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
 --- !u!114 &8211426203969925326

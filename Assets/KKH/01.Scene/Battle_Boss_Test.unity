@@ -2055,6 +2055,10 @@ PrefabInstance:
       propertyPath: landImpactVfxPrefab
       value: 
       objectReference: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
+    - target: {fileID: 512307155976557277, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: muzzleFlashVfxPrefab
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 559362491712179911, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_Color.b
       value: 1
@@ -4714,7 +4718,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 1.193573, y: 29.942825}
+  m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

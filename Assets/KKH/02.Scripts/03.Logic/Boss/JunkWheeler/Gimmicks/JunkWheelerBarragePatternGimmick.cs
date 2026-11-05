@@ -259,7 +259,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             // 탄환 히트 트리거 부착 및 착탄 VFX 전달
-            var trigger = bullet.AddComponent<BossBulletHitTrigger>();
+            var trigger = bullet.GetComponent<BossBulletHitTrigger>() ?? bullet.AddComponent<BossBulletHitTrigger>();
             trigger.Initialize(this, bulletHitVfxPrefab);
 
             float rotAngle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
@@ -278,6 +278,15 @@ namespace RealSteel.Boss.JunkWheeler
         private static Sprite GetOrCreateFallbackBulletSprite()
         {
             if (_fallbackSprite != null) return _fallbackSprite;
+
+#if UNITY_EDITOR
+            var editorSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Sprites/1Boss_Robot/Junk_Bullet_Saw.png");
+            if (editorSprite != null)
+            {
+                _fallbackSprite = editorSprite;
+                return _fallbackSprite;
+            }
+#endif
 
             int size = 16;
             Texture2D tex = new Texture2D(size, size, TextureFormat.RGBA32, false);

@@ -309,7 +309,7 @@ MonoBehaviour:
   slamSquashScale: {x: 1.45, y: 0.5}
   squashFastInDuration: 0.04
   restoreElasticDuration: 0.28
-  groundImpactVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
+  groundImpactVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
   nailPunctureVfxPrefab: {fileID: 4190246949986612809, guid: 141de425b875475f98c35e49d1b2e24e, type: 3}
 --- !u!114 &8152764038469079320
@@ -426,7 +426,7 @@ MonoBehaviour:
   bladeLocalOffset: {x: 0, y: 0.375, z: -0.05}
   bounceImpactVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
   bladeHitVfxPrefab: {fileID: 3049097570590131687, guid: 213a2d0d531abce42a6b81559dec81d7, type: 3}
-  landImpactVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
+  landImpactVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
 --- !u!114 &8957008211139764899
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -487,7 +487,7 @@ MonoBehaviour:
   pauseBetweenDribbles: 0.1
   postLandVulnerableDelay: 0.8
   shockwaveVisualPrefab: {fileID: 8369145054601909066, guid: 4c2eec274044ee944b7e81b11ff89f62, type: 3}
-  dribbleLandVfxPrefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
+  dribbleLandVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
   tellCrackVfxPrefab: {fileID: 1323618065715081469, guid: 6592df7d1457e02409f105dcfa33d2d9, type: 3}
   hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}

@@ -159,6 +159,14 @@ public class Auction : Singleton<Auction>
     [SerializeField] public Image[] npcs;
     [SerializeField] private Image playerImage;
     public RectTransform PlayerSlot => playerImage != null ? playerImage.rectTransform : null;
+
+    //==========================사운드=============================
+    [Header("효과음 설정")]
+    [SerializeField] private AudioSource sfxAudioSource; // 사운드 재생용 컴포넌트
+    [SerializeField] public AudioClip giveUpEffect;      // GiveUpEffect
+    [SerializeField] public AudioClip dialogueEffect;    // DialogueEffect
+    [SerializeField] public AudioClip useSkillEffect;    // UseSkillEffect
+    [SerializeField] public AudioClip clickSoundEffect;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -574,6 +582,7 @@ public class Auction : Singleton<Auction>
 
     public void ForceFistBid(int bid) // 입찰 확정 (시간 초과 시 0원 강제 제출에도 사용)
     {
+        PlaySound(clickSoundEffect);
         if (fistBidTcs == null) return;
         UniTaskCompletionSource<int> tcs = fistBidTcs;
         fistBidTcs = null; // 중복 제출 방지
@@ -615,12 +624,14 @@ public class Auction : Singleton<Auction>
 
     public void OnSelectNormalMode()
     {
+        PlaySound(clickSoundEffect);
         if (IsShopOpen) return; // 상점이 열려 있으면 경매 시작 안 함
         modeSelectTcs?.TrySetResult(AuctionType.Normal);
     }
 
     public void OnSelectFistMode()
     {
+        PlaySound(clickSoundEffect);
         if (IsShopOpen) return;
         modeSelectTcs?.TrySetResult(AuctionType.Fist);
     }
@@ -767,6 +778,7 @@ public class Auction : Singleton<Auction>
 
     private void NormalAuctionButtonReady(bool active) // 일반 경매 버튼 활성화
     {
+        PlaySound(clickSoundEffect);
         if (raiseButton != null) raiseButton.gameObject.SetActive(active);
         if (giveUpButton != null) giveUpButton.gameObject.SetActive(active);
     }
@@ -786,6 +798,8 @@ public class Auction : Singleton<Auction>
         if (!IsTimeRunning || isPlayerGiveUp) return;
         isPlayerGiveUp = true;
         NormalAuctionButtonReady(false);
+        PlaySound(clickSoundEffect);
+        PlaySound(giveUpEffect);
         if (AuctionPlayer.Instance != null)
             AuctionPlayer.Instance.ShowThinkChatWithText("못해먹겠네. 안해.");
         ShowErrorMessage("입찰을 포기하셨습니다.").Forget();
@@ -794,6 +808,7 @@ public class Auction : Singleton<Auction>
 
     public void OnRaiseButton() // 레이즈 버튼
     {
+        PlaySound(clickSoundEffect);
         if (!IsTimeRunning || isPlayerGiveUp || IsCutscenePlaying) return;
         if (GlobalGold.Instance == null || GlobalGold.Instance.mainCharacterdata == null || GlobalGold.Instance.mainCharacterdata.Count == 0)
         {
@@ -985,5 +1000,14 @@ public class Auction : Singleton<Auction>
             npcs[i].gameObject.SetActive(false);
         }
     }
-    
+    //=========================사운드 재생======================
+    // 사운드 재생 통합 함수
+    public void PlaySound(AudioClip clip)
+    {
+        if (sfxAudioSource != null && clip != null)
+        {
+            sfxAudioSource.PlayOneShot(clip); // 메모리 추가 할당 없이 재생
+        }
+    }
+
 }

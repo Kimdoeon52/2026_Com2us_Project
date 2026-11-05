@@ -50,7 +50,6 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         playerThinkImage.transform.localPosition = originalLocalPos;
         playerThinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작
         thinkCanvasGroup.alpha = 1f;
-
         // DOTween 연출 시퀀스 생성
         thinkSequence = DOTween.Sequence();
 

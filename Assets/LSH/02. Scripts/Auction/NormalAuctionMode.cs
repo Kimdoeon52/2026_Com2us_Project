@@ -75,6 +75,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                     //manager.CurrentCost += raiseStep;
                     int beforeCost = manager.CurrentCost;
                     boss.UseBigSkill(manager);
+                    manager.PlaySound(manager.useSkillEffect);
                     if (manager.CurrentCost != beforeCost) manager.UpdateAuctionCostUI(); // 가격을 가리는 스킬이 덮어써지지 않게 가격이 바뀔 때만 갱신
 
                     if (manager.CurrentCost > beforeCost) // 가격을 올린 스킬만 입찰로 인정
@@ -104,6 +105,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
                 
                 manager.SetChat($"{ai.NPCName} 님이 입찰을 포기했습니다.");
+                manager.PlaySound(manager.giveUpEffect);
             }
 
             if (manager.CheckAllGiveUp()) //모두가 포기하면 낙찰 카운트다운 돌입

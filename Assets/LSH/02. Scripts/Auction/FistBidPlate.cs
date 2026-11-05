@@ -76,8 +76,7 @@ public class FistBidPlate : MonoBehaviour
         group.alpha = 1f;
         background.color = SealedColor;
         label.color = Color.white;
-        label.text = "봉인 완료";
-
+        label.text = "선택 완료";
         rect.DOKill(true);
         rect.localScale = Vector3.one;
         rect.DOPunchScale(Vector3.one * 0.25f, 0.35f, 8, 0.6f).SetLink(gameObject);

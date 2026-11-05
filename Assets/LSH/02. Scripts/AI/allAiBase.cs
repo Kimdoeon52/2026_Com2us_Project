@@ -103,7 +103,7 @@ public abstract class AllAiBase : MonoBehaviour
         thinkImage.transform.localPosition = originalLocalPos;
         thinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작
         thinkCanvasGroup.alpha = 1f;
-
+        Auction.Instance.PlaySound(Auction.Instance.dialogueEffect);
         // DOTween 연출 시퀀스 생성
         thinkSequence = DOTween.Sequence();
 

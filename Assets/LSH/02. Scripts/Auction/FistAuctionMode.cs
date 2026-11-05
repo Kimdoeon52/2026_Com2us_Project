@@ -68,7 +68,7 @@ public class FistAuctionMode : IAuctionMode
         }
 
         // ===== 2. 카운트다운 =====
-        manager.SetChat("모든 입찰서가 봉인되었습니다!");
+        manager.SetChat("모든 입찰서가 등록되었습니다!");
         await UniTask.Delay(1200);
         foreach (string count in new[] { "셋!", "둘!", "하나!" })
         {

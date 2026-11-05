@@ -344,9 +344,13 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (_hasHit || _ownerPattern == null) return;
 
-            if (collision.CompareTag("Player"))
+            GameObject playerObj = null;
+            if (collision.CompareTag("Player")) playerObj = collision.gameObject;
+            else if (collision.transform.root != null && collision.transform.root.CompareTag("Player")) playerObj = collision.transform.root.gameObject;
+
+            if (playerObj != null)
             {
-                if (_ownerPattern != null && _ownerPattern.IsPlayerInvincible(collision.gameObject))
+                if (_ownerPattern != null && _ownerPattern.IsPlayerInvincible(playerObj))
                 {
                     // 무적 회피 중에는 탄환이 관통하여 지나감 (피격 파티클 미생성)
                     return;
@@ -354,7 +358,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 _hasHit = true;
                 if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
-                _ownerPattern.ApplyDamageToPlayer(collision.gameObject);
+                _ownerPattern.ApplyDamageToPlayer(playerObj);
                 Destroy(gameObject);
             }
             else if (collision.CompareTag("Wall") || collision.CompareTag("Ground"))

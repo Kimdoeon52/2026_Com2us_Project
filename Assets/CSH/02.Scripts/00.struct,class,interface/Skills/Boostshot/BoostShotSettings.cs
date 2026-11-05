@@ -13,6 +13,17 @@ public struct BoostShotSettings
     public float farScale;      // 사거리 끝에서의 피해 배율 (steps가 2 이상일 때만 의미)
     public int hitLength;       // 박스가 켜져 있는 프레임 수. 1 = 활성 첫 프레임만(발사 순간 스냅샷), 0 = 활성 구간 전체
 
+    public FanShape ToShape() => new FanShape
+    {
+        rays = pellets,
+        spreadDegrees = spreadDegrees,
+        range = range,
+        thickness = thickness,
+        steps = steps,
+        farScale = farScale,
+        hitLength = hitLength
+    };
+
     // 부스터샷 일반 기준 기본값
     public static BoostShotSettings BoosterNormal => new BoostShotSettings
     {

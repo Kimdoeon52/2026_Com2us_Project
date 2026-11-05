@@ -62,6 +62,8 @@ public class HitDetection : MonoBehaviour
 
     // 다중 박스 판정에서 방어자 Hurt박스를 한 번만 월드로 바꿔 담는 임시 버퍼 (틱마다 새로 할당하지 않으려고 재사용) 최.추가
     private static readonly List<WorldBox> hurtBuffer = new List<WorldBox>(8);
+    // 최. 추가 — 박스마다 따로 맞히는 행동(ActionData.PerBoxSeparateHits)의 "맞은 박스별 계수"
+    private static readonly List<float> boxWeightBuffer = new List<float>(16);
 
     // 호출: Unity(이 컴포넌트가 활성화될 때). 씬에서 로봇 2개를 찾아 캐싱하고 CombatClock에 판정 함수를 등록한다
     private void OnEnable()
@@ -252,6 +254,7 @@ public class HitDetection : MonoBehaviour
         if (hurtBuffer.Count == 0) return;
 
         float weight = 0f;
+        boxWeightBuffer.Clear();
         foreach (var hitBox in attacker.State.GetActiveBoxes())
         {
             if (hitBox.type != BoxType.Hit) continue;
@@ -261,6 +264,7 @@ public class HitDetection : MonoBehaviour
             {
                 if (!BoxResolver.Overlap(worldHit, hurtBuffer[i])) continue;
                 weight += hitBox.DamageScaleOrOne;
+                boxWeightBuffer.Add(hitBox.DamageScaleOrOne); // 최. 추가
                 break; // 이 Hit박스(=발)는 한 번만 센다
             }
         }
@@ -268,13 +272,18 @@ public class HitDetection : MonoBehaviour
         if (weight <= 0f) return; // 한 발도 안 맞았다 — 이번 틱은 아무 일도 없었던 걸로 (MarkHit도 안 한다)
 
         // 히트스톱도 겹친 박스 계수의 합으로 — 산탄이 많이 맞을수록 묵직하게
-        ResolveHit(attacker, defender, weight, hitStopBoxScale: weight);
+        ActionData action = attacker.State.CurrentAction;
+        ResolveHit(attacker, defender, weight, hitStopBoxScale: weight,
+                   separateWeights: action != null && action.PerBoxSeparateHits ? boxWeightBuffer : null); // 최. 추가
     }
 
     // 실제로 겹침이 확인된 뒤, KKH API에 필요한 값(가드/회피 여부)을 계산해서 ProcessHit을 호출한다
     // damageWeight: 음수면 기존 경로(ActionData.Damage 그대로), 0 이상이면 "Damage × damageWeight"를 수치 직접 전달형으로 넘긴다  최.추가
     // hitStopBoxScale: 히트스톱 박스 계수(2026-10-28) — 맞힌 Hit박스의 damageScale(박스당 피해면 합)
-    private void ResolveHit(ActionExecutor attacker, ActionExecutor defender, float damageWeight = -1f, float hitStopBoxScale = 1f)
+    // separateWeights: null이 아니면 박스마다 ProcessHit을 따로 부른다(최. 추가) — 경직·넉백·히트스톱은 합친 결과로 1번
+    private void ResolveHit(ActionExecutor attacker, ActionExecutor defender, 
+                            float damageWeight = -1f, float hitStopBoxScale = 1f,
+                            List<float> separateWeights = null)
     {
         // CombatDataHub(KKH)는 CombatClock과 달리 씬에 없으면 Instance가 그냥 null을 반환한다
         // (자동 생성 안 함) — 여기서 막아두지 않으면 이 예외 하나가 CombatClock.Tick()의 나머지
@@ -309,6 +318,22 @@ public class HitDetection : MonoBehaviour
         {
             // KKH의 ActionData 오버로드와 똑같이 Damage가 0이면 10으로 본다
             float perBox = attackAction.Damage > 0f ? attackAction.Damage : 10f;
+            if (separateWeights != null && separateWeights.Count > 0)
+            {
+                // 최. 추가 — 맞은 박스마다 1번씩. 반환값은 피해 합·크리 여부만 합쳐서 아래 반응 처리에 1번 넘긴다
+                result = null;
+                int totalDamage = 0;
+                bool anyCritical = false;
+                foreach (float w in separateWeights)
+                {
+                    result = CombatDataHub.Instance.ProcessHit(attacker.FighterId, defender.FighterId, perBox * w);
+                    totalDamage += result.DamageToHp;
+                    anyCritical |= result.IsCritical;
+                }
+                result.DamageToHp = totalDamage;
+                result.IsCritical = anyCritical;
+            }
+            else
             result = CombatDataHub.Instance.ProcessHit(attacker.FighterId, defender.FighterId, perBox * damageWeight);
             // float 오버로드는 넉백 거리를 채워주지 않는다 (ActionData 오버로드만 채움) — 여기서 같은 값을 넣는다
             result.KnockbackDistance = attackAction.KnockbackDistance;
@@ -356,6 +381,7 @@ public class HitDetection : MonoBehaviour
         BossHurtZone targetZone = null;
         float weight = 0f;
         targetBuffer.Clear();
+        boxWeightBuffer.Clear(); // 최. 추가
         Vector2 hitPoint = attacker.transform.position;
 
         foreach (var hitBox in attacker.State.GetActiveBoxes())
@@ -369,10 +395,12 @@ public class HitDetection : MonoBehaviour
             target = boss;
             if (targetZone == null) targetZone = zone; // 여러 부위에 걸치면 처음 찾은 부위 배율
             weight += hitBox.DamageScaleOrOne;
+            boxWeightBuffer.Add(hitBox.DamageScaleOrOne); // 최. 추가
             if (!action.PerBoxDamage) break; // 일반 행동은 박스 하나만 맞아도 1히트 — 로봇전과 같은 규칙
         }
 
-        if (target != null) ResolveBossHit(attacker, target, targetZone, action, weight);
+        if (target != null) ResolveBossHit(attacker, target, targetZone, action, weight,
+                                           action.PerBoxDamage && action.PerBoxSeparateHits ? boxWeightBuffer : null); // 최. 추가
         if (targetBuffer.Count > 0) ResolveTargetHits(attacker, action, targetBuffer, hitPoint, bossAlsoHit: target != null);
     }
 
@@ -425,7 +453,9 @@ public class HitDetection : MonoBehaviour
     }
 
     // weight: 맞힌 Hit박스 계수의 합. 박스당 피해 행동이면 데미지에도 곱하고, 아니면 히트스톱에만 쓴다
-    private void ResolveBossHit(ActionExecutor attacker, BossControllerBase boss, BossHurtZone zone, ActionData action, float weight)
+    // separateWeights: null이 아니면 맞은 박스마다 ProcessHit을 따로 부른다 (최. 추가)
+    private void ResolveBossHit(ActionExecutor attacker, BossControllerBase boss, BossHurtZone zone, ActionData action, float weight,
+                                List<float> separateWeights = null)
     {
         var hub = CombatDataHub.Instance;
         string bossId = boss.Snapshot.bossID;
@@ -438,9 +468,28 @@ public class HitDetection : MonoBehaviour
         {
             // 수치 직접 전달형 — 박스 수·부위 배율을 데미지에 곱한다. D 판정은 ActionData 오버로드와 같은 규칙
             float baseDamage = action.Damage > 0f ? action.Damage : 10f; // ResolveHit과 같은 규칙
+            if (separateWeights != null && separateWeights.Count > 0)
+            {
+                // 최. 추가 — 맞은 박스마다 1번씩. 피해 합·크리 여부만 합쳐서 아래 처리에 넘긴다
+                result = null;
+                int totalDamage = 0;
+                bool anyCritical = false;
+                foreach (float w in separateWeights)
+                {
+                    result = hub.ProcessHit(attacker.FighterId, bossId, baseDamage * w * zoneScale,
+                                            isBasicAttackD: IsBasicAttackD(action));
+                    totalDamage += result.DamageToHp;
+                    anyCritical |= result.IsCritical;
+                }
+                result.DamageToHp = totalDamage;
+                result.IsCritical = anyCritical;
+            }
+            else
+            {
             float boxes = action.PerBoxDamage ? weight : 1f;
             result = hub.ProcessHit(attacker.FighterId, bossId, baseDamage * boxes * zoneScale,
                                     isBasicAttackD: IsBasicAttackD(action));
+            }
         }
         else
         {
@@ -463,6 +512,15 @@ public class HitDetection : MonoBehaviour
     private void TryProjectileHitBoss(Projectile projectile)
     {
         if (projectile.Owner == null || projectile.SourceAction == null) return;
+
+        // 최. 추가: 폭발형은 닿으면 터지기만 한다 — 보스·촉수·기물 피해는 폭발 범위 판정(ProjectileExplosion)이 한 번에 준다 (이중 피해 방지)
+        if (projectile.IsExplosive)
+        {
+            var touchBox = new WorldBox(projectile.GetWorldHitBox(), 0f);
+            targetBuffer.Clear();
+            if (CollectHitTargets(touchBox, targetBuffer) || FindBoss(touchBox, out _) != null) projectile.Explode();
+            return;
+        }
 
         // 촉수 등 체력이 따로 있는 대상이 먼저 — 맞으면 총알이 거기서 터진다
         targetBuffer.Clear();

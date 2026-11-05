@@ -22,12 +22,3 @@ public struct SkillParamEntry
     public ParamOption op;
     public float value;
 }
-
-[System.Serializable]
-public struct SkillParamOverride
-{
-    public int skillId;
-    public SkillParamId id;
-    public ParamOption op;
-    public float value;
-}

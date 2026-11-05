@@ -5,12 +5,10 @@ public readonly struct EffectContext
 {
     public readonly ActionExecutor Executor;
     public readonly BodyPart SourcePart;
-    public readonly SkillParamSet Params;
 
-    public EffectContext(ActionExecutor executor, BodyPart sourcePart, SkillParamSet p = null)
+    public EffectContext(ActionExecutor executor, BodyPart sourcePart)
     {
         Executor = executor;
         SourcePart = sourcePart;
-        Params = p ?? SkillParamSet.Empty;
     }
 }

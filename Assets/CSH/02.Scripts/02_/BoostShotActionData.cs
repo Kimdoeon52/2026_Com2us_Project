@@ -28,49 +28,6 @@ public class BoostShotActionData : TapSkillData
     private void OnValidate() => cache = null; // 인스펙터에서 값을 바꾸면 다시 계산
     private void OnEnable() => cache = null;
 
-    private FrameBox[] Build()
-    {
-        var list = new System.Collections.Generic.List<FrameBox>();
-
-        // 직접 저장된 박스 중 Hit는 버린다 (부채꼴이 대신함). Hurt/Push는 유지
-        foreach (var box in StoredFrameBoxes)
-            if (box.type != BoxType.Hit) list.Add(box);
-
-        int pellets = Mathf.Max(1, fan.pellets);
-        int steps = Mathf.Max(1, fan.steps);
-        Vector2 muzzle = ProjectileMuzzle;
-
-        for (int p = 0; p < pellets; p++)
-        {
-            // 1발이면 정면, 아니면 -spread/2 ~ +spread/2 로 균등 분할
-            float t = pellets == 1 ? 0f : (float)p / (pellets - 1) - 0.5f;
-            float angle = t * fan.spreadDegrees;
-            float rad = angle * Mathf.Deg2Rad;
-            Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-
-            for (int step = 0; step < steps; step++)
-            {
-                // step 0: 사거리 전체(배율 farScale), 이후: 점점 짧은 박스(나머지 배율을 균등 분배). 겹치면 합이 1.0
-                float length = fan.range * (steps - step) / steps;
-                float scale = steps == 1 ? 1f : (step == 0 ? fan.farScale : (1f - fan.farScale) / (steps - 1));
-
-                // 모든 박스가 총구에서 시작하도록 중심을 광선 방향으로 length/2 만큼 민다
-                Vector2 center = muzzle + dir * (length * 0.5f);
-                list.Add(new FrameBox
-                {
-                    type = BoxType.Hit,
-                    bodyPart = BodyPart.Core,
-                    rect = new Rect(center.x - length * 0.5f, center.y - fan.thickness * 0.5f, length, fan.thickness),
-                    rotation = angle,
-                    damageScale = scale,
-                    anchor = FrameAnchor.Active,
-                    startOffset = 0,
-                    length = Mathf.Max(0, fan.hitLength),
-                    startFrame = 1,                      // Legacy 앵커에서만 읽히는 값
-                    endFrame = Mathf.Max(1, TotalFrames)
-                });
-            }
-        }
-        return list.ToArray();
-    }
+    // 직접 저장된 Hit박스는 버리고(부채꼴이 대신함) Hurt/Push는 유지한다
+    private FrameBox[] Build() => FanBoxBuilder.BuildWithStored(StoredFrameBoxes, fan.ToShape(), ProjectileMuzzle, TotalFrames);
 }

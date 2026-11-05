@@ -11,23 +11,23 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31dadd9b23090b042af589e0ef2edac1, type: 3}
   m_Name: Boober
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier:
   actionName: Boober
   source: 1
   requiredPart: 1
-  startupFrames: 0
-  activeFrames: 0
-  recoveryFrames: 0
+  startupFrames: 18
+  activeFrames: 1
+  recoveryFrames: 24
   isInvincibleDuringActive: 0
   isGuardable: 1
   causesKnockdown: 0
   staggerValue: 0
   knockbackDistance: 0
-  damage: 0
+  damage: 40
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: 
-  activeClipName: 
+  animationClipName: Straight
+  activeClipName:
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -35,16 +35,46 @@ MonoBehaviour:
   advanceDuringActiveOnly: 0
   trailAfterImageInterval: 0
   groundOnly: 0
-  projectile: {fileID: 0}
+  projectile: {fileID: 11400000, guid: 18d9d0726b76a4a4c937850098d70f34, type: 2}
   projectileIntervalFrames: 15
-  projectileMuzzle: {x: 0, y: 0}
+  projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
   perBoxDamage: 0
-  cooldownFrames: 0
+  cooldownFrames: 480
   cooldownOwner: {fileID: 0}
   cylinderCost: 0
   fallbackAction: {fileID: 0}
-  frameBoxes: []
-  chargedVariant: {fileID: 0}
+  frameBoxes:
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.22
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  chargedVariant: {fileID: 11400000, guid: ab393e43ea5142d096a5ecbc08511d1f, type: 2}
   chargeThresholdFrames: 18
   autoReleaseFrames: 0

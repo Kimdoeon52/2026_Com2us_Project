@@ -173,6 +173,10 @@ public class ActionData : ScriptableObject
     [Tooltip("활성 구간 동안 총구에서 뿜을 불. 로봇에 FlameEmitter가 있어야 보인다")]
     [SerializeField] private FlameData flame;
 
+    // 최. 추가 — 구간별 이펙트 프리팹 (선딜 / 선딜~활성 / 활성 / 활성~후딜 / 후딜 / 전체). ActionVfxPlayer가 재생. 순수 연출
+    [Tooltip("구간별로 생성할 이펙트 프리팹 목록. 로봇의 ActionVfxPlayer(자동 부착)가 재생한다")]
+    [SerializeField] private List<ActionVfxEntry> vfx = new List<ActionVfxEntry>();
+
 
     // ── 박스당 피해 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
     // 2026-10-15 추가: 부채꼴 산탄처럼 "겹친 Hit박스 수만큼 피해가 쌓이는" 행동용.
@@ -180,6 +184,11 @@ public class ActionData : ScriptableObject
     // FrameBox.damageScale을 합산해 ProcessHit을 1번 호출한다. 끄면 기존처럼 행동당 Damage 1회
     [Tooltip("켜면 Damage가 '박스 1개당' 피해가 된다. 겹친 Hit박스의 damageScale 합 × Damage로 한 번에 맞힌다 (산탄용)")]
     [SerializeField] private bool perBoxDamage;
+
+    // 최. 추가 — 박스당 피해에서 "합산 1회" 대신 "맞은 박스마다 ProcessHit 1회"(크리·방어·데미지 숫자가 박스마다 따로).
+    // 경직·넉백·히트스톱은 틱당 1번만 (박스 수만큼 밀려나지 않게)
+    [Tooltip("박스당 피해가 켜져 있을 때만 읽힘. 켜면 겹친 Hit박스마다 공격(ProcessHit)을 따로 호출한다. 끄면 합산해서 1번")]
+    [SerializeField] private bool perBoxSeparateHits;
 
 
     // ── 쿨타임 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
@@ -264,8 +273,10 @@ public class ActionData : ScriptableObject
     public ActionData CooldownKey => cooldownOwner != null ? cooldownOwner : this;
     public int CylinderCost => cylinderCost;
     public virtual bool PerBoxDamage => perBoxDamage;
+    public virtual bool PerBoxSeparateHits => perBoxSeparateHits; // 최. 추가
     public ActionData FallbackAction => fallbackAction;
     public FlameData Flame => flame;
+    public IReadOnlyList<ActionVfxEntry> Vfx => vfx; // 최. 추가
 
     public virtual FrameBox[] FrameBoxes => frameBoxes;
     protected FrameBox[] StoredFrameBoxes => frameBoxes;

@@ -40,25 +40,22 @@ public class ActionModifierData : EquipmentEffect
         return slot.Value.TryGetBodyPart(out BodyPart part) && part == SourcePart;
     }
 
-    public override EffectInstance CreateInstance(EffectContext ctx) => new Instance(this, ctx.Params, ctx.Executor);
+    public override EffectInstance CreateInstance(EffectContext ctx) => new Instance(this, ctx.Executor);
 
     // 상태가 없는 효과라서 데이터 참조만 들고 있는다
     private sealed class Instance : EffectInstance
     {
         private readonly ActionModifierData data;
-        private readonly SkillParamSet p;
         private readonly ActionExecutor executor;
-        public Instance(ActionModifierData data, SkillParamSet p, ActionExecutor executor)
+        public Instance(ActionModifierData data, ActionExecutor executor)
         {
             this.data = data;
-            this.p = p;
             this.executor = executor;
         }
 
         public override void Contribute(ActionData action, ResolvedModifiers r)
         {
             if (!data.Matches(action, executor)) return;
-
 
             var list = data.BaseParams;
             for (int i = 0; i < list.Length; i++)

@@ -56,26 +56,4 @@ public sealed class ResolvedModifiers
         if (hasSet[i]) return set[i];
         return (baseValue + add[i]) * mul[i];
     }
-
-    private static int ComputeCount()
-    {
-        int max = 0;
-        foreach (SkillParamId id in Enum.GetValues(typeof(SkillParamId)))
-            max = Math.Max(max, (int)id);
-        return max + 1;
-    }
 }
-
-
-/*
-public struct ResolvedModifiers
-{
-    public float HitBoxWidthAdd;
-    public float HitBoxHeightAdd;
-    public float KnockbackMultiplier;
-
-    // default(ResolvedModifiers)는 KnockbackMultiplier가 0이 되어 넉백이 사라지므로,
-    // "보정 없음" 상태가 필요할 땐 반드시 이 Identity를 쓴다
-    public static ResolvedModifiers Identity => new ResolvedModifiers { KnockbackMultiplier = 1f };
-}
-*/

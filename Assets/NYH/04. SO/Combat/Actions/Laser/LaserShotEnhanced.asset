@@ -15,8 +15,8 @@ MonoBehaviour:
   actionName: LaserShot
   source: 1
   requiredPart: 2
-  startupFrames: 90
-  activeFrames: 6
+  startupFrames: 24
+  activeFrames: 90
   recoveryFrames: 30
   isInvincibleDuringActive: 0
   isGuardable: 0
@@ -27,7 +27,7 @@ MonoBehaviour:
   hitIntervalFrames: 9
   hitStopScale: 1
   animationClipName: 
-  activeClipName: 
+  activeClipName: Straight
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0

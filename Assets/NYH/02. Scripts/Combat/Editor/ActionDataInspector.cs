@@ -45,7 +45,8 @@ public static class ActionDataInspector
         new Group("띄우기 (맞은 상대)", false, "launchVelocity"),
         new Group("투사체", false, "projectile", "projectileIntervalFrames", "projectileMuzzle"),
         new Group("화염", false, "flame"),
-        new Group("박스당 피해", false, "perBoxDamage"),
+        new Group("구간별 이펙트", false, "vfx"), // 최. 추가
+        new Group("박스당 피해", false, "perBoxDamage", "perBoxSeparateHits"), // 최. 추가: perBoxSeparateHits
         new Group("쿨타임", false, "cooldownFrames", "cooldownOwner"),
         new Group("실린더", false, "cylinderCost", "fallbackAction"),
 

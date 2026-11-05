@@ -13,7 +13,7 @@ public class EquipmentEffectTable : ScriptableObject
     [System.Serializable]
     public class Entry
     {
-        [Tooltip("PartMasterData.partID와 정확히 같은 문자열")]
+        [Tooltip("구분용 이름 (조회에는 쓰이지 않는다). 효과는 각 에셋의 skillId로 찾는다 — PartMasterData.activeSkillId / passiveSkillIds와 맞출 것")]
         public string partID;
 
         [Tooltip("이 파츠를 장착했을 때 등록될 효과들 (ActionModifierData, ActionReplaceEffect 등 EquipmentEffect 하위 에셋)")]
@@ -22,38 +22,13 @@ public class EquipmentEffectTable : ScriptableObject
 
     [SerializeField] private List<Entry> entries = new List<Entry>();
 
-    private static readonly EquipmentEffect[] Empty = new EquipmentEffect[0];
-
     // 매번 리스트를 순회하지 않도록 첫 조회 때 딕셔너리로 만들어둔다. 직렬화하지 않는 캐시다
-    private Dictionary<string, EquipmentEffect[]> lookup;
-    private Dictionary<int, EquipmentEffect> skillLookup; // partID용 lookup과 분리
+    private Dictionary<int, EquipmentEffect> skillLookup;
 
-    private void OnEnable() { lookup = null; skillLookup = null; }
-    private void OnValidate() { lookup = null; skillLookup = null; }
+    private void OnEnable() => skillLookup = null;
+    private void OnValidate() => skillLookup = null;
 
-    /// <summary>partID에 연결된 효과 목록. 없으면 빈 배열</summary>
-    public IReadOnlyList<EquipmentEffect> GetEffects(string partID)
-    {
-        if (string.IsNullOrEmpty(partID)) return Empty;
-
-        if (lookup == null) BuildLookup();
-        return lookup.TryGetValue(partID, out var effects) ? effects : Empty;
-    }
-
-    private void BuildLookup()
-    {
-        lookup = new Dictionary<string, EquipmentEffect[]>();
-        foreach (var entry in entries)
-        {
-            if (entry == null || string.IsNullOrEmpty(entry.partID)) continue;
-
-            if (lookup.ContainsKey(entry.partID))
-                Debug.LogWarning($"[EquipmentEffectTable] partID '{entry.partID}'가 중복 등록됨 - 뒤의 항목이 앞을 덮어씀", this);
-
-            lookup[entry.partID] = entry.effects ?? Empty;
-        }
-    }
-
+    /// <summary>skillId에 해당하는 효과. 없으면 null (EquipmentEffectApplier가 장착 파츠의 스킬 ID로 부른다)</summary>
     public EquipmentEffect Get(int skillId)
     {
         if (skillLookup == null)

@@ -75,6 +75,9 @@ public class Projectile : MonoBehaviour
         exploded = true;
         live.Remove(this);
         PlayState(data.ImpactStateName);
+
+        // 최. 추가: 폭발형은 터지는 자리에서 범위 피해 (명중·사거리 끝 공통). Live에서 뺀 뒤라 다시 불려도 이중 폭발 없음
+        if (data is ExplosiveProjectileData explosive) ProjectileExplosion.Detonate(this, explosive);
     }
 
     // 호출: CombatClock.OnCombatTick (1/60초마다). 날아가는 중이면 전진, 터진 뒤면 연출 시간만 센다

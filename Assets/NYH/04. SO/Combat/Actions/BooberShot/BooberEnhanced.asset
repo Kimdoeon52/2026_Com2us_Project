@@ -9,42 +9,57 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bfdd8ddc40607e444a2d1411cc908f5b, type: 3}
-  m_Name: Stomp
-  m_EditorClassIdentifier: 
-  actionName: Stomp
+  m_Script: {fileID: 11500000, guid: 31dadd9b23090b042af589e0ef2edac1, type: 3}
+  m_Name: BooberEnhanced
+  m_EditorClassIdentifier:
+  actionName: BooberEnhanced
   source: 1
-  requiredPart: 2
-  startupFrames: 3
-  activeFrames: 9
+  requiredPart: 1
+  startupFrames: 18
+  activeFrames: 1
   recoveryFrames: 24
   isInvincibleDuringActive: 0
-  isGuardable: 0
+  isGuardable: 1
   causesKnockdown: 0
   staggerValue: 0
   knockbackDistance: 0
-  damage: 30
+  damage: 60
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: 
-  activeClipName: 
+  animationClipName: Straight
+  activeClipName:
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: 0
   advanceDuringActiveOnly: 0
   trailAfterImageInterval: 0
-  groundOnly: 1
-  projectile: {fileID: 0}
+  groundOnly: 0
+  projectile: {fileID: 11400000, guid: 338700a9ec664d93b46431eea5566fa8, type: 2}
   projectileIntervalFrames: 15
-  projectileMuzzle: {x: 0, y: 0}
+  projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
   perBoxDamage: 0
-  cooldownFrames: 0
-  cooldownOwner: {fileID: 0}
-  cylinderCost: 0
-  fallbackAction: {fileID: 0}
+  cooldownFrames: 480
+  cooldownOwner: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}
+  cylinderCost: 1
+  fallbackAction: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}
   frameBoxes:
+  - type: 2
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.22
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
   - type: 1
     bodyPart: 5
     rect:
@@ -60,22 +75,6 @@ MonoBehaviour:
     length: 0
     startFrame: 0
     endFrame: 0
-  - type: 0
-    bodyPart: 5
-    rect:
-      serializedVersion: 2
-      x: -1
-      y: -0.25
-      width: 2
-      height: 0.55
-    rotation: 0
-    damageScale: 0
-    anchor: 3
-    startOffset: 5
-    length: 9
-    startFrame: 0
-    endFrame: 0
   chargedVariant: {fileID: 0}
   chargeThresholdFrames: 18
   autoReleaseFrames: 0
-  maxActiveFrames: 120

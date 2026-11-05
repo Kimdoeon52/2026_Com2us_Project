@@ -25,8 +25,11 @@ MonoBehaviour:
   knockbackDistance: 0
   damage: 10
   hitIntervalFrames: 0
+  hitStopScale: 1
   animationClipName: Straight
   activeClipName: 
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: 0
   advanceDuringActiveOnly: 0
@@ -36,7 +39,18 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    phase: 5
+    endMode: 2
+    offset: {x: 0.23, y: 0.18}
+    rotation: 0
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 1
+    sortingOrderOffset: 55
   perBoxDamage: 1
+  perBoxSeparateHits: 1
   cooldownFrames: 60
   cooldownOwner: {fileID: 0}
   cylinderCost: 0
@@ -215,6 +229,6 @@ MonoBehaviour:
     spreadDegrees: 60
     range: 2.5
     thickness: 0.35
-    steps: 2
+    steps: 1
     farScale: 0.5
     hitLength: 1

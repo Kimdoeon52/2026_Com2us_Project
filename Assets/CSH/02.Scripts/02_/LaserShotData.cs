@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -29,6 +28,18 @@ public class LaserShotData : HoldSkillData
         public float thickness;                         // 광선 두께. 사거리 끝에서 광선 사이가 비지 않게 충분히
         [Min(0)] public int hitLength;                  // 박스가 켜져 있는 프레임 수. 0 = 활성 구간 전체
 
+        // 레이저는 거리 무관 동일 피해라 감쇠 단계 1 (모든 광선 배율 1.0)
+        public FanShape ToShape() => new FanShape
+        {
+            rays = rays,
+            spreadDegrees = spreadDegrees,
+            range = range,
+            thickness = thickness,
+            steps = 1,
+            farScale = 1f,
+            hitLength = hitLength
+        };
+
         public static FanSettings Default => new FanSettings
         {
             rays = 11,
@@ -58,44 +69,8 @@ public class LaserShotData : HoldSkillData
 
     public override SkillRunner CreateRunner() => new Runner(this);
 
-    // BoostShotActionData.Build와 같은 규칙에서 거리 감쇠만 뺀 것 (레이저는 거리 무관 동일 피해)
-    private FrameBox[] Build()
-    {
-        var list = new List<FrameBox>();
-
-        // 직접 저장된 박스 중 Hit는 버린다 (부채꼴이 대신함). Hurt/Push는 유지
-        foreach (var box in StoredFrameBoxes)
-            if (box.type != BoxType.Hit) list.Add(box);
-
-        int rays = Mathf.Max(1, fan.rays);
-        Vector2 muzzle = ProjectileMuzzle;
-        float length = fan.range;
-
-        for (int i = 0; i < rays; i++)
-        {
-            float t = rays == 1 ? 0f : (float)i / (rays - 1) - 0.5f;
-            float angle = t * fan.spreadDegrees;
-            float rad = angle * Mathf.Deg2Rad;
-            Vector2 dir = new Vector2(Mathf.Cos(rad), Mathf.Sin(rad));
-
-            // 모든 광선이 총구에서 시작하도록 중심을 광선 방향으로 length/2 만큼 민다
-            Vector2 center = muzzle + dir * (length * 0.5f);
-            list.Add(new FrameBox
-            {
-                type = BoxType.Hit,
-                bodyPart = BodyPart.Core,
-                rect = new Rect(center.x - length * 0.5f, center.y - fan.thickness * 0.5f, length, fan.thickness),
-                rotation = angle,
-                damageScale = 1f,
-                anchor = FrameAnchor.Active,
-                startOffset = 0,
-                length = fan.hitLength,
-                startFrame = 1,                      // Legacy 앵커에서만 읽히는 값
-                endFrame = Mathf.Max(1, TotalFrames)
-            });
-        }
-        return list.ToArray();
-    }
+    // BoostShotActionData와 같은 공용 빌더, 거리 감쇠만 없음 (레이저는 거리 무관 동일 피해)
+    private FrameBox[] Build() => FanBoxBuilder.BuildWithStored(StoredFrameBoxes, fan.ToShape(), ProjectileMuzzle, TotalFrames);
 
     private sealed class Runner : HoldSkillRunner
     {

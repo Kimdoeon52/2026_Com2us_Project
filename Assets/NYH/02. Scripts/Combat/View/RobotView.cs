@@ -239,6 +239,9 @@ public class RobotView : MonoBehaviour
         // 데미지 숫자는 맞을 수 있는 로봇이면 항상 필요하다 (2026-10-11)
         if (GetComponent<DamageNumberEmitter>() == null)
             gameObject.AddComponent<DamageNumberEmitter>();
+        // 최. 추가 — 구간별 이펙트. 스킬·체인 행동은 AvailableActions에 없을 수 있어서 항상 붙인다 (이펙트가 없으면 아무것도 안 함)
+        if (GetComponent<ActionVfxPlayer>() == null)
+            gameObject.AddComponent<ActionVfxPlayer>();
     }
 
     // 호출: ActionState.OnActionBegin 이벤트. 받음: 시작된 ActionData — AnimationClipName 스테이트를 재생하고 속도를 데이터 길이에 맞춘다

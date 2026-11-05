@@ -11,7 +11,7 @@ public static class ProjectileExplosion
 {
     private static readonly List<Collider2D> overlapBuffer = new List<Collider2D>(32);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
-    private static readonly HashSet<Component> handled = new HashSet<Component>(); // 보스·기물 중복 방지 (콜라이더 여러 개)
+    private static readonly HashSet<object> handled = new HashSet<object>(); // 보스·촉수·기물 중복 방지 (콜라이더 여러 개)
 
     public static void Detonate(Projectile projectile, ExplosiveProjectileData data)
     {
@@ -54,6 +54,15 @@ public static class ProjectileExplosion
         foreach (var col in overlapBuffer)
         {
             if (col == null) continue;
+
+            // 촉수 등 체력이 따로 있는 대상 — 보스 밑에 있어도 보스 대신 이쪽이 맞는다 (HitDetection.FindBoss와 같은 규칙)
+            var target = hitBoss ? col.GetComponentInParent<IPlayerHitTarget>() : null;
+            if (target != null)
+            {
+                if (target.IsHittable && handled.Add(target))
+                    target.TakePlayerHit(action.Damage > 0f ? action.Damage : 10f, center); // HitDetection.ResolveTargetHits와 같은 규칙
+                continue;
+            }
 
             var boss = hitBoss ? col.GetComponentInParent<BossControllerBase>() : null;
             if (boss != null && boss.Snapshot != null && boss.Snapshot.IsAlive && handled.Add(boss))

@@ -20,6 +20,11 @@ namespace RealSteel.Dialogue
 
         private readonly List<BubbleView> views = new List<BubbleView>();
 
+        public void BindCamera(Camera camera)
+        {
+            worldCamera = camera;
+        }
+
         private void Awake()
         {
             if (template == null || !template.IsValid)

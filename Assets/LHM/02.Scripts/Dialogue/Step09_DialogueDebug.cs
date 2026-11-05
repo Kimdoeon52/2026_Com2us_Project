@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -26,29 +25,36 @@ namespace RealSteel.Dialogue
         [Header("난이도 선택 UI 테스트 — 파츠 내구도 0~1 (머리·왼팔·오른팔·왼다리·오른다리)")]
         [SerializeField] private float[] partDurability = { 0.82f, 0.64f, 0.30f, 0.91f, 0f };
 
-        private readonly Dictionary<string, int> attempts = new Dictionary<string, int>();
-        private readonly Dictionary<string, int> loses = new Dictionary<string, int>();
-        private readonly Dictionary<string, int> bestCleared = new Dictionary<string, int>();
-        private readonly HashSet<string> clearedRegions = new HashSet<string>();
+        private RealSteel.BossRace.BossProgressStore store;
+        private RealSteel.BossRace.SeasonRaceCall seasonCall;
         private int difficultyIndex = 2;
         private int bossIndex;
 
         public string SelectedDifficulty => Difficulties[difficultyIndex];
         public string TargetBoss => regionBosses != null && regionBosses.Length > 0 ? regionBosses[bossIndex % regionBosses.Length] : "boss.wheel";
 
-        public int AttemptsOf(string boss) => attempts.TryGetValue(boss, out int count) ? count : 0;
-        public int LosesOf(string boss) => loses.TryGetValue(boss, out int count) ? count : 0;
-        public int BestDifficulty(string boss) => bestCleared.TryGetValue(boss, out int index) ? index : -1;
-        public bool IsRegionCleared(string boss) => clearedRegions.Contains(boss);
-        public int SeasonDaysLeft => Mathf.Max(0, seasonLength - manager.Variables.GetInt("season.day"));
-        public string RankText => $"{manager.Variables.Get("rank.band")}위";
-        public string ScoreText => "-";
+        public int AttemptsOf(string boss) => Store.AttemptsOf(boss);
+        public int LosesOf(string boss) => Store.LosesOf(boss);
+        public int BestDifficulty(string boss) => Store.BestDifficulty(boss);
+        public bool IsRegionCleared(string boss) => Store.IsRegionCleared(boss);
+        public int SeasonDaysLeft => Store.SeasonDaysLeft;
+        public string RankText => Store.RankText;
+        public string ScoreText => Store.ScoreText;
+        public bool TryGetDurability(BodyPart part, out float ratio) => Store.TryGetDurability(part, out ratio);
 
-        public bool TryGetDurability(BodyPart part, out float ratio)
+        private RealSteel.BossRace.BossProgressStore Store
         {
-            int index = (int)part;
-            ratio = partDurability != null && index < partDurability.Length ? partDurability[index] : 0f;
-            return partDurability != null && index < partDurability.Length;
+            get
+            {
+                if (store != null) return store;
+
+                store = FindFirstObjectByType<RealSteel.BossRace.BossProgressStore>(FindObjectsInactive.Include);
+                if (store != null) return store;
+
+                store = gameObject.AddComponent<RealSteel.BossRace.BossProgressStore>();
+                store.Configure(manager, seasonLength, partDurability);
+                return store;
+            }
         }
 
         public void SetDifficulty(string difficulty)
@@ -78,13 +84,13 @@ namespace RealSteel.Dialogue
         private void ToggleRegionCleared()
         {
             string boss = TargetBoss;
-            if (!clearedRegions.Remove(boss)) clearedRegions.Add(boss);
-            Debug.Log($"[Step09] {boss} 지역 레이스 시즌 1위: {(clearedRegions.Contains(boss) ? "달성 → 다음 지역 개방" : "취소")}");
+            Store.ToggleRegionCleared(boss);
+            Debug.Log($"[Step09] {boss} 지역 레이스 시즌 1위: {(Store.IsRegionCleared(boss) ? "달성 → 다음 지역 개방" : "취소")}");
         }
 
         public void AddAttempt(string boss)
         {
-            attempts[boss] = AttemptsOf(boss) + 1;
+            Store.AddAttempt(boss);
         }
 
         private void Start()
@@ -97,8 +103,20 @@ namespace RealSteel.Dialogue
             }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
+            seasonCall = FindFirstObjectByType<RealSteel.BossRace.SeasonRaceCall>(FindObjectsInactive.Include);
+            if (seasonCall != null) seasonCall.SeasonStarted += OnSeasonStarted;
             Debug.Log("[Step09] 1~5 난이도 / Shift+G 대상 보스 전환 / Shift+B 대상 보스 지역 시즌 1위(다음 지역 개방) 전환 / F1 패배 / F2 승리 / F3 경매 정산(판매) / F4 말 걸기 / F5 기록 / F6 저장 / F7 다시 읽기 / F8 세이브 폴더 / F9 순위 올리기 (Shift: 내리기) / F10 풀스크린 / F11 인터미션 / F12 초기화 후 저장 / Shift+F12 세이브 삭제");
 #endif
+        }
+
+        private void OnDestroy()
+        {
+            if (seasonCall != null) seasonCall.SeasonStarted -= OnSeasonStarted;
+        }
+
+        private void OnSeasonStarted(string bossId)
+        {
+            if (!string.IsNullOrEmpty(bossId)) SetTargetBoss(bossId);
         }
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -147,19 +165,7 @@ namespace RealSteel.Dialogue
 
         public void RecordHunt(string result, string boss)
         {
-            DialogueVariables variables = manager.Variables;
-            string difficulty = Difficulties[difficultyIndex];
-
-            variables.Set("hunt.lastResult", result);
-            variables.Set("hunt.lastBoss", boss);
-            variables.Set("hunt.lastDifficulty", difficulty);
-            variables.Add("hunt.count", 1);
-            variables.Add(result == "win" ? "hunt.winCount" : "hunt.loseCount", 1);
-            if (result == "lose") loses[boss] = LosesOf(boss) + 1;
-            else if (difficultyIndex > BestDifficulty(boss)) bestCleared[boss] = difficultyIndex;
-
-            manager.LogState($"{(result == "win" ? "승리" : "패배")} ({boss}, {difficulty}) — 이 보스 패배 {LosesOf(boss)}회");
-            manager.Save();
+            Store.RecordHunt(result, boss, Difficulties[difficultyIndex]);
         }
 
         private void RecordAuction(string result)

@@ -52,6 +52,10 @@ namespace RealSteel.Dialogue.EditorTools
 
         private static readonly ToolGroup[] Groups =
         {
+            new ToolGroup("프리팹",
+                new ToolItem("프리팹 만들기 (DialogueTest 기준)", DialoguePrefabBuilder.Build, DialoguePrefabBuilder.Exists),
+                new ToolItem("씬에 프리팹 배치 + 씬 연결", DialogueSceneLinker.PlaceAndLink, Has<DialogueSceneBinder>),
+                new ToolItem("씬 연결 다시 실행", DialogueSceneLinker.LinkActiveScene, null)),
             new ToolGroup("기본 대화",
                 new ToolItem("대화 코어 (9단계)", Step09_SceneSetup.Setup, () => Has<DialogueManager>() && Has<NpcChoiceMenu>(), true),
                 new ToolItem("LJS 시간 (10-1단계)", TimeSystemSetup.Setup, () => Has<TimeSystemUiStack>() && !Has<DummyUiStack>(), true,
@@ -186,7 +190,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
             else if (!SetupKit.IsLhmScene(scene))
             {
-                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 토벌 출발, NPC 스프라이트, 단축키 정리, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 단축키 정리, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
             }
         }
 

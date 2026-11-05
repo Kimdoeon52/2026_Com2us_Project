@@ -30,6 +30,15 @@ namespace RealSteel.Dialogue
         private bool waitingRelease;
         private bool interactorDisabledByUs;
 
+        public void BindScene(PlayerInteractor newInteractor, Behaviour[] newMovement, Behaviour[] newInteractions, GameObject[] newHiddenPrompts, Behaviour[] newUiHotkeys)
+        {
+            interactor = newInteractor;
+            movement = newMovement;
+            interactions = newInteractions;
+            hiddenPrompts = newHiddenPrompts;
+            uiHotkeys = newUiHotkeys;
+        }
+
         private void OnDisable()
         {
             if (blocked) Unblock();

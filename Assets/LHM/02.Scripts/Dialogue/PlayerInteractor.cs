@@ -20,6 +20,15 @@ namespace RealSteel.Dialogue
         public bool IsBusy => (menu != null && menu.IsBusy) || (manager != null && manager.IsTalking) ||
                               (talkCamera != null && talkCamera.IsBusy);
 
+        public void Bind(DialogueManager newManager, NpcChoiceMenu newMenu, TMP_Text newPrompt, Camera camera, NpcTalkCamera newTalkCamera)
+        {
+            if (newManager != null) manager = newManager;
+            if (newMenu != null) menu = newMenu;
+            if (newPrompt != null) prompt = newPrompt;
+            if (camera != null) worldCamera = camera;
+            if (newTalkCamera != null) talkCamera = newTalkCamera;
+        }
+
         private void Start()
         {
             if (manager == null || menu == null)

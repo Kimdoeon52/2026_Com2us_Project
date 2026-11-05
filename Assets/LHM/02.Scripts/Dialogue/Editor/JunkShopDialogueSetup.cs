@@ -345,7 +345,7 @@ namespace RealSteel.Dialogue.EditorTools
                 log.AppendLine($"- {HelpName} 이미 있음");
             }
 
-            var hotkeys = FindInScene<Behaviour>(scene).Where(b => UiHotkeyTypes.Contains(b.GetType().Name)).ToArray();
+            Behaviour[] hotkeys = UiHotkeysIn(scene);
             var menu = FindInScene<NpcChoiceMenu>(scene).FirstOrDefault();
             foreach (FieldInputBridge bridge in FindInScene<FieldInputBridge>(scene))
             {
@@ -360,7 +360,7 @@ namespace RealSteel.Dialogue.EditorTools
 
         private const string ShopWindowName = "ShopWindow";
 
-        private static GameObject FindShopWindow(Scene scene)
+        internal static GameObject FindShopWindow(Scene scene)
         {
             foreach (MonoBehaviour behaviour in FindInScene<MonoBehaviour>(scene))
             {
@@ -466,7 +466,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
         }
 
-        private static void PlaceNpcs(List<GameObject> npcs, GameObject player, Dictionary<string, Pose> keptPoses, StringBuilder log)
+        internal static void PlaceNpcs(List<GameObject> npcs, GameObject player, Dictionary<string, Pose> keptPoses, StringBuilder log)
         {
             Vector3 forward = Vector3.ProjectOnPlane(player.transform.forward, Vector3.up);
             if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
@@ -511,25 +511,36 @@ namespace RealSteel.Dialogue.EditorTools
             Undo.RegisterCreatedObjectUndo(go, UndoName);
             var bridge = go.AddComponent<FieldInputBridge>();
 
-            var movement = player.GetComponents<Behaviour>().Where(b => MovementTypes.Contains(b.GetType().Name)).ToArray();
-            var interactions = FindInScene<Behaviour>(target).Where(b => InteractionTypes.Contains(b.GetType().Name)).ToArray();
-            var prompts = FindInScene<Behaviour>(target).Where(b => PromptTypes.Contains(b.GetType().Name)).ToArray();
-            var promptRoots = prompts
-                .Select(p => new SerializedObject(p).FindProperty("_root")?.objectReferenceValue as GameObject)
-                .Where(g => g != null)
-                .ToArray();
+            CollectBridgeTargets(player, target, out Behaviour[] movement, out Behaviour[] interactions, out GameObject[] promptRoots);
 
             var so = new SerializedObject(bridge);
             so.FindProperty("interactor").objectReferenceValue = interactor;
             SetArray(so.FindProperty("movement"), movement);
-            SetArray(so.FindProperty("interactions"), interactions.Concat(prompts).ToArray());
+            SetArray(so.FindProperty("interactions"), interactions);
             SetArray(so.FindProperty("hiddenPrompts"), promptRoots);
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            log.AppendLine($"- {BridgeName}: 대화 중 끌 이동 {movement.Length}개({string.Join(", ", movement.Select(m => m.GetType().Name))}), NPC 근처에서 끌 상호작용 {interactions.Length}개 + 안내 {promptRoots.Length}개, 미니게임 중 NPC 상호작용 끔");
+            log.AppendLine($"- {BridgeName}: 대화 중 끌 이동 {movement.Length}개({string.Join(", ", movement.Select(m => m.GetType().Name))}), NPC 근처에서 끌 상호작용·안내 컴포넌트 {interactions.Length}개 + 안내 {promptRoots.Length}개, 미니게임 중 NPC 상호작용 끔");
         }
 
-        private static void DisableSceneShortcuts(Scene target, StringBuilder log)
+        internal static void CollectBridgeTargets(GameObject player, Scene scene, out Behaviour[] movement, out Behaviour[] interactions, out GameObject[] promptRoots)
+        {
+            movement = player != null ? player.GetComponents<Behaviour>().Where(b => MovementTypes.Contains(b.GetType().Name)).ToArray() : new Behaviour[0];
+
+            Behaviour[] prompts = FindInScene<Behaviour>(scene).Where(b => PromptTypes.Contains(b.GetType().Name)).ToArray();
+            interactions = FindInScene<Behaviour>(scene).Where(b => InteractionTypes.Contains(b.GetType().Name)).Concat(prompts).ToArray();
+            promptRoots = prompts
+                .Select(p => new SerializedObject(p).FindProperty("_root")?.objectReferenceValue as GameObject)
+                .Where(g => g != null)
+                .ToArray();
+        }
+
+        internal static Behaviour[] UiHotkeysIn(Scene scene)
+        {
+            return FindInScene<Behaviour>(scene).Where(b => UiHotkeyTypes.Contains(b.GetType().Name)).ToArray();
+        }
+
+        internal static void DisableSceneShortcuts(Scene target, StringBuilder log)
         {
             foreach (GameSceneManager manager in FindInScene<GameSceneManager>(target))
             {
@@ -543,7 +554,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
         }
 
-        private static Camera FindGameplayCamera(Scene scene, GameObject player)
+        internal static Camera FindGameplayCamera(Scene scene, GameObject player)
         {
             if (player != null)
             {
@@ -644,19 +655,19 @@ namespace RealSteel.Dialogue.EditorTools
             return true;
         }
 
-        private static GameObject FindPlayer(Scene scene)
+        internal static GameObject FindPlayer(Scene scene)
         {
             Behaviour movement = FindInScene<Behaviour>(scene).FirstOrDefault(b => MovementTypes.Contains(b.GetType().Name));
             if (movement != null) return movement.gameObject;
             return scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).Select(t => t.gameObject).FirstOrDefault(g => g.CompareTag("Player"));
         }
 
-        private static IEnumerable<T> FindInScene<T>(Scene scene) where T : Component
+        internal static IEnumerable<T> FindInScene<T>(Scene scene) where T : Component
         {
             return scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<T>(true));
         }
 
-        private static void SetArray(SerializedProperty property, Object[] values)
+        internal static void SetArray(SerializedProperty property, Object[] values)
         {
             property.arraySize = values.Length;
             for (int i = 0; i < values.Length; i++) property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];

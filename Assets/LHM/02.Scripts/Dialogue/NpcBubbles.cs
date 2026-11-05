@@ -35,6 +35,11 @@ namespace RealSteel.Dialogue
 
         public int PendingCount => reactions.Count;
 
+        public void BindPlayer(Transform playerTransform)
+        {
+            player = playerTransform;
+        }
+
         private void OnEnable()
         {
             if (queue != null) queue.BubbleRequested += OnBubbleRequested;

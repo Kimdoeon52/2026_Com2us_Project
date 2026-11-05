@@ -62,6 +62,12 @@ namespace RealSteel.Dialogue
         public float MaxWaitSeconds => maxWaitSeconds;
         public string CurrentBgmId { get; private set; }
 
+        public void BindCamera(Camera camera)
+        {
+            targetCamera = camera;
+            defaultCamera = camera;
+        }
+
         private void Awake()
         {
             if (targetCamera == null) targetCamera = Camera.main;

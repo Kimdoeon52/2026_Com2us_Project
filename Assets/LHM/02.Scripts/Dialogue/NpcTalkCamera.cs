@@ -59,6 +59,9 @@ namespace RealSteel.Dialogue
         private readonly List<Renderer> hiddenRenderers = new List<Renderer>();
 
         private const string FocusTypeName = "RSAutoFocus";
+        private const string UrpCameraDataTypeName = "UniversalAdditionalCameraData";
+
+        private bool copyMainCameraSettings;
 
         private struct FocusOverride
         {
@@ -78,6 +81,12 @@ namespace RealSteel.Dialogue
 
         public bool IsBusy => busy;
         public NpcInteractable Target => target;
+
+        public void BindCamera(Camera camera)
+        {
+            mainCamera = camera;
+            copyMainCameraSettings = true;
+        }
 
         private void Awake()
         {
@@ -195,6 +204,7 @@ namespace RealSteel.Dialogue
 
             startFov = mainCamera != null ? mainCamera.fieldOfView : closeUpCamera.fieldOfView;
             closeUpCamera.gameObject.SetActive(true);
+            if (copyMainCameraSettings) CopyMainCameraSettings();
             closeUpCamera.enabled = true;
             if (closeUpCamera.nearClipPlane > maxNearClip)
             {
@@ -220,6 +230,24 @@ namespace RealSteel.Dialogue
             HidePlayer();
             RetargetFocus();
             closeUpActive = true;
+        }
+
+        private void CopyMainCameraSettings()
+        {
+            if (mainCamera == null || mainCamera == closeUpCamera) return;
+
+            closeUpCamera.CopyFrom(mainCamera);
+            closeUpCamera.depth = mainCamera.depth + 1f;
+            closeUpCamera.gameObject.layer = mainCamera.gameObject.layer;
+
+            foreach (Component component in mainCamera.GetComponents<Component>())
+            {
+                if (component == null || component.GetType().Name != UrpCameraDataTypeName) continue;
+
+                Component data = closeUpCamera.GetComponent(component.GetType());
+                if (data == null) data = closeUpCamera.gameObject.AddComponent(component.GetType());
+                JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(component), data);
+            }
         }
 
         private void RetargetFocus()

@@ -38,5 +38,12 @@ public class PixelFxData : ScriptableObject
     [Tooltip("그림 순서 — 쿄다이 손 5, 레이저 8")]
     public int sortingOrder = 9;
 
-    public float Duration => frames == null || frames.Length == 0 ? 0f : frames.Length / (fps * speed);
+    [Tooltip("앞에서부터 이 프레임까지만 재생 (0 = 전부). 시트 뒤쪽 긴 꼬리(오래 남는 연기 등)를 자르고 fadeOutFrames로 흐리게 끝낸다 " +
+             "(2026-11-09: 주먹 충격 연기가 3초씩 남아 연속 공격 때 플레이어를 가렸다)")]
+    [Min(0)] public int maxFrames;
+
+    /// <summary>실제로 재생하는 프레임 수 (maxFrames 반영)</summary>
+    public int FrameCount => frames == null ? 0 : (maxFrames > 0 ? Mathf.Min(maxFrames, frames.Length) : frames.Length);
+
+    public float Duration => FrameCount == 0 ? 0f : FrameCount / (fps * speed);
 }

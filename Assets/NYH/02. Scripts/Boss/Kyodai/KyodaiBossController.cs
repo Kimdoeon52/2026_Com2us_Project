@@ -16,10 +16,17 @@ using UnityEngine;
 /// </summary>
 public class KyodaiBossController : BossControllerBase
 {
-    [Tooltip("경기장 왼쪽 끝 x(월드)")]
+    [Tooltip("켜면 경기장 좌우 끝 = 메인 카메라에 보이는 바닥의 좌우 끝(안쪽으로 arenaCameraPadding). 카메라를 뒤로 빼면 그만큼 넓어진다 " +
+             "(2026-11-09 사용자: 패턴도 카메라 안에서만). 끄거나 카메라가 없으면 아래 고정 값")]
+    [SerializeField] private bool arenaFromCamera = true;
+
+    [Tooltip("카메라 끝에서 이만큼(월드) 안쪽까지를 경기장으로 — 플레이어 이동 제한(RobotMover.cameraViewPadding)과 같게 둘 것. 임시값")]
+    [Min(0f)] [SerializeField] private float arenaCameraPadding = 0.3f;
+
+    [Tooltip("경기장 왼쪽 끝 x(월드) — arenaFromCamera를 끄거나 카메라가 없을 때")]
     [SerializeField] private float arenaMinX = -10f;
 
-    [Tooltip("경기장 오른쪽 끝 x(월드)")]
+    [Tooltip("경기장 오른쪽 끝 x(월드) — arenaFromCamera를 끄거나 카메라가 없을 때")]
     [SerializeField] private float arenaMaxX = 10f;
 
     [Tooltip("바닥 높이 y(월드) — 플레이어가 서 있는 높이")]
@@ -103,10 +110,21 @@ public class KyodaiBossController : BossControllerBase
     public int ArmDisableDamage => armDisableDamage;
     public int ArmDisableFrames => armDisableFrames;
 
-    public float ArenaMinX => arenaMinX;
-    public float ArenaMaxX => arenaMaxX;
-    public float ArenaCenterX => (arenaMinX + arenaMaxX) * 0.5f;
-    public float ArenaWidth => arenaMaxX - arenaMinX;
+    public float ArenaMinX => Arena().x;
+    public float ArenaMaxX => Arena().y;
+    public float ArenaCenterX => (ArenaMinX + ArenaMaxX) * 0.5f;
+    public float ArenaWidth => ArenaMaxX - ArenaMinX;
+
+    // 경기장 좌우 끝 (x = 왼쪽, y = 오른쪽). 카메라 기준이면 바닥 높이에서 보이는 범위 — 경기장 평면은 루트 고정 자리의 z.
+    // 매번 계산한다(광선 4개라 가볍고, 플레이 중 카메라를 옮겨도 바로 따라간다)
+    private Vector2 Arena()
+    {
+        if (arenaFromCamera
+            && CameraBounds.TryGetVisibleX(Camera.main, Anchor.z, groundY, out float min, out float max)
+            && max - min > arenaCameraPadding * 2f)
+            return new Vector2(min + arenaCameraPadding, max - arenaCameraPadding);
+        return new Vector2(arenaMinX, arenaMaxX);
+    }
     public override float GroundY => groundY;
     public IReadOnlyList<float> GroggyHpRatios => groggyHpRatios;
     public IReadOnlyList<KyodaiHand> Hands => hands;
@@ -121,8 +139,9 @@ public class KyodaiBossController : BossControllerBase
     /// <summary>경기장 안으로 x를 자른다. halfWidth만큼 안쪽 여유를 둔다</summary>
     public float ClampToArena(float x, float halfWidth = 0f)
     {
-        float min = arenaMinX + halfWidth;
-        float max = arenaMaxX - halfWidth;
+        Vector2 arena = Arena();
+        float min = arena.x + halfWidth;
+        float max = arena.y - halfWidth;
         return min > max ? ArenaCenterX : Mathf.Clamp(x, min, max);
     }
 
@@ -495,9 +514,11 @@ public class KyodaiBossController : BossControllerBase
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawLine(new Vector3(arenaMinX, groundY), new Vector3(arenaMaxX, groundY));
-        Gizmos.DrawLine(new Vector3(arenaMinX, groundY), new Vector3(arenaMinX, groundY + 3f));
-        Gizmos.DrawLine(new Vector3(arenaMaxX, groundY), new Vector3(arenaMaxX, groundY + 3f));
+        // 실제로 쓰는 경기장(카메라 기준이면 카메라에 보이는 범위)
+        Vector2 a = Arena();
+        Gizmos.DrawLine(new Vector3(a.x, groundY), new Vector3(a.y, groundY));
+        Gizmos.DrawLine(new Vector3(a.x, groundY), new Vector3(a.x, groundY + 3f));
+        Gizmos.DrawLine(new Vector3(a.y, groundY), new Vector3(a.y, groundY + 3f));
     }
 #endif
 }

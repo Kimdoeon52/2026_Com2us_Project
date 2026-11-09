@@ -64,8 +64,9 @@ public class KyodaiLaserArm : MonoBehaviour
     /// <summary>
     /// 전투 틱마다 (KyodaiLaser.Tick). aiming이면 target(경기장 평면 위 점)을 노린다.
     /// project: 3D 자리 → 화면에서 겹쳐 보이는 경기장 평면 위 점 (KyodaiLaser가 넘긴다 — 고정 자리 보정 포함)
+    /// exact: 발사·사라짐 동안 — 레일건이 회전 빠르기 제한 없이 목표를 정확히 본다 (2026-11-09: 바닥 쓸기 중 제한 때문에 최대 9° 뒤처졌다)
     /// </summary>
-    public void Tick(bool aiming, Vector2 target, System.Func<Vector3, Vector2?> project)
+    public void Tick(bool aiming, Vector2 target, System.Func<Vector3, Vector2?> project, bool exact = false)
     {
         if (upperArm == null || elbow == null) return;
         if (float.IsNaN(upper)) { upper = restAngle; gun = gunRestAngle; }
@@ -95,7 +96,22 @@ public class KyodaiLaserArm : MonoBehaviour
             Vector2 d = target - e.Value;
             if (d.sqrMagnitude > 0.0001f) { gunWant = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg; speed = gunAimSpeed; }
         }
-        gun = Mathf.MoveTowardsAngle(gun, gunWant, speed * dt);
+        gun = aiming && exact ? gunWant : Mathf.MoveTowardsAngle(gun, gunWant, speed * dt);
+        SetAngle(elbow, elbow, gun);
+    }
+
+    /// <summary>
+    /// 레일건만 지금 목표로 바로 돌린다 (윗팔 스프링은 안 돎). 바닥 쓸기에서 이번 틱에 옮긴 조준점을 같은 틱에 따라가게 —
+    /// Tick은 조준점을 옮기기 전에 불려서 한 틱 늦다
+    /// </summary>
+    public void SnapGun(Vector2 target, System.Func<Vector3, Vector2?> project)
+    {
+        if (elbow == null || float.IsNaN(gun)) return;
+        Vector2? e = project(elbow.position);
+        if (!e.HasValue) return;
+        Vector2 d = target - e.Value;
+        if (d.sqrMagnitude < 0.0001f) return;
+        gun = Mathf.Atan2(d.y, d.x) * Mathf.Rad2Deg;
         SetAngle(elbow, elbow, gun);
     }
 

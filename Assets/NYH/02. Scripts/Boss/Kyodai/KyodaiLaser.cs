@@ -190,7 +190,7 @@ public class KyodaiLaser : MonoBehaviour
         if (Sweep)
         {
             // 플레이어 쪽에서 경기장 가운데 방향으로 쓴다 — 벽에 붙어 있어도 쓸 자리가 남게.
-            // X자: 반대편 바깥쪽으로 (왼어깨 → 오른쪽 끝)
+            // X자: 왼어깨는 오른쪽으로 쓴다 (겉 → 안 교차면 왼쪽 끝에서 출발, 예전 방식이면 오른쪽 바깥으로)
             sweepDir = data.crossSweep ? (Eye.x < owner.ArenaCenterX ? 1 : -1)
                                        : (owner.PlayerX < owner.ArenaCenterX ? 1 : -1);
             aim = SweepStartGoal();
@@ -224,7 +224,9 @@ public class KyodaiLaser : MonoBehaviour
     {
         // 팔은 쉴 때도 흔들린다 — 레이저가 보이는 동안(조준·고정·발사·사라짐) 조준점을 노린다(한 틱 전 조준점).
         // 사라지는 동안에도 붙잡는다: 팔이 먼저 쉬는 자세로 돌아가면 사라지는 선이 엉뚱한 쪽으로 남았다(2026-11-05 버그)
-        if (arm != null) arm.Tick(data != null && BeamVisible, aim, ProjectFixed);
+        // 발사부터는 레일건이 조준점을 정확히 본다(회전 빠르기 제한은 조준 시작에 휙 돌지 않게 하려는 것 — 발사 중엔 지연만 만든다)
+        if (arm != null) arm.Tick(data != null && BeamVisible, aim, ProjectFixed,
+                                  phase == Phase.Fire || phase == Phase.Fade || phase == Phase.Burn);
         if (phase == Phase.Idle || data == null) return;
         frame++;
         switch (phase)
@@ -260,6 +262,7 @@ public class KyodaiLaser : MonoBehaviour
                     float k = Mathf.SmoothStep(0f, 1f, frame / (float)Mathf.Max(1, data.sweepFrames));
                     aim = new Vector2(Mathf.Lerp(sweepStartX, sweepEndX, k), owner.GroundY);
                     AimGun(aim);
+                    if (arm != null) arm.SnapGun(aim, ProjectFixed); // 옮긴 조준점을 같은 틱에
                     UpdateDirection();
                     KyodaiHand blocker = FireTick();
                     if (blocker == null || !data.blockedByHand) RecordBurn(end.x);
@@ -279,6 +282,7 @@ public class KyodaiLaser : MonoBehaviour
             case Phase.Fade:
                 UpdateDirection();
                 end = TraceEnd(out _);
+                MoveEndLoop();
                 if (frame >= data.fadeFrames) Next(Phase.Idle);
                 break;
             case Phase.Burn:
@@ -286,7 +290,9 @@ public class KyodaiLaser : MonoBehaviour
                 {
                     UpdateDirection();
                     end = TraceEnd(out _);
+                    MoveEndLoop();
                 }
+                else StopEndLoop();
                 if (TickExplosions()) Next(Phase.Idle);
                 break;
         }
@@ -294,7 +300,8 @@ public class KyodaiLaser : MonoBehaviour
 
     private void Next(Phase next)
     {
-        if (phase == Phase.Fire) StopEndLoop();
+        // 끝 이펙트는 레이저가 보이는 동안(사라지는 단계까지) 끝을 따라가다 같이 사라진다 — 발사가 끝나는 순간 뚝 끊기지 않게
+        if (phase == Phase.Fire && (next == Phase.Idle || (next == Phase.Burn && data.fadeFrames <= 0))) StopEndLoop();
         phase = next;
         frame = 0;
         if (next == Phase.Idle) Stop();
@@ -314,15 +321,23 @@ public class KyodaiLaser : MonoBehaviour
         return new Vector2(x, owner.GroundY);
     }
 
-    // X자 쓸기 시작점: 가운데에서 쓸어 나갈 쪽으로 crossStart만큼
-    private float CrossStartX => owner.ArenaCenterX + sweepDir * data.crossStart * owner.ArenaWidth * 0.5f;
+    // X자 쓸기 (sweepDir = 쓸어 가는 방향: 왼어깨 +1 → 오른쪽으로)
+    //  겉 → 안 교차(crossInward, 기본): 자기 쪽 바깥 끝에서 시작 → 가운데에서 다른 어깨 줄과 엇갈림 → 반대편 crossEnd에서 끝
+    //  겉만(예전): 반대편 crossStart에서 시작 → 바깥 끝
+    private float CrossStartX => data.crossInward
+        ? (sweepDir > 0 ? owner.ArenaMinX : owner.ArenaMaxX)
+        : owner.ArenaCenterX + sweepDir * data.crossStart * owner.ArenaWidth * 0.5f;
+
+    private float CrossEndX => data.crossInward
+        ? owner.ArenaCenterX + sweepDir * data.crossEnd * owner.ArenaWidth * 0.5f
+        : (sweepDir > 0 ? owner.ArenaMaxX : owner.ArenaMinX);
 
     private void LockSweep()
     {
         if (data.crossSweep)
         {
             sweepStartX = CrossStartX;
-            sweepEndX = sweepDir > 0 ? owner.ArenaMaxX : owner.ArenaMinX;
+            sweepEndX = CrossEndX;
             return;
         }
         if (data.sweepFullArena)
@@ -428,6 +443,12 @@ public class KyodaiLaser : MonoBehaviour
         charge = null;
     }
 
+    // 사라지는 동안 끝 이펙트를 끝에 붙여 둔다 (발사 중엔 FireTick이 옮긴다)
+    private void MoveEndLoop()
+    {
+        if (endLoop != null) endLoop.transform.position = new Vector3(end.x, end.y, PlaneZ);
+    }
+
     private void StopEndLoop()
     {
         if (endLoop != null) endLoop.Stop();
@@ -479,18 +500,27 @@ public class KyodaiLaser : MonoBehaviour
         float maxT = data.maxLength;
         if (dir.y < -0.0001f) maxT = Mathf.Min(maxT, (owner.GroundY - Eye.y) / dir.y);
         // 바닥에 안 닿는 방향(총구가 조준 높이보다 낮을 때 등)이면 경기장 벽에서 끝낸다 — 화면 밖으로 날아가지 않게
+        // (2026-11-09 버그: 왼쪽은 Max(0, ArenaMinX - Eye.x) / dir.x 로 계산해, 총구가 경기장 안이면 늘 0 → 왼쪽으로 쏘는 레이저가
+        //  전부 길이 0. 끝 이펙트가 총구에서 터지고 선이 안 보이거나 엉뚱하게 그려졌다. 거리는 양수끼리 나눈다)
         if (dir.x > 0.0001f) maxT = Mathf.Min(maxT, Mathf.Max(0f, owner.ArenaMaxX - Eye.x) / dir.x);
-        else if (dir.x < -0.0001f) maxT = Mathf.Min(maxT, Mathf.Max(0f, owner.ArenaMinX - Eye.x) / dir.x);
+        else if (dir.x < -0.0001f) maxT = Mathf.Min(maxT, Mathf.Max(0f, Eye.x - owner.ArenaMinX) / -dir.x);
 
         float best = maxT;
+        // 손은 보스 루트 자식 — KKH가 프레임 중간에 루트를 흔들면(예고 진동) 손 상자도 같이 밀려 있으니 고정 자리로 되돌려 잰다
+        Vector2 fix = owner.Anchor - owner.transform.position;
         foreach (var hand in owner.Hands)
         {
             if (hand == null || hand.HurtZone == null || !hand.HurtZone.Vulnerable) continue;
             var box = hand.HurtZone.Box;
             Vector3 ls = hand.HurtZone.transform.lossyScale; // 콜라이더 크기는 로컬 — 보스 크기만큼 줄어 있다
             Vector2 worldSize = new Vector2(box.size.x * Mathf.Abs(ls.x), box.size.y * Mathf.Abs(ls.y));
-            Vector2 c = (Vector2)hand.HurtZone.transform.position + new Vector2(box.offset.x * ls.x, box.offset.y * ls.y);
+            Vector2 c = (Vector2)hand.HurtZone.transform.position + new Vector2(box.offset.x * ls.x, box.offset.y * ls.y) + fix;
             Vector2 half = worldSize * 0.5f + Vector2.one * (data.beamWidth * S * 0.5f);
+            // 총구(화면 투영)가 손 상자 안에서 시작하면 막지 않는다 — 총구는 경기장 뒤(본체 깊이)에 있어 화면에서 손과 겹쳐 보일
+            // 뿐이다. 안 거르면 레이저 길이가 0이 되어, 끝 이펙트가 총구에서 터지고 그 손이 떨어지고, 0 길이 선이 엉뚱한 방향으로
+            // 그려졌다 (2026-11-09 진단 로그: Eye = 끝)
+            Vector2 rel = Eye - c;
+            if (Mathf.Abs(rel.x) <= half.x && Mathf.Abs(rel.y) <= half.y) continue;
             if (RayBox(Eye, dir, c - half, c + half, out float t) && t < best)
             {
                 // 막지 않는 설정이어도 맞은 손은 정지한다 — 가장 가까운 손 하나
@@ -585,9 +615,12 @@ public class KyodaiLaser : MonoBehaviour
                 float width = data.beamWidth * S * k * burst * jitter;
                 Line(beam, length, width, angle, data.beamColor);
                 Line(core, length, width * 0.4f, angle, data.coreColor);
+                // 끝 섬광(흰 네모)은 끝 이펙트(endFx — 도트 플립북)가 없을 때만의 임시 그림. 있으면 그쪽이 끝을 그린다
+                // (2026-11-09 사용자: 땅에 닿는 자리의 흰 네모가 안 어울림)
+                if (data.endFx != null) break;
                 float f = width * 1.6f;
                 flash.enabled = true;
-                flash.transform.position = new Vector3(end.x, end.y, transform.position.z);
+                flash.transform.position = new Vector3(end.x, end.y, PlaneZ) + Disp;
                 flash.transform.rotation = Quaternion.Euler(0f, 0f, 45f + time * 360f);
                 float fl = LocalScaleDivisor();
                 flash.transform.localScale = new Vector3(f / fl, f / fl, 1f);
@@ -612,7 +645,7 @@ public class KyodaiLaser : MonoBehaviour
             left -= data.explosionSpacing * 0.25f;
             float soon = phase == Phase.Burn ? Mathf.Clamp01(frame / (float)Mathf.Max(1, data.explosionDelayFrames)) : 0f;
             Color c = Color.Lerp(data.scorchColor, data.explosionColor, soon * (0.5f + 0.5f * Mathf.Sin(time * (10f + 20f * soon))));
-            scorch.transform.position = new Vector3(left, owner.GroundY + 0.03f, transform.position.z);
+            scorch.transform.position = new Vector3(left, owner.GroundY + 0.03f, PlaneZ) + Disp;
             scorch.transform.rotation = Quaternion.identity;
             scorch.transform.localScale = new Vector3(len / d, data.scorchThickness * S / d, 1f);
             scorch.color = c;
@@ -631,7 +664,7 @@ public class KyodaiLaser : MonoBehaviour
             if (!show) continue;
             float t = age / (float)Mathf.Max(1, data.explosionVisualFrames);
             float sz = Mathf.Lerp(0.4f, 1.2f, 1f - (1f - t) * (1f - t)) * data.explosionSize.x * S;
-            r.transform.position = new Vector3(e.x, owner.GroundY + sz * 0.45f, transform.position.z);
+            r.transform.position = new Vector3(e.x, owner.GroundY + sz * 0.45f, PlaneZ) + Disp;
             r.transform.rotation = Quaternion.Euler(0f, 0f, 45f + age * 6f);
             r.transform.localScale = new Vector3(sz / d, sz / d, 1f);
             Color c = Color.Lerp(data.coreColor, data.explosionColor, Mathf.Clamp01(t * 2f));
@@ -640,11 +673,22 @@ public class KyodaiLaser : MonoBehaviour
         }
     }
 
+    // 그림은 보스 루트 자식이라, 루트가 고정 자리에서 밀려 있는 프레임(KKH 예고 진동 등)엔 프레임 끝(LateUpdate)에 루트와 같이
+    // 되돌려진다. 그만큼 미리 더해 두면 그려질 때 제자리 (2026-11-09: 조준선·레이저가 루트 흔들림만큼 떨렸다)
+    private Vector3 Disp => owner != null ? owner.transform.position - owner.Anchor : Vector3.zero;
+
     // 길이·굵기는 월드 값 — 눈이 줄어든 보스 루트 밑이라 로컬 크기는 그만큼 나눠서 넣는다
     private float LocalScaleDivisor() => Mathf.Max(0.0001f, Mathf.Abs(transform.lossyScale.x));
 
     private void Line(SpriteRenderer r, float length, float width, float angle, Color color)
     {
+        // 화면에서 길이가 거의 없는 선은 그리지 않는다. 3D 판이 렌즈 → 렌즈의 화면 투영(카메라 시선과 나란한 선)이 되면
+        // 판을 세울 방향이 없어 엉뚱한 쪽(왼쪽 위 등)으로 긴 선이 그려졌다 (2026-11-09)
+        if (length < 0.05f)
+        {
+            r.enabled = false;
+            return;
+        }
         r.enabled = true;
         r.color = color;
         float d = LocalScaleDivisor();
@@ -664,12 +708,12 @@ public class KyodaiLaser : MonoBehaviour
                 Vector3 z = -(toCam - Vector3.Dot(toCam, x) * x);
                 if (z.sqrMagnitude < 0.0001f) z = Vector3.forward;
                 z.Normalize();
-                r.transform.SetPositionAndRotation(a, Quaternion.LookRotation(z, Vector3.Cross(z, x)));
+                r.transform.SetPositionAndRotation(a + Disp, Quaternion.LookRotation(z, Vector3.Cross(z, x)));
                 r.transform.localScale = new Vector3(len3 / d, width / d, 1f);
                 return;
             }
         }
-        r.transform.position = new Vector3(Eye.x, Eye.y, transform.position.z);
+        r.transform.position = new Vector3(Eye.x, Eye.y, transform.position.z) + Disp;
         r.transform.rotation = Quaternion.Euler(0f, 0f, angle);
         r.transform.localScale = new Vector3(length / d, width / d, 1f);
     }

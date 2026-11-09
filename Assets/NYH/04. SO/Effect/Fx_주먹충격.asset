@@ -105,8 +105,9 @@ MonoBehaviour:
   fps: 30
   loop: 0
   source: impacts/ground-slam
-  scale: 0.65
-  fadeOutFrames: 8
+  scale: 0.45
+  fadeOutFrames: 12
   speed: 1
   tint: {r: 1, g: 1, b: 1, a: 1}
   sortingOrder: 9
+  maxFrames: 30

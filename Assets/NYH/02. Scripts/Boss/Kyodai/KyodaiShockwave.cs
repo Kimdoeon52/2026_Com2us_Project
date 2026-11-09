@@ -20,6 +20,10 @@ public class KyodaiShockwave : MonoBehaviour
     [Tooltip("판정 크기(보스 단위) — 높이를 낮게 둬야 점프로 넘는다 (기본 점프 높이 약 0.9 월드)")]
     [SerializeField] private Vector2 size = new Vector2(1.2f, 0.9f);
 
+    [Tooltip("그림 크기 배율 — 판정(size)과 따로. 임시 그림(16×12px)이 작아 안 보여서 키움 (2026-11-09 사용자). " +
+             "판정은 그대로라 그림 윗부분은 안 맞는다(점프로 넘기 쉬운 쪽)")]
+    [Min(0.1f)] [SerializeField] private float visualScale = 2.5f;
+
     [SerializeField] private int sortingOrder = 4;
     [SerializeField] private Color color = new Color(1f, 0.85f, 0.6f);
 
@@ -102,7 +106,7 @@ public class KyodaiShockwave : MonoBehaviour
             float x = Mathf.Lerp(w.prevX, w.x, a);
             w.renderer.transform.position = new Vector3(x, owner.GroundY, transform.position.z);
             float pulse = 1f + 0.18f * Mathf.Sin(w.age * 0.6f); // 출렁이며 굴러가는 느낌
-            w.renderer.transform.localScale = new Vector3(1f / pulse, pulse, 1f);
+            w.renderer.transform.localScale = new Vector3(visualScale / pulse, visualScale * pulse, 1f);
             w.renderer.flipX = w.dir < 0;
             // 경기장 끝 근처에서 흐려진다
             float edge = Mathf.Min(x - owner.ArenaMinX, owner.ArenaMaxX - x);

@@ -50,7 +50,7 @@ public class PixelFx : MonoBehaviour
 
     private void Apply()
     {
-        int count = data.frames.Length;
+        int count = data.FrameCount;
         int index = Mathf.FloorToInt(age * data.fps * data.speed);
         index = data.loop ? index % count : Mathf.Min(index, count - 1);
         spriteRenderer.sprite = data.frames[index];

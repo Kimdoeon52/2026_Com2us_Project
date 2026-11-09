@@ -34,6 +34,14 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     [SerializeField] private Transform opponent;
     [SerializeField] private CombatCamera combatCamera; // 비우면 씬에서 자동 검색
 
+    // 2026-11-09: CombatCamera(따라다니는 카메라)가 없는 씬(쿄다이 Battle3 — 고정 카메라)에서도 화면 밖으로 못 나가게.
+    // 카메라에 보이는 경기장 평면의 좌우 끝(CameraBounds) 안으로 자른다 — 카메라를 뒤로 빼면 그만큼 넓어진다
+    [Tooltip("CombatCamera가 없을 때 메인 카메라 화면 밖으로 못 나가게 막는다")]
+    [SerializeField] private bool clampToCameraView = true;
+
+    [Tooltip("화면 끝에서 이만큼(월드) 안쪽까지만 — 몸이 화면 밖으로 반쯤 나가지 않게. 임시값")]
+    [Min(0f)] [SerializeField] private float cameraViewPadding = 0.3f;
+
     private IInputSource inputSource;
     private ActionState actionState;
     // 히트스톱 중인지 묻는 용도(2026-10-28). 같은 몸에 붙은 실행기 — 없으면 히트스톱 없이 그냥 움직인다
@@ -224,6 +232,16 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
             Vector3 pos = transform.position;
             pos.x = combatCamera.ClampFighterX(pos.x); // 방금 이동한 값을 그대로 화면 경계 안으로 다시 잘라낸다 — 먼저 이동시키고 나중에 보정하는 순서라 "밀어붙여도 벽을 못 뚫는" 느낌이 남
             transform.position = pos;
+        }
+        else if (clampToCameraView)
+        {
+            Vector3 pos = transform.position;
+            if (CameraBounds.TryGetVisibleX(Camera.main, pos.z, pos.y, out float minX, out float maxX)
+                && maxX - minX > cameraViewPadding * 2f)
+            {
+                pos.x = Mathf.Clamp(pos.x, minX + cameraViewPadding, maxX - cameraViewPadding);
+                transform.position = pos;
+            }
         }
 
         // 2026-10-02: 방향 전환 기준을 "상대 위치"에서 "이동 입력 방향"으로 교체했다.

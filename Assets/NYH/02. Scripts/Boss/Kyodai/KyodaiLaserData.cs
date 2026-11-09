@@ -27,8 +27,9 @@ public class KyodaiLaserData : ScriptableObject
 
     [Range(0.1f, 1.5f)] public float aimDamping = 0.9f;
 
-    [Tooltip("조준점 높이 — 바닥에서 플레이어 가슴쯤(월드)")]
-    public float aimHeight = 1f;
+    [Tooltip("조준점 높이 — 바닥에서(월드). 0 = 플레이어 발밑 바닥 (2026-11-09 사용자 결정: 가슴(1)이면 카메라가 거의 수평이라 " +
+             "총구가 조준점보다 조금밖에 안 높아, 레이저가 수평으로 나가 플레이어를 지나 공중에서 끝났다)")]
+    public float aimHeight = 0f;
 
     [Header("판정")]
     [Tooltip("레이저 굵기(월드) — 판정·그림 공용")]
@@ -89,8 +90,15 @@ public class KyodaiLaserData : ScriptableObject
              "두 어깨가 같이 쏘면 레이저가 가운데 위에서 X자로 엇갈린다. sweepLength·sweepFullArena는 무시")]
     public bool crossSweep;
 
-    [Tooltip("TODO: 임시값. X자 쓸기 시작점 — 가운데에서 경기장 끝까지의 비율 (0 = 가운데, 1 = 끝). 안쪽은 안 쓸어서 피할 자리")]
+    [Tooltip("켜면(기본) 겉 → 안 교차: 각 어깨가 자기 쪽 바깥 끝에서 시작해 안쪽으로 쓸고, 가운데에서 서로 엇갈려 반대편 crossEnd까지 간다 " +
+             "(2026-11-09 사용자: 겉에서 쏜 뒤 안쪽으로 와서 교차해야 함). 끄면 예전 방식 — 반대편 crossStart에서 바깥 끝으로(겉만 씀)")]
+    public bool crossInward = true;
+
+    [Tooltip("TODO: 임시값. (겉만 쓰는 예전 방식) 시작점 — 가운데에서 경기장 끝까지의 비율 (0 = 가운데, 1 = 끝). 안쪽은 안 쓸어서 피할 자리")]
     [Range(0f, 1f)] public float crossStart = 0.3f;
+
+    [Tooltip("TODO: 임시값. (겉 → 안 교차) 가운데를 지나 반대편으로 얼마나 더 가서 끝나는지 — 가운데에서 경기장 끝까지의 비율 (0 = 가운데에서 멈춤)")]
+    [Range(0f, 1f)] public float crossEnd = 0.3f;
 
     [Header("쓸고 난 뒤 바닥 폭발")]
     [Tooltip("쓸기가 끝나고 첫 폭발까지 (사용자: 약 1.2초 = 72f)")]

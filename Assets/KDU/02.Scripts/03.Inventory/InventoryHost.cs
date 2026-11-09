@@ -567,6 +567,22 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return true;
     }
 
+    // 인벤토리 칸 하나를 버린다. 부품 칸은 쌓인 수량을 모두 버린다
+    public bool DiscardEntry(int index)
+    {
+        if (_grid == null || !_grid.TryGetEntry(index, out InventoryGrid.Entry entry))
+            return false;
+
+        if (entry.IsComponent)
+            return entry.Component != null && ConsumeComponent(entry.Component.Id, _save.Components.Get(entry.Component.Id));
+
+        if (!_grid.Remove(index))
+            return false;
+
+        Changed?.Invoke();
+        return true;
+    }
+
     // 지급해도 버려지거나 칸이 없어 안 보이게 되지 않는지. 크래프팅 슬롯에서 돌려주기 전에 확인한다
     public bool CanGiveComponent(ComponentDefinition component, int amount = 1)
     {

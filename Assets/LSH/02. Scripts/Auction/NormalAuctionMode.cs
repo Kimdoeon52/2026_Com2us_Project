@@ -103,14 +103,12 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             else
             {
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
-                
-                manager.SetChat($"{ai.NPCName} 님이 입찰을 포기했습니다.");
-                manager.PlaySound(manager.giveUpEffect);
+                manager.PlaySound(manager.giveUpEffect); // 진행자 대사 없이 효과음 + 반투명 처리로만 표현
             }
 
             if (manager.CheckAllGiveUp()) //모두가 포기하면 낙찰 카운트다운 돌입
             {
-                manager.SetChat("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
+                manager.AppendConsoleLog("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
                 if (manager.RemainingTime > 5f)
                     manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
                 break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
@@ -122,7 +120,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
     {
         manager.WinnerID = ai.NPCID;
         manager.IfPlayerWin = false;
-        manager.SetChat($"{ai.NPCName} 님이 {manager.CurrentCost}G로 레이즈!");
+        manager.AppendConsoleLog($"{ai.NPCName}님이 {manager.CurrentCost}G로 레이즈!"); // 레이즈는 말풍선/가격표로만 보여줌
 
         if (manager.RemainingTime < 10f)
         {

@@ -52,7 +52,7 @@ public class FistAuctionMode : IAuctionMode
         }
 
         manager.AppendConsoleLog("--- 주먹 경매 진행 중 ---");
-        manager.SetChat($"주먹 경매를 시작합니다! {bidTime:0}초 안에 입찰가를 적어 주세요. (0G = 포기)");
+        manager.AnnounceBriefAsync($"주먹 경매를 시작합니다! {bidTime:0}초 안에 입찰가를 적어 주세요. (0G = 포기)", 2.5f).Forget(); // 안내 후 자동 퇴장
         manager.EnableFistAuctionUI(true);
 
         // ===== 1. 입찰 단계 =====
@@ -63,13 +63,13 @@ public class FistAuctionMode : IAuctionMode
 
         if (bidders.Any(b => !b.IsSubmitted))
         {
-            manager.SetChat("다른 참가자들이 아직 입찰서를 쓰고 있습니다...");
+            manager.AppendConsoleLog("다른 참가자들이 아직 입찰서를 쓰고 있습니다...");
             await UniTask.WhenAll(aiTasks);
         }
 
-        // ===== 2. 카운트다운 =====
-        manager.SetChat("모든 입찰서가 등록되었습니다!");
-        await UniTask.Delay(1200);
+        // ===== 2. 카운트다운 (진행자 재등장) =====
+        await manager.SayAsync("모든 입찰서가 등록되었습니다!");
+        await UniTask.Delay(900);
         foreach (string count in new[] { "셋!", "둘!", "하나!" })
         {
             manager.SetChat(count);
@@ -96,7 +96,7 @@ public class FistAuctionMode : IAuctionMode
         if (winner.Bid <= 0)
         {
             bidders.ForEach(b => b.Plate?.Lose());
-            manager.SetChat("아무도 입찰하지 않았습니다. 경매가 유찰되었습니다.");
+            await manager.SayAsync("아무도 입찰하지 않았습니다. 경매가 유찰되었습니다."); // 진행자는 그대로 남아 마무리 대사로 이어짐
             manager.WinnerID = -1;
             manager.IfPlayerWin = false;
             await UniTask.Delay(2000);
@@ -114,9 +114,9 @@ public class FistAuctionMode : IAuctionMode
         manager.WinnerID = winner.ID;
         manager.IfPlayerWin = winner == player;
 
-        manager.SetChat(BuildResultChat(winner, ranking));
         PunchChat(manager, 0.4f);
         ShowReactions(bidders, winner, player);
+        await manager.SayAsync(BuildResultChat(winner, ranking)); // 진행자는 그대로 남아 낙찰 축하 대사로 이어짐
 
         await UniTask.Delay(2500);
     }
@@ -145,9 +145,7 @@ public class FistAuctionMode : IAuctionMode
             int second = Mathf.CeilToInt(remain);
             if (remain <= WarningTime && second != lastWarnSecond && second > 0) // 마지막 5초 경고
             {
-                lastWarnSecond = second;
-                manager.SetChat($"서두르세요! {second}초 남았습니다!");
-                PunchChat(manager, 0.2f);
+                lastWarnSecond = second; // 진행자 대사 대신 타임바 펀치로만 재촉
                 if (manager.timeBar != null)
                 {
                     manager.timeBar.transform.DOKill(true);

@@ -78,6 +78,8 @@ public class Auction : Singleton<Auction>
     [SerializeField] public TextMeshProUGUI chat; //경매하는 사람 채팅 나올 곳
     [SerializeField] public TextMeshProUGUI errorMessage; //에러 메시지 나올 곳
     [SerializeField] public TextMeshProUGUI myGold;// 내 골드 보유 수 나올 곳
+    [SerializeField] private AuctionAnnouncer announcer; // 경매 진행자(AuctionGirl). 비워두면 chat의 부모에 자동 생성
+    [SerializeField] private float curtainRevealDelay = 1.2f; // 커튼 열리고 물건 감상할 시간
 
     [Header("일반 경매 조작 버튼")] //순서 상관없이 쭉쭉 돌아가며 레이즈 하며 진행
     [SerializeField] public Button raiseButton; //레이즈 버튼
@@ -236,6 +238,8 @@ public class Auction : Singleton<Auction>
 
         if (errorMessage != null)
             errorMessagePos = errorMessage.rectTransform.anchoredPosition; //첫 위치 저장
+
+        SetupAnnouncer(); // 진행자는 말할 때만 등장하도록 숨긴 채 시작
 
         // UI 버튼 이벤트 바인딩 (인스펙터 중복 등록 방지를 위해 기존 리스너 제거 후 등록)
         BindButton(normalModeButton, OnSelectNormalMode);
@@ -434,13 +438,13 @@ public class Auction : Singleton<Auction>
             }
         }
 
-        await StartAuctionChatting(); //경매 아저씨 대사 출력
+        await StartAuctionChatting(); //진행자 등장 → 경매 시작 대사 → 퇴장
         curtainMove.MoveCurtain(); //커튼 열기
         auctionName.text = stuff.DisplayName; // 경매 물품 이름 출력
         UpdateAuctionCostUI(); // 가격표 보여주기
-        await WaitInput(); //스페이스 바 입력 대기
+        await UniTask.Delay(System.TimeSpan.FromSeconds(curtainRevealDelay)); // 커튼 열리는 동안 물건 감상
 
-        await IntroAuction(); // 경매 아저씨 경매 물품 소개
+        await IntroAuction(); // 진행자 재등장 → 경매 물품 소개 → 퇴장
 
         IsAuctioningFin = false; 
         isPlayerGiveUp = false;
@@ -485,9 +489,74 @@ public class Auction : Singleton<Auction>
         }
     }
 
-    public void SetChat(string text) // 경매 아저씨 채팅
+    //=========================경매 진행자(AuctionGirl) 대사===================
+    private void SetupAnnouncer()
     {
-        if (chat != null) chat.text = text;
+        if (announcer == null && chat != null && chat.transform.parent != null)
+        {
+            GameObject girl = chat.transform.parent.gameObject;
+            announcer = girl.GetComponent<AuctionAnnouncer>();
+            if (announcer == null) announcer = girl.AddComponent<AuctionAnnouncer>();
+        }
+        if (announcer != null) announcer.HideInstant();
+    }
+
+    // 진행자 등장 후 즉시 대사 표시 (카운트다운처럼 빠르게 바뀌는 대사용). 퇴장은 HideChatAsync로
+    public void SetChat(string text)
+    {
+        if (announcer == null)
+        {
+            if (chat != null) chat.text = text;
+            return;
+        }
+        if (!announcer.IsVisible) announcer.ShowAsync().Forget();
+        announcer.SetLineInstant(text);
+    }
+
+    // 진행자 등장 → 타자기로 한 줄 출력 (입력 대기 없음)
+    public async UniTask SayAsync(string text)
+    {
+        if (announcer == null) { SetChat(text); return; }
+        await announcer.ShowAsync();
+        PlaySound(dialogueEffect);
+        await announcer.TypeLineAsync(text);
+    }
+
+    // 진행자 등장 → 대사들을 한 줄씩 출력하며 입력 대기 → (hideAfter면) 퇴장
+    public async UniTask SpeakAsync(IList<string> lines, bool hideAfter = true)
+    {
+        if (lines == null || lines.Count == 0) return;
+
+        if (announcer != null) await announcer.ShowAsync();
+        foreach (string line in lines)
+        {
+            PlaySound(dialogueEffect);
+            if (announcer != null)
+            {
+                await announcer.TypeLineAsync(line, IsAdvanceInput); // 입력하면 타자기 즉시 완성
+            }
+            else if (chat != null)
+            {
+                chat.text = line;
+            }
+            await WaitInput(); // 다 나온 뒤 입력하면 다음 대사
+        }
+        if (hideAfter) await HideChatAsync();
+    }
+
+    public async UniTask HideChatAsync()
+    {
+        if (announcer != null) await announcer.HideAsync();
+    }
+
+    // 진행자 등장 → 한 줄 출력 → holdSeconds 뒤 자동 퇴장 (그 사이 다른 대사가 나오면 퇴장 안 함)
+    public async UniTask AnnounceBriefAsync(string text, float holdSeconds)
+    {
+        await SayAsync(text);
+        if (announcer == null) return;
+        int version = announcer.LineVersion;
+        await UniTask.Delay(System.TimeSpan.FromSeconds(holdSeconds), ignoreTimeScale: true);
+        if (announcer != null && announcer.IsVisible && announcer.LineVersion == version) await HideChatAsync();
     }
 
     public void AppendConsoleLog(string log) // 콘솔 로그 채팅
@@ -723,28 +792,12 @@ public class Auction : Singleton<Auction>
 
     private async UniTask StartAuctionChatting()
     {
-        List<string> chatList = ChatList.Instance.GetChat("경매시작", stuff.DisplayName); // 경매 시작에 잇는 대사들 출력
-        if (chatList != null && chatList.Count > 0) // 
-        {
-            foreach (var chatMessage in chatList)
-            {
-                SetChat(chatMessage); //대사 출력
-                await WaitInput();
-            }
-        }
+        await SpeakAsync(ChatList.Instance.GetChat("경매시작", stuff.DisplayName)); // 경매 시작 대사
     }
 
     private async UniTask IntroAuction()
     {
-        List<string> chatList = ChatList.Instance.GetChat("물건소개", stuff.DisplayName);
-        if (chatList != null && chatList.Count > 0)
-        {
-            foreach (var chatMessage in chatList)
-            {
-                SetChat(chatMessage);
-                await WaitInput();
-            }
-        }
+        await SpeakAsync(ChatList.Instance.GetChat("물건소개", stuff.DisplayName)); // 물건 소개 대사
     }
 
     private async UniTask ActionFinish()
@@ -758,20 +811,11 @@ public class Auction : Singleton<Auction>
 
         if (finalWinner == -1)
         {
-            SetChat("낙찰자가 없습니다.");
-            await WaitInput();
+            await SpeakAsync(new List<string> { "낙찰자가 없습니다." });
             return;
         }
         string winnerName = IfPlayerWin ? PlayerName : auctionAiList.Find(ai => ai.NPCID == finalWinner)?.NPCName ?? "알 수 없음";
-        List<string> chatList = ChatList.Instance.GetChat("경매완료", winnerName);
-        if (chatList != null && chatList.Count > 0)
-        {
-            foreach (var chatMessage in chatList)
-            {
-                SetChat(chatMessage);
-                await WaitInput();
-            }
-        }
+        await SpeakAsync(ChatList.Instance.GetChat("경매완료", winnerName)); // 낙찰자 발표 후 퇴장
         curtainMove.CloseCurtain(); //커튼 닫기
         await UniTask.Delay(1000); //1초 대기
     }
@@ -779,7 +823,12 @@ public class Auction : Singleton<Auction>
     private async UniTask WaitInput() // 입력대기 (스페이스바 또는 마우스 왼쪽 클릭)
     {
         await UniTask.Yield();
-        await UniTask.WaitUntil(() => Input.GetKeyDown(KeyCode.Space) || (Input.GetMouseButtonDown(0) && !IsPointerOverButton()));
+        await UniTask.WaitUntil(IsAdvanceInput);
+    }
+
+    private bool IsAdvanceInput() // 대사 넘김 입력인지 (스페이스바 또는 버튼이 아닌 곳 클릭)
+    {
+        return Input.GetKeyDown(KeyCode.Space) || (Input.GetMouseButtonDown(0) && !IsPointerOverButton());
     }
 
     private bool IsPointerOverButton() // 버튼을 누른 클릭은 대사 넘김으로 치지 않음 (경매 나가기 등 오작동 방지)
@@ -854,7 +903,7 @@ public class Auction : Singleton<Auction>
             UpdateAuctionCostUI();
             WinnerID = GlobalGold.Instance.mainCharacterdata[0].mainCharacterID;
             IfPlayerWin = true;
-            SetChat($"{GlobalGold.Instance.mainCharacterdata[0].mainCharacterName} 님이 {CurrentCost}G로 레이즈!");
+            AppendConsoleLog($"{PlayerName}님이 {CurrentCost}G로 레이즈!"); // 진행자 대사 대신 콘솔에만 기록
             if (RemainingTime < 10f) RemainingTime = 10f;
             if (AuctionPlayer.Instance != null)
                 AuctionPlayer.Instance.ShowThinkChatWithText($"{needGold}G 레이즈!");

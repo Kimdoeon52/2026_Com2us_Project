@@ -201,6 +201,7 @@ public class Auction : Singleton<Auction>
 
     버튼이 여러 개라서 "수락(true)을 눌렀는지 / 거절(false)을 눌렀는지" 결과를 받아야 할 때 ("입찰 경매 수락/거절")
      */
+    [SerializeField] private CurtainMove curtainMove;
     private void OnEnable()
     {
         BossAiBase.OnBossBigRaiseCutscene += HandleBossBigRaiseCutscene; //컷씬 옵져버 등록 OnBossBigRaiseCutscene 실행시 HandleBossBigRaiseCutscene발동
@@ -285,7 +286,6 @@ public class Auction : Singleton<Auction>
             PlayerName = "Player"; // 플레이어 이름 비우면 그냥 플레이어
             PlayerID = 0;
         }
-
         RunAuctionSessionAsync().Forget(); // 경매 연속 진행 시작
     }
 
@@ -435,8 +435,7 @@ public class Auction : Singleton<Auction>
         }
 
         await StartAuctionChatting(); //경매 아저씨 대사 출력
-        await UniTask.Delay(1000); //1초 대기
-
+        curtainMove.MoveCurtain(); //커튼 열기
         auctionName.text = stuff.DisplayName; // 경매 물품 이름 출력
         UpdateAuctionCostUI(); // 가격표 보여주기
         await WaitInput(); //스페이스 바 입력 대기
@@ -773,6 +772,8 @@ public class Auction : Singleton<Auction>
                 await WaitInput();
             }
         }
+        curtainMove.CloseCurtain(); //커튼 닫기
+        await UniTask.Delay(1000); //1초 대기
     }
 
     private async UniTask WaitInput() // 입력대기 (스페이스바 또는 마우스 왼쪽 클릭)

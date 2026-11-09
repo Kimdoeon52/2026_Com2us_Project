@@ -8,8 +8,14 @@ public class CorrectRecipe : MonoBehaviour
     [SerializeField] private ResultSlot resultSlot;
     public PartsDefinition resultPart;
 
+    private const int GridSize = 9;
+
     // RefreshMissingComponents 안의 ConsumeComponent가 다시 Changed를 부르므로 재진입 방지용
     private bool _refreshing;
+
+    // 같은 연결 오류를 매번 찍지 않도록
+    private bool _warnedSlots;
+    private readonly System.Collections.Generic.HashSet<string> _warnedRecipes = new System.Collections.Generic.HashSet<string>();
 
     private void Awake()
     {
@@ -32,7 +38,7 @@ public class CorrectRecipe : MonoBehaviour
     // 인벤토리가 바뀔 때마다 빨간 칸(재료 없음)이 이제 재료를 가져올 수 있는지 다시 확인한다
     private void RefreshMissingComponents()
     {
-        if (_refreshing || slots == null)
+        if (_refreshing || !HasValidSlots())
             return;
 
         _refreshing = true;
@@ -70,12 +76,41 @@ public class CorrectRecipe : MonoBehaviour
         Debug.Log($"슬롯갯수{slots.Length}");
     }
 
+    // 조합 칸이 9개 모두 연결돼 있어야 판정한다. 잘못된 연결은 한 번만 알린다
+    private bool HasValidSlots()
+    {
+        bool valid = slots != null && slots.Length == GridSize && System.Array.TrueForAll(slots, s => s != null);
+        if (!valid && !_warnedSlots)
+        {
+            _warnedSlots = true;
+            Debug.LogError($"[CorrectRecipe] 조합 칸이 {(slots != null ? slots.Length : 0)}개 연결돼 있습니다. {GridSize}칸이 모두 있어야 제작할 수 있어 제작을 중단합니다.", this);
+        }
+        return valid;
+    }
+
+    // 비었거나 9칸이 아닌 레시피는 판정에서 빼고 한 번만 알린다
+    private bool IsValidRecipe(RecipeData recipe)
+    {
+        if (recipe != null && recipe.Combination != null && recipe.Combination.Length == GridSize)
+            return true;
+
+        if (_warnedRecipes.Add(recipe != null ? recipe.name : "(비어 있음)"))
+            Debug.LogWarning($"[CorrectRecipe] 레시피 '{(recipe != null ? recipe.name : "비어 있음")}'의 조합법이 {GridSize}칸이 아니어서 건너뜁니다.", this);
+        return false;
+    }
+
     public string FindRecipe()
     {
+        if (!HasValidSlots() || recipeDatas == null)
+            return null;
+
         foreach (var recipe in recipeDatas)
         {
+            if (!IsValidRecipe(recipe))
+                continue;
+
             bool allMatch = true;
-            for (int i = 0; i < 9; i++)
+            for (int i = 0; i < GridSize; i++)
             {
                 if (!IsSameID(slots[i].componentID, recipe.Combination[i]))
                 {
@@ -99,24 +134,28 @@ public class CorrectRecipe : MonoBehaviour
 
     public void PushPartData()
     {
-        string partID = FindRecipe();
-        if (isCorrect() == true && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
-        { 
-            partID = FindRecipe();
-            resultPart = partID != null ? resultSlot.FindPart(partID) : null;
-            resultSlot.SetPart(resultPart);   // null이면 결과 슬롯을 비움
-        }
-        else
+        if (resultSlot == null)
         {
-            partID = "";
+            Debug.LogError("[CorrectRecipe] 결과 슬롯이 연결되지 않아 제작을 중단합니다.", this);
             resultPart = null;
-            resultSlot.SetPart(null);
+            return;
         }
+
+        string partID = FindRecipe();
+        if (partID != null && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
+            resultPart = resultSlot.FindPart(partID);
+        else
+            resultPart = null;
+
+        resultSlot.SetPart(resultPart);   // null이면 결과 슬롯을 비움
     }
 
     // 슬롯 9칸 모두 실제로 인벤토리에서 빠진 부품인지 (빨간 칸이 없는지)
     private bool HasAllComponents()
     {
+        if (!HasValidSlots())
+            return false;
+
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i].Component != null && !slots[i].HasComponent)   // 빈 칸은 검사 대상 아님
@@ -133,6 +172,9 @@ public class CorrectRecipe : MonoBehaviour
 
     private void ConsumeSlots()
     {
+        if (!HasValidSlots())
+            return;
+
         for (int i = 0; i < slots.Length; i++)
         {
             slots[i].SetComponent(null);

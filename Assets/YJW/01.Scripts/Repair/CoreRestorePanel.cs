@@ -44,7 +44,10 @@ public class CoreRestorePanel : MonoBehaviour
         _warningBanner.SetActive(unstable);
         _badge.SetCore(unstable);
         _level.text = $"CORE Lv.{level}";
-        _guide.text = unstable ? "복구 전에는 로봇을 조립할 수 없습니다." : "코어가 정상입니다.";
+        // 골드가 모자라도 막히지 않게 무료로 골드를 모으는 길을 같이 알려준다
+        if (!unstable) _guide.text = "코어가 정상입니다.";
+        else if (balance < 0) _guide.text = "복구 전에는 출전할 수 없습니다.\n골드가 부족하면 고물상에서 부품을 모아 파츠를 제작하고 상점에 판매하세요.";
+        else _guide.text = "복구 전에는 출전할 수 없습니다.";
         _icon.color = stateColor;
         _iconInner.color = stateColor;
 

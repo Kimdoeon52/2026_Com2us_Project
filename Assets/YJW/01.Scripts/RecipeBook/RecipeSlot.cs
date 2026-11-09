@@ -76,6 +76,14 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
 
         var manager = CraftingManager.Instance;
 
+        // 조합 칸과 레시피 칸 수가 다르면 엉뚱한 칸에 들어가므로 채우지 않는다
+        if (manager == null || manager.slots == null || data.Combination == null
+            || manager.slots.Length != data.Combination.Length || System.Array.Exists(manager.slots, s => s == null))
+        {
+            Debug.LogError($"[RecipeSlot] 조합 칸 연결이나 레시피 '{data.name}'의 칸 수가 맞지 않아 채울 수 없습니다.", this);
+            return;
+        }
+
         // 기존에 올려둔 부품이 있으면 먼저 인벤토리로 돌려놓는다 (안 하면 덮어써져서 사라짐)
         manager.AllComponentReturn();
 

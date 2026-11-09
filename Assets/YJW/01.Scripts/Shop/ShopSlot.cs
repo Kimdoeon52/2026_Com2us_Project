@@ -34,26 +34,29 @@ public class ShopSlot : MonoBehaviour
         _name.text = name;
         _grade.text = grade.ToString();
         _icon.sprite = icon;
-        int disGold = 0;
-        switch(grade)
-        {
-            case PartGrade.Common:
-                disGold = (cost * 35 + 50) / 100;
-                _cost.text = disGold.ToString();
-                break;
-            case PartGrade.Rare:
-                disGold = (cost * 30 + 50) / 100;
-                _cost.text = disGold.ToString();
-                break;
-            case PartGrade.Epic:
-                disGold = (cost * 20 + 50) / 100;
-                _cost.text = disGold.ToString();
-                break;
-        }
+
+        // 판매가가 없는 등급은 0G로 팔리지 않게 판매 불가로 표시한다
+        int rate = SellRate(grade);
+        Gold = rate > 0 && cost > 0 ? (cost * rate + 50) / 100 : 0;
+        _cost.text = Gold > 0 ? Gold.ToString() : "판매 불가";
+
         _part = part;
-        Gold = disGold;
         CanSell();   // 다른 파츠가 들어왔으니 판매 가능 여부도 다시 판정
     }
+
+    // 정가 대비 판매가 비율(%). 기본·전설·프로토타입은 정가가 없어 팔 수 없다
+    private static int SellRate(PartGrade grade)
+    {
+        switch (grade)
+        {
+            case PartGrade.Common: return 35;
+            case PartGrade.Rare: return 30;
+            case PartGrade.Epic: return 20;
+            default: return 0;
+        }
+    }
+
+    private bool IsSellable => _part != null && Gold > 0;
 
     bool hasPart(PartsDefinition part)
     {
@@ -68,18 +71,20 @@ public class ShopSlot : MonoBehaviour
 
     private void CanSell()
     {
-        if (hasPart(_part) == true) buttonBG.color = canSellColor;
+        if (IsSellable && hasPart(_part)) buttonBG.color = canSellColor;
         else buttonBG.color = cannotSellColor;
     }
 
     public void OnSellButton()
     {
-        if (hasPart(_part) == true)
-        {
-            InventoryHost.Instance.RemovePart(_part);
-            GlobalGold.Instance.GetGold(0, Gold);
-            GlobalGold.Instance.SaveGame();
-        }
-        else return;
+        if (!IsSellable || !hasPart(_part) || GlobalGold.Instance == null)
+            return;
+
+        // 파츠가 실제로 빠졌을 때만 골드를 준다
+        if (!InventoryHost.Instance.RemovePart(_part))
+            return;
+
+        GlobalGold.Instance.GetGold(0, Gold);
+        GlobalGold.Instance.SaveGame();
     }
 }

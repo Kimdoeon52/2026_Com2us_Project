@@ -203,7 +203,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0f7e340138ed1f247872734e1b624087, type: 3}
+  m_Sprite: {fileID: 21300000, guid: daaeeec1f63854b4b953e7fd345ff7bb, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -314,6 +314,5 @@ MonoBehaviour:
   cutsceneBannerSprite: {fileID: 21300000, guid: 1d12d9438e5786b489908314fc6baa4f, type: 3}
   cutsceneBGcolor: {r: 0.63403344, g: 0.9088199, b: 0.9811321, a: 1}
   cutsceneCharacter: {fileID: 21300000, guid: 80de35b4a9a0f1d448d6146cdc438e72, type: 3}
-  bigRaiseGold: 1000
-  bigRaisetimes: 2
+  RaiseThinkRatio: 3
   actionRate: 0.7

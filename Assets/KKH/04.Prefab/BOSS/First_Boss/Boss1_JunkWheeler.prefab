@@ -447,47 +447,47 @@ MonoBehaviour:
   - jumpHeight: 0.45
     jumpDuration: 0.16
     fallDuration: 0.12
-    shockwaveMaxDistance: 1.25
-    shockwaveHitWidth: 0.15
+    shockwaveMaxDistance: 0.7
+    shockwaveHitWidth: 0.12
     shockwaveScaleX: 0.8
-    shockwaveSpeed: 6.5
+    shockwaveSpeed: 2.5
     coreDamage: 20
     legDamage: 15
     landSquashScale: {x: 1.2, y: 0.75}
   - jumpHeight: 0.65
     jumpDuration: 0.18
     fallDuration: 0.13
-    shockwaveMaxDistance: 2.25
-    shockwaveHitWidth: 0.18
+    shockwaveMaxDistance: 1.05
+    shockwaveHitWidth: 0.14
     shockwaveScaleX: 1.1
-    shockwaveSpeed: 7
+    shockwaveSpeed: 3.2
     coreDamage: 25
     legDamage: 20
     landSquashScale: {x: 1.28, y: 0.7}
   - jumpHeight: 0.85
     jumpDuration: 0.2
     fallDuration: 0.14
-    shockwaveMaxDistance: 3.25
-    shockwaveHitWidth: 0.22
+    shockwaveMaxDistance: 1.4
+    shockwaveHitWidth: 0.16
     shockwaveScaleX: 1.4
-    shockwaveSpeed: 8
+    shockwaveSpeed: 4.2
     coreDamage: 30
     legDamage: 25
     landSquashScale: {x: 1.35, y: 0.65}
   - jumpHeight: 1.15
     jumpDuration: 0.24
     fallDuration: 0.16
-    shockwaveMaxDistance: 5.25
-    shockwaveHitWidth: 0.26
+    shockwaveMaxDistance: 1.88
+    shockwaveHitWidth: 0.18
     shockwaveScaleX: 1.8
-    shockwaveSpeed: 9.5
+    shockwaveSpeed: 5.5
     coreDamage: 40
     legDamage: 35
     landSquashScale: {x: 1.48, y: 0.52}
   pauseBetweenDribbles: 0.1
   postLandVulnerableDelay: 0.8
-  shockwaveVisualPrefab: {fileID: 8369145054601909066, guid: 4c2eec274044ee944b7e81b11ff89f62, type: 3}
+  shockwaveVisualPrefab: {fileID: 5051787410455962075, guid: 299f355f801ebeb408106306b9440a9e, type: 3}
   dribbleLandVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
-  tellCrackVfxPrefab: {fileID: 1323618065715081469, guid: 6592df7d1457e02409f105dcfa33d2d9, type: 3}
+  tellCrackVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}

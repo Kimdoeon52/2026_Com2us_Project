@@ -36,6 +36,8 @@ namespace RealSteel.Boss.JunkWheeler
         private float _baseScaleX = 1.0f;
         private float _baseScaleY = 1.0f;
         private float _baseScaleZ = 1.0f;
+        private Vector3 _prefabOriginalScale = Vector3.one;
+        private bool _isHorizontalGroundParticle = false;
 
         private int _coreDamage = 25;
         private int _legDamage = 20;
@@ -70,7 +72,8 @@ namespace RealSteel.Boss.JunkWheeler
             int roundIndex,
             JunkWheelerDribbleShockwavePatternGimmick owner,
             GameObject visualPrefab = null,
-            GameObject hitVfxPrefab = null)
+            GameObject hitVfxPrefab = null,
+            bool suppressProceduralVisual = false)
         {
             _directionX = Mathf.Sign(directionX);
             _speed = speed;
@@ -94,7 +97,10 @@ namespace RealSteel.Boss.JunkWheeler
             BossVfxHelper.ConfigureVisualOnly(gameObject);
 
             // 비주얼 생성 및 X축 가로 스케일 적용
-            SetupVisual(visualPrefab);
+            if (!suppressProceduralVisual || visualPrefab != null)
+            {
+                SetupVisual(visualPrefab);
+            }
 
             // 초기 높이를 지면에 밀착
             Vector3 pos = transform.position;
@@ -109,10 +115,20 @@ namespace RealSteel.Boss.JunkWheeler
                 _visualInstance = Instantiate(visualPrefab, transform);
                 _visualInstance.transform.localPosition = Vector3.zero;
 
-                _baseScaleY = 1.0f;
-                _baseScaleZ = 1.0f;
+                // 프리팹 인스턴스화 후 실제 원본 스케일 읽기 (에셋 직접 참조 시 {1,1,1} 유실 방지)
+                _prefabOriginalScale = _visualInstance.transform.localScale;
+                if (_prefabOriginalScale.x < 0.1f) _prefabOriginalScale.x = 8f;
+                // 스프라이트 비율(360x154)에 맞춘 Z 스케일 산출 (원근 왜곡 방지)
+                float safeZ = _prefabOriginalScale.x * (154f / 360f);
+                if (_prefabOriginalScale.z > 10f || _prefabOriginalScale.z < 0.5f)
+                {
+                    _prefabOriginalScale = new Vector3(_prefabOriginalScale.x, _prefabOriginalScale.y, safeZ);
+                }
+
+                _baseScaleY = _prefabOriginalScale.y;
+                _baseScaleZ = _prefabOriginalScale.z;
                 _visualInstance.transform.localScale = new Vector3(
-                    _baseScaleX,
+                    _prefabOriginalScale.x * _baseScaleX,
                     _baseScaleY,
                     _baseScaleZ
                 );
@@ -124,18 +140,37 @@ namespace RealSteel.Boss.JunkWheeler
                 foreach (var r in renderers)
                 {
                     if (r == null) continue;
-                    r.sortingOrder = Mathf.Max(r.sortingOrder, 5);
+                    r.sortingOrder = Mathf.Max(r.sortingOrder, 12);
 
-                    if (_directionX < 0f)
+                    if (r is ParticleSystemRenderer psr)
                     {
-                        if (r is ParticleSystemRenderer psr)
+                        if (psr.renderMode == ParticleSystemRenderMode.HorizontalBillboard)
+                        {
+                            _isHorizontalGroundParticle = true;
+                            psr.maxParticleSize = Mathf.Max(psr.maxParticleSize, 5.0f);
+                        }
+                        if (_directionX < 0f)
                         {
                             psr.flip = new Vector3(1f, psr.flip.y, psr.flip.z);
                         }
-                        else if (r is SpriteRenderer sr)
-                        {
-                            sr.flipX = !sr.flipX;
-                        }
+                    }
+                    else if (r is SpriteRenderer sr && _directionX < 0f)
+                    {
+                        sr.flipX = !sr.flipX;
+                    }
+                }
+
+                if (_isHorizontalGroundParticle)
+                {
+                    var particles = _visualInstance.GetComponentsInChildren<ParticleSystem>(true);
+                    foreach (var ps in particles)
+                    {
+                        if (ps == null) continue;
+                        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                        var main = ps.main;
+                        main.loop = false;
+                        main.startSize3D = true;
+                        ps.Play(true);
                     }
                 }
             }
@@ -148,6 +183,7 @@ namespace RealSteel.Boss.JunkWheeler
 
         private void CreateProceduralVisual()
         {
+            _prefabOriginalScale = Vector3.one;
             _visualInstance = new GameObject("ProceduralShockwave");
             _visualInstance.transform.SetParent(transform, false);
             _visualInstance.transform.localPosition = new Vector3(0f, 0.25f, 0f);
@@ -183,7 +219,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (_visualInstance != null)
             {
-                float dynamicScaleX = _baseScaleX * (1f + progress * dynamicXExpandRatio);
+                float dynamicScaleX = _prefabOriginalScale.x * _baseScaleX * (1f + progress * dynamicXExpandRatio);
                 _visualInstance.transform.localScale = new Vector3(
                     dynamicScaleX,
                     _baseScaleY,
@@ -306,7 +342,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (_hitVfxPrefab != null)
             {
                 Vector3 hitPos = new Vector3(playerObj.transform.position.x, _groundY, 0f);
-                BossVfxHelper.SpawnVfx(_hitVfxPrefab, hitPos, Quaternion.identity, Vector3.one, 1.2f);
+                BossVfxHelper.SpawnVfx(_hitVfxPrefab, hitPos, Quaternion.identity, null, 1.2f);
             }
         }
 
@@ -315,9 +351,22 @@ namespace RealSteel.Boss.JunkWheeler
             if (_isDisintegrating) return;
             _isDisintegrating = true;
 
-            // 트윈 스케일 축소 후 파괴
             if (_visualInstance != null)
             {
+                // HorizontalBillboard 파티클(예: Vfx_Slam_Sprak, 0.6초 재생)은 즉시 Y스케일을 0으로 찌그러뜨리거나
+                // 사거리 도달 즉시 파괴하면 파티클 스프라이트 시트 애니메이션이 중간에 잘리므로,
+                // 월드 공간에 분리하여 파티클 잔여 수명 동안 자연스럽게 끝까지 재생 후 소멸시킴.
+                var ps = _visualInstance.GetComponentInChildren<ParticleSystem>();
+                if (ps != null)
+                {
+                    _visualInstance.transform.SetParent(null, true);
+                    float remainDuration = Mathf.Max(0.45f, ps.main.duration);
+                    Destroy(_visualInstance, remainDuration);
+                    _visualInstance = null;
+                    Destroy(gameObject);
+                    return;
+                }
+
                 _visualInstance.transform.DOScaleY(0f, 0.12f).SetEase(Ease.InQuad).OnComplete(() =>
                 {
                     Destroy(gameObject);

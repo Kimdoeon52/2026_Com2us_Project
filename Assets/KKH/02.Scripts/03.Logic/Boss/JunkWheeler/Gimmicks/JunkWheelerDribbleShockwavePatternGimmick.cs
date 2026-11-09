@@ -69,62 +69,62 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private Color crackWarningColor = new Color(1.0f, 0.28f, 0.08f, 0.95f);
         [SerializeField] private float crackWidth = 1.2f;
 
-        [Header("드리블 4회 라운드 설정 (X축 점진적 범위 확장 - 전 회차 반경 50% 축소)")]
+        [Header("드리블 4회 라운드 설정 (Vfx_Slam_Sprak 이펙트 반경과 1:1 동기화)")]
         [SerializeField]
         private DribbleRoundConfig[] roundConfigs = new DribbleRoundConfig[4]
         {
-            // 1회차: 소형 (X사거리 1.25m, X판정 반폭 0.15m, X스케일 0.8x)
+            // 1회차: 소형 (이펙트 반경 ~1.0m, X스케일 0.8x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.45f,
                 jumpDuration = 0.16f,
                 fallDuration = 0.12f,
-                shockwaveMaxDistance = 1.25f,
-                shockwaveHitWidth = 0.15f,
+                shockwaveMaxDistance = 0.70f,
+                shockwaveHitWidth = 0.12f,
                 shockwaveScaleX = 0.8f,
-                shockwaveSpeed = 6.5f,
+                shockwaveSpeed = 2.5f,
                 coreDamage = 20,
                 legDamage = 15,
                 landSquashScale = new Vector2(1.20f, 0.75f)
             },
-            // 2회차: 중형 (X사거리 2.25m, X판정 반폭 0.18m, X스케일 1.1x)
+            // 2회차: 중형 (이펙트 반경 ~1.38m, X스케일 1.1x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.48f,
                 jumpDuration = 0.17f,
                 fallDuration = 0.12f,
-                shockwaveMaxDistance = 2.25f,
-                shockwaveHitWidth = 0.18f,
+                shockwaveMaxDistance = 1.05f,
+                shockwaveHitWidth = 0.14f,
                 shockwaveScaleX = 1.1f,
-                shockwaveSpeed = 7.0f,
+                shockwaveSpeed = 3.2f,
                 coreDamage = 25,
                 legDamage = 20,
                 landSquashScale = new Vector2(1.28f, 0.70f)
             },
-            // 3회차: 대형 (X사거리 3.25m, X판정 반폭 0.22m, X스케일 1.4x)
+            // 3회차: 대형 (이펙트 반경 ~1.75m, X스케일 1.4x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.50f,
                 jumpDuration = 0.18f,
                 fallDuration = 0.13f,
-                shockwaveMaxDistance = 3.25f,
-                shockwaveHitWidth = 0.22f,
+                shockwaveMaxDistance = 1.40f,
+                shockwaveHitWidth = 0.16f,
                 shockwaveScaleX = 1.4f,
-                shockwaveSpeed = 8.0f,
+                shockwaveSpeed = 4.2f,
                 coreDamage = 30,
                 legDamage = 25,
                 landSquashScale = new Vector2(1.35f, 0.65f)
             },
-            // 4회차: 특대형 (X사거리 5.25m, X판정 반폭 0.26m, X스케일 1.8x)
+            // 4회차: 특대형 (이펙트 반경 ~2.25m, X스케일 1.8x)
             new DribbleRoundConfig
             {
                 jumpHeight = 0.55f,
                 jumpDuration = 0.20f,
                 fallDuration = 0.14f,
-                shockwaveMaxDistance = 5.25f,
-                shockwaveHitWidth = 0.26f,
+                shockwaveMaxDistance = 1.88f,
+                shockwaveHitWidth = 0.18f,
                 shockwaveScaleX = 1.8f,
-                shockwaveSpeed = 9.5f,
+                shockwaveSpeed = 5.5f,
                 coreDamage = 40,
                 legDamage = 35,
                 landSquashScale = new Vector2(1.48f, 0.52f)
@@ -149,11 +149,30 @@ namespace RealSteel.Boss.JunkWheeler
         [Tooltip("플레이어 피격 순간 스파크/충격 VFX")]
         [SerializeField] private GameObject hitVfxPrefab;
 
+        [Header("★ 착지 이펙트 위치 오프셋 (인스펙터 미세 조정)")]
+        [Tooltip("보스 중심(transform.position) 대비 착지 이펙트 및 충격파 스폰 오프셋 (보스가 바라보는 방향에 따라 X축 부호 자동 반전)")]
+        [SerializeField] private Vector3 dribbleVfxOffset = Vector3.zero;
+
         private float _groundY;
         private Tweener _currentTween;
         private GameObject _activeCrackIndicator;
         private readonly List<JunkWheelerShockwaveHazard> _activeHazards = new List<JunkWheelerShockwaveHazard>();
         private readonly HashSet<int> _hitRounds = new HashSet<int>();
+
+        /// <summary>
+        /// 보스가 바라보는 방향(Facing) 및 월드 깊이(Z)를 반영하여 착지 중앙 이펙트 및 충격파가 스폰될 정확한 월드 지면 좌표를 반환함.
+        /// </summary>
+        public Vector3 GetLandingCenterPosition()
+        {
+            if (OwnerBoss == null) return transform.position;
+            Vector3 bossPos = OwnerBoss.transform.position;
+            float signX = OwnerBoss.transform.localScale.x >= 0f ? 1f : -1f;
+            return new Vector3(
+                bossPos.x + dribbleVfxOffset.x * signX,
+                _groundY + dribbleVfxOffset.y,
+                bossPos.z + dribbleVfxOffset.z
+            );
+        }
 
         private void Awake()
         {
@@ -274,8 +293,13 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.SnapToGroundY();
                 OwnerBoss.Animation?.PlaySlamLand();
 
-                // 착지 중앙 충격 이펙트
-                SpawnVfx(dribbleLandVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
+                Vector3 landingCenter = GetLandingCenterPosition();
+
+                // 착지 중앙 충격 이펙트 (중복 생성 방지: shockwaveVisualPrefab과 동일하거나 수평 고리인 경우 지면 링 로직에서 단일 전담 처리)
+                if (dribbleLandVfxPrefab != null && dribbleLandVfxPrefab != shockwaveVisualPrefab && !IsSymmetricGroundRingPrefab(dribbleLandVfxPrefab))
+                {
+                    SpawnVfx(dribbleLandVfxPrefab, landingCenter);
+                }
 
                 // 비대칭 펀치 연출 (Squash & Stretch: 0.04s 압착 ➔ 탄성 복원)
                 if (OwnerBoss.Animation != null)
@@ -284,11 +308,24 @@ namespace RealSteel.Boss.JunkWheeler
                         OwnerBoss.transform, config.landSquashScale, 0.04f, 0.18f, token);
                 }
 
-                // ★ [X축 점진적 확장 충격파 발사! (좌/우 방향)]
-                SpawnShockwaveHazard(roundIndex, -1f, config);
-                SpawnShockwaveHazard(roundIndex, +1f, config);
+                // ★ [X축 점진적 확장 충격파 발사! (이펙트 반경과 피격 판정 범위 1:1 완전 동기화)]
+                // Vfx_Slam_Sprak(28프레임 2.5D 대칭형 타원 고리)은 보스 착지 중앙(landingCenter)에 1회 스폰하여
+                // 회차별(1~4회) 및 프레임 진행(1~16f)에 맞춰 X축 크기를 점진적으로 확장시킴.
+                // 좌/우 이동 해저드(JunkWheelerShockwaveHazard)는 실제 이펙트의 시각적 외곽 링 반경(visualOuterRadius)까지만 정확히 전파됨.
+                bool isSymmetricGroundRing = IsSymmetricGroundRingPrefab(shockwaveVisualPrefab);
+                GameObject groundRingPrefab = isSymmetricGroundRing ? shockwaveVisualPrefab : (IsSymmetricGroundRingPrefab(dribbleLandVfxPrefab) ? dribbleLandVfxPrefab : null);
+                bool hasGroundRing = groundRingPrefab != null;
 
-                Debug.Log($"<color=yellow>[JunkWheelerDribbleShockwave] 💥 {roundIndex}회차 착지 완료! 좌/우 광폭 충격파 전파 (X사거리: {config.shockwaveMaxDistance}m, X폭: {config.shockwaveHitWidth * 2f:F2}m)</color>");
+                float syncedVisualOuterRadius = -1f;
+                if (hasGroundRing)
+                {
+                    syncedVisualOuterRadius = SpawnExpandingGroundShockwaveVisual(config, landingCenter, groundRingPrefab);
+                }
+
+                SpawnShockwaveHazard(roundIndex, -1f, config, !hasGroundRing, syncedVisualOuterRadius, landingCenter);
+                SpawnShockwaveHazard(roundIndex, +1f, config, !hasGroundRing, syncedVisualOuterRadius, landingCenter);
+
+                Debug.Log($"<color=yellow>[JunkWheelerDribbleShockwave] 💥 {roundIndex}회차 착지 완료! 좌/우 충격파 전파 (시각/판정 반경: {(syncedVisualOuterRadius > 0f ? syncedVisualOuterRadius : config.shockwaveMaxDistance):F2}m)</color>");
 
                 // 다음 회차 도약 전 짧은 리듬 딜레이
                 if (r < totalRounds - 1)
@@ -310,12 +347,117 @@ namespace RealSteel.Boss.JunkWheeler
             await UniTask.Delay(TimeSpan.FromSeconds(postLandVulnerableDelay), cancellationToken: token);
         }
 
-        private void SpawnShockwaveHazard(int roundIndex, float directionX, DribbleRoundConfig config)
+        private bool IsSymmetricGroundRingPrefab(GameObject prefab)
+        {
+            if (prefab == null) return false;
+            var psr = prefab.GetComponentInChildren<ParticleSystemRenderer>(true);
+            return psr != null && psr.renderMode == ParticleSystemRenderMode.HorizontalBillboard;
+        }
+
+        // Vfx_Slam_Sprak(localScale.x = 8.0일 때 실제 지면 밝은 고리 반경 = 1.0m -> X스케일 1.0당 0.125m 반경)
+        private const float VisualRadiusPerScaleX = 0.125f;
+        private const float VisualRingExpandDuration = 0.35f;
+
+        private float SpawnExpandingGroundShockwaveVisual(DribbleRoundConfig config, Vector3 spawnCenter, GameObject prefabOverride = null)
+        {
+            GameObject prefab = prefabOverride != null ? prefabOverride : shockwaveVisualPrefab;
+            if (OwnerBoss == null || prefab == null) return -1f;
+
+            // 1. 보스 착지 지점 중앙 바닥(보스와 일치하는 월드 Z깊이)에 1회 스폰
+            GameObject vfxObj = Instantiate(prefab, spawnCenter, Quaternion.identity);
+            if (vfxObj == null) return -1f;
+
+            // 판정 완전 분리
+            BossVfxHelper.ConfigureVisualOnly(vfxObj);
+
+            // 2. 인스턴스화된 오브젝트의 가로세로 원본 비율(360x154 = 약 2.338 : 1)에 맞춘 Z축 스케일 산출
+            Vector3 baseScale = vfxObj.transform.localScale;
+            if (baseScale.x < 0.1f) baseScale.x = 8.0f;
+
+            // Z축을 3.42m(스프라이트 비율 154/360)로 제한하여 3D 투영 카메라 원근 왜곡 및 화면 좌측 쏠림 완전 차단
+            float baseZ = baseScale.x * (154f / 360f);
+            if (baseScale.z > 10f || baseScale.z < 0.5f)
+            {
+                baseScale = new Vector3(baseScale.x, 1f, baseZ);
+            }
+            else
+            {
+                baseScale = new Vector3(baseScale.x, baseScale.y, baseZ);
+            }
+
+            // 3. 드리블 회차별(1~4회차) X축 점진적 확장 (Z축은 스프라이트 비율 유지):
+            // 1회차(0.8x): 4.8 -> 8.0 (반경 1.00m) | 2회차(1.1x): 6.6 -> 11.0 (반경 1.38m)
+            // 3회차(1.4x): 8.4 -> 14.0 (반경 1.75m) | 4회차(1.8x): 10.8 -> 18.0 (반경 2.25m)
+            float startScaleX = baseScale.x * config.shockwaveScaleX * 0.75f;
+            float endScaleX = baseScale.x * config.shockwaveScaleX * 1.25f;
+            float currentZ = baseZ * config.shockwaveScaleX;
+            vfxObj.transform.localScale = new Vector3(startScaleX, baseScale.y, currentZ);
+
+            // 4. Sorting Order 보정 및 MaxParticleSize(0.5 -> 5.0) 제한 해제로 대형 X축 스케일 잘림 방지
+            var renderers = vfxObj.GetComponentsInChildren<Renderer>(true);
+            foreach (var r in renderers)
+            {
+                if (r == null) continue;
+                r.sortingOrder = Mathf.Max(r.sortingOrder, 10);
+                if (r is ParticleSystemRenderer psr)
+                {
+                    psr.maxParticleSize = Mathf.Max(psr.maxParticleSize, 5.0f);
+                }
+            }
+
+            // 5. 3D Start Size(size3D) 강제 활성화 후 Stop -> Play로 t=0 Burst 파티클 정상 방출 보장
+            float duration = 0.6f;
+            var particles = vfxObj.GetComponentsInChildren<ParticleSystem>(true);
+            foreach (var ps in particles)
+            {
+                if (ps == null) continue;
+                ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var main = ps.main;
+                main.loop = false;
+                main.startSize3D = true;
+                duration = Mathf.Max(duration, main.duration + main.startLifetime.constantMax);
+                ps.Play(true);
+            }
+
+            // 6. 스프라이트 시트 고리 팽창 구간(1~16프레임, 약 0.35초)에 맞춰 X축 실시간 확장 트윈
+            vfxObj.transform.DOScaleX(endScaleX, VisualRingExpandDuration).SetEase(Ease.OutCubic);
+
+            Destroy(vfxObj, duration + 0.15f);
+
+            // 실제 화면에 그려지는 이펙트 고리의 외곽 반경(m) 반환
+            return endScaleX * VisualRadiusPerScaleX;
+        }
+
+        private void SpawnShockwaveHazard(
+            int roundIndex,
+            float directionX,
+            DribbleRoundConfig config,
+            bool spawnVisual = true,
+            float syncedVisualOuterRadius = -1f,
+            Vector3? landingCenterOverride = null)
         {
             if (OwnerBoss == null) return;
 
-            float spawnX = OwnerBoss.transform.position.x + directionX * 0.45f;
-            Vector3 spawnPos = new Vector3(spawnX, _groundY, 0f);
+            Vector3 center = landingCenterOverride ?? GetLandingCenterPosition();
+
+            // 대칭형 지면 고리(Vfx_Slam_Sprak) 사용 시 피격 판정 외곽 끝단이 이펙트 고리 반경을 절대 넘지 않도록 1:1 동기화
+            float spawnOffset = syncedVisualOuterRadius > 0f ? 0.15f : 0.45f;
+            float hitWidth = config.shockwaveHitWidth;
+            float maxDistance = config.shockwaveMaxDistance;
+            float speed = config.shockwaveSpeed;
+
+            if (syncedVisualOuterRadius > 0f)
+            {
+                hitWidth = Mathf.Min(hitWidth, 0.18f);
+                float finalExpandedHitHalfWidth = hitWidth * 1.20f;
+                // 보스 중심에서 (spawnOffset + maxDistance + finalExpandedHitHalfWidth) == syncedVisualOuterRadius가 되도록 제한
+                maxDistance = Mathf.Max(0.15f, syncedVisualOuterRadius - spawnOffset - finalExpandedHitHalfWidth);
+                // 이펙트 고리가 팽창하는 시간(0.35초)에 맞춰 판정 파동이 고리 끝단에 정확히 도달하도록 속도 동기화
+                speed = maxDistance / VisualRingExpandDuration;
+            }
+
+            float spawnX = center.x + directionX * spawnOffset;
+            Vector3 spawnPos = new Vector3(spawnX, _groundY, center.z);
 
             GameObject hazardObj = new GameObject($"ShockwaveHazard_R{roundIndex}_{(directionX < 0 ? "L" : "R")}");
             hazardObj.transform.position = spawnPos;
@@ -323,17 +465,18 @@ namespace RealSteel.Boss.JunkWheeler
             var hazard = hazardObj.AddComponent<JunkWheelerShockwaveHazard>();
             hazard.Initialize(
                 directionX: directionX,
-                speed: config.shockwaveSpeed,
-                maxDistance: config.shockwaveMaxDistance,
-                hitWidth: config.shockwaveHitWidth,
+                speed: speed,
+                maxDistance: maxDistance,
+                hitWidth: hitWidth,
                 scaleX: config.shockwaveScaleX,
                 coreDamage: config.coreDamage,
                 legDamage: config.legDamage,
                 groundY: _groundY,
                 roundIndex: roundIndex,
                 owner: this,
-                visualPrefab: shockwaveVisualPrefab,
-                hitVfxPrefab: hitVfxPrefab
+                visualPrefab: spawnVisual ? shockwaveVisualPrefab : null,
+                hitVfxPrefab: hitVfxPrefab,
+                suppressProceduralVisual: !spawnVisual
             );
 
             _activeHazards.Add(hazard);
@@ -343,26 +486,34 @@ namespace RealSteel.Boss.JunkWheeler
         {
             DestroyFloorCrackIndicator();
 
+            Vector3 center = GetLandingCenterPosition();
+
             if (tellCrackVfxPrefab != null)
             {
+                Vector3 origCrackScale = tellCrackVfxPrefab.transform.localScale;
+                if (origCrackScale.sqrMagnitude < 0.0001f) origCrackScale = Vector3.one;
+
                 _activeCrackIndicator = SpawnVfx(
                     tellCrackVfxPrefab,
-                    new Vector3(OwnerBoss.transform.position.x, _groundY, 0f),
+                    center,
                     Quaternion.identity,
-                    new Vector3(1.0f, 1.0f, 1.0f),
+                    origCrackScale,
                     tellCrackDuration + 0.2f
                 );
-                // 0.6초 동안 X축으로 찌이익 넓어지는 연출
+                // 0.6초 동안 원본 X축 스케일을 기준으로 찌이익 넓어지는 연출
                 if (_activeCrackIndicator != null)
                 {
-                    _activeCrackIndicator.transform.DOScaleX(crackWidth * 1.5f, tellCrackDuration).From(0.5f).SetEase(Ease.OutQuad);
+                    _activeCrackIndicator.transform
+                        .DOScaleX(origCrackScale.x * crackWidth * 1.5f, tellCrackDuration)
+                        .From(origCrackScale.x * 0.5f)
+                        .SetEase(Ease.OutQuad);
                 }
             }
             else
             {
                 // 프로시저럴 바닥 균열 경고 바 생성
                 _activeCrackIndicator = new GameObject("ProceduralCrackIndicator");
-                _activeCrackIndicator.transform.position = new Vector3(OwnerBoss.transform.position.x, _groundY + 0.04f, 0f);
+                _activeCrackIndicator.transform.position = new Vector3(center.x, _groundY + 0.04f, center.z);
 
                 var sr = _activeCrackIndicator.AddComponent<SpriteRenderer>();
                 sr.color = crackWarningColor;
@@ -442,12 +593,12 @@ namespace RealSteel.Boss.JunkWheeler
             if (shockwaveVisualPrefab == null)
             {
                 shockwaveVisualPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
-                    "Assets/Eric VFX Studio/Flipbook VFX - Cartoon Skill/Prefab/FX_Flipbook_GroundShock.prefab");
+                    "Assets/Sprites/Vfx/Vfx_Slam_Sprak.prefab");
             }
             if (dribbleLandVfxPrefab == null)
             {
                 dribbleLandVfxPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
-                    "Assets/Eric VFX Studio/Flipbook VFX - Cartoon Skill/Prefab/FX_Flipbook_Blast_Ground.prefab");
+                    "Assets/Sprites/Vfx/Vfx_Crack_Small.prefab");
             }
             if (hitVfxPrefab == null)
             {
@@ -457,14 +608,13 @@ namespace RealSteel.Boss.JunkWheeler
             if (tellCrackVfxPrefab == null)
             {
                 tellCrackVfxPrefab = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>(
-                    "Assets/Eric VFX Studio/Flipbook VFX - Cartoon Skill/Prefab/FX_Flipbook_SlashGround_02.prefab");
+                    "Assets/Sprites/Vfx/Vfx_Crack_Small.prefab");
             }
         }
 
         private void OnDrawGizmosSelected()
         {
-            Vector3 center = transform.position;
-            center.y = _groundY;
+            Vector3 center = GetLandingCenterPosition();
 
             // 1~4회차 X축 도달 사거리 및 가로 판정폭 기즈모 시각화
             if (roundConfigs != null)
@@ -477,12 +627,14 @@ namespace RealSteel.Boss.JunkWheeler
                     new Color(1f, 0.1f, 0.1f, 0.7f)  // 4회차 빨강
                 };
 
+                bool isSymmetric = IsSymmetricGroundRingPrefab(shockwaveVisualPrefab);
                 for (int i = 0; i < roundConfigs.Length; i++)
                 {
                     Gizmos.color = colors[i % colors.Length];
-                    float d = roundConfigs[i].shockwaveMaxDistance;
-                    float w = roundConfigs[i].shockwaveHitWidth * 2f;
-                    Gizmos.DrawWireCube(center, new Vector3(d * 2f, 0.15f, 0.1f));
+                    float outerRadius = isSymmetric
+                        ? (8f * roundConfigs[i].shockwaveScaleX * 1.25f * VisualRadiusPerScaleX)
+                        : (0.45f + roundConfigs[i].shockwaveMaxDistance + roundConfigs[i].shockwaveHitWidth * 1.2f);
+                    Gizmos.DrawWireCube(center, new Vector3(outerRadius * 2f, 0.15f, 0.1f));
                 }
             }
         }

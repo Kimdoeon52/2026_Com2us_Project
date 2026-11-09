@@ -77,22 +77,28 @@ namespace RealSteel.Boss.Visual
             // [판정 완전 분리]
             ConfigureVisualOnly(instance);
 
-            // 1. 2D 렌더링 정렬 보정 (보스 스프라이트보다 전면에 표시)
+            // 1. 2D 렌더링 정렬 보정 및 HorizontalBillboard 최대 크기 제한 해제
             var renderers = instance.GetComponentsInChildren<Renderer>(true);
             foreach (var r in renderers)
             {
-                if (r != null && r.sortingOrder <= 0)
+                if (r == null) continue;
+                if (r.sortingOrder <= 0)
                 {
                     r.sortingOrder += sortingOrderOffset;
                 }
+                if (r is ParticleSystemRenderer psr && psr.renderMode == ParticleSystemRenderMode.HorizontalBillboard)
+                {
+                    psr.maxParticleSize = Mathf.Max(psr.maxParticleSize, 5.0f);
+                }
             }
 
-            // 2. 파티클 시스템 수명 자동 연산
+            // 2. 파티클 시스템 수명 자동 연산 및 3D 스케일/Burst 재시작 보장
             float duration = defaultLifetime;
             var particles = instance.GetComponentsInChildren<ParticleSystem>(true);
             if (particles != null && particles.Length > 0)
             {
                 float maxParticleLifetime = 0f;
+                bool needsRestart = scale.HasValue;
                 foreach (var ps in particles)
                 {
                     if (ps == null) continue;
@@ -101,9 +107,22 @@ namespace RealSteel.Boss.Visual
                     {
                         main.loop = false;
                     }
-                    if (!ps.isPlaying && main.playOnAwake)
+
+                    // 지면 원근 스케일(z > 1.5)을 사용하는 파티클은 3D Start Size 활성화
+                    if (instance.transform.localScale.z > 1.5f && !main.startSize3D)
                     {
-                        ps.Play();
+                        main.startSize3D = true;
+                        needsRestart = true;
+                    }
+
+                    if (needsRestart)
+                    {
+                        ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                        ps.Play(true);
+                    }
+                    else if (!ps.isPlaying && main.playOnAwake)
+                    {
+                        ps.Play(true);
                     }
 
                     float psTime = main.duration + main.startLifetime.constantMax;

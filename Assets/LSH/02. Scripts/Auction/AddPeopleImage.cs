@@ -5,9 +5,11 @@ using UnityEngine.UI;
 public class AddPeopleImage : MonoBehaviour
 {
     [Header("구경꾼 이미지 설정")]
-    [SerializeField] private Image[] peopleImages;
+    [SerializeField] private Image[] peopleImageLineOne;
+    [SerializeField] private Image[] peopleImageLineTwo;
+    [SerializeField] private Image[] peopleImageLineThree;
     [SerializeField] private Sprite[] peopleSprite;
-
+    private Image[] peopleImages; // 모든 구경꾼 이미지 배열
     [Header("웅성웅성 연출 설정")]
     [SerializeField] private float lessMoveTime = 0.3f;
     [SerializeField] private float maxMoveTime = 0.6f;
@@ -15,6 +17,11 @@ public class AddPeopleImage : MonoBehaviour
 
     private void Start()
     {
+        peopleImages = new Image[peopleImageLineOne.Length + peopleImageLineTwo.Length + peopleImageLineThree.Length];
+        int index = 0;
+        foreach (var img in peopleImageLineOne) peopleImages[index++] = img;
+        foreach (var img in peopleImageLineTwo) peopleImages[index++] = img;
+        foreach (var img in peopleImageLineThree) peopleImages[index++] = img;
         for (int i = 0; i < peopleImages.Length; i++)
         {
             int ranIndex = Random.Range(0, peopleSprite.Length);

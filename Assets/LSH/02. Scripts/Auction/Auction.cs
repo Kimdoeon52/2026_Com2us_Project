@@ -171,6 +171,9 @@ public class Auction : Singleton<Auction>
     [SerializeField] public AudioClip dialogueEffect;    // DialogueEffect
     [SerializeField] public AudioClip useSkillEffect;    // UseSkillEffect
     [SerializeField] public AudioClip clickSoundEffect;
+    [Header("배경음 설정")]
+    [SerializeField] private AudioClip normalBGM;
+    [SerializeField] private AudioClip fistBGM;
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -344,7 +347,7 @@ public class Auction : Singleton<Auction>
         if (stageBosses == null) return false; // 보스 명단이 없으면 중단
 
         stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
-        CurrentCost = stuff.Cost / 2;
+        CurrentCost = stuff.Cost / 2; //원가의 절반
         stuffGrade = stuff.Grade; // 등급 넣기
         if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
         if (auctionName != null) auctionName.text = "";
@@ -458,11 +461,13 @@ public class Auction : Singleton<Auction>
         {
             NormalAuctionButtonReady(true);
             EnableFistAuctionUI(false);
+            PlayBGM(currentAuctionType);
         }
         else if (currentAuctionType == AuctionType.Fist)
         {
             NormalAuctionButtonReady(false);
             EnableFistAuctionUI(true);
+            PlayBGM(currentAuctionType);
         }
 
         // 전략 패턴 실행
@@ -817,6 +822,7 @@ public class Auction : Singleton<Auction>
         string winnerName = IfPlayerWin ? PlayerName : auctionAiList.Find(ai => ai.NPCID == finalWinner)?.NPCName ?? "알 수 없음";
         await SpeakAsync(ChatList.Instance.GetChat("경매완료", winnerName)); // 낙찰자 발표 후 퇴장
         curtainMove.CloseCurtain(); //커튼 닫기
+        StopMusic();
         await UniTask.Delay(1000); //1초 대기
     }
 
@@ -1084,5 +1090,25 @@ public class Auction : Singleton<Auction>
             sfxAudioSource.PlayOneShot(clip); // 메모리 추가 할당 없이 재생
         }
     }
-
+    public void PlayBGM(AuctionType currentAuctionType)
+    {
+        switch(currentAuctionType)
+        {
+            case AuctionType.Normal:
+                sfxAudioSource.clip = normalBGM;
+                break;
+            case AuctionType.Fist:
+                sfxAudioSource.clip = fistBGM;
+                break;
+        }
+        sfxAudioSource.Play();
+    }
+    public void StopMusic()
+    {
+        if (sfxAudioSource.isPlaying || sfxAudioSource.clip != null)
+        {
+            sfxAudioSource.Stop();
+            sfxAudioSource.clip = null; // 클립 해제까지 원하시면 추가
+        }
+    }
 }

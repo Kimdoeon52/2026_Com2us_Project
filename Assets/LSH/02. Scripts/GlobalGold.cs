@@ -43,9 +43,9 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
 
         // 최종 파일 경로: LSH/06.JSon/mainGold.json
-        mainSavePath = Path.GetFullPath(Path.Combine(basePath, ".mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
+        mainSavePath = Path.GetFullPath(Path.Combine(basePath, "mainGold.json"));//Path.GetFullPath은 역슬래시로 통일시켜줌.안쓰면 뒤죽박죽...
 
-        stageSavePath = Path.GetFullPath(Path.Combine(basePath, ".stageProgress.json"));
+        stageSavePath = Path.GetFullPath(Path.Combine(basePath, "stageProgress.json"));
 
         Debug.Log($"[저장 경로] {mainSavePath}");
         LoadGame();

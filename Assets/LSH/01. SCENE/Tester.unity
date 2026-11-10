@@ -455,7 +455,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -700, y: 280}
+  m_AnchoredPosition: {x: -700, y: -200}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &36913588
@@ -4661,14 +4661,14 @@ MonoBehaviour:
   currentAuctionType: 0
   totalAuctionRounds: 3
   nextSceneName: JunkShop_Map_Jin
-  giveUpTimeScale: 5
+  giveUpTimeScale: 3
   auctionName: {fileID: 1692719511}
   auctionCost: {fileID: 911715460}
   auctionGrade: {fileID: 1692490881}
   chat: {fileID: 1110483354}
   errorMessage: {fileID: 511616656}
   myGold: {fileID: 389162651}
-  announcer: {fileID: 0}
+  announcer: {fileID: 36913588}
   curtainRevealDelay: 1.2
   raiseButton: {fileID: 1709811340}
   giveUpButton: {fileID: 1228110433}
@@ -4768,6 +4768,8 @@ MonoBehaviour:
   dialogueEffect: {fileID: 8300000, guid: bda9c99e4672f7d4aba03ebc1e3d626f, type: 3}
   useSkillEffect: {fileID: 8300000, guid: d71dd18376e6ffd4b92d03d9a3a92d29, type: 3}
   clickSoundEffect: {fileID: 8300000, guid: ef74191acfb114848a6bc6b5a37081f9, type: 3}
+  normalBGM: {fileID: 8300000, guid: 5aab43dc434a9b34e9f0772cf317d17e, type: 3}
+  fistBGM: {fileID: 8300000, guid: 452a137fd5df26c45a29c25e42fe52e6, type: 3}
   curtainMove: {fileID: 609825353}
 --- !u!4 &609825351
 Transform:
@@ -5375,22 +5377,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &658334874
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1414343295}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: deecda1f56b549deac57cc7bd0630ba1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _rowGroups: []
-  _lateItems: []
-  _lines: []
-  _typeTexts: []
 --- !u!1 &675261770
 GameObject:
   m_ObjectHideFlags: 0
@@ -10306,7 +10292,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 0f7e340138ed1f247872734e1b624087, type: 3}
+  m_Sprite: {fileID: 21300000, guid: daaeeec1f63854b4b953e7fd345ff7bb, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -13468,7 +13454,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 100, y: -50}
+  m_AnchoredPosition: {x: 100, y: -64}
   m_SizeDelta: {x: 150, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1408447884
@@ -13596,7 +13582,6 @@ GameObject:
   - component: {fileID: 1414343296}
   - component: {fileID: 1414343298}
   - component: {fileID: 1414343297}
-  - component: {fileID: 658334874}
   m_Layer: 5
   m_Name: ModeSelectPanel
   m_TagString: Untagged

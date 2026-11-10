@@ -35,7 +35,7 @@ public abstract class AllAiBase : MonoBehaviour
 
     //==================================공통 경매 판단===================================
     public const float MinBidLimitRatio = 2f; // 원가의 최소 2배까지
-    public const float MaxBidLimitRatio = 4f; // 원가의 최대 4배까지
+    public const float MaxBidLimitRatio = 3f; // 원가의 최대 3배까지
     public abstract PartGrade[] Parts { get; } // 현재 장착 중인 장비 등급들
 
     private float bidLimitRatio = MinBidLimitRatio; // 이번 경매에서 원가의 몇 배까지 낼지 (경매마다 새로 굴림)

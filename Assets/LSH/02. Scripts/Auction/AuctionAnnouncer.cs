@@ -20,7 +20,7 @@ public class AuctionAnnouncer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI chatText; // Chat
 
     [Header("텍스트 영역 (TextBOx 안쪽 여백)")]
-    [SerializeField] private Vector2 textPadding = new Vector2(50f, 30f); // 좌우, 상하 여백
+    [SerializeField] private Vector2 textPadding = new Vector2(200f, 30f); // 좌우, 상하 여백
     [SerializeField] private float minFontSize = 24f; // 줄바꿈해도 넘치면 이 크기까지 줄임
 
     [Header("등장/퇴장 연출")]
@@ -111,6 +111,8 @@ public class AuctionAnnouncer : MonoBehaviour
 
         Vector2 min = parent.InverseTransformPoint(corners[0]);
         Vector2 max = parent.InverseTransformPoint(corners[2]);
+
+        min.x += 150f; //우측으로 조금 조절 하려고
 
         chatRect.anchorMin = chatRect.anchorMax = new Vector2(0.5f, 0.5f);
         chatRect.pivot = new Vector2(0.5f, 0.5f);

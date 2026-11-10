@@ -39,7 +39,45 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    phase: 1
+    repeat: 1
+    repeatIntervalFrames: 10
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: -140
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    phase: 1
+    repeat: 1
+    repeatIntervalFrames: 26
+    endMode: 2
+    offset: {x: 0.84, y: 0.23}
+    rotation: -144
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 1.2
+    sortingOrderOffset: 20
+  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    phase: 1
+    repeat: 1
+    repeatIntervalFrames: 12
+    endMode: 2
+    offset: {x: 0.78, y: 0.32}
+    rotation: -144
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 0.8
+    sortingOrderOffset: 20
   perBoxDamage: 0
+  perBoxSeparateHits: 1
   cooldownFrames: 60
   cooldownOwner: {fileID: 0}
   cylinderCost: 0

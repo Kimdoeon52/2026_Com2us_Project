@@ -22,11 +22,21 @@ public class ActionVfxPlayer : MonoBehaviour
         public Vector3 followOffset;
     }
 
+    // 반복 생성 항목 — 구간 시작 GlobalFrame부터 interval 틱마다 1개씩 더 만든다
+    private sealed class Repeater
+    {
+        public ActionVfxEntry entry;
+        public int startFrame;
+        public int interval;
+        public int spawned;
+    }
+
     private const float DefaultLifetime = 2f;
 
     private ActionState state;
     private RobotMover mover;
     private readonly List<Live> live = new List<Live>();
+    private readonly List<Repeater> repeaters = new List<Repeater>();
 
     // ActionState는 ActionExecutor.Init(PlayerRobotBootstrap.Awake)에서 만들어지므로 Start에서 구독 (AfterImageEmitter와 같은 이유)
     private void Start()
@@ -82,12 +92,32 @@ public class ActionVfxPlayer : MonoBehaviour
                 live.RemoveAt(i);
             }
         }
+        repeaters.RemoveAll(r => r.entry.EndIndex < phaseIndex);
 
         if (action == null || action.Vfx == null) return;
         foreach (var entry in action.Vfx)
         {
             if (entry == null || entry.prefab == null || entry.StartIndex != phaseIndex) continue;
             Spawn(entry);
+
+            int interval = entry.ResolveInterval(action);
+            if (interval > 0)
+                repeaters.Add(new Repeater { entry = entry, startFrame = state.GlobalFrame, interval = interval, spawned = 1 });
+        }
+    }
+
+    // 전투 틱은 렌더 프레임과 따로 돌므로 "지난 틱 수 / 간격"으로 밀린 개수만큼 따라잡는다 (EmitProjectiles와 같은 0, n, 2n... 타이밍)
+    private void Update()
+    {
+        if (state == null) return;
+        foreach (var r in repeaters)
+        {
+            int due = (state.GlobalFrame - r.startFrame) / r.interval + 1;
+            while (r.spawned < due)
+            {
+                Spawn(r.entry);
+                r.spawned++;
+            }
         }
     }
 
@@ -123,9 +153,23 @@ public class ActionVfxPlayer : MonoBehaviour
         {
             var main = ps.main;
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
+            if (entry.playbackSpeed > 0f) main.simulationSpeed *= entry.playbackSpeed; // 인스펙터 + 버튼으로 생긴 항목은 0일 수 있음
+
+            // 카메라를 보는 빌보드(Alignment=View)는 Transform 회전을 무시하고 음수 스케일 반전과 섞이면 각도가 틀어진다.
+            // 2D 화면 평면(XY)에 놓인 빌보드는 Local 정렬로 바꿔 Transform 회전·반전을 그대로 따르게 한다
+            if (IsViewAlignedBillboard(ps) && Mathf.Abs(Vector3.Dot(ps.transform.forward, Vector3.forward)) > 0.99f)
+                ps.GetComponent<ParticleSystemRenderer>().alignment = ParticleSystemRenderSpace.Local;
         }
 
         live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
+    }
+
+    private static bool IsViewAlignedBillboard(ParticleSystem ps)
+    {
+        var r = ps.GetComponent<ParticleSystemRenderer>();
+        return r != null
+            && r.renderMode == ParticleSystemRenderMode.Billboard
+            && r.alignment == ParticleSystemRenderSpace.View;
     }
 
     private void LateUpdate()
@@ -143,6 +187,7 @@ public class ActionVfxPlayer : MonoBehaviour
     {
         foreach (var l in live) Finish(l, mode ?? l.entry.endMode);
         live.Clear();
+        repeaters.Clear();
     }
 
     private static void Finish(Live l, ActionVfxEndMode mode)
@@ -162,7 +207,7 @@ public class ActionVfxPlayer : MonoBehaviour
                 foreach (var ps in particles)
                 {
                     ps.Stop(false, ParticleSystemStopBehavior.StopEmitting);
-                    remain = Mathf.Max(remain, ps.main.startLifetime.constantMax);
+                    remain = Mathf.Max(remain, ps.main.startLifetime.constantMax / ps.main.simulationSpeed);
                 }
                 Destroy(l.go, Mathf.Max(0.1f, remain));
                 break;
@@ -181,7 +226,7 @@ public class ActionVfxPlayer : MonoBehaviour
         {
             var main = ps.main;
             main.loop = false;
-            t = Mathf.Max(t, main.duration + main.startLifetime.constantMax);
+            t = Mathf.Max(t, (main.duration + main.startLifetime.constantMax) / main.simulationSpeed);
         }
         if (t <= 0f)
         {

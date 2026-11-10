@@ -28,6 +28,15 @@ public enum ActionVfxEndMode
     KeepPlaying,  // 건드리지 않음 — 파티클/애니메이션 길이만큼 재생 후 자동 제거
 }
 
+/// <summary>구간 안에서 몇 번 생성할지</summary>
+public enum ActionVfxRepeat
+{
+    Once,               // 구간 시작에 1번
+    FixedInterval,      // repeatIntervalFrames마다 다시 생성
+    ProjectileInterval, // ActionData.ProjectileIntervalFrames마다 (투사체 발사와 같은 틱 — 연사 머즐 플래시)
+    HitInterval,        // ActionData.HitIntervalFrames마다 (다단히트와 같은 간격)
+}
+
 [Serializable]
 public class ActionVfxEntry
 {
@@ -36,6 +45,12 @@ public class ActionVfxEntry
 
     [Tooltip("이펙트가 유지될 구간")]
     public ActionVfxPhase phase = ActionVfxPhase.Active;
+
+    [Tooltip("구간 안에서 반복 생성할지. 반복이면 구간 시작 틱에 1번, 그 뒤 간격마다 1번씩 새로 만든다")]
+    public ActionVfxRepeat repeat = ActionVfxRepeat.Once;
+
+    [Tooltip("repeat = FixedInterval일 때 생성 간격(틱)")]
+    [Min(1)] public int repeatIntervalFrames = 10;
 
     [Tooltip("구간이 끝났을 때 정리 방식")]
     public ActionVfxEndMode endMode = ActionVfxEndMode.StopEmitting;
@@ -54,6 +69,9 @@ public class ActionVfxEntry
 
     [Min(0.01f)] public float scale = 1f;
 
+    [Tooltip("파티클 재생 속도 배율. 0.5면 절반 속도로 2배 길게 재생된다 (플립북 애니메이션도 같이 느려짐)")]
+    [Min(0.01f)] public float playbackSpeed = 1f;
+
     [Tooltip("로봇 그림보다 몇 칸 앞에 그릴지 (sortingOrder 가산)")]
     public int sortingOrderOffset = 1;
 
@@ -62,6 +80,15 @@ public class ActionVfxEntry
     {
         ActionVfxPhase.Active or ActionVfxPhase.ActiveToRecovery => 1,
         ActionVfxPhase.Recovery => 2,
+        _ => 0,
+    };
+
+    /// <summary>반복 생성 간격(틱). 0이면 반복 안 함</summary>
+    public int ResolveInterval(ActionData action) => repeat switch
+    {
+        ActionVfxRepeat.FixedInterval => Math.Max(1, repeatIntervalFrames),
+        ActionVfxRepeat.ProjectileInterval => action != null ? Math.Max(1, action.ProjectileIntervalFrames) : 0,
+        ActionVfxRepeat.HitInterval => action != null ? Math.Max(0, action.HitIntervalFrames) : 0,
         _ => 0,
     };
 

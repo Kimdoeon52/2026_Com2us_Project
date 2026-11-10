@@ -42,14 +42,18 @@ MonoBehaviour:
   vfx:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
     phase: 5
+    repeat: 0
+    repeatIntervalFrames: 10
     endMode: 2
-    offset: {x: 0.15, y: 0.27}
+    offset: {x: 0.81, y: 0.29}
+    rotation: -140
     followOwner: 0
-    flipWithFacing: 0
-    scale: 0
-    sortingOrderOffset: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 1
+    sortingOrderOffset: 26
   perBoxDamage: 1
-  perBoxSeparateHits: 0
+  perBoxSeparateHits: 1
   cooldownFrames: 60
   cooldownOwner: {fileID: 11400000, guid: 21c7046068b8bb848a00bb9187776961, type: 2}
   cylinderCost: 1
@@ -75,9 +79,9 @@ MonoBehaviour:
   autoReleaseFrames: 0
   fan:
     pellets: 9
-    spreadDegrees: 60
+    spreadDegrees: 75
     range: 2.5
-    thickness: 0.35
+    thickness: 0.08
     steps: 1
     farScale: 0.5
     hitLength: 36

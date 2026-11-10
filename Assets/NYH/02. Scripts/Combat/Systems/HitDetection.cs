@@ -184,11 +184,13 @@ public class HitDetection : MonoBehaviour
     // 맞은 뒤의 후속 처리 순서를 근접·투사체가 똑같이 따르도록 한 곳에 모은다.
     // 경직 → 넉백 순서인 이유는 HitReactionSystem.Apply 주석 참고(띄우기가 먼저면 공중 판정으로 경직이 빠짐)
     // 반환: 맞은 쪽이 피격 모션(경직)에 들어갔는지 — 히트스톱이 이걸 보고 멈출지 정한다
-    private static bool ApplyHitConsequences(float sourceX, ActionData sourceAction, ActionExecutor defender, HitResolutionResult result)
+    // notifyDamaged: false면 OnDamaged를 여기서 안 부른다 — 박스마다 따로 맞힌 경우 ResolveHit이 박스별로 이미 알렸다 (최. 추가)
+    private static bool ApplyHitConsequences(float sourceX, ActionData sourceAction, ActionExecutor defender, HitResolutionResult result,
+                                             bool notifyDamaged = true)
     {
         bool reacted = HitReactionSystem.Apply(defender, result);
         KnockbackSystem.Apply(sourceX, sourceAction, defender, result);
-        defender.NotifyDamaged(result); // 점멸 등 연출 — 판정에는 영향 없음
+        if (notifyDamaged) defender.NotifyDamaged(result); // 점멸 등 연출 — 판정에는 영향 없음
         return reacted;
     }
 
@@ -307,6 +309,7 @@ public class HitDetection : MonoBehaviour
              attacker.FighterId, defender.FighterId, attackAction, isGuarding, isWeaving);*/
 
         HitResolutionResult result;
+        bool notifiedPerBox = false; // 최. 추가 — 박스별로 OnDamaged(데미지 숫자)를 이미 보냈는지
         if (damageWeight < 0f || isWeaving)
         {
             // 기존 경로. 박스당 피해 행동도 회피 무적 중이면 여기로 온다 — 수치 직접 전달형(float) 오버로드는
@@ -329,7 +332,9 @@ public class HitDetection : MonoBehaviour
                     result = CombatDataHub.Instance.ProcessHit(attacker.FighterId, defender.FighterId, perBox * w);
                     totalDamage += result.DamageToHp;
                     anyCritical |= result.IsCritical;
+                    defender.NotifyDamaged(result); // 최. 추가 — 데미지 숫자를 박스마다 하나씩 (합치기 전에 보낸다)
                 }
+                notifiedPerBox = true;
                 result.DamageToHp = totalDamage;
                 result.IsCritical = anyCritical;
             }
@@ -345,7 +350,8 @@ public class HitDetection : MonoBehaviour
 
         // 데미지 계산은 KKH가 끝냈고, 몸이 어떻게 반응하는지(경직·밀려남·띄우기·점멸)는 여기서 처리한다.
         // 히트스톱은 경직 뒤에 건다 — 피격 행동이 먼저 시작돼야 "피격 첫 장에서 멈춘" 그림이 된다
-        bool reacted = ApplyHitConsequences(attacker.transform.position.x, attackAction, defender, result);
+        bool reacted = ApplyHitConsequences(attacker.transform.position.x, attackAction, defender, result,
+                                            notifyDamaged: !notifiedPerBox); // 최. 추가
         HitStopSystem.Apply(hitStopSettings, attacker, defender, attackAction, result,
                             hitStopBoxScale, fromProjectile: false, isRepeatHit, defenderReacted: reacted);
 

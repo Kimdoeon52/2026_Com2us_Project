@@ -45,6 +45,24 @@ public class DamageNumberEmitter : MonoBehaviour
     [Tooltip("연달아 맞을 때 쌓는 최대 칸 수. 다 차면 다시 맨 아래부터. 1이면 항상 같은 자리에서만 뜬다")]
     [Min(1)] [SerializeField] private int maxStackCount = 3;
 
+    // 최. 추가 — 메이플 + 테라리아 혼합 (2026-11-10)
+    [Header("메이플식 순차 표시")]
+    [Tooltip("한꺼번에 들어온 숫자를 차례로 띄우는 간격(초). 0이면 들어온 즉시 전부 띄운다")]
+    [Min(0f)] [SerializeField] private float sequenceInterval = 0.06f;
+
+    [Header("테라리아식 튀기·흩어짐")]
+    [Tooltip("뜰 때 좌우 랜덤 위치 폭(±, 월드 단위)")]
+    [Min(0f)] [SerializeField] private float spawnJitterX = 0.08f;
+
+    [Tooltip("떠오르는 동안 좌우로 흘러가는 랜덤 거리(±, 월드 단위)")]
+    [Min(0f)] [SerializeField] private float driftX = 0.12f;
+
+    [Tooltip("뜬 직후 글자 크기 배율. 이 크기에서 popSeconds 동안 제 크기로 줄어든다. 1이면 튀기 없음")]
+    [Min(1f)] [SerializeField] private float popScale = 1.4f;
+
+    [Tooltip("튀었다가 제 크기로 돌아오는 시간(초)")]
+    [Min(0.01f)] [SerializeField] private float popSeconds = 0.1f;
+
     [Tooltip("이 시간(초) 안에 또 맞으면 '연달아 맞음'으로 보고 위로 쌓는다. 지나면 다시 처음 위치부터")]
     [Min(0f)] [SerializeField] private float stackWindowSeconds = 0.6f;
 
@@ -80,12 +98,17 @@ public class DamageNumberEmitter : MonoBehaviour
         public Vector3 start;   // 처음 뜬 월드 위치 — 여기서 riseDistance만큼 올라간다
         public float age;       // 뜬 뒤 지난 시간(초)
         public Color color;
+        public float drift;     // 최. 추가 — 사는 동안 좌우로 흘러가는 거리(랜덤, 테라리아식)
     }
 
     private ActionExecutor executor;
     private readonly List<Popup> active = new List<Popup>();
     private readonly Stack<TextMeshPro> pool = new Stack<TextMeshPro>();
     private int stackIndex;          // 지금 몇 번째로 쌓이는 중인지
+    // 최. 추가 — 아직 안 띄운 숫자 대기열(메이플식 순차 표시)과 다음에 꺼낼 시각
+    private struct Pending { public string label; public Color color; public float size; }
+    private readonly Queue<Pending> pending = new Queue<Pending>();
+    private float nextReleaseTime;
     private float lastHitTime = -999f;
 
     private void Awake() => executor = GetComponent<ActionExecutor>();
@@ -107,13 +130,9 @@ public class DamageNumberEmitter : MonoBehaviour
     }
 
     // 호출: ActionExecutor.OnDamaged (HitDetection이 판정을 끝낸 직후, 근접·투사체 공통)
+    // 최. 수정 — 바로 띄우지 않고 대기열에 넣는다. 실제로 띄우는 건 Update의 ReleasePending (메이플식 순차 표시)
     private void OnDamaged(HitResolutionResult result)
     {
-        // 연달아 맞는 중이면 한 칸 위로, 아니면 처음 자리부터. 최대 칸 수를 넘으면 다시 맨 아래 칸으로 돌아온다(나머지 연산)
-        // — 이게 없으면 계속 맞는 동안 끝없이 올라가 화면 밖으로 나간다
-        stackIndex = Time.time - lastHitTime <= stackWindowSeconds ? (stackIndex + 1) % maxStackCount : 0;
-        lastHitTime = Time.time;
-
         bool isPlayer = executor != null && executor.FighterId == "Player";
         string label;
         Color color;
@@ -131,8 +150,29 @@ public class DamageNumberEmitter : MonoBehaviour
             if (result.IsCritical) size *= criticalScale;
         }
 
-        Vector3 start = transform.position + new Vector3(spawnOffset.x, spawnOffset.y + stackIndex * stackSpacing, 0f);
-        Spawn(label, color, size, start);
+        pending.Enqueue(new Pending { label = label, color = color, size = size });
+        ReleasePending(); // 대기 중인 게 없고 간격도 지났으면 이번 프레임에 바로 뜬다
+    }
+
+    // 최. 추가 — 대기열에서 sequenceInterval 간격으로 하나씩 꺼내 띄운다
+    private void ReleasePending()
+    {
+        while (pending.Count > 0 && Time.time >= nextReleaseTime)
+        {
+            Pending p = pending.Dequeue();
+
+            // 연달아 맞는 중이면 한 칸 위로, 아니면 처음 자리부터. 최대 칸 수를 넘으면 다시 맨 아래 칸으로 돌아온다(나머지 연산)
+            // — 이게 없으면 계속 맞는 동안 끝없이 올라가 화면 밖으로 나간다. 다시 내려와도 좌우 랜덤 덕에 안 포개진다
+            stackIndex = Time.time - lastHitTime <= stackWindowSeconds ? (stackIndex + 1) % maxStackCount : 0;
+            lastHitTime = Time.time;
+
+            float jitter = Random.Range(-spawnJitterX, spawnJitterX);
+            Vector3 start = transform.position + new Vector3(spawnOffset.x + jitter, spawnOffset.y + stackIndex * stackSpacing, 0f);
+            Spawn(p.label, p.color, p.size, start);
+
+            nextReleaseTime = Time.time + sequenceInterval;
+            if (sequenceInterval > 0f) break; // 간격이 있으면 이번 프레임엔 하나만
+        }
     }
 
     // 형식 문자열을 잘못 넣어도(예: "{1}", 중괄호 짝 안 맞음) 게임이 멈추지 않게 숫자만 띄운다
@@ -150,8 +190,10 @@ public class DamageNumberEmitter : MonoBehaviour
         text.fontSize = size;
         text.color = color;
         text.transform.position = position;
+        text.transform.localScale = Vector3.one * popScale; // 최. 추가 — 크게 튀어나온 상태로 시작
 
-        active.Add(new Popup { text = text, start = position, age = 0f, color = color });
+        active.Add(new Popup { text = text, start = position, age = 0f, color = color,
+                               drift = Random.Range(-driftX, driftX) }); // 최. 추가: drift
     }
 
     private TextMeshPro CreateText()
@@ -173,6 +215,8 @@ public class DamageNumberEmitter : MonoBehaviour
     // 호출: Unity 매 렌더 프레임. 위로 떠오르며(처음엔 빠르게, 끝엔 느리게) 뒤쪽 절반부터 투명해진다
     private void Update()
     {
+        ReleasePending(); // 최. 추가 — 대기 중인 숫자를 간격 맞춰 꺼낸다
+
         for (int i = active.Count - 1; i >= 0; i--)
         {
             Popup p = active[i];
@@ -188,7 +232,12 @@ public class DamageNumberEmitter : MonoBehaviour
             }
 
             float eased = 1f - (1f - t) * (1f - t); // 처음엔 빠르게, 나중엔 천천히 떠오름
-            p.text.transform.position = p.start + Vector3.up * (riseDistance * eased);
+            p.text.transform.position = p.start + new Vector3(p.drift * eased, riseDistance * eased, 0f); // 최. 수정: 좌우 흐름 추가
+
+            // 최. 추가 — 튀기: popScale → 1로 빠르게 줄어든다(끝에서 감속)
+            float pt = Mathf.Clamp01(p.age / popSeconds);
+            float popEased = 1f - (1f - pt) * (1f - pt);
+            p.text.transform.localScale = Vector3.one * Mathf.Lerp(popScale, 1f, popEased);
 
             Color c = p.color;
             c.a = t < 0.5f ? 1f : 1f - (t - 0.5f) * 2f; // 앞 절반은 또렷하게, 뒤 절반에 걸쳐 사라짐

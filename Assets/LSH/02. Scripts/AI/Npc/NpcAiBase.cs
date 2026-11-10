@@ -16,6 +16,7 @@ public class NpcAiBase : AllAiBase
     public override int Gold => data != null ? data.npcGold : 0;
     public override int ThinkDelay => Random.Range(5000, 10000);
     public override int NPCID => data != null ? data.npcID : -1;
+    public override PartGrade[] Parts => data != null ? data.parts : null;
 
     //public override bool IsGiveUp { get; set; } = false;
 

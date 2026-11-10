@@ -19,6 +19,10 @@ public class AuctionAnnouncer : MonoBehaviour
     [SerializeField] private RectTransform textBox;   // TextBOx
     [SerializeField] private TextMeshProUGUI chatText; // Chat
 
+    [Header("텍스트 영역 (TextBOx 안쪽 여백)")]
+    [SerializeField] private Vector2 textPadding = new Vector2(50f, 30f); // 좌우, 상하 여백
+    [SerializeField] private float minFontSize = 24f; // 줄바꿈해도 넘치면 이 크기까지 줄임
+
     [Header("등장/퇴장 연출")]
     [SerializeField] private float showDuration = 0.4f;
     [SerializeField] private float hideDuration = 0.25f;
@@ -78,6 +82,42 @@ public class AuctionAnnouncer : MonoBehaviour
             girlBaseScale = girlImage.localScale;
         }
         if (textBox != null) textBoxBaseScale = textBox.localScale;
+        FitChatToTextBox();
+    }
+
+    // Chat 텍스트 영역을 TextBOx 크기에 맞추고 줄바꿈 + 자동 축소로 박스 밖으로 안 나가게
+    private void FitChatToTextBox()
+    {
+        if (chatText == null) return;
+
+        chatText.textWrappingMode = TextWrappingModes.Normal; // 박스 폭에서 줄바꿈
+        chatText.overflowMode = TextOverflowModes.Overflow;
+        float baseSize = chatText.fontSize;
+        chatText.fontSizeMax = baseSize;
+        chatText.fontSizeMin = Mathf.Min(minFontSize, baseSize);
+        chatText.enableAutoSizing = true; // 줄바꿈해도 높이가 넘치면 글자 크기를 줄임
+
+        if (textBox == null) return;
+        RectTransform chatRect = chatText.rectTransform;
+        RectTransform parent = chatRect.parent as RectTransform;
+        if (parent == null) return;
+
+        // TextBOx의 실제 영역(스케일 1 기준)을 Chat 부모 좌표로 변환
+        Vector3 savedScale = textBox.localScale;
+        textBox.localScale = textBoxBaseScale;
+        Vector3[] corners = new Vector3[4];
+        textBox.GetWorldCorners(corners);
+        textBox.localScale = savedScale;
+
+        Vector2 min = parent.InverseTransformPoint(corners[0]);
+        Vector2 max = parent.InverseTransformPoint(corners[2]);
+
+        chatRect.anchorMin = chatRect.anchorMax = new Vector2(0.5f, 0.5f);
+        chatRect.pivot = new Vector2(0.5f, 0.5f);
+        chatRect.anchoredPosition = (min + max) * 0.5f - parent.rect.center;
+        chatRect.sizeDelta = new Vector2(
+            Mathf.Max(0f, (max.x - min.x) - textPadding.x * 2f),
+            Mathf.Max(0f, (max.y - min.y) - textPadding.y * 2f));
     }
 
     //=============================등장/퇴장=============================

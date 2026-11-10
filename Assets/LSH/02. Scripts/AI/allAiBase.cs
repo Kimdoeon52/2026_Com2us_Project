@@ -32,6 +32,48 @@ public abstract class AllAiBase : MonoBehaviour
     public virtual int RaiseGold { get; set; } = 10;
     public abstract void ReadyForAction();
     public abstract bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade);
+
+    //==================================공통 경매 판단===================================
+    public const float MinBidLimitRatio = 2f; // 원가의 최소 2배까지
+    public const float MaxBidLimitRatio = 4f; // 원가의 최대 4배까지
+    public abstract PartGrade[] Parts { get; } // 현재 장착 중인 장비 등급들
+
+    private float bidLimitRatio = MinBidLimitRatio; // 이번 경매에서 원가의 몇 배까지 낼지 (경매마다 새로 굴림)
+
+    // 경매 물품이 내 장비 중 어느 하나라도 등급이 높으면 필요한 물건
+    public bool NeedsItem(PartGrade stuffGrade)
+    {
+        PartGrade[] parts = Parts;
+        if (parts == null || parts.Length == 0) return true; // 장비가 없으면 뭐든 필요함
+        foreach (PartGrade myPart in parts)
+        {
+            if (stuffGrade > myPart) return true;
+        }
+        return false;
+    }
+
+    // 경매 시작 시 호출. 이번 물품에 원가의 2배~4배 중 몇 배까지 낼지 결정
+    public void RollBidLimit()
+    {
+        bidLimitRatio = UnityEngine.Random.Range(MinBidLimitRatio, MaxBidLimitRatio);
+    }
+
+    public int MaxBidPrice(int baseCost) => Mathf.FloorToInt(baseCost * bidLimitRatio);
+
+    // 일반 경매 공통 판단: 필요 없는 물건이거나, 다음 레이즈가 한도(원가 x 2~4배)를 넘으면 포기
+    public bool PassCommonRaiseRule(int currentCost, int baseCost, PartGrade stuffGrade)
+    {
+        if (!NeedsItem(stuffGrade)) return false;
+        return currentCost + RaiseGold <= MaxBidPrice(baseCost);
+    }
+
+    // 주먹 경매 공통 판단: 필요 없으면 0G, 필요하면 원가의 2배~4배 사이 금액 (보유 골드 이내)
+    public int CalculateFistBid(int baseCost, PartGrade stuffGrade)
+    {
+        if (!NeedsItem(stuffGrade)) return 0;
+        int bid = Mathf.FloorToInt(baseCost * UnityEngine.Random.Range(MinBidLimitRatio, MaxBidLimitRatio));
+        return Mathf.Clamp(bid, 0, Mathf.Max(0, Gold));
+    }
     [Header("Npc UI들 나오는 곳")]
     public Image thinkImage;
     public TextMeshProUGUI npcThinkChat;

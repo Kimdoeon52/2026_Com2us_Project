@@ -11,6 +11,11 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
         manager.IsTimeRunning = true; // 시간 가는거 true로
 
+        foreach (var ai in participants) // 이번 물품에 원가의 몇 배(2~4배)까지 낼지 AI마다 결정
+        {
+            if (ai != null) ai.RollBidLimit();
+        }
+
         // AI 독립 입찰 루프 가동
         RunAllAiAsync(manager, stuff, participants).Forget();
 
@@ -65,7 +70,13 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
             Debug.Log($"[AI 루틴 체크] {ai.NPCName} | 현재가: {manager.CurrentCost} | AI 보유 RaiseGold: {ai.RaiseGold}");
 
-            if (ai.RaiseThink(manager.CurrentCost, stuff.Cost, stuff.Grade))
+            // 공통 판단: 필요 없는 물건이거나 원가 x 2~4배 한도를 넘으면 포기
+            if (!ai.PassCommonRaiseRule(manager.CurrentCost, stuff.Cost, stuff.Grade))
+            {
+                ai.IsGiveUp = true;
+            }
+
+            if (!ai.IsGiveUp && ai.RaiseThink(manager.CurrentCost, stuff.Cost, stuff.Grade))
             {
                 int raiseStep = ai.RaiseGold;
 

@@ -185,7 +185,7 @@ public class FistAuctionMode : IAuctionMode
         int maxDelay = Mathf.Max(1000, Mathf.Min(ai.ThinkDelay, (int)((bidTime - 1f) * 1000)));
         await UniTask.Delay(Random.Range(800, maxDelay));
 
-        bidder.Bid = CalculateAiFistBid(ai, stuff.Cost);
+        bidder.Bid = ai.CalculateFistBid(stuff.Cost, stuff.Grade); // 필요 없으면 0G, 필요하면 원가 x 2~4배
         Submit(bidder);
         ai.ShowThinkChatWithText("결정했다.");
         manager.AppendConsoleLog($"{ai.NPCName}님이 입찰서를 제출했습니다.");
@@ -196,21 +196,6 @@ public class FistAuctionMode : IAuctionMode
         bidder.IsSubmitted = true;
         bidder.SubmitOrder = submitCounter++;
         bidder.Plate?.Seal();
-    }
-
-    private int CalculateAiFistBid(AllAiBase ai, int baseCost)
-    {
-        // 보스는 원가의 0.8배 ~ 1.5배, 일반 NPC(조무레기)는 기준가의 20% ~ 50%만 비밀 입찰
-        float ratio = ai is NpcAiBase ? Random.Range(0.2f, 0.5f) : Random.Range(0.8f, 1.5f);
-        int maxPossible = (int)(baseCost * ratio);
-
-        // 보유 골드 검증
-        if (!GlobalGold.Instance.CanUseGold(ai.NPCID, maxPossible))
-        {
-            maxPossible = ai.Gold; // 올인 또는 남은 잔고 전체
-        }
-
-        return maxPossible;
     }
 
     // ==================== 연출 헬퍼 ====================

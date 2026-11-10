@@ -19,7 +19,8 @@ public class BossNpc1 : BossAiBase
     }
     public override bool IsBigRaiseThink(int currentPrice, int baseCost)
     {
-        if(!GlobalGold.Instance.CanUseGold(NPCID, currentPrice + bigRaiseGold))
+        if(!GlobalGold.Instance.CanUseGold(NPCID, currentPrice + bigRaiseGold)
+           || currentPrice + bigRaiseGold > MaxBidPrice(baseCost)) // 큰 레이즈도 원가 배수 한도는 넘지 않음
         {
             return false;
         }

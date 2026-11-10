@@ -19,6 +19,7 @@ public class BossAiBase : AllAiBase
     public override int Gold => data != null ? data.mainCharacterGold : 0;
     public override int ThinkDelay => UnityEngine.Random.Range(4000, 8000); //보스는 생각 하는 시간 짧게
     public override int NPCID => data != null ? data.mainCharacterID : -1;
+    public override PartGrade[] Parts => data != null ? data.parts : null;
     //public override bool IsGiveUp { get; set; } = false;
 
     protected virtual int SkillCount { get; set; } = 0; //스킬 사용 횟수
@@ -30,14 +31,7 @@ public class BossAiBase : AllAiBase
     [SerializeField] private Color cutsceneBGcolor; //컷씬 백그라운드 색상
     [SerializeField] private Sprite cutsceneCharacter; //배너 캐릭터 모습
 
-    [SerializeField] private int RaiseThinkRatio = 3; 
     //================================기본 세팅=================================
-    public override void Start()
-    {
-        base.Start();
-        RaiseThinkRatio = UnityEngine.Random.Range(3, 6); //가격의 3배~5배까지 올릴 수 있음
-    }
-
     public override void ReadyForAction()
     {
         IsGiveUp = false;
@@ -46,22 +40,9 @@ public class BossAiBase : AllAiBase
 
     //==================================판단===================================
     public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
-    { //현재는 단순히 골드보유로만
+    { // 필요 여부/원가 배수 한도는 NormalAuctionMode에서 공통 판단(PassCommonRaiseRule) 후 호출됨
         if (IsGiveUp || data == null) return false;
 
-        foreach(PartGrade myparts in data.parts) // 기본적으로 장착한 부품 등급보다 낮은 등급의 아이템이 나오면 포기하도록 설정
-        {
-            if(myparts > stuffGrade)
-            {
-                IsGiveUp = true;
-                return false;
-            }
-        }
-        if(Auction.Instance.CurrentCost > Auction.Instance.stuff.Cost * RaiseThinkRatio)
-        {
-            IsGiveUp = true;
-            return false;
-        }
         int NextPrice = actionPrise + RaiseGold;
 
         // GlobalGold 매니저를 통해 안전하게 잔고 검사

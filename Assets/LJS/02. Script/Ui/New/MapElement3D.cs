@@ -1,8 +1,8 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
+
 /// <summary>
-/// 각 3D 오브젝트 그룹에 붙는 스크립트.
+/// 각 3D 오브젝트에 붙는 스크립트.
 /// </summary>
 public class MapElement3D : MonoBehaviour
 {
@@ -14,27 +14,31 @@ public class MapElement3D : MonoBehaviour
     public int useHours;
     public string targetSceneName;
 
-    [Header("하이라이트")]
-    public Color elementHighlight = new Color(1.2f, 1.2f, 1.2f); // 밝아지는 정도 (기본 색상에 곱해짐)
+    [Header("하이라이트 메테리얼")]
+    public Material hoverMaterial;
 
-    // 자식들의 메쉬와 원래 색상을 기억할 딕셔너리
-    private Dictionary<MeshRenderer, Color> originalColors = new Dictionary<MeshRenderer, Color>();
+    // 자신의 렌더러와 원래 메테리얼을 기억할 변수
+    private MeshRenderer myRenderer;
+    private Material originalMaterial;
 
     private void Awake()
     {
-        // 하위에 있는 모든 Box(MeshRenderer)를 찾아서 원래 색상 저장
-        MeshRenderer[] childRenderers = GetComponentsInChildren<MeshRenderer>();
-        foreach (var renderer in childRenderers)
+        // 자신의 오브젝트에 있는 MeshRenderer만 가져옵니다.
+        myRenderer = GetComponent<MeshRenderer>();
+
+        if (myRenderer != null)
         {
-            originalColors[renderer] = renderer.material.color;
+            // 원래 메테리얼 저장 (sharedMaterial을 사용하여 복제 방지)
+            originalMaterial = myRenderer.sharedMaterial;
         }
     }
 
     public void HoverOn()
     {
-        foreach (var kvp in originalColors)
+        // 내 렌더러의 메테리얼을 교체
+        if (myRenderer != null && hoverMaterial != null)
         {
-            kvp.Key.material.color = kvp.Value * elementHighlight; // 원래 색상보다 밝게 조절
+            myRenderer.material = hoverMaterial;
         }
 
         // 툴팁을 띄우기 위해 내 3D 월드 좌표(transform.position)를 방송
@@ -43,10 +47,12 @@ public class MapElement3D : MonoBehaviour
 
     public void HoverOff()
     {
-        foreach (var kvp in originalColors)
+        // 내 렌더러의 메테리얼을 원래대로 복구
+        if (myRenderer != null && originalMaterial != null)
         {
-            kvp.Key.material.color = kvp.Value; // 원래 색상으로 복구
+            myRenderer.material = originalMaterial;
         }
+
         OnUnhovered3D?.Invoke();
     }
 

@@ -9,7 +9,7 @@ public class IsoMapIconHovering : MonoBehaviour
     public TextMeshProUGUI hoverText;
 
     [Header("UI 위치값")]
-    public Vector2 offset = new Vector2(0, 50f); // 3D -> 2D 변환 후의 오프셋
+    public Vector2 offset = new Vector2(50f, 0f); // 3D -> 2D 변환 후의 오프셋
 
     [Header("도트윈 세팅")]
     public float fadeDuration = 0.3f;

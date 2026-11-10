@@ -17540,7 +17540,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 801916085130581514, guid: 76aee4cc1ca966f4482de1ef9a9c2f5a, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1966238401757714247, guid: 76aee4cc1ca966f4482de1ef9a9c2f5a, type: 3}
       propertyPath: fixWindow
@@ -23884,7 +23884,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 13.5859375, y: 18.648438}
+  m_LightCookieOffset: {x: 0.11000001, y: 0.044999998}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -60997,10 +60997,30 @@ PrefabInstance:
       propertyPath: m_Name
       value: CoreSystemRoot
       objectReference: {fileID: 0}
+    - target: {fileID: 3640777433820881389, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3640777433820881389, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3640777433820881389, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5303355996321965090, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: timeOfDay
       value: 
       objectReference: {fileID: 411684200}
+    - target: {fileID: 7805140482852692383, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7805140482852692383, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.0006713867
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

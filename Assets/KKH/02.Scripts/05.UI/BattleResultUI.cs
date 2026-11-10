@@ -33,6 +33,7 @@ namespace RealSteel.UI
         [Header("=== 보상 및 코어 성장 섹션 ===")]
         [SerializeField] private TextMeshProUGUI goldValueText;
         [SerializeField] private TextMeshProUGUI expValueText;
+        [SerializeField] private TextMeshProUGUI rankingScoreValueText;
         [SerializeField] private Slider coreExpSlider;
         [SerializeField] private TextMeshProUGUI coreStatusText;
 
@@ -183,7 +184,7 @@ namespace RealSteel.UI
 
             if (subtitleText != null)
             {
-                subtitleText.text = playerWon ? "작전 성공 — 목표 대상을 완파했습니다." : "작전 실패 — 기체 제어 불능 및 대파.";
+                subtitleText.text = playerWon ? "작전 성공 — 목표 대상을 완파했습니다." : "작전 실패 — 기체 제어 불능 및 대파 (잔해 보존).";
             }
 
             if (bannerBackgroundImage != null)
@@ -221,11 +222,11 @@ namespace RealSteel.UI
                 if (hasDestroyedParts)
                 {
                     string destroyedNames = string.Join(", ", settlement.DestroyedPartIDs);
-                    destroyedWarningText.text = $"<color=#FF2222><b>[경고] 영구 파손된 부품 소멸:</b> {destroyedNames}</color>";
+                    destroyedWarningText.text = $"<color=#FF2222><b>[경고] 부품 파괴됨 (고물상에서 잔해 복구 가능):</b> {destroyedNames}</color>";
                 }
                 else
                 {
-                    destroyedWarningText.text = "<color=#88FF88>※ 영구 파괴된 부품 없음 (모든 파츠 보존)</color>";
+                    destroyedWarningText.text = "<color=#88FF88>※ 파괴된 부품 없음 (모든 파츠 온전 보존)</color>";
                 }
             }
 
@@ -322,6 +323,28 @@ namespace RealSteel.UI
                 {
                     expValueText.text = $"+{val} EXP";
                 }).SetEase(Ease.OutQuad));
+            }
+
+            // 4-1. 랭킹 점수 롤링 카운팅 (기획서 §10.5 토벌 랭킹 점수)
+            int targetScore = settlement.RankingScoreGained;
+            if (rankingScoreValueText != null)
+            {
+                rankingScoreValueText.text = "+0 PT";
+                _animSequence.Join(DOVirtual.Int(0, targetScore, numberRollDuration, val =>
+                {
+                    rankingScoreValueText.text = $"+{val} PT";
+                }).SetEase(Ease.OutQuad));
+            }
+            else if (targetScore > 0 && subtitleText != null)
+            {
+                // UI 프리팹에 rankingScoreValueText가 아직 연결되지 않은 경우 서브타이틀에 자동 병기
+                _animSequence.AppendCallback(() =>
+                {
+                    if (subtitleText != null && !subtitleText.text.Contains("랭킹 점수"))
+                    {
+                        subtitleText.text += $" (랭킹 점수 +{targetScore} PT)";
+                    }
+                });
             }
 
             if (coreExpSlider != null)

@@ -220,7 +220,7 @@ public static class BattleSettlementProcessor
                 // 4. 코어 불안정: 아주쉬움/쉬움은 false, 보통 이상은 true
                 // 5. 부품 파괴: 아주쉬움은 내구도 0만 (파괴 판정 없음 0%), 쉬움 0.5x, 보통/어려움 1.0x, 헬 1.3x
                 result.RankingScoreGained = 0;
-                result.GoldDelta = -entryFee;
+                result.GoldDelta = 0; // 입장 시 선지불 완료, 패배 시 추가 차감 0 (신청비 몰수)
                 result.CoreExpGained = CalculateGainedEXP(basePrice, layer.coreExpMultiplier, levelDiffMultiplier, isWin: false);
                 result.CoreUnstable = layer.coreUnstableOnLoss;
 
@@ -279,7 +279,7 @@ public static class BattleSettlementProcessor
                     }
                 }
 
-                result.SummaryMessage = $"[보스 토벌 실패 ({difficulty})] 신청비 {entryFee}G 몰수, 코어 불안정: {result.CoreUnstable}, 파괴된 부품: {result.DestroyedPartIDs.Count}개, 위로 EXP: {result.CoreExpGained}";
+                result.SummaryMessage = $"[보스 토벌 실패 ({difficulty})] 신청비 {entryFee}G 몰수(선지불), 코어 불안정: {result.CoreUnstable}, 파괴된 부품: {result.DestroyedPartIDs.Count}개, 위로 EXP: {result.CoreExpGained}";
             }
         }
         else
@@ -315,7 +315,7 @@ public static class BattleSettlementProcessor
             }
             else
             {
-                result.GoldDelta = -betGold;
+                result.GoldDelta = 0; // ArenaBettingManager에서 이미 선차감되었으므로 추가 차감 0 (판돈 몰수)
                 result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: false);
                 result.CoreUnstable = true;
 
@@ -353,7 +353,7 @@ public static class BattleSettlementProcessor
                     }
                 }
 
-                result.SummaryMessage = $"일반전 패배! 판돈 몰수, 코어 손상(Unstable), 파괴된 부품: {result.DestroyedPartIDs.Count}개임";
+                result.SummaryMessage = $"일반전 패배! 판돈 몰수(선지불), 코어 손상(Unstable), 파괴된 부품: {result.DestroyedPartIDs.Count}개임";
             }
         }
 
@@ -417,6 +417,22 @@ public static class BattleSettlementProcessor
         else if (GlobalGold.Instance == null && result.GoldDelta != 0)
         {
             Debug.LogWarning($"[정산기] GlobalGold.Instance가 씬에 없어 골드 변동({result.GoldDelta:+#;-#;0}G)이 디스크에 기록되지 않았습니다 (단독 씬 테스트 환경).");
+        }
+
+        // 4. LHM 보스 레이스 진행도 및 대사 변수(BossProgressStore) 동기화
+        if (bossMaster != null)
+        {
+            var progressStore = UnityEngine.Object.FindFirstObjectByType<RealSteel.BossRace.BossProgressStore>();
+            if (progressStore != null)
+            {
+                string resultStr = playerWon ? "win" : "lose";
+                string diffStr = difficulty.ToString().ToLower();
+                string bossId = string.IsNullOrEmpty(bossMaster.bossID) || bossMaster.bossID == "BOSS_REGION_01"
+                    ? "boss.wheel"
+                    : bossMaster.bossID;
+                progressStore.RecordHunt(resultStr, bossId, diffStr);
+                Debug.Log($"<color=cyan>[정산기] LHM BossProgressStore 토벌 기록 동기화 완료: {bossId} / {diffStr} / {resultStr}</color>");
+            }
         }
 
         return result;

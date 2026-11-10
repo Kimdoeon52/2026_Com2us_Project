@@ -35,9 +35,9 @@ public class CoreMasterData : ScriptableObject
     [Tooltip("레벨당 다음 레벨까지 필요 경험치 (Lv.1 ~ Lv.30)")]
     public int[] requiredEXPTable = new int[30] 
     {
-        230, 250, 270, 290, 320, 350, 380, 410, 440, 480,       // Lv.1 ~ 10
-        520, 560, 610, 660, 720, 780, 850, 920, 1000, 1080,     // Lv.11 ~ 20
-        1180, 1280, 1380, 1500, 1630, 1770, 1920, 2080, 2260, 0 // Lv.21 ~ 30 (MAX)
+        200, 260, 340, 450, 470, 500, 520, 550, 580, 610,       // Lv.1 ~ 10 (누적 3,870 EXP)
+        640, 670, 700, 740, 770, 810, 850, 890, 940, 990,       // Lv.11 ~ 20 (누적 11,490 EXP)
+        1030, 1090, 1140, 1200, 1260, 1320, 1390, 1460, 1530, 0 // Lv.21 ~ 30 (누적 23,900 EXP, MAX)
     };
 
     #region 스탯 연산 헬퍼 메서드
@@ -67,7 +67,7 @@ public class CoreMasterData : ScriptableObject
 
     /// <summary>
     /// 코어 레벨을 반영한 최종 본체 방어력(Defense) 산출함
-    /// Lv.1: 20, Lv.2~10: +3/Lv, Lv.11~20: +4/Lv, Lv.21~30: +5/Lv
+    /// Lv.1: 20, Lv.2~10: +2/Lv, Lv.11~20: +3/Lv, Lv.21~30: +4/Lv (기획서 10/29 개정)
     /// </summary>
     public int GetDefense(int level = -1)
     {
@@ -76,16 +76,16 @@ public class CoreMasterData : ScriptableObject
 
         if (lv <= 10)
         {
-            defense += (lv - 1) * 3;
+            defense += (lv - 1) * 2;
         }
         else if (lv <= 20)
         {
-            defense += (9 * 3) + (lv - 10) * 4;
+            defense += (9 * 2) + (lv - 10) * 3;
         }
         else
         {
             // baseDefense(20) 기반 누적 합산 정상화
-            defense += (9 * 3) + (10 * 4) + (lv - 20) * 5;
+            defense += (9 * 2) + (10 * 3) + (lv - 20) * 4;
         }
         return defense;
     }
@@ -141,7 +141,7 @@ public class CoreMasterData : ScriptableObject
     }
 
     /// <summary>
-    /// 특정 레벨까지의 총 누적 경험치 산출 (Lv.30 기준 26,120 EXP)
+    /// 특정 레벨까지의 총 누적 경험치 산출 (Lv.30 기준 23,900 EXP, 기획서 10/29 개정)
     /// </summary>
     public int GetCumulativeEXP(int level)
     {

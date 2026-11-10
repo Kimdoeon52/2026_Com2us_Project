@@ -110,6 +110,24 @@ namespace RealSteel.BossRace
                 return;
             }
 
+            // 기획서 §10.3 & §10.5: 토벌 입장 시 신청비 선지불 (VeryEasy: 0, Easy: 25G, Normal: 50G, Hard: 100G, Hell: 150G)
+            BossDifficultyLayer layer = BossDifficultyLayer.GetDefault(battleDifficulty);
+            int entryFee = Mathf.RoundToInt(500 * layer.entryFeeMultiplier);
+
+            if (GlobalGold.Instance != null && entryFee > 0)
+            {
+                if (GlobalGold.Instance.PlayerGold < entryFee)
+                {
+                    Debug.LogWarning($"[Hunt] 골드가 부족하여 토벌을 신청할 수 없습니다. (필요 신청비: {entryFee}G, 보유 골드: {GlobalGold.Instance.PlayerGold}G)");
+                    busy = false;
+                    return;
+                }
+
+                GlobalGold.Instance.UseGold(0, entryFee);
+                GlobalGold.Instance.SaveGame();
+                Debug.Log($"<color=yellow>[Hunt] 토벌 신청비 {entryFee}G 선지불 완료 (잔여 골드: {GlobalGold.Instance.PlayerGold}G)</color>");
+            }
+
             BattleManager.SetPreBattleDifficulty(battleDifficulty);
             manager.Save();
             Debug.Log($"[Hunt] 전투 출발 — {bossId} / {battleDifficulty} → 씬 '{scene}'");

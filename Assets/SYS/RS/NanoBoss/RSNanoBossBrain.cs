@@ -134,6 +134,9 @@ namespace RealSteel.NanoBoss
             blobLift = 0f;
             sw.dark = 0f;
             sw.freeGlow = 0f;
+            sw.Knight.moves = null;
+            sw.Knight.scaleOverride = 0;
+            sw.Knight.reinforce = false;
             ResetGuides();
             sw.Blob.aspect = blobRadius.x / Mathf.Max(0.01f, blobRadius.y);
             blobBase = sw.BlobSize(sw.botCount, blobRadius);
@@ -165,7 +168,8 @@ namespace RealSteel.NanoBoss
         }
 
         // 3페에서 작성 패턴이 기사 봇을 형태로 가져가도 체력이 줄어든 걸로 치지 않는다
-        int KnightBodyCount => sw.guideCount[RSNanoSwarm.G_Knight] + (activeRig ? sw.guideCount[RSNanoSwarm.G_Rig] : 0);
+        // 그림 기사: 몸 · 후광 · 탄이 계속 오가므로 살아 있는 봇 전체가 질량
+        int KnightBodyCount => sw.Knight.SpriteMode ? sw.Alive : sw.guideCount[RSNanoSwarm.G_Knight] + (activeRig ? sw.guideCount[RSNanoSwarm.G_Rig] : 0);
 
         public bool CanBeHit => Phase == BossPhase.Phase1 || Phase == BossPhase.Phase2 || Phase == BossPhase.Phase3;
 
@@ -511,9 +515,12 @@ namespace RealSteel.NanoBoss
         /// </summary>
         List<int> TakeToTube(float frac, Vector3 near, int guide, int min = 30)
         {
-            int n = Mathf.Max(min, Mathf.RoundToInt(sw.guideCount[RSNanoSwarm.G_Blob] * frac));
-            var ids = sw.Collect(RSNanoSwarm.G_Blob, near, n, new List<int>());
             var tube = guide == RSNanoSwarm.G_TubeB ? sw.TubeB : sw.TubeA;
+            // 2D 판: 봇이 넉넉하면 줄기를 칸 간격으로 채울 만큼만 가져간다. 모자라면 군집이 줄기를 가늘게 그린다 (RSNanoSwarm.FitTube)
+            float sp = sw.spacing;
+            int need = Mathf.Max(min, Mathf.RoundToInt(7f * (tube.r0 + tube.r1) / (sp * sp)));
+            int n = Mathf.Min(need, Mathf.Max(min, Mathf.RoundToInt(sw.guideCount[RSNanoSwarm.G_Blob] * Mathf.Min(0.5f, frac * 2.5f))));   // 덩어리에서 넉넉히 떼어 줄기를 굵고 촘촘하게
+            var ids = sw.Collect(RSNanoSwarm.G_Blob, near, n, new List<int>());
             var lat = NanoLattice.Taper(Mathf.Max(1, ids.Count), tube.r0, tube.r1, 7f);
             for (int k = 0; k < ids.Count; k++)
             {
@@ -754,7 +761,7 @@ namespace RealSteel.NanoBoss
 
             ring.center = Mouth(); ring.axis = dir; ring.radius = 1.7f; ring.length = 1.0f;
             ring.tint = new Color32(190, 240, 255, 255); ring.glow = 0f; ring.danger = false;
-            var ids = sw.Collect(RSNanoSwarm.G_Blob, ring.center, Mathf.Max(60, Mathf.RoundToInt(sw.guideCount[RSNanoSwarm.G_Blob] * 0.2f)), new List<int>());
+            var ids = sw.Collect(RSNanoSwarm.G_Blob, ring.center, Mathf.Max(60, Mathf.RoundToInt(sw.guideCount[RSNanoSwarm.G_Blob] * 0.3f)), new List<int>());
             foreach (int i in ids) BindRandomV(i, RSNanoSwarm.G_Ring);
 
             float tg = Tg(1.25f), spin = 2f;
@@ -785,17 +792,22 @@ namespace RealSteel.NanoBoss
                 ring.angle += spin * Time.deltaTime;
                 ring.center = Mouth();
                 blob.center -= dir * (0.6f * Time.deltaTime);   // 반동
-                carry += Time.deltaTime * 260f * Sp;
-                int shots = (int)carry;
-                carry -= shots;
-                for (int k = 0; k < shots && ids.Count > 0; k++)
+                // 2D 빔: 이번 프레임에 나아간 거리만큼 칸 줄 × 폭 칸을 빈틈 없이 채워 쏜다 → 끊기지 않는 굵은 줄기
+                float cs = sw.Cell, speed = 44f * Sp;
+                carry += speed * Time.deltaTime / cs;
+                int rows = (int)carry;
+                carry -= rows;
+                const int Width = 7;
+                perp = new Vector3(-dir.y, dir.x, 0f);
+                for (int r = 0; r < rows && ids.Count > 0; r++)
+                for (int wv = 0; wv < Width; wv++)
                 {
                     for (int tries = 0; tries < ids.Count; tries++)
                     {
                         int i = ids[rr++ % ids.Count];
                         if (sw.Bots[i].mode != BotMode.Bound || sw.Bots[i].guide != RSNanoSwarm.G_Ring) continue;
-                        Vector3 jitter = perp * Random.Range(-0.25f, 0.25f) + Vector3.forward * Random.Range(-0.2f, 0.2f);
-                        sw.Fire(i, ring.center + jitter, 0f, dir * 44f * Sp, 0.42f, RSNanoSwarm.G_Ring, default, 0f, true);
+                        Vector3 at = ring.center - dir * (r * cs) + perp * ((wv - (Width - 1) * 0.5f) * cs);
+                        sw.Fire(i, at, 0f, dir * speed, 0.32f, RSNanoSwarm.G_Ring, default, 0f, true, 1);
                         break;
                     }
                 }

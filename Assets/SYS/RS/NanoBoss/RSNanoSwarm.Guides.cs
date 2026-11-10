@@ -60,6 +60,16 @@ namespace RealSteel.NanoBoss
         public const int K = 16;
         public readonly Vector3[] nodes = new Vector3[K];
         public float r0 = 0.5f, r1 = 0.05f;   // 뿌리 · 끝 두께
+        // 2D 판: 봇 수 · 지금 길이에 맞춘 실제 두께와 자리표를 만든 길이 (군집이 매 프레임 맞춘다)
+        [System.NonSerialized] public float er0, er1, builtLen;
+        [System.NonSerialized] public int builtN;
+
+        public float Length()
+        {
+            float l = 0f;
+            for (int i = 1; i < K; i++) l += Vector3.Distance(nodes[i - 1], nodes[i]);
+            return l;
+        }
 
         // 사슬 (휘두르기) — 마디 각도가 앞 마디를 늦게 따라가며 채찍처럼 휜다
         readonly float[] ang = new float[K - 1];
@@ -229,10 +239,66 @@ namespace RealSteel.NanoBoss
 
         Vector3 ToWorld(Vector2 p, float z) => origin + new Vector3(p.x * facing, p.y, z);
 
-        public Vector3 HeadWorld => ToWorld(head, 0f);
-        public Vector3 ChestWorld => ToWorld(Rot(new Vector2(0.05f, 3.0f), Pivot, lean), 0f);
-        public Vector3 BladeTipWorld => ToWorld(wb[BladeSeg], 0f);
-        public Vector3 HandWorld => ToWorld(wa[BladeSeg], 0f);
+        public Vector3 HeadWorld => SpriteMode ? SpriteWorld(spriteHead) : ToWorld(head, 0f);
+        public Vector3 ChestWorld => SpriteMode ? SpriteWorld(spriteChest) : ToWorld(Rot(new Vector2(0.05f, 3.0f), Pivot, lean), 0f);
+        public Vector3 BladeTipWorld => SpriteMode ? SpriteWorld(spriteChest) : ToWorld(wb[BladeSeg], 0f);
+        public Vector3 HandWorld => SpriteMode ? SpriteWorld(spriteChest) : ToWorld(wa[BladeSeg], 0f);
+
+        // ── 그림 기사 (3페 동작 시트, RSNanoKnightMoves) ────────────────
+        /// <summary>그림 기사 동작. null 이면 예전 조각 기사</summary>
+        public RSNanoKnightMoves moves;
+        public KnightMove move;
+        public int frame;
+        /// <summary>칸 크기 (m) — 군집이 채운다</summary>
+        public float cell = 0.03125f;
+        /// <summary>몸에 봇이 모자라면 후광에서 데려온다 (3페 동안 두뇌가 켠다)</summary>
+        public bool reinforce;
+        Vector2 spriteHead, spriteChest;
+        KnightMove poseMove = (KnightMove)(-1);
+        int poseFrame = -1;
+
+        public bool SpriteMode => moves && moves.Ready;
+        public NanoKnightClip Clip => moves ? moves.Get(move) : null;
+        /// <summary>지금 프레임에 검기(효과)가 있다 — 칼날도 판정</summary>
+        public bool Active => SpriteMode && Clip.Ready && Clip.Active(frame);
+        /// <summary>그림 픽셀 하나 = 칸 배율 × 배율. 0 이면 동작 에셋의 배율 (봇이 모자라면 두뇌가 각성 때 낮춘다)</summary>
+        public int scaleOverride;
+        public int Scale => Mathf.Max(1, scaleOverride > 0 ? scaleOverride : moves ? moves.pixelScale : 1);
+        float PxWorld => cell * Scale;
+
+        Vector3 SpriteWorld(Vector2 px) => origin + new Vector3((px.x + 0.5f) * PxWorld * facing, (px.y + 0.5f) * PxWorld, 0f);
+
+        /// <summary>그림 픽셀 좌표 (발밑 기준) → 월드</summary>
+        public Vector3 PixelWorld(Vector2 px) => SpriteWorld(px);
+
+        /// <summary>자세를 정한다 (동작 · 프레임). 머리 · 가슴 위치를 그 프레임의 몸 픽셀로 다시 잡는다</summary>
+        public void SetPose(KnightMove m, int f)
+        {
+            move = m;
+            var c = Clip;
+            frame = c != null && c.Ready ? Mathf.Clamp(f, 0, c.frames - 1) : 0;
+            if (poseMove == move && poseFrame == frame) return;
+            poseMove = move; poseFrame = frame;
+            if (c == null || !c.Ready) return;
+            int s0 = c.start[frame], nb = c.Body(frame);
+            if (nb <= 0) return;
+            float sx = 0f, sy = 0f; int top = int.MinValue;
+            for (int i = 0; i < nb; i++)
+            {
+                int v = c.px[s0 + i];
+                sx += RSNanoKnightMoves.X(v); sy += RSNanoKnightMoves.Y(v);
+                top = Mathf.Max(top, RSNanoKnightMoves.Y(v));
+            }
+            spriteChest = new Vector2(sx / nb, sy / nb);
+            float hx = 0f; int hn = 0;
+            for (int i = 0; i < nb; i++)
+            {
+                int v = c.px[s0 + i];
+                if (RSNanoKnightMoves.Y(v) < top - 5) continue;
+                hx += RSNanoKnightMoves.X(v); hn++;
+            }
+            spriteHead = new Vector2(hn > 0 ? hx / hn : spriteChest.x, top - 4f);
+        }
 
         /// <summary>봇에게 기사 몸의 자리를 배정한다 (면적에 비례해 고르게)</summary>
         public static void Sample(ref NanoBot b, float r1, float r2, float r3, float r4)
@@ -241,8 +307,7 @@ namespace RealSteel.NanoBoss
             while (seg < Segs.Length - 1 && r1 > Cum[seg]) seg++;
             b.seg = seg;
             b.segU = r2;
-            float ang = r3 * 6.2832f, rad = Mathf.Sqrt(r4);
-            b.segV = new Vector2(Mathf.Cos(ang), Mathf.Sin(ang)) * rad;
+            b.segV = new Vector2(r3 * 2f - 1f, 0f);   // 2D 판: 조각 단면 가로로 고르게 (원판 표본은 가장자리가 성겨 칸에 구멍이 났다)
         }
 
         // ── 잡으로 넘기는 값 ──

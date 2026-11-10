@@ -33,14 +33,18 @@ namespace RealSteel.NanoBoss.EditorTools
                 ? "줄기: 이 오브젝트 → 첫째 자식 → 그 첫째 자식 … 이 관절이다. 씬 뷰에서 관절 점을 끌어 휘고, 두께 점을 끌어 굵기를 바꾼다."
                 : l.type == LimbType.Blob
                     ? "덩어리: 크기 × 트랜스폼 스케일 타원. 스케일에 키를 잡아 부풀리고 줄인다."
-                    : "웅덩이: 바닥에 깔리는 층. '요동 지점' 을 주고 '솟는 높이' 에 키를 잡으면 그 자리로 모여 요동치며 솟는다.";
-            EditorGUILayout.HelpBox(help + "\n양 = 앞(뿌리 · 가운데)부터 채운 비율. 결속 1 = 기계 격자, 0 = 흐르는 유체.", MessageType.None);
+                    : l.type == LimbType.Sprite
+                        ? "그림: 스프라이트 시트의 칠한 픽셀 하나 = 봇 하나 = 판 위 칸 하나. 프레임이 바뀌면 봇이 흘러가 다음 그림이 된다."
+                        : l.type == LimbType.Swarm
+                            ? "무리: 봇이 각자 제 궤도로 이 부위 주위를 날아다닌다 (벌레 떼 · 불티 · 위협). 부위를 움직이면 따라온다."
+                            : "웅덩이: 바닥에 깔리는 층. '요동 지점' 을 주고 '솟는 높이' 에 키를 잡으면 그 자리로 모여 요동치며 솟는다.";
+            EditorGUILayout.HelpBox(help + "\n양 = 앞(뿌리 · 가운데)부터 채운 비율. 결속 1 = 단단한 덩어리, 0 = 흐르는 유체 (맞으면 물처럼 퍼진다).", MessageType.None);
 
             // ── 상태 ──
             if (rig && rig.Active && targets.Length == 1)
             {
                 Rect r = GUILayoutUtility.GetRect(100, 16, GUILayout.ExpandWidth(true));
-                RSNanoRigEditor.FillBar(r, l.assigned, l.Desired, Mathf.Max(1, l.bots), new Color(0.5f, 0.85f, 0.95f));
+                RSNanoRigEditor.FillBar(r, l.assigned, l.Desired, Mathf.Max(1, l.SlotTotal), new Color(0.5f, 0.85f, 0.95f));
             }
 
             // ── 모양 ──
@@ -52,7 +56,6 @@ namespace RealSteel.NanoBoss.EditorTools
                     EditorGUILayout.PropertyField(P("radius"), new GUIContent("두께 (m)", "관절마다 '나노봇 리그 관절' 의 두께 배율이 곱해진다"));
                     EditorGUILayout.PropertyField(P("grow"), new GUIContent("자라기", "뿌리부터 얼마나 뻗었나 (키를 잡는다)"));
                     EditorGUILayout.PropertyField(P("fillToFloor"), new GUIContent("바닥까지 채움", "관절선 아래를 바닥까지 채운다 (파도)"));
-                    EditorGUILayout.PropertyField(P("depth"), new GUIContent("앞뒤 두께 배율"));
                     EditorGUILayout.PropertyField(P("smooth"), new GUIContent("곡선으로 잇기"));
                     if (targets.Length == 1) JointList(l);
                     break;
@@ -63,8 +66,12 @@ namespace RealSteel.NanoBoss.EditorTools
                 case LimbType.Sprite:
                     if (targets.Length == 1) SpriteSection(l, sw);
                     break;
+                case LimbType.Swarm:
+                    EditorGUILayout.PropertyField(P("roam"), new GUIContent("날아다니는 반경 (m)", "x = 가로, y = 세로. 트랜스폼 스케일이 곱해진다"));
+                    EditorGUILayout.PropertyField(P("roamSpeed"), new GUIContent("도는 빠르기", "봇마다 0.6~1.4 배로 다르다"));
+                    break;
                 default:
-                    EditorGUILayout.PropertyField(P("extent"), new GUIContent("너비 · 안쪽 깊이 (m)"));
+                    EditorGUILayout.PropertyField(P("extent"), new GUIContent("너비 (m)", "y 는 쓰지 않는다 (2D 판)"));
                     EditorGUILayout.PropertyField(P("layer"), new GUIContent("층 두께 (m)"));
                     EditorGUILayout.PropertyField(P("ripple"), new GUIContent("물결 높이 (m)"));
                     EditorGUILayout.PropertyField(P("rippleSpeed"), new GUIContent("물결 속도"));
@@ -75,28 +82,26 @@ namespace RealSteel.NanoBoss.EditorTools
                     break;
             }
 
+            // ── 판 ──
+            Section("판");
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUILayout.Label("앞판", Mini, GUILayout.Width(26));
+                EditorGUILayout.PropertyField(P("back"), GUIContent.none);
+                GUILayout.Label("뒷판", Mini, GUILayout.Width(26));
+            }
+            EditorGUILayout.LabelField("   0.5 를 넘는 순간 봇이 화면 안쪽 뒷판으로 날아가 거기서 모양을 만든다 (키를 잡는다)", Mini);
+
             // ── 봇 ──
             Section("봇");
             if (l.type == LimbType.Sprite)
                 EditorGUILayout.LabelField($"   봇 {l.SlotTotal} — 그림에서 가장 많이 칠한 프레임의 픽셀 수 (픽셀 하나 = 봇 하나)", Mini);
+            else if (l.type == LimbType.Swarm)
+                EditorGUILayout.PropertyField(P("bots"), new GUIContent("봇 수", "날아다니는 봇 수"));
             else
-            using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.PropertyField(P("bots"), new GUIContent("자리 수 (봇)", "양이 1 일 때 쓰는 봇 수 = 격자 자리 수"));
-                if (GUILayout.Button(new GUIContent("크기에 맞게", "지금 모양을 격자 간격으로 빈틈 없이 채우는 수"), GUILayout.Width(80)))
-                {
-                    serializedObject.ApplyModifiedProperties();
-                    foreach (var t in targets) { Undo.RecordObject(t, "봇 수"); RSNanoRigEditor.AutoBots((RSNanoLimb)t, sw); }
-                    serializedObject.Update();
-                }
-            }
-            if (targets.Length == 1 && l.type != LimbType.Sprite)
-            {
-                float floor = RSNanoRigPreview.FloorY(rig);
-                int est = l.EstimateBots(RSNanoRigEditor.Spacing(sw), floor);
-                float ratio = l.bots / (float)Mathf.Max(1, est);
-                string state = ratio < 0.7f ? "<color=#ffaa55>성김 — 판 사이가 벌어진다</color>" : ratio > 1.4f ? "<color=#ffaa55>빽빽 — 판이 겹친다</color>" : "<color=#9be89b>알맞음</color>";
-                EditorGUILayout.LabelField($"   지금 모양에 알맞은 수 ≈ {est}  ({state})", Mini);
+                int est = l.EstimateBots(RSNanoRigEditor.Spacing(sw), RSNanoRigPreview.FloorY(rig));
+                EditorGUILayout.LabelField($"   봇 ≈ {est} — 지금 모양을 칸으로 빈틈 없이 채우는 수 (자동). 모양을 키우면 봇이 더 흘러든다", Mini);
             }
             EditorGUILayout.PropertyField(P("amount"), new GUIContent("양", "앞(뿌리 · 가운데)부터 채운 비율 (키를 잡는다)"));
             EditorGUILayout.PropertyField(P("feedFrom"), new GUIContent("먼저 가져올 부위", "모자란 봇을 이 부위에서 가까운 것부터 가져온다 (웅덩이에서 솟는 가시 등)"));
@@ -109,7 +114,7 @@ namespace RealSteel.NanoBoss.EditorTools
                 EditorGUILayout.PropertyField(P("bind"), GUIContent.none);
                 GUILayout.Label("기계", Mini, GUILayout.Width(26));
             }
-            EditorGUILayout.LabelField("   1 = 판이 맞물린 기계 격자 · 0 = 이웃과 함께 흐르는 방울. 0 → 1 로 올리면 뿌리부터 '착착' 잠기며 빛난다", Mini);
+            EditorGUILayout.LabelField("   1 = 칸에 딱 맞물린 덩어리 · 0 = 이웃과 함께 흐르는 유체 (맞아서 떨어지면 물처럼 옆으로 퍼진다). 0 → 1 로 올리면 뿌리부터 '착착' 잠기며 빛난다", Mini);
             EditorGUILayout.PropertyField(P("flow"), new GUIContent("흐름 (m)", "유체일 때 덩어리째 일렁이는 폭"));
 
             // ── 느낌 ──
@@ -154,8 +159,8 @@ namespace RealSteel.NanoBoss.EditorTools
 
         void SpriteSection(RSNanoLimb l, RSNanoSwarm sw)
         {
-            EditorGUILayout.HelpBox("픽셀아트 스프라이트 시트를 넣으면 프레임마다 어두운 픽셀(검정)을 봇 자리로 굽는다. 흰색 · 투명은 무시.\n" +
-                                    "픽셀 하나 = 봇 하나. 프레임이 바뀌면 남은 픽셀의 봇은 그대로, 새 픽셀은 가까운 봇이 옮겨 와 사이를 메운다.", MessageType.None);
+            EditorGUILayout.HelpBox("픽셀아트 스프라이트 시트를 넣으면 프레임마다 칠한 픽셀을 봇 자리로 굽는다 (32px/m 로 그리면 게임 크기 그대로).\n" +
+                                    "픽셀 하나 = 봇 하나 = 칸 하나. 프레임이 바뀌면 남은 픽셀의 봇은 그대로, 새 픽셀은 가까운 봇이 옮겨 와 사이를 메운다.", MessageType.None);
             var cur = l.picture ? l.picture.sheet : null;
             var tex = (Texture2D)EditorGUILayout.ObjectField(new GUIContent("스프라이트 시트", "PNG. 가로로 이어 붙인 시트면 칸 수가 자동으로 잡힌다"), cur, typeof(Texture2D), false);
             if (tex && tex != cur)
@@ -163,7 +168,7 @@ namespace RealSteel.NanoBoss.EditorTools
                 var shape = RSNanoSpriteBaker.CreateOrFind(tex);
                 Undo.RecordObject(l, "그림");
                 l.picture = shape;
-                if (sw) l.pixelSize = sw.spacing;
+                if (sw) l.pixelSize = sw.Cell;
                 RSNanoRigPreview.MarkDirty();
                 serializedObject.Update();
             }
@@ -180,8 +185,12 @@ namespace RealSteel.NanoBoss.EditorTools
                 EditorGUILayout.PropertyField(so.FindProperty("rows"), new GUIContent("세로 칸"));
             }
             EditorGUILayout.PropertyField(so.FindProperty("frameLimit"), new GUIContent("프레임 수 (0 = 전부)"));
-            EditorGUILayout.PropertyField(so.FindProperty("darkness"), new GUIContent("어두운 기준", "이보다 어두운 픽셀을 따라간다"));
-            EditorGUILayout.PropertyField(so.FindProperty("invert"), new GUIContent("반대로 (밝은 픽셀)"));
+            EditorGUILayout.PropertyField(so.FindProperty("pick"), new GUIContent("쓸 픽셀"));
+            if (pic.pick == NanoSpritePick.Dark)
+            {
+                EditorGUILayout.PropertyField(so.FindProperty("darkness"), new GUIContent("어두운 기준", "이보다 어두운 픽셀을 따라간다"));
+                EditorGUILayout.PropertyField(so.FindProperty("invert"), new GUIContent("반대로 (밝은 픽셀)"));
+            }
             EditorGUILayout.PropertyField(so.FindProperty("alphaCut"), new GUIContent("투명 기준"));
             EditorGUILayout.PropertyField(so.FindProperty("pivot"), new GUIContent("기준점"));
             if (EditorGUI.EndChangeCheck()) so.ApplyModifiedProperties();
@@ -189,7 +198,7 @@ namespace RealSteel.NanoBoss.EditorTools
 
             if (!pic.Ready)
             {
-                EditorGUILayout.HelpBox("칠한 픽셀을 못 찾았다 — 칸 수 · 어두운 기준 · '반대로' 를 확인", MessageType.Warning);
+                EditorGUILayout.HelpBox("칠한 픽셀을 못 찾았다 — 칸 수 · 쓸 픽셀 · 투명 기준을 확인", MessageType.Warning);
                 return;
             }
             float w = (pic.maxX - pic.minX + 1) * l.pixelSize, h = (pic.maxY - pic.minY + 1) * l.pixelSize;
@@ -207,12 +216,8 @@ namespace RealSteel.NanoBoss.EditorTools
             }
 
             EditorGUILayout.Space(2);
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.PropertyField(P("pixelSize"), new GUIContent("픽셀 크기 (m)", "그림 픽셀 하나 = 봇 하나의 간격"));
-                if (sw && GUILayout.Button(new GUIContent("격자 간격에", "군집 격자 간격과 같게 → 다른 부위와 판 크기가 같다"), GUILayout.Width(70)))
-                { Undo.RecordObject(l, "픽셀 크기"); l.pixelSize = sw.spacing; serializedObject.Update(); }
-            }
+            EditorGUILayout.LabelField($"   그림 픽셀 하나 = 칸 하나 ({(sw ? sw.Cell : l.pixelSize) * 100f:0.##}cm, 군집 알갱이 크기)", Mini);
+            EditorGUILayout.PropertyField(P("artColor"), new GUIContent("봇 색 = 그림 색", "그림 칸에 도착한 봇이 그 픽셀 색이 된다. 끄면 군집 '봇 색'"));
             EditorGUILayout.PropertyField(P("fps"), new GUIContent("초당 프레임", "0 보다 크면 패턴 시작부터 저절로 넘긴다. 0 이면 '프레임' 키로 넘긴다"));
             using (new EditorGUI.DisabledScope(l.fps > 0f))
                 EditorGUILayout.PropertyField(P("frame"), new GUIContent("프레임", "초당 프레임이 0 일 때 쓴다 (키를 잡는다 — 계단 키)"));

@@ -188,6 +188,7 @@ namespace RealSteel.NanoBoss.EditorTools
             pic.picture = shape;
             pic.bots = Mathf.Max(1, shape.botCount);
             pic.fps = 0f;                 // 프레임은 계단 키로 (픽셀 애니의 '노출' 처럼)
+            pic.artColor = false;         // 검은 잉크 시트라 그림 색 대신 군집 봇 색
             pic.tint = new Color(1f, 0.75f, 0.6f);
 
             var clip = RSNanoKeys.NewClip(rig, "그림주먹", 2.0f);

@@ -1,14 +1,16 @@
-// RE:AL STEEL - 나노봇 보스 셰이더 (URP)
+// RE:AL STEEL - 나노봇 보스 셰이더 (URP) — 2D 판 알갱이
 //
 // RSNanoSwarm 이 Graphics.RenderPrimitives 로 봇 수만큼 사각형을 한 번에 그린다.
 // 메시가 없다: 정점 번호(0~5)로 사각형 모서리를, 인스턴스 번호로 봇 데이터(_Bots)를 읽는다.
 //
-// 빌보드: 모든 봇이 카메라 평면(_PlaneRight · _PlaneUp, 카메라마다 스크립트가 넣음)을 공유하는 평행 빌보드.
-// 봇마다: 색조(tint) · 발광(glow, 색조 색으로 빛남) · 번쩍임 · 흰 테두리(rim, 3페에서만) · 늘이기(stretch, 빠른 봇은 진행 방향으로 길게)
-// 3페: _Dark 가 1 로 가면 봇이 검은 실루엣이 되고 rim 봇만 흰 빛을 낸다
+// 2D 판 (11-10): 봇 하나 = 칸 하나 = 월드 XY 평면의 정사각형 (회전 · 텍스처 없음, 색 하나).
+//   위치는 스크립트가 칸 중심에 맞춰 넣는다 → 판 위 봇은 픽셀처럼 딱 맞물린다.
+//   open (비어 있는 이웃 칸: 1 위 · 2 아래 · 4 왼 · 8 오른) 으로 가장자리 법선을 만들어 3D 장면의 조명을 받는다.
+//     윗면은 밝게 · 아랫면은 어둡게 (모래 더미 · 실루엣이 입체로 읽힌다)
+//   3페: _Dark 가 1 로 가면 검은 실루엣, 가장자리 봇(rim)만 흰 빛
 //
 // 조명 · 그림자 · 깊이 처리는 캐릭터 셰이더와 같다
-//   알파 오려내기 + 불투명 큐 (DOF 가 보스를 인식) / 조명은 '색조로' 받기 / 그림자 캐스터 · DepthOnly · DepthNormals
+//   불투명 큐 (DOF 가 보스를 인식) / 그림자 캐스터 · DepthOnly · DepthNormals
 //
 // Unity 6000.0.x / URP 17.x 기준. StructuredBuffer 를 정점 셰이더에서 읽으므로 target 4.5.
 
@@ -16,15 +18,16 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
 {
     Properties
     {
-        [Header(Tile)]
+        [Header(Color)]
         [Space(4)]
         _Color      ("색조", Color) = (1, 1, 1, 1)
-        _Cutoff     ("오려낼 기준값", Range(0, 1)) = 0.5
 
         [Header(Lighting)]
         [Space(4)]
-        _LightStrength ("조명 반영   (0 원본색 / 1 완전히 조명대로)", Range(0, 1)) = 0.7
-        _NormalLean    ("법선 기울이기   (0 카메라쪽 / 1 하늘쪽)", Range(0, 1)) = 0.5
+        _LightStrength ("조명 반영   (0 원본색 / 1 완전히 조명대로)", Range(0, 1)) = 0.6
+        _EdgeTilt      ("가장자리 법선 기울기", Range(0, 1)) = 0.7
+        _TopLight      ("윗면 밝게", Range(0, 1)) = 0.35
+        _BottomDark    ("아랫면 어둡게", Range(0, 1)) = 0.3
 
         [Header(FX)]
         [Space(4)]
@@ -48,41 +51,31 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Include/RSIndirect.hlsl"     // 간접광 (RS 간접광 컴포넌트)
 
-        TEXTURE2D(_MainTex);    SAMPLER(sampler_MainTex);
-
         CBUFFER_START(UnityPerMaterial)
             half4  _Color;
-            float  _Cutoff;
             float  _LightStrength;
-            float  _NormalLean;
+            float  _EdgeTilt;
+            float  _TopLight;
+            float  _BottomDark;
             float  _GlowStrength;
             float  _FlashStrength;
             float  _RimStrength;
         CBUFFER_END
 
-        // ── 보스마다 스크립트가 MaterialPropertyBlock 으로 넣는 값 ──
+        // ── 스크립트가 MaterialPropertyBlock 으로 넣는 값 ──
         struct NanoBot
         {
             float3 pos;
-            float  roll;
-            float  scale;
+            float  size;
             float  flash;
             float  glow;
             float  rim;
-            float  stretch;
-            uint   tile;
+            uint   open;
             uint   color;
-            float  pad;
+            float3 pad;
         };
         StructuredBuffer<NanoBot> _Bots;
 
-        float4 _PlaneRight;     // 보스 평면 오른쪽 (월드)
-        float4 _PlaneUp;        // 보스 평면 위쪽
-        float4 _PlaneNormal;    // 카메라 쪽
-        float4 _AtlasInfo;      // x 열 수, y 행 수, z 칸 크기(px, 여백 포함), w 여백(px)
-        float4 _AtlasSize;      // x 너비(px), y 높이(px), z 타일 크기(px)
-        float  _TileWorld;      // 타일 한 변 (m)
-        float  _BossFlip;       // 1 = 왼쪽을 봄 (그림 좌우 반전)
         half4  _BossFlashColor;
         float  _Dark;           // 0 금속 봇 / 1 검은 실루엣 (3페)
         float  _DarkTint;       // 검게 될 때 남는 밝기
@@ -97,10 +90,11 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
         struct BotVertex
         {
             float3 positionWS;
-            float2 uv;
+            float3 normalWS;
             half   flash;
             half   glow;
             half   rim;
+            half   shade;     // 윗면 + / 아랫면 −
             half4  tint;
         };
 
@@ -109,35 +103,24 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
             NanoBot b = _Bots[instanceID];
             float2 c = kCorners[vertexID % 6];
 
-            // 타일 중심 기준 사각형 → 봇 회전 → 보스 평면 위로
-            float2 q = (c - 0.5) * (_TileWorld * b.scale);
-            q.x *= 1.0 + b.stretch;     // 진행 방향(회전 전 x)으로 늘인다 — 스미어
-            float s, co;
-            sincos(b.roll, s, co);
-            float2 r = float2(q.x * co - q.y * s, q.x * s + q.y * co);
-
             BotVertex o;
-            o.positionWS = b.pos + _PlaneRight.xyz * r.x + _PlaneUp.xyz * r.y;
+            float2 q = (c - 0.5) * b.size;
+            o.positionWS = b.pos + float3(q.x, q.y, 0.0);
 
-            // 아틀라스 칸 (이미지 왼쪽 위 기준으로 채워져 있다)
-            uint cols = max(1u, (uint)_AtlasInfo.x);
-            float col = (float)(b.tile % cols);
-            float row = (float)(b.tile / cols);
-            float u = _BossFlip > 0.5 ? 1.0 - c.x : c.x;
-            float2 px = float2(col * _AtlasInfo.z + _AtlasInfo.w + u * _AtlasSize.z,
-                               row * _AtlasInfo.z + _AtlasInfo.w + (1.0 - c.y) * _AtlasSize.z);
-            o.uv = float2(px.x / _AtlasSize.x, 1.0 - px.y / _AtlasSize.y);
+            // 비어 있는 이웃 → 바깥을 향한 법선 (판 법선은 카메라 쪽 -z)
+            float up = (b.open & 1u) ? 1.0 : 0.0;
+            float dn = (b.open & 2u) ? 1.0 : 0.0;
+            float lf = (b.open & 4u) ? 1.0 : 0.0;
+            float rt = (b.open & 8u) ? 1.0 : 0.0;
+            float2 e = float2(rt - lf, up - dn);
+            o.normalWS = normalize(float3(e * _EdgeTilt, -1.0));
+            o.shade = (half)(up * _TopLight - dn * _BottomDark);
 
             o.flash = (half)b.flash;
             o.glow  = (half)b.glow;
-            o.rim   = (half)b.rim;
-            o.tint  = half4(b.color & 0xFF, (b.color >> 8) & 0xFF, (b.color >> 16) & 0xFF, (b.color >> 24) & 0xFF) / 255.0;
+            o.rim   = (half)(b.rim * (b.open != 0u ? 1.0 : 0.0));
+            o.tint  = half4(b.color & 0xFF, (b.color >> 8) & 0xFF, (b.color >> 16) & 0xFF, 255) / 255.0;
             return o;
-        }
-
-        half4 SampleTile(float2 uv)
-        {
-            return SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv) * _Color;
         }
         ENDHLSL
 
@@ -173,12 +156,11 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
-                float3 normalWS   : TEXCOORD2;
-                half3  fx         : TEXCOORD3;   // x 번쩍임, y 발광, z 테두리
+                nointerpolation float3 normalWS : TEXCOORD2;
+                nointerpolation half4  fx       : TEXCOORD3;   // x 번쩍임, y 발광, z 테두리, w 윗면/아랫면
                 half   fogCoord   : TEXCOORD4;
-                half4  tint       : TEXCOORD5;
+                nointerpolation half4  tint     : TEXCOORD5;
             };
 
             Varyings NbVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
@@ -187,9 +169,8 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
                 Varyings OUT = (Varyings)0;
                 OUT.positionWS = v.positionWS;
                 OUT.positionCS = TransformWorldToHClip(v.positionWS);
-                OUT.uv         = v.uv;
-                OUT.normalWS   = normalize(lerp(_PlaneNormal.xyz, float3(0.0, 1.0, 0.0), _NormalLean));
-                OUT.fx         = half3(v.flash, v.glow, v.rim);
+                OUT.normalWS   = v.normalWS;
+                OUT.fx         = half4(v.flash, v.glow, v.rim, v.shade);
                 OUT.tint       = v.tint;
                 OUT.fogCoord   = ComputeFogFactor(OUT.positionCS.z);
                 return OUT;
@@ -197,11 +178,11 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
 
             half4 NbFrag(Varyings IN) : SV_Target
             {
-                half4 albedo = SampleTile(IN.uv);
-                clip(albedo.a - _Cutoff);
-                half3 tintRGB = IN.tint.rgb;
-                albedo.rgb *= tintRGB;
-                albedo.rgb = lerp(albedo.rgb, albedo.rgb * _DarkTint, _Dark);   // 3페 검은 실루엣
+                half3 albedo = IN.tint.rgb * _Color.rgb;
+                // 윗면 밝게 · 아랫면 어둡게
+                albedo = IN.fx.w >= 0 ? lerp(albedo, albedo * 1.6 + 0.04, IN.fx.w) : albedo * (1.0 + IN.fx.w);
+                half3 tintRGB = albedo;
+                albedo = lerp(albedo, albedo * _DarkTint, _Dark);   // 3페 검은 실루엣
 
                 float3 n = normalize(IN.normalWS);
 
@@ -217,7 +198,7 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
                 inputData.shadowMask      = half4(1, 1, 1, 1);
 
                 SurfaceData sd = (SurfaceData)0;
-                sd.albedo     = albedo.rgb;
+                sd.albedo     = albedo;
                 sd.alpha      = 1.0;
                 sd.specular   = half3(0, 0, 0);
                 sd.metallic   = 0;
@@ -228,16 +209,16 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
 
                 half4 lit = UniversalFragmentBlinnPhong(inputData, sd);
 
-                // 원화 보존: 원본 색과 조명 받은 색 사이
-                half3 col = lerp(albedo.rgb, lit.rgb, _LightStrength);
+                // 원본 색과 조명 받은 색 사이
+                half3 col = lerp(albedo, lit.rgb, _LightStrength);
 
-                // 발광 — 색조 색으로 빛난다 (반짝이 봇 · 빔 · 눈). 블룸이 받도록 1 을 넘길 수 있다
+                // 발광 — 봇 색으로 빛난다 (반짝이 봇 · 빔 · 눈). 블룸이 받도록 1 을 넘길 수 있다
                 col += tintRGB * IN.fx.y * _GlowStrength * 0.5;
 
-                // 3페 흰 테두리 — 검은 실루엣의 윤곽 · 탄
+                // 3페 흰 테두리 — 검은 실루엣의 가장자리 칸
                 col += _RimColor.rgb * (IN.fx.z * _Dark * _RimStrength);
 
-                // 번쩍임 (피격 · 다시 붙음)
+                // 번쩍임 (피격)
                 col = lerp(col, _BossFlashColor.rgb, saturate(IN.fx.x) * _FlashStrength);
 
                 col = MixFog(col, IN.fogCoord);
@@ -247,7 +228,7 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
         }
 
         // ─────────────────────────────────────────────────────────────
-        // 그림자 캐스터 — 타일 모양 그대로 그림자가 진다
+        // 그림자 캐스터
         // ─────────────────────────────────────────────────────────────
         Pass
         {
@@ -271,13 +252,7 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
             float3 _LightDirection;
             float3 _LightPosition;
 
-            struct SVaryings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-            };
-
-            SVaryings ShadowVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
+            float4 ShadowVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID) : SV_POSITION
             {
                 BotVertex v = BuildBotVertex(vertexID, instanceID);
                 float3 posWS = v.positionWS;
@@ -288,24 +263,16 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
                 float3 lightDirWS = _LightDirection;
             #endif
 
-                float4 cs = TransformWorldToHClip(ApplyShadowBias(posWS, _PlaneNormal.xyz, lightDirWS));
+                float4 cs = TransformWorldToHClip(ApplyShadowBias(posWS, float3(0, 0, -1), lightDirWS));
             #if UNITY_REVERSED_Z
                 cs.z = min(cs.z, cs.w * UNITY_NEAR_CLIP_VALUE);
             #else
                 cs.z = max(cs.z, cs.w * UNITY_NEAR_CLIP_VALUE);
             #endif
-
-                SVaryings OUT;
-                OUT.positionCS = cs;
-                OUT.uv = v.uv;
-                return OUT;
+                return cs;
             }
 
-            half4 ShadowFrag(SVaryings IN) : SV_Target
-            {
-                clip(SampleTile(IN.uv).a - _Cutoff);
-                return 0;
-            }
+            half4 ShadowFrag() : SV_Target { return 0; }
             ENDHLSL
         }
 
@@ -326,26 +293,13 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
             #pragma vertex   DepthVert
             #pragma fragment DepthFrag
 
-            struct DVaryings
-            {
-                float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-            };
-
-            DVaryings DepthVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
+            float4 DepthVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID) : SV_POSITION
             {
                 BotVertex v = BuildBotVertex(vertexID, instanceID);
-                DVaryings OUT;
-                OUT.positionCS = TransformWorldToHClip(v.positionWS);
-                OUT.uv = v.uv;
-                return OUT;
+                return TransformWorldToHClip(v.positionWS);
             }
 
-            half4 DepthFrag(DVaryings IN) : SV_Target
-            {
-                clip(SampleTile(IN.uv).a - _Cutoff);
-                return 0;
-            }
+            half4 DepthFrag() : SV_Target { return 0; }
             ENDHLSL
         }
 
@@ -368,8 +322,7 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
             struct DNVaryings
             {
                 float4 positionCS : SV_POSITION;
-                float2 uv         : TEXCOORD0;
-                float3 normalWS   : TEXCOORD1;
+                nointerpolation float3 normalWS : TEXCOORD1;
             };
 
             DNVaryings DNVert(uint vertexID : SV_VertexID, uint instanceID : SV_InstanceID)
@@ -377,14 +330,12 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
                 BotVertex v = BuildBotVertex(vertexID, instanceID);
                 DNVaryings OUT;
                 OUT.positionCS = TransformWorldToHClip(v.positionWS);
-                OUT.uv = v.uv;
-                OUT.normalWS = normalize(lerp(_PlaneNormal.xyz, float3(0.0, 1.0, 0.0), _NormalLean));
+                OUT.normalWS = v.normalWS;
                 return OUT;
             }
 
             half4 DNFrag(DNVaryings IN) : SV_Target
             {
-                clip(SampleTile(IN.uv).a - _Cutoff);
                 return half4(normalize(IN.normalWS), 0.0);
             }
             ENDHLSL

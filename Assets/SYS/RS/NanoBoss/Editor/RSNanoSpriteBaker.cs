@@ -45,7 +45,7 @@ namespace RealSteel.NanoBoss.EditorTools
             if (!s || !s.sheet) return "";
             string path = AssetDatabase.GetAssetPath(s.sheet);
             long t = File.Exists(path) ? File.GetLastWriteTimeUtc(path).Ticks : 0;
-            return $"{AssetDatabase.AssetPathToGUID(path)}|{t}|{s.columns}|{s.rows}|{s.frameLimit}|{s.darkness:0.###}|{s.invert}|{s.alphaCut:0.###}|{s.pivot}|{Slices(s.sheet).Count}";
+            return $"{AssetDatabase.AssetPathToGUID(path)}|{t}|{s.columns}|{s.rows}|{s.frameLimit}|{s.pick}|{s.darkness:0.###}|{s.invert}|{s.alphaCut:0.###}|{s.pivot}|{Slices(s.sheet).Count}|c";
         }
 
         public static bool NeedsBake(RSNanoSpriteShape s) => s && s.sheet && (s.bakedKey != KeyOf(s) || !s.Ready);
@@ -77,10 +77,14 @@ namespace RealSteel.NanoBoss.EditorTools
         }
 
         /// <summary>프레임마다 칠한 픽셀 (피벗 기준 정수 좌표)</summary>
-        public static List<List<Vector2Int>> Frames(RSNanoSpriteShape s, out string error)
+        public static List<List<Vector2Int>> Frames(RSNanoSpriteShape s, out string error) => Frames(s, out error, out _);
+
+        /// <summary>프레임마다 칠한 픽셀 (피벗 기준 정수 좌표) + 픽셀 색 (packed RGBA)</summary>
+        public static List<List<Vector2Int>> Frames(RSNanoSpriteShape s, out string error, out List<Dictionary<Vector2Int, int>> colors)
         {
             error = null;
             var frames = new List<List<Vector2Int>>();
+            colors = new List<Dictionary<Vector2Int, int>>();
             if (!s.sheet) { error = "스프라이트 시트가 없다"; return frames; }
             if (!Read(s.sheet, out var pix, out int W, out int H)) { error = "PNG · JPG 만 읽을 수 있다"; return frames; }
 
@@ -110,17 +114,24 @@ namespace RealSteel.NanoBoss.EditorTools
             foreach (var (r, pv) in rects)
             {
                 var list = new List<Vector2Int>();
+                var cols = new Dictionary<Vector2Int, int>();
                 for (int y = r.y; y < r.y + r.height; y++)
                 for (int x = r.x; x < r.x + r.width; x++)
                 {
                     if (x < 0 || y < 0 || x >= W || y >= H) continue;
                     var c = pix[y * W + x];
                     if (c.a < cut || c.a == 0) continue;
-                    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
-                    if (s.invert ? lum <= s.darkness : lum >= s.darkness) continue;
-                    list.Add(new Vector2Int(Mathf.FloorToInt(x - r.x - pv.x), Mathf.FloorToInt(y - r.y - pv.y)));
+                    if (s.pick == NanoSpritePick.Dark)
+                    {
+                        float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+                        if (s.invert ? lum <= s.darkness : lum >= s.darkness) continue;
+                    }
+                    var q = new Vector2Int(Mathf.FloorToInt(x - r.x - pv.x), Mathf.FloorToInt(y - r.y - pv.y));
+                    list.Add(q);
+                    cols[q] = c.r | (c.g << 8) | (c.b << 16);
                 }
                 frames.Add(list);
+                colors.Add(cols);
             }
             if (frames.Count == 0) error = "프레임이 없다 — 가로 · 세로 칸 수를 확인";
             return frames;
@@ -131,7 +142,7 @@ namespace RealSteel.NanoBoss.EditorTools
         // ─────────────────────────────────────────────────────────────
         public static void Bake(RSNanoSpriteShape s)
         {
-            var frames = Frames(s, out string err);
+            var frames = Frames(s, out string err, out var frameColors);
             Undo.RecordObject(s, "그림 굽기");
             int F = frames.Count, N = 0;
             foreach (var f in frames) N = Mathf.Max(N, f.Count);
@@ -139,6 +150,7 @@ namespace RealSteel.NanoBoss.EditorTools
             s.botCount = N;
             s.filled = new int[F];
             s.pixels = new int[F * N];
+            s.colors = new int[F * N];
             s.bakedKey = KeyOf(s);
             if (F == 0 || N == 0)
             {
@@ -226,6 +238,7 @@ namespace RealSteel.NanoBoss.EditorTools
                     int i = Mathf.Max(0, assign[k]);
                     var p = P[i];
                     s.pixels[fi * N + k] = RSNanoSpriteShape.Pack(p.x, p.y, rank[i]++);
+                    s.colors[fi * N + k] = frameColors[fi].TryGetValue(p, out int pc) ? pc : 0;
                     prev[k] = p;
                 }
             }
@@ -304,7 +317,9 @@ namespace RealSteel.NanoBoss.EditorTools
             {
                 int v = s.pixels[frame * s.botCount + k];
                 int x = (v & 0xFFF) - 2048 - s.minX, y = ((v >> 12) & 0xFFF) - 2048 - s.minY;
-                if (x >= 0 && y >= 0 && x < W && y < H) px[y * W + x] = new Color32(140, 220, 255, 255);
+                if (x < 0 || y < 0 || x >= W || y >= H) continue;
+                if (s.HasColors) { int c = s.colors[frame * s.botCount + k]; px[y * W + x] = new Color32((byte)(c & 255), (byte)((c >> 8) & 255), (byte)((c >> 16) & 255), 255); }
+                else px[y * W + x] = new Color32(140, 220, 255, 255);
             }
             previewTex.SetPixels32(px);
             previewTex.Apply();

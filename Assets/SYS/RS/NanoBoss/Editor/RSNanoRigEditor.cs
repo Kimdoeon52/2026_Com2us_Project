@@ -49,7 +49,7 @@ namespace RealSteel.NanoBoss.EditorTools
                     if (GUILayout.Button(l.name, EditorStyles.linkLabel, GUILayout.Width(110))) Selection.activeGameObject = l.gameObject;
                     GUILayout.Label(TypeName(l.type), Mini, GUILayout.Width(40));
                     Rect r = GUILayoutUtility.GetRect(60, 14, GUILayout.ExpandWidth(true));
-                    int slots = rig.Active ? rig.SlotCountOf(li) : l.bots;
+                    int slots = rig.Active ? rig.SlotCountOf(li) : l.SlotTotal;
                     FillBar(r, rig.Active ? l.assigned : 0, l.Desired, Mathf.Max(1, slots), l.danger ? new Color(1f, 0.4f, 0.35f) : l.bind < 0.5f ? new Color(0.45f, 0.7f, 1f) : new Color(0.5f, 0.85f, 0.95f));
                     string flags = (l.danger ? "<color=#ff7766>판정</color> " : "") + (l.glow > 0.05f ? "<color=#ffdd55>발광</color> " : "") + (l.bind < 0.5f ? "<color=#77aaff>유체</color>" : "");
                     GUILayout.Label(flags, Mini, GUILayout.Width(70));
@@ -68,8 +68,13 @@ namespace RealSteel.NanoBoss.EditorTools
                 if (GUILayout.Button("+ 웅덩이")) Select(AddLimb(rig.transform, "웅덩이", LimbType.Puddle, new Vector3(3f, -2.1f, 0f), sw));
                 if (GUILayout.Button("+ 발사기")) Select(AddEmitter(rig.transform, "발사기", Vector3.right));
             }
-            if (GUILayout.Button(new GUIContent("+ 그림 (스프라이트 시트 따라가기)", "픽셀아트 시트를 넣으면 어두운 픽셀을 봇이 따라간다")))
-                Select(AddSprite(rig.transform, "그림", new Vector3(1.5f, 0f, 0f), sw));
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button(new GUIContent("+ 그림 (스프라이트 시트)", "픽셀아트 시트를 넣으면 칠한 픽셀 하나하나를 봇이 따라간다")))
+                    Select(AddSprite(rig.transform, "그림", new Vector3(1.5f, 0f, 0f), sw));
+                if (GUILayout.Button(new GUIContent("+ 무리 (각자 날아다님)", "봇이 각자 제 궤도로 부위 주위를 날아다닌다")))
+                    Select(AddSwarm(rig.transform, "무리", new Vector3(1.5f, 1f, 0f), sw));
+            }
             using (new EditorGUILayout.HorizontalScope())
             {
                 if (GUILayout.Button("+ 부위 프리셋 ▾")) RSNanoLimbPresets.Menu(rig, Selection.activeTransform);
@@ -114,14 +119,14 @@ namespace RealSteel.NanoBoss.EditorTools
             GUI.Label(r, $" {have}/{want}", EditorStyles.miniLabel);
         }
 
-        static string TypeName(LimbType t) => t == LimbType.Chain ? "줄기" : t == LimbType.Blob ? "덩어리" : t == LimbType.Sprite ? "그림" : "웅덩이";
+        static string TypeName(LimbType t) => t == LimbType.Chain ? "줄기" : t == LimbType.Blob ? "덩어리" : t == LimbType.Sprite ? "그림" : t == LimbType.Swarm ? "무리" : "웅덩이";
 
         static void Select(Component c) { if (c) Selection.activeGameObject = c.gameObject; }
 
         // ─────────────────────────────────────────────────────────────
         // 만들기 도우미 (프리셋 · 템플릿도 쓴다)
         // ─────────────────────────────────────────────────────────────
-        public static float Spacing(RSNanoSwarm sw) => sw ? sw.spacing : 0.1f;
+        public static float Spacing(RSNanoSwarm sw) => sw ? sw.spacing : 0.0275f;
 
         public static RSNanoLimb AddLimb(Transform parent, string name, LimbType type, Vector3 local, RSNanoSwarm sw = null)
         {
@@ -175,9 +180,19 @@ namespace RealSteel.NanoBoss.EditorTools
         {
             var l = AddLimb(parent, name, LimbType.Sprite, local, sw);
             l.ApplyPreset(RSNanoLimb.Presets[2]);
-            l.pixelSize = Spacing(sw);
+            l.pixelSize = sw ? sw.Cell : 0.03125f;
             if (sheet) l.picture = RSNanoSpriteBaker.CreateOrFind(sheet);
             l.bots = Mathf.Max(1, l.SlotTotal);
+            return l;
+        }
+
+        public static RSNanoLimb AddSwarm(Transform parent, string name, Vector3 local, RSNanoSwarm sw)
+        {
+            var l = AddLimb(parent, name, LimbType.Swarm, local, sw);
+            l.ApplyPreset(RSNanoLimb.Presets[1]);
+            l.bots = 600;
+            l.roam = new Vector2(1.6f, 1.1f);
+            l.roamSpeed = 3f;
             return l;
         }
 

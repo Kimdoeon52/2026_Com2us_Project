@@ -1,8 +1,10 @@
 // RE:AL STEEL - 나노봇 격자 (기계 군체)
 //
-// 봇은 무작위 자리가 아니라 부위마다 깔린 '격자 자리' 에 맞물린다 → 촘촘한 기계 군체.
-//   덩어리   육각 격자 (비늘). 가운데부터 바깥으로 채운다
-//   줄기     관절선을 따라 줄 × 두께 방향 칸 (벽돌처럼 엇갈림). 뿌리부터 끝으로 채운다
+// 봇은 무작위 자리가 아니라 부위마다 깔린 '격자 자리' 에 맞물린다 → 촘촘한 군체.
+// 2D 판 (11-10): 판 위 칸에 맞춰 그리므로 정사각 격자. 자리 간격은 칸보다 조금 촘촘하게(군집 '촘촘함') 해서
+// 곡선 · 기울어진 모양도 칸에 빈틈이 생기지 않게 한다.
+//   덩어리   정사각 격자. 가운데부터 바깥으로 채운다 → 질량이 줄면 가장자리부터 깎인다
+//   줄기     관절선을 따라 줄 × 두께 방향 칸. 뿌리부터 끝으로 채운다
 //   웅덩이   바닥을 따라 깔린 격자. 가운데부터 채운다
 // 자리표는 '채우는 순서' 대로 정렬돼 있다. 부위의 '양' = 앞에서부터 채운 비율.
 //
@@ -16,12 +18,12 @@ namespace RealSteel.NanoBoss
 {
     public static class NanoLattice
     {
-        const float Row = 0.8660254f;
+        const float Row = 1f;   // 정사각 (예전 육각 0.866)
 
         static float Fract(float x) => x - Mathf.Floor(x);
 
         /// <summary>
-        /// 타원 안 육각 격자 (간격 1), 가운데부터. x 는 aspect 로 나눈 '원 좌표'.
+        /// 타원 안 정사각 격자 (간격 1), 가운데부터. x 는 aspect 로 나눈 '원 좌표'.
         /// 반환 (x, y, z(-1~1 의사난수), r(원 좌표 반지름))
         /// </summary>
         public static Vector4[] EllipseHex(int n, float aspect)
@@ -38,7 +40,7 @@ namespace RealSteel.NanoBoss
                 for (int j = -rows; j <= rows; j++)
                 {
                     float y = j * Row;
-                    float off = (j & 1) != 0 ? 0.5f : 0f;
+                    float off = 0f;
                     for (int i = -cols; i <= cols; i++)
                     {
                         float nx = (i + off) / aspect;
@@ -142,7 +144,7 @@ namespace RealSteel.NanoBoss
             {
                 float u = (k + 0.5f) / rows;
                 int cols = Mathf.Max(1, Mathf.RoundToInt(W(width, u) / s));
-                float shift = cols > 1 ? ((k & 1) == 0 ? -0.25f : 0.25f) : 0f;
+                float shift = 0f;
                 for (int c = 0; c < cols; c++)
                 {
                     float f = (c + 0.5f + shift) / cols;
@@ -183,24 +185,23 @@ namespace RealSteel.NanoBoss
             return total;
         }
 
-        /// <summary>웅덩이 — (x -0.5~0.5, 층 0~1, z -0.5~0.5, 채움 순서 비율). 가운데부터</summary>
-        public static Vector4[] Puddle(int n, Vector2 extent, out float space)
+        /// <summary>웅덩이 — (x -0.5~0.5, 층 0~1 (아래부터), 0, 채움 순서 비율). size = (너비, 층 두께) m. 가운데 · 아래부터</summary>
+        public static Vector4[] Puddle(int n, Vector2 size, out float space)
         {
             n = Mathf.Max(1, n);
-            float ex = Mathf.Max(0.1f, extent.x), ez = Mathf.Max(0.1f, extent.y);
-            float s = Mathf.Sqrt(ex * ez / n);
-            int nz = Mathf.Max(1, Mathf.RoundToInt(ez / s));
-            int nx = Mathf.CeilToInt(n / (float)nz);
-            var list = new List<Vector4>(nx * nz);
-            var keys = new List<float>(nx * nz);
-            for (int j = 0; j < nz; j++)
+            float ex = Mathf.Max(0.1f, size.x), ey = Mathf.Max(0.02f, size.y);
+            float s = Mathf.Sqrt(ex * ey / n);
+            int ny = Mathf.Max(1, Mathf.RoundToInt(ey / s));
+            int nx = Mathf.CeilToInt(n / (float)ny);
+            var list = new List<Vector4>(nx * ny);
+            var keys = new List<float>(nx * ny);
+            for (int j = 0; j < ny; j++)
             for (int i = 0; i < nx; i++)
             {
-                float x = (i + 0.5f + ((j & 1) != 0 ? 0.25f : -0.25f)) / nx - 0.5f;
-                float z = (j + 0.5f) / nz - 0.5f;
-                float y = ((i * 3 + j * 5) % 4) / 3f;
-                list.Add(new Vector4(x, y, z, 0f));
-                keys.Add(x * ex * x * ex + z * ez * z * ez);
+                float x = (i + 0.5f) / nx - 0.5f;
+                float y = (j + 0.5f) / ny;
+                list.Add(new Vector4(x, y, 0f, 0f));
+                keys.Add(Mathf.Abs(x) * ex + j * s * 3f);
             }
             var order = new int[list.Count];
             var karr = keys.ToArray();
@@ -213,7 +214,7 @@ namespace RealSteel.NanoBoss
                 v.w = k / (float)n;
                 res[k] = v;
             }
-            space = Mathf.Min(ex / nx, s);
+            space = Mathf.Min(ex / nx, ey / ny);
             return res;
         }
 

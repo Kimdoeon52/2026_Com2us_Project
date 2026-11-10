@@ -53,7 +53,21 @@ namespace RealSteel.NanoBoss
             CurrentPattern = "각성";
             var k = sw.Knight;
             float kx = Mathf.Clamp(c.x, arenaMinX + 3f, arenaMaxX - 3f);
-            k.origin = new Vector3(kx, sw.floorY + 0.6f, 0f);
+            k.moves = SpriteKnight ? knightMoves : null;   // 그림 기사 (동작 시트) — 없으면 예전 조각 기사
+            k.reinforce = false;
+            k.origin = new Vector3(kx, sw.floorY + (SpriteKnight ? 0f : 0.6f), 0f);
+            if (SpriteKnight)
+            {
+                // 봇 수에 맞는 배율 — 군집 봇의 85% 로 가장 큰 프레임의 몸을 75% 이상 채울 수 있게 (그보다 모자라면 몸이 숭숭 빈다).
+                // 조금 모자란 만큼은 몸 칸을 고르게 솎아(점묘) 실루엣은 그대로 둔다
+                int total = bots.Length, sc = Mathf.Max(1, knightMoves.pixelScale);
+                while (sc > 1 && knightMoves.MaxBodyBots(sc) * 0.75f > total * 0.85f) sc--;
+                k.scaleOverride = sc;
+                if (sc < knightMoves.pixelScale)
+                    Debug.LogWarning($"[나노봇] 군집 봇 {total:N0}개로는 3페 기사 배율 {knightMoves.pixelScale} 의 몸을 못 채워 배율 {sc} 로 낮춥니다 (기사가 작아짐). " +
+                                     $"배율 {knightMoves.pixelScale} 그대로 쓰려면 군집 봇 {Mathf.CeilToInt(knightMoves.MaxBodyBots(knightMoves.pixelScale) / 0.85f):N0}개 이상.", this);
+                k.SetPose(knightMoves.idle, 0);
+            }
             k.facing = Mathf.Sign(P.x - kx) == 0f ? -1f : Mathf.Sign(P.x - kx);
             k.lean = 0f; k.armAngle = 0f; k.bladeAngle = 0f; k.bladeDanger = false;
             k.UpdatePose();
@@ -72,7 +86,7 @@ namespace RealSteel.NanoBoss
                 if ((bots[i].mode == BotMode.Debris || bots[i].mode == BotMode.Dead) && !eyeIds.Contains(i)) rest.Add(i);
             Vector3 o = k.ChestWorld;
             rest.Sort((a, b) => (bots[a].pos - o).sqrMagnitude.CompareTo((bots[b].pos - o).sqrMagnitude));
-            int knightN = KnightBotCount(sw);
+            int knightN = SpriteKnight ? SpriteKnightBodyBots() : KnightBotCount(sw);
             sw.Halo.center = k.ChestWorld;
 
             float dur = 1.5f, t = 0f;
@@ -83,14 +97,14 @@ namespace RealSteel.NanoBoss
                 float q = Mathf.Clamp01(t / dur);
                 int upto = Mathf.Min(rest.Count, Mathf.CeilToInt(rest.Count * q));
                 for (; next < upto; next++) AwakenBot(rest[next], next < knightN, kx, next);
-                sw.dark = Mathf.Clamp01(t / (dur + 0.3f));
-                k.stiffness = Mathf.Lerp(6f, 900f, q * q);
-                k.damping = Mathf.Lerp(3.5f, 55f, q);
-                k.maxSpeed = Mathf.Lerp(3.5f, 95f, q);
+                sw.dark = SpriteKnight && !knightMoves.darkSilhouette ? 0f : Mathf.Clamp01(t / (dur + 0.3f));
+                k.stiffness = Mathf.Lerp(6f, KStiff, q * q);
+                k.damping = Mathf.Lerp(3.5f, KDamp, q);
+                k.maxSpeed = Mathf.Lerp(3.5f, KSpeed, q);
                 yield return null;
             }
-            k.stiffness = 900f; k.damping = 55f; k.maxSpeed = 95f; k.noise = 0.004f;
-            sw.dark = 1f;
+            k.stiffness = KStiff; k.damping = KDamp; k.maxSpeed = KSpeed; k.noise = 0.004f;
+            sw.dark = SpriteKnight && !knightMoves.darkSilhouette ? 0f : 1f;
 
             // 4) 한 번 내려다본다
             for (float u = 0f; u < 0.35f; u += Time.deltaTime) { k.lean = Mathf.Lerp(0f, -12f, Smooth(u / 0.35f)); yield return null; }
@@ -99,8 +113,14 @@ namespace RealSteel.NanoBoss
 
             knightInitial = Mathf.Max(1, KnightBodyCount);
             SetPhase(BossPhase.Phase3);
-            yield return KnightLoop();
+            if (SpriteKnight) yield return SpriteKnightLoop();
+            else yield return KnightLoop();
         }
+
+        // 기사 봇 반응 — 그림 기사는 프레임(1/15~1/20초)마다 자리가 바뀌니 훨씬 빨리 붙는다 (하네스: 6000 이면 프레임이 바뀐 직후 몸 칸의 30% 까지 비고, 40000 이면 대부분 한 스텝 안)
+        float KStiff => SpriteKnight ? knightMoves.bodySnap : 900f;
+        float KDamp => SpriteKnight ? 1.8f * Mathf.Sqrt(knightMoves.bodySnap) : 55f;
+        float KSpeed => SpriteKnight ? knightMoves.snapSpeed : 95f;
 
         void MakeEye(int i, int j)
         {
@@ -117,8 +137,8 @@ namespace RealSteel.NanoBoss
         /// <summary>기사 몸을 격자 간격으로 빈틈 없이 채우는 봇 수 (나머지는 후광 = 탄약)</summary>
         public static int KnightBotCount(RSNanoSwarm s)
         {
-            int n = Mathf.RoundToInt(KnightGuide.BodyArea / (0.866f * s.spacing * s.spacing));
-            return Mathf.Clamp(n, 200, Mathf.Max(200, Mathf.RoundToInt(s.Count * 0.6f)));
+            int n = Mathf.RoundToInt(KnightGuide.BodyArea / (s.spacing * s.spacing));   // 2D 판: 투영 면적 ÷ 자리 간격²
+            return Mathf.Clamp(n, 200, Mathf.Max(200, Mathf.RoundToInt(s.Count * 0.7f)));
         }
 
         /// <summary>흩어진 봇 하나를 기사 몸(테두리 판정 포함) 또는 후광으로 빨아들인다. ordinal = 기사 몸을 고르게 채우는 순번</summary>
@@ -128,7 +148,14 @@ namespace RealSteel.NanoBoss
             b.glow = 0f;
             b.tint = White;
             if (b.mode == BotMode.Dead) { b.pos = new Vector3(kx + Random.Range(-6f, 6f), sw.floorY, Random.Range(-1f, 2f)); b.scale = 0f; }
-            if (toKnight)
+            if (toKnight && SpriteKnight)
+            {
+                b.seg = 0;
+                b.cell = -1;   // 그림 기사 — 군집이 번호를 준다 (RSNanoSwarm.FillKnight)
+                b.rim = 0f;
+                sw.Bind(i, RSNanoSwarm.G_Knight);
+            }
+            else if (toKnight)
             {
                 KnightGuide.Sample(ref b, NanoLattice.Halton(ordinal, 2), NanoLattice.Halton(ordinal, 3), NanoLattice.Halton(ordinal, 5), NanoLattice.Halton(ordinal, 7));
                 b.rim = 0f;   // 테두리는 군집이 실루엣 가장자리를 찾아 매 프레임 정한다 (RSNanoSwarm.UpdateRim)
@@ -142,6 +169,9 @@ namespace RealSteel.NanoBoss
             }
         }
 
+        /// <summary>그림 기사가 각성 때 모으는 몸 봇 수 = 가장 큰 프레임의 몸 (배율 반영). 동작 중에 데려오느라 몸이 비지 않게</summary>
+        int SpriteKnightBodyBots() => Mathf.Max(200, knightMoves.MaxBodyBots(sw.Knight.Scale));
+
         void UpdateKnight(float dt)
         {
             var k = sw.Knight;
@@ -151,7 +181,7 @@ namespace RealSteel.NanoBoss
                 if (f != 0f) k.facing = f;
             }
             k.lookAt = P;
-            k.origin.y = sw.floorY + 0.6f + Mathf.Sin(Time.time * 1.3f) * 0.12f;
+            if (!k.SpriteMode) k.origin.y = sw.floorY + 0.6f + Mathf.Sin(Time.time * 1.3f) * 0.12f;
             sw.Halo.center = k.ChestWorld + new Vector3(-k.facing * 0.5f, 0.4f, 0f);
         }
 
@@ -357,11 +387,12 @@ namespace RealSteel.NanoBoss
                     float x = cols[c];
                     Vector3 top = new Vector3(x, 8.6f, zBack);
                     Vector3 vel = (new Vector3(x + slant, sw.floorY, 0f) - top).normalized * 21f;
-                    for (int j = 0; j < 4; j++)
+                    // 칼날 하나 = 세로로 촘촘히 이은 봇 뭉치 7개 (2D 판: 듬성듬성한 점이 아니라 한 줄기 칼날)
+                    for (int j = 0; j < 7; j++)
                     {
                         int i = NextHalo();
                         if (i < 0) break;
-                        sw.Fire(i, top + new Vector3(0f, j * 0.27f, 0f), fallWait + c * 0.03f, vel, 1.15f, RSNanoSwarm.G_Halo, default, 1f);
+                        sw.Fire(i, top + new Vector3(0f, j * 0.12f, 0f), fallWait + c * 0.03f, vel, 1.15f, RSNanoSwarm.G_Halo, default, 1f, false, 10);
                     }
                 }
                 yield return new WaitForSeconds(0.6f);
@@ -426,7 +457,7 @@ namespace RealSteel.NanoBoss
                         int i = NextHalo();
                         if (i < 0) break;
                         Vector3 d = Dir(theta + a * 120f);
-                        sw.Fire(i, c + d * 0.6f, 0f, d * 7.2f, 2.8f, RSNanoSwarm.G_Halo, default, 1f, true);
+                        sw.Fire(i, c + d * 0.6f, 0f, d * 7.2f, 2.8f, RSNanoSwarm.G_Halo, default, 1f, true, 12);
                     }
                     theta += 11f * k.facing;
                 }

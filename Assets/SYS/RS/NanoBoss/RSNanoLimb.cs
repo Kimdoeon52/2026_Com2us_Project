@@ -8,7 +8,11 @@
 //            '바닥까지 채움' = 파도처럼 관절선 아래를 바닥까지 채움
 //   덩어리   타원 (크기 = size × 트랜스폼 스케일). 주먹 · 몸통 · 혹
 //   웅덩이   바닥에 깔리는 층 (너비 × 안쪽 깊이). 물결 + '요동 지점' 에서 솟아오름
-//   그림     픽셀아트 스프라이트 시트를 따라간다 (어두운 픽셀 = 봇 자리, 흰색 · 투명은 무시). 프레임이 바뀌면 봇이 흘러간다
+//   그림     픽셀아트 스프라이트 시트를 따라간다 (그림 픽셀 하나 = 봇 하나 = 칸 하나). 프레임이 바뀌면 봇이 흘러간다.
+//            '봇 색 = 그림 색' 이면 도착한 봇이 그 픽셀 색이 된다
+//   무리     봇이 각자 제 궤도로 부위 주위를 날아다닌다 (개별 움직임 — 벌레 떼 · 불티 · 위협)
+//
+// 2D 판 (11-10): 모든 부위는 판 위에 그린다. '뒷판' 을 올리면 화면 안쪽 뒷판으로 날아가 거기서 모양을 만든다 (키를 잡는다).
 //
 // 양(amount) = 자리를 앞에서부터(뿌리 · 가운데부터) 채운 비율. 올리면 가까운 봇부터 흘러들고, 내리면 끝부터 풀려난다.
 // 결속(bind) 1 = 촘촘한 기계 격자 / 0 = 유체. 0 → 1 로 올리는 순간 뿌리부터 '착착' 잠긴다.
@@ -32,6 +36,7 @@ namespace RealSteel.NanoBoss
         [InspectorName("덩어리 (타원)")] Blob,
         [InspectorName("웅덩이 (바닥 층)")] Puddle,
         [InspectorName("그림 (스프라이트 시트 따라가기)")] Sprite,
+        [InspectorName("무리 (봇이 각자 날아다님)")] Swarm,
     }
 
     public enum GatherOrder
@@ -66,7 +71,7 @@ namespace RealSteel.NanoBoss
         public LimbType type = LimbType.Chain;
 
         [Header("봇")]
-        [Tooltip("이 부위의 격자 자리 수 = 양이 1 일 때 쓰는 봇 수. 인스펙터의 '크기에 맞게' 로 정하면 빈틈 없이 맞물린다")]
+        [Tooltip("무리: 날아다니는 봇 수. (줄기 · 덩어리 · 웅덩이는 2D 판에서 모양을 칸으로 빈틈 없이 채우는 수로 자동, 그림은 칠한 픽셀 수)")]
         [Min(1)] public int bots = 200;
         [Tooltip("자리를 앞(뿌리 · 가운데)에서부터 채운 비율 (키를 잡는다). 0 이면 봇을 다 풀어 준다")]
         [Range(0f, 1f)] public float amount = 1f;
@@ -79,6 +84,10 @@ namespace RealSteel.NanoBoss
         [Tooltip("발광 (색은 tint). 예고에 쓴다")]
         [Min(0f)] public float glow;
         public Color tint = Color.white;
+
+        [Header("판")]
+        [Tooltip("0 = 앞판 (싸우는 면) · 1 = 뒷판 (화면 안쪽). 0.5 를 넘는 순간 봇이 판 사이를 날아 건너간다 (키를 잡는다)")]
+        [Range(0f, 1f)] public float back;
 
         [Header("결속")]
         [Tooltip("1 = 촘촘한 기계 격자 (판이 맞물림) · 0 = 유체 (흐르고 출렁임). 0 → 1 로 올리면 뿌리부터 착착 잠긴다 (키를 잡는다)")]
@@ -118,7 +127,7 @@ namespace RealSteel.NanoBoss
         [Range(0f, 0.4f)] public float wobble = 0.08f;
 
         [Header("웅덩이")]
-        [Tooltip("x = 너비, y = 안쪽(z) 깊이 (m)")]
+        [Tooltip("x = 너비 (m). y 는 쓰지 않는다 (2D 판)")]
         public Vector2 extent = new Vector2(8f, 2.5f);
         [Tooltip("층 두께 (m)")]
         public float layer = 0.15f;
@@ -143,8 +152,16 @@ namespace RealSteel.NanoBoss
         [Min(0f)] public float fps = 12f;
         [Tooltip("끝 프레임 다음에 처음으로")]
         public bool loop = true;
-        [Tooltip("그림 픽셀 하나의 크기 (m). 보통 군집 격자 간격과 같게")]
-        [Min(0.01f)] public float pixelSize = 0.1f;
+        [Tooltip("그림 픽셀 하나의 크기 (m). 리그가 군집의 칸 크기로 맞춘다 (그림 픽셀 하나 = 칸 하나)")]
+        [Min(0.005f)] public float pixelSize = 0.03125f;
+        [Tooltip("봇 색 = 그림 색. 그림 칸에 도착한 봇이 그 픽셀 색으로 바뀐다 (끄면 군집 '봇 색')")]
+        public bool artColor = true;
+
+        [Header("무리")]
+        [Tooltip("봇이 날아다니는 반경 (m). x = 가로, y = 세로")]
+        public Vector2 roam = new Vector2(1.5f, 1f);
+        [Tooltip("도는 빠르기 (초당 라디안 정도). 봇마다 0.6~1.4 배")]
+        [Range(0f, 12f)] public float roamSpeed = 3f;
 
         // ── 예전 값 (10-27 판). 불러올 때 프레임 값으로 한 번 바꾼다 ─────────
         [SerializeField, HideInInspector] int feelVersion;
@@ -154,6 +171,9 @@ namespace RealSteel.NanoBoss
 
         // ── 런타임 ───────────────────────────────────────────────────
         [NonSerialized] public int assigned;
+        /// <summary>줄기 · 덩어리 · 웅덩이: 지금 모양을 칸 간격으로 채우는 자리 수 (리그가 매 프레임, 12% 단위로 맞춘다)</summary>
+        [NonSerialized] public int autoSlots;
+        public bool AutoCount => type == LimbType.Chain || type == LimbType.Blob || type == LimbType.Puddle;
         [NonSerialized] public int index;
         readonly List<Transform> joints = new List<Transform>();
         readonly List<RSNanoJoint> jointComp = new List<RSNanoJoint>();
@@ -163,9 +183,9 @@ namespace RealSteel.NanoBoss
         public float CurScale { get; private set; } = 1f;
         public int Desired => Mathf.RoundToInt(SlotTotal * Mathf.Clamp01(amount) * (isActiveAndEnabled ? 1f : 0f));
         /// <summary>자리 수 — 그림은 구운 봇 수, 나머지는 '자리 수 (봇)'</summary>
-        public int SlotTotal => type == LimbType.Sprite ? (picture && picture.Ready ? picture.botCount : 0) : bots;
+        public int SlotTotal => type == LimbType.Sprite ? (picture && picture.Ready ? picture.botCount : 0) : AutoCount && autoSlots > 0 ? autoSlots : bots;
         public IReadOnlyList<Transform> Joints => joints;
-        public int LayoutKey => (int)type * 7919 + SlotTotal * 31 + (fillToFloor ? 1 : 0) + joints.Count * 131 +
+        public int LayoutKey => (int)type * 7919 + SlotTotal * 31 + (fillToFloor ? 1 : 0) + joints.Count * 131 + Mathf.RoundToInt(pixelSize * 100000f) +
                                 (type == LimbType.Sprite && picture ? picture.GetInstanceID() * 17 + (picture.bakedKey != null ? picture.bakedKey.GetHashCode() : 0) : 0);
 
         /// <summary>그림: 시각 clock 의 프레임 번호</summary>
@@ -177,15 +197,17 @@ namespace RealSteel.NanoBoss
             return loop ? ((f % n) + n) % n : Mathf.Clamp(f, 0, n - 1);
         }
 
-        /// <summary>그림: 프레임 f 의 자리 (부위 좌표, m) 를 dst[offset..] 의 xyz 에 쓴다 (w = 채움 순서는 그대로)</summary>
-        public void WriteSpriteSlots(float4[] dst, int offset, int f)
+        /// <summary>그림: 프레임 f 의 자리 (부위 좌표, m) 를 dst[offset..] 의 xyz 에, 그 픽셀 색을 colors[offset..] 에 쓴다 (w = 채움 순서는 그대로)</summary>
+        public void WriteSpriteSlots(float4[] dst, uint[] colors, int offset, int f)
         {
             if (!picture || !picture.Ready) return;
             int n = picture.botCount;
+            bool col = artColor && picture.HasColors;
             for (int k = 0; k < n; k++)
             {
                 Vector3 p = picture.Local(f, k, pixelSize);
                 dst[offset + k] = new float4(p.x, p.y, p.z, dst[offset + k].w);
+                colors[offset + k] = col ? picture.ColorOf(f, k) : 0u;
             }
         }
 
@@ -331,7 +353,7 @@ namespace RealSteel.NanoBoss
         public Vector4[] BuildSlots(float floorY, out float space)
         {
             CachePose();
-            int n = Mathf.Max(1, bots);
+            int n = Mathf.Max(1, SlotTotal);
             switch (type)
             {
                 case LimbType.Chain:
@@ -349,6 +371,18 @@ namespace RealSteel.NanoBoss
                     Vector3 ls = transform.lossyScale;
                     return NanoLattice.Ellipse(n, new Vector2(size.x * ls.x, size.y * ls.y), out space);
                 }
+                case LimbType.Swarm:
+                {
+                    // 봇마다 (집 자리 x, y = 단위 원 안, 궤도 위상)
+                    var res = new Vector4[n];
+                    for (int k = 0; k < n; k++)
+                    {
+                        float a = k * 2.39996f, r = Mathf.Sqrt((k + 0.5f) / n);
+                        res[k] = new Vector4(Mathf.Cos(a) * r, Mathf.Sin(a) * r, (k * 0.618034f) % 1f, k / (float)n);
+                    }
+                    space = 0f;
+                    return res;
+                }
                 case LimbType.Sprite:
                 {
                     int m = Mathf.Max(1, SlotTotal);
@@ -362,7 +396,7 @@ namespace RealSteel.NanoBoss
                     return res;
                 }
                 default:
-                    return NanoLattice.Puddle(n, extent, out space);
+                    return NanoLattice.Puddle(n, new Vector2(extent.x, Mathf.Max(0.05f, layer)), out space);
             }
         }
 
@@ -370,8 +404,9 @@ namespace RealSteel.NanoBoss
         public int EstimateBots(float spacing, float floorY)
         {
             if (type == LimbType.Sprite) return Mathf.Max(1, SlotTotal);   // 그림: 칠한 픽셀 수
+            if (type == LimbType.Swarm) return Mathf.Max(1, bots);         // 무리: 직접 정함
             CachePose();
-            float cell = 0.866f * spacing * spacing;
+            float cell = spacing * spacing;
             float area;
             switch (type)
             {
@@ -396,10 +431,10 @@ namespace RealSteel.NanoBoss
                     break;
                 }
                 default:
-                    area = extent.x * extent.y * 0.35f;   // 안쪽(z)은 덜 촘촘하게
+                    area = extent.x * Mathf.Max(0.05f, layer);
                     break;
             }
-            return Mathf.Clamp(Mathf.RoundToInt(area / Mathf.Max(1e-5f, cell)), 4, 8000);
+            return Mathf.Clamp(Mathf.RoundToInt(area / Mathf.Max(1e-6f, cell)), 4, 60000);
         }
     }
 }

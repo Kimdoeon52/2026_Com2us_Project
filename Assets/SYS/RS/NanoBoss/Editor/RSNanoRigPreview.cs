@@ -352,15 +352,26 @@ namespace RealSteel.NanoBoss.EditorTools
                         pts.Add(l.transform.TransformPoint(new Vector3(Mathf.Cos(a) * l.size.x, Mathf.Sin(a) * l.size.y, 0f)));
                     }
                     break;
+                case LimbType.Swarm:
+                {
+                    Vector3 ls = l.transform.lossyScale;
+                    for (int i = 0; i < 40; i++)
+                    {
+                        float a = i / 40f * Mathf.PI * 2f;
+                        pts.Add(l.transform.position + new Vector3(Mathf.Cos(a) * l.roam.x * Mathf.Abs(ls.x), Mathf.Sin(a) * l.roam.y * Mathf.Abs(ls.y), 0f));
+                    }
+                    break;
+                }
                 default:
                 {
+                    // 웅덩이 — 바닥에서 층 두께까지 (2D 판)
                     Vector3 c = l.transform.position;
-                    float y = floorY + l.layer + 0.08f;
-                    float hx = l.extent.x * 0.5f, hz = l.extent.y * 0.5f;
-                    pts.Add(new Vector3(c.x - hx, y, c.z - hz));
-                    pts.Add(new Vector3(c.x + hx, y, c.z - hz));
-                    pts.Add(new Vector3(c.x + hx, y, c.z + hz));
-                    pts.Add(new Vector3(c.x - hx, y, c.z + hz));
+                    float y0 = floorY, y1 = floorY + l.layer + l.ripple;
+                    float hx = l.extent.x * 0.5f;
+                    pts.Add(new Vector3(c.x - hx, y0, c.z));
+                    pts.Add(new Vector3(c.x + hx, y0, c.z));
+                    pts.Add(new Vector3(c.x + hx, y1, c.z));
+                    pts.Add(new Vector3(c.x - hx, y1, c.z));
                     break;
                 }
             }

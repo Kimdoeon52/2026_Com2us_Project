@@ -42,7 +42,7 @@ namespace RealSteel.NanoBoss
         Color playerColor = new Color(0.35f, 0.85f, 1f);
         Rect panel;
         bool showPatterns, showPerf = true;
-        int pendingCount = -1;
+        int pendingCount = -1, pendingGrain = -1;
         float fps;
 
         void Start()
@@ -198,7 +198,7 @@ namespace RealSteel.NanoBoss
             if (showPatterns)
             {
                 bool knight = brain.Phase == BossPhase.Phase3;
-                var list = knight ? RSNanoBossBrain.KnightPatterns : RSNanoBossBrain.SwarmPatterns;
+                var list = knight ? brain.Phase3Patterns : RSNanoBossBrain.SwarmPatterns;
                 GUILayout.Label(knight ? "3페 (기사)" : "1 · 2페 (군집)", Rich(11));
                 foreach (var p in list)
                     if (GUILayout.Button(p)) brain.ForcePattern(p);
@@ -233,34 +233,25 @@ namespace RealSteel.NanoBoss
             string col = swarm.SimMs <= 1f ? "#9be89b" : swarm.SimMs <= 2f ? "#ffdd66" : "#ff8877";
             GUILayout.Label($"FPS <b>{fps:0}</b>   시뮬 <b><color={col}>{swarm.SimMs:0.00}ms</color></b>   그리기 준비 {swarm.UploadMs:0.00}ms" +
                             (rig ? $"   리그 {rig.TickMs:0.00}ms" : ""), Rich(11));
-            GUILayout.Label($"덩어리 격자 간격 {swarm.BlobSpace * 100f:0.0}cm (≈{swarm.BlobSpace / (swarm.botWorldSize / RSNanoBotSprites.Tile):0.0}px 판)", Rich(10));
+            GUILayout.Label($"칸 {swarm.Cell * 100f:0.00}cm ({swarm.grain}px 알갱이) · 붙은 봇 {swarm.Alive} · 모래 {swarm.DebrisCount}", Rich(10));
 
             if (pendingCount < 0) pendingCount = swarm.botCount;
+            if (pendingGrain < 0) pendingGrain = swarm.grain;
             GUILayout.BeginHorizontal();
             GUILayout.Label("봇 수", GUILayout.Width(60));
-            pendingCount = Mathf.RoundToInt(GUILayout.HorizontalSlider(pendingCount, 1000, 8000) / 250f) * 250;
-            GUILayout.Label(pendingCount.ToString(), GUILayout.Width(40));
-            using (new GUIEnabled(pendingCount != swarm.botCount))
-                if (GUILayout.Button("적용", GUILayout.Width(44))) { swarm.botCount = pendingCount; brain.Restart(); hitsTaken = 0; }
+            pendingCount = Mathf.RoundToInt(GUILayout.HorizontalSlider(pendingCount, 2000, 50000) / 1000f) * 1000;
+            GUILayout.Label(pendingCount.ToString(), GUILayout.Width(44));
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal();
+            GUILayout.Label("알갱이", GUILayout.Width(60));
+            pendingGrain = Mathf.RoundToInt(GUILayout.HorizontalSlider(pendingGrain, 1, 3));
+            GUILayout.Label(pendingGrain + "px", GUILayout.Width(44));
+            GUILayout.EndHorizontal();
+            using (new GUIEnabled(pendingCount != swarm.botCount || pendingGrain != swarm.grain))
+                if (GUILayout.Button("적용 (다시 시작)")) { swarm.botCount = pendingCount; swarm.grain = pendingGrain; brain.Restart(); hitsTaken = 0; }
+            GUILayout.Label("게임 기준 32px/m. 1px = 봇 하나가 픽셀 하나", Rich(10));
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label("격자 간격", GUILayout.Width(60));
-            if (swarm.spacingFromPicture) GUILayout.Label("봇 그림 크기에 맞춤", GUILayout.ExpandWidth(true));
-            else swarm.spacing = GUILayout.HorizontalSlider(swarm.spacing, 0.06f, 0.2f);
-            GUILayout.Label((swarm.spacing * 100f).ToString("0.0") + "cm", GUILayout.Width(44));
-            GUILayout.EndHorizontal();
-            swarm.spacingFromPicture = GUILayout.Toggle(swarm.spacingFromPicture, " 간격을 그림에 맞춤");
-
-            GUILayout.BeginHorizontal();
-            GUILayout.Label("픽셀 크기", GUILayout.Width(60));
-            swarm.botWorldSize = GUILayout.HorizontalSlider(swarm.botWorldSize, 0.125f, 0.5f);
-            GUILayout.Label((RSNanoBotSprites.Tile / swarm.botWorldSize).ToString("0") + "px/m", GUILayout.Width(52));
-            GUILayout.EndHorizontal();
-            GUILayout.Label("게임 기준 32px/m. 그림 크기 × 픽셀 크기 = 격자 간격", Rich(10));
-
-            GUILayout.BeginHorizontal();
-            swarm.plates = GUILayout.Toggle(swarm.plates, " 판으로 그리기");
             swarm.castShadows = GUILayout.Toggle(swarm.castShadows, " 그림자");
             GUILayout.EndHorizontal();
         }

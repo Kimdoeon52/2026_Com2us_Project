@@ -4,7 +4,7 @@
 //   위    지금 프레임 · 재생(1 · ½ · ¼ 배속) · 한 프레임씩 · 어니언 스킨
 //   띠    부위마다 한 줄: 회색 = 보임(양) · 파랑 = 유체 · 노랑 = 발광(예고) · 빨강 = 판정 / 리그 줄: 하늘 = 플레이어 고정 · 보라 = 흔들림
 //         발사기 줄: 주황 = 발사. 띠를 누르거나 끌면 그 시각으로 간다
-//   동작      지금 프레임에 버튼 한 번으로 키 (나타나기 · 사라지기 · 자라기 · 판정 · 빛 펄스 · 풀림 · 결속 · 흔들림 · 고정 · 발사)
+//   동작      지금 프레임에 버튼 한 번으로 키 (나타나기 · 사라지기 · 자라기 · 판정 · 빛 펄스 · 풀림 · 결속 · 뒷판 · 흔들림 · 고정 · 발사)
 //   행동 블록  돌진 · 휘두르기 · 내려찍기 · 모였다 흩어지기 — 프레임 몇 개만 정하면 키 묶음을 만든다
 //   포즈      리그 모양을 이름 붙여 저장 → 지금 프레임에 키로 (달라진 값만)
 //   점검      예고가 짧은 판정, 봇 모자람, 원점 키 … 고치기 버튼
@@ -390,6 +390,11 @@ namespace RealSteel.NanoBoss.EditorTools
                         if (Btn("풀림 ≈", "결속 → 0 (흐르는 유체로)")) Do(clip, "풀림", () => { float L = Len(l); Key(clip, l, "bind", t, Val(clip, l, "bind", t, l.bind)); Key(clip, l, "bind", t + L, 0f); });
                         if (Btn("결속 착!", "결속 → 1 (4프레임 만에 뿌리부터 잠긴다)")) Do(clip, "결속", () => { Key(clip, l, "bind", t, Val(clip, l, "bind", t, l.bind)); Key(clip, l, "bind", t + 4f / 60f, 1f); });
                     }
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        if (Btn("뒷판으로", "이 순간 봇이 화면 안쪽 뒷판으로 날아간다 (계단 키)")) Do(clip, "뒷판으로", () => RSNanoKeys.Key(clip, root, l, "back", t, 1f, true));
+                        if (Btn("앞판으로", "이 순간 봇이 싸우는 면(앞판)으로 돌아온다 (계단 키)")) Do(clip, "앞판으로", () => RSNanoKeys.Key(clip, root, l, "back", t, 0f, true));
+                    }
                 }
             }
 
@@ -774,7 +779,7 @@ namespace RealSteel.NanoBoss.EditorTools
             }
             EditorGUILayout.Space(6);
             var sw = rig.swarm;
-            if (sw) GUILayout.Label($"군집 봇 {sw.Count} · 격자 간격 {sw.spacing * 100f:0.0}cm · 시뮬 {sw.SimMs:0.00}ms (에디터, 대상 PC 는 Burst 기준 1ms 이하 목표)", Rich);
+            if (sw) GUILayout.Label($"군집 봇 {sw.Count:N0} · 칸 {sw.Cell * 100f:0.00}cm ({sw.grain}px) · 시뮬 {sw.SimMs:0.00}ms (에디터, 대상 PC 는 Burst 기준 2ms 이하 목표)", Rich);
             if (RSNanoRigPreview.Scrubbing) GUILayout.Label($"되감기 재시뮬 {RSNanoRigPreview.LastResimMs:0}ms", Rich);
         }
     }

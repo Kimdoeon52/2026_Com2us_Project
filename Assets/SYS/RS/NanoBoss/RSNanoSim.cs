@@ -1,19 +1,20 @@
 // RE:AL STEEL - 나노봇 시뮬레이션 (Burst 잡)
 //
-// 봇 5,000 개를 GTX 1060 3GB 급 PC 에서 60fps 로 돌리려고 봇 계산을 전부 Burst 잡으로 옮겼다.
-//   NanoGridJob    봇 위치를 화면 평면 격자에 나눠 담는다 (가장자리 판정 · 끈적임에 쓴다). 한 스레드
-//   NanoSimJob     봇마다: 목표 자리 계산 → 흐름 · 끈적임 → 감쇠 스프링(정확해) → 모습(각도 · 늘이기 · 판). 여러 스레드
-//   NanoUploadJob  GPU 로 보낼 값 (판 그림 고르기 · 색 · 발광) + 경계 상자. 한 스레드
+// 봇 수만 개를 GTX 1060 3GB 급 PC 에서 60fps 로 돌리려고 봇 계산을 전부 Burst 잡으로 옮겼다.
+//   NanoGridJob    봇 위치를 화면 평면 격자에 나눠 담는다 (유체 끈적임에 쓴다). 한 스레드
+//   NanoSimJob     봇마다: 목표 자리 계산 → 판(앞 · 뒤) 정하기 → 흐름 · 끈적임 → 감쇠 스프링(정확해). 여러 스레드
+//   NanoSandJob    떨어진 봇(모래): 날다가 바닥 · 더미에 닿으면 칸에 앉고, 아래 → 대각선 아래 (유체는 옆) 로 흘러내림. 한 스레드
+//   NanoUploadJob  칸에 맞춘 위치 · 비어 있는 이웃(가장자리) · 색 · 발광 + 경계 상자. 한 스레드
 //
 // 목표 자리는 가이드 · 부위가 매 프레임 미리 채워 둔 값(GuideFeel · LimbSim · 격자 자리표 · 관절선 기록)으로만 계산한다.
 // 관리 코드(가이드 클래스 · 부위 컴포넌트)는 잡 안에서 부르지 않는다.
 //
 // 스프링: 감쇠 진동의 정확해를 쓴다 → 서브스텝 없이도 안정, 같은 입력이면 같은 결과 (편집기 되감기 재시뮬)
 //
-// 깊이(z): 기계(결속 1)일수록 화면 안쪽 두께를 얇게 눌러 판이 한 장의 면처럼 맞물린다 (두꺼우면 원근 때문에
-//          판이 위아래로 어긋나 '물에 뜬 시리얼' 처럼 보인다). 유체일수록 원래 두께.
-// 결속(bind): 봇은 늘 자기 격자 자리를 갖는다. 기계(1)면 자리에 딱 맞물린 판, 유체(0)면 자리 위에 '흐름'(공간적으로
-// 이어진 물결 변위)이 얹히고 끈적임으로 이웃과 함께 움직이며 둥근 방울로 그려진다 → 흩어진 먼지가 아니라 흐르는 덩어리.
+// 2D 판 (11-10): 목표 자리의 깊이(z)는 판 두 장(앞 · 뒤) 중 하나로 눌린다. 리그 부위는 '뒷판' 값으로, 가이드는
+//   목표가 두 판 사이 절반보다 안쪽이면 뒷판. 봇은 판 사이를 3D 로 날아 오가고, 판 위에서는 칸에 맞춰 그린다.
+// 결속(bind): 봇은 늘 자기 격자 자리를 갖는다. 기계(1)면 자리에 딱, 유체(0)면 자리 위에 '흐름'(공간적으로
+// 이어진 물결 변위)이 얹히고 끈적임으로 이웃과 함께 움직인다 → 흩어진 먼지가 아니라 흐르는 덩어리.
 using System.Runtime.InteropServices;
 using Unity.Burst;
 using Unity.Collections.LowLevel.Unsafe;
@@ -34,13 +35,19 @@ namespace RealSteel.NanoBoss
     public struct BlobSim { public float3 center, radius, bulgeDir; public float wobble, wobbleSpeed, flow, flowSpeed, bulge, floorY, ext; }
     public struct TubeSim { public float r0, r1; }
     public struct RingSim { public float3 center, axis; public float radius, length, angle; }
-    public struct KnightSim { public float3 origin, lookAt, head; public float facing; }
+    public struct KnightSim
+    {
+        public float3 origin, lookAt, head;
+        public float facing;
+        public int sprite, slotCount, art;      // 그림 기사: 봇마다 knightSlots[cell] 자리
+        public float bladeGlow, fxGlow, eyeSpread;
+    }
     public struct HaloSim { public float3 center; public float radius, spin; }
 
     /// <summary>리그 부위 하나 (잡으로 넘기는 값)</summary>
     public struct LimbSim
     {
-        public int type;                      // 0 줄기 · 1 덩어리 · 2 웅덩이 · 3 그림
+        public int type;                      // 0 줄기 · 1 덩어리 · 2 웅덩이 · 3 그림 · 4 무리
         public int slotStart, slotCount;      // 격자 자리표 안 위치
         public int histBase, histHead, histCount;   // 관절선 기록 (부위 번호 × 기록 수)
         public float4x4 local;                // 덩어리: 단위 타원 → 월드 (크기 곱함)
@@ -54,6 +61,10 @@ namespace RealSteel.NanoBoss
         public int hasBump;
         public float omega, zeta, gatherOmega, maxSpeed, flow, lag, bind, space;
         public float lockAge;                 // 재결속 연출 경과 (초). < 0 = 없음
+        public int plane;                     // 0 앞판 · 1 뒷판
+        public int artColor;                  // 그림: 도착한 봇이 그림 칸 색이 된다
+        public float2 roam;                   // 무리: 돌아다니는 반경 (m)
+        public float roamSpeed;
         public float glow;
         public uint tint;
         public int tinted, danger;
@@ -61,13 +72,16 @@ namespace RealSteel.NanoBoss
 
     public struct GridInfo { public float minX, minY, cell; public int w, h; }
 
+    /// <summary>GPU 로 보내는 봇 하나 (48 바이트). 셰이더 NanoBot 과 같은 순서</summary>
     [StructLayout(LayoutKind.Sequential)]
     public struct NanoGpuBot
     {
-        public float3 pos;
-        public float roll, scale, flash, glow, rim, stretch;
-        public uint tile, color;
-        public float pad;
+        public float3 pos;      // 칸 중심 (판 위면 칸에 맞춤)
+        public float size;      // 사각형 한 변 (m). 0 = 숨김
+        public float flash, glow, rim;
+        public uint open;       // 비어 있는 이웃 칸 (1 위 · 2 아래 · 4 왼 · 8 오른) — 가장자리 조명 · 테두리
+        public uint color;
+        public float3 pad;
     }
 
     public static class NanoSpring
@@ -210,6 +224,9 @@ namespace RealSteel.NanoBoss
         [NativeDisableUnsafePtrRestriction] public int* sorted;
         [NativeDisableUnsafePtrRestriction] public float2* sortedPos;
         [NativeDisableUnsafePtrRestriction] public float4* cellVel;
+        [NativeDisableUnsafePtrRestriction] public uint* limbSlotColor;
+        [NativeDisableUnsafePtrRestriction] public float4* knightSlots;     // 그림 기사: 자리 (월드 xyz, w = 0 몸 · 1 칼날 · 2 효과)
+        [NativeDisableUnsafePtrRestriction] public uint* knightColors;
 
         public GridInfo grid;
         public BlobSim blob;
@@ -218,24 +235,25 @@ namespace RealSteel.NanoBoss
         public KnightSim knight;
         public HaloSim halo;
         public int limbCount, blobSlotCount, frame;
-        public float dt, time, clock, floorY, gravity, bounce, friction, flashDecay, half, viscosity, edgeRate, dark, spacing;
+        public float dt, time, clock, floorY, gravity, flashDecay, viscosity, dark, spacing, cell, frontZ, backZ;
 
         struct Feel
         {
             public float omega, zeta, vmax, noise, nspeed, bind, space, gather, lockAge, frac, flow;
             public bool lattice;
+            public int plane;       // -1 = 목표 깊이로 정함
+            public uint slotColor;  // 그림 칸 색 (0 = 없음)
         }
 
-        /// <summary>공간적으로 이어진 흐름 변위 (이웃끼리 비슷하게 움직인다)</summary>
-        /// <summary>깊이 배율 — 기계일수록 얇게</summary>
-        static float ZK(float bind) => math.lerp(1f, 0.06f, math.saturate(bind));
+        /// <summary>깊이 배율 — 2D 판이라 모양의 두께는 쓰지 않는다</summary>
+        static float ZK(float bind) => 0f;
 
+        /// <summary>공간적으로 이어진 흐름 변위 (이웃끼리 비슷하게 움직인다). 판 위라 z 는 없다</summary>
         static float3 Flow(float3 p, float t)
         {
             float x = math.sin(p.y * 1.6f + t * 1.7f) + 0.6f * math.sin(p.x * 2.9f - t * 2.3f + p.y * 1.1f);
             float y = math.sin(p.x * 1.4f - t * 1.3f) + 0.6f * math.sin(p.y * 3.1f + t * 2.1f + p.x * 0.9f);
-            float z = 0.5f * math.sin((p.x - p.y) * 1.2f + t * 1.1f);
-            return new float3(x, y, z) * 0.55f;
+            return new float3(x, y, 0f) * 0.55f;
         }
 
         public void Execute(int i)
@@ -264,8 +282,7 @@ namespace RealSteel.NanoBoss
         void Bound(int i, NanoBot* b)
         {
             float3 pos = b->pos, vel = b->vel;
-            float sp = b->space > 0f ? b->space : spacing;
-            if (((i + frame) & 1) == 0) b->edge = Toward(b->edge, EdgeOf(i, pos.xy, sp), 2f * dt * edgeRate);   // 두 프레임에 한 번씩 번갈아
+            b->edge = b->open != 0 ? 1f : 0f;   // 비어 있는 이웃 칸 (지난 프레임 그리기 잡)
 
             if (b->wait > 0f)
             {
@@ -280,6 +297,18 @@ namespace RealSteel.NanoBoss
             int g = b->guide;
             float3 tgt = Target(b, out Feel f);
             float fluid = 1f - f.bind;
+
+            // 판 — 리그 부위는 '뒷판' 값, 나머지는 목표가 두 판 사이 절반보다 안쪽이면 뒷판
+            int plane = f.plane >= 0 ? f.plane : (tgt.z > (frontZ + backZ) * 0.5f ? 1 : 0);
+            b->plane = (byte)plane;
+            tgt.z = plane == 1 ? backZ : frontZ;
+
+            // 그림 색 — 그림 칸 가까이 도착하면 그 칸 색이 된다
+            if (f.slotColor != 0u && math.lengthsq(tgt.xy - pos.xy) < cell * cell * 4f)
+            {
+                uint sc = f.slotColor;
+                b->tint = new UnityEngine.Color32((byte)(sc & 255u), (byte)((sc >> 8) & 255u), (byte)((sc >> 16) & 255u), 255);
+            }
 
             // 끈적임 — 유체일수록 주변 봇과 속도를 맞춘다 → 통째로 흐른다
             if (fluid > 0.01f && viscosity > 0f && grid.w > 0)
@@ -324,19 +353,11 @@ namespace RealSteel.NanoBoss
                 if (d >= 0f && d < 0.08f) b->flash = math.max(b->flash, 0.9f * (1f - d / 0.08f));
             }
 
-            // 모습 — 기계: 각도 0 · 판 · 늘이지 않음 / 유체: 둥근 방울 · 속도 방향으로 늘이기
-            float speed = math.sqrt(math.lengthsq(vel));
+            // 모습 — 2D 칸: 회전 · 늘이기 없음
             float machine = f.lattice ? math.saturate((f.bind - 0.35f) / 0.3f) : 0f;
-            float kk = 1f - math.exp(-12f * dt);
-            float rollT;
-            if (machine > 0.5f) rollT = 0f;
-            else if (speed > 2f) rollT = math.atan2(vel.y, vel.x);
-            else rollT = f.lattice ? 0f : (b->hash - 0.5f) * 0.6f;
-            b->roll += WrapPi(rollT - b->roll) * kk;
-            float stretchT = (1f - machine) * math.saturate((speed - 3f) / 18f) * (f.lattice ? 1.4f * fluid : 0.8f);
-            b->stretch = math.lerp(b->stretch, stretchT, kk);
-            float scaleT = f.lattice ? math.lerp(1.2f, 1f, machine) : 0.8f + b->hash2 * 0.35f;
-            b->scale = Toward(b->scale, scaleT, dt * 3f);
+            b->roll = 0f;
+            b->stretch = 0f;
+            b->scale = Toward(b->scale, 1f, dt * 3f);
             b->machine = machine;
             b->space = f.lattice ? f.space : 0f;
             if (dark > 0.01f && ((g == 4 && b->seg >= 0) || g == 6))
@@ -367,45 +388,6 @@ namespace RealSteel.NanoBoss
             return n > 0f ? new float3(sum / n, fallback.z) : fallback;
         }
 
-        /// <summary>주변 8 방향 중 3 방향 이상이 비었으면 실루엣 가장자리</summary>
-        float EdgeOf(int self, float2 p, float space)
-        {
-            if (grid.w <= 0) return 0f;
-            float r = math.clamp(space * 1.9f, 0.04f, grid.cell);
-            float r2 = r * r;
-            int cx = math.clamp((int)((p.x - grid.minX) / grid.cell), 0, grid.w - 1);
-            int cy = math.clamp((int)((p.y - grid.minY) / grid.cell), 0, grid.h - 1);
-            int mask = 0;
-            // 제 칸부터 → 8 방향이 다 차면 바로 끝 (안쪽 봇은 금방 끝난다)
-            for (int o = 0; o < 9; o++)
-            {
-                int dx = o == 0 ? 0 : o == 1 ? 1 : o == 2 ? -1 : o == 3 ? 0 : o == 4 ? 0 : o == 5 ? 1 : o == 6 ? -1 : o == 7 ? 1 : -1;
-                int dy = o == 0 ? 0 : o == 1 ? 0 : o == 2 ? 0 : o == 3 ? 1 : o == 4 ? -1 : o == 5 ? 1 : o == 6 ? -1 : o == 7 ? -1 : 1;
-                int x = cx + dx, y = cy + dy;
-                if (x < 0 || x >= grid.w || y < 0 || y >= grid.h) continue;
-                int c = y * grid.w + x, s0 = cellStart[c], n = cellCount[c];
-                for (int k = s0; k < s0 + n; k++)
-                {
-                    if (sorted[k] == self) continue;
-                    float2 d = sortedPos[k] - p;
-                    float d2 = math.dot(d, d);
-                    if (d2 > r2 || d2 < 1e-10f) continue;
-                    mask |= 1 << Octant(d);
-                }
-                if (mask == 0xFF) return 0f;
-            }
-            return 8 - math.countbits(mask) >= 3 ? 1f : 0f;
-        }
-
-        static int Octant(float2 d)
-        {
-            int o = 0;
-            if (d.y < 0f) { d = -d; o = 4; }
-            if (d.x <= 0f) { d = new float2(d.y, -d.x); o += 2; }
-            if (d.y > d.x) o += 1;
-            return o;
-        }
-
         // ── 목표 자리 ────────────────────────────────────────────────
         float3 Target(NanoBot* b, out Feel f)
         {
@@ -413,6 +395,7 @@ namespace RealSteel.NanoBoss
             GuideFeel gf = feel[g];
             f.omega = gf.omega; f.zeta = gf.zeta; f.vmax = gf.maxSpeed; f.noise = gf.noise; f.nspeed = gf.noiseSpeed;
             f.bind = gf.bind; f.space = gf.space; f.gather = gf.gather; f.lockAge = -1f; f.frac = 0f; f.lattice = gf.lattice != 0; f.flow = gf.flow;
+            f.plane = -1; f.slotColor = 0u;
             switch (g)
             {
                 case 0: return BlobTarget(b, ref f);
@@ -480,13 +463,15 @@ namespace RealSteel.NanoBoss
             return p + n * (b->v.x * r) + bz * (b->v.y * r * zk);
         }
 
+        /// <summary>포신 — 2D 판이라 고리 대신 꽉 찬 소용돌이 원반 (가운데로 갈수록 빨리 돈다)</summary>
         float3 RingTarget(NanoBot* b)
         {
-            float a = b->v.x * 6.2832f + ring.angle;
-            float along = (b->v.y - 0.5f) * ring.length;
+            float rk = math.sqrt(b->v.z);
+            float a = b->v.x * 6.2832f + ring.angle * (1.6f - 0.8f * rk);
+            float along = (b->v.y - 0.5f) * ring.length * 0.4f;
             float3 perp = new float3(-ring.axis.y, ring.axis.x, 0f);
-            float rr = ring.radius * (0.8f + 0.2f * b->v.z);
-            return ring.center + ring.axis * along + (perp * math.cos(a) + new float3(0f, 0f, 1f) * math.sin(a)) * rr;
+            float rr = ring.radius * rk;
+            return ring.center + ring.axis * along + (perp * math.cos(a) + ring.axis * (math.sin(a) * 0.55f)) * rr;
         }
 
         float3 KnightTarget(NanoBot* b, ref Feel f)
@@ -495,11 +480,31 @@ namespace RealSteel.NanoBoss
             {
                 // 눈 — 머리 앞쪽, 보는 방향으로 살짝 쏠린다
                 f.lattice = false;
-                float3 hw = knight.head + new float3(0.12f * knight.facing, 0.02f, -0.35f);
+                float3 hw = knight.head + new float3(0.12f * knight.facing, 0.02f, knight.sprite != 0 ? 0f : -0.35f);
                 float3 look = knight.lookAt - hw;
                 look.z = 0f;
                 if (math.lengthsq(look) > 1e-4f) hw += math.normalize(look) * 0.06f;
-                return hw + new float3(b->segV.x * 0.09f, b->segV.y * 0.03f, 0f);
+                float sp = knight.eyeSpread > 0f ? knight.eyeSpread : 0.09f;
+                return hw + new float3(b->segV.x * sp, b->segV.y * 0.03f, 0f);
+            }
+            if (knight.sprite != 0)
+            {
+                // 그림 기사 — 군집이 매 프레임 봇마다 자리를 정해 둔다 (몸 → 칼날 → 효과 순)
+                int c = b->cell;
+                if (c < 0 || c >= knight.slotCount)
+                {
+                    f.lattice = false;
+                    return knight.origin + new float3(0f, 1.5f, 0f);   // 아직 자리가 없다 — 가슴 쪽으로
+                }
+                float4 ks = knightSlots[c];
+                b->glow = ks.w > 1.5f ? knight.fxGlow : ks.w > 0.5f ? knight.bladeGlow : 0f;
+                if (knight.art != 0)
+                {
+                    uint kc = knightColors[c];
+                    b->tint = new UnityEngine.Color32((byte)(kc & 255u), (byte)((kc >> 8) & 255u), (byte)((kc >> 16) & 255u), 255);
+                }
+                f.space = cell;
+                return ks.xyz;
             }
             int s = math.clamp(b->seg, 0, KnightSegs - 1);
             float4 sg = knightSegs[s];
@@ -533,12 +538,15 @@ namespace RealSteel.NanoBoss
             f.lattice = has;
             f.frac = slot.w;
             f.bind = has ? math.saturate(L->bind) : 0f;
+            f.plane = L->plane;
+            if (has && L->artColor != 0) f.slotColor = limbSlotColor[L->slotStart + b->cell];
             float lw = has ? 1f : 0f;   // 자리가 없으면 (아직 배정 전) 부위 안 무작위 자리
             switch (L->type)
             {
                 case 0: return ChainTarget(b, L, slot, lw, ZK(f.bind));
                 case 1: return LimbBlobTarget(b, L, slot, lw, ZK(f.bind));
                 case 3: return SpriteTarget(b, L, slot, has);
+                case 4: f.lattice = false; return RoamTarget(b, L, slot);
                 default: return PuddleTarget(b, L, slot, lw);
             }
         }
@@ -593,15 +601,33 @@ namespace RealSteel.NanoBoss
             return p;
         }
 
+        /// <summary>무리 — 봇마다 제 궤도로 부위 주위를 날아다닌다 (개별 움직임). 자리 = (단위 원 x, y, 위상)</summary>
+        float3 RoamTarget(NanoBot* b, LimbSim* L, float4 slot)
+        {
+            float sp = L->roamSpeed * (0.6f + 0.8f * b->hash2);
+            float a = time * sp + slot.z * 6.2832f;
+            float wob = 0.35f * math.sin(time * sp * 1.7f + b->hash * 13f);
+            float2 orbit = new float2(math.cos(a), math.sin(a * (1f + 0.37f * b->hash3)));
+            float2 home = new float2(slot.x, slot.y) * 0.65f;
+            float2 q = home + orbit * (0.35f + wob * 0.3f);
+            float3 c = L->origin;
+            if (L->lag > 0f)
+            {
+                float lagT = L->lag * (0.4f + 0.6f * b->hash2);
+                SampleSpine(L, 0f, clock - lagT, out float3 then, out _, out _);
+                c = then;
+            }
+            return c + new float3(q.x * L->roam.x * L->sx, q.y * L->roam.y, 0f);
+        }
+
         float3 PuddleTarget(NanoBot* b, LimbSim* L, float4 slot, float bind)
         {
             float nx = math.lerp(b->hash - 0.5f, slot.x, bind);
             float ny = math.lerp(b->hash2, slot.y, bind);
-            float nz = math.lerp(b->hash3 - 0.5f, slot.z, bind);
             float3 c = L->origin;
             float x = c.x + nx * L->extent.x * L->sx;
-            float z = c.z + nz * L->extent.y;
-            float y = floorY + 0.08f + L->layer * ny;
+            float z = c.z;
+            float y = floorY + cell * 0.5f + L->layer * ny;
             float dist = math.abs(x - c.x);
             y += L->ripple * (0.5f + 0.5f * math.sin(dist * 2.6f - time * L->rippleSpeed + b->hash * 1.5f * (1f - 0.7f * bind)));
             if (L->hasBump != 0 && L->bump > 0f)
@@ -697,34 +723,149 @@ namespace RealSteel.NanoBoss
             }
             b->edge = math.max(0f, b->edge - dt * 4f);
             b->machine = 0f;
+            b->roll = 0f; b->stretch = 0f;
+            // 판 — 탄은 가까운 판 위를 난다
+            float pz = pos.z > (frontZ + backZ) * 0.5f ? backZ : frontZ;
+            b->plane = (byte)(pz == backZ ? 1 : 0);
+            pos.z += (pz - pos.z) * (1f - math.exp(-10f * dt));
             b->pos = pos; b->vel = vel;
         }
 
+        /// <summary>떨어진 봇 — 날고 있는 동안만 (칸에 앉은 모래는 NanoSandJob 이 움직인다)</summary>
         void Debris(NanoBot* b)
         {
+            b->roll = 0f; b->stretch = 0f; b->machine = 0f; b->edge = 0f; b->scale = 1f;
+            if (b->sand >= 0) return;
             float3 pos = b->pos, vel = b->vel;
             vel.y -= gravity * dt;
+            vel.x *= math.exp(-0.6f * dt);
             pos += vel * dt;
-            b->roll += b->spin * dt;
-            float fl = floorY + half * 0.6f;
-            if (pos.y <= fl)
-            {
-                pos.y = fl;
-                vel.y = vel.y < -1.5f ? -vel.y * bounce : 0f;
-                float fr = math.exp(-friction * dt);
-                vel.x *= fr; vel.z *= fr;
-                b->spin *= fr;
-            }
-            b->stretch = 0f;
-            b->machine = 0f;
-            b->edge = math.max(0f, b->edge - dt * 4f);
+            float pz = b->plane == 1 ? backZ : frontZ;
+            pos.z += (pz - pos.z) * (1f - math.exp(-12f * dt));
             b->pos = pos; b->vel = vel;
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // 모래
+    // ─────────────────────────────────────────────────────────────
+    /// <summary>
+    /// 떨어진 봇(Debris)을 모래로. 판마다 고정 범위 칸(occ, 0 빔 · 1 모래)에 앉힌다.
+    ///   날고 있음 (sand &lt; 0): 지난 위치 → 지금 위치 사이 세로 칸을 훑어 바닥 · 더미에 닿으면 그 위 빈 칸에 앉음
+    ///   앉음: 아래가 비면 다시 날기 시작, 아니면 대각선 아래(좌우 무작위), 유체에서 떨어진 봇은 옆으로도 퍼짐
+    ///   떨어진 봇이 아니게 되면 (재흡수 · 새로 시작) 칸을 비운다
+    /// </summary>
+    [BurstCompile(CompileSynchronously = true)]
+    public unsafe struct NanoSandJob : IJob
+    {
+        [NativeDisableUnsafePtrRestriction] public NanoBot* bots;
+        [NativeDisableUnsafePtrRestriction] public byte* occ;
+        public int count, w, h, frame;
+        public float minX, minY, cell, frontZ, backZ, dt, slide;
+
+        static uint Hash(uint x)
+        {
+            x ^= x >> 16; x *= 0x7feb352du; x ^= x >> 15; x *= 0x846ca68bu; x ^= x >> 16;
+            return x;
+        }
+
+        public void Execute()
+        {
+            int plane = w * h;
+            for (int i = 0; i < count; i++)
+            {
+                NanoBot* b = bots + i;
+                if (b->sand >= 0 && b->mode != BotMode.Debris) { occ[b->sand] = 0; b->sand = -1; continue; }
+                if (b->mode != BotMode.Debris) continue;
+
+                int pl = b->plane == 1 ? 1 : 0;
+                byte* g = occ + pl * plane;
+                float pz = pl == 1 ? backZ : frontZ;
+                uint rnd = Hash((uint)i * 9781u + (uint)frame * 6271u);
+
+                if (b->sand < 0)
+                {
+                    // ── 날고 있음 ──
+                    float3 p = b->pos;
+                    int cx = (int)math.floor((p.x - minX) / cell);
+                    if (cx < 0 || cx >= w)
+                    {
+                        // 범위 밖 — 바닥에 멈춘다
+                        if (p.y < minY + cell * 0.5f) { p.y = minY + cell * 0.5f; b->pos = p; b->vel = float3.zero; }
+                        continue;
+                    }
+                    if (b->vel.y > 0f) continue;   // 올라가는 중
+                    int cy = (int)math.floor((p.y - minY) / cell);
+                    if (cy >= h) continue;
+                    float prevY = p.y - b->vel.y * dt;
+                    int top = math.clamp((int)math.floor((prevY - minY) / cell), 0, h - 1);
+                    int land = int.MinValue;
+                    for (int r = top; r >= cy - 1; r--)
+                    {
+                        if (r < 0 || g[r * w + cx] != 0) { land = r + 1; break; }
+                    }
+                    if (land == int.MinValue) continue;
+                    while (land < h && g[land * w + cx] != 0) land++;
+                    if (land >= h) continue;
+                    int c = land * w + cx;
+                    g[c] = 1;
+                    b->sand = pl * plane + c;
+                    b->pos = new float3(minX + (cx + 0.5f) * cell, minY + (land + 0.5f) * cell, pz);
+                    b->vel = float3.zero;
+                    continue;
+                }
+
+                // ── 앉은 모래 ──
+                int idx = b->sand - pl * plane;
+                int x = idx % w, y = idx / w;
+                if (y > 0 && g[(y - 1) * w + x] == 0)
+                {
+                    // 아래가 비었다 — 다시 떨어진다
+                    g[idx] = 0;
+                    b->sand = -1;
+                    b->vel = new float3(0f, -1.5f, 0f);
+                    continue;
+                }
+                if (y == 0 && b->liquid == 0) continue;
+                if ((rnd & 1023u) / 1024f > slide) continue;
+                int dir = (rnd & 1024u) != 0 ? 1 : -1;
+                int moved = -1;
+                if (y > 0)
+                {
+                    for (int t = 0; t < 2 && moved < 0; t++)
+                    {
+                        int nx = x + (t == 0 ? dir : -dir);
+                        if (nx < 0 || nx >= w) continue;
+                        if (g[(y - 1) * w + nx] == 0 && g[y * w + nx] == 0) moved = (y - 1) * w + nx;
+                    }
+                }
+                if (moved < 0 && b->liquid != 0 && (rnd & 2048u) != 0)
+                {
+                    // 유체 — 옆으로 퍼진다
+                    for (int t = 0; t < 2 && moved < 0; t++)
+                    {
+                        int nx = x + (t == 0 ? dir : -dir);
+                        if (nx < 0 || nx >= w) continue;
+                        if (g[y * w + nx] == 0) moved = y * w + nx;
+                    }
+                }
+                if (moved < 0) continue;
+                g[idx] = 0;
+                g[moved] = 1;
+                b->sand = pl * plane + moved;
+                b->pos = new float3(minX + (moved % w + 0.5f) * cell, minY + (moved / w + 0.5f) * cell, pz);
+            }
         }
     }
 
     // ─────────────────────────────────────────────────────────────
     // GPU 로 보낼 값
     // ─────────────────────────────────────────────────────────────
+    /// <summary>
+    /// 봇마다 칸에 맞춘 위치 · 색 · 발광. 판 위 봇은 칸 비트맵(앞 · 뒤 판, 모래 범위와 같은 칸)에 찍어
+    /// 비어 있는 이웃(위 · 아래 · 왼 · 오른)을 찾는다 → 셰이더가 가장자리 조명 · 3페 흰 테두리에 쓴다.
+    /// 범위 밖의 봇은 이웃을 모른다 (비어 있는 것으로 본다).
+    /// </summary>
     [BurstCompile(CompileSynchronously = true)]
     public unsafe struct NanoUploadJob : IJob
     {
@@ -733,8 +874,9 @@ namespace RealSteel.NanoBoss
         [NativeDisableUnsafePtrRestriction] public GuideFeel* feel;
         [NativeDisableUnsafePtrRestriction] public LimbSim* limbs;
         [NativeDisableUnsafePtrRestriction] public float3* bounds;
-        public int count, limbCount, highlightDanger, plates;
-        public float freeGlow;
+        [NativeDisableUnsafePtrRestriction] public uint* occ;
+        public int count, limbCount, highlightDanger, w, h, freeSize, eyeSize;
+        public float freeGlow, minX, minY, cell, frontZ, backZ, backDim;
         public uint freeTint;
 
         static uint Mul(uint c, uint t)
@@ -745,24 +887,58 @@ namespace RealSteel.NanoBoss
             return r | (g << 8) | (b << 16) | (255u << 24);
         }
 
-        static uint Mix(uint a, uint b)
+        static uint Scale(uint c, float k)
         {
-            uint r = (((a & 255u) + (b & 255u)) >> 1);
-            uint g = ((((a >> 8) & 255u) + ((b >> 8) & 255u)) >> 1);
-            uint bl = ((((a >> 16) & 255u) + ((b >> 16) & 255u)) >> 1);
-            return r | (g << 8) | (bl << 16) | (255u << 24);
+            uint r = (uint)math.min(255f, (c & 255u) * k);
+            uint g = (uint)math.min(255f, ((c >> 8) & 255u) * k);
+            uint b = (uint)math.min(255f, ((c >> 16) & 255u) * k);
+            return r | (g << 8) | (b << 16) | (255u << 24);
+        }
+
+        /// <summary>판 위인가 (0 앞 · 1 뒤 · -1 판 사이를 나는 중)</summary>
+        int PlaneOf(float z)
+        {
+            float tol = math.max(0.15f, math.abs(backZ - frontZ) * 0.04f);
+            if (math.abs(z - frontZ) < tol) return 0;
+            if (math.abs(z - backZ) < tol) return 1;
+            return -1;
+        }
+
+        bool Get(int pl, int x, int y)
+        {
+            if (x < 0 || y < 0 || x >= w || y >= h) return false;
+            int k = pl * w * h + y * w + x;
+            return (occ[k >> 5] & (1u << (k & 31))) != 0u;
         }
 
         public void Execute()
         {
+            int words = (w * h * 2 + 31) >> 5;
+            for (int k = 0; k < words; k++) occ[k] = 0u;
+
+            // 1. 판 위 봇을 칸 비트맵에 찍는다
+            for (int i = 0; i < count; i++)
+            {
+                NanoBot* b = bots + i;
+                if (b->mode == BotMode.Dead || b->scale < 0.5f) continue;
+                if (b->mode == BotMode.Bound && b->guide == 5) continue;   // 후광(3페 탄약)도 — 기사 몸 뒤에 따로 그린다
+                if (b->mode == BotMode.Bound && b->guide == 4 && b->seg < 0) continue;   // 기사 눈 — 몸 위에 따로
+                int pl = PlaneOf(b->pos.z);
+                if (pl < 0) continue;
+                int x = (int)math.floor((b->pos.x - minX) / cell), y = (int)math.floor((b->pos.y - minY) / cell);
+                if (x < 0 || y < 0 || x >= w || y >= h) continue;
+                int k = pl * w * h + y * w + x;
+                occ[k >> 5] |= 1u << (k & 31);
+            }
+
+            // 2. 봇마다 칸 위치 · 비어 있는 이웃 · 색
             float3 mn = new float3(float.MaxValue), mx = new float3(float.MinValue);
             for (int i = 0; i < count; i++)
             {
                 NanoBot* b = bots + i;
-                float scale = b->mode == BotMode.Dead ? 0f : b->scale;
+                bool show = b->mode != BotMode.Dead && b->scale >= 0.5f;
                 float glow = b->glow;
-                uint c = (uint)b->tint.r | ((uint)b->tint.g << 8) | ((uint)b->tint.b << 16) | ((uint)b->tint.a << 24);
-                uint tile = b->tileLoose;
+                uint c = (uint)b->tint.r | ((uint)b->tint.g << 8) | ((uint)b->tint.b << 16) | (255u << 24);
                 if (b->mode == BotMode.Bound)
                 {
                     int g = b->guide;
@@ -781,39 +957,52 @@ namespace RealSteel.NanoBoss
                         glow += feel[g].glow;
                         if (g != 0 && b->seg != -1) c = Mul(c, feel[g].tint);
                     }
-                    if (plates != 0 && b->space > 0f)
-                    {
-                        // 격자 봇: 기계 = 몸 판 (가장자리는 테두리 판), 유체 = 방울. 그림은 봇 종류 (RSNanoBotKinds)
-                        bool machine = b->machine > 0.5f;
-                        tile = machine ? (b->edge > 0.5f ? b->tileEdge : b->tileBody) : b->tileDrop;
-                        if (machine && b->glow > 0.5f)
-                        {
-                            // 반짝이 봇은 판 위에선 은은하게 (밝은 판이 점점이 박히면 덩어리가 아니라 낱알로 읽힌다)
-                            glow -= b->glow * 0.8f;
-                            c = Mix(c, 0xFFC8C0B8u);
-                        }
-                    }
                 }
                 else if (b->mode == BotMode.Free)
                 {
                     glow += freeGlow;
                     c = Mul(c, freeTint);
                 }
+
+                float3 p = b->pos;
+                int pl = PlaneOf(p.z);
+                int gx = (int)math.floor((p.x - minX) / cell), gy = (int)math.floor((p.y - minY) / cell);
+                // 칸에 맞춘다 (모래 범위 밖도 같은 칸 눈금)
+                p.x = minX + (gx + 0.5f) * cell;
+                p.y = minY + (gy + 0.5f) * cell;
+                uint open = 15u;
+                if (pl >= 0)
+                {
+                    p.z = pl == 1 ? backZ : frontZ;
+                    bool halo = b->mode == BotMode.Bound && b->guide == 5;
+                    bool eye = b->mode == BotMode.Bound && b->guide == 4 && b->seg < 0;
+                    if (halo) p.z += 0.25f;   // 기사 몸 바로 뒤 (같은 판이면 겹쳐 깜빡인다)
+                    if (eye) { p.z -= 0.08f; halo = true; }   // 기사 눈 — 몸 바로 앞
+                    if (!halo && gx >= 0 && gy >= 0 && gx < w && gy < h)
+                    {
+                        open = 0u;
+                        if (!Get(pl, gx, gy + 1)) open |= 1u;
+                        if (!Get(pl, gx, gy - 1) && gy > 0) open |= 2u;
+                        if (!Get(pl, gx - 1, gy)) open |= 4u;
+                        if (!Get(pl, gx + 1, gy)) open |= 8u;
+                    }
+                    if (pl == 1) c = Scale(c, backDim);
+                }
+                b->open = (byte)open;
+                float size = show ? cell * (b->mode == BotMode.Free ? math.max(1, freeSize)
+                                            : b->mode == BotMode.Bound && b->guide == 4 && b->seg < 0 ? math.max(1, eyeSize) : 1) : 0f;
                 gpu[i] = new NanoGpuBot
                 {
-                    pos = b->pos,
-                    roll = b->roll,
-                    scale = scale,
+                    pos = p,
+                    size = size,
                     flash = b->flash,
                     glow = glow,
                     rim = b->rim,
-                    stretch = b->stretch,
-                    tile = tile,
+                    open = open,
                     color = c,
                 };
-                if (scale > 0f)
+                if (show)
                 {
-                    float3 p = b->pos;
                     mn = math.min(mn, p);
                     mx = math.max(mx, p);
                 }

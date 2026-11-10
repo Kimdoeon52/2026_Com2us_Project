@@ -68,23 +68,24 @@ namespace RealSteel.NanoBoss.EditorTools
                     float t = clip ? len * s / (samples - 1f) : 0f;
                     int sum = 0;
                     foreach (var l in limbs)
-                        sum += Mathf.RoundToInt(l.bots * Mathf.Clamp01(RSNanoKeys.ValueAt(clip, rig.transform, l, "amount", t, l.amount)));
+                        sum += Mathf.RoundToInt((l.AutoCount ? l.EstimateBots(RSNanoRigEditor.Spacing(sw), RSNanoRigPreview.FloorY(rig)) : l.SlotTotal) * Mathf.Clamp01(RSNanoKeys.ValueAt(clip, rig.transform, l, "amount", t, l.amount)));
                     if (sum > peak) { peak = sum; peakT = t; }
                 }
                 if (peak > sw.botCount)
-                    list.Add(I(1, $"봇 모자람 — {peakT:0.00}초에 부위들이 {peak}개를 원하는데 군집은 {sw.botCount}개. 비율대로 줄어 형태가 성기다", rig));
+                    list.Add(I(1, $"봇 모자람 — {peakT:0.00}초에 부위들이 {peak}개를 원하는데 군집은 {sw.botCount}개. 모양이 뿌리 · 가운데부터만 채워진다 (끝이 비어 짧아 보인다)", rig));
                 else if (peak > sw.botCount * 0.85f)
                     list.Add(I(0, $"{peakT:0.00}초에 봇 {peak}/{sw.botCount} — 덩어리에 거의 안 남는다", rig));
 
                 float sp = RSNanoRigEditor.Spacing(sw), floor = RSNanoRigPreview.FloorY(rig);
                 foreach (var l in limbs)
                 {
+                    if (l.AutoCount || l.type == LimbType.Sprite) continue;   // 2D 판: 자리 수가 모양에서 자동
                     int est = l.EstimateBots(sp, floor);
                     float r = l.bots / (float)Mathf.Max(1, est);
                     if (r < 0.6f || r > 1.6f)
                     {
                         var limb = l;
-                        list.Add(I(0, $"'{l.name}' 자리 {l.bots} — 지금 모양엔 {est} 이 알맞다 ({(r < 1f ? "판 사이가 벌어진다" : "판이 겹친다")})", l, "크기에 맞게", () =>
+                        list.Add(I(0, $"'{l.name}' 자리 {l.bots} — 지금 모양엔 {est} 이 알맞다 ({(r < 1f ? "칸 사이에 구멍이 보인다" : "봇이 남아 겹친다")})", l, "크기에 맞게", () =>
                         {
                             Undo.RecordObject(limb, "봇 수");
                             RSNanoRigEditor.AutoBots(limb, sw);

@@ -72,6 +72,9 @@ namespace RealSteel.NanoBoss
         public float4[] SimSlots => slotTable;
         public float4[] SimSpine => spine;
         public float[] SimSpineTime => spineTime;
+        public uint[] SimSlotColors => slotColor;
+        /// <summary>부위 li 의 결속 (떨어진 봇이 유체였나 — 모래가 옆으로 퍼지나)</summary>
+        public float LimbBind(int li) => li >= 0 && li < limbs.Count && limbs[li] ? limbs[li].bind : 1f;
 
         readonly List<RSNanoLimb> limbs = new List<RSNanoLimb>();
         readonly List<RSNanoEmitter> emitters = new List<RSNanoEmitter>();
@@ -84,6 +87,7 @@ namespace RealSteel.NanoBoss
         float[] layoutSpace = Array.Empty<float>(), layoutScale = Array.Empty<float>(), lockStart = Array.Empty<float>(), prevBind = Array.Empty<float>();
         LimbSim[] limbSim = new LimbSim[1];
         float4[] slotTable = new float4[1];
+        uint[] slotColor = new uint[1];
         float4[] spine = new float4[S * H];
         float[] spineTime = new float[H];
         int[] orig = Array.Empty<int>();
@@ -224,6 +228,7 @@ namespace RealSteel.NanoBoss
             {
                 var l = limbs[li];
                 l.RefreshJoints();
+                FitCount(l);
                 if (l.LayoutKey != layoutKey[li]) { Layout(li); relayout = true; }
                 l.CachePose();
             }
@@ -236,7 +241,7 @@ namespace RealSteel.NanoBoss
                 if (l.type != LimbType.Sprite) continue;
                 int f = l.SpriteFrame(clock);
                 if (f == spriteFrame[li]) continue;
-                l.WriteSpriteSlots(slotTable, slotOffset[li], f);
+                l.WriteSpriteSlots(slotTable, slotColor, slotOffset[li], f);
                 spriteFrame[li] = f;
             }
 
@@ -296,9 +301,24 @@ namespace RealSteel.NanoBoss
             if (orig.Length != swarm.Count) { orig = new int[swarm.Count]; for (int i = 0; i < orig.Length; i++) orig[i] = -1; }
         }
 
+        /// <summary>
+        /// 2D 판: 줄기 · 덩어리 · 웅덩이의 자리 수 = 지금 모양을 칸 간격으로 채우는 수 → 모양이 커지면 봇이 더 흘러들고,
+        /// 작아지면 풀려난다 (늘 같은 밀도). 12% 단위로 끊어 매 프레임 자리표를 다시 깔지 않게 한다
+        /// </summary>
+        void FitCount(RSNanoLimb l)
+        {
+            if (!l.AutoCount || !swarm) return;
+            int est = l.EstimateBots(swarm.spacing, swarm.floorY);
+            const float Step = 1.12f;
+            int q = Mathf.RoundToInt(Mathf.Log(Mathf.Max(4, est)) / Mathf.Log(Step));
+            l.autoSlots = Mathf.Max(4, Mathf.RoundToInt(Mathf.Pow(Step, q)));
+        }
+
         void Layout(int li)
         {
             var l = limbs[li];
+            FitCount(l);
+            if (l.type == LimbType.Sprite && swarm && Mathf.Abs(l.pixelSize - swarm.Cell) > 1e-6f) l.pixelSize = swarm.Cell;   // 그림 픽셀 하나 = 칸 하나
             l.RefreshJoints();
             var slots = l.BuildSlots(swarm.floorY, out float sp);
             slotsOf[li] = slots;
@@ -306,19 +326,26 @@ namespace RealSteel.NanoBoss
             layoutScale[li] = Mathf.Max(1e-4f, l.CurScale);
             layoutKey[li] = l.LayoutKey;
             sets[li].Resize(slots.Length);
+            // 자리표가 바뀌어도 (채우는 순서는 뿌리 · 가운데부터로 같다) 봇은 같은 번호 자리에 남긴다 → 크게 안 움직인다
             var bots = swarm.Bots;
-            foreach (int i in limbBots[li]) bots[i].cell = -1;
+            var own = sets[li].owner;
+            foreach (int i in limbBots[li])
+            {
+                int c = bots[i].cell;
+                if (c >= 0 && c < own.Length && own[c] < 0) own[c] = i;
+                else bots[i].cell = -1;
+            }
         }
 
         void ConcatSlots()
         {
             int total = 0;
             for (int li = 0; li < slotsOf.Length; li++) { slotOffset[li] = total; total += slotsOf[li].Length; }
-            if (slotTable.Length < Mathf.Max(1, total)) slotTable = new float4[Mathf.Max(1, total)];
+            if (slotTable.Length < Mathf.Max(1, total)) { slotTable = new float4[Mathf.Max(1, total)]; slotColor = new uint[slotTable.Length]; }
             for (int li = 0; li < slotsOf.Length; li++)
             {
                 var s = slotsOf[li];
-                for (int k = 0; k < s.Length; k++) slotTable[slotOffset[li] + k] = s[k];
+                for (int k = 0; k < s.Length; k++) { slotTable[slotOffset[li] + k] = s[k]; slotColor[slotOffset[li] + k] = 0u; }
                 if (li < spriteFrame.Length) spriteFrame[li] = -1;   // 그림은 다음 진행에서 지금 프레임으로 다시 쓴다
             }
         }
@@ -381,6 +408,10 @@ namespace RealSteel.NanoBoss
                     tint = Pack(l.tint),
                     tinted = l.tint != Color.white ? 1 : 0,
                     danger = l.danger ? 1 : 0,
+                    plane = l.back >= 0.5f ? 1 : 0,
+                    artColor = l.type == LimbType.Sprite && l.artColor ? 1 : 0,
+                    roam = new float2(Mathf.Abs(l.roam.x * ls.x), Mathf.Abs(l.roam.y * ls.y)),
+                    roamSpeed = l.roamSpeed,
                 };
             }
         }

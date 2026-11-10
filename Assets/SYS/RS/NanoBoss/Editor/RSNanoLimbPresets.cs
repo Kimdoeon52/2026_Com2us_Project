@@ -25,6 +25,8 @@ namespace RealSteel.NanoBoss.EditorTools
             m.AddItem(new GUIContent("웅덩이 — 바닥 층, 유체"), false, () => Done(Puddle(parent, rig)));
             m.AddSeparator("");
             m.AddItem(new GUIContent("그림 — 스프라이트 시트를 따라 움직임"), false, () => Done(RSNanoRigEditor.AddSprite(parent, "그림", new Vector3(1.5f, 0f, 0f), Sw(rig))));
+            m.AddItem(new GUIContent("무리 — 주위를 각자 날아다니는 봇 떼"), false, () => Done(RSNanoRigEditor.AddSwarm(parent, "무리", new Vector3(1.5f, 1f, 0f), Sw(rig))));
+            m.AddItem(new GUIContent("불티 — 작고 빠른 무리, 발광"), false, () => Done(Embers(parent, rig)));
             m.ShowAsContext();
         }
 
@@ -162,6 +164,18 @@ namespace RealSteel.NanoBoss.EditorTools
             Feel(l, 0, 5f);
             l.flow = 0.2f;
             RSNanoRigEditor.AutoBots(l, sw);
+            return l;
+        }
+
+        public static RSNanoLimb Embers(Transform parent, RSNanoRig rig)
+        {
+            var l = RSNanoRigEditor.AddSwarm(parent, "불티", new Vector3(0.5f, 1.5f, 0f), Sw(rig));
+            l.bots = 240;
+            l.roam = new Vector2(2.4f, 1.6f);
+            l.roamSpeed = 6f;
+            l.glow = 1.2f;
+            l.tint = new Color(1f, 0.6f, 0.35f);
+            l.ApplyPreset(RSNanoLimb.Presets[0]);
             return l;
         }
 

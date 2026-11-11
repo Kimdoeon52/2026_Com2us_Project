@@ -98,11 +98,18 @@ public class ActionVfxPlayer : MonoBehaviour
         foreach (var entry in action.Vfx)
         {
             if (entry == null || entry.prefab == null || entry.StartIndex != phaseIndex) continue;
-            Spawn(entry);
-
             int interval = entry.ResolveInterval(action);
-            if (interval > 0)
-                repeaters.Add(new Repeater { entry = entry, startFrame = state.GlobalFrame, interval = interval, spawned = 1 });
+            if (interval <= 0)
+            {
+                Spawn(entry);
+                continue;
+            }
+
+            // 반복 항목은 시작 오프셋만큼 늦게 첫 생성 — 오프셋이 0이면 기존처럼 구간 시작 틱에 바로 1개
+            int delay = Mathf.Max(0, entry.repeatStartOffsetFrames);
+            bool spawnNow = delay == 0;
+            if (spawnNow) Spawn(entry);
+            repeaters.Add(new Repeater { entry = entry, startFrame = state.GlobalFrame + delay, interval = interval, spawned = spawnNow ? 1 : 0 });
         }
     }
 
@@ -112,6 +119,7 @@ public class ActionVfxPlayer : MonoBehaviour
         if (state == null) return;
         foreach (var r in repeaters)
         {
+            if (state.GlobalFrame < r.startFrame) continue; // 시작 오프셋 대기 중
             int due = (state.GlobalFrame - r.startFrame) / r.interval + 1;
             while (r.spawned < due)
             {

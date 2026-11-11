@@ -44,6 +44,7 @@ MonoBehaviour:
     phase: 5
     repeat: 0
     repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: -140
@@ -51,7 +52,20 @@ MonoBehaviour:
     flipWithFacing: 1
     scale: 0.5
     playbackSpeed: 1
-    sortingOrderOffset: 26
+    sortingOrderOffset: 20
+  - prefab: {fileID: 8369145054601909066, guid: 540a174685556db4897e6c5b5dc9cbe6, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: 90
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.3
+    playbackSpeed: 0.5
+    sortingOrderOffset: 5
   perBoxDamage: 1
   perBoxSeparateHits: 1
   cooldownFrames: 60

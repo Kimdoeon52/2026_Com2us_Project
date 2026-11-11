@@ -41,9 +41,10 @@ MonoBehaviour:
   flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
-    phase: 1
+    phase: 2
     repeat: 1
-    repeatIntervalFrames: 10
+    repeatIntervalFrames: 20
+    repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: -140
@@ -53,9 +54,10 @@ MonoBehaviour:
     playbackSpeed: 1
     sortingOrderOffset: 20
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
-    phase: 1
+    phase: 2
     repeat: 1
-    repeatIntervalFrames: 26
+    repeatIntervalFrames: 20
+    repeatStartOffsetFrames: 5
     endMode: 2
     offset: {x: 0.84, y: 0.23}
     rotation: -144
@@ -65,11 +67,25 @@ MonoBehaviour:
     playbackSpeed: 1.2
     sortingOrderOffset: 20
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
-    phase: 1
+    phase: 2
     repeat: 1
-    repeatIntervalFrames: 12
+    repeatIntervalFrames: 20
+    repeatStartOffsetFrames: 10
     endMode: 2
     offset: {x: 0.78, y: 0.32}
+    rotation: -144
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 0.8
+    sortingOrderOffset: 20
+  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    phase: 2
+    repeat: 1
+    repeatIntervalFrames: 20
+    repeatStartOffsetFrames: 15
+    endMode: 2
+    offset: {x: 0.81, y: 0.23}
     rotation: -144
     followOwner: 0
     flipWithFacing: 1

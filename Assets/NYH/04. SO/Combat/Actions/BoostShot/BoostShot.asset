@@ -40,42 +40,58 @@ MonoBehaviour:
   projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
   vfx:
-  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+  - prefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
     phase: 5
     repeat: 0
     repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.29}
-    rotation: -140
+    rotation: 90
     followOwner: 0
     flipWithFacing: 1
     scale: 0.3
-    playbackSpeed: 1
-    sortingOrderOffset: 55
-  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    playbackSpeed: 0.8
+    sortingOrderOffset: 20
+  - prefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
     phase: 5
     repeat: 0
     repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.11}
-    rotation: -150
+    rotation: 80
     followOwner: 0
     flipWithFacing: 1
     scale: 0.3
     playbackSpeed: 1
-    sortingOrderOffset: 55
-  - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
+    sortingOrderOffset: 20
+  - prefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
     phase: 5
     repeat: 0
     repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.4}
-    rotation: -130
+    rotation: 100
     followOwner: 0
     flipWithFacing: 1
     scale: 0.3
     playbackSpeed: 1
-    sortingOrderOffset: 55
+    sortingOrderOffset: 20
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 2
+    repeat: 1
+    repeatIntervalFrames: 6
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: 90
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.3
+    playbackSpeed: 0.8
+    sortingOrderOffset: 5
   perBoxDamage: 1
   perBoxSeparateHits: 1
   cooldownFrames: 60

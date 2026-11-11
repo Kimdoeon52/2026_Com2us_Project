@@ -52,6 +52,9 @@ public class ActionVfxEntry
     [Tooltip("repeat = FixedInterval일 때 생성 간격(틱)")]
     [Min(1)] public int repeatIntervalFrames = 10;
 
+    [Tooltip("반복 생성(repeat ≠ Once)일 때만 적용 — 구간 시작 후 몇 틱 뒤부터 첫 생성을 할지. 여러 항목의 시작을 엇갈리게 할 때 사용")]
+    [Min(0)] public int repeatStartOffsetFrames;
+
     [Tooltip("구간이 끝났을 때 정리 방식")]
     public ActionVfxEndMode endMode = ActionVfxEndMode.StopEmitting;
 
@@ -60,6 +63,7 @@ public class ActionVfxEntry
 
     [Tooltip("Z축 회전 각도(도). 0이면 회전 없음. 오른쪽을 볼 때 기준 — 좌우 반전 시 부호가 자동으로 뒤집힌다")]
     public float rotation;
+
 
     [Tooltip("켜면 로봇을 따라 움직인다 (꺼두면 생성 위치에 남음)")]
     public bool followOwner = true;

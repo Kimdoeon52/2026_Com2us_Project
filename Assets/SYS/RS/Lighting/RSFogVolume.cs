@@ -111,6 +111,28 @@ namespace RealSteel.Lighting
 
 
 
+        [RSGroup("고정 빛 (시간대와 무관한 빛줄기)")]
+        [RSHelp("켜면 이 상자는 씬의 해 대신 아래 방향 · 색의 빛을 받는다. 시각이 바뀌어도, 밤이어도, 해가 없는 실내 씬이어도 빛줄기가 늘 같다.\n" +
+            "해의 그림자 · 구름 쿠키는 쓰지 않는다 — 빛기둥 모양은 '안개 구역'(창에서 바닥까지 비스듬한 네모)과 '빛줄기 무늬' 가 만든다.\n" +
+            "실내 씬은 Tools → RE_AL STEEL → Stage → 실내 갓레이 넣기 메뉴가 이걸 켜고 창마다 구역을 놓아 준다.")]
+        [Tooltip("씬의 해(시간대) 대신 고정된 빛을 쓴다")]
+        [RSKey]
+        public bool fixedLight = false;
+        [Tooltip("빛이 나아가는 방향 = 이 오브젝트의 앞(파란 화살표). 비우면 아래 각도")]
+        public Transform fixedLightFrom;
+        [Tooltip("빛이 나아가는 방향 (회전 각도 X · Y · Z). '방향 오브젝트' 가 비었을 때만 쓴다")]
+        public Vector3 fixedLightEuler = new Vector3(25f, 205f, 0f);
+        [Tooltip("고정 빛 색")]
+        public Color fixedLightColor = new Color(1f, 0.92f, 0.78f);
+        [Range(0f, 4f), Tooltip("고정 빛 세기 (해의 Intensity 에 해당)")]
+        public float fixedLightIntensity = 1f;
+
+        /// <summary>고정 빛이 나아가는 방향 (월드)</summary>
+        public Vector3 FixedLightForward
+        {
+            get { return fixedLightFrom != null ? fixedLightFrom.forward : Quaternion.Euler(fixedLightEuler) * Vector3.forward; }
+        }
+
         [RSGroup("품질")]
         [Range(4, 48), Tooltip("최대 걸음 수 (햇빛 · 그림자 빛줄기용). 라이트 번짐은 걸음과 상관없다")]
         public int steps = 16;
@@ -373,7 +395,7 @@ namespace RealSteel.Lighting
             if (mesh == null || builtSize != size) BuildMesh();
 
             Color c = L.color;
-            if (L.followTimeOfDay)
+            if (L.followTimeOfDay && !fixedLight)
             {
                 // 시간대 안개색의 '색조'만 따른다 (밝기는 햇빛 · 달빛이 정한다)
                 Color f = RenderSettings.fogColor;
@@ -392,7 +414,7 @@ namespace RealSteel.Lighting
             mat.SetFloat("_StepLength", stepLength * RSGraphics.FogStepLengthScale(gq.fogQuality));
             mat.SetFloat("_PointCore", L.pointCore);
             float shaftK = 1f;
-            if (L.shaftsFollowTime)
+            if (L.shaftsFollowTime && !fixedLight)
             {
                 if (tod == null && (Time.frameCount >= todSearchFrame || Time.frameCount < todSearchFrame - 200)) { tod = FindAnyObjectByType<RSTimeOfDay>(); todSearchFrame = Time.frameCount + 120; }
                 if (tod != null) shaftK = tod.IsMoon ? L.moonShafts : tod.ShaftFactor;
@@ -418,6 +440,13 @@ namespace RealSteel.Lighting
             mat.SetFloat("_DitherPixel", ditherPixel);
             mat.SetFloat("_DitherStyle", (float)ditherStyle);
             mat.SetFloat("_Occlusion", L.occlusion);
+            if (fixedLight)
+            {
+                Vector3 f = FixedLightForward;
+                mat.SetVector("_FixedLightDir", new Vector4(-f.x, -f.y, -f.z, 1f));   // 셰이더는 '빛 쪽' 방향을 쓴다
+                mat.SetColor("_FixedLightColor", fixedLightColor.linear * fixedLightIntensity);
+            }
+            else mat.SetVector("_FixedLightDir", new Vector4(0f, 1f, 0f, 0f));
         }
 
         // ─────────────────────────────────────────────────────────────

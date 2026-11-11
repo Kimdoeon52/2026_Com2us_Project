@@ -48,6 +48,8 @@ Shader "RE_AL STEEL/Fog Volume"
         _ShaftPatternScale ("빛줄기 무늬 촘촘함 (/m)", Range(0.02, 2)) = 0.6
         _ShaftDebug      ("빛줄기만 보기", Float) = 0
         _ShaftEven       ("보는 방향 고르게", Range(0, 1)) = 0
+        [HideInInspector] _FixedLightDir   ("고정 빛 방향 (xyz = 빛 쪽, w = 켬)", Vector) = (0, 1, 0, 0)
+        [HideInInspector] _FixedLightColor ("고정 빛 색 × 세기", Color) = (1, 1, 1, 1)
     }
 
     SubShader
@@ -116,6 +118,8 @@ Shader "RE_AL STEEL/Fog Volume"
                 float  _DitherPixel;
                 float  _DitherStyle;
                 float  _Occlusion;
+                float4 _FixedLightDir;
+                half4  _FixedLightColor;
             CBUFFER_END
 
             // 노이즈 (RSFogVolume 이 만든 32³ 반복 텍스처: 2 옥타브를 미리 구워 둠)
@@ -306,13 +310,24 @@ Shader "RE_AL STEEL/Fog Volume"
                 bool useCookie = _CookieShafts > 0.001 && _SunStrength > 0.001;
 
                 Light mainLight = GetMainLight();
-                float phaseSun = Phase(dot(rd, mainLight.direction), _Anisotropy);
+                // 고정 빛: 씬의 해(시간대) 대신 안개 상자가 정한 방향 · 색을 쓴다 → 시각 · 날씨와 상관없이 늘 같은 빛줄기.
+                // 해의 그림자 맵 · 쿠키는 방향이 달라 쓸 수 없으므로 끈다 (빛기둥 모양은 안개 구역 + 빛줄기 무늬가 만든다)
+                float3 Ld = mainLight.direction;
+                half3  Lc = mainLight.color;
+                if (_FixedLightDir.w > 0.5)
+                {
+                    Ld = normalize(_FixedLightDir.xyz);
+                    Lc = _FixedLightColor.rgb;
+                    useShadow = false;
+                    useCookie = false;
+                }
+                float phaseSun = Phase(dot(rd, Ld), _Anisotropy);
                 half3 ambient = SampleSH(half3(0, 1, 0)) * _AmbientStrength * (1.0 - _ShaftContrast);   // 대비: 그늘 쪽 뿌연 밝기를 뺀다
                 // 보는 방향 고르게(_ShaftEven) 는 앞쪽 산란(해를 향해 볼 때 몇 배 밝아짐)도 같이 평평하게 한다
                 float ph = lerp(phaseSun, 1.0, _ShaftEven);
-                half3 sunCol = mainLight.color * _SunStrength * ph;
+                half3 sunCol = Lc * _SunStrength * ph;
                 // 빛줄기 강조는 보는 방향과 상관없이 보이게 (탑다운 카메라는 대개 해를 등지고 있어 앞쪽 산란이 약하다)
-                half3 shaftCol = mainLight.color * _SunStrength * lerp(ph, 1.0, 0.7);
+                half3 shaftCol = Lc * _SunStrength * lerp(ph, 1.0, 0.7);
                 // 조절용 보기: 시각 때문에 강조가 0 이어도(밤 · 커브 0) 무늬가 보이게 최소 1, 밝기는 빛 세기로 나눠 늘 비슷하게
                 bool dbg = _ShaftDebug > 0.5;
                 float boost = dbg ? max(_ShaftBoost, 1.0) : _ShaftBoost;
@@ -320,7 +335,6 @@ Shader "RE_AL STEEL/Fog Volume"
 
                 // 빛줄기 무늬: 해 방향으로 늘어진 기둥 무늬 (해 방향에 수직인 평면 좌표로 노이즈를 읽어서, 해 방향으로는 값이 같다)
                 // → 맵에 가릴 물체가 없어도 빛기둥이 선다. 나무 · 건물 그림자 · 구름 쿠키와 곱해진다
-                float3 Ld = mainLight.direction;
                 float3 ax = normalize(cross(Ld, abs(Ld.y) < 0.99 ? float3(0, 1, 0) : float3(1, 0, 0)));
                 float3 ay = cross(Ld, ax);
                 bool usePattern = _ShaftPattern > 0.001;

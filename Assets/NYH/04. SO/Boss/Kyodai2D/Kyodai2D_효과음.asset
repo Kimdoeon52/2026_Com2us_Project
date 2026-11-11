@@ -1,0 +1,145 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88888c8d3f47b7a44a7e3ddc0eaf4f16, type: 3}
+  m_Name: "Kyodai2D_\uD6A8\uACFC\uC74C"
+  m_EditorClassIdentifier: 
+  masterVolume: 0.8
+  stereoSpread: 0.5
+  fistImpact:
+    clips:
+    - {fileID: 8300000, guid: 7c446088716174245b0e74c73f086c78, type: 3}
+    - {fileID: 8300000, guid: 03d7d8d1fe8538c439a6f6606851ddac, type: 3}
+    - {fileID: 8300000, guid: b5bf87c737017a24bb18fb6fee4a9ff5, type: 3}
+    volume: 0.95
+    pitchJitter: 0.05
+  palmImpact:
+    clips:
+    - {fileID: 8300000, guid: e084e8320f2e22c42a074a1f67511b3e, type: 3}
+    - {fileID: 8300000, guid: 6f6be9a22dc85a84285a3602c29a2afa, type: 3}
+    volume: 0.85
+    pitchJitter: 0.05
+  strikeWhoosh:
+    clips:
+    - {fileID: 8300000, guid: 199eb5edde77b8f47ad56aa69217ebf7, type: 3}
+    - {fileID: 8300000, guid: fb6400e09bad1d54a8b6b992b918cec3, type: 3}
+    - {fileID: 8300000, guid: 14714fd2902b87847a5137bcf64b4e1c, type: 3}
+    volume: 0.55
+    pitchJitter: 0.05
+  handHit:
+    clips:
+    - {fileID: 8300000, guid: 0298eb63e3909e94881e2b7b1d7b5f16, type: 3}
+    - {fileID: 8300000, guid: 3cf69bab089bea14484fadb8ecb36283, type: 3}
+    - {fileID: 8300000, guid: d911ca7fef8c0824285f436bb6cc0e24, type: 3}
+    volume: 0.5
+    pitchJitter: 0.05
+  handZapped:
+    clips:
+    - {fileID: 8300000, guid: 2356e117f03ef3942b2c69e3eaec4c7c, type: 3}
+    - {fileID: 8300000, guid: dd156d40078ad7840bcecbb2969841c1, type: 3}
+    volume: 0.7
+    pitchJitter: 0.05
+  handThud:
+    clips:
+    - {fileID: 8300000, guid: 4f49d616f26c9c141a081e514ab3b354, type: 3}
+    - {fileID: 8300000, guid: 7ed75299bc5f21f4fb7142f9ff597e93, type: 3}
+    volume: 0.7
+    pitchJitter: 0.05
+  shockwave:
+    clips:
+    - {fileID: 8300000, guid: 948369e4ee2bdca42b5034067039c742, type: 3}
+    volume: 0.8
+    pitchJitter: 0.05
+  laserCharge:
+    clips:
+    - {fileID: 8300000, guid: a7e4cd5df3b1ea7439d4501620b7a9b7, type: 3}
+    volume: 0.45
+    pitchJitter: 0.05
+  laserChargePitch: {x: 0.8, y: 1.5}
+  laserFire:
+    clips:
+    - {fileID: 8300000, guid: 191e8f6484c30794596309ec1529e9f8, type: 3}
+    - {fileID: 8300000, guid: 6b9e2895590eaf34eab4bbd5083826db, type: 3}
+    volume: 0.85
+    pitchJitter: 0.05
+  laserBeam:
+    clips:
+    - {fileID: 8300000, guid: 35876c70e78cd0e4494d15be6c0896ab, type: 3}
+    volume: 0.4
+    pitchJitter: 0.05
+  laserExplosion:
+    clips:
+    - {fileID: 8300000, guid: 739dffb8002bbe94a85ad1929635c206, type: 3}
+    - {fileID: 8300000, guid: e071db4e7a46150478bae399ba87d15e, type: 3}
+    - {fileID: 8300000, guid: 3403f14688104d14c9e476a3453a65c4, type: 3}
+    volume: 0.65
+    pitchJitter: 0.05
+  crusherDescend:
+    clips:
+    - {fileID: 8300000, guid: 8a14da4ef91889a498e5ad13d28d15dd, type: 3}
+    volume: 0.4
+    pitchJitter: 0.05
+  crusherLock:
+    clips:
+    - {fileID: 8300000, guid: 620b8854ddae637409c158bb245265a5, type: 3}
+    volume: 0.7
+    pitchJitter: 0.05
+  crusherSlam:
+    clips:
+    - {fileID: 8300000, guid: 3feca4bb592faf04f83547fc460d6313, type: 3}
+    - {fileID: 8300000, guid: 47df8c86d1484f44fa679c088c7905c9, type: 3}
+    volume: 1
+    pitchJitter: 0.05
+  crusherRise:
+    clips:
+    - {fileID: 8300000, guid: da604a96e7e2a3947b389b5db9efabe8, type: 3}
+    volume: 0.55
+    pitchJitter: 0.05
+  tentacleEmerge:
+    clips:
+    - {fileID: 8300000, guid: ce94adb29c836e74bbab17a0731496e7, type: 3}
+    - {fileID: 8300000, guid: bfd50065602967c42bccb89f203cd59d, type: 3}
+    volume: 0.75
+    pitchJitter: 0.05
+  tentacleSwing:
+    clips:
+    - {fileID: 8300000, guid: d5df06dffd3824d41bb528a9ce3add99, type: 3}
+    - {fileID: 8300000, guid: 85bf48d9c54e6f84c8cf1c783b61d174, type: 3}
+    volume: 0.6
+    pitchJitter: 0.05
+  tentacleHit:
+    clips:
+    - {fileID: 8300000, guid: 4911248f6fa100d46b246c6336984944, type: 3}
+    - {fileID: 8300000, guid: 58462b72ae30a89479f813a1fc0abf98, type: 3}
+    - {fileID: 8300000, guid: c94cd875832db87458ab73fbf834427e, type: 3}
+    volume: 0.45
+    pitchJitter: 0.05
+  tentacleDie:
+    clips:
+    - {fileID: 8300000, guid: d476dd79fa3558c40bd97cec8e6937e8, type: 3}
+    - {fileID: 8300000, guid: e32725479394c4141a2627f9caaed291, type: 3}
+    volume: 0.7
+    pitchJitter: 0.05
+  phaseTransition:
+    clips:
+    - {fileID: 8300000, guid: afb82c5f7f1edae47912cd8991f4fc15, type: 3}
+    volume: 0.9
+    pitchJitter: 0.05
+  groggy:
+    clips:
+    - {fileID: 8300000, guid: 15a94108f729ac540b0b80ae59bbc88f, type: 3}
+    volume: 0.8
+    pitchJitter: 0.05
+  defeat:
+    clips:
+    - {fileID: 8300000, guid: e2e6632b90ff6cd48b2a0e188d220837, type: 3}
+    volume: 1
+    pitchJitter: 0.05

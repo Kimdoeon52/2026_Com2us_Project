@@ -208,6 +208,7 @@ public class KyodaiHand : MonoBehaviour
         frozenFrames = Mathf.Max(frozenFrames, frames);
         if (!fresh) return;
         if (motion != null) Finish(); // 공격 취소 — 패턴은 손이 끝난 걸 보고 다음으로 넘어간다
+        KyodaiSfx.Play(KyodaiSfx.D?.handZapped, pos);
         fallVel = new Vector2(vel.x * 0.3f, Mathf.Min(vel.y, 0f));
         landed = bounced = false;
         wantRotation = feel != null ? (side == KyodaiHandSide.Left ? feel.fallRotation : -feel.fallRotation) : 0f; // 쓰러진 듯 기울어짐
@@ -274,6 +275,7 @@ public class KyodaiHand : MonoBehaviour
                     bounced = true;
                     impactPending = true;
                     if (Application.isPlaying) KyodaiCameraShake.Shake(feel != null ? feel.fallShake : 0.2f, 0.2f);
+                    KyodaiSfx.Play(KyodaiSfx.D?.handThud, pos);
                 }
                 fallVel.y = -fallVel.y * (feel != null ? feel.fallBounce : 0.3f);
             }
@@ -337,7 +339,11 @@ public class KyodaiHand : MonoBehaviour
     {
         keyStart = pos;
         // 판정 구간이 새로 시작되면 다시 맞을 수 있다 (연타의 두 번째 찍기)
-        if (key.hitActive && (keyIndex == 0 || !motion.keys[keyIndex - 1].hitActive)) touched = false;
+        if (key.hitActive && (keyIndex == 0 || !motion.keys[keyIndex - 1].hitActive))
+        {
+            touched = false;
+            KyodaiSfx.Play(KyodaiSfx.D?.strikeWhoosh, pos); // 휘두르기·밀기 시작
+        }
         target = new Vector2(ResolveX(key), ResolveY(key));
         bool mirror = key.mirrorByDirection && dir < 0;
         wantRotation = mirror ? -key.rotation : key.rotation;
@@ -443,6 +449,8 @@ public class KyodaiHand : MonoBehaviour
         KyodaiCameraShake.Shake(key.impactShake, feel != null ? feel.shakeSeconds : 0.3f);
         if (key.spawnShockwave) owner.SpawnShockwave(ground.x, onTouch); // 충격파 내려치기 — 바닥을 따라 좌우로
         if (feel != null) PixelFx.Play(feel.impactFx, new Vector3(ground.x, ground.y, transform.position.z));
+        KyodaiSfx.Play(pose == KyodaiHandPose.Palm ? KyodaiSfx.D?.palmImpact : KyodaiSfx.D?.fistImpact, ground);
+        if (key.spawnShockwave) KyodaiSfx.Play(KyodaiSfx.D?.shockwave, ground);
         OnImpact?.Invoke(this, ground);
     }
 
@@ -487,6 +495,7 @@ public class KyodaiHand : MonoBehaviour
 
     private void HandleHit(BossHurtZone zone, int damage)
     {
+        KyodaiSfx.Play(KyodaiSfx.D?.handHit, pos);
         if (feel != null)
         {
             flashUntil = Time.time + feel.hitFlashSeconds;

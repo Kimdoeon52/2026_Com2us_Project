@@ -71,6 +71,10 @@ public class KyodaiBossController : BossControllerBase
     [Tooltip("임시 체력 표시(KyodaiHpDebugView)를 시작할 때 붙인다 — 정식 UI가 생기면 끈다")]
     [SerializeField] private bool showDebugHp = true;
 
+    [Header("효과음 (2026-11-05)")]
+    [Tooltip("쿄다이 효과음 묶음 — 시작할 때 KyodaiSfx에 건다. 비우면 소리 없음")]
+    [SerializeField] private KyodaiSfxData sfx;
+
     private readonly List<BossPatternGimmickBase> allPatterns = new List<BossPatternGimmickBase>();
     private KyodaiHand[] hands = new KyodaiHand[0];
     private KyodaiLaser[] lasers = new KyodaiLaser[0];
@@ -234,6 +238,7 @@ public class KyodaiBossController : BossControllerBase
     {
         defeated = false;
         groggyStep = 0;
+        KyodaiSfx.Bind(sfx);
 
         hands = GetComponentsInChildren<KyodaiHand>(true);
         foreach (var hand in hands) hand.Init(this);
@@ -343,6 +348,7 @@ public class KyodaiBossController : BossControllerBase
         foreach (var crusher in crushers) if (crusher != null) crusher.SetRunning(false); // 연출 동안 쉼 (찍던 중이면 올라감)
         transitionFrame = 0;
         transitionSlamStarted = false;
+        KyodaiSfx.Play(KyodaiSfx.D?.phaseTransition, transform.position);
         Debug.Log("[Kyodai] 2페이즈 전환 연출 시작");
     }
 
@@ -483,6 +489,7 @@ public class KyodaiBossController : BossControllerBase
     private void HandleGroggyChanged(bool groggy, float duration)
     {
         if (defeated) return;
+        if (groggy) KyodaiSfx.Play(KyodaiSfx.D?.groggy, transform.position);
         foreach (var hand in hands) if (hand != null) hand.SetDown(groggy);
         if (groggy) foreach (var laser in lasers) if (laser != null) laser.Stop();
 
@@ -501,6 +508,7 @@ public class KyodaiBossController : BossControllerBase
     {
         Debug.Log("[Kyodai] 쿄다이 격파");
         defeated = true;
+        KyodaiSfx.Play(KyodaiSfx.D?.defeat, transform.position);
         foreach (var hand in hands) if (hand != null) hand.Kill();
         foreach (var laser in lasers) if (laser != null) laser.Stop();
         foreach (var crusher in crushers) if (crusher != null) crusher.SetRunning(false);

@@ -149,6 +149,7 @@ public static class Kyodai2DBuilder
         EnsureClapFacing(added);
         SyncPhases(master, added);
         EnsureEffects(feel, added);
+        EnsureSfx(boss, added);
         ApplyArt(boss, added);
 
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
@@ -1266,6 +1267,56 @@ public static class Kyodai2DBuilder
         string png = $"{EffectImageFolder}/{name}.png";
         if (AssetDatabase.LoadAssetAtPath<Texture2D>(png) != null) return PixelFxImporter.Import(png);
         return AssetDatabase.LoadAssetAtPath<PixelFxData>($"Assets/NYH/04. SO/Effect/{name}.asset");
+    }
+
+    // ───────────────────────── 효과음 (2026-11-05) ─────────────────────────
+
+    // 합성한 효과음(Boss/Editor/Tools~/kyodai-sfx.mjs → kyodai_<칸 이름>_<번호>.wav)으로 비어 있는 칸만 채운다 — 손으로 바꾼 칸은 그대로
+    private const string SoundFolder = "Assets/NYH/09. Sound/Kyodai";
+
+    // 칸별 처음 음량 (반복음은 작게, 큰 충격은 크게 — 임시값, 데이터에서 조절)
+    private static readonly System.Collections.Generic.Dictionary<string, float> SfxVolume = new System.Collections.Generic.Dictionary<string, float>
+    {
+        { "fistImpact", 0.95f }, { "palmImpact", 0.85f }, { "strikeWhoosh", 0.55f }, { "handHit", 0.5f }, { "handZapped", 0.7f },
+        { "handThud", 0.7f }, { "shockwave", 0.8f }, { "laserCharge", 0.45f }, { "laserFire", 0.85f }, { "laserBeam", 0.4f },
+        { "laserExplosion", 0.65f }, { "crusherDescend", 0.4f }, { "crusherLock", 0.7f }, { "crusherSlam", 1f }, { "crusherRise", 0.55f },
+        { "tentacleEmerge", 0.75f }, { "tentacleSwing", 0.6f }, { "tentacleHit", 0.45f }, { "tentacleDie", 0.7f },
+        { "phaseTransition", 0.9f }, { "groggy", 0.8f }, { "defeat", 1f },
+    };
+
+    private static void EnsureSfx(KyodaiBossController boss, System.Collections.Generic.List<string> added)
+    {
+        var data = LoadOrCreate<KyodaiSfxData>($"{DataFolder}/Kyodai2D_효과음.asset", _ => { });
+        int filled = 0;
+        foreach (var field in typeof(KyodaiSfxData).GetFields())
+        {
+            if (field.FieldType != typeof(KyodaiSfxCue)) continue;
+            var cue = (KyodaiSfxCue)field.GetValue(data);
+            if (cue == null) field.SetValue(data, cue = new KyodaiSfxCue());
+            if (!cue.IsEmpty) continue;
+            var clips = new System.Collections.Generic.List<AudioClip>();
+            for (int i = 1; ; i++)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>($"{SoundFolder}/kyodai_{field.Name}_{i}.wav");
+                if (clip == null) break;
+                clips.Add(clip);
+            }
+            if (clips.Count == 0) continue;
+            cue.clips = clips.ToArray();
+            if (SfxVolume.TryGetValue(field.Name, out float v)) cue.volume = v;
+            filled++;
+        }
+        if (filled > 0)
+        {
+            EditorUtility.SetDirty(data);
+            AssetDatabase.SaveAssets();
+            added.Add($"효과음 {filled}칸");
+        }
+        if (new SerializedObject(boss).FindProperty("sfx").objectReferenceValue == null)
+        {
+            SetFields(boss, so => so.FindProperty("sfx").objectReferenceValue = data);
+            added.Add("효과음 연결");
+        }
     }
 
     // ───────────────────────── 진짜 그림 (2026-11-05) ─────────────────────────

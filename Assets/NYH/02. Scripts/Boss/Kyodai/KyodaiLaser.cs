@@ -61,6 +61,7 @@ public class KyodaiLaser : MonoBehaviour
     private SpriteRenderer aimLine, beam, core, flash, scorch;
     private PixelFx charge;  // 조준·고정 동안 눈의 차지 이펙트 (반복)
     private PixelFx endLoop; // 발사 중 레이저 끝 이펙트 (반복, 끝을 따라감)
+    private AudioSource chargeSound, beamSound; // 차지·발사 중 반복 효과음 (KyodaiSfx)
     private float gunAngle = float.NaN; // 레일건 지금 각도 (NaN = 아직 안 정함)
 
     // 쓸기 모드
@@ -202,6 +203,18 @@ public class KyodaiLaser : MonoBehaviour
         frame = 0;
         StopCharge();
         if (Application.isPlaying) charge = FollowLens(PixelFx.Play(data.chargeFx, EyeFxPosition(), LensDepthScale()));
+        if (KyodaiSfx.D != null) chargeSound = KyodaiSfx.Loop(KyodaiSfx.D.laserCharge, EyeFxPosition(), KyodaiSfx.D.laserChargePitch.x);
+    }
+
+    // 차지 반복음: 조준 시작 → 발사 직전까지 음이 올라간다 (조준 길이가 데이터마다 달라도 발사 순간에 맞춰 꼭대기)
+    private void TickChargeSound()
+    {
+        if (chargeSound == null || KyodaiSfx.D == null) return;
+        int total = Mathf.Max(1, data.aimFrames + data.lockFrames);
+        int done = phase == Phase.Aim ? frame : data.aimFrames + frame;
+        Vector2 range = KyodaiSfx.D.laserChargePitch;
+        chargeSound.pitch = Mathf.Lerp(range.x, range.y, Mathf.Clamp01(done / (float)total));
+        KyodaiSfx.Move(chargeSound, EyeFxPosition());
     }
 
     public void Stop()
@@ -211,6 +224,7 @@ public class KyodaiLaser : MonoBehaviour
         onTouch = null;
         StopCharge();
         StopEndLoop();
+        KyodaiSfx.Stop(ref beamSound);
         SetVisible(false);
         ClearExplosions();
         burnPoints.Clear();
@@ -237,6 +251,7 @@ public class KyodaiLaser : MonoBehaviour
                 AimGun(aim);
                 UpdateDirection();
                 end = TraceEnd(out _);
+                TickChargeSound();
                 if (frame >= data.aimFrames)
                 {
                     if (Sweep) LockSweep();
@@ -246,6 +261,7 @@ public class KyodaiLaser : MonoBehaviour
             case Phase.Lock:
                 UpdateDirection(); // 팔이 출렁여 시작점이 움직여도 조준점은 그대로
                 end = TraceEnd(out _);
+                TickChargeSound();
                 if (frame >= data.lockFrames) Next(Phase.Fire);
                 break;
             case Phase.Fire:
@@ -254,7 +270,11 @@ public class KyodaiLaser : MonoBehaviour
                     KyodaiCameraShake.Shake(data.fireShake, 0.2f);
                     StopCharge();
                     FollowLens(PixelFx.Play(data.fireFx, EyeFxPosition(), LensDepthScale()));
+                    KyodaiSfx.Play(KyodaiSfx.D?.laserFire, EyeFxPosition());
+                    KyodaiSfx.Stop(ref beamSound);
+                    beamSound = KyodaiSfx.Loop(KyodaiSfx.D?.laserBeam, EyeFxPosition());
                 }
+                if (beamSound != null) KyodaiSfx.Move(beamSound, new Vector3(end.x, end.y, PlaneZ));
                 if (frame == 1 && arm != null) arm.Recoil(aim, ProjectFixed);
                 if (Sweep)
                 {
@@ -302,6 +322,7 @@ public class KyodaiLaser : MonoBehaviour
     {
         // 끝 이펙트는 레이저가 보이는 동안(사라지는 단계까지) 끝을 따라가다 같이 사라진다 — 발사가 끝나는 순간 뚝 끊기지 않게
         if (phase == Phase.Fire && (next == Phase.Idle || (next == Phase.Burn && data.fadeFrames <= 0))) StopEndLoop();
+        if (phase == Phase.Fire) KyodaiSfx.Stop(ref beamSound); // 발사 중 지지직은 발사가 끝나는 순간 끈다
         phase = next;
         frame = 0;
         if (next == Phase.Idle) Stop();
@@ -382,6 +403,7 @@ public class KyodaiLaser : MonoBehaviour
                 {
                     KyodaiCameraShake.Shake(data.explosionShake, 0.15f);
                     PixelFx.Play(data.explosionFx, new Vector3(e.x, owner.GroundY, transform.position.z), 1f, i % 2 == 1); // 번갈아 뒤집어 반복이 덜 보이게
+                    KyodaiSfx.Play(KyodaiSfx.D?.laserExplosion, new Vector3(e.x, owner.GroundY, transform.position.z));
                 }
             }
             if (frame < e.trigger || frame >= e.trigger + data.explosionHitFrames || e.hit || onTouch == null) continue;
@@ -441,6 +463,7 @@ public class KyodaiLaser : MonoBehaviour
     {
         if (charge != null) charge.Stop();
         charge = null;
+        KyodaiSfx.Stop(ref chargeSound);
     }
 
     // 사라지는 동안 끝 이펙트를 끝에 붙여 둔다 (발사 중엔 FireTick이 옮긴다)

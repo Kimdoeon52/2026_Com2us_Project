@@ -64,6 +64,7 @@ public class KyodaiTentacle : MonoBehaviour, IPlayerHitTarget
         hp = data.hp;
         state = State.Emerge;
         frame = cooldown = 0;
+        KyodaiSfx.Play(KyodaiSfx.D?.tentacleEmerge, transform.position);
         bend = bendVel = prevBend = 0f;
         grow = prevGrow = 0f;
         swingHitDone = paused = false;
@@ -159,6 +160,8 @@ public class KyodaiTentacle : MonoBehaviour, IPlayerHitTarget
         frame = 0;
         if (next == State.Swing) swingHitDone = false;
         if (next == State.Dying && hurtBox != null) hurtBox.enabled = false;
+        if (next == State.Swing) KyodaiSfx.Play(KyodaiSfx.D?.tentacleSwing, Root);
+        else if (next == State.Dying) KyodaiSfx.Play(KyodaiSfx.D?.tentacleDie, Root);
     }
 
     private void BendTo(float target, float frequency, float damping)
@@ -188,6 +191,7 @@ public class KyodaiTentacle : MonoBehaviour, IPlayerHitTarget
         if (!IsHittable) return;
         hp -= damage;
         flashUntil = Time.time + 0.08f;
+        KyodaiSfx.Play(KyodaiSfx.D?.tentacleHit, point);
         bendVel -= dir * 2f; // 맞으면 움찔
         if (hp <= 0f) Begin(State.Dying);
     }

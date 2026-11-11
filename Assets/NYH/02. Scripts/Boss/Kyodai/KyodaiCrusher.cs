@@ -43,6 +43,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
     private float velX;
     private float topY;
     private float riseFromY; // 올라가기 시작한 높이 (찍기 전에 끊겨도 그 자리에서 올라가게)
+    private AudioSource descendSound; // 내려오는 동안 반복 효과음 (KyodaiSfx)
 
     /// <summary>찍는 순간 (바닥 위치) — 소리·이펙트용</summary>
     public event System.Action<Vector2> OnImpact;
@@ -128,6 +129,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
             }
         }
         transform.position = new Vector3(pos.x, pos.y, transform.position.z);
+        KyodaiSfx.Move(descendSound, pos);
     }
 
     private float HoverY => kyodai.GroundY + data.hoverHeight * S;
@@ -149,6 +151,12 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
         frame = 0;
         if (next == Phase.Rise) riseFromY = pos.y;
         if (next == Phase.Slam || next == Phase.Rise || next == Phase.Stuck) HideTelegraph();
+
+        // 효과음: 내려오는 동안(내려옴·멈춤) 반복음, 멈춤 = 피할 신호, 올라가기 시작
+        if (next != Phase.Descend && next != Phase.Lock) KyodaiSfx.Stop(ref descendSound);
+        if (next == Phase.Descend) descendSound = KyodaiSfx.Loop(KyodaiSfx.D?.crusherDescend, pos);
+        else if (next == Phase.Lock) KyodaiSfx.Play(KyodaiSfx.D?.crusherLock, pos);
+        else if (next == Phase.Rise) KyodaiSfx.Play(KyodaiSfx.D?.crusherRise, pos);
     }
 
     private void Impact()
@@ -158,6 +166,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
         Begin(Phase.Stuck);
         var ground = new Vector2(pos.x, kyodai.GroundY);
         if (Application.isPlaying) KyodaiCameraShake.Shake(data.impactShake, 0.3f);
+        KyodaiSfx.Play(KyodaiSfx.D?.crusherSlam, ground);
         OnImpact?.Invoke(ground);
     }
 
@@ -186,6 +195,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
 
     private void HideNow()
     {
+        KyodaiSfx.Stop(ref descendSound);
         phase = Phase.Waiting;
         frame = 0;
         HideTelegraph();

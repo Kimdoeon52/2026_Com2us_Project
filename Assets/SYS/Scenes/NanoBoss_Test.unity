@@ -170,6 +170,7 @@ MonoBehaviour:
   danger: 0
   glow: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  back: 0
   bind: 1
   response: 42.03808
   bounce: 0.5978135
@@ -197,6 +198,9 @@ MonoBehaviour:
   fps: 12
   loop: 1
   pixelSize: 0.1
+  artColor: 1
+  roam: {x: 1.5, y: 1}
+  roamSpeed: 3
   feelVersion: 2
   stiffness: 45
   damping: 7
@@ -526,6 +530,7 @@ MonoBehaviour:
   danger: 0
   glow: 0
   tint: {r: 1, g: 0.7, b: 0.6, a: 1}
+  back: 0
   bind: 1
   response: 12.366517
   bounce: 0.4277581
@@ -553,6 +558,9 @@ MonoBehaviour:
   fps: 12
   loop: 1
   pixelSize: 0.1
+  artColor: 1
+  roam: {x: 1.5, y: 1}
+  roamSpeed: 3
   feelVersion: 2
   stiffness: 520
   damping: 30
@@ -1227,6 +1235,7 @@ MonoBehaviour:
   danger: 0
   glow: 0
   tint: {r: 1, g: 1, b: 1, a: 1}
+  back: 0
   bind: 1
   response: 25.742958
   bounce: 0.56534684
@@ -1254,6 +1263,9 @@ MonoBehaviour:
   fps: 12
   loop: 1
   pixelSize: 0.1
+  artColor: 1
+  roam: {x: 1.5, y: 1}
+  roamSpeed: 3
   feelVersion: 2
   stiffness: 120
   damping: 12
@@ -1346,40 +1358,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   botCount: 8000
+  grain: 1
   botWorldSize: 0.25
-  spacing: 0.09375
+  fill: 1.3
+  bulletClump: 24
+  freeSize: 1
+  botColors: []
+  grainNoise: 0.08
   sparkleRatio: 0.05
   sparkleTint:
     serializedVersion: 2
     rgba: 4294959470
-  botKinds:
-  - picture: {fileID: 2800000, guid: 1687ed7a5e3319e4e8c68327d7167ac9, type: 3}
-    use: 0
-    ratio: 100
-  - picture: {fileID: 2800000, guid: faea6a95ff22df24ba67340c4eef0fe2, type: 3}
-    use: 3
-    ratio: 20
-  - picture: {fileID: 2800000, guid: 9c96a59bea0a52544846cf9a41082a0c, type: 3}
-    use: 3
-    ratio: 20
-  - picture: {fileID: 2800000, guid: 6248fead8ba996e4682cd4098404b7c9, type: 3}
-    use: 3
-    ratio: 20
-  - picture: {fileID: 2800000, guid: 857a67f2049321e4d86ab7d39923b599, type: 3}
-    use: 3
-    ratio: 20
-  - picture: {fileID: 2800000, guid: f218b4d857d4a184c858836088cf9960, type: 3}
-    use: 3
-    ratio: 20
-  spacingFromPicture: 1
-  plates: 1
+  backDepth: 9
+  backDim: 0.6
+  sandField: {x: 64, y: 18}
   refillDelay: 0.35
   viscosity: 8
+  slide: 0.6
   floorFromTransform: 1
   floorY: 0
   gravity: 28
-  bounce: 0.25
-  friction: 4
   dark: 0
   darkTint: 0.05
   rimColor: {r: 1.6, g: 1.6, b: 1.7, a: 1}
@@ -1387,13 +1385,13 @@ MonoBehaviour:
   material: {fileID: 0}
   castShadows: 1
   receiveShadows: 1
-  pitchFollow: 0.35
   flashColor: {r: 1, g: 1, b: 1, a: 1}
   flashDecay: 5
   freeGlow: 0
   freeTint:
     serializedVersion: 2
     rgba: 4294967295
+  knightRefillPerFrame: 3000
 --- !u!114 &1372871654
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1406,6 +1404,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 935d946b82debb74d83bfc3d13201436, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  knightMoves: {fileID: 11400000, guid: b1ef0931904cca44cbe70720d763095e, type: 2}
   difficulty: 5
   rigPatterns:
   - rig: {fileID: 0}

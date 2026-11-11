@@ -247,6 +247,9 @@ namespace RealSteel.NanoBoss
 
         void OnValidate()
         {
+#if UNITY_EDITOR
+            if (glitchAura != null && !glitchAura.shader) glitchAura.shader = Shader.Find(AuraShaderName);   // 빌드에도 들어가게 씬에 기록
+#endif
             if (bots.Length > 0 && RSNanoBotColorsSig() != colorSig) RecolorAll();
         }
 
@@ -313,6 +316,7 @@ namespace RealSteel.NanoBoss
         void OnDestroy()
         {
             if (runtimeMaterial) { if (Application.isPlaying) Destroy(runtimeMaterial); else DestroyImmediate(runtimeMaterial); }
+            DestroyAura();
         }
 
         float R() => (float)rng.NextDouble();
@@ -384,6 +388,7 @@ namespace RealSteel.NanoBoss
             Knight.UpdatePose();
             MaintainBlob(time);
             FillKnight(dt);
+            UpdateAura(dt, time);
             FitTube(TubeA, G_TubeA);
             FitTube(TubeB, G_TubeB);
             FillGuides();
@@ -679,6 +684,7 @@ namespace RealSteel.NanoBoss
                 kSlots[c] = new float4(ox + fc * (kFill.locX[c] + 0.5f) * cs, oy + (kFill.locY[c] + 0.5f) * cs, o.z, kFill.kind[c]);
                 kColors[c] = kFill.color[c];
             }
+            NoteAuraFrame(clip, f, S, ox, oy, fc, o.z, cs);
         }
 
         readonly List<int> tubeTmp = new List<int>();
@@ -1025,6 +1031,7 @@ namespace RealSteel.NanoBoss
                 matProps = mpb,
             };
             Graphics.RenderPrimitives(rp, MeshTopology.Triangles, 6, bots.Length);
+            DrawAura(cam);
         }
 
         unsafe void Upload()

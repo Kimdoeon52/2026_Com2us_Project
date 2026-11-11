@@ -11,10 +11,13 @@ namespace RealSteel.BossRace
     public class BossDifficultySelectUI : MonoBehaviour
     {
         private static readonly BodyPart[] Parts = { BodyPart.Head, BodyPart.LeftArm, BodyPart.RightArm, BodyPart.LeftLeg, BodyPart.RightLeg };
-        private static readonly Color PartGood = new Color32(0x7F, 0xD3, 0xA0, 0xFF);
-        private static readonly Color PartLow = new Color32(0xF2, 0x8A, 0x3C, 0xFF);
-        private static readonly Color PartBroken = new Color32(0xE0, 0x4E, 0x4E, 0xFF);
         private static readonly Color TextSub = new Color32(0x9A, 0x9E, 0xA4, 0xFF);
+
+        [Header("색")]
+        [SerializeField] private Color accentColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField] private Color partGood = new Color32(0x7F, 0xD3, 0xA0, 0xFF);
+        [SerializeField] private Color partLow = new Color32(0xF2, 0x8A, 0x3C, 0xFF);
+        [SerializeField] private Color partBroken = new Color32(0xE0, 0x4E, 0x4E, 0xFF);
 
         [Header("난이도 (위에서부터)")]
         [SerializeField] private List<DifficultyEntry> difficulties = new List<DifficultyEntry>();
@@ -229,7 +232,7 @@ namespace RealSteel.BossRace
 
             int loses = progress.LosesOf(boss.bossId);
             bool hint = loses >= BossRaceDifficulty.HintLoseCount;
-            SetText(loseText, $"이 보스 상대 패배 <color=#F2A900>{loses}회</color>");
+            SetText(loseText, $"이 보스 상대 패배 <color=#{ColorUtility.ToHtmlStringRGB(accentColor)}>{loses}회</color>");
             SetText(loseHintText, hint ? "기믹 힌트 개방됨 — 다음 진입 때 접수원이 알려 줍니다" : $"{BossRaceDifficulty.HintLoseCount}패 시 기믹 힌트 개방 (난이도 무관)");
         }
 
@@ -252,7 +255,7 @@ namespace RealSteel.BossRace
                 }
 
                 ratio = Mathf.Clamp01(ratio);
-                Color color = ratio <= 0f ? PartBroken : ratio < 0.5f ? PartLow : PartGood;
+                Color color = ratio <= 0f ? partBroken : ratio < 0.5f ? partLow : partGood;
                 SetFill(fill, ratio, color);
                 if (value != null)
                 {

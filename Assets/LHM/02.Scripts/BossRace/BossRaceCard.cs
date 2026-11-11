@@ -8,10 +8,8 @@ namespace RealSteel.BossRace
 {
     public class BossRaceCard : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
     {
-        private static readonly Color Gold = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         private static readonly Color Green = new Color32(0x7F, 0xD3, 0xA0, 0xFF);
         private static readonly Color Muted = new Color32(0x8A, 0x8E, 0x94, 0xFF);
-        private static readonly Color TagDark = new Color32(0x2E, 0x31, 0x35, 0xFF);
         private static readonly Color SegmentEmpty = new Color32(0x2E, 0x31, 0x35, 0xFF);
 
         [Header("연결")]
@@ -34,6 +32,16 @@ namespace RealSteel.BossRace
         [SerializeField] private Color backgroundSelected = new Color32(0x22, 0x25, 0x2A, 0xFF);
         [SerializeField] private Color frameNormal = new Color32(0x33, 0x36, 0x3B, 0xFF);
         [SerializeField] private Color iconNormal = new Color32(0x9A, 0x9E, 0xA4, 0xFF);
+        [SerializeField] private Color accentColor = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField] private Color frameSelected = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField, Min(0.01f)] private float frameScaleNormal = 2f;
+        [SerializeField, Min(0.01f)] private float frameScaleSelected = 1f;
+        [SerializeField] private Color tagActive = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField] private Color tagInactive = new Color32(0x2E, 0x31, 0x35, 0xFF);
+
+        [Header("지역 태그 이미지 (비우면 바꾸지 않음)")]
+        [SerializeField] private Sprite tagSpriteActive;
+        [SerializeField] private Sprite tagSpriteInactive;
         [SerializeField, Range(0f, 1f)] private float lockedAlpha = 0.45f;
 
         [Header("흔들림")]
@@ -85,7 +93,7 @@ namespace RealSteel.BossRace
             switch (state)
             {
                 case BossRaceCardState.InProgress:
-                    SetText(statusText, "진행 중", Gold);
+                    SetText(statusText, "진행 중", accentColor);
                     break;
                 case BossRaceCardState.Cleared:
                     SetText(statusText, "클리어", Green);
@@ -116,11 +124,18 @@ namespace RealSteel.BossRace
             if (background != null) background.color = selected ? backgroundSelected : backgroundNormal;
             if (frame != null)
             {
-                frame.color = selected ? Gold : frameNormal;
-                frame.pixelsPerUnitMultiplier = selected ? 1f : 2f;
+                frame.color = selected ? frameSelected : frameNormal;
+                frame.pixelsPerUnitMultiplier = selected ? frameScaleSelected : frameScaleNormal;
             }
-            if (regionTag != null) regionTag.color = active && State != BossRaceCardState.Locked ? Gold : TagDark;
-            if (regionText != null) regionText.color = active && State != BossRaceCardState.Locked ? new Color32(0x14, 0x16, 0x19, 0xFF) : new Color32(0xD8, 0xDA, 0xDE, 0xFF);
+
+            bool tagOn = active && State != BossRaceCardState.Locked;
+            if (regionTag != null)
+            {
+                Sprite sprite = tagOn ? tagSpriteActive : tagSpriteInactive;
+                if (sprite != null) regionTag.sprite = sprite;
+                regionTag.color = tagOn ? tagActive : tagInactive;
+            }
+            if (regionText != null) regionText.color = tagOn ? new Color32(0x14, 0x16, 0x19, 0xFF) : new Color32(0xD8, 0xDA, 0xDE, 0xFF);
             if (icon != null) icon.color = iconNormal;
         }
 

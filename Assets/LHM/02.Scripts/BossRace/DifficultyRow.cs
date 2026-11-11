@@ -8,7 +8,6 @@ namespace RealSteel.BossRace
 {
     public class DifficultyRow : MonoBehaviour, IPointerEnterHandler, IPointerClickHandler
     {
-        private static readonly Color Gold = new Color32(0xF2, 0xA9, 0x00, 0xFF);
         private static readonly Color BarEmpty = new Color32(0x2E, 0x31, 0x35, 0xFF);
 
         [Header("연결")]
@@ -25,6 +24,9 @@ namespace RealSteel.BossRace
         [SerializeField] private Color backgroundNormal = new Color32(0x1B, 0x1E, 0x22, 0xFF);
         [SerializeField] private Color backgroundSelected = new Color32(0x22, 0x25, 0x2A, 0xFF);
         [SerializeField] private Color frameNormal = new Color32(0x33, 0x36, 0x3B, 0xFF);
+        [SerializeField] private Color frameSelected = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField, Min(0.01f)] private float frameScaleNormal = 2f;
+        [SerializeField, Min(0.01f)] private float frameScaleSelected = 1f;
         [SerializeField] private float selectedShift = 8f;
         [SerializeField] private float stripeNormal = 4f;
         [SerializeField] private float stripeSelected = 10f;
@@ -65,8 +67,8 @@ namespace RealSteel.BossRace
             if (background != null) background.color = selected ? backgroundSelected : backgroundNormal;
             if (frame != null)
             {
-                frame.color = selected ? Gold : frameNormal;
-                frame.pixelsPerUnitMultiplier = selected ? 1f : 2f;
+                frame.color = selected ? frameSelected : frameNormal;
+                frame.pixelsPerUnitMultiplier = selected ? frameScaleSelected : frameScaleNormal;
             }
             if (stripe != null)
             {

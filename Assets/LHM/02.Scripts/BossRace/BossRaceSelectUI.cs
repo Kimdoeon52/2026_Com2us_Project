@@ -38,8 +38,12 @@ namespace RealSteel.BossRace
         [SerializeField, Min(0f)] private float lockHintSeconds = 1.8f;
         [SerializeField, Min(0f)] private float openInputDelay = 0.2f;
 
-        private static readonly Color ConfirmOn = new Color32(0xF2, 0xA9, 0x00, 0xFF);
-        private static readonly Color ConfirmOff = new Color32(0x3A, 0x3D, 0x42, 0xFF);
+        [Header("확인 버튼 (이미지는 비우면 바꾸지 않음)")]
+        [SerializeField] private Color confirmOn = new Color32(0xF2, 0xA9, 0x00, 0xFF);
+        [SerializeField] private Color confirmOff = new Color32(0x3A, 0x3D, 0x42, 0xFF);
+        [SerializeField] private Sprite confirmSpriteOn;
+        [SerializeField] private Sprite confirmSpriteOff;
+
         private static readonly Color HintLocked = new Color32(0xE8, 0x74, 0x3B, 0xFF);
         private static readonly Color HintNormal = new Color32(0x9A, 0x9E, 0xA4, 0xFF);
 
@@ -211,7 +215,12 @@ namespace RealSteel.BossRace
             bool valid = selected >= 0 && selected < entries.Count && cards[selected] != null && cards[selected].IsSelectable;
 
             if (confirmButton != null) confirmButton.interactable = valid;
-            if (confirmImage != null) confirmImage.color = valid ? ConfirmOn : ConfirmOff;
+            if (confirmImage != null)
+            {
+                Sprite sprite = valid ? confirmSpriteOn : confirmSpriteOff;
+                if (sprite != null) confirmImage.sprite = sprite;
+                confirmImage.color = valid ? confirmOn : confirmOff;
+            }
             if (confirmText != null) confirmText.alpha = valid ? 1f : 0.4f;
 
             if (!valid)

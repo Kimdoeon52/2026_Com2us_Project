@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using RealSteel.BossRace;
 using RealSteel.BossRace.EditorTools;
+using RealSteel.Tutorial;
+using RealSteel.Tutorial.EditorTools;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -83,6 +85,8 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("RS-OS 스타일 대화창 (프리팹 수정)", RsOsDialogueStyleSetup.Setup, RsOsDialogueStyleSetup.IsApplied),
                 new ToolItem("NPC 스프라이트", NpcSpriteSetup.Setup, NpcSpriteSetup.IsApplied),
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
+            new ToolGroup("튜토리얼 화면",
+                new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>)),
             new ToolGroup("고물상 맵",
                 new ToolItem("고물상 맵 배치", JunkShopDialogueSetup.Setup, Has<FieldInputBridge>),
                 new ToolItem("연결 복구 (카메라 · 상점 창)", JunkShopDialogueSetup.RepairLinks, null)),

@@ -45,7 +45,8 @@ namespace RealSteel.BossRace.EditorTools
             return root != null && root.GetComponentsInChildren<Transform>(true).Any(t => t.name.StartsWith(AddedPrefix));
         }
 
-        internal static void Run(string title, string prefabPath, string changes, string checkHint, Func<GameObject, RsOsSprites, StringBuilder, bool> apply)
+        // 못 찾으면 안내 창을 띄우고 null
+        internal static RsOsSprites LoadSprites(string title)
         {
             var sprites = new RsOsSprites
             {
@@ -56,11 +57,16 @@ namespace RealSteel.BossRace.EditorTools
             };
             var missing = new[] { (FillPath, sprites.Fill), (OutlinePath, sprites.Outline), (ChipPath, sprites.Chip), (ChipOffPath, sprites.ChipOff) }
                 .Where(p => p.Item2 == null).Select(p => p.Item1).ToList();
-            if (missing.Count > 0)
-            {
-                EditorUtility.DisplayDialog(title, "스프라이트를 찾지 못했습니다 (Single 모드 스프라이트여야 함):\n" + string.Join("\n", missing), "확인");
-                return;
-            }
+            if (missing.Count == 0) return sprites;
+
+            EditorUtility.DisplayDialog(title, "스프라이트를 찾지 못했습니다 (Single 모드 스프라이트여야 함):\n" + string.Join("\n", missing), "확인");
+            return null;
+        }
+
+        internal static void Run(string title, string prefabPath, string changes, string checkHint, Func<GameObject, RsOsSprites, StringBuilder, bool> apply)
+        {
+            RsOsSprites sprites = LoadSprites(title);
+            if (sprites == null) return;
 
             if (AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath) == null)
             {

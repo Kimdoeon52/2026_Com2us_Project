@@ -24,7 +24,7 @@ namespace RealSteel.BossRace.EditorTools
                 "- 강조색: 금색 → RS-OS 노란색, 선택 카드 테두리 노란색\n" +
                 "- 지역 태그 · 난이도 선택 버튼: 노란 사선 칩 (잠김 · 비활성은 회색 칩)\n" +
                 "- 상세 패널에 노란 모서리 괄호\n",
-                "DialogueTest_Prefab 씬에서 Play → 접수원 → 토벌 신청으로 확인하세요.",
+                "DialogueTest_Prefab 씬에서 Play → Shift+Y → Shift+T → 전화 Z로 받기 → 지역 보스 선택으로 확인하세요.",
                 Apply);
         }
 

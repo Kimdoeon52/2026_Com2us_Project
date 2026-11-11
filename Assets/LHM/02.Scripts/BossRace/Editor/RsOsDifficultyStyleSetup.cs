@@ -24,7 +24,7 @@ namespace RealSteel.BossRace.EditorTools
                 "- 패널 · 난이도 줄 · 버튼: 오른쪽 위 · 왼쪽 아래가 깎인 모서리\n" +
                 "- 강조색: 금색 → RS-OS 노란색, 보스 · 선택 패널에 노란 모서리 괄호\n" +
                 "- 지역 태그 · 레이스 시작: 노란 사선 칩\n",
-                "DialogueTest_Prefab 씬에서 Play → 접수원 → 토벌 신청 → 보스 선택 → 난이도 선택으로 확인하세요.",
+                "DialogueTest_Prefab 씬에서 Play → 접수원 E → 토벌 신청으로 확인하세요.",
                 Apply);
         }
 

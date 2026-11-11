@@ -167,6 +167,7 @@ namespace RealSteel.Dialogue
                     .Add("J · Shift + J", "관중 켜기/끄기 · 기본 파츠 전환")
                     .Add("Shift + K · Shift + L", "관중 말풍선 · 대기 목록");
             }
+            if (Has("TutorialTest")) test.Add("Insert · Shift + Insert", "튜토리얼 화면 (←→ · Space · Esc) · 본 기록 지우기");
             if (Has(nameof(Step10_InputTest))) test.Add("` (1 왼쪽)", "필드 ↔ 전투 입력 전환");
             if (Has("InventoryHost")) test.Add("Shift + Q", "디버그 부품 지급");
             if (Has("CorrectRecipe")) test.Add("T", "제작 슬롯 새로고침");

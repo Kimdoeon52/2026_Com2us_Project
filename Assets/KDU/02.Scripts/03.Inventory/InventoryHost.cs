@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
+using UnityEngine.UI;
 
 // 인벤토리 데이터 보유. 씬 전환에도 유지되며 UI는 Instance로 Grid/Save를 읽어간다
 public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSource
@@ -52,6 +53,8 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
 
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
+
+    GridLayoutGroup __grid;
 
     // 첫 씬에 배치된 게 없으면 Resources 프리팹으로 만든다
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -123,6 +126,8 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     {
         if (Input.GetKeyDown(KeyCode.Q) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
             GiveDebugComponents();
+        if (Input.GetKeyDown(KeyCode.W) && (Input.GetKey(KeyCode.LeftShift)))
+            GiveDebugParts();
     }
 
     // 한 프레임에 여러 번 바뀌어도 파일은 한 번만 쓴다
@@ -690,6 +695,9 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     [Tooltip("지급할 부품 ID 목록")]
     [SerializeField] private string[] _debugComponentIds;
 
+    [Tooltip("지급할 파츠 ID 목록")]
+    [SerializeField] private string[] _debugPartIds;
+
     [Tooltip("각 부품당 지급 수량")]
     [SerializeField] private int _debugAmount = 1;
 
@@ -709,6 +717,17 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             }
 
             GiveComponent(component, _debugAmount);
+
+        }
+    }
+
+    public void GiveDebugParts()
+    {
+        for (int i = 0; i < _debugPartIds.Length; i++)
+        {
+            PartsDefinition part = Catalog.Find(_debugPartIds[i]);
+            GivePart(part);
+
         }
     }
 }

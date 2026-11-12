@@ -103,3 +103,32 @@ public class ActionVfxEntry
         _ => 2,
     };
 }
+
+/// <summary>
+/// 폭발형 투사체(ExplosiveProjectileData)가 터질 때 생성할 이펙트 항목.
+/// 터지는 순간 1번 생성되고 파티클/애니메이션 길이만큼 재생 후 자동 제거된다 (ActionVfxEntry의 KeepPlaying과 같음).
+/// 위치·회전·반전·크기·재생 속도·정렬은 ActionVfxEntry와 같은 규칙 — 기준점은 폭발 위치, 방향은 투사체 진행 방향
+/// </summary>
+[Serializable]
+public class ExplosionVfxEntry
+{
+    [Tooltip("생성할 이펙트 프리팹")]
+    public GameObject prefab;
+
+    [Tooltip("폭발 위치 기준 위치(오른쪽으로 날아갈 때 기준). 좌우 반전은 자동")]
+    public Vector2 offset;
+
+    [Tooltip("Z축 회전 각도(도). 오른쪽으로 날아갈 때 기준 — 좌우 반전 시 부호가 자동으로 뒤집힌다")]
+    public float rotation;
+
+    [Tooltip("켜면 왼쪽으로 날아갈 때 좌우를 뒤집는다")]
+    public bool flipWithFacing = true;
+
+    [Min(0.01f)] public float scale = 1f;
+
+    [Tooltip("파티클 재생 속도 배율. 0.5면 절반 속도로 2배 길게 재생된다")]
+    [Min(0.01f)] public float playbackSpeed = 1f;
+
+    [Tooltip("쏜 로봇 그림보다 몇 칸 앞에 그릴지 (sortingOrder 가산)")]
+    public int sortingOrderOffset = 1;
+}

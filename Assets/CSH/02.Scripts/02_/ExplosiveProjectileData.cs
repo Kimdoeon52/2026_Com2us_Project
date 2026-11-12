@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -22,13 +23,9 @@ public class ExplosiveProjectileData : ProjectileData
     [field: Tooltip("반경 안의 전장 기물(BossFieldGimmickBase)을 작동시킨다")]
     [field: SerializeField] public bool TriggerFieldGimmicks { get; private set; } = true;
 
-    [field: Header("연출 — 비워도 판정은 동작한다")]
-    [field: Tooltip("폭발 위치에 생성할 이펙트 프리팹. 비우면 생성 안 함")]
-    [field: SerializeField] public GameObject ExplosionVfxPrefab { get; private set; }
+    [Header("연출 — 비워도 판정은 동작한다")]
+    [Tooltip("터질 때 폭발 위치에 생성할 이펙트 목록. 스킬 구간 이펙트(ActionData.vfx)와 같은 규칙으로 생성되고, 끝까지 재생 후 자동 제거된다")]
+    [SerializeField] private List<ExplosionVfxEntry> explosionVfx = new List<ExplosionVfxEntry>();
 
-    [field: Tooltip("프리팹 스케일 × 반경 × 이 값. 0이면 크기 조절 안 함")]
-    [field: Min(0f)] [field: SerializeField] public float VfxScalePerRadius { get; private set; } = 1f;
-
-    [field: Tooltip("이펙트를 지우기까지의 시간(초). 0이면 지우지 않는다")]
-    [field: Min(0f)] [field: SerializeField] public float VfxLifetimeSeconds { get; private set; } = 2f;
+    public IReadOnlyList<ExplosionVfxEntry> ExplosionVfx => explosionVfx;
 }

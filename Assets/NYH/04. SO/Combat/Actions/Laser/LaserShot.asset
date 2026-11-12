@@ -26,9 +26,9 @@ MonoBehaviour:
   damage: 70
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: 
+  animationClipName: Jap
   activeClipName: Straight
-  keepClipSpeed: 0
+  keepClipSpeed: 1
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: -1
@@ -39,7 +39,20 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.05, y: 0.27}
   flame: {fileID: 0}
-  vfx: []
+  vfx:
+  - prefab: {fileID: 5011422705881722773, guid: 50d4588dd79bd37582fee442039ef5b0, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 0
+    repeatStartOffsetFrames: 0
+    endMode: 0
+    offset: {x: 0, y: 0.35}
+    rotation: -90
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.1
+    playbackSpeed: 2
+    sortingOrderOffset: 0
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 60
@@ -47,7 +60,7 @@ MonoBehaviour:
   cylinderCost: 0
   fallbackAction: {fileID: 0}
   frameBoxes: []
-  holdMode: 0
+  holdMode: 1
   minHoldFrames: 60
   earlyReleaseCooldownScale: 0.5
   maxHoldFrames: 0
@@ -58,7 +71,7 @@ MonoBehaviour:
   fan:
     rays: 11
     spreadDegrees: 90
-    range: 7
+    range: 5
     thickness: 0.1
     hitLength: 0
   hoverInAir: 1

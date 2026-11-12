@@ -83659,7 +83659,7 @@ Light:
   m_BounceIntensity: 1
   m_ColorTemperature: 6570
   m_UseColorTemperature: 0
-  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_BoundingSphereOverride: {x: 2.7105054e-20, y: 2.020486e-39, z: 3.2838e-41, w: 0}
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
@@ -93592,6 +93592,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 78fbfe8229294b5418dbf89d3c1f2f12, type: 3}
       propertyPath: m_Name
       value: CellPlane
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 78fbfe8229294b5418dbf89d3c1f2f12, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

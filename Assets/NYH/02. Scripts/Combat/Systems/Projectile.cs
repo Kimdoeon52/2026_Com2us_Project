@@ -32,6 +32,9 @@ public class Projectile : MonoBehaviour
     private ProjectileData data;
     private Animator animator;
     private bool facingRight;
+
+    /// <summary>날아가는 방향이 오른쪽인지 (폭발 이펙트 좌우 반전에 사용)</summary>
+    public bool FacingRight => facingRight;
     private int ageFrames;
     private bool exploded;
     private int impactAgeFrames;

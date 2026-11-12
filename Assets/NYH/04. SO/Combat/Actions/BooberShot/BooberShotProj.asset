@@ -28,6 +28,11 @@ MonoBehaviour:
   <HitRobots>k__BackingField: 1
   <HitBoss>k__BackingField: 1
   <TriggerFieldGimmicks>k__BackingField: 1
-  <ExplosionVfxPrefab>k__BackingField: {fileID: 0}
-  <VfxScalePerRadius>k__BackingField: 1
-  <VfxLifetimeSeconds>k__BackingField: 2
+  explosionVfx:
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    offset: {x: 0, y: 0.35}
+    rotation: 0
+    flipWithFacing: 1
+    scale: 0.5
+    playbackSpeed: 0
+    sortingOrderOffset: 1

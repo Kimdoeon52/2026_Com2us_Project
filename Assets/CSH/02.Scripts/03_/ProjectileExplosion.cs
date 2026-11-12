@@ -21,10 +21,9 @@ public static class ProjectileExplosion
         Vector2 center = pos;
         float radius = data.ExplosionRadius;
 
-        SpawnVfx(data, pos);
-        // ?? 연산자는 Unity 가짜 null을 못 걸러서 TryGetComponent를 쓴다
-
         ActionExecutor owner = projectile.Owner;
+        SpawnVfx(data, pos, projectile.FacingRight, owner);
+
         ActionData action = projectile.SourceAction;
         var hub = CombatDataHub.Instance;
         if (owner == null || action == null) return;
@@ -100,13 +99,21 @@ public static class ProjectileExplosion
         return false;
     }
 
-    private static void SpawnVfx(ExplosiveProjectileData data, Vector3 pos)
+    // 스킬 구간 이펙트와 같은 생성 규칙(ActionVfxPlayer.SpawnVisual). 기준점 = 폭발 위치, 방향 = 투사체 진행 방향,
+    // 정렬 기준 = 쏜 로봇 그림. 터지는 순간 1번 만들고 끝까지 재생 후 자동 제거 (순수 연출 — 판정과 무관)
+    private static void SpawnVfx(ExplosiveProjectileData data, Vector3 pos, bool facingRight, ActionExecutor owner)
     {
-        var prefab = data.ExplosionVfxPrefab;
-        if (prefab == null) return;
-        var vfx = Object.Instantiate(prefab, pos, Quaternion.identity);
-        if (data.VfxScalePerRadius > 0f) vfx.transform.localScale = prefab.transform.localScale * (data.ExplosionRadius * data.VfxScalePerRadius);
-        if (data.VfxLifetimeSeconds > 0f) Object.Destroy(vfx, data.VfxLifetimeSeconds);
+        var entries = data.ExplosionVfx;
+        if (entries == null || entries.Count == 0) return;
+
+        Renderer sortBase = owner != null ? RobotView.FindRenderer(owner) : null;
+        foreach (var e in entries)
+        {
+            if (e == null || e.prefab == null) continue;
+            var go = ActionVfxPlayer.SpawnVisual(e.prefab, pos, e.offset, e.rotation, facingRight,
+                                                 e.flipWithFacing, e.scale, e.playbackSpeed, sortBase, e.sortingOrderOffset);
+            ActionVfxPlayer.DestroyAfterNaturalLifetime(go);
+        }
     }
 
     private static void Log(ActionExecutor owner, string target, HitResolutionResult result) =>

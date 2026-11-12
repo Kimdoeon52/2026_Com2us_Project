@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31dadd9b23090b042af589e0ef2edac1, type: 3}
   m_Name: Boober
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   actionName: Boober
   source: 1
   requiredPart: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
   hitIntervalFrames: 0
   hitStopScale: 1
   animationClipName: Straight
-  activeClipName:
+  activeClipName: 
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -37,10 +37,25 @@ MonoBehaviour:
   groundOnly: 0
   projectile: {fileID: 11400000, guid: 18d9d0726b76a4a4c937850098d70f34, type: 2}
   projectileIntervalFrames: 15
-  projectileMuzzle: {x: 0.15, y: 0.27}
+  projectileMuzzle: {x: 0.43, y: 0.33}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 8369145054601909066, guid: 540a174685556db4897e6c5b5dc9cbe6, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 0
+    repeatStartOffsetFrames: 0
+    endMode: 0
+    offset: {x: 0.86, y: 0.52}
+    rotation: -90
+    followOwner: 0
+    flipWithFacing: 0
+    scale: 0.4
+    playbackSpeed: 0
+    sortingOrderOffset: 1
   perBoxDamage: 0
-  cooldownFrames: 480
+  perBoxSeparateHits: 0
+  cooldownFrames: 0
   cooldownOwner: {fileID: 0}
   cylinderCost: 0
   fallbackAction: {fileID: 0}

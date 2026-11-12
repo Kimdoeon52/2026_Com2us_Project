@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31dadd9b23090b042af589e0ef2edac1, type: 3}
   m_Name: BooberEnhanced
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   actionName: BooberEnhanced
   source: 1
   requiredPart: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
   hitIntervalFrames: 0
   hitStopScale: 1
   animationClipName: Straight
-  activeClipName:
+  activeClipName: 
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -39,8 +39,10 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
+  vfx: []
   perBoxDamage: 0
-  cooldownFrames: 480
+  perBoxSeparateHits: 0
+  cooldownFrames: 0
   cooldownOwner: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}
   cylinderCost: 1
   fallbackAction: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}

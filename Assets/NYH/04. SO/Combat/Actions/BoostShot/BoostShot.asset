@@ -92,6 +92,19 @@ MonoBehaviour:
     scale: 0.3
     playbackSpeed: 0.8
     sortingOrderOffset: 5
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 2
+    repeat: 1
+    repeatIntervalFrames: 6
+    repeatStartOffsetFrames: 4
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: 90
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.3
+    playbackSpeed: 0.8
+    sortingOrderOffset: 5
   perBoxDamage: 1
   perBoxSeparateHits: 1
   cooldownFrames: 60
@@ -270,7 +283,7 @@ MonoBehaviour:
   fan:
     pellets: 5
     spreadDegrees: 75
-    range: 2.5
+    range: 1.5
     thickness: 0.08
     steps: 0
     farScale: 0.5

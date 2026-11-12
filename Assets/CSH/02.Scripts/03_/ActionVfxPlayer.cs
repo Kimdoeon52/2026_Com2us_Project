@@ -132,27 +132,41 @@ public class ActionVfxPlayer : MonoBehaviour
     private void Spawn(ActionVfxEntry entry)
     {
         bool facingRight = mover == null || mover.FacingRight;
-        Vector3 pos = BoxResolver.ToWorldPoint(transform.position, entry.offset, facingRight);
+        GameObject go = SpawnVisual(entry.prefab, transform.position, entry.offset, entry.rotation, facingRight,
+                                    entry.flipWithFacing, entry.scale, entry.playbackSpeed,
+                                    RobotView.FindRenderer(this), entry.sortingOrderOffset);
+        live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
+    }
+
+    /// <summary>
+    /// 이펙트 프리팹 1개를 순수 연출용으로 생성한다. 스킬 구간 이펙트(ActionVfxEntry)와 폭발 이펙트(ExplosionVfxEntry)가 같이 쓴다.
+    /// origin + offset(오른쪽 기준, 좌우 반전 자동) 위치에 rotation/scale/playbackSpeed를 적용하고,
+    /// sortBase가 있으면 그 렌더러의 sorting layer/order + sortingOrderOffset 앞에 그린다.
+    /// </summary>
+    public static GameObject SpawnVisual(GameObject prefab, Vector3 origin, Vector2 offset, float rotation, bool facingRight,
+                                         bool flipWithFacing, float scale, float playbackSpeed,
+                                         Renderer sortBase, int sortingOrderOffset)
+    {
+        Vector3 pos = BoxResolver.ToWorldPoint(origin, offset, facingRight);
 
         // 좌우 반전(음수 스케일)과 같이 쓰면 각도도 반대로 돌려야 오른쪽 볼 때와 대칭이 된다
-        bool flipped = entry.flipWithFacing && !facingRight;
-        float angle = flipped ? -entry.rotation : entry.rotation;
-        Quaternion rot = entry.prefab.transform.rotation * Quaternion.Euler(0f, 0f, angle);
+        bool flipped = flipWithFacing && !facingRight;
+        float angle = flipped ? -rotation : rotation;
+        Quaternion rot = prefab.transform.rotation * Quaternion.Euler(0f, 0f, angle);
 
-        GameObject go = Instantiate(entry.prefab, pos, rot);
+        GameObject go = Instantiate(prefab, pos, rot);
         BossVfxHelper.ConfigureVisualOnly(go); // 콜라이더·리지드바디 끄고 Ignore Raycast로 격리 (판정 오염 방지)
 
-        Vector3 s = entry.prefab.transform.localScale * entry.scale;
+        Vector3 s = prefab.transform.localScale * scale;
         if (flipped) s.x = -s.x;
         go.transform.localScale = s;
 
-        var robotRenderer = RobotView.FindRenderer(this);
-        foreach (var r in go.GetComponentsInChildren<Renderer>(true))
+        if (sortBase != null)
         {
-            if (robotRenderer != null)
+            foreach (var r in go.GetComponentsInChildren<Renderer>(true))
             {
-                r.sortingLayerID = robotRenderer.sortingLayerID;
-                r.sortingOrder = robotRenderer.sortingOrder + entry.sortingOrderOffset + r.sortingOrder;
+                r.sortingLayerID = sortBase.sortingLayerID;
+                r.sortingOrder = sortBase.sortingOrder + sortingOrderOffset + r.sortingOrder;
             }
         }
 
@@ -161,7 +175,7 @@ public class ActionVfxPlayer : MonoBehaviour
         {
             var main = ps.main;
             main.scalingMode = ParticleSystemScalingMode.Hierarchy;
-            if (entry.playbackSpeed > 0f) main.simulationSpeed *= entry.playbackSpeed; // 인스펙터 + 버튼으로 생긴 항목은 0일 수 있음
+            if (playbackSpeed > 0f) main.simulationSpeed *= playbackSpeed; // 인스펙터 + 버튼으로 생긴 항목은 0일 수 있음
 
             // 카메라를 보는 빌보드(Alignment=View)는 Transform 회전을 무시하고 음수 스케일 반전과 섞이면 각도가 틀어진다.
             // 2D 화면 평면(XY)에 놓인 빌보드는 Local 정렬로 바꿔 Transform 회전·반전을 그대로 따르게 한다
@@ -169,7 +183,14 @@ public class ActionVfxPlayer : MonoBehaviour
                 ps.GetComponent<ParticleSystemRenderer>().alignment = ParticleSystemRenderSpace.Local;
         }
 
-        live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
+        return go;
+    }
+
+    /// <summary>끝까지 재생한 뒤 스스로 지워지게 한다 (endMode = KeepPlaying과 같음)</summary>
+    public static void DestroyAfterNaturalLifetime(GameObject go)
+    {
+        if (go == null) return;
+        Destroy(go, NaturalLifetime(go, go.GetComponentsInChildren<ParticleSystem>(true)));
     }
 
     private static bool IsViewAlignedBillboard(ParticleSystem ps)

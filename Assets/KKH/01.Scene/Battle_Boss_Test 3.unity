@@ -1664,8 +1664,8 @@ MonoBehaviour:
     totalAttackPower: 40
     finalMoveSpeed: 3
   BossSnapshot:
-    bossID: BOSS_REGION_01
-    bossName: "\uC815\uD06C \uD720\uB7EC"
+    bossID: BOSS_REGION_03
+    bossName: "\uCFC4\uC1FC"
     currentHp: 0
     maxHp: 0
     baseDefense: 0
@@ -4601,6 +4601,77 @@ MonoBehaviour:
   wobbleFrequency: 0.35
   topNoise: 0.2
   topPaint: -1
+--- !u!1001 &1175820273
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 5095273230462034699, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_Name
+      value: Boss3_Kyosho
+      objectReference: {fileID: 0}
+    - target: {fileID: 7296471864078433265, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: targetCamera
+      value: 
+      objectReference: {fileID: 1831109083}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 3.22
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.119
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+--- !u!1 &1175820274 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5095273230462034699, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+  m_PrefabInstance: {fileID: 1175820273}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1175820275 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 8248272241459916028, guid: 3ed489db795ff1e44989a72c746aaaa4, type: 3}
+  m_PrefabInstance: {fileID: 1175820273}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1193386794
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -4696,7 +4767,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerRobotObject: {fileID: 0}
-  enemyRobotObject: {fileID: 0}
+  enemyRobotObject: {fileID: 1175820274}
   currentState: 0
   betGold: 100
   timeLimit: 99
@@ -4923,7 +4994,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 24.243322, y: 9.917722}
+  m_LightCookieOffset: {x: 14.729965, y: 35.48044}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -5537,6 +5608,11 @@ MonoBehaviour:
     shaftsFollowTime: 1
     moonShafts: 0.6
   ownLook: 0
+  fixedLight: 0
+  fixedLightFrom: {fileID: 0}
+  fixedLightEuler: {x: 25, y: 205, z: 0}
+  fixedLightColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  fixedLightIntensity: 1
   steps: 16
   stepLength: 1.5
   maxDistance: 40
@@ -5685,6 +5761,52 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1750536340
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1750536342}
+  - component: {fileID: 1750536341}
+  m_Layer: 0
+  m_Name: KyoshoGimmickTester
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1750536341
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750536340}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd14190d04d595542be369016a8ceb80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  kyosho: {fileID: 0}
+  showOverlay: 1
+--- !u!4 &1750536342
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1750536340}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1754759559
 GameObject:
   m_ObjectHideFlags: 0
@@ -6021,18 +6143,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerA: {fileID: 1075138734}
-  playerB: {fileID: 0}
+  playerB: {fileID: 1175820275}
   minX: -3
   maxX: 3
   framingPadding: 1.5
   closeZ: -8
-  farZ: -12
+  farZ: -23
   minOrthoSize: 14
   maxOrthoSize: 1.9
   positionSmoothTime: 0.025
   zoomInSmoothTime: 0.2
   fixedY: 1
   fighterEdgeInset: 0.25
+  useArenaBounds: 1
+  arenaMinX: -7.75
+  arenaMaxX: 7.75
 --- !u!4 &1843611676 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7347677701256762536, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
@@ -6494,3 +6619,5 @@ SceneRoots:
   - {fileID: 1673169975}
   - {fileID: 1854844738}
   - {fileID: 993925539}
+  - {fileID: 1175820273}
+  - {fileID: 1750536342}

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_Kyosho_04_Fermata
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_KYOSHO_FERMATA
+  patternName: "\uD398\uB974\uB9C8\uD0C0"
+  description: "\uC0C1\uACF5 \uC74C\uD45C \uC815\uC9C0(\u2312) \uD6C4 \uC77C\uC81C
+    \uC218\uC9C1 \uB099\uD558. \uAE08\uAD00 \uC0DD\uC874 \uC2DC \uD0C4 +4\uBC1C &
+    \uC218\uD3C9 \uBE54 \uCD94\uAC00."
+  tellDuration: 0
+  postDelay: 0.54
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 4
+  partDurabilityDamage: 25
+  baseDamage: 200
+  damageRatio: 100
+  actionData: {fileID: 0}

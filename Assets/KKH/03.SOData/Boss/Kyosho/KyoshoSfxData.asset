@@ -1,0 +1,138 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4839304c598686f4d99581e216a3e155, type: 3}
+  m_Name: KyoshoSfxData
+  m_EditorClassIdentifier: 
+  masterSfxVolume: 0.85
+  bgmVolume: 0.4
+  stereoSpread: 0.5
+  bgmMain: {fileID: 0}
+  bgmPhase2: {fileID: 0}
+  beatDownbeat:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0
+  beatSub:
+    clips: []
+    volume: 0.45
+    pitchJitter: 0
+  conductWhoosh:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.05
+  conductTipFlash:
+    clips: []
+    volume: 0.65
+    pitchJitter: 0.02
+  percussionShockwave:
+    clips: []
+    volume: 0.9
+    pitchJitter: 0.04
+  staccatoCallNote:
+    clips: []
+    volume: 0.7
+    pitchJitter: 0
+  staccatoFire:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.04
+  stringsRapidFire:
+    clips: []
+    volume: 0.7
+    pitchJitter: 0.05
+  bloomSeedToss:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.04
+  bloomStemGrow:
+    clips: []
+    volume: 0.6
+    pitchJitter: 0.04
+  bloomStemCut:
+    clips: []
+    volume: 0.9
+    pitchJitter: 0.05
+  bloomOpenNote:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.03
+  bloomOpenTrumpet:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.03
+  bloomOpenCymbal:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.04
+  fermataSpawn:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.03
+  fermataHoldChord:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0
+  fermataSlamDrop:
+    clips: []
+    volume: 0.95
+    pitchJitter: 0.03
+  brassBeam:
+    clips: []
+    volume: 0.9
+    pitchJitter: 0.02
+  variationMelodyNotes:
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  - clips: []
+    volume: 1
+    pitchJitter: 0.03
+  variationCorrect:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0
+  variationFailDissonance:
+    clips: []
+    volume: 0.95
+    pitchJitter: 0
+  finaleGather:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0
+  finaleFullBlast:
+    clips: []
+    volume: 1
+    pitchJitter: 0
+  sectionBroken:
+    clips: []
+    volume: 0.95
+    pitchJitter: 0.04
+  encoreApplause:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0
+  encoreAwaken:
+    clips: []
+    volume: 0.9
+    pitchJitter: 0

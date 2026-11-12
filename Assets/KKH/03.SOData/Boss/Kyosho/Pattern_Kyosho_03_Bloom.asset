@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_Kyosho_03_Bloom
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_KYOSHO_BLOOM
+  patternName: "\uAC1C\uD654"
+  description: "\uBC14\uB2E5 \uD30C\uD3B8 \uC0B4\uD3EC \u2794 2~3\uBC15 \uC904\uAE30
+    \uC131\uC7A5(\uC808\uB2E8 \uAC00\uB2A5) \u2794 4\uBC15 \uB9CC\uAC1C \uACF5\uACA9."
+  tellDuration: 0
+  postDelay: 0.54
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 3
+  partDurabilityDamage: 25
+  baseDamage: 180
+  damageRatio: 100
+  actionData: {fileID: 0}

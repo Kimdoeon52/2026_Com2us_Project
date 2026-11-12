@@ -1,0 +1,279 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5095273230462034699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8248272241459916028}
+  - component: {fileID: 8380704832193260637}
+  - component: {fileID: 1513324330291625765}
+  - component: {fileID: 7296471864078433265}
+  - component: {fileID: 1356543104157595756}
+  - component: {fileID: 7084314016540671192}
+  - component: {fileID: 6352023204691458755}
+  - component: {fileID: 2795108970356153393}
+  - component: {fileID: 5261337838454003490}
+  - component: {fileID: 2243934719404535548}
+  m_Layer: 0
+  m_Name: Boss3_Kyosho
+  m_TagString: Boss
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8248272241459916028
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8380704832193260637
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c8c8f94bc229984a8884984d579e96d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  glitchAura:
+    on: 1
+    color: 0
+    amount: 1
+    glitchFps: 12
+    intensity: 1.6
+    glow: 0.5
+    glowSize: 3.5
+    fade: 0.6
+    onBlade: 0
+    zOffset: 0.05
+    shader: {fileID: 4800000, guid: 2ae15b4398713c446bf78d2fade78f2d, type: 3}
+  botCount: 16000
+  grain: 1
+  botWorldSize: 0.25
+  fill: 1.3
+  bulletClump: 24
+  freeSize: 1
+  botColors: []
+  grainNoise: 0.08
+  sparkleRatio: 0.04
+  sparkleTint:
+    serializedVersion: 2
+    rgba: 4294959470
+  backDepth: 9
+  backDim: 0.6
+  sandField: {x: 64, y: 18}
+  refillDelay: 0.35
+  viscosity: 8
+  slide: 0.6
+  floorFromTransform: 0
+  floorY: 0
+  gravity: 28
+  dark: 0
+  darkTint: 0.05
+  rimColor: {r: 1.6, g: 1.6, b: 1.7, a: 1}
+  shader: {fileID: 4800000, guid: 8bfd372b869f0304484be750d8900300, type: 3}
+  material: {fileID: 0}
+  castShadows: 1
+  receiveShadows: 1
+  flashColor: {r: 1, g: 1, b: 1, a: 1}
+  flashDecay: 5
+  freeGlow: 0
+  freeTint:
+    serializedVersion: 2
+    rgba: 4294967295
+  knightRefillPerFrame: 3000
+--- !u!58 &1513324330291625765
+CircleCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ForceSendLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ForceReceiveLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_ContactCaptureLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_CallbackLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_CompositeOperation: 0
+  m_CompositeOrder: 0
+  m_Offset: {x: 0, y: 0}
+  m_Radius: 2
+--- !u!114 &7296471864078433265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce43c90d3779e9048bfb2b842119cf6c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  masterData: {fileID: 11400000, guid: 599b363e39ccbff47b2af0a126e434eb, type: 2}
+  selectedDifficulty: 2
+  currentStateName: 
+  currentHpView: 0
+  isGroggyView: 0
+  clampToCameraBounds: 1
+  customVisualHalfWidth: 0.85
+  cameraEdgePadding: 0.25
+  targetCamera: {fileID: 0}
+  animationController: {fileID: 0}
+  swarm: {fileID: 8380704832193260637}
+  rhythmTable: {fileID: 11400000, guid: ce4514ec0f5a0e043bc6e86623bd7ca0, type: 2}
+  sfxData: {fileID: 11400000, guid: 4b4b2eac88556fc4ea0ea01242778086, type: 2}
+  blobShapeRatio: {x: 3.4, y: 2.7, z: 0.9}
+  fallbackArenaMinX: -7.75
+  fallbackArenaMaxX: 7.75
+  preferredDistance: 5.5
+  driftSpeed: 2
+  conductPattern: {fileID: 1356543104157595756}
+  staccatoPattern: {fileID: 7084314016540671192}
+  bloomPattern: {fileID: 6352023204691458755}
+  fermataPattern: {fileID: 2795108970356153393}
+  variationPattern: {fileID: 5261337838454003490}
+  finalePattern: {fileID: 2243934719404535548}
+--- !u!114 &1356543104157595756
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 665881eb38f6b81438edb0defbebe030, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: 834d28b945cc646448eeb2ef07f6a5d7, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+  batonLength: 4.6
+  tipLagLeadSeconds: 0.08
+  shockwaveSpeed: 10
+  shockwaveHeight: 0.6
+  shockwaveCoreDamage: 135
+--- !u!114 &7084314016540671192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 132b671cf5645f94eb5564c6fb588f53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: ee97797fa4f4d8e4895d55e4f469c653, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+  rhythmTable: {fileID: 0}
+  bonusCoreDamage: 115
+--- !u!114 &6352023204691458755
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ddbf05ec5278644ab4ebca6eaa0edcf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: e673e773a731cef43a520736395e4ad5, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+--- !u!114 &2795108970356153393
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c990d6bc1cb2ea3468094f2bcd608fc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: 2ac80b2253c5b4c4397723bcb3c2e4d1, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+  deployHeight: 5.5
+  slamDropSpeed: 28
+  brassExtraCoreDamage: 135
+  brassBeamCoreDamage: 155
+--- !u!114 &5261337838454003490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af373655b3821f340b2357c001f49edf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: 70a08f76f68eb944db77be27dbacc783, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+  rhythmTable: {fileID: 0}
+  dissonanceFailDamage: 240
+  hardSymbolMoveSpeed: 1.5
+--- !u!114 &2243934719404535548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5095273230462034699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be37297359160794588bdca005344e59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  patternData: {fileID: 11400000, guid: e26a95fdaa0f9404286dd1bd436d1bbf, type: 2}
+  tellBeats: 1
+  postDelayBeats: 1
+  safeZoneWidth: 2.2
+  pressureBulletDamage: 110

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_Kyosho_02_Staccato
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_KYOSHO_STACCATO
+  patternName: "\uC2A4\uD0C0\uCE74\uD1A0"
+  description: "1\uB9C8\uB514 \uBA38\uB9AC \uC704 \uC545\uBCF4 \uC608\uACE0 \u2794
+    2\uB9C8\uB514 \uB3D9\uC77C \uB9AC\uB4EC \uC9C1\uC120 \uC74C\uD45C \uD0C4 \uBC1C\uC0AC.
+    \uD604\uC545 \uC0DD\uC874 \uC2DC 16\uBD84\uC74C\uD45C \uCD94\uAC00."
+  tellDuration: 0
+  postDelay: 0.54
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 0
+  partDurabilityDamage: 25
+  baseDamage: 160
+  damageRatio: 100
+  actionData: {fileID: 0}

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Pattern_Kyosho_05_Finale
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_KYOSHO_FINALE
+  patternName: "\uD53C\uB0A0\uB808"
+  description: "\uC804 \uBD07 \uC9D1\uACB0 & \uC27C\uD45C \uBAA8\uB798 \uC548\uC804\uC9C0\uB300
+    \uC0DD\uC131 \u2794 4\uB9C8\uB514 \uC804 \uD654\uBA74 \uAD11\uC5ED \uD310\uC815
+    \u2794 \uC0DD\uC874 \uC2DC 4\uBC15 \uB9C8\uC9C0\uB9C9 \uADF8\uB85C\uAE30."
+  tellDuration: 0
+  postDelay: 0.54
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 1
+  partDurabilityDamage: 35
+  baseDamage: 260
+  damageRatio: 100
+  actionData: {fileID: 0}

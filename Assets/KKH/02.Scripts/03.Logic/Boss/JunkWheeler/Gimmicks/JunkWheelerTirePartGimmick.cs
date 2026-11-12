@@ -40,6 +40,10 @@ namespace RealSteel.Boss.JunkWheeler
         {
             base.OnPartDamaged(amount);
             Debug.Log($"<color=yellow>[JunkWheelerTirePartGimmick] 타이어 부위 피격! (잔여 내구도: {CurrentDurability}/{MaxDurability})</color>");
+            if (JunkWheelerSfx.Data != null && OwnerBoss != null)
+            {
+                JunkWheelerSfx.Play(JunkWheelerSfx.Data.hitRubber, OwnerBoss.transform.position);
+            }
         }
 
         protected override void OnPartBroken()
@@ -50,6 +54,12 @@ namespace RealSteel.Boss.JunkWheeler
             if (flatTireParticle != null)
             {
                 flatTireParticle.Play();
+            }
+
+            var d = JunkWheelerSfx.Data;
+            if (d != null && OwnerBoss != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(d.tireBreakFinal, d.driftDonut, OwnerBoss.transform.position, 1f, 1.28f, 1.0f);
             }
 
             if (IsPermanentlyBroken)

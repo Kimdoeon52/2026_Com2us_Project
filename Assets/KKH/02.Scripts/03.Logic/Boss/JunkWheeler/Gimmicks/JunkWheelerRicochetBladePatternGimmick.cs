@@ -84,6 +84,7 @@ namespace RealSteel.Boss.JunkWheeler
         private float _currentSpinInterval = 0.045f;
         private float _spinFrameTimer = 0f;
         private int _spinFrameIndex = 0;
+        private AudioSource _bladeSpinLoop;
 
         private static readonly int AnimHashDeploy = Animator.StringToHash("Boss_Blades_Deploy");
         private static readonly int AnimHashSpin = Animator.StringToHash("Boss_Blades_Spin");
@@ -410,6 +411,7 @@ namespace RealSteel.Boss.JunkWheeler
                     }
 
                     OwnerBoss.transform.position = nextPos;
+                    if (_bladeSpinLoop != null) JunkWheelerSfx.UpdateLoop(_bladeSpinLoop, nextPos);
 
                     // 바운스 발생 시 연출
                     if (bounced)
@@ -422,6 +424,7 @@ namespace RealSteel.Boss.JunkWheeler
                         if (bounceVfxCooldown <= 0f)
                         {
                             bounceVfxCooldown = 0.08f;
+                            if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.bladeBounce, JunkWheelerSfx.Data.hitArmor, nextPos, 1f, 1.25f, 0.9f);
                             float rotZ = Mathf.Atan2(impactNormal.y, impactNormal.x) * Mathf.Rad2Deg;
                             SpawnVfx(bounceImpactVfxPrefab, nextPos, Quaternion.Euler(0f, 0f, rotZ));
                         }
@@ -452,7 +455,7 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.Animation?.PlaySlamFall();
 
                 Vector3 fallStartPos = OwnerBoss.transform.position;
-                Vector3 landTargetPos = new Vector3(OwnerBoss.ClampToStageWallX(fallStartPos.x, 0.5f), _groundY, fallStartPos.z);
+                Vector3 landTargetPos = new Vector3(OwnerBoss.ClampToStageWallX(fallStartPos.x), _groundY, fallStartPos.z);
                 float fallDistY = Mathf.Abs(fallStartPos.y - _groundY);
                 if (fallDistY > 0.02f)
                 {
@@ -472,6 +475,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 // [VFX 3] 지면 착지 충격파 스폰
                 SpawnVfx(landImpactVfxPrefab, landTargetPos);
+                if (JunkWheelerSfx.Data != null) { JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamImpact, JunkWheelerSfx.Data.dribbleBounce4, landTargetPos, 1f, 0.95f, 0.95f); JunkWheelerSfx.DuckBgm(0.16f, 0.55f); }
 
                 // 5단계: 착지 임팩트 펀치 & 톱날 수납 & 롤 감속
                 OwnerBoss.Animation?.PlaySlamLand();
@@ -488,6 +492,7 @@ namespace RealSteel.Boss.JunkWheeler
                 // 휠 지면 구름 감속 연출 (0.40초)
                 if (OwnerBoss.Animation != null)
                 {
+                    if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.chargeDecelRoll, JunkWheelerSfx.Data.rollMove, OwnerBoss.transform.position, 1f, 0.78f, 0.7f);
                     await OwnerBoss.Animation.PlayRollDecelAsync(0.40f, 1.2f, 0.3f, token);
                 }
 
@@ -497,6 +502,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
             finally
             {
+                JunkWheelerSfx.Stop(ref _bladeSpinLoop);
                 _isActionRunning = false;
                 _isBladeSpinning = false;
                 if (_bladeVfxObj != null)
@@ -504,6 +510,7 @@ namespace RealSteel.Boss.JunkWheeler
                     _bladeVfxObj.transform.DOKill();
                     _bladeVfxObj.SetActive(false);
                     if (_bladeRenderer != null) _bladeRenderer.sprite = null;
+                    SetBladeSortingOrderOffset(+1);
                     _bladeVfxObj.transform.localPosition = bladeLocalOffset;
                     _bladeVfxObj.transform.localScale = Vector3.one;
                     _bladeVfxObj.transform.localRotation = Quaternion.identity;
@@ -534,15 +541,23 @@ namespace RealSteel.Boss.JunkWheeler
         {
             minY = _groundY + groundPaddingY;
             maxY = _groundY + 4.2f;
-            minX = -7.5f;
-            maxX = 7.5f;
+            minX = -6.65f;
+            maxX = 6.65f;
 
             if (OwnerBoss != null)
             {
-                // 좌우 경계: 스테이지 최대 카메라 확장 범위(StageWallBounds)를 사용하여 줌인 상태에서도 끝까지 튕기도록 보장
-                if (!OwnerBoss.TryGetStageWallBoundsX(out minX, out maxX, cameraPaddingX))
+                float visualHalfWidth = OwnerBoss.GetBossVisualHalfWidth();
+                float totalPadX = Mathf.Max(cameraPaddingX, visualHalfWidth);
+
+                // 고정 전장 벽(StageWallBoundsX)을 최우선으로 사용하여 전장 전체 폭을 역동적으로 튕기되,
+                // CombatCamera가 farZ 확장을 통해 전장 전체를 화면 안에 담도록 동기화함.
+                if (!OwnerBoss.TryGetStageWallBoundsX(out minX, out maxX, totalPadX))
                 {
-                    OwnerBoss.TryGetCameraBoundsX(out minX, out maxX, cameraPaddingX);
+                    if (!OwnerBoss.TryGetCameraBoundsX(out minX, out maxX, totalPadX))
+                    {
+                        minX = -7.75f + totalPadX;
+                        maxX = 7.75f - totalPadX;
+                    }
                 }
 
                 Camera cam = OwnerBoss.TargetCamera;
@@ -621,6 +636,7 @@ namespace RealSteel.Boss.JunkWheeler
                     // [VFX 2] 플레이어 피격 참격 이펙트 스폰
                     Vector3 hitPos = (OwnerBoss.transform.position + player.position) * 0.5f;
                     SpawnVfx(bladeHitVfxPrefab, hitPos);
+                    if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.bladeSlashHit, JunkWheelerSfx.Data.hitArmor, hitPos, 1f, 1.3f, 1.0f);
                     return true;
                 }
             }
@@ -629,7 +645,7 @@ namespace RealSteel.Boss.JunkWheeler
         }
 
         protected override void OnInterrupted(InterruptReason reason)
-        {
+        {;
             base.OnInterrupted(reason);
             CleanupBladePattern();
         }
@@ -645,6 +661,7 @@ namespace RealSteel.Boss.JunkWheeler
             StopTellVisuals();
             _isActionRunning = false;
             _isBladeSpinning = false;
+            JunkWheelerSfx.Stop(ref _bladeSpinLoop);
             if (_currentTween != null && _currentTween.IsActive())
             {
                 _currentTween.Kill();
@@ -655,6 +672,7 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeVfxObj.transform.DOKill();
                 _bladeVfxObj.SetActive(false);
                 if (_bladeRenderer != null) _bladeRenderer.sprite = null;
+                SetBladeSortingOrderOffset(+1);
                 _bladeVfxObj.transform.localPosition = bladeLocalOffset;
                 _bladeVfxObj.transform.localScale = Vector3.one;
                 _bladeVfxObj.transform.localRotation = Quaternion.identity;
@@ -673,11 +691,26 @@ namespace RealSteel.Boss.JunkWheeler
         // ========================================================================
         // 블레이드 시각화 서브시스템
         // ========================================================================
+        private void SetBladeSortingOrderOffset(int offset)
+        {
+            if (_bladeRenderer == null) return;
+            if (OwnerBoss != null && OwnerBoss.Animation != null && OwnerBoss.Animation.SpriteRenderer != null)
+            {
+                _bladeRenderer.sortingLayerID = OwnerBoss.Animation.SpriteRenderer.sortingLayerID;
+                _bladeRenderer.sortingOrder = OwnerBoss.Animation.SpriteRenderer.sortingOrder + offset;
+            }
+            else
+            {
+                _bladeRenderer.sortingOrder = offset;
+            }
+        }
+
         private void EnsureBladeVfxObject()
         {
             if (_bladeVfxObj != null)
             {
                 _bladeVfxObj.transform.localPosition = bladeLocalOffset;
+                SetBladeSortingOrderOffset(+1);
                 return;
             }
 
@@ -704,16 +737,8 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeRenderer = _bladeVfxObj.AddComponent<SpriteRenderer>();
             }
 
-            // 소팅 오더 설정: 보스보다 한 레이어 앞
-            if (OwnerBoss != null && OwnerBoss.Animation != null && OwnerBoss.Animation.SpriteRenderer != null)
-            {
-                _bladeRenderer.sortingLayerID = OwnerBoss.Animation.SpriteRenderer.sortingLayerID;
-                _bladeRenderer.sortingOrder = OwnerBoss.Animation.SpriteRenderer.sortingOrder + 1;
-            }
-            else
-            {
-                _bladeRenderer.sortingOrder = 1;
-            }
+            // 소팅 오더 설정: 기본(전개/회전)은 보스보다 한 레이어 앞
+            SetBladeSortingOrderOffset(+1);
 
             _bladeAnimator = _bladeVfxObj.GetComponent<Animator>();
             _bladeVfxObj.SetActive(false);
@@ -768,6 +793,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             // Step 1: Slide out from wheel + Scale 0 -> 1
             _isBladeSpinning = false;
+            SetBladeSortingOrderOffset(+1);
             _bladeVfxObj.transform.DOKill();
             _bladeVfxObj.transform.localRotation = Quaternion.identity;
             Vector3 hiddenLocalPos = bladeLocalOffset - new Vector3(0f, 0.18f, 0f);
@@ -775,6 +801,7 @@ namespace RealSteel.Boss.JunkWheeler
             _bladeVfxObj.transform.localScale = Vector3.zero;
 
             float deployDuration = 0.24f;
+            if (JunkWheelerSfx.Data != null && OwnerBoss != null) JunkWheelerSfx.Play(JunkWheelerSfx.Data.bladeDeploy, OwnerBoss.transform.position);
             _ = _bladeVfxObj.transform.DOLocalMove(bladeLocalOffset, deployDuration).SetEase(Ease.OutCubic);
             _ = _bladeVfxObj.transform.DOScale(Vector3.one, deployDuration).SetEase(Ease.OutBack);
 
@@ -833,6 +860,10 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             _isBladeSpinning = true;
+            if (_bladeSpinLoop == null && JunkWheelerSfx.Data != null && OwnerBoss != null)
+            {
+                _bladeSpinLoop = JunkWheelerSfx.LoopOrFallback(JunkWheelerSfx.Data.bladeSpinLoop, JunkWheelerSfx.Data.slamHover, OwnerBoss.transform.position, 1f, 1.38f, 0.8f);
+            }
         }
 
         private async UniTask PlayBladeRetractAsync(CancellationToken token)
@@ -843,11 +874,19 @@ namespace RealSteel.Boss.JunkWheeler
             // 스핀 루프 정지
             _isBladeSpinning = false;
 
-            // 1단계: 휠 안쪽으로 슬라이드 인 + 스케일 1 -> 0 (InBack 쏙 빨려 들어감 연출)
+            // 보스 뒷면으로 삽입되도록 소팅 오더를 보스 뒤(-1)로 전환하고 Z축도 보스 뒤쪽(+0.05f)으로 이동
+            SetBladeSortingOrderOffset(-1);
+            float backZ = Mathf.Abs(bladeLocalOffset.z) > 0.001f ? Mathf.Abs(bladeLocalOffset.z) : 0.05f;
+            Vector3 currentLocal = _bladeVfxObj.transform.localPosition;
+            _bladeVfxObj.transform.localPosition = new Vector3(currentLocal.x, currentLocal.y, backZ);
+
+            // 1단계: 보스 뒷면 안쪽으로 슬라이드 인 + 스케일 1 -> 0 (InBack 쏙 빨려 들어감 연출)
             _bladeVfxObj.transform.DOKill();
             _bladeVfxObj.transform.localRotation = Quaternion.identity;
             float retractDuration = 0.22f;
-            Vector3 hiddenLocalPos = bladeLocalOffset - new Vector3(0f, 0.18f, 0f);
+            JunkWheelerSfx.Stop(ref _bladeSpinLoop);
+            if (JunkWheelerSfx.Data != null && OwnerBoss != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.bladeRetract, JunkWheelerSfx.Data.bladeDeploy, OwnerBoss.transform.position, 1f, 0.78f, 0.75f);
+            Vector3 hiddenLocalPos = new Vector3(bladeLocalOffset.x, bladeLocalOffset.y - 0.18f, backZ);
             _ = _bladeVfxObj.transform.DOLocalMove(hiddenLocalPos, retractDuration).SetEase(Ease.InQuad);
             _ = _bladeVfxObj.transform.DOScale(Vector3.zero, retractDuration).SetEase(Ease.InBack);
 
@@ -875,9 +914,10 @@ namespace RealSteel.Boss.JunkWheeler
                 await UniTask.Delay(TimeSpan.FromSeconds(retractDuration), cancellationToken: token);
             }
 
-            // 3단계: 수납 완료 즉시 스프라이트 및 오브젝트 클리어 (감속 모션 중 찌꺼기 방지)
+            // 3단계: 수납 완료 즉시 스프라이트 및 오브젝트 클리어 (감속 모션 중 찌꺼기 방지 및 다음 전개 시 원복)
             _bladeRenderer.sprite = null;
             _bladeVfxObj.SetActive(false);
+            SetBladeSortingOrderOffset(+1);
             _bladeVfxObj.transform.localPosition = bladeLocalOffset;
             _bladeVfxObj.transform.localScale = Vector3.one;
             _bladeVfxObj.transform.localRotation = Quaternion.identity;

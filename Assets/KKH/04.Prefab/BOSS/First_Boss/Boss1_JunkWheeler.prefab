@@ -190,6 +190,8 @@ MonoBehaviour:
   animationController: {fileID: 8812345678901234501}
   phase2FireVFX: {fileID: 2637285693673319944, guid: a5a94b907892ea141ae65d635f9cf7ee, type: 3}
   defeatExplosionVFX: {fileID: 6763835713075931532, guid: 4c2eec274044ee944b7e81b11ff89f62, type: 3}
+  sfxData: {fileID: 11400000, guid: bf020cfbeba4feb4ca17aa8c3e80a6a9, type: 2}
+  playIdleEngineLoop: 1
   tirePartGimmick: {fileID: 3468832547808010039}
   chargePatternGimmick: {fileID: 8211426203969925326}
   barragePatternGimmick: {fileID: 512307155976557277}
@@ -491,3 +493,4 @@ MonoBehaviour:
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
   tellCrackVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}
+  dribbleVfxOffset: {x: 0, y: 0, z: 0}

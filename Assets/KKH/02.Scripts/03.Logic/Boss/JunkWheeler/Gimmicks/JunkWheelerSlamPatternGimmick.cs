@@ -50,6 +50,7 @@ namespace RealSteel.Boss.JunkWheeler
         private Tweener _currentTween;
         private float _groundY;
         private Transform _playerTransform;
+        private AudioSource _slamHoverLoop;
 
         public bool IsSlamActive { get; private set; } = false;
         public int CurrentSlamRound { get; private set; } = 0;
@@ -61,6 +62,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss != null)
             {
                 _groundY = OwnerBoss.GroundY;
+                JunkWheelerSfx.Stop(ref _slamHoverLoop);
                 OwnerBoss.SnapToGroundY();
                 OwnerBoss.FacePlayer();
             }
@@ -72,6 +74,8 @@ namespace RealSteel.Boss.JunkWheeler
         public override void OnTellStarted()
         {
             OwnerBoss?.Animation?.PlayChargeLoop();
+            var dSfx = JunkWheelerSfx.Data;
+            if (dSfx != null && OwnerBoss != null) JunkWheelerSfx.PlayOrFallback(dSfx.chargeTell, dSfx.driftDonut, OwnerBoss.transform.position, 0.9f, 0.95f, 0.5f);
         }
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
@@ -98,6 +102,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                     // [도약 VFX]: 바닥 도약 먼지 연출
                     SpawnVfx(jumpDustVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
+                    if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamLaunch, JunkWheelerSfx.Data.slamHover, OwnerBoss.transform.position, 1f, 1.25f, 0.85f);
 
                     // [텐션 2단계]: 공중 도약 및 도약 애니메이션
                     if (OwnerBoss.Animation != null)
@@ -110,6 +115,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                     // 상승 완료 후 공중 추적 구간: 정지 화면 대신 공중 회전 루프
                     OwnerBoss.Animation?.PlayRollBarrage();
+                    if (JunkWheelerSfx.Data != null) { JunkWheelerSfx.Stop(ref _slamHoverLoop); _slamHoverLoop = JunkWheelerSfx.LoopOrFallback(JunkWheelerSfx.Data.slamHover, null, OwnerBoss.transform.position, 1f, 1f, 0.85f); }
 
                     // 2단계: 1초간 플레이어 X좌표 실시간 추적 (그림자/타겟팅)
                     float elapsed = 0f;
@@ -124,7 +130,7 @@ namespace RealSteel.Boss.JunkWheeler
                             float newX = Mathf.MoveTowards(currentX, targetX, 7.0f * Time.deltaTime);
                             if (OwnerBoss != null)
                             {
-                                newX = OwnerBoss.ClampToStageWallX(newX, 0.50f);
+                                newX = OwnerBoss.ClampToStageWallX(newX);
                                 // 추적 방향으로 스프라이트 반전
                                 float dirX = targetX >= currentX ? 1f : -1f;
                                 OwnerBoss.Animation?.FaceDirection(dirX);
@@ -132,6 +138,7 @@ namespace RealSteel.Boss.JunkWheeler
                             OwnerBoss.transform.position = new Vector3(newX, OwnerBoss.transform.position.y, OwnerBoss.transform.position.z);
                         }
 
+                        if (_slamHoverLoop != null) JunkWheelerSfx.UpdateLoop(_slamHoverLoop, OwnerBoss.transform.position);
                         elapsed += Time.deltaTime;
                         await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                     }
@@ -151,6 +158,8 @@ namespace RealSteel.Boss.JunkWheeler
                     }
 
                     // 4단계: 급강하 내려찍기 (지면 충돌) - 실제 낙하 시점에 낙하 루프 재생
+                    JunkWheelerSfx.Stop(ref _slamHoverLoop);
+                    if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamDrop, JunkWheelerSfx.Data.slamHover, OwnerBoss.transform.position, 1f, 1.32f, 0.9f);
                     OwnerBoss.Animation?.PlaySlamFall();
                     _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                     await _currentTween.ToUniTask(cancellationToken: token);
@@ -172,6 +181,7 @@ namespace RealSteel.Boss.JunkWheeler
                     }
 
                     // 고철 못판이 없으면 착지 순간 즉시 플레이어 피격 판정 (쾅! 충돌과 동시에 대미지 적용)
+                    if (JunkWheelerSfx.Data != null) { JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamImpact, JunkWheelerSfx.Data.dribbleBounce4, OwnerBoss.transform.position, 1f, 0.92f, 1.05f); JunkWheelerSfx.DuckBgm(0.16f, 0.55f); }
                     CheckPlayerHit();
 
                     // 5단계: 착지 충격 연출 (바닥 찌그러짐 및 착지 모션)
@@ -322,6 +332,7 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (OwnerBoss != null)
             {
+                JunkWheelerSfx.Stop(ref _slamHoverLoop);
                 OwnerBoss.SnapToGroundY();
             }
         }

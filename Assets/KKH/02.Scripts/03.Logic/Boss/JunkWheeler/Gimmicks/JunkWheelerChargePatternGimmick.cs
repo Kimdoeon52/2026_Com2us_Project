@@ -118,6 +118,8 @@ namespace RealSteel.Boss.JunkWheeler
         private bool _hasHitPlayer = false;
         private float _chargeDirection = 1.0f; // 1.0: 우측, -1.0: 좌측
         private Transform _playerTransform;
+        private AudioSource _chargeTellLoop;
+        private AudioSource _chargeRushLoop;
 
         public void ApplyTireBrokenDebuff(bool debuffed)
         {
@@ -201,6 +203,14 @@ namespace RealSteel.Boss.JunkWheeler
             _isTellVisualRunning = true;
             float elapsed = 0f;
 
+            var sfx = JunkWheelerSfx.Data;
+            if (sfx != null)
+            {
+                JunkWheelerSfx.Stop(ref _chargeTellLoop);
+                var tellFallback = sfx.driftDonut.HasValidClip ? sfx.driftDonut : sfx.rollMove;
+                _chargeTellLoop = JunkWheelerSfx.LoopOrFallback(sfx.chargeTell, tellFallback, _baseWorldPosBeforeTell, 0.85f, 0.85f, 0.85f);
+            }
+
             try
             {
                 while (elapsed < duration)
@@ -209,6 +219,10 @@ namespace RealSteel.Boss.JunkWheeler
 
                     float progress = Mathf.Clamp01(elapsed / duration); // 0 ~ 1
                     float curvedT = Mathf.Pow(progress, shakeCurveExponent); // 비선형 지수 가속 (t^2.8)
+                    if (_chargeTellLoop != null)
+                    {
+                        JunkWheelerSfx.UpdateLoop(_chargeTellLoop, OwnerBoss.transform.position, Mathf.Lerp(0.85f, 1.45f, curvedT));
+                    }
 
                     // 1. 비선형 진동 계산 (X축 바퀴 헛돔 진동 + 미세 Y축 떨림)
                     float curAmp = Mathf.Lerp(minShakeStrength, maxShakeStrength, curvedT);
@@ -288,7 +302,7 @@ namespace RealSteel.Boss.JunkWheeler
             Vector3 pullBackPosition = startPosition - new Vector3(_chargeDirection * 0.3f, 0f, 0f);
             if (OwnerBoss != null)
             {
-                pullBackPosition.x = OwnerBoss.ClampToStageWallX(pullBackPosition.x, 0.5f);
+                pullBackPosition.x = OwnerBoss.ClampToStageWallX(pullBackPosition.x);
             }
             _currentTween = OwnerBoss.transform.DOMoveX(pullBackPosition.x, anticipatedDuration).SetEase(Ease.OutQuad);
             await _currentTween.ToUniTask(cancellationToken: token);
@@ -317,6 +331,14 @@ namespace RealSteel.Boss.JunkWheeler
             // [VFX 1] 돌진 발사 궤적 이펙트 스폰
             Quaternion launchRot = Quaternion.Euler(0f, 0f, _chargeDirection > 0f ? 0f : 180f);
             SpawnVfx(chargeLaunchVfxPrefab, OwnerBoss.transform.position, launchRot);
+
+            var sfx = JunkWheelerSfx.Data;
+            if (sfx != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(sfx.chargeRush, sfx.rollMove, OwnerBoss.transform.position, 1f, 1.35f, 1.05f);
+                JunkWheelerSfx.Stop(ref _chargeRushLoop);
+                _chargeRushLoop = JunkWheelerSfx.LoopOrFallback(sfx.rollMove, null, OwnerBoss.transform.position, 1.25f, 1f, 0.8f);
+            }
 
             // 돌진 발사 순간 애니메이션 ➔ 주행 루프
             if (OwnerBoss.Animation != null)
@@ -354,7 +376,7 @@ namespace RealSteel.Boss.JunkWheeler
                     }
                 }
 
-                // 매 프레임 현재 카메라 뷰포트의 실제 좌/우 끝 벽 좌표를 실시간 조회
+                // 매 프레임 전장 고정 벽 또는 물리적 Wall 레이어 좌/우 끝 좌표를 조회
                 float dynamicWallX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
                 float nextX = OwnerBoss.transform.position.x + (_chargeDirection * finalSpeed * dt);
 
@@ -369,8 +391,11 @@ namespace RealSteel.Boss.JunkWheeler
                 }
 
                 OwnerBoss.transform.position = new Vector3(nextX, OwnerBoss.transform.position.y, OwnerBoss.transform.position.z);
+                if (_chargeRushLoop != null) JunkWheelerSfx.UpdateLoop(_chargeRushLoop, OwnerBoss.transform.position);
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
             }
+
+            JunkWheelerSfx.Stop(ref _chargeRushLoop);
 
             if (hitExplosive)
             {
@@ -379,6 +404,12 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 4단계: 반대편 벽 충돌 임팩트 및 탄성 반동(Elastic Rebound)
             Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 접촉! (콰앙!)</color>");
+
+            if (sfx != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(sfx.chargeWallSlam, sfx.chargeHitPlayer, OwnerBoss.transform.position, 1f, 0.82f, 1.15f);
+                JunkWheelerSfx.DuckBgm(0.18f, 0.5f);
+            }
 
             // [VFX 2] 벽 충돌 폭발/충격파 이펙트 스폰 (벽면 안쪽을 향하도록 회전)
             Quaternion wallRot = Quaternion.Euler(0f, 0f, _chargeDirection > 0f ? 180f : 0f);
@@ -402,7 +433,12 @@ namespace RealSteel.Boss.JunkWheeler
             float reboundTargetX = wallContactX - (_chargeDirection * reboundDistance);
             if (OwnerBoss != null)
             {
-                reboundTargetX = OwnerBoss.ClampToStageWallX(reboundTargetX, 0.5f);
+                reboundTargetX = OwnerBoss.ClampToStageWallX(reboundTargetX);
+            }
+
+            if (sfx != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(sfx.chargeRebound, sfx.dribbleBounce3, OwnerBoss.transform.position, 1f, 1.08f, 0.72f);
             }
 
             _currentTween = OwnerBoss.transform.DOMoveX(reboundTargetX, reboundDuration).SetEase(Ease.OutQuad);
@@ -413,6 +449,10 @@ namespace RealSteel.Boss.JunkWheeler
 
             // [Step 4-C] 지면 굴림(Roll) 관성 감속 (0.40s)
             // 튕겨 나온 후 바퀴가 천천히 굴러가며 잔여 관성을 자연스럽게 소모함
+            if (sfx != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(sfx.chargeDecelRoll, sfx.rollMove, OwnerBoss.transform.position, 1f, 0.78f, 0.7f);
+            }
             if (OwnerBoss.Animation != null)
             {
                 await OwnerBoss.Animation.PlayRollDecelAsync(rollDecelDuration, 1.2f, 0.3f, token);
@@ -513,6 +553,8 @@ namespace RealSteel.Boss.JunkWheeler
                     _hasHitPlayer = true;
                     if (ApplyDamageToPlayer(hit.gameObject))
                     {
+                        var d = JunkWheelerSfx.Data;
+                        if (d != null) JunkWheelerSfx.PlayOrFallback(d.chargeHitPlayer, d.hitArmor, hit.transform.position);
                         // [VFX 3] 실제로 피해가 적용된 경우에만 플레이어 피격 히트 이펙트 스폰
                         SpawnVfx(playerHitVfxPrefab, hit.transform.position);
                     }
@@ -541,7 +583,8 @@ namespace RealSteel.Boss.JunkWheeler
 
         private float CalculateTargetWallX(float currentX, float directionX)
         {
-            float pad = wallEdgePadding > 0f ? wallEdgePadding : 0.50f;
+            float visualHalfWidth = OwnerBoss != null ? OwnerBoss.GetBossVisualHalfWidth() : 1.10f;
+            float pad = Mathf.Max(wallEdgePadding, visualHalfWidth);
 
             // 1. CombatCamera 줌아웃(farZ) 및 스테이지 한계(minX/maxX)가 반영된 실제 전장 카메라 벽 좌표를 최우선 획득
             float cameraWallX = currentX + (directionX * Mathf.Max(20f, maxMapDistance));
@@ -632,6 +675,8 @@ namespace RealSteel.Boss.JunkWheeler
 
         private void StopTellVisuals()
         {
+            JunkWheelerSfx.Stop(ref _chargeTellLoop);
+            JunkWheelerSfx.Stop(ref _chargeRushLoop);
             if (_tellVisualCts != null)
             {
                 if (!_tellVisualCts.IsCancellationRequested) _tellVisualCts.Cancel();

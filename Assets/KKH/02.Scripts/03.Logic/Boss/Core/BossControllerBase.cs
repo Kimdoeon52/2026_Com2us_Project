@@ -7,6 +7,7 @@ using RealSteel.Boss.Visual;
 
 namespace RealSteel.Boss.Core
 {
+    [DefaultExecutionOrder(500)]
     public abstract class BossControllerBase : MonoBehaviour
     {
         [Header("1. 보스 데이터 원장 에셋")]
@@ -23,7 +24,10 @@ namespace RealSteel.Boss.Core
 
         [Header("3. Camera Bounds (X-Axis)")]
         [SerializeField] protected bool clampToCameraBounds = true;
-        [SerializeField] protected float cameraEdgePadding = 0.50f;
+        [Tooltip("인스펙터에서 지정하는 보스 가로 외형 반폭 (기본 0.85m, 보스 본체 Sprite/Collider와 자동 비교)")]
+        [SerializeField] protected float customVisualHalfWidth = 0.85f;
+        [Tooltip("벽/화면 가장자리와 보스 외형 사이의 최소 안전 마진 (m)")]
+        [SerializeField] protected float cameraEdgePadding = 0.25f;
         [SerializeField] protected Camera targetCamera;
         protected CombatCamera _cachedCombatCamera;
         private float _initialGroundY;
@@ -164,11 +168,32 @@ namespace RealSteel.Boss.Core
             }
         }
 
+        /// <summary>
+        /// 보스의 시각적/물리적 가로 반폭(Half-Width)을 반환함 (본체 Collider2D 및 주 SpriteRenderer bounds만 고려하여 VFX 오염 방지).
+        /// </summary>
+        public virtual float GetBossVisualHalfWidth()
+        {
+            float halfWidth = customVisualHalfWidth > 0f ? customVisualHalfWidth : 0.85f;
+
+            if (TryGetComponent<Collider2D>(out var col) && col.enabled)
+            {
+                halfWidth = Mathf.Max(halfWidth, col.bounds.extents.x);
+            }
+
+            if (Animation != null && Animation.SpriteRenderer != null && Animation.SpriteRenderer.enabled)
+            {
+                halfWidth = Mathf.Max(halfWidth, Animation.SpriteRenderer.bounds.extents.x);
+            }
+
+            return halfWidth + cameraEdgePadding;
+        }
+
         protected virtual void LateUpdate()
         {
             if (clampToCameraBounds)
             {
-                // CombatCamera보다 먼저 LateUpdate가 실행되더라도 카메라 줌아웃을 막지 않도록 스테이지 최대 카메라 경계로 보정
+                // CombatCamera가 최대 줌아웃(farZ)으로 전장 전체를 커버하므로,
+                // 보스는 좁은 줌인 뷰포트가 아닌 고정 전장 벽(StageWallBounds) 내로 제한해 넓은 가동 폭을 보장함.
                 float clampedX = ClampToStageWallX(transform.position.x);
                 if (!Mathf.Approximately(clampedX, transform.position.x))
                 {
@@ -182,7 +207,7 @@ namespace RealSteel.Boss.Core
         /// </summary>
         public bool TryGetCameraBoundsX(out float minX, out float maxX, float padding = -1f)
         {
-            float pad = padding >= 0f ? padding : cameraEdgePadding;
+            float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
             Camera cam = TargetCamera;
 
             if (cam == null)
@@ -215,44 +240,43 @@ namespace RealSteel.Boss.Core
         /// </summary>
         public bool TryGetStageWallBoundsX(out float minX, out float maxX, float padding = -1f)
         {
-            float pad = padding >= 0f ? padding : cameraEdgePadding;
+            float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
             Camera cam = TargetCamera;
             var combatCam = TargetCombatCamera;
 
+            if (combatCam != null && combatCam.UseArenaBounds)
+            {
+                minX = combatCam.ArenaMinX + pad;
+                maxX = combatCam.ArenaMaxX - pad;
+                if (minX > maxX)
+                {
+                    float mid = (combatCam.ArenaMinX + combatCam.ArenaMaxX) * 0.5f;
+                    minX = mid;
+                    maxX = mid;
+                }
+                return true;
+            }
+
             if (cam != null && combatCam != null)
             {
-                var minXField = typeof(CombatCamera).GetField("minX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var maxXField = typeof(CombatCamera).GetField("maxX", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var farZField = typeof(CombatCamera).GetField("farZ", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                var maxOrthoField = typeof(CombatCamera).GetField("maxOrthoSize", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-
-                float camMinCenter = minXField != null ? (float)minXField.GetValue(combatCam) : -3f;
-                float camMaxCenter = maxXField != null ? (float)maxXField.GetValue(combatCam) : 3f;
+                float camMinCenter = combatCam.MinCenterX;
+                float camMaxCenter = combatCam.MaxCenterX;
 
                 float maxHalfWidth;
                 if (cam.orthographic)
                 {
-                    float maxOrtho = maxOrthoField != null ? (float)maxOrthoField.GetValue(combatCam) : cam.orthographicSize;
+                    float maxOrtho = combatCam.MaxOrthoSize;
                     maxHalfWidth = Mathf.Max(cam.orthographicSize, maxOrtho) * cam.aspect;
                 }
                 else
                 {
-                    float farZ = farZField != null ? (float)farZField.GetValue(combatCam) : cam.transform.position.z;
+                    float farZ = combatCam.FarZ;
                     float maxDist = Mathf.Max(Mathf.Abs(cam.transform.position.z - transform.position.z), Mathf.Abs(farZ - transform.position.z));
                     maxHalfWidth = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * maxDist * cam.aspect;
                 }
 
-                // 현재 순간 카메라 경계와 최대 스테이지 경계 중 더 넓은 범위를 허용하여 카메라가 줌아웃하며 따라올 수 있게 보장
-                if (TryGetCameraBoundsX(out float curMinX, out float curMaxX, pad))
-                {
-                    minX = Mathf.Min(curMinX, camMinCenter - maxHalfWidth + pad);
-                    maxX = Mathf.Max(curMaxX, camMaxCenter + maxHalfWidth - pad);
-                }
-                else
-                {
-                    minX = camMinCenter - maxHalfWidth + pad;
-                    maxX = camMaxCenter + maxHalfWidth - pad;
-                }
+                minX = camMinCenter - maxHalfWidth + pad;
+                maxX = camMaxCenter + maxHalfWidth - pad;
                 return true;
             }
 
@@ -261,7 +285,8 @@ namespace RealSteel.Boss.Core
 
         public float ClampToStageWallX(float desiredX, float padding = -1f)
         {
-            if (TryGetStageWallBoundsX(out float minX, out float maxX, padding))
+            float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
+            if (TryGetStageWallBoundsX(out float minX, out float maxX, pad))
             {
                 return Mathf.Clamp(desiredX, minX, maxX);
             }
@@ -270,7 +295,8 @@ namespace RealSteel.Boss.Core
 
         public float ClampToCameraX(float desiredX, float padding = -1f)
         {
-            if (TryGetCameraBoundsX(out float minX, out float maxX, padding))
+            float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
+            if (TryGetCameraBoundsX(out float minX, out float maxX, pad))
             {
                 return Mathf.Clamp(desiredX, minX, maxX);
             }

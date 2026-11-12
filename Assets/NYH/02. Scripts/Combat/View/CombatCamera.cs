@@ -54,6 +54,20 @@ public class CombatCamera : MonoBehaviour
     [Tooltip("화면 좌우 끝선에서 파이터 중심이 멈추는 거리. 올리면 캐릭터가 화면 끝에서 안쪽에서 멈추고, 0이면 캐릭터 중심이 끝선까지 간다. 몸 반폭 정도가 적당")]
     [SerializeField] private float fighterEdgeInset = 0.25f;
 
+    [Header("전장 고정 경계 (선택 — 보스전 등 넓은 아레나용)")]
+    [Tooltip("체크 시 카메라 최대 줌아웃(farZ)과 연동하여 고정된 전장 벽(arenaMinX ~ arenaMaxX) 안으로 파이터와 보스를 제한함")]
+    [SerializeField] private bool useArenaBounds = false;
+    [SerializeField] private float arenaMinX = -7.75f;
+    [SerializeField] private float arenaMaxX = 7.75f;
+
+    public bool UseArenaBounds => useArenaBounds;
+    public float ArenaMinX => arenaMinX;
+    public float ArenaMaxX => arenaMaxX;
+    public float MinCenterX => minX;
+    public float MaxCenterX => maxX;
+    public float FarZ => farZ;
+    public float MaxOrthoSize => maxOrthoSize;
+
     private Camera cam;
     // SmoothDamp 함수가 "지금 속도가 얼마인지"를 계속 참조해야 부드러운 감속 곡선을 그릴 수 있어서,
     // 결과값 자체보다는 SmoothDamp 내부 계산용으로 매 프레임 갱신되는 상태값이다(ref로 넘겨줌)
@@ -79,16 +93,17 @@ public class CombatCamera : MonoBehaviour
     {
         if (cam == null || playerA == null || playerB == null || isFrozen) return;
 
-        // 두 파이터가 얼마나 떨어져 있는지, 그리고 그 거리 + 여백(framingPadding)만큼을 화면에
-        // 다 담으려면 카메라 중심에서 좌우로 얼마나 넓게 보여야 하는지를 구한다 (필요한 "반쪽 너비")
-        float distance = Mathf.Abs(playerA.position.x - playerB.position.x);
-        float requiredHalfWidth = distance / 2f + framingPadding;
-
         // 카메라가 봐야 할 x축 중심은 두 파이터의 정중앙. Clamp로 minX~maxX(맵 경계) 밖으로는 못 나가게 막는다
         float desiredX = Mathf.Clamp((playerA.position.x + playerB.position.x) / 2f, minX, maxX);
         Vector3 desiredPosXY = new Vector3(desiredX, fixedY, transform.position.z);
         // SmoothDamp로 목표 위치를 향해 부드럽게 따라가게 한다 — positionSmoothTime이 짧을수록 즉각 반응
         Vector3 smoothedXY = Vector3.SmoothDamp(transform.position, desiredPosXY, ref positionVelocity, positionSmoothTime);
+
+        // 두 파이터가 실제 카메라 중심(minX~maxX 클램프 및 SmoothDamp 지연 포함)에서 얼마나 떨어져 있는지 구해,
+        // 구석에 몰리거나 고속 이동 시에도 두 파이터 + 여백(framingPadding)을 화면에 다 담을 수 있도록 필요한 "반쪽 너비"를 산출
+        float distFromCenterA = Mathf.Abs(playerA.position.x - smoothedXY.x);
+        float distFromCenterB = Mathf.Abs(playerB.position.x - smoothedXY.x);
+        float requiredHalfWidth = Mathf.Max(distFromCenterA, distFromCenterB) + framingPadding;
 
         // 카메라 설정이 Orthographic(평행 투영)인지 Perspective(원근 투영)인지에 따라 "줌"의 의미가
         // 다르다 — Ortho는 orthographicSize(보이는 세로 절반 높이)를, Perspective는 카메라와 피사체
@@ -166,6 +181,11 @@ public class CombatCamera : MonoBehaviour
         float centerX = transform.position.x;
         // fighterEdgeInset만큼 화면 끝에서 안쪽으로 들여서 제한한다 — 0으로 두면 캐릭터의 "중심점"이
         // 화면 끝까지 가버려서, 캐릭터 몸(스프라이트 절반 폭)이 화면 밖으로 삐져나가 보이게 된다
-        return Mathf.Clamp(desiredX, centerX - halfWidth + fighterEdgeInset, centerX + halfWidth - fighterEdgeInset);
+        float clampedX = Mathf.Clamp(desiredX, centerX - halfWidth + fighterEdgeInset, centerX + halfWidth - fighterEdgeInset);
+        if (useArenaBounds)
+        {
+            clampedX = Mathf.Clamp(clampedX, arenaMinX + fighterEdgeInset, arenaMaxX - fighterEdgeInset);
+        }
+        return clampedX;
     }
 }

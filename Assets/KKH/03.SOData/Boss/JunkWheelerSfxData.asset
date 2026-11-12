@@ -1,0 +1,235 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdd12041d392ddd40b7c5834aa7c6d2f, type: 3}
+  m_Name: JunkWheelerSfxData
+  m_EditorClassIdentifier: 
+  masterSfxVolume: 0.85
+  bgmVolume: 0.45
+  stereoSpread: 0.55
+  bgmMain: {fileID: 8300000, guid: 691003fca2201b948bc9ee39cd460c7a, type: 3}
+  bgmPhase2: {fileID: 8300000, guid: ec88ddc9d7d5c074fb4edaec6643ff60, type: 3}
+  idleLoop:
+    clips:
+    - {fileID: 8300000, guid: e72a45ab20c3d1849bda6028209b5b73, type: 3}
+    volume: 0.38
+    pitchJitter: 0.02
+  rollMove:
+    clips:
+    - {fileID: 8300000, guid: 134b5b6ef15c2164e9b0d2224fec0b6e, type: 3}
+    volume: 0.7
+    pitchJitter: 0.05
+  v8Ignition:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.03
+  v8RevAggressive:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.05
+  v8Backfire:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.08
+  driftDonut:
+    clips:
+    - {fileID: 8300000, guid: 8091371ce9efb674bbe1b0991fe86cf3, type: 3}
+    volume: 0.78
+    pitchJitter: 0.04
+  chargeTell:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.02
+  chargeRush:
+    clips: []
+    volume: 0.9
+    pitchJitter: 0.04
+  chargeHitPlayer:
+    clips:
+    - {fileID: 8300000, guid: 466b142aa1498af46bb38b776dc48d16, type: 3}
+    volume: 1
+    pitchJitter: 0.05
+  chargeWallSlam:
+    clips: []
+    volume: 1
+    pitchJitter: 0.04
+  chargeRebound:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.06
+  chargeDecelRoll:
+    clips: []
+    volume: 0.65
+    pitchJitter: 0.05
+  chargeInterrupted:
+    clips: []
+    volume: 0.95
+    pitchJitter: 0.04
+  chargeFireTrail:
+    clips: []
+    volume: 0.65
+    pitchJitter: 0.06
+  slamLaunch:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.05
+  slamHover:
+    clips:
+    - {fileID: 8300000, guid: 821e13bc0137bff4fa8f70b6ac04d12a, type: 3}
+    - {fileID: 8300000, guid: cc8b4274dc2274149a633ba0ba34f54c, type: 3}
+    volume: 0.65
+    pitchJitter: 0.03
+  slamDrop:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.05
+  slamImpact:
+    clips: []
+    volume: 1
+    pitchJitter: 0.04
+  nailPuncture:
+    clips:
+    - {fileID: 8300000, guid: c21ba6a5e0477d3429b0794ae1a6ef3f, type: 3}
+    volume: 1
+    pitchJitter: 0.05
+  tireBlowout:
+    clips:
+    - {fileID: 8300000, guid: f10d22b1fe716d6469e1cff7a3b14718, type: 3}
+    volume: 0.95
+    pitchJitter: 0.05
+  barrageJump:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.05
+  barrageShot:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.08
+  barrageFly:
+    clips:
+    - {fileID: 8300000, guid: 04e351fa88852a64fbbe1291e6ba5fc5, type: 3}
+    volume: 0.65
+    pitchJitter: 0.08
+  barrageHit:
+    clips:
+    - {fileID: 8300000, guid: 465020aefdbd11e4992efb2b01114816, type: 3}
+    volume: 0.85
+    pitchJitter: 0.07
+  barrageLand:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.04
+  bladeDeploy:
+    clips:
+    - {fileID: 8300000, guid: 8aa71e34a73b0ec459988a846bb63bc9, type: 3}
+    volume: 0.9
+    pitchJitter: 0.04
+  bladeSpinLoop:
+    clips: []
+    volume: 0.7
+    pitchJitter: 0.02
+  bladeBounce:
+    clips: []
+    volume: 0.95
+    pitchJitter: 0.08
+  bladeSlashHit:
+    clips: []
+    volume: 1
+    pitchJitter: 0.06
+  bladeRetract:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.04
+  dribbleTellCrack:
+    clips: []
+    volume: 0.85
+    pitchJitter: 0.04
+  dribbleBounce1:
+    clips: []
+    volume: 0.78
+    pitchJitter: 0.04
+  dribbleBounce2:
+    clips: []
+    volume: 0.86
+    pitchJitter: 0.04
+  dribbleBounce3:
+    clips:
+    - {fileID: 8300000, guid: 690bfaf1a89bdf84a8c89937926b0bce, type: 3}
+    volume: 0.95
+    pitchJitter: 0.04
+  dribbleBounce4:
+    clips:
+    - {fileID: 8300000, guid: 98cd9c529dc45434485aeb3fd8710352, type: 3}
+    volume: 1.05
+    pitchJitter: 0.03
+  dribbleShockwave:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.05
+  dribbleSteamExhaust:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.04
+  hitArmor:
+    clips:
+    - {fileID: 8300000, guid: 229fca44051cfcf4089fb3da6cd7b347, type: 3}
+    volume: 0.8
+    pitchJitter: 0.08
+  hitRubber:
+    clips:
+    - {fileID: 8300000, guid: f2708bf5376c8f34aa6768ff354dc5a1, type: 3}
+    volume: 0.8
+    pitchJitter: 0.08
+  tireBreakFinal:
+    clips: []
+    volume: 1
+    pitchJitter: 0.04
+  stateGroggy:
+    clips:
+    - {fileID: 8300000, guid: e77feb2e56bb0824c818b03eeb0fe88c, type: 3}
+    volume: 0.75
+    pitchJitter: 0.02
+  phase2Roar:
+    clips: []
+    volume: 1
+    pitchJitter: 0.03
+  defeatExplosion:
+    clips: []
+    volume: 1.05
+    pitchJitter: 0.03
+  mechGearShift:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.05
+  mechTurboBlowOff:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.06
+  mechHydraulicServo:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.05
+  mechChainRatchet:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.05
+  fieldNailBoardRise:
+    clips: []
+    volume: 0.8
+    pitchJitter: 0.06
+  fieldExplosiveBoxTick:
+    clips: []
+    volume: 0.75
+    pitchJitter: 0.03
+  fieldExplosiveBoxBlast:
+    clips: []
+    volume: 1
+    pitchJitter: 0.05

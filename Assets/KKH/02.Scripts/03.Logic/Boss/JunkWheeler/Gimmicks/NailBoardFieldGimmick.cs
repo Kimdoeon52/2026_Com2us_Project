@@ -190,6 +190,7 @@ namespace RealSteel.Boss.JunkWheeler
         private async UniTaskVoid RunEmergeSequenceAsync(CancellationToken token, Action onCompleted)
         {
             CurrentSpikeState = SpikeState.Emerging;
+            if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.fieldNailBoardRise, JunkWheelerSfx.Data.bladeDeploy, transform.position, 1f, 1.3f, 0.7f);
             float frameDur = 1.0f / Mathf.Max(1.0f, emergeFps);
 
             try
@@ -312,6 +313,11 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 2. 스파이크가 아직 다 솟지 않았다면 즉시 최대 돌출 프레임(Frame 3)으로 강제 고정
             SetFrame(Mathf.Min(3, spikeFrames.Length - 1));
+            if (JunkWheelerSfx.Data != null)
+            {
+                JunkWheelerSfx.Play(JunkWheelerSfx.Data.nailPuncture, transform.position);
+                JunkWheelerSfx.Play(JunkWheelerSfx.Data.tireBlowout, transform.position);
+            }
             CurrentSpikeState = SpikeState.Extended;
 
             // 3. 타이어 부위 기믹 내구도 차감 (관통)

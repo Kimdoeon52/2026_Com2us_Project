@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using RealSteel.Boss.Core;
+using RealSteel.Boss.FSM;
 
 namespace RealSteel.Boss.JunkWheeler
 {
@@ -16,6 +17,15 @@ namespace RealSteel.Boss.JunkWheeler
         [Header("정크 휠러 전용 연출 및 컴포넌트")]
         [SerializeField] private ParticleSystem phase2FireVFX; // 2페이즈 엔진 불꽃 파티클
         [SerializeField] private ParticleSystem defeatExplosionVFX; // 토벌 사망 폭발 파티클
+
+        [Header("사운드 데이터 (SO)")]
+        [SerializeField] private JunkWheelerSfxData sfxData;
+        [SerializeField] private bool playIdleEngineLoop = true;
+
+        private AudioSource _idleLoopSource;
+        private AudioSource _groggyLoopSource;
+        private float _lastHitSfxTime = -10f;
+        private int _hitSfxCounter = 0;
 
         [Header("부착된 구체 기믹 참조 (인스펙터 모니터링)")]
         [SerializeField] private JunkWheelerTirePartGimmick tirePartGimmick;
@@ -35,6 +45,12 @@ namespace RealSteel.Boss.JunkWheeler
         public override void AutoBindInspectorReferences()
         {
             base.AutoBindInspectorReferences();
+#if UNITY_EDITOR
+            if (sfxData == null)
+            {
+                sfxData = UnityEditor.AssetDatabase.LoadAssetAtPath<JunkWheelerSfxData>("Assets/KKH/03.SOData/Boss/JunkWheelerSfxData.asset");
+            }
+#endif
             if (tirePartGimmick == null) tirePartGimmick = GetComponentInChildren<JunkWheelerTirePartGimmick>(true);
             if (chargePatternGimmick == null) chargePatternGimmick = GetComponentInChildren<JunkWheelerChargePatternGimmick>(true);
             if (barragePatternGimmick == null) barragePatternGimmick = GetComponentInChildren<JunkWheelerBarragePatternGimmick>(true);
@@ -185,6 +201,47 @@ namespace RealSteel.Boss.JunkWheeler
         {
             base.OnBossInitialized();
             Debug.Log("<color=green>[JunkWheelerBossController] 정크 휠러 초기화 완료! 엔진 가동 시작!</color>");
+
+            if (sfxData != null)
+            {
+                JunkWheelerSfx.Bind(sfxData);
+                if (sfxData.bgmMain != null)
+                {
+                    JunkWheelerSfx.PlayBgm(sfxData.bgmMain);
+                }
+            }
+
+            OnStateChanged -= HandleStateChangedForIdleSfx;
+            OnStateChanged += HandleStateChangedForIdleSfx;
+            OnGroggyChanged -= HandleGroggySfx;
+            OnGroggyChanged += HandleGroggySfx;
+            OnStunChanged -= HandleStunSfx;
+            OnStunChanged += HandleStunSfx;
+
+            if (StateMachine?.CurrentState is BossIdleState)
+            {
+                StartIdleLoop();
+            }
+        }
+
+        protected override void ProcessPostDamageReactions(int finalDamage)
+        {
+            base.ProcessPostDamageReactions(finalDamage);
+            if (finalDamage <= 0 || Snapshot == null || !Snapshot.IsAlive) return;
+
+            if (Time.unscaledTime - _lastHitSfxTime >= 0.06f)
+            {
+                _lastHitSfxTime = Time.unscaledTime;
+                var d = JunkWheelerSfx.Data;
+                if (d != null)
+                {
+                    bool useArmor = (_hitSfxCounter++ % 2) == 0;
+                    JunkWheelerSfx.PlayOrFallback(
+                        useArmor ? d.hitArmor : d.hitRubber,
+                        useArmor ? d.hitRubber : d.hitArmor,
+                        transform.position);
+                }
+            }
         }
 
         protected override void OnPhaseChanged(int prevPhase, int newPhase)
@@ -199,7 +256,26 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     phase2FireVFX.Play();
                 }
+
+                var d = JunkWheelerSfx.Data;
+                if (d != null)
+                {
+                    var fallback = d.v8RevAggressive.HasValidClip ? d.v8RevAggressive : d.idleLoop;
+                    JunkWheelerSfx.PlayOrFallback(d.phase2Roar, fallback, transform.position, 1f, 1.25f, 1.15f);
+                    if (d.bgmPhase2 != null)
+                    {
+                        JunkWheelerSfx.PlayBgm(d.bgmPhase2, 0.5f);
+                    }
+                }
             }
+        }
+
+        public override void StopBossCombat()
+        {
+            base.StopBossCombat();
+            JunkWheelerSfx.Stop(ref _idleLoopSource);
+            JunkWheelerSfx.Stop(ref _groggyLoopSource);
+            JunkWheelerSfx.StopAllLoops();
         }
 
         protected override void OnBossDefeated()
@@ -215,6 +291,87 @@ namespace RealSteel.Boss.JunkWheeler
             if (defeatExplosionVFX != null)
             {
                 defeatExplosionVFX.Play();
+            }
+
+            var d = JunkWheelerSfx.Data;
+            if (d != null)
+            {
+                if (d.defeatExplosion.HasValidClip)
+                {
+                    JunkWheelerSfx.Play(d.defeatExplosion, transform.position);
+                }
+                else
+                {
+                    // 전용 사망 폭발음이 비어 있으면 파열음+중장비 충돌음 레이어링으로 웅장한 폭발 연출
+                    JunkWheelerSfx.Play(d.tireBlowout, transform.position, 0.72f, 1.1f);
+                    JunkWheelerSfx.Play(d.chargeHitPlayer, transform.position, 0.75f, 1.15f);
+                }
+                JunkWheelerSfx.StopBgm(0.8f);
+            }
+        }
+
+        protected override void OnDestroy()
+        {
+            OnStateChanged -= HandleStateChangedForIdleSfx;
+            OnGroggyChanged -= HandleGroggySfx;
+            OnStunChanged -= HandleStunSfx;
+            base.OnDestroy();
+            if (sfxData != null && JunkWheelerSfx.Data == sfxData)
+            {
+                JunkWheelerSfx.Unbind();
+            }
+        }
+
+        private void StartIdleLoop()
+        {
+            if (!playIdleEngineLoop || _idleLoopSource != null) return;
+            var d = JunkWheelerSfx.Data;
+            if (d != null && d.idleLoop.HasValidClip)
+            {
+                _idleLoopSource = JunkWheelerSfx.Loop(d.idleLoop, transform.position, 1f, 1f, true);
+            }
+        }
+
+        private void HandleStateChangedForIdleSfx(string newStateName)
+        {
+            bool isIdle = StateMachine != null && StateMachine.CurrentState is BossIdleState;
+            bool canPlayIdle = isIdle && !IsCombatStopped && Snapshot != null && Snapshot.IsAlive;
+
+            if (canPlayIdle)
+            {
+                StartIdleLoop();
+            }
+            else
+            {
+                JunkWheelerSfx.Stop(ref _idleLoopSource);
+            }
+        }
+
+        private void HandleGroggySfx(bool isGroggy, float duration)
+        {
+            var d = JunkWheelerSfx.Data;
+            if (d == null) return;
+
+            if (isGroggy)
+            {
+                if (_groggyLoopSource == null)
+                {
+                    _groggyLoopSource = JunkWheelerSfx.Loop(d.stateGroggy, transform.position, 1f, 1f, false);
+                }
+            }
+            else
+            {
+                JunkWheelerSfx.Stop(ref _groggyLoopSource);
+            }
+        }
+
+        private void HandleStunSfx(bool isStun, float duration)
+        {
+            if (!isStun) return;
+            var d = JunkWheelerSfx.Data;
+            if (d != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(d.chargeInterrupted, d.stateGroggy, transform.position, 1f, 1.25f, 0.9f);
             }
         }
     }

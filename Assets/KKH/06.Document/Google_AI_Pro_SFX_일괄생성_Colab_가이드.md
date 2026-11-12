@@ -360,3 +360,246 @@ try:
 except Exception as e:
     print("자동 다운로드 실패 시 좌측 폴더 아이콘에서 직접 다운로드하세요:", ZIP_NAME)
 ```
+
+---
+
+## 5. (추가 팩) V8 엔진 공회전 · 드리프트 휠 스핀 · 기계음 10종 전용 생성 코드
+
+방금 성공한 **`AudioLDM2-Large` + `GPT2LMHeadModel` 패치 + 멜로디 배제 파이프라인** 위에, 호이루(정크 휠러)의 메카니컬 감성을 극대화하는 **V8 엔진 / 드리프트 타이어 / 기어·유압·체인 기계음 10종**만 별도로 추가 생성하는 코드입니다.
+
+* **기존 세션 재사용 최적화**: 방금 사운드를 뽑은 Colab 창에서 **새 코드 셀(`+ 코드`)**을 열어 그대로 실행하면 **이미 로드된 `pipe` 모델을 재사용하여 대기 시간 없이 즉시 생성**합니다. *(새 창에서 단독 실행할 때도 자동으로 설치 및 로드됩니다.)*
+* **지속형(공회전/드리프트) vs 단발형(기어/유압/백파이어) 자동 분리 후처리**: 공회전·휠 스핀처럼 길게 이어지는 소리는 중간이 잘리지 않게 30ms 부드러운 페이드만 적용하고, 기어 변속·백파이어 같은 단발음은 앞뒤 무음을 타이트하게 컷팅합니다.
+
+```python
+# [추가 팩: V8 엔진 공회전 + 드리프트 휠 스핀 + 기계 작동음 10종]
+# 이미 직전 셀에서 모델을 로드해 둔 상태라면 재설치/재로딩 없이 바로 생성 시작!
+import os, sys, zipfile, subprocess
+import numpy as np
+
+if "pipe" not in globals():
+    print("새 세션 감지: 필수 패키지 설치 및 AudioLDM2-Large 로딩 중...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "diffusers>=0.31.0", "transformers==4.48.3", "accelerate", "soundfile", "scipy"])
+    import torch
+    from transformers import GPT2LMHeadModel
+    from diffusers import AudioLDM2Pipeline
+    MODEL_ID = "cvssp/audioldm2-large"
+    lm = GPT2LMHeadModel.from_pretrained(MODEL_ID, subfolder="language_model", torch_dtype=torch.float16)
+    pipe = AudioLDM2Pipeline.from_pretrained(MODEL_ID, language_model=lm, torch_dtype=torch.float16).to("cuda")
+else:
+    import torch
+    print("기존에 로드된 pipe 모델을 재사용하여 즉시 생성합니다!")
+
+import soundfile as sf
+from scipy.signal import butter, sosfilt
+from IPython.display import Audio, display
+
+# =========================================================
+# 1. 추가 사운드 설정
+# =========================================================
+VARIATIONS_PER_CUE = 2   # 각 사운드당 생성 개수 (총 10종 x 2 = 20개)
+STEPS = 140
+GUIDANCE = 4.5
+NUM_CANDIDATES = 3       # 3개 생성 후 CLAP 1등(.audios[0]) 자동 선별
+SAMPLE_RATE = 16000
+PREVIEW_IN_COLAB = True  # Colab 화면에서도 바로 들어볼 수 있게 플레이어 표시
+
+OUT_DIR = "Boss1_Mech_Extra_SFX"
+ZIP_NAME = "Boss1_Mech_Extra_SFX.zip"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+NEGATIVE_PROMPT = (
+    "music, melody, tune, chords, harmony, rhythm, song, beat, drum beat, "
+    "instruments, piano, guitar, synthesizer, orchestra, bassline, singing, vocals, "
+    "speech, voice, chatter, ambient pad, heavy reverb, hall echo, room tone"
+)
+
+def wrap_mech_foley(desc):
+    return (
+        f"Close-up foley recording of {desc}, "
+        "exaggerated punchy transient, raw isolated mechanical sound effect, dry studio acoustics"
+    )
+
+# (Cue ID, 물리 묘사, 길이(초), 지속형 루프 여부)
+EXTRA_MECH_CUES = [
+    # --- [V8 엔진 계열] ---
+    ("SFX_JW_V8_Idle", "an aggressive American V8 muscle car engine idling heavily at low RPM with deep throaty exhaust rumble and irregular cam lopey vibration", 4.5, True),
+    ("SFX_JW_V8_Ignition", "an old heavy V8 diesel hotrod engine cranking its starter motor twice then roaring loudly to life with raw exhaust bark", 3.5, False),
+    ("SFX_JW_V8_Rev_Aggressive", "a monstrous modified V8 racing engine violently revving high on throttle blips and snarling aggressively from open exhaust pipes", 3.5, False),
+    ("SFX_JW_V8_Backfire", "a tuned V8 exhaust pipe popping loud explosive gunshot-like backfire bangs and crackles on deceleration", 2.5, False),
+
+    # --- [드리프트 & 휠 스핀 계열] ---
+    ("SFX_JW_Drift_Screech", "heavy thick rubber car tires violently drifting, sliding sideways and screeching loudly across rough asphalt pavement", 3.5, True),
+    ("SFX_JW_Wheel_Spin_Burnout", "a heavy monster truck rubber wheel spinning furiously in place, tearing gravel grit and screeching hot rubber", 3.5, True),
+
+    # --- [기어 / 유압 / 터보 / 체인 등 기계음 계열] ---
+    ("SFX_JW_Mech_GearShift", "heavy steel industrial transmission gears grinding briefly and clunking solidly into locked gear with metallic latch snap", 2.5, False),
+    ("SFX_JW_Mech_TurboBlowOff", "a large automotive turbocharger wastegate flutter and sharp pressurized air blow-off valve hiss burst", 2.5, False),
+    ("SFX_JW_Mech_HydraulicServo", "heavy industrial hydraulic metal pistons and robotic servo motors extending forcefully with pressurized fluid hiss and iron clank", 3.0, False),
+    ("SFX_JW_Mech_ChainRatchet", "heavy rusty iron chains rattling violently against steel armor followed by a heavy mechanical winch ratchet cranking tight", 3.0, False),
+]
+
+def postprocess_mech(wav, sr=16000, is_continuous=False):
+    wav = np.asarray(wav, dtype=np.float32)
+    sos = butter(2, 40, btype="highpass", fs=sr, output="sos")
+    wav = sosfilt(sos, wav)
+
+    if is_continuous:
+        # 공회전/드리프트 등 지속형은 무음 컷 대신 양끝 30ms 부드러운 페이드 처리 (루프 연결감 유지)
+        fade_len = min(int(sr * 0.03), len(wav) // 4)
+        if fade_len > 0:
+            wav[:fade_len] *= np.linspace(0.0, 1.0, fade_len, dtype=np.float32)
+            wav[-fade_len:] *= np.linspace(1.0, 0.0, fade_len, dtype=np.float32)
+    else:
+        # 단발 충격음은 앞뒤 무음 타이트하게 제거 (5ms 프리롤 유지)
+        peak = np.max(np.abs(wav))
+        if peak > 1e-5:
+            active = np.where(np.abs(wav) > peak * 0.03)[0]
+            if len(active) > 0:
+                start = max(0, active[0] - int(sr * 0.005))
+                end = min(len(wav), active[-1] + int(sr * 0.05))
+                wav = wav[start:end]
+
+    peak = np.max(np.abs(wav))
+    if peak > 1e-6:
+        wav = wav / peak
+        wav = np.tanh(wav * 1.42)
+        wav = wav / np.max(np.abs(wav)) * 0.94
+    return wav.astype(np.float32)
+
+total = len(EXTRA_MECH_CUES) * VARIATIONS_PER_CUE
+count = 0
+
+for cue_id, desc, dur, is_cont in EXTRA_MECH_CUES:
+    for v in range(1, VARIATIONS_PER_CUE + 1):
+        count += 1
+        seed = 5000 + count * 777
+        gen = torch.Generator("cuda").manual_seed(seed)
+        prompt = wrap_mech_foley(desc)
+        print(f"[{count}/{total}] 생성 중: {cue_id}_v{v} ({'지속형' if is_cont else '단발형'}, {dur}s)...")
+
+        audio = pipe(
+            prompt=prompt,
+            negative_prompt=NEGATIVE_PROMPT,
+            num_inference_steps=STEPS,
+            guidance_scale=GUIDANCE,
+            num_waveforms_per_prompt=NUM_CANDIDATES,
+            audio_length_in_s=float(dur),
+            generator=gen
+        ).audios[0]
+
+        processed = postprocess_mech(audio, SAMPLE_RATE, is_continuous=is_cont)
+        out_path = os.path.join(OUT_DIR, f"{cue_id}_v{v}.wav")
+        sf.write(out_path, processed, SAMPLE_RATE)
+
+        if PREVIEW_IN_COLAB and v == 1:
+            display(Audio(out_path, rate=SAMPLE_RATE))
+
+with zipfile.ZipFile(ZIP_NAME, 'w', zipfile.ZIP_DEFLATED) as zf:
+    for f in sorted(os.listdir(OUT_DIR)):
+        zf.write(os.path.join(OUT_DIR, f), f)
+
+print(f"\n완료! 총 {total}개 추가 기계음 생성 및 {ZIP_NAME} 다운로드 시작...")
+try:
+    from google.colab import files
+    files.download(ZIP_NAME)
+except Exception as e:
+    print("자동 다운로드 실패 시 좌측 폴더 아이콘에서 직접 다운로드하세요:", ZIP_NAME)
+```
+
+---
+
+## 6. (원포인트 추가) 흰 연기 내뿜으며 도넛 그리는 드리프트 카 스핀 전용
+
+고주파만 날카롭게 찢어지던 현상(엔진 저음 제거 + `160Hz` 하이패스 + 과도한 `tanh` 클리핑 원인)을 해결하고, **실제 드리프트 카가 아스팔트에서 도넛을 그리며 연기를 뿜는 묵직하고 자연스러운 타이어 스키드 + 배기음 조화**를 생성하는 코드입니다.
+
+* **핵심 변경점**:
+  1. **엔진 + 타이어 동시 조화**: 네거티브에서 `engine rumble`을 제거해 묵직한 중저음 바디가 타이어 마찰음을 받쳐주도록 수정 (대신 드리프트 영상 특유의 `crowd cheering, commentary` 차단).
+  2. **실제 도넛 주행 키워드 적용**: 스튜디오 인위적 키워드 대신 AudioSet 실사 데이터에 강한 `drift car doing donuts on asphalt, engine revving and continuous tire screech` 사용.
+  3. **왜곡 필터 제거**: `160Hz` 하이패스와 `tanh(1.55)` 과잉 드라이브를 빼고 `Guidance 3.8`로 맞춰 귀 아픈 디지털 고주파 아티팩트를 제거했습니다.
+
+```python
+# [원포인트 팩: 흰 연기 내뿜는 드리프트 카 도넛 휠 스핀 4종]
+import os, sys, zipfile, subprocess
+import numpy as np
+
+if "pipe" not in globals():
+    print("새 세션 감지: 필수 패키지 설치 및 AudioLDM2-Large 로딩 중...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", "diffusers>=0.31.0", "transformers==4.48.3", "accelerate", "soundfile", "scipy"])
+    import torch
+    from transformers import GPT2LMHeadModel
+    from diffusers import AudioLDM2Pipeline
+    MODEL_ID = "cvssp/audioldm2-large"
+    lm = GPT2LMHeadModel.from_pretrained(MODEL_ID, subfolder="language_model", torch_dtype=torch.float16)
+    pipe = AudioLDM2Pipeline.from_pretrained(MODEL_ID, language_model=lm, torch_dtype=torch.float16).to("cuda")
+else:
+    import torch
+    print("기존에 로드된 pipe 모델을 재사용하여 즉시 생성합니다!")
+
+import soundfile as sf
+from scipy.signal import butter, sosfilt
+from IPython.display import Audio, display
+
+OUT_DIR = "Boss1_DriftDonut_SFX"
+ZIP_NAME = "Boss1_DriftDonut_SFX.zip"
+os.makedirs(OUT_DIR, exist_ok=True)
+
+# 2가지 약간 다른 도넛 뉘앙스를 2개씩 총 4개 생성
+DRIFT_PROMPTS = [
+    ("SFX_JW_Drift_Donut_A", "A loud modified drift car doing donuts on an asphalt track, roaring engine revving with heavy continuous rubber tire squeal and burnout"),
+    ("SFX_JW_Drift_Donut_B", "A powerful rear-wheel drive sports car drifting tightly in circles, thick rubber tires screeching smoothly across pavement with deep exhaust growl"),
+]
+
+NEGATIVE = (
+    "music, melody, tune, chords, harmony, instruments, piano, guitar, synthesizer, "
+    "singing, vocals, speech, crowd cheering, commentary, siren, alarm, whistle, horn"
+)
+
+DURATION = 4.5
+STEPS = 140
+GUIDANCE = 3.8   # 과도한 고주파 아티팩트 방지를 위해 3.8로 자연스럽게 세팅
+SAMPLE_RATE = 16000
+
+for base_name, prompt in DRIFT_PROMPTS:
+    for v in (1, 2):
+        seed = (7000 if base_name.endswith("A") else 8000) + v * 419
+        gen = torch.Generator("cuda").manual_seed(seed)
+        print(f"생성 중: {base_name}_v{v} ({DURATION}s)...")
+        wav = pipe(
+            prompt=prompt,
+            negative_prompt=NEGATIVE,
+            num_inference_steps=STEPS,
+            guidance_scale=GUIDANCE,
+            num_waveforms_per_prompt=3,
+            audio_length_in_s=DURATION,
+            generator=gen
+        ).audios[0]
+
+        # 35Hz 초저음 DC만 살짝 정리하고, 고주파 왜곡(tanh) 없이 원음 질감 보존
+        wav = np.asarray(wav, dtype=np.float32)
+        sos = butter(2, 35, btype="highpass", fs=SAMPLE_RATE, output="sos")
+        wav = sosfilt(sos, wav)
+
+        fade_len = int(SAMPLE_RATE * 0.04)
+        wav[:fade_len] *= np.linspace(0.0, 1.0, fade_len, dtype=np.float32)
+        wav[-fade_len:] *= np.linspace(1.0, 0.0, fade_len, dtype=np.float32)
+
+        peak = np.max(np.abs(wav))
+        if peak > 1e-6:
+            wav = wav / peak * 0.92
+
+        out_path = os.path.join(OUT_DIR, f"{base_name}_v{v}.wav")
+        sf.write(out_path, wav.astype(np.float32), SAMPLE_RATE)
+        print(f"▶ {base_name}_v{v} 미리듣기:")
+        display(Audio(out_path, rate=SAMPLE_RATE))
+
+with zipfile.ZipFile(ZIP_NAME, 'w', zipfile.ZIP_DEFLATED) as zf:
+    for f in sorted(os.listdir(OUT_DIR)):
+        zf.write(os.path.join(OUT_DIR, f), f)
+
+print(f"\n완료! {ZIP_NAME} 자동 다운로드 시작...")
+try:
+    from google.colab import files
+    files.download(ZIP_NAME)
+except Exception as e:
+    print("자동 다운로드 실패 시 좌측 폴더 아이콘에서 직접 다운로드하세요:", ZIP_NAME)
+```

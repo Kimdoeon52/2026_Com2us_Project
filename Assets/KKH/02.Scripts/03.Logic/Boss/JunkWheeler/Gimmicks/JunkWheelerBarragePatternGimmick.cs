@@ -103,6 +103,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss.Animation != null)
             {
                 OwnerBoss.Animation.PlayRollBarrage();
+                if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageJump, JunkWheelerSfx.Data.slamHover, OwnerBoss.transform.position, 1f, 1.2f, 0.75f);
             }
 
             _bossMoveTween = OwnerBoss.transform.DOMove(apexPos, launchDuration).SetEase(Ease.OutQuad);
@@ -176,6 +177,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             // [VFX 3] 지면 착지 충격파 스폰
             SpawnVfx(landImpactVfxPrefab, landPos);
+            if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageLand, JunkWheelerSfx.Data.dribbleBounce3, landPos, 1f, 1f, 0.85f);
 
             // 5단계: 착지 충격 연출 및 Idle 복귀
             if (OwnerBoss.Animation != null)
@@ -217,7 +219,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (OwnerBoss != null)
             {
-                midX = OwnerBoss.ClampToStageWallX(midX, 0.8f);
+                midX = OwnerBoss.ClampToStageWallX(midX);
             }
 
             float effectiveLaunchHeight = _isTireBrokenDebuffed ? launchHeight * 0.7f : launchHeight;
@@ -234,6 +236,11 @@ namespace RealSteel.Boss.JunkWheeler
             // [VFX 1] 탄환 발사 머즐 플래시 스폰
             Quaternion muzzleRot = Quaternion.Euler(0f, 0f, angleDeg);
             SpawnVfx(muzzleFlashVfxPrefab, originPos, muzzleRot);
+            if (JunkWheelerSfx.Data != null)
+            {
+                JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageShot, JunkWheelerSfx.Data.hitArmor, originPos, 1f, 1.32f, 0.65f);
+                JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageFly, null, originPos, 1f, 1f, 0.65f);
+            }
 
             GameObject bullet;
             if (bulletPrefab != null)
@@ -358,6 +365,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 _hasHit = true;
                 if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
+                if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageHit, JunkWheelerSfx.Data.hitArmor, transform.position, 1f, 1.15f, 0.9f);
                 _ownerPattern.ApplyDamageToPlayer(playerObj);
                 Destroy(gameObject);
             }
@@ -365,6 +373,7 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 _hasHit = true;
                 if (_hitVfxPrefab != null) BossVfxHelper.SpawnVfx(_hitVfxPrefab, transform.position);
+                if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.barrageHit, JunkWheelerSfx.Data.hitArmor, transform.position, 1f, 1.15f, 0.9f);
                 Destroy(gameObject);
             }
         }

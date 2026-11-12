@@ -4086,6 +4086,11 @@ MonoBehaviour:
   riseDistance: 0.35
   stackSpacing: 0.14
   maxStackCount: 6
+  sequenceInterval: 0.06
+  spawnJitterX: 0.08
+  driftX: 0.12
+  popScale: 1.4
+  popSeconds: 0.1
   stackWindowSeconds: 0.6
   damageFormat: '{0}'
   missText: MISS
@@ -4188,6 +4193,8 @@ MonoBehaviour:
   spriteFacesRight: 1
   opponent: {fileID: 1048134571}
   combatCamera: {fileID: 1831109084}
+  clampToCameraView: 1
+  cameraViewPadding: 0.3
 --- !u!114 &1075138731
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5100,7 +5107,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 14.416321, y: 30.443024}
+  m_LightCookieOffset: {x: 0.11000001, y: 0.044999998}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -5775,6 +5782,11 @@ MonoBehaviour:
     shaftsFollowTime: 1
     moonShafts: 0.6
   ownLook: 0
+  fixedLight: 0
+  fixedLightFrom: {fileID: 0}
+  fixedLightEuler: {x: 25, y: 205, z: 0}
+  fixedLightColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  fixedLightIntensity: 1
   steps: 16
   stepLength: 1.5
   maxDistance: 40
@@ -6264,13 +6276,16 @@ MonoBehaviour:
   maxX: 3
   framingPadding: 1.5
   closeZ: -8
-  farZ: -12
+  farZ: -23
   minOrthoSize: 14
   maxOrthoSize: 1.9
   positionSmoothTime: 0.025
   zoomInSmoothTime: 0.2
   fixedY: 1
   fighterEdgeInset: 0.25
+  useArenaBounds: 1
+  arenaMinX: -7.75
+  arenaMaxX: 7.75
 --- !u!4 &1843611676 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7347677701256762536, guid: be76f4ac88c124544a3d689956d6683c, type: 3}

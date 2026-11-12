@@ -5,8 +5,8 @@
 | **프로젝트명** | 2026_Com2us_Project (RealSteel 2D Action) |
 | **대상 보스** | 지역 1 보스 - **정크 휠러 (Junk Wheeler / 별칭: 호이루)** |
 | **문서 목적** | 상용 사운드 라이브러리(Freesound, Sonniss, Soundly 등) 검색 및 AI 사운드 생성(ElevenLabs SFX, AudioCraft)을 위한 정밀 키워드 매칭 |
-| **사운드 컨셉** | **헤비 디젤 엔진 + 거대 개조 폐타이어 + 회전 톱날(SFX)** / **묵직한 고철 투기장 감성의 헤비메탈·데스메탈(BGM)** |
-| **작성일** | 2026-11-11 (BGM 컨셉 메탈로 개편) |
+| **사운드 컨셉** | **헤비 디젤 엔진 + 거대 개조 폐타이어 + 회전 톱날(SFX)** / **거친 서부 폐차장 투기장 감성의 하드 락 컨트리(BGM)** |
+| **작성일** | 2026-11-12 (BGM 컨셉 하드 락 컨트리로 확정) |
 
 ---
 
@@ -125,45 +125,32 @@
 
 ---
 
-## 4. 보스전 BGM 명세: 헤비메탈 & 멜로딕 데스메탈 (Heavy / Industrial / Death Metal)
+## 4. 보스전 BGM 명세: 하드 락 컨트리 (Hard Rock Country / Southern Outlaw Rock)
 
-지역 1 보스 '호이루(정크 휠러)'의 **기름 냄새 나는 폐타이어, 중장비 디젤 엔진, 고속 회전 톱날**이라는 고철 투기장 정체성에 맞춰 **육중한 기타 리프와 강렬한 더블 베이스 드럼이 묵직하게 꽂히는 인스트루멘탈 메탈** 컨셉입니다.
+지역 1 보스 '호이루(정크 휠러)'의 **폐차장, V8 머슬 엔진, 모래 먼지 날리는 서부 고철 투기장** 테마에 가장 잘 어울리는 **묵직한 디스토션 리프 + 컨트리 슬라이드 기타·밴조가 어우러진 하드 락 컨트리** 컨셉입니다.
 
-### 4.1 두 가지 메탈 스타일 가이드 (기획 의도에 따른 선택)
+### 4.1 Gemini (Lyria 3 / Lyria 3 Pro) 생성 핵심 규칙
+1. **아티스트·게임명 기재 금지**: 특정 가수나 게임 이름을 쓰면 거부될 수 있으므로 **악기와 앰프 톤 묘사**(`vintage tube-amp overdrive`, `twangy Telecaster`, `steel slide guitar`, `gritty outlaw banjo`)로 풀어서 작성합니다.
+2. **인스트루멘탈 고정**: Gemini 앱에서 **Instrumental(반주만) 옵션을 켜고**, 프롬프트 내에도 `strictly instrumental, zero vocals, no singing, no lyrics`를 명시해 보스 효과음 가독성을 확보합니다.
+3. **즉시 전투 돌입 구조**: 잔잔한 어쿠스틱 전주를 피하기 위해 `starts immediately with a heavy crunching guitar riff, continuous driving combat momentum, seamless loopable structure`를 포함합니다.
 
-| 스타일 옵션 | 추천 서브 장르 | BPM | 음악적 질감 & 호이루와의 시너지 |
+### 4.2 Gemini (Lyria 3) 복붙용 프롬프트 3종
+
+| 구분 | 파일 저장 권장명 (자동 매칭) | 템포 & 특징 | Gemini (Lyria 3) 입력 프롬프트 |
 | :--- | :--- | :--- | :--- |
-| **옵션 A (중장비/육중함 중심)** | **Heavy Metal / Groove Metal / Industrial Metal** | **125 ~ 150 BPM** | 로우 튜닝 일렉 기타의 **묵직한 팜뮤트 리프(Chugging Riff)** + 타이어가 바닥을 짓이기듯 구르는 드럼 그루브. `Slam`·`Charge`의 둔탁한 무게감과 100% 일치 (DOOM / 매드맥스 / 람슈타인 느낌) |
-| **옵션 B (공격성/폭주 중심)** | **Melodic Death Metal / Thrash Metal** | **165 ~ 195 BPM** | 고속 **트레몰로 피킹(Tremolo Picking)** + 타이트한 **더블 페달 킥(Double Bass)** + 날카로운 트윈 기타 멜로디. `Ricochet Blade`·2페이즈 과열의 파괴적 광기를 극대화 (보컬 제외 인스트루멘탈) |
-
----
-
-### 4.2 BGM 검색 & AI 생성 키워드 매칭
-
-| 구분 | Cue ID | 추천 검색 키워드 (스톡/무료 BGM 사이트) | AI 음악 생성기 프롬프트 (Suno AI / Udio / ElevenLabs Music) |
-| :--- | :--- | :--- | :--- |
-| **옵션 A: 헤비/그루브 메탈 (Phase 1 추천)** | `BGM_Boss1_JW_Heavy` | `heavy metal boss music instrumental`, `groove metal chugging riff`, `industrial metal fight theme`, `action metal guitar background`, `junkyard heavy rock metal` | **Style Tags**: `Heavy Metal, Groove Metal, Industrial Metal, 138 BPM, Low Tuned Guitar Chug, Heavy Palm Muted Riff, Punchy Drums, Aggressive, Boss Fight, Instrumental`<br>**Prompt**: *"An intense instrumental heavy groove metal boss battle theme at 138 BPM. Features crushing low-tuned electric guitar palm-muted riffs, driving double-kick drums, subtle metallic industrial clangs, and gritty distorted bass. Feels massive, mechanical, and relentless like a giant scrap-metal monster rolling in an arena."* |
-| **옵션 B: 멜로딕 데스메탈 (고난도/Phase 2 추천)** | `BGM_Boss1_JW_Death` | `melodic death metal instrumental`, `thrash metal action game`, `fast metal double bass boss`, `dark shred guitar instrumental`, `extreme metal battle theme` | **Style Tags**: `Melodic Death Metal, Thrash Metal, 178 BPM, Fast Double Bass Drum, Shredding Twin Guitar Riff, Tremolo Picking, Dark & Fierce, Boss Theme, Instrumental`<br>**Prompt**: *"A ferocious instrumental melodic death metal boss track at 178 BPM. Blistering tight double-bass drumming, razor-sharp tremolo guitar riffs, menacing minor-key harmonies, and relentless high-octane energy. Raw, aggressive, and adrenaline-pumping without vocals."* |
-
-> **AI 생성 시 네거티브(제외) 키워드 팁 (Exclude Styles)**:  
-> 게임 전투 BGM에서 **보컬/그로울링(Growling)**이 들어가면 보스의 패턴 전조 사운드(`Tell`)나 피격음 가독성을 해칩니다. 반드시 **`vocals, singing, death growl, screaming, spoken word, rap, acoustic, soft ballad, lo-fi`**를 제외 태그로 지정해 순수 **연주곡(Instrumental)**으로 뽑는 것이 핵심입니다.
+| **옵션 A: 서부 폐차장 남부 하드 락 컨트리 (Phase 1 메인 추천)** | `BGM_Boss1_Main` | **138 BPM** · 묵직한 진공관 기타 리프 + 쇳소리 슬라이드 기타 + 드라이빙 락 드럼 | `A high-energy hard rock country boss battle track, strictly instrumental with zero vocals, no singing, no lyrics. Starts immediately with a heavy, gritty overdriven electric guitar main riff through a vintage tube amp, blended with sharp twangy country steel slide guitar licks and a driving distorted banjo motif. Powered by heavy stomping rock drums, punchy snare hits, and a growling bassline. Dusty desert scrapyard outlaw vibe, steady rhythmic foundation, continuous combat momentum around 138 BPM, loopable structure.` |
+| **옵션 B: 터보 컨트리 펑크/하드 락 (스피디한 패턴 강조)** | `BGM_Boss1_Main` | **156 BPM** · 고속 질주 리듬 + 공격적인 텔레캐스터 리프 + 하모니카/밴조 포인트 | `An upbeat, aggressive outlaw country hard rock instrumental for a fast-paced video game boss fight, purely instrumental, no vocals. Fast chugging crunchy rhythm guitar paired with blazing country chicken-picking Telecaster solos, gritty distorted harmonica accents, and relentless double-kick rock drumming. High-octane muscle car desert race energy at 156 BPM, tight clean mix, no slow intro, seamless loopable groove.` |
+| **옵션 C: 2페이즈 과열 변주 (`bgmPhase2` 자동 전환용)** | `BGM_Boss1_Phase2` | **166 BPM** · 엔진 과열에 맞춰 기타 디스토션과 드럼 박력을 끌어올린 클라이맥스 | `An intense Phase 2 climax hard rock country instrumental boss theme, strictly instrumental, no vocals. Escalates southern outlaw hard rock with heavier low-tuned electric guitar distortion, blistering slide guitar duels, furious distorted banjo arpeggios, and thunderous driving rock drums. Relentless fiery energy at 166 BPM, continuous high-tension groove, seamless loopable battle track.` |
 
 ---
 
 ## 5. 유니티 오디오 믹서 및 구현 권장 설정 (Unity Audio Guidelines)
 
-1. **피치 랜덤성 (Pitch Variation)**:
-   - 반복적인 공격(연속 탄환 사출, 드리블 바운스, 보스 피격음)은 동일 클립 재생 시 청각적 피로감을 유발함.
-   - 코드 또는 사운드 매니저에서 **Pitch를 `0.92f ~ 1.08f` 범위로 랜덤 조정**하여 재생.
-2. **3D Spatial Sound (공간 음향 설정)**:
-   - 횡스크롤 2D 뷰이므로 `Spatial Blend = 0.5 ~ 0.7` (완전 3D보다는 2.5D 센터 믹싱 권장).
-   - `Min Distance = 3.0m`, `Max Distance = 25.0m`, `Rolloff Mode = Linear or Logarithmic`.
-3. **덕킹 (Audio Ducking / Compression)**:
-   - `SFX_JW_Charge_WallSlam`, `SFX_JW_Slam_Impact`, `SFX_JW_Dribble_Bounce_4` 같은 **결정타(Heavy Impact)** 발생 시:
-   - 0.15초 동안 BGM과 일반 타격음을 약 `-4dB ~ -6dB` 순간 덕킹(Sidechain Compression) 처리하면 메탈 리프 사이로 타격감이 뚫고 나옵니다.
-4. **BGM 볼륨 & EQ 밸런싱 (메탈 트랙 전용)**:
-   - 메탈 장르는 기타 디스토션(`1kHz~4kHz`)과 더블 베이스 킥(`50Hz~100Hz`)의 음압(Loudness)이 매우 높으므로, **BGM 버스 볼륨을 SFX보다 약 `-6dB ~ -8dB` 낮게** 유지 (`0.40 ~ 0.55` 스케일).
-   - 호이루의 **톱날 회전/금속 마찰음(`2kHz~5kHz`)**과 기타 배음이 겹쳐 답답해지지 않도록, Unity AudioMixer에서 BGM 그룹에 ParamEQ를 걸어 **`2.5kHz` 부근을 살짝(-2.5dB) 깎아주면** 효과음 가독성이 비약적으로 상승합니다.
-5. **오디오 우선순위 (Priority)**:
-   - BGM 및 보스 전조/궤적 사운드 (`BGM_Boss1_JW_*`, `SFX_JW_Charge_Tell`, `SFX_JW_Blade_Spin_Loop`): Priority `0 ~ 32` (절대 끊기지 않도록 최우선 순위).
-   - 보스 일반 피격/타이어 피격 (`SFX_JW_Hit_Armor`): Priority `128` (인스턴스가 많을 시 음원 절약).
+1. **자동 연동 경로**:
+   - 생성한 음원을 `Assets/KKH/04.Prefab/BOSS/First_Boss/Sound/Background/` 폴더에 넣고(`BGM_Boss1_Main`, 2페이즈 파일명엔 `Phase2` 포함), 상단 메뉴 **`Tools ➔ JunkWheeler ➔ 사운드 데이터(SO) 자동 생성 및 1보스 연결`**을 클릭하면 `bgmMain`, `bgmPhase2` 슬롯에 자동 등록됩니다.
+2. **피치 랜덤성 (Pitch Variation)**:
+   - [`JunkWheelerSfxData`](file:///d:/KDU/2026_Com2us_Project/Assets/KKH/02.Scripts/03.Logic/Boss/JunkWheeler/Audio/JunkWheelerSfxData.cs)의 `pitchJitter` (`0.04 ~ 0.08`)로 반복 재생 피로감을 완화함.
+3. **덕킹 (Audio Ducking)**:
+   - 벽 충돌(`Charge_WallSlam`), 내려찍기 착지(`Slam_Impact`), 드리블 4회차(`Dribble_Bounce_4`) 순간에 [`JunkWheelerSfx.DuckBgm`](file:///d:/KDU/2026_Com2us_Project/Assets/KKH/02.Scripts/03.Logic/Boss/JunkWheeler/Audio/JunkWheelerSfx.cs#L186)이 BGM 음량을 `0.16~0.18초` 동안 눌러주어 하드 락 기타 리프 사이로 타격감이 뚫고 나옴.
+4. **BGM 볼륨 밸런싱**:
+   - [`JunkWheelerSfxData.bgmVolume`](file:///d:/KDU/2026_Com2us_Project/Assets/KKH/02.Scripts/03.Logic/Boss/JunkWheeler/Audio/JunkWheelerSfxData.cs#L53) 기본 `0.45f` 기준으로, 거친 일렉 기타와 호이루의 엔진/톱날 소리가 겹칠 경우 `0.30 ~ 0.40` 선에서 미세 조절 권장.

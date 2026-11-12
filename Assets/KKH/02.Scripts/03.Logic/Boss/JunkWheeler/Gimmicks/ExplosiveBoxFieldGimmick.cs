@@ -82,6 +82,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             try
             {
+                if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.fieldExplosiveBoxTick, JunkWheelerSfx.Data.barrageHit, transform.position, 1f, 1.4f, 0.65f);
                 await UniTask.Delay(TimeSpan.FromSeconds(fuseDuration), cancellationToken: this.GetCancellationTokenOnDestroy());
                 TriggerExplosion();
             }
@@ -104,6 +105,7 @@ namespace RealSteel.Boss.JunkWheeler
                 BossVfxHelper.SpawnVfx(explosionVfxPrefab, transform.position);
             }
 
+            if (JunkWheelerSfx.Data != null) { JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.fieldExplosiveBoxBlast, JunkWheelerSfx.Data.chargeHitPlayer, transform.position, 1f, 0.78f, 1.15f); JunkWheelerSfx.Play(JunkWheelerSfx.Data.tireBlowout, transform.position, 0.8f, 0.7f); }
             Vector2 center = transform.position;
             Collider2D[] hits = Physics2D.OverlapCircleAll(center, explosionRadius);
             bool hasDamagedBoss = false;

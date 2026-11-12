@@ -236,6 +236,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 1. 바닥 균열 인디케이터 스폰 (X축으로 확장되는 연출)
             SpawnFloorCrackIndicator();
+            if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.dribbleTellCrack, JunkWheelerSfx.Data.nailPuncture, OwnerBoss.transform.position, 1f, 0.72f, 0.8f);
 
             // 2. 보스 차징 예열 미세 진동
             OwnerBoss.transform.DOShakePosition(tellCrackDuration * 0.9f, new Vector3(0.04f, 0f, 0f), 25, 90f, false, true);
@@ -278,6 +279,7 @@ namespace RealSteel.Boss.JunkWheeler
                 // 2단계: 도약 먼지 연출 및 공중 도약 (Jump Up - 제자리 짧은 도약)
                 SpawnVfx(jumpDustVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
                 OwnerBoss.Animation?.PlaySlamJump();
+                if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamLaunch, JunkWheelerSfx.Data.hitRubber, OwnerBoss.transform.position, 1f, 1.1f + r * 0.05f, 0.68f);
 
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY + config.jumpHeight, config.jumpDuration)
                     .SetEase(Ease.OutQuad);
@@ -292,6 +294,7 @@ namespace RealSteel.Boss.JunkWheeler
                 // 4단계: 착지 (Land 쾅!)
                 OwnerBoss.SnapToGroundY();
                 OwnerBoss.Animation?.PlaySlamLand();
+                PlayDribbleImpactSfx(roundIndex, GetLandingCenterPosition());
 
                 Vector3 landingCenter = GetLandingCenterPosition();
 
@@ -344,7 +347,33 @@ namespace RealSteel.Boss.JunkWheeler
             // 기획서 §1408: 4번째 착지 후 0.8초간 지면 정지 확정 딜타임 (무방비 상태)
             Debug.Log($"<color=green><b>[JunkWheelerDribbleShockwave] 🛡️ 4회 드리블 완료! {postLandVulnerableDelay:F1}초간 지면 정지 확정 딜타임(무방비) 진입!</b></color>");
             OwnerBoss.Animation?.PlayIdle();
+            if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.dribbleSteamExhaust, JunkWheelerSfx.Data.tireBlowout, OwnerBoss.transform.position, 1f, 0.88f, 0.75f);
             await UniTask.Delay(TimeSpan.FromSeconds(postLandVulnerableDelay), cancellationToken: token);
+        }
+
+        private void PlayDribbleImpactSfx(int roundIndex, Vector3 landingPos)
+        {
+            var d = JunkWheelerSfx.Data;
+            if (d == null) return;
+
+            switch (roundIndex)
+            {
+                case 1:
+                    JunkWheelerSfx.PlayOrFallback(d.dribbleBounce1, d.dribbleBounce3, landingPos, 1f, 1.25f, 0.72f);
+                    break;
+                case 2:
+                    JunkWheelerSfx.PlayOrFallback(d.dribbleBounce2, d.dribbleBounce3, landingPos, 1f, 1.10f, 0.85f);
+                    break;
+                case 3:
+                    JunkWheelerSfx.PlayOrFallback(d.dribbleBounce3, d.dribbleBounce4, landingPos, 1f, 1.00f, 0.95f);
+                    break;
+                default:
+                    JunkWheelerSfx.Play(d.dribbleBounce4, landingPos);
+                    JunkWheelerSfx.DuckBgm(0.18f, 0.5f);
+                    break;
+            }
+
+            JunkWheelerSfx.PlayOrFallback(d.dribbleShockwave, d.rollMove, landingPos, 1f, 1.05f + roundIndex * 0.06f, 0.52f + roundIndex * 0.08f);
         }
 
         private bool IsSymmetricGroundRingPrefab(GameObject prefab)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -237,7 +237,12 @@ namespace RealSteel.Boss.FSM
                 wallX = hit.point.x - (directionX * 0.5f);
             }
 
-            if (boss != null && boss.TryGetStageWallBoundsX(out float camMinX, out float camMaxX, 0.5f))
+            float pad = boss != null ? boss.GetBossVisualHalfWidth() : 1.10f;
+            if (boss != null && boss.TryGetStageWallBoundsX(out float stageMinX, out float stageMaxX, pad))
+            {
+                return directionX > 0 ? Mathf.Min(wallX, stageMaxX) : Mathf.Max(wallX, stageMinX);
+            }
+            if (boss != null && boss.TryGetCameraBoundsX(out float camMinX, out float camMaxX, pad))
             {
                 return directionX > 0 ? Mathf.Min(wallX, camMaxX) : Mathf.Max(wallX, camMinX);
             }

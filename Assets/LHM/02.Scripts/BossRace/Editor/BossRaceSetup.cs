@@ -296,7 +296,7 @@ namespace RealSteel.BossRace.EditorTools
                 },
                 new BossRaceEntry
                 {
-                    bossId = "boss.region3", regionLabel = 3, bossName = "[지역 3 보스명]", typeLabel = "상자형",
+                    bossId = "boss.region3", regionLabel = 3, bossName = "쿄쇼", typeLabel = "상자형",
                     tags = "상자형 몸통 · 기물 파괴 2 + 부위 파괴 1",
                     description = "보스 기획 후 추가 예정입니다.",
                     icon = BossRaceArt.Box,

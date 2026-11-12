@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using RealSteel.BossRace;
 using RealSteel.BossRace.EditorTools;
+using RealSteel.Cutscene.EditorTools;
 using RealSteel.Tutorial;
 using RealSteel.Tutorial.EditorTools;
 using UnityEditor;
@@ -87,6 +88,8 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
             new ToolGroup("튜토리얼 화면",
                 new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>)),
+            new ToolGroup("컷신",
+                new ToolItem("오프닝 컷신 (프리팹 + 테스트 씬)", CutsceneSetup.Setup, CutsceneSetup.Exists)),
             new ToolGroup("고물상 맵",
                 new ToolItem("고물상 맵 배치", JunkShopDialogueSetup.Setup, Has<FieldInputBridge>),
                 new ToolItem("연결 복구 (카메라 · 상점 창)", JunkShopDialogueSetup.RepairLinks, null)),
@@ -197,7 +200,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
             else if (!SetupKit.IsLhmScene(scene))
             {
-                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 단축키 정리, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 단축키 정리, 컷신, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
             }
         }
 

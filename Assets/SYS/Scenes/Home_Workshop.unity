@@ -2212,7 +2212,7 @@ Transform:
   m_GameObject: {fileID: 295332890}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.375, y: 4.0625, z: 6.7}
+  m_LocalPosition: {x: 7.375, y: 3.445, z: 6.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2233,7 +2233,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   note: "\uC9C0\uD558 \uC815\uBE44\uC18C\uB85C \uB0B4\uB824\uAC00\uB294 \uACC4\uB2E8
     \uC785\uAD6C \uD45C\uC9C0"
-  size: {x: 1.25, y: 2.3, z: 0.2}
+  size: {x: 1.25, y: -0.02, z: 0.2}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &299058597
@@ -12231,14 +12231,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1603470965}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0.72, y: 0.428, z: -0.766}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1495542796}
   m_Father: {fileID: 295332891}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!114 &1603470967
 MonoBehaviour:
   m_ObjectHideFlags: 0

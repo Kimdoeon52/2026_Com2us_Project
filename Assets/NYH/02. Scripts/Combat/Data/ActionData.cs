@@ -120,6 +120,12 @@ public class ActionData : ScriptableObject
     [Tooltip("활성 구간에 들어서는 순간 바꿔 재생할 Animator 스테이트 이름. 비우면 animationClipName을 계속 재생")]
     [SerializeField] private string activeClipName;
 
+    // 2026-11-12 추가: 홀드형 기술은 활성 구간 길이가 누른 시간에 따라 달라져서 첫 클립처럼 "데이터 길이"에 맞출 수가 없다.
+    // 대신 활성 클립 한 바퀴가 몇 프레임이어야 하는지를 정해 두면 그 길이에 맞춰 속도를 매긴다 (예: 래피드 펀치 = 타격 반복 간격 20프레임).
+    // 같은 Animator 스테이트(Straight 등)를 여러 기술이 같이 쓰므로 스테이트 Speed가 아니라 행동 데이터에 둔다
+    [Tooltip("활성 구간 클립(activeClipName) 한 바퀴를 몇 프레임(60fps)에 맞출지. 0 = 맞추지 않고 원본 속도. activeClipName이 비어 있으면 쓰이지 않는다")]
+    [Min(0)] [SerializeField] private int activeClipFrames;
+
     // 2026-10-27 추가: 클립 안에 행동보다 긴 동작이 들어 있을 때(예: 점프 시트 16장 중 웅크림 4장만 쓰기) 앞부분만 보여주려고.
     // 평소엔 "데이터가 진실, 그림이 따라온다"(§10)대로 클립을 데이터 길이에 맞춰 늘이고 줄인다 — 이 칸은 그 예외를 명시적으로 켜는 자리
     [Tooltip("켜면 첫 클립을 데이터 길이에 맞춰 늘이거나 줄이지 않고 원래 속도로 튼다 — 클립의 앞부분만 보이고 나머지는 잘린다")]
@@ -255,6 +261,7 @@ public class ActionData : ScriptableObject
 
     public string AnimationClipName => animationClipName;
     public string ActiveClipName => activeClipName;
+    public int ActiveClipFrames => activeClipFrames;
     public bool KeepClipSpeed => keepClipSpeed;
     public Vector2 LeapVelocity => leapVelocity;
 

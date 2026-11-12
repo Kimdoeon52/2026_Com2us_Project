@@ -133,18 +133,29 @@ public class ActionVfxPlayer : MonoBehaviour
     {
         bool facingRight = mover == null || mover.FacingRight;
         GameObject go = SpawnVisual(entry.prefab, transform.position, entry.offset, entry.rotation, facingRight,
-                                    entry.flipWithFacing, entry.scale, entry.playbackSpeed,
+                                    entry.flipWithFacing, CombineScale(entry.scale, entry.scaleXY), entry.playbackSpeed,
                                     RobotView.FindRenderer(this), entry.sortingOrderOffset);
         live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
     }
 
     /// <summary>
+    /// 공통 배율(scale)과 축별 배율(scaleXY)을 합친다. 인스펙터 + 버튼으로 빈 목록에 만든 항목은 scaleXY가 (0, 0)일 수 있어서
+    /// 0 이하인 축은 1로 취급한다 — 안 그러면 이펙트가 보이지 않는다
+    /// </summary>
+    public static Vector2 CombineScale(float scale, Vector2 scaleXY)
+    {
+        float x = scaleXY.x > 0f ? scaleXY.x : 1f;
+        float y = scaleXY.y > 0f ? scaleXY.y : 1f;
+        return new Vector2(scale * x, scale * y);
+    }
+
+    /// <summary>
     /// 이펙트 프리팹 1개를 순수 연출용으로 생성한다. 스킬 구간 이펙트(ActionVfxEntry)와 폭발 이펙트(ExplosionVfxEntry)가 같이 쓴다.
     /// origin + offset(오른쪽 기준, 좌우 반전 자동) 위치에 rotation/scale/playbackSpeed를 적용하고,
-    /// sortBase가 있으면 그 렌더러의 sorting layer/order + sortingOrderOffset 앞에 그린다.
+    /// sortBase가 있으면 그 렌더러의 sorting layer/order + sortingOrderOffset 앞에 그린다. scale은 x, y 축별 배율
     /// </summary>
     public static GameObject SpawnVisual(GameObject prefab, Vector3 origin, Vector2 offset, float rotation, bool facingRight,
-                                         bool flipWithFacing, float scale, float playbackSpeed,
+                                         bool flipWithFacing, Vector2 scale, float playbackSpeed,
                                          Renderer sortBase, int sortingOrderOffset)
     {
         Vector3 pos = BoxResolver.ToWorldPoint(origin, offset, facingRight);
@@ -157,7 +168,11 @@ public class ActionVfxPlayer : MonoBehaviour
         GameObject go = Instantiate(prefab, pos, rot);
         BossVfxHelper.ConfigureVisualOnly(go); // 콜라이더·리지드바디 끄고 Ignore Raycast로 격리 (판정 오염 방지)
 
-        Vector3 s = prefab.transform.localScale * scale;
+        Vector3 s = prefab.transform.localScale;
+        s.x *= scale.x;
+        s.y *= scale.y;
+        // z는 x, y 중 작은 쪽을 따라간다 — 2D라 보통 영향 없지만 3D 파티클 모양이 한쪽으로만 부풀지 않게
+        s.z *= Mathf.Min(scale.x, scale.y);
         if (flipped) s.x = -s.x;
         go.transform.localScale = s;
 

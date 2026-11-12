@@ -26,8 +26,9 @@ MonoBehaviour:
   damage: 4
   hitIntervalFrames: 6
   hitStopScale: 1
-  animationClipName: Jap
-  activeClipName: Straight
+  animationClipName: 
+  activeClipName: Jap
+  activeClipFrames: 6
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -43,7 +44,7 @@ MonoBehaviour:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
     phase: 2
     repeat: 1
-    repeatIntervalFrames: 20
+    repeatIntervalFrames: 24
     repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.29}
@@ -56,8 +57,8 @@ MonoBehaviour:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
     phase: 2
     repeat: 1
-    repeatIntervalFrames: 20
-    repeatStartOffsetFrames: 5
+    repeatIntervalFrames: 24
+    repeatStartOffsetFrames: 6
     endMode: 2
     offset: {x: 0.84, y: 0.23}
     rotation: -144
@@ -69,11 +70,11 @@ MonoBehaviour:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
     phase: 2
     repeat: 1
-    repeatIntervalFrames: 20
-    repeatStartOffsetFrames: 10
+    repeatIntervalFrames: 24
+    repeatStartOffsetFrames: 12
     endMode: 2
     offset: {x: 0.78, y: 0.32}
-    rotation: -144
+    rotation: -136
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5
@@ -82,11 +83,11 @@ MonoBehaviour:
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
     phase: 2
     repeat: 1
-    repeatIntervalFrames: 20
-    repeatStartOffsetFrames: 15
+    repeatIntervalFrames: 24
+    repeatStartOffsetFrames: 18
     endMode: 2
     offset: {x: 0.81, y: 0.23}
-    rotation: -144
+    rotation: -140
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5

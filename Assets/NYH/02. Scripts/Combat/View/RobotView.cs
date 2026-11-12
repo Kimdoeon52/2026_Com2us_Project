@@ -281,12 +281,23 @@ public class RobotView : MonoBehaviour
     }
 
     // 호출: ActionState.OnActionActiveStart. 활성 구간 전용 클립이 있으면 거기서 갈아끼운다(예: 총 변신 → 사격 루프).
-    // 루프 클립은 "몇 번 반복할지"가 데이터(활성 프레임)로 정해지므로 원본 속도(1배)로 그냥 돌린다
+    // 루프 클립은 "몇 번 반복할지"가 데이터(활성 프레임)로 정해지므로 활성 전체 길이에 맞추지 않는다.
+    // ActiveClipFrames가 있으면 클립 한 바퀴를 그 프레임 수에 맞추고(홀드형처럼 활성 길이가 바뀌는 기술용), 0이면 원본 속도(1배)
     private void OnActionActiveStart(ActionData action)
     {
         if (animator == null || string.IsNullOrEmpty(action.ActiveClipName)) return;
         animator.speed = 1f;
         animator.Play(action.ActiveClipName, 0, 0f);
+
+        if (action.ActiveClipFrames > 0)
+        {
+            // PlayAction과 같은 이유로 Update(0)으로 상태를 확정한 뒤 원본 길이를 읽는다
+            animator.Update(0f);
+            float clipLength = animator.GetCurrentAnimatorStateInfo(0).length;
+            float loopLength = action.ActiveClipFrames * CombatClock.TICK;
+            animator.speed = clipLength / loopLength;
+            Debug.Log($"[RobotView] {action.ActionName} 활성 클립길이={clipLength:F3}s 한바퀴={loopLength:F3}s → speed={animator.speed:F2}");
+        }
 
         // 도약 기술이면 이 클립을 착지까지 이어서 쓴다 — 키도 맞춰둬서 행동이 끝날 때 처음부터 다시 틀지 않게 한다
         if (action.LeapVelocity != Vector2.zero)

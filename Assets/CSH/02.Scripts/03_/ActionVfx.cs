@@ -71,7 +71,11 @@ public class ActionVfxEntry
     [Tooltip("켜면 왼쪽을 볼 때 좌우를 뒤집는다")]
     public bool flipWithFacing = true;
 
+    [Tooltip("전체 크기 배율 (x, y 공통)")]
     [Min(0.01f)] public float scale = 1f;
+
+    [Tooltip("x, y 축별 크기 배율. scale에 한 번 더 곱해진다. (1, 1) = 비율 그대로, (2, 1) = 가로로만 두 배. 0 이하는 1로 취급")]
+    public Vector2 scaleXY = Vector2.one;
 
     [Tooltip("파티클 재생 속도 배율. 0.5면 절반 속도로 2배 길게 재생된다 (플립북 애니메이션도 같이 느려짐)")]
     [Min(0.01f)] public float playbackSpeed = 1f;
@@ -124,7 +128,11 @@ public class ExplosionVfxEntry
     [Tooltip("켜면 왼쪽으로 날아갈 때 좌우를 뒤집는다")]
     public bool flipWithFacing = true;
 
+    [Tooltip("전체 크기 배율 (x, y 공통)")]
     [Min(0.01f)] public float scale = 1f;
+
+    [Tooltip("x, y 축별 크기 배율. scale에 한 번 더 곱해진다. (1, 1) = 비율 그대로, (2, 1) = 가로로만 두 배. 0 이하는 1로 취급")]
+    public Vector2 scaleXY = Vector2.one;
 
     [Tooltip("파티클 재생 속도 배율. 0.5면 절반 속도로 2배 길게 재생된다")]
     [Min(0.01f)] public float playbackSpeed = 1f;

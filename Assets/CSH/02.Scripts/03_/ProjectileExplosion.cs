@@ -111,7 +111,7 @@ public static class ProjectileExplosion
         {
             if (e == null || e.prefab == null) continue;
             var go = ActionVfxPlayer.SpawnVisual(e.prefab, pos, e.offset, e.rotation, facingRight,
-                                                 e.flipWithFacing, e.scale, e.playbackSpeed, sortBase, e.sortingOrderOffset);
+                                                 e.flipWithFacing, ActionVfxPlayer.CombineScale(e.scale, e.scaleXY), e.playbackSpeed, sortBase, e.sortingOrderOffset);
             ActionVfxPlayer.DestroyAfterNaturalLifetime(go);
         }
     }

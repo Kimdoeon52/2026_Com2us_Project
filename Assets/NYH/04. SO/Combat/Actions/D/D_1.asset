@@ -28,6 +28,7 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Jap
   activeClipName: 
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -39,7 +40,9 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx: []
   perBoxDamage: 0
+  perBoxSeparateHits: 0
   cooldownFrames: 0
   cooldownOwner: {fileID: 0}
   cylinderCost: 0

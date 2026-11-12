@@ -732,6 +732,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 64. 🔶 (2026-11-12) 주먹 5연타만 소리가 유독 큼(사용자) — 짧은 간격으로 충격음·휘두르기음이 5번 겹침. `KyodaiHandMotion.sfxVolume`(동작별 효과음 배율, 기본 1) + `KyodaiSfx.Play(…, volume)` 추가, 손의 휘두르기·충격·충격파 소리에 곱함. `Kyodai2D_주먹5연타_모션` = 0.6(임시). ⬜ 들어보고 조절
 65. 🔶 (2026-11-12) 내려찍기 소리가 너무 경쾌(사용자: 둔탁·묵직하게) — 주먹 충격 녹음이 고음(1kHz 위) 49%. `fistImpact_1·2`·`crusherSlam_1·2`를 녹음 여러 겹 + 로우패스 + 음높이 0.55~0.85배 + 합성 저음 쿵으로 다시 만듦(`Tools~/natural-sfx/mix-heavy.mjs`). 저음만 키우면 작은 스피커에서 사라져서 대역 비율로 맞춤: 주먹 저/중/고 ≈ 40/40/20%, 기물 ≈ 66~80% 저음. 같은 파일 이름·guid로 덮어써 에셋 연결 그대로, 바로 전 버전은 `09. Sound/Kyodai/이전/`. ⬜ 들어보고 조절
 66. ✅ (2026-11-12) NYH 정리(사용자: 안 쓰거나 합칠 수 있는 것만, 구조는 그대로) — 프로젝트 전체 텍스트 파일에서 guid·클래스 이름 참조를 조사해 **참조 0인 것만** 삭제: `PlayerData/Walk.asset`(빈 ActionData), `06.Material/SPRo 1·3.mat`, `08-999.OldPlayerAnim`의 안 쓰는 클립 9개 + `AnimatorControlle.controller`(PlayerAc.controller·CSH 프리팹이 쓰는 것은 남김). 합침: `IKyodaiHazard`(빈 표시 인터페이스) → `IKyodaiPatternUse.cs`. 내용이 완전히 같은 SO·안 쓰는 런타임 스크립트는 없었음. 남긴 것: `Kyodai2D_Master`(빌더 기본값 — 지우면 다시 만듦), `_Legacy3D` 일체(Battle2 씬이 사용 — 사용자 결정 대기)
+67. ✅ (2026-11-12) 안 쓰는 스크립트 분리(사용자) — 지금 게임(Battle3·빌드 씬)에서 안 쓰고 옛 Battle2 씬·레거시 코드에서만 쓰는 스크립트는 `Boss/Kyodai/_Legacy3D` 일체뿐 → `02. Scripts/99. 안쓰는 스크립트/Kyodai_Legacy3D/`로 .meta째 이동(guid 유지 — Battle2·RedLaserLine 프리팹·3D 모션 SO 연결 그대로, Editor 하위 폴더도 유지). 폴더 안 `README.md`에 아직 쓰는 곳 표. 이 문서의 예전 항목에 적힌 `_Legacy3D/` 경로는 이 폴더로 읽을 것
 
 ---
 

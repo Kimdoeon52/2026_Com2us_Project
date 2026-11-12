@@ -26,7 +26,7 @@ public enum KyodaiLaserChoice
 ///
 /// 2026-11-05 어깨 레이저 2개: emitter로 어느 어깨가 쏠지 — 번갈아(일반·쓸기) / 둘 다(X자 쓸기).
 /// </summary>
-public class KyodaiLaserPattern : BossPatternGimmickBase
+public class KyodaiLaserPattern : BossPatternGimmickBase, IKyodaiPatternUse
 {
     [Tooltip("emitter = Fixed일 때 쏘는 레이저")]
     [SerializeField] private KyodaiLaser laser;
@@ -55,6 +55,9 @@ public class KyodaiLaserPattern : BossPatternGimmickBase
     public KyodaiLaserData LaserData => laserData;
     public KyodaiHandMotion CompanionMotion => companionMotion;
     public KyodaiLaserChoice Emitter => emitter;
+    public bool UsesHands => companionMotion != null;
+    public int HandsNeeded => companionMotion != null ? 1 : 0;
+    public int LasersNeeded => emitter == KyodaiLaserChoice.Both && kyodai != null ? Mathf.Max(1, kyodai.Lasers.Count) : 1;
 
     protected override void OnAttached()
     {
@@ -83,6 +86,7 @@ public class KyodaiLaserPattern : BossPatternGimmickBase
             foreach (var l in firing) l.Play(laserData, touch);
         }
         if (hand != null) hand.Play(companionMotion, ApplyDamageToPlayer, telegraph);
+        if (kyodai != null) kyodai.OnPatternTellStarted(this);
     }
 
     // 여러 레이저가 같이 쏠 때: 같은 순간(같은 프레임)에 두 줄에 닿으면 한 번만 — X자 엇갈림에 서 있다고 두 배로 맞지 않게.
@@ -98,6 +102,7 @@ public class KyodaiLaserPattern : BossPatternGimmickBase
     protected override async UniTask ExecuteActionAsync(CancellationToken token)
     {
         await UniTask.WaitUntil(() => !AnyFiring() && (hand == null || !hand.IsPlaying), cancellationToken: token);
+        if (kyodai != null) await kyodai.WaitConcurrent(this, token);
     }
 
     private bool AnyFiring()
@@ -111,5 +116,6 @@ public class KyodaiLaserPattern : BossPatternGimmickBase
         foreach (var l in firing) if (l != null) l.Stop();
         if (hand != null) hand.Stop();
         if (telegraph != null) telegraph.Hide();
+        if (kyodai != null) kyodai.EndConcurrent(this);
     }
 }

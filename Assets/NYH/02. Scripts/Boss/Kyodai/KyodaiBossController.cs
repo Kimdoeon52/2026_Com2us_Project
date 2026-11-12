@@ -1,11 +1,13 @@
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using RealSteel.Boss.Core;
 using RealSteel.Boss.Visual;
 using UnityEngine;
 
 /// <summary>
 /// 지역 2 보스 "쿄다이" — 2D 스프라이트판 (2026-11-04 전면 개편, 쿄다이_보스전_제작_가이드 맨 위 절).
-/// 3D 리깅판은 _Legacy3D/KyodaiBossController3D로 보관.
+/// 3D 리깅판은 02. Scripts/99. 안쓰는 스크립트/Kyodai_Legacy3D/KyodaiBossController3D로 보관.
 ///
 /// KKH BossControllerBase를 그대로 탄다 — HP·페이즈·FSM(딜타임 → 패턴 → 딜타임)·그로기/스턴은 KKH 것, 여기는 쿄다이 전용만:
 ///   · 본체: 경기장 뒤의 큰 스프라이트(판정 없음). 천천히 숨 쉬듯 오르내린다(그림만)
@@ -71,6 +73,10 @@ public class KyodaiBossController : BossControllerBase
     [Tooltip("임시 체력 표시(KyodaiHpDebugView)를 시작할 때 붙인다 — 정식 UI가 생기면 끈다")]
     [SerializeField] private bool showDebugHp = true;
 
+    [Header("난이도별 차이 (2026-11-12)")]
+    [Tooltip("난이도마다 나오는 패턴·동시 패턴 수·기물 빈도·촉수 최대 수. 비우면 예전 방식(KKH 패턴 수 제한으로 무작위 고르기, 동시 패턴 없음)")]
+    [SerializeField] private KyodaiDifficultyData difficultyData;
+
     [Header("효과음 (2026-11-05)")]
     [Tooltip("쿄다이 효과음 묶음 — 시작할 때 KyodaiSfx에 건다. 비우면 소리 없음")]
     [SerializeField] private KyodaiSfxData sfx;
@@ -96,6 +102,11 @@ public class KyodaiBossController : BossControllerBase
     private const string AnimationHolderName = "KKH 애니메이션 (방향 전환용)";
     private int groggyStep;
     private bool defeated;
+
+    // 동시 패턴 (2026-11-12): KKH가 고른 패턴(main)의 예고가 시작될 때 부위가 안 겹치는 패턴 하나(extra)를 같이 돌린다.
+    // main은 extra가 끝날 때까지 기다렸다 끝난다 → 다음 패턴은 둘 다 끝난 뒤. main이 끊기면 extra도 끊는다
+    private BossPatternGimmickBase pendingMain, extraOwner, extraPattern;
+    private CancellationTokenSource extraCts;
 
     /// <summary>
     /// 보스 크기 = 루트 스케일 (2026-11-04, 사용자: 플레이어에 맞춰 0.4). 손 동작 오프셋·판정 크기·대기 자리·레이저 굵기·
@@ -133,6 +144,15 @@ public class KyodaiBossController : BossControllerBase
     public IReadOnlyList<float> GroggyHpRatios => groggyHpRatios;
     public IReadOnlyList<KyodaiHand> Hands => hands;
     public IReadOnlyList<KyodaiLaser> Lasers => lasers;
+
+    /// <summary>지금 난이도의 쿄다이 규칙 (난이도 데이터가 없으면 null)</summary>
+    public KyodaiDifficultyRule Rule => difficultyData != null ? difficultyData.Get(SelectedDifficulty) : null;
+
+    /// <summary>내려찍는 기물 빈도 배율 (0 = 안 나옴). 호출: KyodaiCrusher</summary>
+    public float CrusherFrequency => Rule != null ? Rule.crusherFrequency : 1f;
+
+    /// <summary>촉수 최대 수. 난이도 규칙이 없으면 촉수 수치의 최대 수. 호출: KyodaiTentacleSpawner</summary>
+    public int TentacleMax(int fallback) => Rule != null ? Rule.tentacleMax : fallback;
 
     /// <summary>플레이어 x. 플레이어가 없으면 경기장 가운데. 미리보기 중엔 가상 플레이어 x</summary>
     public float PlayerX => PlayerXOverride ?? (PlayerTransform != null ? PlayerTransform.position.x : ArenaCenterX);
@@ -214,6 +234,30 @@ public class KyodaiBossController : BossControllerBase
                            || phaseData.availableSkillIDs.Contains(pattern.GimmickID);
             if (allowed) activePatternPool.Add(pattern);
         }
+        _patternIndex = 0;
+
+        // 난이도 데이터가 있으면 (2026-11-12) 그 난이도 목록대로 — 적힌 순서로 돌고, KKH 패턴 수 제한은 안 쓴다
+        var rule = Rule;
+        if (rule != null)
+        {
+            var ids = rule.Patterns(phase);
+            if (ids != null && ids.Count > 0)
+            {
+                var ordered = new List<BossPatternGimmickBase>();
+                foreach (string id in ids)
+                {
+                    var found = activePatternPool.Find(p => p.GimmickID == id);
+                    if (found == null) Debug.LogWarning($"[Kyodai] 난이도 {SelectedDifficulty} 페이즈 {phase}: 패턴 '{id}'가 마스터 페이즈 목록이나 보스 밑에 없음");
+                    else if (!ordered.Contains(found)) ordered.Add(found);
+                }
+                activePatternPool.Clear();
+                activePatternPool.AddRange(ordered);
+            }
+            var ruleNames = new List<string>();
+            foreach (var p in activePatternPool) ruleNames.Add(p.GimmickName);
+            Debug.Log($"[Kyodai] 난이도 {SelectedDifficulty} 페이즈 {phase} 패턴 (동시 {rule.Concurrent(phase)}개): {string.Join(", ", ruleNames)}");
+            return;
+        }
 
         // 난이도별 패턴 수 제한(기획서 §6.10.4, KKH maxAllowedPatterns)보다 많으면 페이즈가 시작될 때마다 무작위로 그 수만큼 고른다
         // (2026-11-04) — KKH는 넘친 패턴을 목록 뒤에서 잘라버려서, 쿄다이처럼 패턴이 많으면 뒤쪽 패턴이 영영 안 나온다
@@ -230,7 +274,96 @@ public class KyodaiBossController : BossControllerBase
             foreach (var p in activePatternPool) names.Add(p.GimmickName);
             Debug.Log($"[Kyodai] 페이즈 {phase} 패턴 (제한 {cap}개, 무작위): {string.Join(", ", names)}");
         }
-        _patternIndex = 0;
+    }
+
+    // KKH는 목록 앞에서 패턴 수 제한만큼 잘라 쓴다 — 난이도 데이터가 있으면 목록 전체를 차례로 (목록이 곧 제한)
+    public override BossPatternGimmickBase GetNextPatternGimmick()
+    {
+        BossPatternGimmickBase next;
+        if (Rule == null || activePatternPool.Count == 0) next = base.GetNextPatternGimmick();
+        else
+        {
+            var valid = activePatternPool.FindAll(p => p != null && (Snapshot == null || !Snapshot.IsSkillSealed(p.GimmickID)));
+            if (valid.Count == 0) valid = activePatternPool;
+            next = valid[_patternIndex % valid.Count];
+            _patternIndex++;
+        }
+        pendingMain = next;
+        return next;
+    }
+
+    // ───────────────────────── 동시 패턴 (2026-11-12) ─────────────────────────
+
+    /// <summary>패턴 예고 시작. KKH가 고른 패턴이면 난이도에 따라 같이 나올 패턴을 하나 고른다. 호출: 쿄다이 패턴들의 OnTellStarted</summary>
+    public void OnPatternTellStarted(BossPatternGimmickBase pattern)
+    {
+        if (pattern != pendingMain) return; // 같이 나온 쪽(extra)이 부른 것
+        pendingMain = null;
+        var rule = Rule;
+        if (rule == null || Snapshot == null || rule.Concurrent(Snapshot.currentPhase) < 2) return;
+        if (extraPattern != null || defeated || Snapshot.isGroggy || transitionFrame >= 0) return;
+
+        var extra = PickConcurrent(pattern);
+        if (extra == null) return;
+        extraCts = new CancellationTokenSource();
+        extraOwner = pattern;
+        extraPattern = extra;
+        Debug.Log($"[Kyodai] 동시 패턴: {pattern.GimmickName} + {extra.GimmickName}");
+        RunExtra(extra, extraCts.Token).Forget();
+    }
+
+    /// <summary>main이 자기 동작을 끝낸 뒤 같이 나온 패턴이 끝날 때까지 기다린다. 호출: 쿄다이 패턴들의 ExecuteAction</summary>
+    public async UniTask WaitConcurrent(BossPatternGimmickBase pattern, CancellationToken token)
+    {
+        if (pattern != extraOwner) return;
+        await UniTask.WaitUntil(() => extraPattern == null || extraOwner != pattern, cancellationToken: token);
+    }
+
+    /// <summary>main 정리(끝·끊김) — 같이 나온 패턴이 아직 돌면 끊는다. 호출: 쿄다이 패턴들의 CleanupEffects</summary>
+    public void EndConcurrent(BossPatternGimmickBase pattern)
+    {
+        if (pattern == pendingMain) pendingMain = null;
+        if (pattern == extraOwner) StopConcurrent();
+    }
+
+    private void StopConcurrent()
+    {
+        extraOwner = null;
+        if (extraCts == null) return;
+        extraCts.Cancel();
+        extraCts.Dispose();
+        extraCts = null;
+    }
+
+    private async UniTaskVoid RunExtra(BossPatternGimmickBase extra, CancellationToken token)
+    {
+        try { await extra.ExecutePatternSequenceAsync(token); }
+        catch (System.OperationCanceledException) { }
+        catch (System.Exception e) { Debug.LogException(e); }
+        finally
+        {
+            if (extraPattern == extra) extraPattern = null;
+        }
+    }
+
+    // main이 이미 자리를 잡은 뒤(손 재생·레이저 시작) — 손을 쓰는 패턴끼리는 안 겹치고, 레이저는 남은 어깨 수만큼
+    private BossPatternGimmickBase PickConcurrent(BossPatternGimmickBase main)
+    {
+        bool mainHands = main is IKyodaiPatternUse mu && mu.UsesHands;
+        int freeHands = 0, freeLasers = 0;
+        foreach (var h in hands) if (h != null && IsFree(h)) freeHands++;
+        foreach (var l in lasers) if (l != null && !l.IsActive) freeLasers++;
+
+        var candidates = new List<BossPatternGimmickBase>();
+        foreach (var p in activePatternPool)
+        {
+            if (p == null || p == main || !(p is IKyodaiPatternUse use)) continue;
+            if (Snapshot != null && Snapshot.IsSkillSealed(p.GimmickID)) continue;
+            if (use.UsesHands && (mainHands || freeHands < use.HandsNeeded)) continue;
+            if (use.LasersNeeded > freeLasers) continue;
+            candidates.Add(p);
+        }
+        return candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)] : null;
     }
 
     // InitializeBoss가 다시 불려도 두 번 걸리지 않게 빼고 건다
@@ -343,6 +476,7 @@ public class KyodaiBossController : BossControllerBase
         var token = RenewStateCancellationToken();
         StateMachine.ChangeState(new RealSteel.Boss.FSM.BossIdleState(this, token, holdSeconds));
 
+        StopConcurrent();
         foreach (var hand in hands) if (hand != null) hand.Stop();
         foreach (var laser in lasers) if (laser != null) laser.Stop();
         foreach (var crusher in crushers) if (crusher != null) crusher.SetRunning(false); // 연출 동안 쉼 (찍던 중이면 올라감)
@@ -490,6 +624,7 @@ public class KyodaiBossController : BossControllerBase
     {
         if (defeated) return;
         if (groggy) KyodaiSfx.Play(KyodaiSfx.D?.groggy, transform.position);
+        if (groggy) StopConcurrent();
         foreach (var hand in hands) if (hand != null) hand.SetDown(groggy);
         if (groggy) foreach (var laser in lasers) if (laser != null) laser.Stop();
 
@@ -508,6 +643,7 @@ public class KyodaiBossController : BossControllerBase
     {
         Debug.Log("[Kyodai] 쿄다이 격파");
         defeated = true;
+        StopConcurrent();
         KyodaiSfx.Play(KyodaiSfx.D?.defeat, transform.position);
         foreach (var hand in hands) if (hand != null) hand.Kill();
         foreach (var laser in lasers) if (laser != null) laser.Stop();

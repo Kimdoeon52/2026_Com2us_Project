@@ -13,7 +13,7 @@ using UnityEngine;
 /// 손마다 바닥 예고를 따로 둔다(두 손이 동시에 그림자를 쓰면 하나를 서로 뺏는다).
 /// 데미지·부위 피해는 패턴 데이터(KKH ApplyDamageToPlayer — 회피 무적 검사 포함).
 /// </summary>
-public class KyodaiDualHandPattern : BossPatternGimmickBase
+public class KyodaiDualHandPattern : BossPatternGimmickBase, IKyodaiPatternUse
 {
     [Header("왼손")]
     [SerializeField] private KyodaiHandMotion leftMotion;
@@ -36,6 +36,9 @@ public class KyodaiDualHandPattern : BossPatternGimmickBase
 
     public KyodaiHandMotion LeftMotion => leftMotion;
     public KyodaiHandMotion RightMotion => rightMotion;
+    public bool UsesHands => true;
+    public int HandsNeeded => (leftMotion != null ? 1 : 0) + (rightMotion != null ? 1 : 0);
+    public int LasersNeeded => 0;
 
     protected override void OnAttached()
     {
@@ -58,6 +61,7 @@ public class KyodaiDualHandPattern : BossPatternGimmickBase
         Func<GameObject, bool> touch = shareHit ? TouchShared : (Func<GameObject, bool>)ApplyDamageToPlayer;
         if (left != null) left.Play(leftMotion, touch, leftTelegraph, leftDelayFrames);
         if (right != null) right.Play(rightMotion, touch, rightTelegraph, rightDelayFrames);
+        if (kyodai != null) kyodai.OnPatternTellStarted(this);
     }
 
     // 두 손 중 먼저 닿은 쪽만 데미지. 이미 맞았으면 "맞은 걸로" 돌려줘서 다른 손도 더 안 본다
@@ -72,6 +76,7 @@ public class KyodaiDualHandPattern : BossPatternGimmickBase
     protected override async UniTask ExecuteActionAsync(CancellationToken token)
     {
         await UniTask.WaitUntil(() => (left == null || !left.IsPlaying) && (right == null || !right.IsPlaying), cancellationToken: token);
+        if (kyodai != null) await kyodai.WaitConcurrent(this, token);
     }
 
     protected override void CleanupEffects()
@@ -80,5 +85,6 @@ public class KyodaiDualHandPattern : BossPatternGimmickBase
         if (right != null) right.Stop();
         if (leftTelegraph != null) leftTelegraph.Hide();
         if (rightTelegraph != null) rightTelegraph.Hide();
+        if (kyodai != null) kyodai.EndConcurrent(this);
     }
 }

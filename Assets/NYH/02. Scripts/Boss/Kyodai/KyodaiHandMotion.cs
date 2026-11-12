@@ -130,6 +130,9 @@ public class KyodaiHandMotion : ScriptableObject
 {
     public List<KyodaiHandKey> keys = new List<KyodaiHandKey>();
 
+    [Tooltip("이 동작의 효과음(휘두르기·충격·충격파) 크기 배율. 짧은 간격으로 여러 번 찍는 동작은 소리가 겹쳐 커지니 낮춘다 (2026-11-12 사용자: 주먹 5연타)")]
+    [Range(0f, 1f)] public float sfxVolume = 1f;
+
     /// <summary>전체 프레임 수 (충격 히트스톱 제외)</summary>
     public int TotalFrames
     {

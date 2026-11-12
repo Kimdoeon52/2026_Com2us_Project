@@ -150,6 +150,7 @@ public static class Kyodai2DBuilder
         SyncPhases(master, added);
         EnsureEffects(feel, added);
         EnsureSfx(boss, added);
+        EnsureDifficulty(boss, added);
         ApplyArt(boss, added);
 
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
@@ -1316,6 +1317,43 @@ public static class Kyodai2DBuilder
         {
             SetFields(boss, so => so.FindProperty("sfx").objectReferenceValue = data);
             added.Add("효과음 연결");
+        }
+    }
+
+    // ───────────────────────── 난이도별 차이 (2026-11-12) ─────────────────────────
+    // 사용자 승인 안(전부 임시값): 패턴 구성·동시 패턴 수·기물 빈도·촉수 최대 수. 이미 있는 에셋은 안 건드린다(손으로 고친 값 유지)
+
+    private static void EnsureDifficulty(KyodaiBossController boss, System.Collections.Generic.List<string> added)
+    {
+        string[] easy2 = { "KYODAI2D_FIST_SLAM", "KYODAI2D_PALM_PUSH" };
+        string[] easy3 = { "KYODAI2D_FIST_SLAM", "KYODAI2D_PALM_PUSH", "KYODAI2D_LASER" };
+        string[] all1 = { "KYODAI2D_FIST_SLAM", "KYODAI2D_PALM_PUSH", "KYODAI2D_FIST_COMBO", "KYODAI2D_LASER", "KYODAI2D_LASER_SWEEP" };
+        var all2 = new System.Collections.Generic.List<string>(all1)
+        {
+            "KYODAI2D_PALM_PRESS", "KYODAI2D_SHOCK_SLAM", "KYODAI2D_DUAL_CLAP", "KYODAI2D_DUAL_BARRAGE", "KYODAI2D_DUAL_SLAM", CrossPatternId
+        };
+
+        KyodaiDifficultyRule Rule(BossDifficulty d, string[] p1, System.Collections.Generic.List<string> p2, int c1, int c2, float crusher, int tentacles) =>
+            new KyodaiDifficultyRule
+            {
+                difficulty = d,
+                phase1Patterns = new System.Collections.Generic.List<string>(p1),
+                phase2Patterns = p2 != null ? new System.Collections.Generic.List<string>(p2) : new System.Collections.Generic.List<string>(),
+                phase1Concurrent = c1, phase2Concurrent = c2, crusherFrequency = crusher, tentacleMax = tentacles
+            };
+
+        var data = LoadOrCreate<KyodaiDifficultyData>($"{DataFolder}/Kyodai2D_난이도.asset", d => d.rules = new[]
+        {
+            Rule(BossDifficulty.VeryEasy, easy2, null, 1, 1, 0f, 3),
+            Rule(BossDifficulty.Easy, easy3, null, 1, 1, 0.5f, 5),
+            Rule(BossDifficulty.Normal, all1, null, 1, 1, 1f, 7),
+            Rule(BossDifficulty.Hard, all1, all2, 1, 2, 1.3f, 10),
+            Rule(BossDifficulty.Hell, all1, all2, 2, 2, 1.6f, 10),
+        });
+        if (new SerializedObject(boss).FindProperty("difficultyData").objectReferenceValue == null)
+        {
+            SetFields(boss, so => so.FindProperty("difficultyData").objectReferenceValue = data);
+            added.Add("난이도별 차이 연결");
         }
     }
 

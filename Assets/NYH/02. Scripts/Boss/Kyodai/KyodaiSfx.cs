@@ -23,12 +23,13 @@ public static class KyodaiSfx
 
     public static void Bind(KyodaiSfxData sfx) => data = sfx;
 
-    /// <summary>한 번 재생. pos = 소리 나는 자리(좌우 나누기용)</summary>
-    public static void Play(KyodaiSfxCue cue, Vector3 pos, float pitch = 1f)
+    /// <summary>한 번 재생. pos = 소리 나는 자리(좌우 나누기용), volume = 이 재생만의 크기 배율</summary>
+    public static void Play(KyodaiSfxCue cue, Vector3 pos, float pitch = 1f, float volume = 1f)
     {
         if (!Ready(cue)) return;
         AudioSource s = NextVoice();
         Setup(s, cue, pos, pitch);
+        s.volume *= volume;
         s.loop = false;
         s.Play();
     }

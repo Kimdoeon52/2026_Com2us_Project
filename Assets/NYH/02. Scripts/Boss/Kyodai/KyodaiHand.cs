@@ -342,7 +342,7 @@ public class KyodaiHand : MonoBehaviour
         if (key.hitActive && (keyIndex == 0 || !motion.keys[keyIndex - 1].hitActive))
         {
             touched = false;
-            KyodaiSfx.Play(KyodaiSfx.D?.strikeWhoosh, pos); // 휘두르기·밀기 시작
+            KyodaiSfx.Play(KyodaiSfx.D?.strikeWhoosh, pos, 1f, SfxVolume); // 휘두르기·밀기 시작
         }
         target = new Vector2(ResolveX(key), ResolveY(key));
         bool mirror = key.mirrorByDirection && dir < 0;
@@ -449,8 +449,8 @@ public class KyodaiHand : MonoBehaviour
         KyodaiCameraShake.Shake(key.impactShake, feel != null ? feel.shakeSeconds : 0.3f);
         if (key.spawnShockwave) owner.SpawnShockwave(ground.x, onTouch); // 충격파 내려치기 — 바닥을 따라 좌우로
         if (feel != null) PixelFx.Play(feel.impactFx, new Vector3(ground.x, ground.y, transform.position.z));
-        KyodaiSfx.Play(pose == KyodaiHandPose.Palm ? KyodaiSfx.D?.palmImpact : KyodaiSfx.D?.fistImpact, ground);
-        if (key.spawnShockwave) KyodaiSfx.Play(KyodaiSfx.D?.shockwave, ground);
+        KyodaiSfx.Play(pose == KyodaiHandPose.Palm ? KyodaiSfx.D?.palmImpact : KyodaiSfx.D?.fistImpact, ground, 1f, SfxVolume);
+        if (key.spawnShockwave) KyodaiSfx.Play(KyodaiSfx.D?.shockwave, ground, 1f, SfxVolume);
         OnImpact?.Invoke(this, ground);
     }
 
@@ -492,6 +492,9 @@ public class KyodaiHand : MonoBehaviour
         // 그림이 바뀌는 순간을 톡 튀는 움직임으로 가린다
         if (changed && pop && feel != null) squashVel += feel.posePop;
     }
+
+    // 지금 동작의 효과음 크기 배율 (동작 에셋 sfxVolume)
+    private float SfxVolume => motion != null ? motion.sfxVolume : 1f;
 
     private void HandleHit(BossHurtZone zone, int damage)
     {

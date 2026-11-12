@@ -17,7 +17,7 @@ public enum KyodaiHandChoice { Left, Right, NearestToPlayer, Alternate, Farthest
 /// BossPatternData.tellDuration은 DPS 저지(전조 중 누적 피해) 시간 — 동작의 예고 키 길이와 맞춰두면 된다.
 /// 데미지·부위 피해는 패턴 데이터(KKH ApplyDamageToPlayer — 회피 무적 검사 포함).
 /// </summary>
-public class KyodaiHandPattern : BossPatternGimmickBase
+public class KyodaiHandPattern : BossPatternGimmickBase, IKyodaiPatternUse
 {
     [Tooltip("재생할 손 동작")]
     [SerializeField] private KyodaiHandMotion motion;
@@ -33,6 +33,9 @@ public class KyodaiHandPattern : BossPatternGimmickBase
     private int alternate;
 
     public KyodaiHandMotion Motion => motion;
+    public bool UsesHands => true;
+    public int HandsNeeded => 1;
+    public int LasersNeeded => 0;
 
     protected override void OnAttached()
     {
@@ -50,16 +53,19 @@ public class KyodaiHandPattern : BossPatternGimmickBase
     {
         if (hand == null || motion == null) return;
         hand.Play(motion, ApplyDamageToPlayer, telegraph);
+        if (kyodai != null) kyodai.OnPatternTellStarted(this); // 난이도에 따라 같이 나올 패턴
     }
 
     protected override async UniTask ExecuteActionAsync(CancellationToken token)
     {
         await UniTask.WaitUntil(() => hand == null || !hand.IsPlaying, cancellationToken: token);
+        if (kyodai != null) await kyodai.WaitConcurrent(this, token); // 같이 나온 패턴도 끝나야 딜타임
     }
 
     protected override void CleanupEffects()
     {
         if (hand != null) hand.Stop();
         if (telegraph != null) telegraph.Hide();
+        if (kyodai != null) kyodai.EndConcurrent(this);
     }
 }

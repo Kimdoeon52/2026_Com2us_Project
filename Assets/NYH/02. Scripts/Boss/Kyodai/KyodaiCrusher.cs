@@ -7,7 +7,7 @@ using UnityEngine;
 /// <summary>
 /// 쿄다이 내려찍는 기물 (2026-11-04). 맵에 1개 — 전투 내내(1페이즈부터, 사용자 정정) 손 패턴과 **따로** 주기적으로 내려찍는다.
 /// 2026-11-05 사용자: "패턴 겹치기 금지"의 예외 — 어떤 패턴 중에든 끼어들어 난이도를 올리는 역할. 난이도가 높을수록 자주
-/// (KyodaiCrusherData.frequencyByDifficulty).
+/// (쿄다이 난이도 데이터 KyodaiDifficultyData.crusherFrequency — 2026-11-12 기물 수치에서 옮김).
 ///
 /// 한 번: 화면 위에서 플레이어를 따라 내려옴(바닥 그림자 예고) → 멈추고 떨림(피할 틈) → 찍기(판정) → 박힘 → 올라감 → 대기.
 /// 로직은 전투 틱(KyodaiBossController가 손·레이저 다음에 부른다), 그림은 Update.
@@ -84,6 +84,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
         {
             case Phase.Waiting:
                 if (!running) return;
+                if (kyodai.CrusherFrequency <= 0f) return; // 이 난이도는 기물 없음 (2026-11-12 난이도 데이터)
                 if (--wait <= 0) StartDrop();
                 return;
 
@@ -123,7 +124,7 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
                 if (frame >= data.riseFrames)
                 {
                     HideNow();
-                    wait = data.IntervalFrames(kyodai.SelectedDifficulty);
+                    wait = data.IntervalFrames(kyodai.CrusherFrequency);
                 }
                 break;
             }

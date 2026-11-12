@@ -14,17 +14,11 @@ public class KyodaiCrusherData : ScriptableObject
     [Tooltip("TODO: 기획 수치 없음. 한 번 올라간 뒤 다음 내려찍기까지 (임시 6초)")]
     [Min(0)] public int intervalFrames = 360;
 
-    [Tooltip("TODO: 기획 수치 없음. 난이도별 빈도 배율 (아주 쉬움·쉬움·보통·어려움·헬 순서). 2 = 두 배 자주(대기 시간 절반). " +
-             "2026-11-05 사용자: 난이도가 높을수록 자주 — 값은 아직 전부 1(같음)")]
-    public float[] frequencyByDifficulty = { 1f, 1f, 1f, 1f, 1f };
-
-    /// <summary>다음 내려찍기까지 대기 = intervalFrames ÷ 그 난이도 빈도 배율</summary>
-    public int IntervalFrames(BossDifficulty difficulty)
-    {
-        int i = (int)difficulty;
-        float f = frequencyByDifficulty != null && i >= 0 && i < frequencyByDifficulty.Length ? frequencyByDifficulty[i] : 1f;
-        return Mathf.Max(1, Mathf.RoundToInt(intervalFrames / Mathf.Max(0.01f, f)));
-    }
+    /// <summary>
+    /// 다음 내려찍기까지 대기 = intervalFrames ÷ 빈도 배율. 난이도별 배율은 쿄다이 난이도 데이터(KyodaiDifficultyData.crusherFrequency)로
+    /// 옮겼다 (2026-11-12 — 난이도 차이를 한 에셋에서)
+    /// </summary>
+    public int IntervalFrames(float frequency) => Mathf.Max(1, Mathf.RoundToInt(intervalFrames / Mathf.Max(0.01f, frequency)));
 
     [Header("단계 길이 (60fps 프레임)")]
     [Tooltip("화면 위에서 플레이어를 따라 내려오는 시간 (그림자 예고)")]

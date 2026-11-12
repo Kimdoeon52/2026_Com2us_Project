@@ -42,7 +42,8 @@ public class KyodaiTentacleSpawner : BossPatternGimmickBase, IKyodaiHazard
         }
     }
 
-    public int MaxCount => data != null ? data.maxCount : 0;
+    /// <summary>최대 수 — 쿄다이 난이도 데이터가 있으면 그 난이도 값 (2026-11-12)</summary>
+    public int MaxCount => data == null ? 0 : kyodai != null ? kyodai.TentacleMax(data.maxCount) : data.maxCount;
     public float SpeedMultiplier => appliedMultiplier;
     public float Size => kyodai != null ? kyodai.Size : 1f;
     public float PlayerX => kyodai != null ? kyodai.PlayerX : transform.position.x;
@@ -107,7 +108,7 @@ public class KyodaiTentacleSpawner : BossPatternGimmickBase, IKyodaiHazard
 
         if (running && !paused && --timer <= 0)
         {
-            if (Count < data.maxCount) Spawn();
+            if (Count < MaxCount) Spawn();
             timer = phase2 ? data.phase2SpawnIntervalFrames : data.spawnIntervalFrames;
         }
         UpdateDebuff();

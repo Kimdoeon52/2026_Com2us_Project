@@ -1,32 +1,30 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
+// [Stage1 랭커5] 짠돌이 상인 - 스킬 "눈물의 흥정": 가격이 원가의 1.2배를 넘으면 20% 깎으면서 자기가 선두가 됨. 1회
 public class BossNpc5 : BossAiBase
 {
-    [Range(0.1f, 1f)]
-    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.7f;
+    public override string SkillName => "눈물의 흥정";
+    public override string SkillLine => "너무 비싸요... 네고 가능한가요...?";
+    protected override string[] ThinkLines => new[] { "비싸... 너무 비싸...", "계산기가 어디 갔지...", "한 푼이라도 아껴야..." };
+    protected override string[] RaiseLines => new[] { "{0}G... 이게 최선이에요.", "{0}G... 눈물이 나네요.", "{0}G... 큰맘 먹었어요." };
+    protected override string GiveUpLine => "이 가격엔 못 사요...";
 
-    public override void Start()
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(40, 1);//40% 확률로 스킬 발동, 1회만 발동
+        SetSkillChance(35, 1);
         RaiseGold = 10;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
+
+    private int NegoPrice(Auction m) => Mathf.Max(m.stuff != null ? m.stuff.Cost / 2 : 1, Mathf.RoundToInt(m.CurrentCost * 0.8f));
+
+    protected override bool WantsSkill(Auction m)
+        => !IsLeading(m) && m.stuff != null && m.CurrentCost > m.stuff.Cost * 1.2f && CanAffordBid(m, NegoPrice(m));
+
+    public override UniTask UseSkillAsync(Auction m)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
-    }
-    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
-    {
-        return base.IsBigRaiseThink(currentPrice, baseCost);
-    }// Start is called once before the first execution of Update after the MonoBehaviour is created
-    public override void UseBigSkill(Auction manager)
-    {
-        //경매 아이템 가격을 절반으로 낮추는 능력
-        manager.CurrentCost /= 2;
-    }
-    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
-    {
-        return "너무 비싸다요... 네고가능한가요...?";
+        BidAt(m, NegoPrice(m));
+        m.ShowErrorMessage($"가격이 {m.CurrentCost}G로 깎였습니다!").Forget();
+        return UniTask.CompletedTask;
     }
 }

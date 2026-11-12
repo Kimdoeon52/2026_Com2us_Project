@@ -1,35 +1,27 @@
-using UnityEngine;
+using Cysharp.Threading.Tasks;
 
-// 경매 아이템이 안보이는 능력 1회 (시작 확률형)
+// [Stage1 랭커4] 장난꾸러기 - 스킬 "연막탄": 8초 동안 물품 이름/가격/등급을 가림. 1회
 public class BossNpc4 : BossAiBase
 {
-    [Range(0.1f, 1f)]
-    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.7f;
+    private const float HideSeconds = 8f;
 
-    public override void Start()
+    public override string SkillName => "연막탄";
+    public override string SkillLine => "아무것도 안 보이게 만들어 줄게?";
+    protected override string[] ThinkLines => new[] { "히히, 뭘 숨겨볼까~", "까꿍!", "심심한데 장난이나 칠까?" };
+    protected override string[] RaiseLines => new[] { "{0}G! 맞혀봐~", "{0}G! 히히!", "{0}G~ 놀랐지?" };
+    protected override string GiveUpLine => "에이, 재미없어.";
+
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(40, 1);//40% 확률로 스킬 발동, 1회만 발동
+        SetSkillChance(40, 1);
         RaiseGold = 10;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
+
+    protected override bool WantsSkill(Auction m) => m.RemainingTime > 20f && !m.IsInfoHidden;
+
+    public override UniTask UseSkillAsync(Auction m)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
-    }
-    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
-    {
-        return base.IsBigRaiseThink(currentPrice, baseCost);
-    }// Start is called once before the first execution of Update after the MonoBehaviour is created
-    public override void UseBigSkill(Auction manager)
-    {
-        //경매 아이템이 안보이는 능력.
-        manager.auctionName.text = "메롱 안보이지?";
-        manager.auctionCost.text = "얼마일까?";
-        manager.auctionGrade.text = "등급은 비밀이야~";
-    }
-    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
-    {
-        return "아무것도 안보이게 만들어줄게?";
+        m.HideAuctionInfo(HideSeconds);
+        return UniTask.CompletedTask;
     }
 }

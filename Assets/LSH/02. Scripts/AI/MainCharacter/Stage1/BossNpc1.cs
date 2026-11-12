@@ -1,42 +1,29 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-//보스 스킬: 50% 확률로 1000골드 올리기. 2회
+// [Stage1 랭커1] 거만한 부자 - 스킬 "큰손": 남이 앞서 있으면 현재가의 15%(최소 100G)를 한 번에 얹어 선두 탈환. 2회
 public class BossNpc1 : BossAiBase
-{ //보스 성격 만들기
-    [Range(0.1f, 1f)]
-    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.7f;
-    [SerializeField] private int bigRaiseGold = 100; //큰 레이즈가 생기면 얼마를 올릴 것인지.
-    public override void Start()
+{
+    public override string SkillName => "큰손";
+    public override string SkillLine => "그렇게 조금 걸어서 되겠어?";
+    protected override string[] ThinkLines => new[] { "돈이면 다 되지.", "흠, 푼돈 싸움이군.", "지갑이 심심하네." };
+    protected override string[] RaiseLines => new[] { "{0}G. 껌값이지.", "{0}G! 잔돈은 됐어.", "{0}G. 이 정도야 뭐." };
+    protected override string GiveUpLine => "흥, 이딴 고철에 더는 안 써.";
+
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(30, 3); //스킬 확률과 횟수 설정
-        RaiseGold = 15; 
+        SetSkillChance(35, 2);
+        RaiseGold = 15;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
+
+    private int BigRaisePrice(Auction m) => m.CurrentCost + Mathf.Max(100, Mathf.RoundToInt(m.CurrentCost * 0.15f));
+
+    protected override bool WantsSkill(Auction m) => !IsLeading(m) && CanAffordBid(m, BigRaisePrice(m));
+
+    public override UniTask UseSkillAsync(Auction m)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
-    }
-    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
-    {
-        if(!GlobalGold.Instance.CanUseGold(NPCID, currentPrice + bigRaiseGold)
-           || currentPrice + bigRaiseGold > MaxBidPrice(baseCost)) // 큰 레이즈도 원가 배수 한도는 넘지 않음
-        {
-            return false;
-        }
-        return base.IsBigRaiseThink(currentPrice, baseCost);
-    }
-    public override void UseBigSkill(Auction manager)
-    {
-        manager.CurrentCost += bigRaiseGold;
-        manager.WinnerID = NPCID; //큰 레이즈를 사용하면 승자
-    }
-    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
-    {
-        return "그렇게 조금 걸어서 되겠어?";
-    }
-    protected override void HandleGiveUp()
-    {
-        ShowThinkChatWithText("쳇 난 포기 하겠어.");
+        BidAt(m, BigRaisePrice(m));
+        ShowThinkChatWithText($"{m.CurrentCost}G! 확 올려버리지!");
+        return UniTask.CompletedTask;
     }
 }

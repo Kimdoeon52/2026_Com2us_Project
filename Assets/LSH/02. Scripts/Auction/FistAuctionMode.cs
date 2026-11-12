@@ -15,7 +15,6 @@ using UnityEngine;
  */
 public class FistAuctionMode : IAuctionMode
 {
-    private static readonly Vector2 PlateOffset = new Vector2(0f, -135f); // 초상화(150x200) 바로 아래
     private const float RevealRollTime = 1.2f; // 숫자 굴리는 시간 (전원 동일)
     private const float WarningTime = 5f; // 남은 시간 경고 구간
 
@@ -47,7 +46,7 @@ public class FistAuctionMode : IAuctionMode
         {
             if (ai == null) continue;
             Bidder bidder = new Bidder { Name = ai.NPCName, ID = ai.NPCID, Ai = ai };
-            bidder.Plate = CreatePlate(manager, ai.transform.parent as RectTransform);
+            bidder.Plate = CreatePlate(manager, ai.transform.parent); // AI는 좌석(랭커자리)의 자식으로 생성됨
             bidders.Add(bidder);
         }
 
@@ -199,10 +198,10 @@ public class FistAuctionMode : IAuctionMode
     }
 
     // ==================== 연출 헬퍼 ====================
-    private FistBidPlate CreatePlate(Auction manager, RectTransform slot)
+    private FistBidPlate CreatePlate(Auction manager, Transform slot)
     {
         if (slot == null) return null;
-        FistBidPlate plate = FistBidPlate.Create(slot, manager.chat != null ? manager.chat.font : null, PlateOffset);
+        FistBidPlate plate = FistBidPlate.Create(slot, manager.chat != null ? manager.chat.font : null); // 좌석 초상화 바로 아래에 자동 배치
         manager.RegisterRoundUI(plate.gameObject);
         return plate;
     }

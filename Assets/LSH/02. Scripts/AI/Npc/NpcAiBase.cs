@@ -35,8 +35,8 @@ public class NpcAiBase : AllAiBase
 
         int NextPrice = actionPrise + RaiseGold;
 
-        // GlobalGold 매니저를 통해 안전하게 잔고 검사
-        if (!GlobalGold.Instance.CanUseGold(data.npcID, NextPrice))
+        // 일반 NPC는 GlobalGold에 등록돼 있지 않으므로 자기 NpcGold 데이터의 예산으로 판단
+        if (!CanUseGold(NextPrice))
         {
             IsGiveUp = true; // 예산 부족으로 포기
             return false;
@@ -44,13 +44,14 @@ public class NpcAiBase : AllAiBase
         return true;
     }
 
-    public virtual void GetAuction(int finalPrise) //낙찰
+    // NPC 예산 검사 (NpcGold.npcGold 기준)
+    protected bool CanUseGold(int price) => data != null && data.npcGold >= price;
+
+    // 일반 NPC(조무레기)는 골드/장비가 저장되지 않음 (기획: 골드 상관X).
+    // NpcGold는 ScriptableObject라 에디터에서 값을 깎으면 에셋 자체가 바뀌므로 차감하지 않고 기록만 남김
+    public override void OnWinAuction(int finalPrice, PartGrade stuffGrade)
     {
-        if (data != null)
-        {
-            data.npcGold -= finalPrise;
-            Debug.Log($"{NPCName} : {finalPrise} 골드로 낙찰 받음. 남은 골드 : {data.npcGold}");
-        }
+        Debug.Log($"[낙찰] {NPCName} : {finalPrice}G (일반 NPC라 골드는 차감하지 않음)");
     }
     
 }

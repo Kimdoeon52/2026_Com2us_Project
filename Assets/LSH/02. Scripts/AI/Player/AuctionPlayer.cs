@@ -1,69 +1,102 @@
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class AuctionPlayer : Singleton<AuctionPlayer>
 {
     [Header("플레이어 말풍선 나오는 곳")]
-    [SerializeField] private Image playerThinkImage;
-    [SerializeField] private TextMeshProUGUI playerThinkChat;
+    [SerializeField] private SpriteRenderer playerThinkImage;
+    [SerializeField] private TextMeshPro playerThinkChat;
     public Sprite playerImage;
 
     [Header("생각 말풍선 연출 설정")]
-    [SerializeField] private CanvasGroup thinkCanvasGroup; // 말풍선 전체 투명도 제어용
+    [SerializeField] private Vector3 newScale = Vector3.one; //말풍선이 다 커졌을 때 크기 (0이면 씬에 잡힌 크기 사용)
     private Sequence thinkSequence; // DOTween 트윈 중첩 방지용
     private Vector3 originalLocalPos; // 원래 말풍선 위치 저장
     private SpeechBubbleFitter bubbleFitter; // 텍스트 길이에 맞춰 말풍선 크기 조절
+    private bool isBubbleReady = false;
 
-
-    private void Start()
+    protected override void Awake()
     {
-        // CanvasGroup이 안 붙어 있으면 자동으로 가져오거나 추가
-        if (playerThinkImage != null)
-        {
-            if (!playerThinkImage.TryGetComponent<CanvasGroup>(out thinkCanvasGroup))
-            {
-                thinkCanvasGroup = playerThinkImage.gameObject.AddComponent<CanvasGroup>();
-            }
-            originalLocalPos = new Vector3(0f, 200f, 0f);
-            bubbleFitter = SpeechBubbleFitter.Attach(playerThinkImage, playerThinkChat); // 글이 길면 말풍선이 늘어나게
-
-            // 초기 상태 비활성화 및 초기화
-            ResetThinkBubble();
-        }
+        base.Awake();
+        InitBubble();
     }
 
+    private void InitBubble()
+    {
+        if (isBubbleReady || playerThinkImage == null) return;
+        isBubbleReady = true;
+
+        originalLocalPos = playerThinkImage.transform.localPosition; // 씬에 배치한 위치 그대로 사용
+        if (newScale == Vector3.zero) newScale = playerThinkImage.transform.localScale;
+        if (newScale == Vector3.zero) newScale = Vector3.one;
+        bubbleFitter = SpeechBubbleFitter.Attach(playerThinkImage, playerThinkChat); // 글이 길면 말풍선이 늘어나게
+
+        // 초기 상태 비활성화 및 초기화
+        ResetThinkBubble();
+    }
+
+    // 경매 시작 시 플레이어 좌석 머리 위로 말풍선을 옮김 (월드 크기는 유지)
+    public void AttachBubbleTo(Transform seat, Vector3 worldPosition, SpriteRenderer seatPortrait)
+    {
+        if (playerThinkImage == null || seat == null) return;
+        InitBubble();
+        thinkSequence?.Kill();
+
+        Transform bubble = playerThinkImage.transform;
+        Vector3 worldScale = Vector3.Scale(newScale, bubble.parent != null ? bubble.parent.lossyScale : Vector3.one);
+        bubble.SetParent(seat, true);
+        bubble.position = worldPosition;
+        originalLocalPos = bubble.localPosition;
+
+        Vector3 seatScale = seat.lossyScale;
+        newScale = new Vector3(
+            seatScale.x != 0f ? worldScale.x / seatScale.x : newScale.x,
+            seatScale.y != 0f ? worldScale.y / seatScale.y : newScale.y,
+            seatScale.z != 0f ? worldScale.z / seatScale.z : newScale.z);
+
+        Auction.BringAboveSeat(playerThinkImage.gameObject, seatPortrait);
+        ResetThinkBubble();
+    }
 
     //===============================플레이어 생각===========================
     public void ShowThinkChatWithText(string message)
     {
         if (playerThinkImage == null || playerThinkChat == null) return;
+        InitBubble();
 
         // 이전 애니메이션 진행 중이면 중단
         thinkSequence?.Kill();
 
         // 텍스트 적용 및 초기 상태 설정
-        if (bubbleFitter != null) bubbleFitter.Fit(message);
+        if (bubbleFitter != null) bubbleFitter.GetSize(message);
         else playerThinkChat.text = message;
         playerThinkImage.gameObject.SetActive(true);
         playerThinkImage.transform.localPosition = originalLocalPos;
         playerThinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작
-        thinkCanvasGroup.alpha = 1f;
+        SetAlpha(1f);
         // DOTween 연출 시퀀스 생성
         thinkSequence = DOTween.Sequence();
 
         thinkSequence
-            // 1. 0.3초 동안 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
-            .Append(playerThinkImage.transform.DOScale(Vector3.one, 1f).SetEase(Ease.OutBack))
-            // 2. 2.5초 동안 대기하면서 말풍선이 둥실둥실 살짝 올라감
-            .Append(playerThinkImage.transform.DOLocalMoveY(originalLocalPos.y + 50f, 5f).SetEase(Ease.OutQuad))
-            // 3. 서서히 사라지면서(Fade Out) 조금 더 위로 떠오름
-            .Join(thinkCanvasGroup.DOFade(0f, 3f))
-            .OnComplete(() =>
-            {
-                ResetThinkBubble();
-            });
+            // 1. 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
+            .Append(playerThinkImage.transform.DOScale(newScale, 1f).SetEase(Ease.OutBack))
+            // 2. 대기하면서 말풍선이 둥실둥실 살짝 올라감
+            .Append(playerThinkImage.transform.DOLocalMoveY(originalLocalPos.y + 0.3f, 2f).SetEase(Ease.OutQuad))
+            // 3. 서서히 사라짐 (말풍선 + 글자)
+            .Join(DOTween.To(() => 1f, SetAlpha, 0f, 2f))
+            .OnComplete(ResetThinkBubble);
+    }
+
+    private void SetAlpha(float alpha)
+    {
+        if (playerThinkImage != null)
+        {
+            Color color = playerThinkImage.color;
+            color.a = alpha;
+            playerThinkImage.color = color;
+        }
+        if (playerThinkChat != null) playerThinkChat.alpha = alpha;
     }
 
     private void ResetThinkBubble()
@@ -72,7 +105,7 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         {
             playerThinkImage.transform.localPosition = originalLocalPos;
             playerThinkImage.transform.localScale = Vector3.zero;
-            if (thinkCanvasGroup != null) thinkCanvasGroup.alpha = 0f;
+            SetAlpha(0f);
             playerThinkImage.gameObject.SetActive(false);
         }
     }

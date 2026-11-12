@@ -1,12 +1,26 @@
-using UnityEngine;
+using Cysharp.Threading.Tasks;
 
-// Stage2 보스: BossNpc5 스킬 재사용 (전용 스킬이 나오면 교체)
-public class BossNpc10 : BossNpc5
+// [Stage2 랭커5] 사기꾼 마술사 - 스킬 "바꿔치기": 밀리고 있을 때 경매 물품을 다른 물품으로 교체 (가격은 유지 또는 새 시작가). 1회
+public class BossNpc10 : BossAiBase
 {
-    public override void Start()
+    public override string SkillName => "바꿔치기";
+    public override string SkillLine => "짜잔~ 물건이 바뀌었습니다!";
+    protected override string[] ThinkLines => new[] { "자, 잘 보세요~", "손은 눈보다 빠르죠.", "이 모자 안에 뭐가 있을까요?" };
+    protected override string[] RaiseLines => new[] { "{0}G! 박수!", "{0}G! 마법처럼!", "{0}G~ 짠!" };
+    protected override string GiveUpLine => "마술은 여기까지~";
+
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(40, 1); //40% 확률로 스킬 발동, 1회 발동
+        SetSkillChance(30, 1);
         RaiseGold = 15;
+    }
+
+    protected override bool WantsSkill(Auction m) => !IsLeading(m) && m.auctionItem != null && m.auctionItem.Count >= 2;
+
+    public override UniTask UseSkillAsync(Auction m)
+    {
+        PartsDefinition next = m.SwapAuctionItem();
+        if (next != null) m.ShowErrorMessage($"물품이 [{next.DisplayName}](으)로 바뀌었습니다!").Forget();
+        return UniTask.CompletedTask;
     }
 }

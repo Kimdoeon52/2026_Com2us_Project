@@ -48,94 +48,102 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
                 await UniTask.Yield(); // 포기 상태에서도 최소 1프레임 대기로 스핀 방지
                 continue;
             }
-            int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
+            BossAiBase boss = ai as BossAiBase;
+            bool isLeading = manager.WinnerID == ai.NPCID;
 
-            // 이미 최고 입찰자라면 고민(ThinkDelay)도 안 하고 연출도 스킵!
-            if (manager.WinnerID == ai.NPCID)
+            // 이미 최고 입찰자면 레이즈 고민은 안 함. 단, 스킬이 남은 보스는 선두일 때 쓰는 스킬(초읽기 등)을 위해 계속 고민
+            if (isLeading && (boss == null || !boss.HasSkillLeft))
             {
                 await UniTask.Yield(); // 무한 루프 방지용 최소 대기
                 continue;
             }
-            if (!ai.IsGiveUp)
-            {
-                await UniTask.Yield();
-                manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
-            }
-            
-            // ai 고민 말풍선 띄우기
-            ai.ShowThinkChat();
-            await UniTask.Delay(thinkDelay); // thinkDelay 만큼 
-            await UniTask.WaitWhile(() => manager.IsCutscenePlaying);
-            
-            if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
-            Debug.Log($"[AI 루틴 체크] {ai.NPCName} | 현재가: {manager.CurrentCost} | AI 보유 RaiseGold: {ai.RaiseGold}");
 
-            // 공통 판단: 필요 없는 물건이거나 원가 x 2~4배 한도를 넘으면 포기
-            if (!ai.PassCommonRaiseRule(manager.CurrentCost, stuff.Cost, stuff.Grade))
+            int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
+            if (!isLeading)
+            {
+                manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
+                ai.ShowThinkChat(); // ai 고민 말풍선 띄우기
+            }
+            await UniTask.Delay(thinkDelay); // thinkDelay 만큼
+            await UniTask.WaitWhile(() => manager.IsCutscenePlaying);
+
+            if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
+            if (ai.IsGiveUp) continue; // 고민하는 사이 다른 보스 스킬로 쫓겨남
+
+            // ===== 보스 스킬: 레이즈와 별개로 매 고민마다 조건/확률 체크 =====
+            if (boss != null && boss.TryRollSkill(manager))
+            {
+                await UseBossSkillAsync(manager, boss);
+                if (CheckEndCountdown(manager)) break;
+                continue;
+            }
+
+            if (manager.WinnerID == ai.NPCID) continue; // 선두라면 스킬만 노림
+
+            PartsDefinition item = manager.stuff != null ? manager.stuff : stuff; // 바꿔치기 스킬로 물품이 바뀔 수 있음
+
+            // 공통 판단: 필요 없는 물건이거나 원가 x 2~3배 한도를 넘으면 포기
+            if (!ai.PassCommonRaiseRule(manager.CurrentCost, item.Cost, item.Grade))
             {
                 ai.IsGiveUp = true;
             }
 
-            if (!ai.IsGiveUp && ai.RaiseThink(manager.CurrentCost, stuff.Cost, stuff.Grade))
+            if (!ai.IsGiveUp && ai.RaiseThink(manager.CurrentCost, item.Cost, item.Grade))
             {
-                int raiseStep = ai.RaiseGold;
+                manager.CurrentCost += ai.RaiseGold;
+                manager.UpdateAuctionCostUI();
 
-                if (ai is BossAiBase boss && boss.IsBigRaiseThink(manager.CurrentCost, stuff.Cost))
-                {
-                    //raiseStep = boss.BigRaiseGold();
-                    //manager.CurrentCost += raiseStep;
-                    int beforeCost = manager.CurrentCost;
-                    boss.UseBigSkill(manager);
-                    manager.PlaySound(manager.useSkillEffect);
-                    if (manager.CurrentCost != beforeCost) manager.UpdateAuctionCostUI(); // 가격을 가리는 스킬이 덮어써지지 않게 가격이 바뀔 때만 갱신
-
-                    if (manager.CurrentCost > beforeCost) // 가격을 올린 스킬만 입찰로 인정
-                    {
-                        // 빅 레이즈 성공 말풍선 연출
-                        ai.ShowThinkChatWithText($"{manager.CurrentCost}G! 확 올려버리지!");
-                        ApplyAiBid(manager, ai);
-                    }
-                    else
-                    {
-                        ai.ShowThinkChatWithText(boss.BigRaiseSkillName());
-                    }
-                    await boss.TriggerCutscene(boss.NPCName, boss.BigRaiseSkillName());
-                }
-                else
-                {
-                    manager.CurrentCost += raiseStep;
-                    manager.UpdateAuctionCostUI();
-
-                    // 일반 레이즈 성공 말풍선 연출 (금액 외치기)
-                    ai.ShowThinkChatWithText($"{manager.CurrentCost}G 가본다!");
-                    ApplyAiBid(manager, ai);
-                }
+                // 레이즈 성공 말풍선 연출 (보스는 개성 대사)
+                ai.ShowThinkChatWithText(ai.GetRaiseLine(manager.CurrentCost));
+                ApplyAiBid(manager, ai);
             }
-            else
+            else if (ai.IsGiveUp) // 진짜 포기한 경우만 (후반형처럼 관망하며 false를 돌려준 건 포기 아님)
             {
                 manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
                 manager.PlaySound(manager.giveUpEffect); // 진행자 대사 없이 효과음 + 반투명 처리로만 표현
             }
-
-            if (manager.CheckAllGiveUp()) //모두가 포기하면 낙찰 카운트다운 돌입
+            else
             {
-                manager.AppendConsoleLog("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
-                if (manager.RemainingTime > 5f)
-                    manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
-                break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
+                manager.AppendConsoleLog($"{ai.NPCName}님은 이번엔 지켜봅니다.\n");
             }
+
+            if (CheckEndCountdown(manager)) break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
         }
     }
 
-    private void ApplyAiBid(Auction manager, AllAiBase ai) // AI를 최고 입찰자로 등록
+    private bool CheckEndCountdown(Auction manager) //모두가 포기하면 낙찰 카운트다운 돌입
+    {
+        if (!manager.CheckAllGiveUp()) return false;
+        manager.AppendConsoleLog("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
+        if (manager.RemainingTime > 5f)
+            manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
+        return true;
+    }
+
+    // 보스 스킬: 대사 → 컷씬(타이머 정지) → 효과 → 가격/선두가 바뀌었으면 입찰로 인정
+    private async UniTask UseBossSkillAsync(Auction manager, BossAiBase boss)
+    {
+        int beforeCost = manager.CurrentCost;
+        int beforeWinner = manager.WinnerID;
+
+        boss.ShowThinkChatWithText(boss.SkillLine);
+        manager.PlaySound(manager.useSkillEffect);
+        manager.AppendConsoleLog($"[스킬] {boss.NPCName}의 <{boss.SkillName}>!");
+        await boss.TriggerCutscene(boss.NPCName, boss.SkillName);
+        if (!manager.IsTimeRunning || manager.IsAuctioningFin) return;
+
+        await boss.UseSkillAsync(manager);
+        manager.UpdateAuctionCostUI();
+
+        bool tookLead = manager.WinnerID == boss.NPCID && (beforeWinner != boss.NPCID || manager.CurrentCost != beforeCost);
+        if (tookLead) ApplyAiBid(manager, boss, boss.SkillRefreshesTimer);
+    }
+
+    private void ApplyAiBid(Auction manager, AllAiBase ai, bool refreshTimer = true) // AI를 최고 입찰자로 등록
     {
         manager.WinnerID = ai.NPCID;
         manager.IfPlayerWin = false;
         manager.AppendConsoleLog($"{ai.NPCName}님이 {manager.CurrentCost}G로 레이즈!"); // 레이즈는 말풍선/가격표로만 보여줌
-
-        if (manager.RemainingTime < 10f)
-        {
-            manager.RemainingTime = 10f;
-        }
+        if (refreshTimer) manager.RefreshTimerOnBid();
     }
 }

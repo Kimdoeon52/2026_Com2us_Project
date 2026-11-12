@@ -1,33 +1,24 @@
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-// 말풍선을 텍스트 길이에 맞춰 늘려주는 컴포넌트 (줄바꿈 대신 말풍선이 옆으로 늘어남)
-// Diabox 스프라이트를 런타임에 9-slice로 바꿔서 꼬리 부분은 늘어나지 않게 하고,
-// 꼬리 위치를 고정한 채 오른쪽(줄이 많으면 위쪽)으로 커짐
+// 월드 말풍선(SpriteRenderer) 안에 글자(TextMeshPro)가 넘치지 않게 맞춰주는 컴포넌트
+// - 글자 영역을 말풍선 스프라이트 안쪽(여백/꼬리 제외)으로 고정하고 자동 크기 + 줄바꿈 적용
+//   → 대사가 길면 글자가 작아지거나 줄이 바뀌어서 말풍선 밖으로 나가지 않음
+// - 말풍선 Draw Mode가 Sliced/Tiled면 글자 길이에 맞춰 말풍선 자체를 늘림
 public class SpeechBubbleFitter : MonoBehaviour
 {
-    // 9-slice 경계 (Diabox 200x100 기준 비율). 왼쪽 경계가 꼬리 오른쪽 끝(108px)을 덮어서 꼬리는 안 늘어남
-    private const float BorderLeft = 0.56f;
-    private const float BorderRight = 0.15f;
-    private const float BorderTop = 0.2f;
-    private const float BorderBottom = 0.32f; // 아래 테두리 + 꼬리
-    private const float TailAnchorX = 0.5f; // 원래 말풍선 중심 = 이 지점이 늘어나도 제자리에 있음
+    // 말풍선 크기 대비 글자 여백 비율 (Diabox 200x100 기준: 좌우 18px, 위 12px, 아래 30px(꼬리))
+    private const float PaddingX = 0.09f;
+    private const float PaddingTop = 0.12f;
+    private const float PaddingBottom = 0.3f;
+    private const float MinFontSize = 0.05f;
+    private const float DefaultMaxFontSize = 3f;
 
-    // 원본 크기(200x100) 기준 글자 여백
-    private const float PaddingX = 18f;
-    private const float PaddingTop = 12f;
-    private const float PaddingBottom = 30f; // 꼬리 높이 포함
+    private SpriteRenderer boxRenderer;
+    private TextMeshPro thinkChat;
+    private Vector2 baseSize; // 말풍선 기본 크기 (로컬 단위). 이보다 작아지지 않음
 
-    private static readonly Dictionary<Sprite, Sprite> slicedCache = new Dictionary<Sprite, Sprite>(); // 같은 스프라이트는 한 번만 변환
-
-    private RectTransform bubbleRect;
-    private TextMeshProUGUI text;
-    private Vector2 baseSize; // 프리팹에 잡혀 있던 기본 크기 (이보다 작아지지 않음)
-    private float scale = 1f; // 원본 스프라이트 대비 크기 비율
-
-    public static SpeechBubbleFitter Attach(Image bubble, TextMeshProUGUI text)
+    public static SpeechBubbleFitter Attach(SpriteRenderer bubble, TextMeshPro text)
     {
         if (bubble == null || text == null) return null;
         if (!bubble.TryGetComponent(out SpeechBubbleFitter fitter))
@@ -38,80 +29,72 @@ public class SpeechBubbleFitter : MonoBehaviour
         return fitter;
     }
 
-    private void Init(Image bubble, TextMeshProUGUI chatText)
+    private void Init(SpriteRenderer bubble, TextMeshPro text)
     {
-        bubbleRect = bubble.rectTransform;
-        text = chatText;
+        boxRenderer = bubble;
+        thinkChat = text;
 
-        // 기존 자동 레이아웃(ContentSizeFitter, LayoutGroup)이 크기를 덮어쓰지 않게 끔
-        DisableLayoutControllers(bubble.gameObject);
-        DisableLayoutControllers(text.gameObject);
+        if (IsResizable) baseSize = boxRenderer.size;
+        else if (boxRenderer.sprite != null) baseSize = boxRenderer.sprite.bounds.size;
+        else baseSize = new Vector2(2f, 1f);
 
-        Sprite source = bubble.sprite;
-        Vector2 spriteSize = source != null ? source.rect.size : new Vector2(200f, 100f);
-        float baseWidth = bubbleRect.rect.width > 1f ? bubbleRect.rect.width : spriteSize.x;
-        scale = baseWidth / spriteSize.x;
-        baseSize = new Vector2(baseWidth, spriteSize.y * scale); // 높이는 스프라이트 비율대로
+        // 글자: 줄바꿈 + 자동 크기. 최대 크기는 원래 지정한 글자 크기
+        float maxFont = thinkChat.enableAutoSizing ? thinkChat.fontSizeMax : thinkChat.fontSize;
+        if (maxFont <= MinFontSize) maxFont = DefaultMaxFontSize;
+        thinkChat.textWrappingMode = TextWrappingModes.Normal;
+        thinkChat.overflowMode = TextOverflowModes.Overflow;
+        thinkChat.enableAutoSizing = true;
+        thinkChat.fontSizeMin = MinFontSize;
+        thinkChat.fontSizeMax = maxFont;
+        thinkChat.margin = Vector4.zero;
+        thinkChat.alignment = TextAlignmentOptions.Center;
 
-        if (source != null)
-        {
-            bubble.sprite = GetSlicedSprite(source);
-            bubble.type = Image.Type.Sliced;
-            bubble.fillCenter = true;
-            float refPpu = bubble.canvas != null ? bubble.canvas.referencePixelsPerUnit : 100f;
-            bubble.pixelsPerUnitMultiplier = refPpu / source.pixelsPerUnit / scale; // 테두리를 기본 크기 비율로 그림
-        }
+        UpdateTextArea(baseSize);
+    }
 
-        // 글자는 말풍선 안쪽 영역에 꽉 채우고 줄바꿈 없음
-        RectTransform textRect = text.rectTransform;
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
+    private bool IsResizable => boxRenderer.drawMode == SpriteDrawMode.Sliced || boxRenderer.drawMode == SpriteDrawMode.Tiled;
+
+    // 말풍선 안쪽(여백 제외) 영역에 글자 RectTransform을 맞춤 (말풍선 로컬 좌표 기준)
+    private void UpdateTextArea(Vector2 bubbleSize)
+    {
+        RectTransform textRect = thinkChat.rectTransform;
+        if (textRect.parent != boxRenderer.transform) textRect.SetParent(boxRenderer.transform, true); // 말풍선 자식이어야 같이 커지고 사라짐
+
+        Vector2 center = boxRenderer.sprite != null && !IsResizable ? (Vector2)boxRenderer.sprite.bounds.center : Vector2.zero;
+        float innerWidth = bubbleSize.x * (1f - PaddingX * 2f);
+        float innerHeight = bubbleSize.y * (1f - PaddingTop - PaddingBottom);
+        float innerCenterY = center.y + bubbleSize.y * (PaddingBottom - PaddingTop) * 0.5f; // 꼬리 쪽 여백만큼 위로
+
+        Vector3 textScale = textRect.localScale;
+        float sx = Mathf.Approximately(textScale.x, 0f) ? 1f : textScale.x;
+        float sy = Mathf.Approximately(textScale.y, 0f) ? 1f : textScale.y;
+
+        textRect.anchorMin = textRect.anchorMax = new Vector2(0.5f, 0.5f);
         textRect.pivot = new Vector2(0.5f, 0.5f);
-        textRect.offsetMin = new Vector2(PaddingX * scale, PaddingBottom * scale);
-        textRect.offsetMax = new Vector2(-PaddingX * scale, -PaddingTop * scale);
-        text.textWrappingMode = TextWrappingModes.NoWrap;
-        text.horizontalAlignment = HorizontalAlignmentOptions.Center;
-        text.verticalAlignment = VerticalAlignmentOptions.Middle;
-
-        Resize(baseSize);
+        textRect.sizeDelta = new Vector2(innerWidth / sx, innerHeight / sy);
+        textRect.localRotation = Quaternion.identity;
+        textRect.localPosition = new Vector3(center.x, innerCenterY, textRect.localPosition.z);
     }
 
-    public void Fit(string message) // 텍스트 넣고 크기 맞추기
+    public void GetSize(string text)
     {
-        text.text = message;
-        Vector2 preferred = text.GetPreferredValues(message, Mathf.Infinity, Mathf.Infinity);
+        if (thinkChat == null || boxRenderer == null) return;
 
-        float width = Mathf.Max(baseSize.x, preferred.x + PaddingX * 2f * scale);
-        float height = Mathf.Max(baseSize.y, preferred.y + (PaddingTop + PaddingBottom) * scale);
-        Resize(new Vector2(width, height));
-    }
+        thinkChat.text = text;
+        if (!IsResizable) return; // Simple 말풍선은 글자가 자동으로 줄어들며 맞춰짐
 
-    private void Resize(Vector2 size)
-    {
-        bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size.x);
-        bubbleRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size.y);
+        // Sliced 말풍선: 최대 글자 크기 기준으로 필요한 크기만큼 말풍선을 늘림
+        float savedMin = thinkChat.fontSizeMin;
+        thinkChat.enableAutoSizing = false;
+        thinkChat.fontSize = thinkChat.fontSizeMax;
+        Vector2 textSize = thinkChat.GetPreferredValues(text, Mathf.Infinity, Mathf.Infinity);
+        thinkChat.enableAutoSizing = true;
+        thinkChat.fontSizeMin = savedMin;
 
-        // 꼬리 위치(원래 중심점)가 항상 같은 자리에 오도록 피벗 이동 -> 오른쪽/위쪽으로만 커짐
-        bubbleRect.pivot = new Vector2(baseSize.x * TailAnchorX / size.x, baseSize.y * 0.5f / size.y);
-    }
-
-    private static Sprite GetSlicedSprite(Sprite source)
-    {
-        if (source.border != Vector4.zero) return source; // 이미 9-slice가 잡힌 스프라이트는 그대로 사용
-        if (slicedCache.TryGetValue(source, out Sprite cached) && cached != null) return cached;
-
-        Rect rect = source.rect;
-        Vector4 border = new Vector4(rect.width * BorderLeft, rect.height * BorderBottom, rect.width * BorderRight, rect.height * BorderTop); // (왼, 아래, 오른, 위)
-        Vector2 pivot = new Vector2(source.pivot.x / rect.width, source.pivot.y / rect.height);
-        Sprite sliced = Sprite.Create(source.texture, rect, pivot, source.pixelsPerUnit, 0, SpriteMeshType.FullRect, border);
-        sliced.name = source.name + "_Sliced";
-        slicedCache[source] = sliced;
-        return sliced;
-    }
-
-    private static void DisableLayoutControllers(GameObject go)
-    {
-        foreach (var fitter in go.GetComponents<ContentSizeFitter>()) fitter.enabled = false;
-        foreach (var group in go.GetComponents<LayoutGroup>()) group.enabled = false;
+        Vector3 textScale = thinkChat.rectTransform.localScale;
+        float width = Mathf.Max(baseSize.x, textSize.x * textScale.x / (1f - PaddingX * 2f));
+        float height = Mathf.Max(baseSize.y, textSize.y * textScale.y / (1f - PaddingTop - PaddingBottom));
+        boxRenderer.size = new Vector2(width, height);
+        UpdateTextArea(boxRenderer.size);
     }
 }

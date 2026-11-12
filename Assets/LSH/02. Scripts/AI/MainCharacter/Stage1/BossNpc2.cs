@@ -1,44 +1,32 @@
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 다른 한명을 강제로 포기하게 만드는 능력. 1회 (확률형)
+// [Stage1 랭커2] 새침한 아가씨 - 스킬 "강제 퇴장": 선두가 아닌 다른 AI 한 명을 강제로 포기시킴. 1회
 public class BossNpc2 : BossAiBase
 {
-    [Range(0.1f, 1f)]
-    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.4f;
+    public override string SkillName => "강제 퇴장";
+    public override string SkillLine => "흐응~ 넌 강퇴야~";
+    protected override string[] ThinkLines => new[] { "흐응~ 다들 진지하네?", "어머, 저거 예쁘다~", "누구부터 울려볼까~?" };
+    protected override string[] RaiseLines => new[] { "{0}G~ 이것도 못 따라와?", "{0}G! 내 거 할래~", "{0}G~ 호호." };
+    protected override string GiveUpLine => "흥! 나 안 할래!";
 
-    public override void Start()
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(10, 1); //10% 확률로 스킬 발동, 1회만 발동
+        SetSkillChance(30, 1);
         RaiseGold = 10;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
+
+    // 선두는 빼고 고름 (선두를 쫓아내면 포기한 사람이 낙찰되는 문제 방지)
+    protected override bool WantsSkill(Auction m) => ActiveRivals(m, includeWinner: false).Count > 0;
+
+    public override UniTask UseSkillAsync(Auction m)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
-    }
-    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
-    {
-        return base.IsBigRaiseThink(currentPrice, baseCost);
-    }
-    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
-    {
-        return "흐응~ 넌 강퇴야~";
-    }
-    public override void UseBigSkill(Auction manager)
-    {
-        AllAiBase target;
-        int randomIndex = Random.Range(0, manager.auctionAiList.Count);
-        target = manager.auctionAiList[randomIndex];
-        if(target.NPCName == data.mainCharacterName)
-        {
-            return;
-        }
-        target.IsGiveUp = true; // 타겟을 강제로 포기하게 만들어버림
-    }
-    protected override void HandleGiveUp()
-    {
-        ShowThinkChatWithText("흥! 나 안할래!");
+        List<AllAiBase> targets = ActiveRivals(m, includeWinner: false);
+        if (targets.Count == 0) return UniTask.CompletedTask;
+        AllAiBase target = targets[Random.Range(0, targets.Count)];
+        target.IsGiveUp = true;
+        m.AppendConsoleLog($"{target.NPCName}님이 강제로 퇴장당했습니다!");
+        return UniTask.CompletedTask;
     }
 }

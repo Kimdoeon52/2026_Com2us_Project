@@ -131,8 +131,8 @@ public class Auction : Singleton<Auction>
     private bool isSelectingMode = false; //모드 선택 대기 중인지 체크 (상점은 이때만 열 수 있음)
     private bool IsShopOpen => shopPanel != null && shopPanel.activeSelf;
     //===============================ai 슬롯 위치====================
-    [Header("AI 슬롯")]
-    [SerializeField] private List<RectTransform> aiSlots;
+    [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 npcsPos 사용)")]
+    [SerializeField] private List<Transform> aiSlots;
 
     private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
     private List<GameObject> roundUiList = new List<GameObject>(); // 회차마다 지울 연출용 UI (주먹 경매 명패 등)
@@ -158,11 +158,13 @@ public class Auction : Singleton<Auction>
     // 비동기 UI 입력 수신용 CS
     private UniTaskCompletionSource<int> fistBidTcs;
 
-    //======================슬롯 이미지=====================
+    //======================슬롯 이미지 및 위치=====================
     [Header("플레이어 및 NPC 슬롯")]
-    [SerializeField] public Image[] npcs;
-    [SerializeField] private Image playerImage;
-    public RectTransform PlayerSlot => playerImage != null ? playerImage.rectTransform : null;
+    [SerializeField] public SpriteRenderer[] npcs; //여기가 npc이미지들
+    [SerializeField] private SpriteRenderer playerImage; //플레이어 들어갈 곳
+    [SerializeField] public Transform[] npcsPos; //여기는 npc위치들
+    [SerializeField] private Transform playerImagePos;
+    public Transform PlayerSlot => playerImage != null ? playerImagePos : null;
 
     //==========================사운드=============================
     [Header("효과음 설정")]
@@ -391,7 +393,9 @@ public class Auction : Singleton<Auction>
 
     private void DayOfAuctionEnter()
     {
-        dayOfEnterNpc = Random.Range(5, 7); // 경매 인원 5~7 (모든 랭커5(필수) + 쩌리(N명))
+        // 경매 인원 5~7 (랭커5(필수) + 쩌리 N명). 좌석 수를 넘으면 못 앉으니 좌석 수로 제한
+        int seatCount = npcs != null && npcs.Length > 0 ? npcs.Length : 7;
+        dayOfEnterNpc = Mathf.Min(Random.Range(5, 8), seatCount);
     }
 
     private void GetAuctionNpc(int enterNpc, List<BossAiBase> stageBosses) // 그날 하루 경매할 npc 수, 현재 스테이지 보스 명단 매개변수
@@ -449,8 +453,9 @@ public class Auction : Singleton<Auction>
 
         await IntroAuction(); // 진행자 재등장 → 경매 물품 소개 → 퇴장
 
-        IsAuctioningFin = false; 
+        IsAuctioningFin = false;
         isPlayerGiveUp = false;
+        ResetSkillEffects(); // 이전 회차 보스 스킬 효과 제거
         WinnerID  = -1;
         IfPlayerWin = false;
         auctionTime = 60f;
@@ -483,15 +488,116 @@ public class Auction : Singleton<Auction>
     // --- 공통 헬퍼 및 UI 제어 메서드 ---
     public void UpdateAuctionCostUI() // 물건 가격 표시 업데이트
     {
-        if (auctionCost != null)
-        {
-            auctionCost.text = CurrentCost.ToString();
-            Debug.Log($"[UI 갱신 성공] 현재 텍스트에 적용된 값: {CurrentCost}");
-        }
-        else
+        if (auctionCost == null)
         {
             Debug.LogError("🔴 [오류] auctionCost 변수가 인스펙터에 연결되어 있지 않습니다!");
+            return;
         }
+        if (IsInfoHidden) { auctionCost.text = "???"; return; } // 연막탄: 가려진 동안은 계속 가림
+        if (IsFakePriceActive) return; // 가짜 호가: 교란 루프가 가짜 숫자를 쓰는 중
+        auctionCost.text = CurrentCost.ToString();
+    }
+
+    //=========================보스 스킬 효과용 상태===================
+    public const int BasePlayerRaiseStep = 15;
+    public int PlayerRaiseTax { get; set; } = 0; // 경매세: 플레이어 레이즈 단가에 추가
+    public int PlayerRaiseStep => BasePlayerRaiseStep + PlayerRaiseTax;
+    public bool NoTimerRefresh { get; set; } = false; // 시간 동결: 입찰해도 10초로 안 돌아감
+    private float playerRaiseLockEnd = 0f;
+    private float infoHiddenEnd = 0f;
+    private float fakePriceEnd = 0f;
+    public bool IsPlayerRaiseLocked => Time.time < playerRaiseLockEnd;
+    public bool IsInfoHidden => Time.time < infoHiddenEnd;
+    public bool IsFakePriceActive => Time.time < fakePriceEnd;
+
+    private void ResetSkillEffects() // 회차 시작마다 스킬 효과 초기화
+    {
+        PlayerRaiseTax = 0;
+        NoTimerRefresh = false;
+        playerRaiseLockEnd = 0f;
+        infoHiddenEnd = 0f;
+        fakePriceEnd = 0f;
+    }
+
+    // 입찰이 들어오면 남은 시간이 10초 미만일 때 10초로 되돌림 (시간 동결 중이면 안 함)
+    public void RefreshTimerOnBid()
+    {
+        if (!NoTimerRefresh && RemainingTime < 10f) RemainingTime = 10f;
+    }
+
+    // 입찰 봉쇄: seconds 동안 플레이어 레이즈 불가
+    public void LockPlayerRaise(float seconds)
+    {
+        playerRaiseLockEnd = Mathf.Max(playerRaiseLockEnd, Time.time + seconds);
+        ShowErrorMessage($"입찰이 {seconds:0}초간 봉쇄되었습니다!").Forget();
+        LockRaiseButtonAsync().Forget();
+    }
+
+    private async UniTask LockRaiseButtonAsync()
+    {
+        if (raiseButton == null) return;
+        raiseButton.interactable = false;
+        await UniTask.WaitUntil(() => !IsPlayerRaiseLocked || this == null);
+        if (raiseButton != null) raiseButton.interactable = true;
+    }
+
+    // 연막탄: seconds 동안 물품 이름/가격/등급을 가림
+    public void HideAuctionInfo(float seconds)
+    {
+        infoHiddenEnd = Time.time + seconds;
+        if (auctionName != null) auctionName.text = "메롱 안보이지?";
+        if (auctionGrade != null) auctionGrade.text = "등급은 비밀이야~";
+        if (auctionCost != null) auctionCost.text = "???";
+        RestoreInfoWhenDoneAsync(infoHiddenEnd).Forget();
+    }
+
+    private async UniTask RestoreInfoWhenDoneAsync(float end)
+    {
+        await UniTask.WaitUntil(() => Time.time >= end || this == null);
+        if (this == null || infoHiddenEnd != end) return; // 그 사이 다시 가려졌으면 그쪽이 복구
+        RefreshAuctionInfoUI();
+    }
+
+    // 가짜 호가: seconds 동안 가격표에 가짜 숫자가 계속 바뀌며 표시됨
+    public void ShowFakePrice(float seconds)
+    {
+        fakePriceEnd = Time.time + seconds;
+        FakePriceLoopAsync(fakePriceEnd).Forget();
+    }
+
+    private async UniTask FakePriceLoopAsync(float end)
+    {
+        while (this != null && Time.time < end && fakePriceEnd == end)
+        {
+            if (auctionCost != null && !IsInfoHidden)
+                auctionCost.text = Mathf.Max(1, Mathf.RoundToInt(CurrentCost * Random.Range(0.6f, 1.6f))).ToString();
+            await UniTask.Delay(250);
+        }
+        if (this != null && fakePriceEnd == end) UpdateAuctionCostUI();
+    }
+
+    // 물품 이름/등급/가격 UI를 현재 상태로 다시 표시
+    public void RefreshAuctionInfoUI()
+    {
+        if (IsInfoHidden) return;
+        if (auctionName != null && stuff != null) auctionName.text = stuff.DisplayName;
+        if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString();
+        UpdateAuctionCostUI();
+    }
+
+    // 바꿔치기: 경매 물품을 다른 물품으로 교체. 가격은 새 물품 시작가보다 낮아지지 않음
+    public PartsDefinition SwapAuctionItem()
+    {
+        if (auctionItem == null || auctionItem.Count < 2) return null;
+        PartsDefinition next;
+        do { next = auctionItem[Random.Range(0, auctionItem.Count)]; } while (next == stuff);
+
+        stuff = next;
+        stuffGrade = next.Grade;
+        CurrentCost = Mathf.Max(CurrentCost, next.Cost / 2);
+        RefreshAuctionInfoUI();
+        AppendConsoleLog($"경매 물품이 [{next.DisplayName}]({next.Grade})(으)로 바뀌었습니다!");
+        return next;
     }
 
     //=========================경매 진행자(AuctionGirl) 대사===================
@@ -784,11 +890,9 @@ public class Auction : Singleton<Auction>
         {
             foreach (var ai in auctionAiList) // ai싹다 돌아보기
             {
-                if (ai != null && ai.NPCID == WinnerID) // ai이름과 이긴 ai의 이름을 체크
+                if (ai != null && ai.NPCID == WinnerID) // 이긴 ai 찾기
                 {
-                    GlobalGold.Instance.UseGold(ai.NPCID, CurrentCost); //이긴 ai 골드차감
-                    GlobalGold.Instance.ChangePartsGrade(ai.NPCID, stuffGrade);
-                    GlobalGold.Instance.SaveGame(); // 저장
+                    ai.OnWinAuction(CurrentCost, stuffGrade); // 보스는 GlobalGold 정산, 일반 NPC는 기록만
                     break;
                 }
             }
@@ -901,8 +1005,12 @@ public class Auction : Singleton<Auction>
             ShowErrorMessage("이미 최고 입찰자입니다.").Forget();
             return;
         }
-        Debug.Log($"[비교 확인] WinnerID: '{WinnerID}' / PlayerID: '{GlobalGold.Instance.mainCharacterdata[0].mainCharacterID}'");
-        int needGold = CurrentCost + 15;
+        if (IsPlayerRaiseLocked)
+        {
+            ShowErrorMessage("입찰이 봉쇄된 상태입니다!").Forget();
+            return;
+        }
+        int needGold = CurrentCost + PlayerRaiseStep; // 경매세가 붙으면 단가가 올라감
         if (GlobalGold.Instance.CanUseGold(GlobalGold.Instance.mainCharacterdata[0].mainCharacterID, needGold))
         {
             CurrentCost = needGold;
@@ -910,7 +1018,7 @@ public class Auction : Singleton<Auction>
             WinnerID = GlobalGold.Instance.mainCharacterdata[0].mainCharacterID;
             IfPlayerWin = true;
             AppendConsoleLog($"{PlayerName}님이 {CurrentCost}G로 레이즈!"); // 진행자 대사 대신 콘솔에만 기록
-            if (RemainingTime < 10f) RemainingTime = 10f;
+            RefreshTimerOnBid();
             if (AuctionPlayer.Instance != null)
                 AuctionPlayer.Instance.ShowThinkChatWithText($"{needGold}G 레이즈!");
         }
@@ -932,72 +1040,82 @@ public class Auction : Singleton<Auction>
             Debug.LogError("[SpawnAndPositionAi] npcs 배열이 비어있거나 null입니다. 인스펙터를 확인하세요.");
             return;
         }
-        if (aiSlots == null || aiSlots.Count == 0)
+
+        // 좌석 인덱스를 섞어서 앞에서부터 auctionAiList 순서대로 앉힘 (중복 없음)
+        List<int> seatOrder = new List<int>();
+        for (int i = 0; i < npcs.Length; i++) seatOrder.Add(i);
+        for (int i = seatOrder.Count - 1; i > 0; i--)
         {
-            Debug.LogError("[SpawnAndPositionAi] aiSlots 리스트가 비어있거나 null입니다. 인스펙터를 확인하세요.");
-            return;
+            int j = Random.Range(0, i + 1);
+            (seatOrder[i], seatOrder[j]) = (seatOrder[j], seatOrder[i]);
         }
 
-        // npcs 배열의 인덱스가 중복되지 않게 무작위로 뽑기 위한 HashSet
-        HashSet<int> selectIndex = new HashSet<int>();
+        int seatCount = Mathf.Min(npcs.Length, auctionAiList.Count);
+        if (auctionAiList.Count > npcs.Length)
+            Debug.LogWarning($"[SpawnAndPositionAi] 참가 AI({auctionAiList.Count})가 좌석({npcs.Length})보다 많아 {auctionAiList.Count - npcs.Length}명은 앉지 못합니다.");
 
-        // 배치할 개수 결정 (npcs 배열 크기와 auctionAiList 크기 중 작은 쪽 기준)
-        int selectCount = Mathf.Min(npcs.Length, auctionAiList.Count);
-        // npcs 배열 안에서 중복되지 않는 랜덤한 위치(인덱스)를 뽑음
-        while (selectIndex.Count < selectCount)
+        for (int count = 0; count < seatCount; count++)
         {
-            int ranIndex = Random.Range(0, npcs.Length);
-            selectIndex.Add(ranIndex); // HashSet이므로 중복 자동 방지
-        }
-
-        int count = 0;
-
-        foreach (int index in selectIndex)
-        {
-            if (count >= auctionAiList.Count)
-            {
-                Debug.LogWarning($"[SpawnAndPositionAi] count({count})가 auctionAiList 범위를 벗어났습니다.");
-                break;
-            }
-            if (index >= aiSlots.Count)
-            {
-                Debug.LogWarning($"[SpawnAndPositionAi] index({index})가 aiSlots 범위를 벗어났습니다.");
-                count++;
-                continue;
-            }
+            int index = seatOrder[count];
             AllAiBase aiPrefab = auctionAiList[count];
-            RectTransform slotTransform = aiSlots[index];
+            Transform seat = GetSeat(index);
+            if (aiPrefab == null || seat == null) continue;
 
-            if (aiPrefab != null && slotTransform != null)
-            {
-                // Canvas 슬롯의 자식으로 프리팹 생성
-                AllAiBase spawnedAi = Instantiate(aiPrefab, slotTransform);
+            InsertNPCData(index, count); // 좌석 초상화 먼저 넣어야 머리 위 위치를 잴 수 있음
 
-                // UI RectTransform 좌표 및 스케일 초기화 (슬롯 중앙 고정)
-                RectTransform aiRect = spawnedAi.GetComponent<RectTransform>();
-                if (aiRect != null)
-                {
-                    aiRect.anchoredPosition = Vector2.zero; // 슬롯 정중앙 위치
-                    aiRect.localScale = Vector3.one;       // 크기 보정
-                }
-                else
-                {
-                    spawnedAi.transform.localPosition = Vector3.zero;
-                    spawnedAi.transform.localScale = Vector3.one;
-                }
+            // 월드 좌석(랭커자리)의 자식으로 생성 → 말풍선이 좌석 초상화 머리 위에 붙음
+            AllAiBase spawnedAi = Instantiate(aiPrefab, seat);
+            PlaceAboveSeat(spawnedAi.transform, seat, npcs[index]);
+            BringAboveSeat(spawnedAi.gameObject, npcs[index]);
 
-                // 생성된 AI 스폰 리스트에 등록
-                spawnedAi.OnGiveUpTrue += () => SetImageAlpha(npcs[index], 0.1f); // 포기 시 NPC 이미지 반투명 처리
-                spawnedAiList.Add(spawnedAi);
-            }
-
-            InsertNPCData(index, count); // NPC 이미지 삽입
-            count++;
+            SpriteRenderer seatImage = npcs[index];
+            spawnedAi.OnGiveUpTrue += () => SetImageAlpha(seatImage, 0.1f); // 포기 시 NPC 이미지 반투명 처리
+            spawnedAiList.Add(spawnedAi);
         }
 
         // 실제 씬에 생성되어 가동 중인 AI 리스트로 교체
         auctionAiList = new List<AllAiBase>(spawnedAiList);
 
+        // 플레이어 말풍선도 플레이어 좌석 머리 위로 옮김
+        if (AuctionPlayer.Instance != null && playerImagePos != null && playerImage != null)
+        {
+            Vector3 head = GetHeadPosition(playerImagePos, playerImage);
+            AuctionPlayer.Instance.AttachBubbleTo(playerImagePos, head, playerImage);
+        }
+    }
+
+    // 좌석 Transform (npcsPos 우선, 없으면 초상화 SpriteRenderer의 Transform)
+    private Transform GetSeat(int index)
+    {
+        if (npcsPos != null && index < npcsPos.Length && npcsPos[index] != null) return npcsPos[index];
+        return npcs[index] != null ? npcs[index].transform : null;
+    }
+
+    // 좌석 초상화의 머리 위(월드 좌표). 스프라이트가 없으면 좌석 중심
+    private static Vector3 GetHeadPosition(Transform seat, SpriteRenderer portrait)
+    {
+        if (portrait == null || portrait.sprite == null) return seat.position;
+        Bounds bounds = portrait.bounds;
+        return new Vector3(bounds.center.x, bounds.max.y, seat.position.z);
+    }
+
+    private static void PlaceAboveSeat(Transform target, Transform seat, SpriteRenderer portrait)
+    {
+        target.localRotation = Quaternion.identity;
+        target.localScale = Vector3.one;
+        target.position = GetHeadPosition(seat, portrait);
+    }
+
+    // 말풍선이 좌석 초상화/배경에 가려지지 않게 정렬 순서를 초상화보다 위로
+    public static void BringAboveSeat(GameObject root, SpriteRenderer portrait)
+    {
+        int layer = portrait != null ? portrait.sortingLayerID : 0;
+        int order = portrait != null ? portrait.sortingOrder : 0;
+        foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
+        {
+            r.sortingLayerID = layer;
+            r.sortingOrder = order + (r is SpriteRenderer ? 10 : 11); // 글자(TMP)는 말풍선보다 한 칸 위
+        }
     }
 
     private void ClearSpawnedAi()
@@ -1067,7 +1185,7 @@ public class Auction : Singleton<Auction>
         }
     }
 
-    public void SetImageAlpha(Image image, float alpha)
+    public void SetImageAlpha(SpriteRenderer image, float alpha)
     {
         Color color = image.color;
         color.a = alpha;

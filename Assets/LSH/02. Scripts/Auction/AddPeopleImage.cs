@@ -5,34 +5,32 @@ using UnityEngine.UI;
 public class AddPeopleImage : MonoBehaviour
 {
     [Header("구경꾼 이미지 설정")]
-    [SerializeField] private Image[] peopleImageLineOne;
-    [SerializeField] private Image[] peopleImageLineTwo;
-    [SerializeField] private Image[] peopleImageLineThree;
+    [SerializeField] private SpriteRenderer[] peopleImageLineOne;
+    [SerializeField] private SpriteRenderer[] peopleImageLineTwo;
     [SerializeField] private Sprite[] peopleSprite;
-    private Image[] peopleImages; // 모든 구경꾼 이미지 배열
+    private SpriteRenderer[] peopleImages; // 모든 구경꾼 이미지 배열
     [Header("웅성웅성 연출 설정")]
     [SerializeField] private float lessMoveTime = 0.3f;
     [SerializeField] private float maxMoveTime = 0.6f;
-    [SerializeField] private float headMoveHeight = 8f; // 끄덕
+    [SerializeField] private float headMoveHeight = 0.2f; // 끄덕
 
     private void Start()
     {
-        peopleImages = new Image[peopleImageLineOne.Length + peopleImageLineTwo.Length + peopleImageLineThree.Length];
+        peopleImages = new SpriteRenderer[peopleImageLineOne.Length + peopleImageLineTwo.Length];
         int index = 0;
         foreach (var img in peopleImageLineOne) peopleImages[index++] = img;
         foreach (var img in peopleImageLineTwo) peopleImages[index++] = img;
-        foreach (var img in peopleImageLineThree) peopleImages[index++] = img;
         for (int i = 0; i < peopleImages.Length; i++)
         {
             int ranIndex = Random.Range(0, peopleSprite.Length);
             peopleImages[i].sprite = peopleSprite[ranIndex]; // 랜덤 구경꾼들 스프라이트 지정
 
             // 💡 각각의 구경꾼에게 웅성거리는 애니메이션 적용
-            StartTalking(peopleImages[i].rectTransform);
+            StartTalking(peopleImages[i]);
         }
     }
 
-    private void StartTalking(RectTransform people)
+    private void StartTalking(SpriteRenderer people)
     {
         if (people == null) return;
 
@@ -41,7 +39,7 @@ public class AddPeopleImage : MonoBehaviour
         float ranMoveTime = Random.Range(0f, 0.4f); // 시작 타이밍 엇갈리게 하기
 
         // 원래 Y 위치 기준점 저장
-        float yPos = people.anchoredPosition.y;
+        float yPos = people.transform.localPosition.y;
 
         // 2. DOTween을 이용한 위아래 끄덕임 연출
         // 잠시 대기 후 시작
@@ -50,7 +48,7 @@ public class AddPeopleImage : MonoBehaviour
             if (people == null) return;
 
             // 현재 위치에서 위로 살짝 올라갔다가(DOAnchorPosY), Yoyo 옵션으로 아래로 내려오기를 무한 반복 (-1)
-            people.DOAnchorPosY(yPos + headMoveHeight, selfMoveTime)
+            people.transform.DOLocalMoveY(yPos + headMoveHeight, selfMoveTime)
                     .SetEase(Ease.InOutSine)
                     .SetLoops(-1, LoopType.Yoyo);
         });
@@ -63,7 +61,7 @@ public class AddPeopleImage : MonoBehaviour
         {
             foreach (var image in peopleImages)
             {
-                if (image != null) image.rectTransform.DOKill();
+                if (image != null) image.transform.DOKill();
             }
         }
     }

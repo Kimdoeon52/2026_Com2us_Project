@@ -1,32 +1,27 @@
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-// 경매시간을 반으로 줄이는 능력 1회 (확률형)
+// [Stage1 랭커3] 성급한 시계상 - 스킬 "초읽기": 자기가 선두일 때 남은 시간을 절반으로 (최소 5초). 1회
 public class BossNpc3 : BossAiBase
 {
-    [Range(0.1f, 1f)]
-    [Tooltip("자신이 골드 %까지 베팅에 사용할지.")]
-    public float actionRate = 0.7f;
+    public override string SkillName => "초읽기";
+    public override string SkillLine => "경기 시간이 너무 길지 않아?";
+    protected override string[] ThinkLines => new[] { "시간은 금이라고.", "빨리빨리 좀 합시다.", "째깍, 째깍..." };
+    protected override string[] RaiseLines => new[] { "{0}G! 자, 끝냅시다!", "{0}G. 시간 없어요.", "{0}G! 다음!" };
+    protected override string GiveUpLine => "시간 낭비였군.";
 
-    public override void Start()
+    protected override void SetupSkill()
     {
-        base.Start();
-        SetSkillChance(30, 1); //30% 확률로 스킬 발동, 1회만 발동
+        SetSkillChance(45, 1);
         RaiseGold = 5;
     }
-    public override bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade)
+
+    protected override bool WantsSkill(Auction m) => IsLeading(m) && m.RemainingTime > 12f;
+
+    public override UniTask UseSkillAsync(Auction m)
     {
-        return base.RaiseThink(actionPrise, actionRealPrise, stuffGrade);
-    }
-    public override bool IsBigRaiseThink(int currentPrice, int baseCost)
-    {
-        return base.IsBigRaiseThink(currentPrice, baseCost);
-    }
-    public override void UseBigSkill(Auction manager)
-    {
-        manager.RemainingTime /= 2; //시간을 절반으로
-    }
-    public override string BigRaiseSkillName() //큰 레이즈가 생길때 보스 맨트
-    {
-        return "경기 시간이 너무 길지 않아?";
+        m.RemainingTime = Mathf.Max(5f, m.RemainingTime / 2f);
+        m.ShowErrorMessage("남은 시간이 절반으로 줄었습니다!").Forget();
+        return UniTask.CompletedTask;
     }
 }

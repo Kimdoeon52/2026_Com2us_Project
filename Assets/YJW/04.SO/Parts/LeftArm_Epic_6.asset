@@ -14,13 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _id: PC-E-LA2
   _displayName: "C\uC0AC \uC815\uC608\uD615 \uC67C\uD314 [\uC5F0\uC18D \uD380\uCE58]"
-  _description: 
+  _description: "\uC815\uC608 \uB808\uC774\uC11C\uC6A9 \uD654\uB824\uD55C C\uC0AC
+    \uC67C\uD314. \uC8FC\uBA39\uC744 \uBE60\uB974\uAC8C \uC5F0\uD0C0\uD574 \uBD80\uC704\uB97C
+    \uAE4E\uC544\uB0B4\uB294 \uC5F0\uC18D \uD380\uCE58 \uD0D1\uC7AC."
   _slot: 0
   _grade: 2
-  _durability: 20
+  _durability: 100
   _shape:
-    _size: {x: 1, y: 3}
-    _cells: 010101
+    _size: {x: 2, y: 2}
+    _cells: 01010101
   _maxCount: 0
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0

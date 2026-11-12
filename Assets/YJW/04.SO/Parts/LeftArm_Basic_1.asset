@@ -20,6 +20,10 @@ MonoBehaviour:
     \uC0AC\uB77C\uC9C4\uB2E4."
   _slot: 0
   _grade: -1
+  _manufacturer: 0
+  _performanceMultiplier: 0.7
+  _acquisition: "\uC804\uD22C \uC785\uC7A5 \uC2DC \uBE48 \uC2AC\uB86F \uC790\uB3D9 \uC7A5\uCC29"
+  _recommendedRace: 
   _durability: 100
   _shape:
     _size: {x: 2, y: 2}
@@ -28,10 +32,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 0
+  _repairCost: 0
+  _restoreCost: 0
+  _restoreComponentId: 
+  _restoreComponentCount: 0
+  _scrapPrice: 0
+  _auctionMinPrice: 0
+  _auctionMaxPrice: 0
+  _destructionResistance: 0
   _attackPower: 70
   _moveSpeedIndex: 0
   _cooldownReduction: 0
   _defenseBonus: 0
   _rangeIncrease: 0
   _activeSkillId: SK_BASIC_TBD
+  _passiveValue: 0
   _skillCost: 1

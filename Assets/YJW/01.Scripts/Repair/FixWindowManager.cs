@@ -142,7 +142,7 @@ public class FixWindowManager : Singleton<FixWindowManager>
         if (host == null) return false;
 
         PartsDefinition part = host.GetEquipped(slot);
-        return part != null && host.GetDurability(slot) < part.Durability;
+        return RepairRules.CanRepair(part) && host.GetDurability(slot) < part.Durability;
     }
 
     public int CheckedCost()
@@ -168,8 +168,9 @@ public class FixWindowManager : Singleton<FixWindowManager>
 
     public bool CanRestore(PartsDefinition part)
     {
-        return PlayerGold >= RepairRules.RestoreCost(part)
-            && InventoryHost.Instance.CountComponents(part.Grade) >= RepairRules.RestoreMaterial(part.Grade);
+        return RepairRules.CanRestore(part)
+            && PlayerGold >= RepairRules.RestoreCost(part)
+            && RepairRules.OwnedMaterial(part) >= RepairRules.RestoreMaterial(part);
     }
 
     // 달력은 한 달 28일, 1년 12개월이다
@@ -234,7 +235,8 @@ public class FixWindowManager : Singleton<FixWindowManager>
             return;
         }
 
-        InventoryHost.Instance.ConsumeComponents(part.Grade, RepairRules.RestoreMaterial(part.Grade));
+        int material = RepairRules.RestoreMaterial(part);
+        if (material > 0) InventoryHost.Instance.ConsumeComponent(part.RestoreComponentId, material);
         PayGold(RepairRules.RestoreCost(part));
         FinishAction(RepairRules.RestoreHours);
     }

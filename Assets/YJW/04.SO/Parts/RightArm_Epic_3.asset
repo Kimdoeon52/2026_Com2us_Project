@@ -17,6 +17,10 @@ MonoBehaviour:
   _description: "\uC815\uC608 \uB808\uC774\uC11C\uC6A9 \uD22C\uBC15\uD558\uC9C0\uB9CC \uD2BC\uD2BC\uD55C B\uC0AC \uC624\uB978\uD314. \uD798\uC744 \uBAA8\uC544 \uD55C \uBC29\uC5D0 \uD06C\uAC8C \uD718\uB450\uB974\uB294 \uCC28\uC9C0 \uC0F7 \uD0D1\uC7AC."
   _slot: 1
   _grade: 2
+  _manufacturer: 2
+  _performanceMultiplier: 1.44
+  _acquisition: "\uACE0\uBB3C\uC0C1\u00B7\uC81C\uC791\u00B7\uACBD\uB9E4\uC7A5"
+  _recommendedRace: "\uB808\uC774\uC2A4 2"
   _durability: 100
   _shape:
     _size: {x: 2, y: 2}
@@ -25,10 +29,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 300
+  _repairCost: 75
+  _restoreCost: 240
+  _restoreComponentId: ITEM_10_3_002
+  _restoreComponentCount: 1
+  _scrapPrice: 60
+  _auctionMinPrice: 210
+  _auctionMaxPrice: 390
+  _destructionResistance: 0.2
   _attackPower: 151
   _moveSpeedIndex: 0
   _cooldownReduction: 0
   _defenseBonus: 2.9
   _rangeIncrease: 0
   _activeSkillId: SK_ARM_CHARGE
+  _passiveValue: 0
   _skillCost: 1

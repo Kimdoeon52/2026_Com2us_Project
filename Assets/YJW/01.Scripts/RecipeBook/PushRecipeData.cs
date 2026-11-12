@@ -25,11 +25,23 @@ public class PushRecipeData : MonoBehaviour
                 correctRecipes.Add(recipe);
         }
 
-        if (correctRecipes.Count <= 0) return;
-        
-        for(int i = 0; i < correctRecipes.Count; i++)
+        if (correctRecipes.Count > slots.Length)
+            Debug.LogWarning($"레시피 {correctRecipes.Count}개가 슬롯 {slots.Length}칸보다 많아 일부가 안 보임");
+
+        for (int i = 0; i < slots.Length; i++)
         {
-            slots[i].GetComponent<RecipeSlot>().PushData(correctRecipes[i], allParts.Find(correctRecipes[i].PartID).Sprite); 
+            if (slots[i] == null) continue;
+            RecipeSlot slot = slots[i].GetComponent<RecipeSlot>();
+
+            // 이전 탭에서 채운 칸이 남지 않도록 레시피가 없는 칸은 비운다
+            if (i >= correctRecipes.Count)
+            {
+                slot.PushData(null, null);
+                continue;
+            }
+
+            PartsDefinition part = allParts.Find(correctRecipes[i].PartID);
+            slot.PushData(correctRecipes[i], part != null ? part.Sprite : null);
         }
     }
 

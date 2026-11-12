@@ -18,6 +18,10 @@ MonoBehaviour:
   _description: "\uC815\uC608 \uB808\uC774\uC11C\uC6A9 \uC815\uBC00\uD55C A\uC0AC \uC624\uB978\uB2E4\uB9AC. \uB4F1 \uB4A4 \uC720\uB2DB\uC774 \uBC29\uC5B4\uB9C9\uC744 \uD3BC\uCCD0 \uD22C\uC0AC\uCCB4\uB97C \uB9C9\uB294 \uC5D0\uB108\uC9C0 \uBC29\uC5B4\uB9C9 \uD0D1\uC7AC."
   _slot: 3
   _grade: 2
+  _manufacturer: 1
+  _performanceMultiplier: 1.44
+  _acquisition: "\uACE0\uBB3C\uC0C1\u00B7\uC81C\uC791\u00B7\uACBD\uB9E4\uC7A5"
+  _recommendedRace: "\uB808\uC774\uC2A4 2"
   _durability: 80
   _shape:
     _size: {x: 1, y: 3}
@@ -26,10 +30,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 270
+  _repairCost: 63
+  _restoreCost: 200
+  _restoreComponentId: ITEM_10_3_001
+  _restoreComponentCount: 1
+  _scrapPrice: 54
+  _auctionMinPrice: 189
+  _auctionMaxPrice: 351
+  _destructionResistance: 0.2
   _attackPower: 0
   _moveSpeedIndex: 106.6
   _cooldownReduction: 5.8
   _defenseBonus: 0
   _rangeIncrease: 0
   _activeSkillId: SK_LEG_SHIELD
+  _passiveValue: 0
   _skillCost: 1

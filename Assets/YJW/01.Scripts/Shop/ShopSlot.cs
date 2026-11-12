@@ -35,25 +35,12 @@ public class ShopSlot : MonoBehaviour
         _grade.text = grade.ToString();
         _icon.sprite = icon;
 
-        // 판매가가 없는 등급은 0G로 팔리지 않게 판매 불가로 표시한다
-        int rate = SellRate(grade);
-        Gold = rate > 0 && cost > 0 ? (cost * rate + 50) / 100 : 0;
+        // 판매가는 SO의 고철 수입가. 0인 파츠(기본·전설·프로토타입)는 0G로 팔리지 않게 판매 불가로 표시한다
+        Gold = part != null ? part.ScrapPrice : 0;
         _cost.text = Gold > 0 ? Gold.ToString() : "판매 불가";
 
         _part = part;
         CanSell();   // 다른 파츠가 들어왔으니 판매 가능 여부도 다시 판정
-    }
-
-    // 정가 대비 판매가 비율(%). 기본·전설·프로토타입은 정가가 없어 팔 수 없다
-    private static int SellRate(PartGrade grade)
-    {
-        switch (grade)
-        {
-            case PartGrade.Common: return 35;
-            case PartGrade.Rare: return 30;
-            case PartGrade.Epic: return 20;
-            default: return 0;
-        }
     }
 
     private bool IsSellable => _part != null && Gold > 0;

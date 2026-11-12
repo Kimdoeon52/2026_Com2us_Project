@@ -21,6 +21,10 @@ MonoBehaviour:
     \uC0F7\uC5D0 \uC138 \uD68C\uC0AC\uC758 \uC7A5\uC810\uC744 \uBAA8\uB450 \uB2F4\uC558\uB2E4."
   _slot: 0
   _grade: 4
+  _manufacturer: 4
+  _performanceMultiplier: 2.07
+  _acquisition: "\uC2A4\uD1A0\uB9AC"
+  _recommendedRace: "\uCD5C\uC885 \uB808\uC774\uC2A4"
   _durability: 100
   _shape:
     _size: {x: 2, y: 2}
@@ -29,10 +33,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 0
+  _repairCost: 180
+  _restoreCost: 720
+  _restoreComponentId: 
+  _restoreComponentCount: 0
+  _scrapPrice: 0
+  _auctionMinPrice: 0
+  _auctionMaxPrice: 0
+  _destructionResistance: 0.01
   _attackPower: 207
   _moveSpeedIndex: 0
   _cooldownReduction: 8.3
   _defenseBonus: 4.1
   _rangeIncrease: 10.4
   _activeSkillId: SK_ARM_LASER
+  _passiveValue: 0
   _skillCost: 1

@@ -8,6 +8,9 @@ public class CorrectRecipe : MonoBehaviour
     [SerializeField] private ResultSlot resultSlot;
     public PartsDefinition resultPart;
 
+    // 지금 결과 슬롯에 뜬 파츠의 레시피. 제작 확정 시 소요 시간을 읽는다
+    private RecipeData _resultRecipe;
+
     private const int GridSize = 9;
 
     // RefreshMissingComponents 안의 ConsumeComponent가 다시 Changed를 부르므로 재진입 방지용
@@ -101,6 +104,12 @@ public class CorrectRecipe : MonoBehaviour
 
     public string FindRecipe()
     {
+        RecipeData recipe = FindMatchedRecipe();
+        return recipe != null ? recipe.PartID : null;
+    }
+
+    private RecipeData FindMatchedRecipe()
+    {
         if (!HasValidSlots() || recipeDatas == null)
             return null;
 
@@ -118,7 +127,7 @@ public class CorrectRecipe : MonoBehaviour
                     break;
                 }
             }
-            if (allMatch) return recipe.PartID;
+            if (allMatch) return recipe;
         }
         return null;
     }
@@ -141,11 +150,13 @@ public class CorrectRecipe : MonoBehaviour
             return;
         }
 
-        string partID = FindRecipe();
-        if (partID != null && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
-            resultPart = resultSlot.FindPart(partID);
+        RecipeData recipe = FindMatchedRecipe();
+        if (recipe != null && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
+            resultPart = resultSlot.FindPart(recipe.PartID);
         else
             resultPart = null;
+
+        _resultRecipe = resultPart != null ? recipe : null;
 
         resultSlot.SetPart(resultPart);   // null이면 결과 슬롯을 비움
     }
@@ -166,8 +177,19 @@ public class CorrectRecipe : MonoBehaviour
 
     public void ConfirmCraft()
     {
-        if (resultPart != null)
-            ConsumeSlots();
+        if (resultPart == null)
+            return;
+
+        int hours = _resultRecipe != null ? _resultRecipe.RequiredTime : 0;
+        ConsumeSlots();
+
+        // 결과를 비워야 같은 파츠를 재료 없이 다시 꺼낼 수 없다
+        resultPart = null;
+        _resultRecipe = null;
+
+        // 레시피의 제작 소요 시간만큼 게임 시간이 흐른다
+        if (hours > 0 && TimeSystemManager.Instance != null)
+            TimeSystemManager.Instance.PassTime(hours);
     }
 
     private void ConsumeSlots()

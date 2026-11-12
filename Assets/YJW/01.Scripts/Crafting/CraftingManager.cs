@@ -31,6 +31,8 @@ public class CraftingManager : Singleton<CraftingManager>
                 return 3;
             case Slot.RightLeg:     // 오른쪽 다리
                 return 4;
+            case Slot.Head:         // 머리
+                return 5;
         }
         return 0;
     }

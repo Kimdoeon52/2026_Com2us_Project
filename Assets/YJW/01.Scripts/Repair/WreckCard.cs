@@ -32,8 +32,8 @@ public class WreckCard : MonoBehaviour
     private void SetRestoreData()
     {
         int cost = RepairRules.RestoreCost(_part);
-        int material = RepairRules.RestoreMaterial(_part.Grade);
-        int owned = InventoryHost.Instance.CountComponents(_part.Grade);
+        int material = RepairRules.RestoreMaterial(_part);
+        int owned = RepairRules.OwnedMaterial(_part);
         bool hasMaterial = owned >= material;
         bool hasGold = FixWindowManager.Instance.PlayerGold >= cost;
 
@@ -51,7 +51,7 @@ public class WreckCard : MonoBehaviour
     private string MaterialText(int material, int owned, bool hasMaterial)
     {
         string color = ColorUtility.ToHtmlStringRGB(hasMaterial ? RepairColors.Good : RepairColors.Bad);
-        return $"{RepairRules.GradeName(_part.Grade)} 부품 {material}개 <color=#{color}>보유 {owned}</color>";
+        return $"{RepairRules.MaterialName(_part)} {material}개 <color=#{color}>보유 {owned}</color>";
     }
 
     public void OnRestoreButton()

@@ -29,7 +29,7 @@ public class PushWreckData : MonoBehaviour
             PartsDefinition part = InventoryHost.Instance.Catalog.Find(id);
             if (part == null) continue;
 
-            if (!RepairRules.CanRestore(part.Grade)) impossible++;
+            if (!RepairRules.CanRestore(part)) impossible++;
             else if (FixWindowManager.Instance.CanRestore(part)) restorable++;
             else lacking++;
 
@@ -44,7 +44,7 @@ public class PushWreckData : MonoBehaviour
 
     private void CreateCard(PartsDefinition part)
     {
-        WreckCard origin = RepairRules.CanRestore(part.Grade) ? _restoreCardOrigin : _commonCardOrigin;
+        WreckCard origin = RepairRules.CanRestore(part) ? _restoreCardOrigin : _commonCardOrigin;
         WreckCard card = Instantiate(origin, _content);
 
         card.gameObject.SetActive(true);

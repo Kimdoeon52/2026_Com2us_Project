@@ -20,6 +20,10 @@ MonoBehaviour:
     \uD0D1\uC7AC."
   _slot: 2
   _grade: 0
+  _manufacturer: 2
+  _performanceMultiplier: 1
+  _acquisition: "\uACE0\uBB3C\uC0C1\u00B7\uC81C\uC791"
+  _recommendedRace: "\uB808\uC774\uC2A4 1"
   _durability: 80
   _shape:
     _size: {x: 1, y: 3}
@@ -28,10 +32,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 45
+  _repairCost: 25
+  _restoreCost: 0
+  _restoreComponentId: 
+  _restoreComponentCount: 0
+  _scrapPrice: 16
+  _auctionMinPrice: 32
+  _auctionMaxPrice: 59
+  _destructionResistance: 0.7
   _attackPower: 0
   _moveSpeedIndex: 97
   _cooldownReduction: 0
   _defenseBonus: 2
   _rangeIncrease: 0
   _activeSkillId: SK_LEG_STOMP
+  _passiveValue: 0
   _skillCost: 1

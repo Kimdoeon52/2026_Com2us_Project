@@ -51,49 +51,41 @@ public static class RepairRules
         return 1f;
     }
 
-    // 부위 기본 수리비 x 등급 배율 x 잃은 내구도 비율 (소수점은 반올림)
+    // 수리 가능 여부. 풀수리비가 0인 파츠(기본 파츠)는 수리 불가
+    public static bool CanRepair(PartsDefinition part) => part != null && part.RepairCost > 0;
+
+    // 풀수리비(SO) x 잃은 내구도 비율 (소수점은 반올림)
     public static int RepairCost(PartsDefinition part, int current)
     {
-        if (part == null || current >= part.Durability) return 0;
+        if (!CanRepair(part) || current >= part.Durability) return 0;
 
         float lost = (part.Durability - current) / (float)part.Durability;
-        return Mathf.FloorToInt(BaseRepairCost(part.Slot) * GradeRate(part.Grade) * lost + 0.5f);
+        return Mathf.FloorToInt(part.RepairCost * lost + 0.5f);
     }
 
-    public static bool CanRestore(PartGrade grade) => grade != PartGrade.Common;   // 일반 등급은 복구 불가
+    // 복구비가 0인 파츠(일반 등급, 기본 파츠)는 복구 불가
+    public static bool CanRestore(PartsDefinition part) => part != null && part.RestoreCost > 0;
 
-    public static int RestoreCost(PartsDefinition part)
+    public static int RestoreCost(PartsDefinition part) => part != null ? part.RestoreCost : 0;
+
+    // 에픽, 전설만 같은 회사 부품 1개가 더 든다 (SO에 지정)
+    public static int RestoreMaterial(PartsDefinition part) => part != null ? part.RestoreComponentCount : 0;
+
+    // 복구 재료로 지정된 부품의 보유 수
+    public static int OwnedMaterial(PartsDefinition part)
     {
-        int headCost = RestoreHeadCost(part.Grade);
-
-        switch (part.Slot)
-        {
-            case Slot.Head:
-                return headCost;
-            case Slot.LeftArm or Slot.RightArm:
-                return headCost * 4 / 5;
-        }
-        return headCost * 2 / 3;
+        if (part == null || string.IsNullOrEmpty(part.RestoreComponentId) || InventoryHost.Instance == null) return 0;
+        return InventoryHost.Instance.Save.Components.Get(part.RestoreComponentId);
     }
 
-    private static int RestoreHeadCost(PartGrade grade)
+    public static string MaterialName(PartsDefinition part)
     {
-        switch (grade)
-        {
-            case PartGrade.Rare:
-                return 150;
-            case PartGrade.Epic:
-                return 300;
-            case PartGrade.Legendary:
-                return 600;
-            case PartGrade.Prototype:
-                return 900;
-        }
-        return 0;
-    }
+        if (part == null || string.IsNullOrEmpty(part.RestoreComponentId)) return "";
 
-    // 에픽, 전설만 같은 등급 부품 1개가 더 든다
-    public static int RestoreMaterial(PartGrade grade) => grade == PartGrade.Epic || grade == PartGrade.Legendary ? 1 : 0;
+        ComponentCatalog catalog = InventoryHost.Instance != null ? InventoryHost.Instance.ComponentCatalog : null;
+        ComponentDefinition component = catalog != null ? catalog.Find(part.RestoreComponentId) : null;
+        return component != null ? component.DisplayName : part.RestoreComponentId;
+    }
 
     public static int CoreRestoreCost(int level) => 100 + level * 50;
 

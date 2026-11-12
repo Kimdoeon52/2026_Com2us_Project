@@ -17,6 +17,10 @@ MonoBehaviour:
   _description: "\uACE0\uBB3C\uC0C1\uC5D0\uC11C \uD754\uD788 \uAD6C\uD558\uB294 \uC815\uBC00\uD55C A\uC0AC \uC624\uB978\uD314. \uCC29\uD0C4 \uD3ED\uBC1C\uB85C \uBA3C \uAE30\uBB3C\uC744 \uBD80\uC218\uB294 \uBD90\uBC84 \uD0D1\uC7AC."
   _slot: 1
   _grade: 0
+  _manufacturer: 1
+  _performanceMultiplier: 1
+  _acquisition: "\uACE0\uBB3C\uC0C1\u00B7\uC81C\uC791"
+  _recommendedRace: "\uB808\uC774\uC2A4 1"
   _durability: 100
   _shape:
     _size: {x: 2, y: 2}
@@ -25,10 +29,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 50
+  _repairCost: 30
+  _restoreCost: 0
+  _restoreComponentId: 
+  _restoreComponentCount: 0
+  _scrapPrice: 18
+  _auctionMinPrice: 35
+  _auctionMaxPrice: 65
+  _destructionResistance: 0.7
   _attackPower: 100
   _moveSpeedIndex: 0
   _cooldownReduction: 4
   _defenseBonus: 0
   _rangeIncrease: 0
   _activeSkillId: SK_ARM_BOMBER
+  _passiveValue: 0
   _skillCost: 1

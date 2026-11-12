@@ -17,6 +17,10 @@ MonoBehaviour:
   _description: "\uD55C \uBC88 \uAC1C\uB7C9\uC744 \uAC70\uCE5C \uD654\uB824\uD55C C\uC0AC \uC67C\uB2E4\uB9AC. \uC21C\uAC04 \uD6C4\uBC29 \uC774\uB3D9\uC73C\uB85C \uAC70\uB9AC\uB97C \uBC8C\uB9AC\uB294 \uBC31 \uBD80\uC2A4\uD2B8 \uD0D1\uC7AC."
   _slot: 2
   _grade: 1
+  _manufacturer: 3
+  _performanceMultiplier: 1.2
+  _acquisition: "\uACE0\uBB3C\uC0C1\u00B7\uC81C\uC791\u00B7\uACBD\uB9E4\uC7A5"
+  _recommendedRace: "\uB808\uC774\uC2A4 1"
   _durability: 80
   _shape:
     _size: {x: 1, y: 3}
@@ -25,10 +29,19 @@ MonoBehaviour:
   _sprite: {fileID: 21300000, guid: b7a7297712a625142894e8a1f7502894, type: 3}
   _destructiveResistance: 0
   cost: 113
+  _repairCost: 38
+  _restoreCost: 100
+  _restoreComponentId: 
+  _restoreComponentCount: 0
+  _scrapPrice: 34
+  _auctionMinPrice: 79
+  _auctionMaxPrice: 147
+  _destructionResistance: 0.45
   _attackPower: 0
   _moveSpeedIndex: 106.1
   _cooldownReduction: 0
   _defenseBonus: 0
   _rangeIncrease: 6
   _activeSkillId: SK_LEG_BACKBOOST
+  _passiveValue: 0
   _skillCost: 1

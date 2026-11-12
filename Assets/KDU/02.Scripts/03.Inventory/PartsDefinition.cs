@@ -17,6 +17,15 @@ public enum Slot
     Core
 }
 
+public enum Manufacturer
+{
+    None,        // 기본(무명): 전투 중에만 존재하는 임시 파츠
+    A,
+    B,
+    C,
+    Universal    // 범용(아버지): 코어 v.2 전용 시제기
+}
+
 public enum GimmickTag
 {
     None,
@@ -48,6 +57,18 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("파츠 등급")]
     [SerializeField] private PartGrade _grade;
 
+    [Tooltip("제조사")]
+    [SerializeField] private Manufacturer _manufacturer;
+
+    [Tooltip("성능 배율. 일반 1.00 기준")]
+    [Min(0f)][SerializeField] private float _performanceMultiplier = 1f;
+
+    [Tooltip("획득 경로")]
+    [SerializeField] private string _acquisition;
+
+    [Tooltip("권장 등장 시점")]
+    [SerializeField] private string _recommendedRace;
+
     [Tooltip("내구도")]
     [SerializeField] private int _durability;
 
@@ -67,11 +88,32 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("가격")]
     [SerializeField] private int cost;
 
+    [Tooltip("풀수리비(G). 0이면 수리 불가")]
+    [Min(0)][SerializeField] private int _repairCost;
+
+    [Tooltip("복구비(G). 0이면 복구 불가")]
+    [Min(0)][SerializeField] private int _restoreCost;
+
+    [Tooltip("복구 추가 재료 부품 ID. 비우면 재료 없음")]
+    [SerializeField] private string _restoreComponentId;
+
+    [Tooltip("복구 추가 재료 수량")]
+    [Min(0)][SerializeField] private int _restoreComponentCount;
+
+    [Tooltip("고철 수입가(G). 0이면 판매 불가")]
+    [Min(0)][SerializeField] private int _scrapPrice;
+
+    [Tooltip("경매가 하한(G)")]
+    [Min(0)][SerializeField] private int _auctionMinPrice;
+
+    [Tooltip("경매가 상한(G)")]
+    [Min(0)][SerializeField] private int _auctionMaxPrice;
+
     [Header("전투")]
     [Tooltip("전투 패배 시 부품 영구 파괴 확률 (0.0 ~ 1.0)\n" +
              "일반(70%), 레어(45%), 에픽(20%), 전설(5%), 프로토타입(1%)")]
     [Range(0f, 1f)]
-    private float _destructionResistance;
+    [SerializeField] private float _destructionResistance;
 
     [Tooltip("공격력 (팔)")]
     [Min(0)][SerializeField] private int _attackPower;
@@ -96,6 +138,9 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("액티브 스킬 ID")]
     [SerializeField] private string _activeSkillId = "";
 
+    [Tooltip("패시브 수치 (%). 머리 파츠만 사용, 등급 반영값")]
+    [Min(0f)][SerializeField] private float _passiveValue;
+
     [Tooltip("기믹 파훼 태그")]
     private GimmickTag _gimmickTag = GimmickTag.None;
 
@@ -113,6 +158,18 @@ public class PartsDefinition : ScriptableObject
     public DestructiveResistance DestructiveResistance => _destructiveResistance;
     public int Durability => _durability;
     public int Cost => cost;
+    public int RepairCost => _repairCost;
+    public int RestoreCost => _restoreCost;
+    public string RestoreComponentId => _restoreComponentId;
+    public int RestoreComponentCount => _restoreComponentCount;
+    public int ScrapPrice => _scrapPrice;
+    public int AuctionMinPrice => _auctionMinPrice;
+    public int AuctionMaxPrice => _auctionMaxPrice;
+    public Manufacturer Manufacturer => _manufacturer;
+    public float PerformanceMultiplier => _performanceMultiplier;
+    public string Acquisition => _acquisition;
+    public string RecommendedRace => _recommendedRace;
+    public float PassiveValue => _passiveValue;
     public float DestructionResistance => _destructionResistance;
     public int AttackPower => _attackPower;
     public float MoveSpeedIndex => _moveSpeedIndex;

@@ -32,6 +32,7 @@ public abstract class AllAiBase : MonoBehaviour
     public virtual int RaiseGold { get; set; } = 10;
     public abstract void ReadyForAction();
     public virtual string GetRaiseLine(int cost) => $"{cost}G 가본다!"; // 레이즈 말풍선 (보스는 개성 대사로 덮어씀)
+    public virtual string GetWinLine() => "앗싸, 내 거다!"; // 낙찰 말풍선 (보스는 개성 대사로 덮어씀)
     public abstract void OnWinAuction(int finalPrice, PartGrade stuffGrade); // 낙찰 정산 (보스: GlobalGold 차감/장비 교체, NPC: 기록만)
     public abstract bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade);
 
@@ -100,7 +101,12 @@ public abstract class AllAiBase : MonoBehaviour
     [SerializeField]
     protected List<ChatList> thinkChatList = new List<ChatList>(); // 모든 AI가 인스펙터에서 각자 설정 가능
 
-    [SerializeField] protected Vector3 newScale = new Vector3(0.2f, 0.2f, 0.2f); // 말풍선이 다 커졌을 때 크기 (플레이어와 동일하게 인스펙터에서 조절)
+    [SerializeField] protected Vector3 newScale = new Vector3(0.35f, 0.35f, 0.35f); // 말풍선이 다 커졌을 때 크기 (플레이어와 동일하게 인스펙터에서 조절)
+    [SerializeField] protected Color bubbleTextColor = Color.white; // 말풍선 글자색
+    [Tooltip("켜면 플레이어 말풍선과 같은 화면 크기로 나옴 (newScale은 플레이어가 없을 때만 사용)")]
+    [SerializeField] protected bool matchPlayerBubbleSize = true;
+    [Tooltip("플레이어 말풍선 크기 대비 배율 (1 = 똑같이)")]
+    [SerializeField] protected float bubbleSizeMultiplier = 1f;
     protected Vector3 originalLocalScale = Vector3.one; // 프리팹에 잡힌 말풍선 크기
     private bool isBubbleReady = false;
 
@@ -128,7 +134,16 @@ public abstract class AllAiBase : MonoBehaviour
         isBubbleReady = true;
 
         dialogueBoxRenderer = dialogueBoxOB.GetComponent<SpriteRenderer>();
+        ApplySharedBubbleStyle(); // 보스/조무레기 모두 플레이어와 같은 말풍선 이미지·폰트
         bubbleFitter = SpeechBubbleFitter.Attach(dialogueBoxRenderer, npcThinkChat);
+        if (!dialogueBoxOB.TryGetComponent<BillboardToCamera>(out _)) dialogueBoxOB.AddComponent<BillboardToCamera>(); // 옆자리도 카메라를 정면으로
+        if (npcThinkChat != null)
+        {
+            // 말풍선 색과 상관없이 읽히도록 흰 글자 + 검은 테두리
+            npcThinkChat.color = bubbleTextColor;
+            npcThinkChat.outlineColor = Color.black;
+            npcThinkChat.outlineWidth = 0.2f;
+        }
         if (thinkCanvasGroup == null)
         {
             dialogueBoxOB.TryGetComponent<CanvasGroup>(out thinkCanvasGroup);
@@ -140,11 +155,41 @@ public abstract class AllAiBase : MonoBehaviour
         // 초기 상태 비활성화 및 초기화
         ResetThinkBubble();
     }
+    // 플레이어 말풍선(기준)의 이미지/그리기 모드/폰트/글자 크기를 그대로 가져옴
+    private void ApplySharedBubbleStyle()
+    {
+        AuctionPlayer player = AuctionPlayer.Instance;
+        if (player == null) return;
+
+        if (dialogueBoxRenderer != null && player.BubbleSprite != null)
+        {
+            dialogueBoxRenderer.sprite = player.BubbleSprite;
+            dialogueBoxRenderer.drawMode = player.BubbleDrawMode;
+            if (player.BubbleDrawMode != SpriteDrawMode.Simple) dialogueBoxRenderer.size = player.BubbleSize;
+            Color c = dialogueBoxRenderer.color; // 말풍선 색도 흰색 기준으로 (투명도는 연출이 관리)
+            dialogueBoxRenderer.color = new Color(1f, 1f, 1f, c.a);
+        }
+        if (npcThinkChat != null)
+        {
+            if (player.BubbleFont != null) npcThinkChat.font = player.BubbleFont;
+            if (player.BubbleFontSize > 0f)
+            {
+                npcThinkChat.enableAutoSizing = false; // 피터가 이 크기를 최대 글자 크기로 사용
+                npcThinkChat.fontSize = player.BubbleFontSize;
+            }
+            npcThinkChat.transform.localScale = Vector3.one;
+            npcThinkChat.transform.localRotation = Quaternion.identity;
+        }
+    }
+
     // 옛 UI 프리팹: UI 말풍선은 Canvas가 없어 안 보이므로 숨기고,
     // 같은 스프라이트로 SpriteRenderer + TextMeshPro 월드 말풍선을 자식으로 생성
     private void BuildWorldBubbleFromLegacy()
     {
-        Sprite sprite = thinkImage != null ? thinkImage.sprite : null;
+        // 플레이어 말풍선 이미지를 우선 사용 (모든 AI가 같은 말풍선), 없으면 옛 UI 말풍선 이미지
+        Sprite sprite = AuctionPlayer.Instance != null && AuctionPlayer.Instance.BubbleSprite != null
+            ? AuctionPlayer.Instance.BubbleSprite
+            : (thinkImage != null ? thinkImage.sprite : null);
         if (thinkImage != null) thinkImage.gameObject.SetActive(false);
         if (TryGetComponent(out Image rootImage)) rootImage.enabled = false; // 루트의 빈 UI 이미지도 끔
         if (sprite == null)
@@ -164,7 +209,7 @@ public abstract class AllAiBase : MonoBehaviour
         textGo.transform.localPosition = new Vector3(0f, 0f, -0.1f);
         TextMeshPro text = textGo.AddComponent<TextMeshPro>();
         if (Auction.Instance != null && Auction.Instance.chat != null) text.font = Auction.Instance.chat.font; // 한글 폰트
-        text.color = Color.black;
+        text.color = Color.white; // 어두운 말풍선 위에서도 보이게
         text.fontSize = 2f;
 
         dialogueBoxOB = box;
@@ -207,7 +252,7 @@ public abstract class AllAiBase : MonoBehaviour
 
         thinkSequence
             // 1. 0.3초 동안 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
-            .Append(dialogueBoxOB.transform.DOScale(newScale != Vector3.zero ? newScale : originalLocalScale, 1f).SetEase(Ease.OutBack))
+            .Append(dialogueBoxOB.transform.DOScale(GetBubbleTargetScale(), 1f).SetEase(Ease.OutBack))
             // 2. 2.5초 동안 대기하면서 말풍선이 둥실둥실 살짝 올라감
             .Append(dialogueBoxOB.transform.DOLocalMoveY(originalLocalPos.y + 0.3f, 5f).SetEase(Ease.OutQuad))
             // 3. 서서히 사라지면서(Fade Out) 조금 더 위로 떠오름
@@ -217,6 +262,20 @@ public abstract class AllAiBase : MonoBehaviour
                 ResetThinkBubble();
             });
     }
+    // 말풍선이 다 커졌을 때의 로컬 크기.
+    // 플레이어 말풍선이 있으면 그 화면 크기(월드)와 똑같아지도록 부모 스케일로 나눠서 계산 (좌석 크기 보정과 무관하게 동일)
+    private Vector3 GetBubbleTargetScale()
+    {
+        Vector3 fallback = newScale != Vector3.zero ? newScale : originalLocalScale;
+        if (!matchPlayerBubbleSize || AuctionPlayer.Instance == null) return fallback;
+
+        Vector3 world = AuctionPlayer.Instance.BubbleWorldScale * bubbleSizeMultiplier;
+        Transform parent = dialogueBoxOB.transform.parent;
+        Vector3 parentScale = parent != null ? parent.lossyScale : Vector3.one;
+        if (world == Vector3.zero || Mathf.Approximately(parentScale.x, 0f) || Mathf.Approximately(parentScale.y, 0f)) return fallback;
+        return new Vector3(world.x / parentScale.x, world.y / parentScale.y, Mathf.Approximately(parentScale.z, 0f) ? 1f : world.z / parentScale.z);
+    }
+
     private void SetAlpha(float alphaAmount)
     {
         if (thinkCanvasGroup != null)

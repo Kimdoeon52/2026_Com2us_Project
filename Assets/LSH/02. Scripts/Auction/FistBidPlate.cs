@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 
 // 주먹 경매에서 참가자 좌석 초상화 아래에 붙는 입찰 명패 (런타임 생성, 월드 공간 SpriteRenderer + TextMeshPro)
-// 작성 중 -> 봉인 -> 동시 오픈(뒤집기 + 숫자 굴리기) -> 낙찰/탈락 순서로 연출
+// (작성 중엔 숨김) -> 봉인(선택 완료) -> 동시 오픈(뒤집기 + 숫자 굴리기) -> 낙찰/탈락 순서로 연출
 public class FistBidPlate : MonoBehaviour
 {
     private static readonly Color ThinkingColor = new Color(0.15f, 0.15f, 0.18f, 0.85f); // 작성 중
@@ -18,6 +18,7 @@ public class FistBidPlate : MonoBehaviour
     private const float DefaultWidth = 1.2f; // 초상화가 없을 때 명패 폭 (월드 단위)
     private const float OldPixelHeight = 52f; // 예전 UI 명패 높이(px). Shake 세기 환산용
     private const int SortingOffset = 20; // 초상화(+0), 말풍선(+10/11)보다 위
+    public static float HeadGap = 0.55f; // 초상화 머리 꼭대기 ~ 명패 아래쪽 사이 간격 (월드 단위, 말풍선과 겹치지 않게)
 
     private static Sprite whiteSprite; // 배경용 1x1 흰색 스프라이트 (모든 명패가 공유)
 
@@ -37,7 +38,7 @@ public class FistBidPlate : MonoBehaviour
         set { alpha = value; ApplyColors(); }
     }
 
-    // slot: 좌석 Transform(랭커자리/플레이어). 같은 오브젝트의 SpriteRenderer를 초상화로 보고 그 아래에 붙음
+    // slot: 좌석 Transform(랭커자리/플레이어). 같은 오브젝트의 SpriteRenderer를 초상화로 보고 그 머리 위에 붙음
     public static FistBidPlate Create(Transform slot, TMP_FontAsset font, SpriteRenderer portrait = null)
     {
         if (portrait == null) slot.TryGetComponent(out portrait);
@@ -51,16 +52,18 @@ public class FistBidPlate : MonoBehaviour
         go.transform.localRotation = Quaternion.identity;
 
         float width = DefaultWidth;
-        Vector3 worldPos = slot.position;
+        Vector3 worldPos = slot.position + Vector3.up * (1f + HeadGap); // 초상화가 없을 때: 좌석 위쪽
+        if (portrait != null && portrait.sprite != null) width = portrait.bounds.size.x * WidthRatio;
+        float height = width * HeightRatio;
         if (portrait != null && portrait.sprite != null)
         {
+            // 머리 위 (말풍선이 머리 꼭대기에 나오므로 그보다 HeadGap만큼 더 위에 띄움. 아래쪽은 의자 등받이에 가려짐)
             Bounds bounds = portrait.bounds;
-            width = bounds.size.x * WidthRatio;
-            worldPos = new Vector3(bounds.center.x, bounds.min.y - width * HeightRatio * 0.6f, slot.position.z);
+            worldPos = new Vector3(bounds.center.x, bounds.max.y + HeadGap + height * 0.5f, slot.position.z);
         }
-        float height = width * HeightRatio;
         go.transform.position = worldPos;
 
+        go.AddComponent<BillboardToCamera>(); // 옆자리 명패도 카메라 정면으로
         FistBidPlate plate = go.AddComponent<FistBidPlate>();
         plate.root = go.transform;
         plate.baseScale = go.transform.localScale;
@@ -138,15 +141,13 @@ public class FistBidPlate : MonoBehaviour
         return DOTween.To(() => alpha, v => Alpha = v, target, time).SetLink(gameObject);
     }
 
-    public void SetThinking() // 입찰서 작성 중
+    public void SetThinking() // 입찰서 작성 중: 명패를 숨겨둠 (제출하면 Seal에서 나타남)
     {
+        thinkingTween?.Kill();
         SetBackground(ThinkingColor);
         SetLabelColor(Color.white);
-        label.text = "작성 중...";
-
-        thinkingTween?.Kill();
-        Alpha = 1f;
-        thinkingTween = FadeTo(0.5f, 0.6f).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine);
+        label.text = "";
+        Alpha = 0f;
     }
 
     public void Seal() // 입찰서 제출 완료 (금액은 숨김)

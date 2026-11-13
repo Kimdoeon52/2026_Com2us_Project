@@ -130,11 +130,8 @@ public class FistAuctionMode : IAuctionMode
 
         float remain = bidTime;
         int lastWarnSecond = -1;
-        if (manager.timeBar != null)
-        {
-            manager.timeBar.gameObject.SetActive(true);
-            manager.timeBar.fillAmount = 1f;
-        }
+        manager.ShowTimer(true); // 입찰 단계에서만 타이머 표시
+        if (manager.timeBar != null) manager.timeBar.fillAmount = 1f;
 
         while (!isPlayerDone && remain > 0f)
         {
@@ -167,7 +164,7 @@ public class FistAuctionMode : IAuctionMode
                 AuctionPlayer.Instance.ShowThinkChatWithText(playerBid > 0 ? "이 정도면 되겠지." : "이번엔 패스.");
         }
 
-        if (manager.timeBar != null) manager.timeBar.gameObject.SetActive(false);
+        manager.ShowTimer(false);
         manager.EnableFistAuctionUI(false);
 
         player.Bid = playerBid;

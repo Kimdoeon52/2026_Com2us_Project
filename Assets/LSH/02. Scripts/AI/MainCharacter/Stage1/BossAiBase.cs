@@ -30,7 +30,7 @@ public class BossAiBase : AllAiBase
     protected virtual int SkillCount { get; set; } = 0; //남은 스킬 사용 횟수
     protected virtual float SkillChance { get; set; } = 50f; //스킬 사용 확률 (0~100)
     public bool HasSkillLeft => SkillCount > 0;
-    public static event Func<string, string, Sprite, Sprite, Color, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
+    public static event Func<string, string, Sprite, Sprite, Color, CutsceneStyle, UniTask> OnBossBigRaiseCutscene; //컷씬 이벤트
 
     [Header("컷씬 배너 이미지")]
     [SerializeField] private Sprite cutsceneBannerSprite; //이 보스 전용 컷씬 배너 (비우면 기본 배너 유지)
@@ -43,6 +43,28 @@ public class BossAiBase : AllAiBase
     protected virtual string[] ThinkLines => new[] { "흠...", "어디 보자..." }; // 고민 중 말풍선
     protected virtual string[] RaiseLines => new[] { "{0}G!" }; // 레이즈 말풍선 ({0} = 가격)
     protected virtual string GiveUpLine => "쳇 난 포기 하겠어."; // 포기 말풍선
+    protected virtual string[] OutbidLines => new[] { "뭐야, 앞질렀다고?" }; // 내가 선두였는데 누가 앞질렀을 때
+    protected virtual string[] WinLines => new[] { "내 거다." }; // 낙찰받았을 때
+    public virtual CutsceneStyle CutsceneStyle => CutsceneStyle.SlideLeft; // 컷씬 배너 등장 방식
+    protected virtual Color SkillColor => new Color(1f, 0.85f, 0.2f); // 스킬 연출 대표 색 (화면 플래시 등)
+
+    protected static string Pick(string[] lines) => lines == null || lines.Length == 0 ? string.Empty : lines[UnityEngine.Random.Range(0, lines.Length)];
+    public string GetOutbidLine() => Pick(OutbidLines);
+    public override string GetWinLine() => Pick(WinLines);
+
+    //================================연출 헬퍼=================================
+    // 내가 앉아 있는 좌석의 초상화 (AI는 좌석 '랭커자리'의 자식으로 생성됨)
+    protected SpriteRenderer SeatPortrait => transform.parent != null ? transform.parent.GetComponent<SpriteRenderer>() : null;
+    protected static SpriteRenderer PortraitOf(AllAiBase ai) => ai != null && ai.transform.parent != null ? ai.transform.parent.GetComponent<SpriteRenderer>() : null;
+
+    // 스킬 발동 직후(컷씬 끝나고 효과 직전) 공통 기합 연출: 내 초상화가 들썩 + 내 색으로 물듦
+    public virtual void PlaySkillIntroFx()
+    {
+        SpriteRenderer me = SeatPortrait;
+        if (me == null) return;
+        SkillFx.Punch(me.transform, 0.2f);
+        SkillFx.Tint(me, SkillColor, 0.8f);
+    }
 
     //================================기본 세팅=================================
     public override void Start()
@@ -140,7 +162,7 @@ public class BossAiBase : AllAiBase
     {
         if (OnBossBigRaiseCutscene != null)
         {
-            await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter, cutsceneBGcolor);
+            await OnBossBigRaiseCutscene.Invoke(bossName, skill, cutsceneBannerSprite, cutsceneCharacter, cutsceneBGcolor, CutsceneStyle);
         }
     }
 

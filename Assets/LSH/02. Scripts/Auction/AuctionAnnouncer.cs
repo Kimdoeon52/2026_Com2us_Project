@@ -20,6 +20,8 @@ public class AuctionAnnouncer : MonoBehaviour
     [SerializeField] private TextMeshProUGUI chatText; // Chat
 
     [Header("텍스트 영역 (TextBOx 안쪽 여백)")]
+    [Tooltip("켜면 Chat 영역을 TextBox 크기에 맞춰 덮어씀. 끄면 씬에서 잡아둔 Chat 크기/위치 그대로 사용")]
+    [SerializeField] private bool fitChatToTextBox = false;
     [SerializeField] private Vector2 textPadding = new Vector2(200f, 30f); // 좌우, 상하 여백
     [SerializeField] private float minFontSize = 24f; // 줄바꿈해도 넘치면 이 크기까지 줄임
 
@@ -39,6 +41,7 @@ public class AuctionAnnouncer : MonoBehaviour
     private Vector3 girlBaseScale = Vector3.one;
     private Vector3 textBoxBaseScale = Vector3.one;
     private bool isInitialized;
+    private float baseFontSize = -1f;
 
     private Sequence visibilitySeq;
     private Tween hopTween;
@@ -92,12 +95,14 @@ public class AuctionAnnouncer : MonoBehaviour
 
         chatText.textWrappingMode = TextWrappingModes.Normal; // 박스 폭에서 줄바꿈
         chatText.overflowMode = TextOverflowModes.Overflow;
-        float baseSize = chatText.fontSize;
+        if (baseFontSize <= 0f) baseFontSize = chatText.fontSize; // 처음 한 번만 (자동 크기 후엔 fontSize가 줄어든 값이라 매번 재면 점점 작아짐)
+        float baseSize = baseFontSize;
         chatText.fontSizeMax = baseSize;
         chatText.fontSizeMin = Mathf.Min(minFontSize, baseSize);
         chatText.enableAutoSizing = true; // 줄바꿈해도 높이가 넘치면 글자 크기를 줄임
 
-        if (textBox == null) return;
+        // 기본: 씬에서 잡아둔 Chat 영역을 그대로 사용 (지금 씬은 TextBox 100x100 / Chat 1600x200이라 맞추면 세로로 찍힘)
+        if (!fitChatToTextBox || textBox == null) return;
         RectTransform chatRect = chatText.rectTransform;
         RectTransform parent = chatRect.parent as RectTransform;
         if (parent == null) return;
@@ -111,15 +116,24 @@ public class AuctionAnnouncer : MonoBehaviour
 
         Vector2 min = parent.InverseTransformPoint(corners[0]);
         Vector2 max = parent.InverseTransformPoint(corners[2]);
+        float boxWidth = max.x - min.x;
+        float boxHeight = max.y - min.y;
+        if (boxWidth < 1f || boxHeight < 1f) return; // 아직 레이아웃 계산 전 → 다음 등장 때 다시 맞춤
 
-        min.x += 150f; //우측으로 조금 조절 하려고
+        // 여백(좌우 textPadding + 왼쪽 150)이 박스보다 크면 글자 폭이 0이 되어 한 글자씩 세로로 찍힘
+        // → 여백은 박스 폭의 최대 40%까지만 쓰고, 글자 영역은 박스 폭의 최소 50%를 보장
+        float leftShift = Mathf.Min(150f, boxWidth * 0.15f); //우측으로 조금 조절 하려고
+        float padX = Mathf.Min(textPadding.x, boxWidth * 0.2f);
+        float padY = Mathf.Min(textPadding.y, boxHeight * 0.2f);
+        min.x += leftShift;
+
+        float width = Mathf.Max(boxWidth * 0.5f, (max.x - min.x) - padX * 2f);
+        float height = Mathf.Max(boxHeight * 0.5f, (max.y - min.y) - padY * 2f);
 
         chatRect.anchorMin = chatRect.anchorMax = new Vector2(0.5f, 0.5f);
         chatRect.pivot = new Vector2(0.5f, 0.5f);
         chatRect.anchoredPosition = (min + max) * 0.5f - parent.rect.center;
-        chatRect.sizeDelta = new Vector2(
-            Mathf.Max(0f, (max.x - min.x) - textPadding.x * 2f),
-            Mathf.Max(0f, (max.y - min.y) - textPadding.y * 2f));
+        chatRect.sizeDelta = new Vector2(width, height);
     }
 
     //=============================등장/퇴장=============================
@@ -133,6 +147,10 @@ public class AuctionAnnouncer : MonoBehaviour
         if (!gameObject.activeSelf) // 완전히 꺼져 있었으면 시작 자세부터 세팅
         {
             gameObject.SetActive(true);
+            // Awake 시점엔 캔버스 레이아웃(해상도/Canvas Scaler)이 계산 전이라 박스 크기가 틀릴 수 있음 → 켜진 뒤 다시 맞춤
+            Canvas.ForceUpdateCanvases();
+            ResetPose();
+            FitChatToTextBox();
             canvasGroup.alpha = 0f;
             if (girlImage != null) girlImage.anchoredPosition = girlBasePos + Vector2.left * slideDistance;
             if (textBox != null) textBox.localScale = textBoxBaseScale * 0.85f;

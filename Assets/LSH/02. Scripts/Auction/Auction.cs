@@ -70,9 +70,9 @@ public class Auction : Singleton<Auction>
     [SerializeField] [Min(1f)] private float giveUpTimeScale = 3f; //플레이어가 포기하면 경매를 n배속으로 진행 (빠른 종료 유도)
 
     [Header("물건 정보 UI")]
-    [SerializeField] public TextMeshProUGUI auctionName; //물건 이름
-    [SerializeField] public TextMeshProUGUI auctionCost; //물건 가격
-    [SerializeField] public TextMeshProUGUI auctionGrade;// 물건 등급
+    [SerializeField] public TextMeshPro auctionName; //물건 이름
+    [SerializeField] public TextMeshPro auctionCost; //물건 가격
+    [SerializeField] public TextMeshPro auctionGrade;// 물건 등급
 
     [Header("대사 & 메시지 UI")]
     [SerializeField] public TextMeshProUGUI chat; //경매하는 사람 채팅 나올 곳
@@ -105,6 +105,8 @@ public class Auction : Singleton<Auction>
 
     [Header("제한 시간 UI")]
     [SerializeField] public Image timeBar; //제한 시간 이미지
+    [Tooltip("타이머 전체 묶음 (막대+테두리). 비우면 timeBar의 부모 'Timer'를 사용")]
+    [SerializeField] private GameObject timerRoot;
     private float auctionTime = 60f; //총 시간
     public float RemainingTime { get; set; } = 0f; //현재 시간
     public bool IsTimeRunning { get; set; } = false; // 시간이 끝났는가? 체크
@@ -117,6 +119,14 @@ public class Auction : Singleton<Auction>
     [SerializeField] public GameObject modeSelectPanel;
     [SerializeField] public Button normalModeButton;
     [SerializeField] public Button fistModeButton;
+
+    //===================================경매 시작 버튼 / 착석===================
+    [Header("경매 시작 (좌측 버튼 → 모드 선택 패널)")]
+    [SerializeField] private Button startAuctionButton; // 비우면 일반 경매 버튼을 복제해서 화면 좌측에 자동 생성
+    [SerializeField] private string startAuctionLabel = "경매 시작";
+    [SerializeField] private Vector2 startButtonOffset = new Vector2(40f, 0f); // 좌측 가운데 기준 위치
+    [SerializeField] private AuctionSeatLock seatLock; // 비우면 자동으로 붙음 (착석/이동 잠금/카메라 고정)
+    private UniTaskCompletionSource startAuctionTcs;
 
     //===================================경매 탈출 버튼===================
     [SerializeField] private Button getOutAuction;
@@ -165,6 +175,18 @@ public class Auction : Singleton<Auction>
     [SerializeField] public Transform[] npcsPos; //여기는 npc위치들
     [SerializeField] private Transform playerImagePos;
     public Transform PlayerSlot => playerImage != null ? playerImagePos : null;
+    [Tooltip("좌석 초상화의 월드 높이. 0이면 플레이어 초상화 높이에 맞춤 (보스/조무레기 크기 통일)")]
+    [SerializeField] private float portraitWorldHeight = 0f;
+    [Tooltip("좌석 초상화 크기 배율 (플레이어 포함 모두 같이 적용)")]
+    [SerializeField] private float portraitSizeMultiplier = 0.9f;
+
+    [Header("경매 물건 이미지 (무대 받침대 위)")]
+    [Tooltip("비우면 '임시_Lot_경매물건/파츠'의 SpriteRenderer를 자동으로 찾음")]
+    [SerializeField] private SpriteRenderer lotItemImage;
+    [SerializeField] private string lotObjectName = "임시_Lot_경매물건";
+    private float lotItemBoxSize = -1f; // 원래 들어있던 임시 이미지 크기 (새 물품도 이 크기 안에 맞춤)
+    private Vector3 lotItemBaseScale = Vector3.one;
+    private readonly Dictionary<Transform, Vector3> seatBaseScales = new Dictionary<Transform, Vector3>();
 
     //==========================사운드=============================
     [Header("효과음 설정")]
@@ -220,12 +242,12 @@ public class Auction : Singleton<Auction>
         ResetGameSpeed(); // 배속 상태로 씬을 떠나도 다음 씬에 배속이 남지 않게 복구
     }
 
-    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite, Color newColor) //컷씬 대기용 함수
+    private async UniTask HandleBossBigRaiseCutscene(string bossName, string skillName, Sprite bannerSprite, Sprite characterSprite, Color newColor, CutsceneStyle style) //컷씬 대기용 함수
     {
         IsCutscenePlaying = true; // 컷씬 플레이 시작
         if (cutsceneManager != null)
         {
-            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite, characterSprite, newColor); // awiat으로 컷씬 연출 대기
+            await cutsceneManager.PlayBossCutsceneAsync(bossName, skillName, bannerSprite, characterSprite, newColor, style); // awiat으로 컷씬 연출 대기
         }
         IsCutscenePlaying = false; // 컷씬 끝
     }
@@ -255,11 +277,24 @@ public class Auction : Singleton<Auction>
         BindButton(getOutAuction, OnGGAuction);
         BindButton(shopButton, OnOpenShop);
         BindButton(shopCloseButton, OnCloseShop);
+        if (startAuctionButton == null) startAuctionButton = CreateStartAuctionButton();
+        BindButton(startAuctionButton, OnStartAuctionButton);
+        if (startAuctionButton != null) startAuctionButton.gameObject.SetActive(false);
+        if (seatLock == null && !TryGetComponent(out seatLock)) seatLock = gameObject.AddComponent<AuctionSeatLock>();
         if (fistBidInputField != null)
         {
             fistBidInputField.onSubmit.RemoveAllListeners();
             fistBidInputField.onSubmit.AddListener(_ => OnSubmitFistBid()); // 엔터로도 제출
         }
+
+        if (timerRoot == null && timeBar != null)
+        {
+            Transform parent = timeBar.transform.parent;
+            timerRoot = parent != null && parent.name.IndexOf("Timer", System.StringComparison.OrdinalIgnoreCase) >= 0
+                ? parent.gameObject
+                : timeBar.gameObject;
+        }
+        ShowTimer(false); // 타이머는 경매(입찰)가 시작돼야 나타남
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
         EnableFistAuctionUI(false);
@@ -303,16 +338,79 @@ public class Auction : Singleton<Auction>
     {
         SettleConsignments(); // 플레이어 위탁품 판매 정산
 
+        // 좌측 '경매 시작' 버튼을 누를 때까지는 자유롭게 돌아다님
+        await WaitStartAuctionButtonAsync();
+        SeatPlayer(); // 플레이어 좌석 착석 + 이동 잠금 + 카메라 무대 정면 고정
+
         for (currentRound = 1; currentRound <= totalAuctionRounds; currentRound++)
         {
-            if (!PrepareRound()) return; // 물품이 없으면 중단
+            if (!PrepareRound()) { ReleasePlayer(); return; } // 물품이 없으면 중단
 
             AppendConsoleLog($"===== {currentRound}/{totalAuctionRounds} 번째 경매 =====");
             await StartAuction();
         }
 
+        ReleasePlayer(); // 경매가 모두 끝나면 다시 움직일 수 있음
         GlobalGold.Instance.AdvanceStage(stageData.StageCount); // 세션이 끝나면 다음 스테이지로
         MoveToNextScene(1000).Forget();
+    }
+
+    //=========================경매 시작 버튼 / 착석===================
+    private async UniTask WaitStartAuctionButtonAsync()
+    {
+        if (startAuctionButton == null) return; // 버튼을 못 만들면 바로 시작
+        startAuctionTcs = new UniTaskCompletionSource();
+        startAuctionButton.gameObject.SetActive(true);
+        await startAuctionTcs.Task;
+        startAuctionButton.gameObject.SetActive(false);
+    }
+
+    public void OnStartAuctionButton()
+    {
+        PlaySound(clickSoundEffect);
+        startAuctionTcs?.TrySetResult();
+    }
+
+    private void SeatPlayer()
+    {
+        if (seatLock == null) return;
+        Transform seat = playerImagePos != null ? (playerImagePos.parent != null ? playerImagePos.parent : playerImagePos) : null; // 좌석 바닥 = 초상화의 부모 슬롯
+        Transform bubble = AuctionPlayer.Instance != null ? AuctionPlayer.Instance.BubbleTransform : null;
+        seatLock.Seat(seat, bubble);
+    }
+
+    private void ReleasePlayer()
+    {
+        if (seatLock != null) seatLock.Release();
+    }
+
+    // 일반 경매 버튼을 복제해서 화면 좌측 가운데에 '경매 시작' 버튼 생성 (같은 디자인 유지)
+    private Button CreateStartAuctionButton()
+    {
+        if (normalModeButton == null) return null;
+        Canvas canvas = normalModeButton.GetComponentInParent<Canvas>(true);
+        if (canvas == null) return null;
+
+        Vector2 size = ((RectTransform)normalModeButton.transform).rect.size; // 원본이 늘어나는(stretch) 앵커여도 크기 유지
+        if (size.x < 1f || size.y < 1f) size = new Vector2(260f, 90f);
+
+        Button button = Instantiate(normalModeButton, canvas.rootCanvas.transform, false);
+        button.name = "StartAuctionButton";
+        RectTransform rt = (RectTransform)button.transform;
+        rt.sizeDelta = size;
+        rt.anchorMin = rt.anchorMax = new Vector2(0f, 0.5f);
+        rt.pivot = new Vector2(0f, 0.5f);
+        rt.anchoredPosition = startButtonOffset;
+        rt.localScale = Vector3.one;
+
+        TMP_Text tmp = button.GetComponentInChildren<TMP_Text>(true);
+        if (tmp != null) tmp.text = startAuctionLabel;
+        else
+        {
+            Text legacy = button.GetComponentInChildren<Text>(true);
+            if (legacy != null) legacy.text = startAuctionLabel;
+        }
+        return button;
     }
 
     // 위탁 창에서 맡긴 파츠를 고정 낙찰가로 팔고 골드 지급
@@ -353,6 +451,7 @@ public class Auction : Singleton<Auction>
         stuffGrade = stuff.Grade; // 등급 넣기
         if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
         if (auctionName != null) auctionName.text = "";
+        UpdateLotItemImage(); // 받침대 위 물건 이미지 교체 (커튼이 닫혀 있는 동안)
 
         WinnerID = -1;
         IfPlayerWin = false;
@@ -510,8 +609,15 @@ public class Auction : Singleton<Auction>
     public bool IsInfoHidden => Time.time < infoHiddenEnd;
     public bool IsFakePriceActive => Time.time < fakePriceEnd;
 
+    private Color? timeBarBaseColor; // 시간 동결 연출로 바뀐 타임바 색 복구용
+
     private void ResetSkillEffects() // 회차 시작마다 스킬 효과 초기화
     {
+        if (timeBar != null)
+        {
+            if (timeBarBaseColor == null) timeBarBaseColor = timeBar.color;
+            else timeBar.color = timeBarBaseColor.Value;
+        }
         PlayerRaiseTax = 0;
         NoTimerRefresh = false;
         playerRaiseLockEnd = 0f;
@@ -548,6 +654,8 @@ public class Auction : Singleton<Auction>
         if (auctionName != null) auctionName.text = "메롱 안보이지?";
         if (auctionGrade != null) auctionGrade.text = "등급은 비밀이야~";
         if (auctionCost != null) auctionCost.text = "???";
+        SpriteRenderer lot = GetLotItemImage();
+        if (lot != null) lot.enabled = false; // 받침대 위 물건도 연막으로 가림
         RestoreInfoWhenDoneAsync(infoHiddenEnd).Forget();
     }
 
@@ -583,6 +691,46 @@ public class Auction : Singleton<Auction>
         if (auctionName != null && stuff != null) auctionName.text = stuff.DisplayName;
         if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString();
         UpdateAuctionCostUI();
+        UpdateLotItemImage();
+    }
+
+    //=========================무대 받침대 위 경매 물건 이미지===================
+    public SpriteRenderer LotImage => GetLotItemImage(); // 보스 스킬 연출용
+    public SpriteRenderer PlayerPortrait => playerImage; // 보스 스킬 연출용 (플레이어 좌석 초상화)
+
+    private SpriteRenderer GetLotItemImage()
+    {
+        if (lotItemImage != null) return lotItemImage;
+        GameObject lot = string.IsNullOrEmpty(lotObjectName) ? null : GameObject.Find(lotObjectName);
+        if (lot == null) return null;
+        Transform part = lot.transform.Find("파츠");
+        lotItemImage = part != null ? part.GetComponent<SpriteRenderer>() : lot.GetComponentInChildren<SpriteRenderer>(true);
+        return lotItemImage;
+    }
+
+    // 현재 경매 물품(stuff)의 이미지를 받침대 위에 표시. 크기는 원래 임시 이미지 크기 안에 맞춤
+    private void UpdateLotItemImage()
+    {
+        SpriteRenderer image = GetLotItemImage();
+        if (image == null) return;
+
+        if (lotItemBoxSize < 0f) // 처음 한 번: 임시 이미지 크기를 기준 상자로 저장
+        {
+            lotItemBaseScale = image.transform.localScale;
+            Vector3 size = image.sprite != null ? image.bounds.size : Vector3.one;
+            lotItemBoxSize = Mathf.Max(0.1f, Mathf.Max(size.x, size.y));
+        }
+
+        Sprite sprite = stuff != null ? stuff.Sprite : null;
+        image.sprite = sprite;
+        image.enabled = sprite != null && !IsInfoHidden; // 이미지 없는 물품 / 연막탄 중에는 숨김
+        if (sprite == null) return;
+
+        // 부모 스케일 영향 제거 후 긴 변이 기준 상자 크기에 맞도록
+        Vector3 parentScale = image.transform.parent != null ? image.transform.parent.lossyScale : Vector3.one;
+        float spriteMax = Mathf.Max(sprite.bounds.size.x * lotItemBaseScale.x * parentScale.x, sprite.bounds.size.y * lotItemBaseScale.y * parentScale.y);
+        float factor = spriteMax > 0.0001f ? lotItemBoxSize / spriteMax : 1f;
+        image.transform.localScale = lotItemBaseScale * factor;
     }
 
     // 바꿔치기: 경매 물품을 다른 물품으로 교체. 가격은 새 물품 시작가보다 낮아지지 않음
@@ -692,11 +840,8 @@ public class Auction : Singleton<Auction>
         RemainingTime = auctionTime;
         IsTimeRunning = true;
 
-        if (timeBar != null)
-        {
-            timeBar.gameObject.SetActive(true);
-            timeBar.fillAmount = 1f;
-        }
+        ShowTimer(true);
+        if (timeBar != null) timeBar.fillAmount = 1f;
 
         while (RemainingTime > 0f && IsTimeRunning)
         {
@@ -712,7 +857,14 @@ public class Auction : Singleton<Auction>
         }
 
         IsTimeRunning = false;
-        if (timeBar != null) timeBar.gameObject.SetActive(false);
+        ShowTimer(false);
+    }
+
+    // 타이머 묶음(막대+테두리) 표시/숨김
+    public void ShowTimer(bool show)
+    {
+        if (timerRoot != null) timerRoot.SetActive(show);
+        if (timeBar != null) timeBar.gameObject.SetActive(show);
     }
 
     // --- 주먹 경매 UI 입출력 ---
@@ -893,6 +1045,7 @@ public class Auction : Singleton<Auction>
                 if (ai != null && ai.NPCID == WinnerID) // 이긴 ai 찾기
                 {
                     ai.OnWinAuction(CurrentCost, stuffGrade); // 보스는 GlobalGold 정산, 일반 NPC는 기록만
+                    ai.ShowThinkChatWithText(ai.GetWinLine()); // 낙찰 소감 (보스는 개성 대사)
                     break;
                 }
             }
@@ -1030,6 +1183,7 @@ public class Auction : Singleton<Auction>
     public void OnGGAuction() //경매 자체 포기
     {
         ShowErrorMessage("경매를 나갑니다.").Forget();
+        ReleasePlayer();
         MoveToNextScene(2000).Forget();
     }
     //================================Canvas에 AI 설치 =======================
@@ -1062,10 +1216,14 @@ public class Auction : Singleton<Auction>
             if (aiPrefab == null || seat == null) continue;
 
             InsertNPCData(index, count); // 좌석 초상화 먼저 넣어야 머리 위 위치를 잴 수 있음
+            float portraitFactor = NormalizePortrait(npcs[index]); // 보스/조무레기 초상화 크기를 플레이어 기준으로 통일
 
             // 월드 좌석(랭커자리)의 자식으로 생성 → 말풍선이 좌석 초상화 머리 위에 붙음
             AllAiBase spawnedAi = Instantiate(aiPrefab, seat);
             PlaceAboveSeat(spawnedAi.transform, seat, npcs[index]);
+            // 초상화 크기 보정만큼 좌석이 커지거나 작아졌으니 AI(말풍선)는 반대로 보정해서 모두 같은 크기로 보이게
+            if (portraitFactor > 0.0001f && seat == npcs[index].transform)
+                spawnedAi.transform.localScale = Vector3.one / portraitFactor;
             BringAboveSeat(spawnedAi.gameObject, npcs[index]);
 
             SpriteRenderer seatImage = npcs[index];
@@ -1079,9 +1237,51 @@ public class Auction : Singleton<Auction>
         // 플레이어 말풍선도 플레이어 좌석 머리 위로 옮김
         if (AuctionPlayer.Instance != null && playerImagePos != null && playerImage != null)
         {
+            if (AuctionPlayer.Instance.playerImage != null) playerImage.sprite = AuctionPlayer.Instance.playerImage;
+            NormalizePortrait(playerImage); // 플레이어 초상화도 같은 배율로
             Vector3 head = GetHeadPosition(playerImagePos, playerImage);
             AuctionPlayer.Instance.AttachBubbleTo(playerImagePos, head, playerImage);
         }
+    }
+
+    // 초상화 스프라이트마다 PPU/해상도가 달라(조무레기 PPU 16, 보스 PPU 100) 화면 크기가 제각각이라
+    // 좌석 초상화의 월드 높이를 플레이어 초상화 높이(또는 portraitWorldHeight)에 맞춤. 반환값 = 원래 크기 대비 배율
+    private float NormalizePortrait(SpriteRenderer portrait)
+    {
+        if (portrait == null || portrait.sprite == null) return 1f;
+        Transform t = portrait.transform;
+        if (!seatBaseScales.TryGetValue(t, out Vector3 baseScale))
+        {
+            baseScale = t.localScale;
+            seatBaseScales[t] = baseScale;
+        }
+
+        float target = GetTargetPortraitHeight();
+        float parentScaleY = t.parent != null ? t.parent.lossyScale.y : 1f;
+        float baseWorldHeight = portrait.sprite.bounds.size.y * baseScale.y * parentScaleY;
+        if (target <= 0f || baseWorldHeight <= 0.0001f)
+        {
+            t.localScale = baseScale;
+            return 1f;
+        }
+
+        float factor = target / baseWorldHeight;
+        t.localScale = baseScale * factor;
+        return factor;
+    }
+
+    private float referencePortraitHeight = -1f; // 플레이어 초상화 원래 높이 (한 번만 잼. 플레이어 좌석도 보정되므로)
+
+    private float GetTargetPortraitHeight()
+    {
+        if (portraitWorldHeight > 0f) return portraitWorldHeight * portraitSizeMultiplier;
+        if (referencePortraitHeight < 0f)
+        {
+            Sprite playerSprite = AuctionPlayer.Instance != null ? AuctionPlayer.Instance.playerImage : null;
+            if (playerSprite == null || playerImage == null) return 0f; // 기준이 없으면 보정 안 함
+            referencePortraitHeight = playerSprite.bounds.size.y * playerImage.transform.lossyScale.y; // 약 1.28m (64px / PPU100 x 좌석 2배)
+        }
+        return referencePortraitHeight * portraitSizeMultiplier;
     }
 
     // 좌석 Transform (npcsPos 우선, 없으면 초상화 SpriteRenderer의 Transform)

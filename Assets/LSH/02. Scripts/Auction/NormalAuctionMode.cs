@@ -40,6 +40,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
     {
         // 각 AI가 다른 시점에 첫 고민을 시작하도록 랜덤 초기 딜레이 (딱 한 번만 실행)
         await UniTask.Delay(Random.Range(500, ai.ThinkDelay));
+        bool wasLeading = false; // 직전 고민 때 선두였는지 (역전당하면 보스가 반응 대사)
 
         while (manager.IsTimeRunning && !manager.IsAuctioningFin)
         {
@@ -54,6 +55,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             // 이미 최고 입찰자면 레이즈 고민은 안 함. 단, 스킬이 남은 보스는 선두일 때 쓰는 스킬(초읽기 등)을 위해 계속 고민
             if (isLeading && (boss == null || !boss.HasSkillLeft))
             {
+                wasLeading = true;
                 await UniTask.Yield(); // 무한 루프 방지용 최소 대기
                 continue;
             }
@@ -62,8 +64,10 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             if (!isLeading)
             {
                 manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
-                ai.ShowThinkChat(); // ai 고민 말풍선 띄우기
+                if (wasLeading && boss != null) ai.ShowThinkChatWithText(boss.GetOutbidLine()); // 역전당함 → 보스 개성 반응
+                else ai.ShowThinkChat(); // ai 고민 말풍선 띄우기
             }
+            wasLeading = isLeading;
             await UniTask.Delay(thinkDelay); // thinkDelay 만큼
             await UniTask.WaitWhile(() => manager.IsCutscenePlaying);
 
@@ -132,7 +136,8 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
         await boss.TriggerCutscene(boss.NPCName, boss.SkillName);
         if (!manager.IsTimeRunning || manager.IsAuctioningFin) return;
 
-        await boss.UseSkillAsync(manager);
+        boss.PlaySkillIntroFx(); // 내 초상화 기합 연출
+        await boss.UseSkillAsync(manager); // 효과 + 보스별 전용 연출
         manager.UpdateAuctionCostUI();
 
         bool tookLead = manager.WinnerID == boss.NPCID && (beforeWinner != boss.NPCID || manager.CurrentCost != beforeCost);

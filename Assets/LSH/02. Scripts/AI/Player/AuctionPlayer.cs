@@ -11,10 +11,31 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
 
     [Header("생각 말풍선 연출 설정")]
     [SerializeField] private Vector3 newScale = Vector3.one; //말풍선이 다 커졌을 때 크기 (0이면 씬에 잡힌 크기 사용)
+    [SerializeField] private float bubbleSizeMultiplier = 1.17f; // newScale에 곱하는 배율 (AI 말풍선 0.35와 맞춤)
     private Sequence thinkSequence; // DOTween 트윈 중첩 방지용
     private Vector3 originalLocalPos; // 원래 말풍선 위치 저장
     private SpeechBubbleFitter bubbleFitter; // 텍스트 길이에 맞춰 말풍선 크기 조절
     private bool isBubbleReady = false;
+    public Transform BubbleTransform => playerThinkImage != null ? playerThinkImage.transform : null;
+
+    // AI 말풍선도 플레이어 말풍선과 똑같이 보이도록 스타일을 공유
+    public Sprite BubbleSprite => playerThinkImage != null ? playerThinkImage.sprite : null;
+    public SpriteDrawMode BubbleDrawMode => playerThinkImage != null ? playerThinkImage.drawMode : SpriteDrawMode.Simple;
+    public Vector2 BubbleSize => playerThinkImage != null ? playerThinkImage.size : Vector2.one;
+    public TMP_FontAsset BubbleFont => playerThinkChat != null ? playerThinkChat.font : null;
+
+    // 다 커졌을 때 플레이어 말풍선의 화면(월드) 크기. AI 말풍선이 이 크기에 맞춰 나옴
+    public Vector3 BubbleWorldScale
+    {
+        get
+        {
+            if (playerThinkImage == null) return Vector3.zero;
+            InitBubble();
+            Transform parent = playerThinkImage.transform.parent;
+            return parent != null ? Vector3.Scale(newScale, parent.lossyScale) : newScale;
+        }
+    }
+    public float BubbleFontSize { get; private set; } // 피터가 키우기 전의 원래 글자 크기 (AI도 같은 기준으로 키움)
 
     protected override void Awake()
     {
@@ -30,6 +51,9 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         originalLocalPos = playerThinkImage.transform.localPosition; // 씬에 배치한 위치 그대로 사용
         if (newScale == Vector3.zero) newScale = playerThinkImage.transform.localScale;
         if (newScale == Vector3.zero) newScale = Vector3.one;
+        newScale *= bubbleSizeMultiplier; // 씬에 저장된 0.3 → 약 0.35 (AI 말풍선과 같은 크기)
+        if (playerThinkChat != null)
+            BubbleFontSize = playerThinkChat.enableAutoSizing ? playerThinkChat.fontSizeMax : playerThinkChat.fontSize;
         bubbleFitter = SpeechBubbleFitter.Attach(playerThinkImage, playerThinkChat); // 글이 길면 말풍선이 늘어나게
 
         // 초기 상태 비활성화 및 초기화
@@ -56,6 +80,7 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
             seatScale.z != 0f ? worldScale.z / seatScale.z : newScale.z);
 
         Auction.BringAboveSeat(playerThinkImage.gameObject, seatPortrait);
+        if (!bubble.TryGetComponent<BillboardToCamera>(out _)) bubble.gameObject.AddComponent<BillboardToCamera>(); // AI 말풍선과 같은 방식으로 카메라 정면
         ResetThinkBubble();
     }
 

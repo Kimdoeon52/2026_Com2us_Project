@@ -3,7 +3,9 @@ using System.Linq;
 using System.Text;
 using TMPro;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace RealSteel.Dialogue.EditorTools
@@ -89,7 +91,14 @@ namespace RealSteel.Dialogue.EditorTools
             GameObject root = PrefabUtility.LoadPrefabContents(prefabPath);
             try
             {
-                if (!Apply(root, fade, arrow, log)) return;
+                DialogueBox dialogueBox = FindStyledBox(root.GetComponentsInChildren<DialogueBox>(true));
+                if (dialogueBox == null)
+                {
+                    EditorUtility.DisplayDialog(Title, "프리팹에서 대화창 모션이 연결된 DialogueBox를 찾지 못했습니다.\n대화 툴의 '대화창 모션 (MTP-2)'을 먼저 적용하세요.", "확인");
+                    return;
+                }
+
+                if (!Apply(dialogueBox, fade, arrow, log, false)) return;
                 PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
                 log.AppendLine("완료. Play → NPC에게 말 걸어 확인하세요. LOG · AUTO · SKIP은 마우스로 눌러도 됩니다.");
                 Debug.Log(log.ToString());
@@ -100,16 +109,86 @@ namespace RealSteel.Dialogue.EditorTools
             }
         }
 
-        private static bool Apply(GameObject root, Sprite fade, Sprite arrow, StringBuilder log)
+        // ── 현재 씬의 대화창 (프리팹이 아닌, 씬에 직접 만든 대화 시스템 — 예: DialogueTest) ─────────────────────────────
+
+        internal static bool IsAppliedInScene()
         {
-            DialogueBox dialogueBox = root.GetComponentsInChildren<DialogueBox>(true)
-                .FirstOrDefault(b => new SerializedObject(b).FindProperty("motion").objectReferenceValue != null);
+            DialogueBox box = FindSceneBox(SceneManager.GetActiveScene());
+            if (box == null) return false;
+
+            var boxObject = new SerializedObject(box).FindProperty("box").objectReferenceValue as GameObject;
+            Transform style = boxObject != null ? boxObject.transform.Find(StyleRootName) : null;
+            return style != null && style.gameObject.activeSelf;
+        }
+
+        internal static void SetupScene()
+        {
+            Scene scene = SceneManager.GetActiveScene();
+            if (!SetupKit.RequireLhmScene(scene, Title)) return;
+
+            DialogueBox dialogueBox = FindSceneBox(scene);
             if (dialogueBox == null)
             {
-                EditorUtility.DisplayDialog(Title, "프리팹에서 대화창 모션이 연결된 DialogueBox를 찾지 못했습니다.\n대화 툴의 '대화창 모션 (MTP-2)'을 먼저 적용하세요.", "확인");
-                return false;
+                bool fromPrefab = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<DialogueBox>(true)).Any(PrefabUtility.IsPartOfPrefabInstance);
+                EditorUtility.DisplayDialog(Title, fromPrefab
+                    ? "이 씬의 대화창은 프리팹(DialogueCanvas)에서 온 것입니다.\n'원신 스타일 대화창 (프리팹 수정)'을 쓰면 이 씬에도 함께 반영됩니다."
+                    : "이 씬에서 대화창 모션이 연결된 DialogueBox를 찾지 못했습니다.", "확인");
+                return;
             }
 
+            var boxObject = new SerializedObject(dialogueBox).FindProperty("box").objectReferenceValue as GameObject;
+            Transform boxTransform = boxObject != null ? boxObject.transform : null;
+            string current = boxTransform == null ? "?"
+                : boxTransform.Find(HadesDialogueStyleSetup.StyleRootName) is Transform h && h.gameObject.activeSelf ? "하데스 스타일"
+                : boxTransform.Find(RsOsDialogueStyleSetup.StyleRootName) is Transform r && r.gameObject.activeSelf ? "RS-OS 스타일"
+                : boxTransform.Find(StyleRootName) is Transform g && g.gameObject.activeSelf ? "원신 스타일 (다시 만듦)"
+                : "기본";
+
+            if (!EditorUtility.DisplayDialog(Title,
+                    $"'{scene.name}' 씬의 대화창을 원신 스타일로 바꿉니다.\n" +
+                    $"- 대상: {dialogueBox.transform.root.name} (지금: {current})\n" +
+                    "- 프리팹에 적용한 원신 스타일과 같은 모양 · 같은 크기\n" +
+                    "- 하데스 · RS-OS 스타일은 끄기만 함 (삭제 안 함)\n" +
+                    "씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)",
+                    "적용", "취소"))
+            {
+                return;
+            }
+
+            var log = new StringBuilder($"[{Title}] {scene.path}\n");
+            Sprite fade = MakeFade(log);
+            Sprite arrow = MakeArrow(log);
+
+            Undo.IncrementCurrentGroup();
+            Undo.SetCurrentGroupName(Title);
+            int group = Undo.GetCurrentGroup();
+            Undo.RegisterFullObjectHierarchyUndo(dialogueBox.transform.root.gameObject, Title);
+
+            if (!Apply(dialogueBox, fade, arrow, log, true)) return;
+
+            Undo.CollapseUndoOperations(group);
+            EditorSceneManager.MarkSceneDirty(scene);
+            log.AppendLine("완료. Ctrl+S로 저장 후 Play → NPC에게 말 걸어 확인하세요.");
+            Debug.Log(log.ToString());
+        }
+
+        // 씬에 직접 있는(프리팹 인스턴스가 아닌) 대화창만 — 프리팹 인스턴스는 프리팹 쪽을 고쳐야 함
+        private static DialogueBox FindSceneBox(Scene scene)
+        {
+            if (!scene.IsValid()) return null;
+            return FindStyledBox(scene.GetRootGameObjects()
+                .SelectMany(r => r.GetComponentsInChildren<DialogueBox>(true))
+                .Where(b => !PrefabUtility.IsPartOfPrefabInstance(b)));
+        }
+
+        // 모션(MTP-2)이 연결된 DialogueBox가 실제로 쓰이는 것 (안쪽 BOX의 예전 DialogueBox는 모션 칸이 비어 있음)
+        private static DialogueBox FindStyledBox(System.Collections.Generic.IEnumerable<DialogueBox> boxes)
+        {
+            return boxes.FirstOrDefault(b => new SerializedObject(b).FindProperty("motion").objectReferenceValue != null);
+        }
+
+        private static bool Apply(DialogueBox dialogueBox, Sprite fade, Sprite arrow, StringBuilder log, bool undo)
+        {
             var boxSo = new SerializedObject(dialogueBox);
             var boxObject = boxSo.FindProperty("box").objectReferenceValue as GameObject;
             var motion = boxSo.FindProperty("motion").objectReferenceValue as DialogueBoxMotion;
@@ -149,9 +228,14 @@ namespace RealSteel.Dialogue.EditorTools
             if (boxObject.TryGetComponent(out Image oldBackground)) oldBackground.enabled = false;
 
             Transform previous = boxRect.Find(StyleRootName);
-            if (previous != null) Object.DestroyImmediate(previous.gameObject);
+            if (previous != null)
+            {
+                if (undo) Undo.DestroyObjectImmediate(previous.gameObject);
+                else Object.DestroyImmediate(previous.gameObject);
+            }
 
             RectTransform style = CreateRect(StyleRootName, boxRect, layer);
+            if (undo) Undo.RegisterCreatedObjectUndo(style.gameObject, Title);
             Stretch(style, Vector2.zero, Vector2.zero);
             style.SetSiblingIndex(0);
 

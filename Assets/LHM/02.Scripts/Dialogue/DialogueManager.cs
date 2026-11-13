@@ -31,6 +31,8 @@ namespace RealSteel.Dialogue
             { "menu.talk", "대화" },
             { "menu.talk_more", "대화하기" },
             { "menu.shop", "상점 열기" },
+            { "menu.craft", "제작하기" },
+            { "menu.repair", "수리하기" },
             { "menu.exit", "나가기" },
         };
 

@@ -59,10 +59,18 @@ namespace RealSteel.Dialogue.EditorTools
 
         internal static void Place(GameObject prefab, Scene scene, GameObject player, StringBuilder log)
         {
+            PlaceSystem(prefab, scene, log);
+            PlaceNpcs(scene, player, log);
+        }
+
+        // NPC 없이 대화 시스템 프리팹만 배치하고 씬 연결 (작업대처럼 씬의 기존 오브젝트에 기능만 붙일 때)
+        internal static GameObject PlaceSystem(GameObject prefab, Scene scene, StringBuilder log)
+        {
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
             Undo.RegisterCreatedObjectUndo(instance, PlaceTitle);
-            PlaceNpcs(scene, player, log);
             Link(instance.GetComponent<DialogueSceneBinder>(), scene, log);
+            log.AppendLine($"- 대화 시스템 프리팹 배치: {instance.name}");
+            return instance;
         }
 
         internal static void LinkActiveScene()

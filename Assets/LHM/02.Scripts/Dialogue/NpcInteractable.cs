@@ -8,6 +8,7 @@ namespace RealSteel.Dialogue
         Other,
         GuildReceptionist,
         JunkDealer,
+        Workbench,
     }
 
     public class NpcInteractable : MonoBehaviour
@@ -20,6 +21,8 @@ namespace RealSteel.Dialogue
         [SerializeField] private NpcRole role = NpcRole.Other;
         [SerializeField] private string poolId = "auction_npc";
         [SerializeField] private string speakerId = "auctioneer";
+        [Tooltip("선택지 전에 대화창에 먼저 띄울 대사 풀. 비우면 바로 선택지가 열림 (예: 작업대 \"……\")")]
+        [SerializeField] private string greetingPoolId = "";
 
         [Header("상호작용")]
         [SerializeField, Min(0.1f)] private float interactRadius = 1.5f;
@@ -34,6 +37,7 @@ namespace RealSteel.Dialogue
         public Transform CloseUpPoint => closeUpPoint;
         public string PoolId => poolId;
         public string SpeakerId => speakerId;
+        public string GreetingPoolId => greetingPoolId;
         public float InteractRadius => interactRadius;
         public Vector3 PromptPosition => transform.position + promptOffset;
 

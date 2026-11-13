@@ -1,0 +1,13 @@
+{
+  "poolId": "workbench",
+  "dialogues": [
+    {
+      "id": "workbench_idle",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "workbench", "textKey": "workbench.idle.1" }
+      ]
+    }
+  ]
+}

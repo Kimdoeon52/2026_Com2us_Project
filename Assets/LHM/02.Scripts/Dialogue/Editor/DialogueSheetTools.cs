@@ -14,7 +14,7 @@ namespace RealSteel.Dialogue.EditorTools
     {
         public const string SheetFolder = DialogueDataTools.DataFolder + "/Sheets";
 
-        private static readonly string[] Columns = { "id", "band", "sub", "conditions", "consume", "display", "background", "formerIds", "speaker", "expression", "text", "effects", "key" };
+        private static readonly string[] Columns = { "id", "band", "sub", "conditions", "consume", "display", "background", "formerIds", "speaker", "expression", "direction", "text", "effects", "key" };
         private static readonly string[] DialogueColumns = { "band", "sub", "conditions", "consume", "display", "background", "formerIds" };
         private static readonly Regex ConditionPattern = new Regex(@"^\s*([^\s=!<>]+)\s*(==|!=|>=|<=|>|<)\s*(.*?)\s*$");
         private static readonly Regex EffectPattern = new Regex(@"^\s*([A-Za-z]+)\s*(?:\((.*)\))?\s*$");
@@ -244,6 +244,7 @@ namespace RealSteel.Dialogue.EditorTools
                 {
                     speaker = Get("speaker"),
                     expression = NullIfEmpty(Get("expression")),
+                    direction = NullIfEmpty(Get("direction")),
                     textKey = Get("key"),
                     effects = ParseEffects(Get("effects"), rowNumber, errors),
                 };
@@ -426,6 +427,7 @@ namespace RealSteel.Dialogue.EditorTools
                         head && dialogue.formerIds != null ? string.Join("; ", dialogue.formerIds) : "",
                         line.speaker ?? "",
                         line.expression ?? "",
+                        line.direction ?? "",
                         strings.TryGetValue(key, out string text) ? text : "",
                         FormatEffects(line.effects),
                         key,
@@ -512,6 +514,7 @@ namespace RealSteel.Dialogue.EditorTools
                     if (!string.IsNullOrEmpty(line.speaker)) fields.Add($"\"speaker\": {Quote(line.speaker)}");
                     fields.Add($"\"textKey\": {Quote(line.textKey)}");
                     if (!string.IsNullOrEmpty(line.expression)) fields.Add($"\"expression\": {Quote(line.expression)}");
+                    if (!string.IsNullOrEmpty(line.direction)) fields.Add($"\"direction\": {Quote(line.direction)}");
                     if (line.effects != null && line.effects.Count > 0) fields.Add($"\"effects\": [ {string.Join(", ", line.effects.Select(WriteEffect))} ]");
                     b.Append($"        {{ {string.Join(", ", fields)} }}");
                     b.Append(l < dialogue.lines.Count - 1 ? ",\n" : "\n");

@@ -6,7 +6,7 @@
       "band": "Fallback",
       "conditions": [],
       "lines": [
-        { "speaker": "receptionist", "textKey": "guild.greeting.1" },
+        { "speaker": "receptionist", "textKey": "guild.greeting.1", "direction": "서류에서 고개를 들며" },
         { "speaker": "hero", "textKey": "guild.greeting.2" }
       ]
     },
@@ -16,7 +16,7 @@
       "cooldownSec": 20,
       "conditions": [],
       "lines": [
-        { "speaker": "receptionist", "textKey": "guild.greeting_busy.1" }
+        { "speaker": "receptionist", "textKey": "guild.greeting_busy.1", "direction": "서류 더미를 넘기며 눈도 안 마주치고" }
       ]
     },
     {
@@ -28,7 +28,7 @@
         { "variable": "hunt.lastResult", "op": "==", "value": "lose" }
       ],
       "lines": [
-        { "speaker": "receptionist", "textKey": "guild.after_defeat.1" },
+        { "speaker": "receptionist", "textKey": "guild.after_defeat.1", "direction": "결과지를 내려다보며" },
         { "speaker": "hero", "textKey": "guild.after_defeat.2" }
       ]
     },

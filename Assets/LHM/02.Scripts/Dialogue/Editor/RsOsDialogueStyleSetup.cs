@@ -38,7 +38,7 @@ namespace RealSteel.Dialogue.EditorTools
         internal static bool IsApplied()
         {
             var root = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
-            return root != null && root.GetComponentsInChildren<Transform>(true).Any(t => t.name == StyleRootName);
+            return root != null && root.GetComponentsInChildren<Transform>(true).Any(t => t.name == StyleRootName && t.gameObject.activeSelf);
         }
 
         internal static void Setup()
@@ -118,6 +118,8 @@ namespace RealSteel.Dialogue.EditorTools
                 hades.gameObject.SetActive(false);
                 log.AppendLine("- 하데스 스타일 끔 (삭제 안 함)");
             }
+
+            GenshinDialogueStyleSetup.Deactivate(boxRect, boxSo, log);
 
             var oldBackground = boxObject.GetComponent<Image>();
             if (oldBackground != null) oldBackground.enabled = false;

@@ -142,6 +142,7 @@ namespace RealSteel.Dialogue
                 {
                     speakerTitle = GetSpeakerTitle(line.speaker),
                     expression = line.expression ?? "",
+                    direction = line.direction ?? "",
                     effects = line.effects,
                     textKey = line.textKey ?? "",
                 });

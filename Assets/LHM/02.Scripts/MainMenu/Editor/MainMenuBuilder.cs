@@ -14,6 +14,14 @@ namespace RealSteel.MainMenu.EditorTools
     {
         internal const string GameTitle = "REAL STEEL";
         private const string Placeholders = Root + "Textures/Placeholders/Background/";
+
+        // 프로젝트 안의 이미지로 채움 (다른 폴더 원본은 읽기만 함). 못 찾으면 Heat 임시 이미지로 대체
+        private const string CyberGui = "Assets/Cyberpunk RPG GUI Pack/Cyberpunk RPG GUI Resources/SlicedElements/Backgrounds/";
+        private const string BackgroundArt = CyberGui + "bg_Scene.png";
+        private const string NewGameArt = "Assets/NYH/03. Image/Boss/사이버 메카 코어 드론.png";
+        private const string ContinueArt = "Assets/LHM/09.Asset/Cutscene/opening_map_placeholder.png";
+        private const string SettingsArt = "Assets/Cyberpunk_RPG_UI/UI_Parts/Background_05_options.png";
+        private const string CreditsArt = CyberGui + "bg3.png";
         private const string MixerPath = Root + "Audio/_Mixer.mixer";
 
         internal const float SideMargin = 75f;
@@ -90,7 +98,7 @@ namespace RealSteel.MainMenu.EditorTools
             Paint(root.gameObject, Dark);
 
             RectTransform imageRt = Node("Image", root);
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Placeholders + "Placeholder Image.png");
+            Sprite sprite = Art(BackgroundArt, "Placeholder Image.png", ctx.log);
             Paint(imageRt.gameObject, Color.white, sprite);
             if (sprite != null)
             {
@@ -187,15 +195,15 @@ namespace RealSteel.MainMenu.EditorTools
             RectTransform right = Column("Row 2", container);
             Stretch(right, LeftColumnWidth + ColumnSpacing, 0, 0, 0);
 
-            BoxButtonManager newGame = Box(left, "New Game", "새 게임", "오프닝부터 이야기를 시작합니다", "Placeholder Image 2.png");
+            BoxButtonManager newGame = Box(left, "New Game", "새 게임", "오프닝부터 이야기를 시작합니다", Art(NewGameArt, "Placeholder Image 2.png", ctx.log));
             Listen(newGame.onClick, ctx.controller.NewGame);
-            continueBox = Box(left, "Continue", "이어하기", "저장된 진행이 없습니다", "Placeholder Image 3.png");
+            continueBox = Box(left, "Continue", "이어하기", "저장된 진행이 없습니다", Art(ContinueArt, "Placeholder Image 3.png", ctx.log));
             Listen(continueBox.onClick, ctx.controller.Continue);
             continueBox.isInteractable = false;
             continueBox.UpdateUI();
 
-            BoxButtonManager settings = Box(right, "Settings", "설정", "화면 · 사운드", "Placeholder Image 4.png");
-            BoxButtonManager credits = Box(right, "Credits", "크레딧", "만든 사람들", "Placeholder Image 5.png");
+            BoxButtonManager settings = Box(right, "Settings", "설정", "화면 · 사운드", Art(SettingsArt, "Placeholder Image 4.png", ctx.log));
+            BoxButtonManager credits = Box(right, "Credits", "크레딧", "만든 사람들", Art(CreditsArt, "Placeholder Image 5.png", ctx.log));
             Listen(credits.onClick, ctx.controller.OpenCredits);
 
             hotkeys = Hotkeys(content);
@@ -214,17 +222,32 @@ namespace RealSteel.MainMenu.EditorTools
             return column;
         }
 
-        private static BoxButtonManager Box(Transform parent, string name, string title, string description, string background)
+        private static BoxButtonManager Box(Transform parent, string name, string title, string description, Sprite background)
         {
             var box = Prefab("UI Elements/Button/Button (Box).prefab", parent, name).GetComponent<BoxButtonManager>();
             box.buttonTitle = title;
             box.buttonDescription = description;
             box.useLocalization = false;
-            var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(Placeholders + background);
-            if (sprite != null) box.buttonBackground = sprite;
+            if (background != null) box.buttonBackground = background;
             box.UpdateUI();
             return box;
         }
+
+        // 여러 장(Multiple) 모드 이미지도 있어 파일 안의 스프라이트 중 가장 큰 것을 씀
+        private static Sprite Art(string path, string placeholder, StringBuilder log)
+        {
+            Sprite sprite = null;
+            foreach (Object asset in AssetDatabase.LoadAllAssetsAtPath(path))
+            {
+                if (asset is Sprite candidate && (sprite == null || Area(candidate) > Area(sprite))) sprite = candidate;
+            }
+            if (sprite != null) return sprite;
+
+            log.AppendLine($"- 주의: 이미지를 찾지 못해 Heat 임시 이미지 사용: {path}");
+            return AssetDatabase.LoadAssetAtPath<Sprite>(Placeholders + placeholder);
+        }
+
+        private static float Area(Sprite sprite) => sprite.rect.width * sprite.rect.height;
 
         internal static Transform Hotkeys(Transform content)
         {

@@ -21,6 +21,10 @@ namespace RealSteel.Dialogue
         [SerializeField] private GameObject speakerPlate;
         [SerializeField] private TMP_Text speakerTitleText;
 
+        [Header("지문 (선택)")]
+        [SerializeField] private TMP_Text directionText;
+        [SerializeField] private string directionFormat = "[ {0} ]";
+
         [Header("타자기")]
         [SerializeField, Min(0f)] private float charactersPerSecond = 30f;
 
@@ -35,6 +39,9 @@ namespace RealSteel.Dialogue
 
         [Header("백로그")]
         [SerializeField] private DialogueBacklog backlog;
+
+        [Header("화면 버튼 · 다음 표시 (선택)")]
+        [SerializeField] private DialogueBoxControls controls;
 
         private readonly List<DialogueLine> current = new List<DialogueLine>();
         private Typewriter typewriter;
@@ -52,6 +59,7 @@ namespace RealSteel.Dialogue
         public bool IsAutoMode => autoMode;
         public bool IsHolding => holding;
         public bool IsClosingMotion => motion != null && motion.IsClosing;
+        public bool IsWaitingForInput => isOpen && !holding && !confirmingSkip && effectWait <= 0f && typewriter != null && !typewriter.IsTyping;
 
         public event Action Closed;
 
@@ -136,33 +144,52 @@ namespace RealSteel.Dialogue
             if (!isOpen || holding) return;
 
             float deltaTime = Time.unscaledDeltaTime;
+            DialogueBoxControls.Click click = controls != null ? controls.PollClick() : DialogueBoxControls.Click.None;
 
             if (backlog != null && backlog.IsOpen)
             {
+                if (click == DialogueBoxControls.Click.Log)
+                {
+                    backlog.Close();
+                    inputReadyAt = Time.unscaledTime + lineInputDelay;
+                    return;
+                }
+
                 HandleBacklog(deltaTime);
                 return;
             }
 
-            if (DialogueInput.AutoPressed()) SetAuto(!autoMode);
+            if (DialogueInput.AutoPressed() || click == DialogueBoxControls.Click.Auto) SetAuto(!autoMode);
 
             if (confirmingSkip)
             {
-                HandleSkipConfirm();
+                if (click == DialogueBoxControls.Click.Skip)
+                {
+                    HideSkipConfirm();
+                    Skip();
+                }
+                else if (click == DialogueBoxControls.Click.None)
+                {
+                    HandleSkipConfirm();
+                }
                 return;
             }
 
             bool inputReady = Time.unscaledTime >= inputReadyAt;
-            if (inputReady && backlog != null && DialogueInput.BacklogPressed())
+            if (inputReady && backlog != null && (DialogueInput.BacklogPressed() || click == DialogueBoxControls.Click.Log))
             {
                 if (backlog.Open()) RefreshStatus(false);
                 return;
             }
 
-            if (inputReady && DialogueInput.SkipPressed())
+            if (inputReady && (DialogueInput.SkipPressed() || click == DialogueBoxControls.Click.Skip))
             {
                 RequestSkip();
                 return;
             }
+
+            // 화면 버튼을 누른 클릭은 '다음 줄' 입력으로 쓰지 않음
+            if (click != DialogueBoxControls.Click.None) return;
 
             bool fastForward = DialogueInput.FastForwardHeld() && IsLineRead(index);
             RefreshStatus(fastForward);
@@ -311,6 +338,13 @@ namespace RealSteel.Dialogue
                 bool hasTitle = hasSpeaker && !string.IsNullOrEmpty(line.speakerTitle);
                 speakerTitleText.gameObject.SetActive(hasTitle);
                 speakerTitleText.text = hasTitle ? line.speakerTitle : "";
+            }
+
+            if (directionText != null)
+            {
+                bool hasDirection = !string.IsNullOrEmpty(line.direction);
+                directionText.gameObject.SetActive(hasDirection);
+                directionText.text = hasDirection ? string.Format(directionFormat, line.direction) : "";
             }
 
             string text = Format(line.text);

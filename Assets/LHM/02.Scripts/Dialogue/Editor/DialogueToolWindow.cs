@@ -85,6 +85,7 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("대화창 모션 (MTP-2)", DialogueBoxMotionSetup.Setup, Has<DialogueBoxMotion>),
                 new ToolItem("하데스 스타일 대화창", HadesDialogueStyleSetup.Setup, HasHadesStyle),
                 new ToolItem("RS-OS 스타일 대화창 (프리팹 수정)", RsOsDialogueStyleSetup.Setup, RsOsDialogueStyleSetup.IsApplied),
+                new ToolItem("원신 스타일 대화창 (프리팹 수정)", GenshinDialogueStyleSetup.Setup, GenshinDialogueStyleSetup.IsApplied),
                 new ToolItem("NPC 스프라이트", NpcSpriteSetup.Setup, NpcSpriteSetup.IsApplied),
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
             new ToolGroup("튜토리얼 화면",
@@ -101,6 +102,7 @@ namespace RealSteel.Dialogue.EditorTools
         private static readonly ToolItem[] DataTools =
         {
             new ToolItem("데이터 검사", DialogueDataTools.CheckMenu, null),
+            new ToolItem("대사 미리보기 (조건 시뮬레이터)", DialoguePreviewWindow.Open, null),
             new ToolItem("데이터 패킹 (빌드용 파일 만들기)", DialogueDataTools.PackMenu, null),
             new ToolItem("CSV 내보내기 (JSON → CSV)", DialogueSheetTools.ExportMenu, null),
             new ToolItem("CSV 가져오기 (CSV → JSON, 전체)", DialogueSheetTools.ImportAllMenu, null),

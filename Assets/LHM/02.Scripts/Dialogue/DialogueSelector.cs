@@ -54,7 +54,7 @@ namespace RealSteel.Dialogue
             return chosen;
         }
 
-        private static string FindFailedCondition(DialogueData dialogue, DialogueVariables variables)
+        public static string FindFailedCondition(DialogueData dialogue, DialogueVariables variables)
         {
             if (dialogue.conditions == null) return null;
 
@@ -69,7 +69,7 @@ namespace RealSteel.Dialogue
             return null;
         }
 
-        private static int Compare(DialogueData a, DialogueData b, DialogueHistory history)
+        public static int Compare(DialogueData a, DialogueData b, DialogueHistory history)
         {
             int result = b.parsedBand.CompareTo(a.parsedBand);
             if (result != 0) return result;
@@ -86,7 +86,7 @@ namespace RealSteel.Dialogue
             return history.GetLastOrder(a.id).CompareTo(history.GetLastOrder(b.id));
         }
 
-        private static string Explain(DialogueData chosen, DialogueData runnerUp, int passedCount, int tieCount, DialogueHistory history)
+        public static string Explain(DialogueData chosen, DialogueData runnerUp, int passedCount, int tieCount, DialogueHistory history)
         {
             string tie = tieCount > 1 ? $" / 동률 {tieCount}개 중 무작위" : "";
 

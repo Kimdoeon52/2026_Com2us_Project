@@ -77,6 +77,7 @@ namespace RealSteel.Dialogue
         public string speaker;
         public string textKey;
         public string expression;
+        public string direction;
         public List<EffectData> effects;
     }
 

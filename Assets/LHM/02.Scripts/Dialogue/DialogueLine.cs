@@ -15,6 +15,7 @@ namespace RealSteel.Dialogue
         public string text;
 
         public string expression;
+        public string direction;
         public List<EffectData> effects;
         public string textKey;
 
@@ -25,6 +26,7 @@ namespace RealSteel.Dialogue
             speakerTitle = "";
             this.text = text;
             expression = "";
+            direction = "";
             effects = null;
             textKey = "";
         }

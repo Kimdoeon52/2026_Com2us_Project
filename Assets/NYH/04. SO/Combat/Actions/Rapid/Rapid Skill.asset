@@ -16,8 +16,8 @@ MonoBehaviour:
   source: 1
   requiredPart: 2
   startupFrames: 6
-  activeFrames: 6
-  recoveryFrames: 18
+  activeFrames: 12
+  recoveryFrames: 12
   isInvincibleDuringActive: 0
   isGuardable: 0
   causesKnockdown: 0
@@ -34,7 +34,7 @@ MonoBehaviour:
   launchVelocity: 0
   advanceDistance: 0
   advanceDuringActiveOnly: 0
-  trailAfterImageInterval: 0
+  trailAfterImageInterval: 3
   groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
@@ -52,6 +52,7 @@ MonoBehaviour:
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 20
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
@@ -65,6 +66,7 @@ MonoBehaviour:
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 1.2
     sortingOrderOffset: 20
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
@@ -78,6 +80,7 @@ MonoBehaviour:
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 20
   - prefab: {fileID: 3676818643683357345, guid: 9bcdb2633dedf8049a9db5193ea697c7, type: 3}
@@ -91,6 +94,7 @@ MonoBehaviour:
     followOwner: 0
     flipWithFacing: 1
     scale: 0.5
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 20
   perBoxDamage: 0

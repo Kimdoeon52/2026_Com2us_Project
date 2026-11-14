@@ -16,7 +16,7 @@ MonoBehaviour:
   source: 1
   requiredPart: 2
   startupFrames: 6
-  activeFrames: 4
+  activeFrames: 20
   recoveryFrames: 24
   isInvincibleDuringActive: 0
   isGuardable: 1
@@ -29,12 +29,12 @@ MonoBehaviour:
   animationClipName: Jap
   activeClipName: Jap
   activeClipFrames: 0
-  keepClipSpeed: 1
+  keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: 0
   advanceDuringActiveOnly: 0
-  trailAfterImageInterval: 0
+  trailAfterImageInterval: 6
   groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
@@ -42,17 +42,18 @@ MonoBehaviour:
   flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 3168625228598809628, guid: 5da192d11a7bc084d9a65b6a8e8ca932, type: 3}
-    phase: 2
+    phase: 4
     repeat: 0
-    repeatIntervalFrames: 10
-    repeatStartOffsetFrames: 0
+    repeatIntervalFrames: 1
+    repeatStartOffsetFrames: 8
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: 90
     followOwner: 0
     flipWithFacing: 1
     scale: 0.3
-    playbackSpeed: 0.8
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
     sortingOrderOffset: 20
   perBoxDamage: 0
   perBoxSeparateHits: 0

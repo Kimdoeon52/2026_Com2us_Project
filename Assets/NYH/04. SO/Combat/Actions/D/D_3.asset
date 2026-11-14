@@ -16,8 +16,8 @@ MonoBehaviour:
   source: 0
   requiredPart: 5
   startupFrames: 6
-  activeFrames: 2
-  recoveryFrames: 20
+  activeFrames: 20
+  recoveryFrames: 2
   isInvincibleDuringActive: 0
   isGuardable: 1
   causesKnockdown: 0
@@ -28,18 +28,21 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Jap
   activeClipName: 
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: 0
   advanceDuringActiveOnly: 0
-  trailAfterImageInterval: 0
+  trailAfterImageInterval: 6
   groundOnly: 0
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx: []
   perBoxDamage: 0
+  perBoxSeparateHits: 0
   cooldownFrames: 0
   cooldownOwner: {fileID: 0}
   cylinderCost: 0

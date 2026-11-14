@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3851091456537264282}
   - component: {fileID: 112838486638172891}
   - component: {fileID: 4818743158909252430}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Score
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -170,7 +170,7 @@ GameObject:
   - component: {fileID: 4818450976763921847}
   - component: {fileID: 2772444106598316625}
   - component: {fileID: 7142463670158412148}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: CP(combat Power)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -331,7 +331,7 @@ GameObject:
   - component: {fileID: 5324105681005374032}
   - component: {fileID: 8149179280934644398}
   - component: {fileID: 9164642035087844413}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: NpcLay
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -356,11 +356,11 @@ RectTransform:
   - {fileID: 8606550315955191050}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1000, y: 80}
-  m_Pivot: {x: 0.5, y: 0.5}
+  m_SizeDelta: {x: 0, y: 80}
+  m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &7772862177869027855
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -486,7 +486,7 @@ GameObject:
   - component: {fileID: 4187176476448019244}
   - component: {fileID: 8638749734696005246}
   - component: {fileID: 8991373894035762540}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Rank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -644,7 +644,7 @@ GameObject:
   - component: {fileID: 2292940119182974032}
   - component: {fileID: 5643042910939312072}
   - component: {fileID: 1209579070281777556}
-  m_Layer: 0
+  m_Layer: 5
   m_Name: Name
   m_TagString: Untagged
   m_Icon: {fileID: 0}

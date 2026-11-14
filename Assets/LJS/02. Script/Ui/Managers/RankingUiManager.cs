@@ -15,8 +15,8 @@ public class RankingUiManager : MonoBehaviour
     public GameObject npcLayPrefab;
 
     [Header("Animation Settings")]
-    public float itemHeight = 70f;    // NpcLay 프리팹의 높이 (UI에 맞게 조절하세요)
-    public float spacing = 10f;       // 항목 간의 간격 (UI에 맞게 조절하세요)
+    public float itemHeight = 80f;    // NpcLay 프리팹의 높이 (UI에 맞게 조절)
+    public float spacing = 10f;       // 항목 간의 간격 (UI에 맞게 조절)
     public float animDuration = 0.6f; // 이동 애니메이션 시간
 
     // NPC 데이터와 UI 객체를 1:1로 매칭하여 추적하는 딕셔너리 (핵심 변경점)
@@ -50,7 +50,7 @@ public class RankingUiManager : MonoBehaviour
 
         if (isActive)
         {
-            TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
+            //TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
             // 창을 열 때는 애니메이션 없이 즉시 화면 배치 (true 전달)
             RefreshUI(true);
         }

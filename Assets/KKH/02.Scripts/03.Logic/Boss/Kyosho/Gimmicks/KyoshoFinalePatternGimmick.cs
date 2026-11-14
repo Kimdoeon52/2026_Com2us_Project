@@ -26,6 +26,7 @@ namespace RealSteel.Boss.Kyosho
         private readonly List<KyoshoTrackedBullet> _pressureBullets = new List<KyoshoTrackedBullet>();
         private GameObject _fullScreenBlastVisual;
         private int _pressureSlotIndex;
+        private int _melodyStepIndex;
 
         private class SafeZoneEntry
         {
@@ -45,28 +46,47 @@ namespace RealSteel.Boss.Kyosho
         {
             if (Kyosho == null || Swarm == null || Clock == null) return;
 
+            bool isPhase3 = Kyosho.IsPhase3;
+            _melodyStepIndex = 0;
             Kyosho.SetPhaseState(KyoshoPhaseState.Finale);
-            Kyosho.SectionManager?.SetTemporarilyGatheredForFinale(true);
+            if (!isPhase3) Kyosho.SectionManager?.SetTemporarilyGatheredForFinale(true);
 
             Kyosho.GetArenaBounds(out float minX, out float maxX);
             float centerX = (minX + maxX) * 0.5f;
             float floorY = Kyosho.ArenaFloorY;
 
-            // 1마디(1~4박): 전 봇 본체 집결 & 바닥 쉼표(𝄽) 모래 안전지대 생성
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.finaleGather, "finale_gather", Swarm.Blob.center);
-            Kyosho.ScorePreviewHUD?.ShowVariationStatus("피날레! 쉼표(𝄽) 모래 안전지대로 대피하세요!");
+            // 1마디(1~4박): 전 봇/후광 집결 & 바닥 쉼표(𝄽) 모래 안전지대 생성
+            Vector3 initialPos = isPhase3 ? Swarm.Knight.ChestWorld : Swarm.Blob.center;
+            KyoshoSfx.PlayCue(KyoshoSfx.Data?.finaleGather, "finale_gather", initialPos);
+            Kyosho.ScorePreviewHUD?.ShowVariationStatus(isPhase3
+                ? "커튼콜 피날레! 쉼표(𝄽) 안전지대로 대피하세요!"
+                : "피날레! 쉼표(𝄽) 모래 안전지대로 대피하세요!");
 
             SpawnSafeZones(KyoshoConstants.GetFinaleSafeZoneCount(Kyosho.SelectedDifficulty), minX, maxX, floorY);
 
-            Vector3 gatherStart = Swarm.Blob.center;
-            Vector3 gatherTarget = new Vector3(centerX, floorY + 2.8f, 0f);
+            Vector3 gatherStart = isPhase3 ? Swarm.Knight.origin : Swarm.Blob.center;
+            Vector3 gatherTarget = new Vector3(centerX, floorY + (isPhase3 ? 3.2f : 2.8f), 0f);
+            Vector3 knightTargetOrigin = new Vector3(centerX, floorY, 0f);
+            if (isPhase3) Kyosho.SetMaestroPose(KnightMove.Guard1, 0);
+
             double bar1Start = Clock.TotalBeats;
             while (Clock.TotalBeats < bar1Start + 4.0)
             {
                 token.ThrowIfCancellationRequested();
                 float k = Mathf.Clamp01((float)((Clock.TotalBeats - bar1Start) / 4.0));
-                Swarm.Blob.center = Vector3.Lerp(gatherStart, gatherTarget, k);
-                Swarm.Blob.glow = Mathf.Lerp(0.2f, 2.0f, k);
+                if (isPhase3)
+                {
+                    Swarm.Knight.origin = Vector3.Lerp(gatherStart, knightTargetOrigin, k);
+                    Swarm.Knight.UpdatePose();
+                    Swarm.Halo.center = Vector3.Lerp(Swarm.Knight.ChestWorld, gatherTarget, k);
+                    Swarm.Halo.spin += Time.deltaTime * 160f;
+                    Swarm.Halo.glow = Mathf.Lerp(0.4f, 2.4f, k);
+                }
+                else
+                {
+                    Swarm.Blob.center = Vector3.Lerp(gatherStart, gatherTarget, k);
+                    Swarm.Blob.glow = Mathf.Lerp(0.2f, 2.0f, k);
+                }
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
@@ -102,6 +122,11 @@ namespace RealSteel.Boss.Kyosho
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_pressureBullets, Swarm);
             Kyosho.ScorePreviewHUD?.ShowVariationStatus(null);
             Swarm.Blob.glow = 0f;
+            if (isPhase3)
+            {
+                Swarm.Halo.glow = 0.3f;
+                Kyosho.SetMaestroPose(KnightMove.FrontHeavy, 2);
+            }
 
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.finaleFullBlast, "finale_blast", gatherTarget);
             KyoshoSfx.DuckBgm(0.5f, 0.25f);
@@ -115,20 +140,37 @@ namespace RealSteel.Boss.Kyosho
 
             if (survived)
             {
-                // 버팀 성공 ➔ 마지막 4박 그로기(최후의 일격 대기)
-                Debug.Log("<color=green>[KyoshoFinale] 안전지대 생존 성공! 4박 마지막 그로기 ➔ 최후의 일격 대기!</color>");
-                Kyosho.EnterFinalBlowGroggy();
+                if (isPhase3 && !Kyosho.IsAtFinaleHpGate)
+                {
+                    Debug.Log("<color=yellow>[KyoshoFinale] 3페이즈 중간 피날레 생존! HP 10% 이하로 낮춰 최종 피날레를 발동하세요!</color>");
+                    Kyosho.SetPhaseState(KyoshoPhaseState.Phase3);
+                    Kyosho.EnterBeatGroggy(4f, 1.8f);
+                }
+                else
+                {
+                    // 버팀 성공 ➔ 마지막 4박 그로기(최후의 일격 대기)
+                    Debug.Log("<color=green>[KyoshoFinale] 안전지대 생존 성공! 4박 마지막 그로기 ➔ 최후의 일격 대기!</color>");
+                    Kyosho.EnterFinalBlowGroggy();
+                }
             }
             else
             {
-                // 버팀 실패 ➔ 코어 + 왼팔 내구도 35 차감 후 2페 1순환 뒤 피날레 재발동
+                // 버팀 실패 ➔ 코어 + 왼팔 내구도 35 차감
                 if (player != null)
                 {
                     ApplyOriginalPatternHit(player, 260, BodyPart.LeftArm, 35);
                 }
-                Kyosho.SectionManager?.SetTemporarilyGatheredForFinale(false);
-                Kyosho.ScheduleFinaleRetryAfterOneCycle();
-                Debug.Log("<color=red>[KyoshoFinale] 피날레 피격! 2페이즈 1순환 후 피날레 재발동 예정!</color>");
+                if (!isPhase3) Kyosho.SectionManager?.SetTemporarilyGatheredForFinale(false);
+
+                if (!isPhase3 || Kyosho.IsAtFinaleHpGate)
+                {
+                    Kyosho.ScheduleFinaleRetryAfterOneCycle();
+                    Debug.Log($"<color=red>[KyoshoFinale] 피날레 피격! {(isPhase3 ? "3페이즈" : "2페이즈")} 1순환 후 피날레 재발동 예정!</color>");
+                }
+                else
+                {
+                    Kyosho.SetPhaseState(KyoshoPhaseState.Phase3);
+                }
             }
         }
 
@@ -250,6 +292,7 @@ namespace RealSteel.Boss.Kyosho
                 14, 0.25f, KyoshoConstants.OriginalPatternColor, 1.1f,
                 pressureBulletDamage, BodyPart.Core, 0, snapToHold: true);
             _pressureBullets.Add(b);
+            KyoshoSfx.PlayFinalePressureMelody(_melodyStepIndex++, Kyosho.SelectedDifficulty == BossDifficulty.Hell, origin);
         }
 
         private void HandlePressureHit(KyoshoTrackedBullet b)
@@ -285,7 +328,11 @@ namespace RealSteel.Boss.Kyosho
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
-            if (Swarm != null) Swarm.Blob.glow = 0f;
+            if (Swarm != null)
+            {
+                Swarm.Blob.glow = 0f;
+                if (Kyosho != null && Kyosho.IsPhase3) Swarm.Halo.glow = 0.3f;
+            }
             Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             ClearSafeZones();
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_pressureBullets, Swarm);

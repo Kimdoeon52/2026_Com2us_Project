@@ -56,6 +56,7 @@ namespace RealSteel.Boss.Kyosho
         [Header("1. 보스전 BGM")]
         public AudioClip bgmMain;
         public AudioClip bgmPhase2;
+        public AudioClip bgmPhase3;
 
         [Header("2. 박자 / 공통 메트로놈")]
         public KyoshoSfxCue beatDownbeat = new KyoshoSfxCue { volume = 0.75f, pitchJitter = 0f };

@@ -15,124 +15,156 @@ MonoBehaviour:
   masterSfxVolume: 0.85
   bgmVolume: 0.4
   stereoSpread: 0.5
-  bgmMain: {fileID: 0}
-  bgmPhase2: {fileID: 0}
+  bgmMain: {fileID: 8300000, guid: f4e611f88abb60548999d386a791dbef, type: 3}
+  bgmPhase2: {fileID: 8300000, guid: f4e611f88abb60548999d386a791dbef, type: 3}
+  bgmPhase3: {fileID: 8300000, guid: f4e611f88abb60548999d386a791dbef, type: 3}
   beatDownbeat:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 1a8f68af5026e926b1e89e427bc6297e, type: 3}
     volume: 0.75
     pitchJitter: 0
   beatSub:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 429b67e583f4d6d50a2c5b368373224e, type: 3}
     volume: 0.45
     pitchJitter: 0
   conductWhoosh:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 80258516bc3eaa6174211d3545c5e5f9, type: 3}
     volume: 0.8
     pitchJitter: 0.05
   conductTipFlash:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: babee59d4b736b0d3199c78d36f6844a, type: 3}
     volume: 0.65
     pitchJitter: 0.02
   percussionShockwave:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f50b788c8618cd9efc4236a2f359b331, type: 3}
     volume: 0.9
     pitchJitter: 0.04
   staccatoCallNote:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: fd5e86a525e662ecc1ae6e3b61728fd3, type: 3}
     volume: 0.7
     pitchJitter: 0
   staccatoFire:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: b4fa14622d9530a665c731295f37d176, type: 3}
     volume: 0.75
     pitchJitter: 0.04
   stringsRapidFire:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: cdea3ed789c4c951fc501155726b9ae5, type: 3}
     volume: 0.7
     pitchJitter: 0.05
   bloomSeedToss:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 022436851203ce15f678084cae57ef78, type: 3}
     volume: 0.75
     pitchJitter: 0.04
   bloomStemGrow:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 32be12b3b3f9bdfd511d30a3a878f6ae, type: 3}
     volume: 0.6
     pitchJitter: 0.04
   bloomStemCut:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 4a6f82544a7a75bbe767e37fb7088216, type: 3}
     volume: 0.9
     pitchJitter: 0.05
   bloomOpenNote:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 62a9180bbcdb4fbb31915f342ead46bf, type: 3}
     volume: 0.8
     pitchJitter: 0.03
   bloomOpenTrumpet:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 3cd0d93e918d9734ba42e14acf11705c, type: 3}
     volume: 0.85
     pitchJitter: 0.03
   bloomOpenCymbal:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 6bbf35195eb6a27a5bcb4b0c15284611, type: 3}
     volume: 0.85
     pitchJitter: 0.04
   fermataSpawn:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 2d12891d65606f4e9decac2de7dcce60, type: 3}
     volume: 0.75
     pitchJitter: 0.03
   fermataHoldChord:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 64107e4fa4f632cf08bf1aba44862240, type: 3}
     volume: 0.8
     pitchJitter: 0
   fermataSlamDrop:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 2566122864483707b65f026ae1d9f961, type: 3}
     volume: 0.95
     pitchJitter: 0.03
   brassBeam:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 3d24465c198a0b2ed63093ce8fb8ea5f, type: 3}
     volume: 0.9
     pitchJitter: 0.02
   variationMelodyNotes:
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: 2eace9a383f00125e59f966ac8ddc200, type: 3}
     volume: 1
     pitchJitter: 0.03
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: a5ded28476575bec045c54aef4c1ee75, type: 3}
     volume: 1
     pitchJitter: 0.03
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: 67e9f21bdeef7a85e401687c063ae6d6, type: 3}
     volume: 1
     pitchJitter: 0.03
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: ff2c191514607b1ae7993ccb409ef390, type: 3}
     volume: 1
     pitchJitter: 0.03
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: 8e500bce55df9ff2d7f34f1698246bf4, type: 3}
     volume: 1
     pitchJitter: 0.03
-  - clips: []
+  - clips:
+    - {fileID: 8300000, guid: e8b23aa4865d06ac432839315371f8be, type: 3}
     volume: 1
     pitchJitter: 0.03
   variationCorrect:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: a09e3dc755c4f9da6d798672820f4036, type: 3}
     volume: 0.85
     pitchJitter: 0
   variationFailDissonance:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: ef6e7253e53fe4d8fb6853e3a45ae0c8, type: 3}
     volume: 0.95
     pitchJitter: 0
   finaleGather:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: ea4299a864c536a7bc180fee7352541a, type: 3}
     volume: 0.85
     pitchJitter: 0
   finaleFullBlast:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 082cdaba96089fa5347027cc9badd234, type: 3}
     volume: 1
     pitchJitter: 0
   sectionBroken:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: f40a49ad9549f2e8ec613372c362fc23, type: 3}
     volume: 0.95
     pitchJitter: 0.04
   encoreApplause:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 8b396529c35fab1f22686eea9946ce03, type: 3}
     volume: 0.8
     pitchJitter: 0
   encoreAwaken:
-    clips: []
+    clips:
+    - {fileID: 8300000, guid: 77316c3554b52ea1c511c9aff168dca6, type: 3}
     volume: 0.9
     pitchJitter: 0

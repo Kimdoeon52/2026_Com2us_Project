@@ -26,6 +26,7 @@ namespace RealSteel.Boss.Kyosho
 
         private readonly List<int> _batonBotIds = new List<int>();
         private readonly List<ActiveShockwave> _shockwaves = new List<ActiveShockwave>();
+        private readonly List<KyoshoTrackedBullet> _fanBullets = new List<KyoshoTrackedBullet>();
         private GameObject _strikeTelegraphGo;
 
         private class ActiveShockwave
@@ -48,29 +49,39 @@ namespace RealSteel.Boss.Kyosho
         {
             if (Kyosho == null || Swarm == null || Clock == null) return;
 
-            bool isPhase2 = Kyosho.Snapshot != null && Kyosho.Snapshot.currentPhase >= 2;
+            bool isPhase3 = Kyosho.IsPhase3;
+            bool isCompound68 = isPhase3 && Kyosho.NextPhase3ConductUsesCompound();
+            bool isPhase2 = !isPhase3 && Kyosho.Snapshot != null && Kyosho.Snapshot.currentPhase >= 2;
             bool hasPercussion = isPhase2 && Kyosho.SectionManager != null && Kyosho.SectionManager.IsPercussionAlive;
             float face = Kyosho.GetFacingToPlayerSign();
 
             var tube = Swarm.TubeA;
-            Color tipColor = isPhase2 ? KyoshoConstants.ConductP2TipColor : KyoshoConstants.ConductP1TipColor;
+            Color tipColor = isPhase3
+                ? (isCompound68 ? KyoshoConstants.ConductP3CompoundColor : KyoshoConstants.ConductP3TripleColor)
+                : (isPhase2 ? KyoshoConstants.ConductP2TipColor : KyoshoConstants.ConductP1TipColor);
             tube.r0 = 0.42f;
-            tube.r1 = isPhase2 ? 0.02f : 0.14f;
-            tube.stiffness = 460f;
+            tube.r1 = (isPhase2 || isPhase3) ? 0.02f : 0.14f;
+            tube.stiffness = isPhase3 ? 540f : 460f;
             tube.damping = 28f;
-            tube.maxSpeed = 90f;
+            tube.maxSpeed = isPhase3 ? 110f : 90f;
             tube.tint = tipColor;
             tube.glow = 0.6f;
             tube.danger = false;
 
             Vector3 Root()
             {
+                if (isPhase3)
+                {
+                    return Swarm.Knight.HandWorld + new Vector3(face * 0.25f, 0.1f, -0.15f);
+                }
                 var b = Swarm.Blob;
                 return b.center + new Vector3(face * b.radius.x * 0.55f, b.radius.y * 0.25f, -0.15f);
             }
 
+            if (isPhase3) Kyosho.SetMaestroPose(KnightMove.Guard1, 0);
+
             double startBeat = Clock.TotalBeats;
-            float initAngle = face >= 0f ? 90f : 90f;
+            float initAngle = 90f;
             tube.ResetChain(initAngle);
             tube.ChainStep(Root(), initAngle, 0.5f, 0.016f);
             TakeBotsToTubeA(0.12f, Root());
@@ -99,42 +110,66 @@ namespace RealSteel.Boss.Kyosho
 
             ClearStrikeTelegraph();
 
-            // 2) 1~4박 4연격 (4/4: ↓←→↑  /  2/4: ↓↑↓↑)
-            float[] strikeTargets = isPhase2
-                ? new[]
-                {
-                    face >= 0f ? -35f : 215f,   // 1박: ↓
-                    face >= 0f ? 105f : 75f,    // 2박: ↑
-                    face >= 0f ? -35f : 215f,   // 3박: ↓
-                    face >= 0f ? 105f : 75f     // 4박: ↑
-                }
-                : new[]
-                {
-                    face >= 0f ? -35f : 215f,   // 1박: ↓
-                    face >= 0f ? -160f : -20f,  // 2박: ←
-                    face >= 0f ? 15f : 165f,    // 3박: →
-                    face >= 0f ? 110f : 70f     // 4박: ↑
-                };
+            // 2) 박자별 연속 타격 (1페 4/4: ↓←→↑, 2페 2/4: ↓↑↓↑, 3페 3/4: ↓→↑, 3페 6/8: ↓←←→→↑)
+            float Ang(float rightDeg, float leftDeg) => face >= 0f ? rightDeg : leftDeg;
+            float[] strikeTargets;
+            double[] beatOffsets;
+            bool[] spawnsShockwave;
+            KnightMove[] maestroPoses;
 
-            bool[] spawnsShockwave = isPhase2
-                ? new[] { true, false, true, false }
-                : new[] { false, false, false, false };
+            if (isPhase3 && isCompound68)
+            {
+                strikeTargets = new[]
+                {
+                    Ang(-35f, 215f), Ang(-160f, -20f), Ang(-160f, -20f),
+                    Ang(15f, 165f), Ang(15f, 165f), Ang(110f, 70f)
+                };
+                beatOffsets = new[] { 1.0, 1.5, 2.0, 2.5, 3.0, 3.5 };
+                spawnsShockwave = new[] { true, false, false, true, false, false };
+                maestroPoses = new[] { KnightMove.Light1, KnightMove.Light2, KnightMove.Light3, KnightMove.Light4, KnightMove.DashAtk, KnightMove.FrontHeavy };
+            }
+            else if (isPhase3)
+            {
+                strikeTargets = new[] { Ang(-35f, 215f), Ang(15f, 165f), Ang(110f, 70f) };
+                beatOffsets = new[] { 1.0, 2.0, 3.0 };
+                spawnsShockwave = new[] { true, false, false };
+                maestroPoses = new[] { KnightMove.Light1, KnightMove.Light2, KnightMove.FrontHeavy };
+            }
+            else if (isPhase2)
+            {
+                strikeTargets = new[] { Ang(-35f, 215f), Ang(105f, 75f), Ang(-35f, 215f), Ang(105f, 75f) };
+                beatOffsets = new[] { 1.0, 2.0, 3.0, 4.0 };
+                spawnsShockwave = new[] { true, false, true, false };
+                maestroPoses = null;
+            }
+            else
+            {
+                strikeTargets = new[] { Ang(-35f, 215f), Ang(-160f, -20f), Ang(15f, 165f), Ang(110f, 70f) };
+                beatOffsets = new[] { 1.0, 2.0, 3.0, 4.0 };
+                spawnsShockwave = new[] { false, false, false, false };
+                maestroPoses = null;
+            }
 
             tube.danger = true;
+            int stepCount = strikeTargets.Length;
 
-            for (int step = 0; step < 4; step++)
+            for (int step = 0; step < stepCount; step++)
             {
-                double beatTarget = startBeat + 1.0 + step;
+                double beatTarget = startBeat + beatOffsets[step];
+                double nextStepWaitEnd = step + 1 < stepCount
+                    ? (startBeat + beatOffsets[step + 1] - leadBeats)
+                    : (startBeat + (isPhase3 ? 4.25 : 5.0));
                 double swingStart = beatTarget - leadBeats;
-                double swingEnd = beatTarget + 0.32;
+                double swingEnd = beatTarget + (isCompound68 ? 0.24 : 0.32);
                 float startAng = curAngle;
                 float targetAng = strikeTargets[step];
                 bool hitDealtThisBeat = false;
                 bool shockwaveSpawnedThisBeat = false;
 
+                if (isPhase3 && maestroPoses != null) Kyosho.SetMaestroPose(maestroPoses[step], 0);
                 KyoshoSfx.PlayCue(KyoshoSfx.Data?.conductWhoosh, "conduct_whoosh", Root());
 
-                while (Clock.TotalBeats < startBeat + 2.0 + step - (step < 3 ? leadBeats : 0.0))
+                while (Clock.TotalBeats < nextStepWaitEnd)
                 {
                     token.ThrowIfCancellationRequested();
                     double nowBeat = Clock.TotalBeats;
@@ -149,23 +184,28 @@ namespace RealSteel.Boss.Kyosho
                         if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(tube.nodes[3], tube.Tip, player.transform, 0.32f))
                         {
                             hitDealtThisBeat = true;
-                            ApplyOriginalPatternHit(player, 190, BodyPart.RightArm, 25);
+                            ApplyOriginalPatternHit(player, isPhase3 ? 210 : 190, BodyPart.RightArm, 25);
                         }
                     }
 
-                    // 정박 통과 순간 시각/청각 강조 및 타악 충격파
+                    // 정박 통과 순간 시각/청각 강조 및 타악 충격파 + 3페 막타 부채꼴 음표 탄막
                     if (!shockwaveSpawnedThisBeat && nowBeat >= beatTarget)
                     {
                         shockwaveSpawnedThisBeat = true;
-                        KyoshoSfx.PlayCue(KyoshoSfx.Data?.conductTipFlash, "conduct_flash", tube.Tip);
+                        KyoshoSfx.PlayConductBeatHarmony(step, stepCount, isPhase2, isPhase3, isCompound68, tube.Tip);
 
-                        if (hasPercussion && spawnsShockwave[step])
+                        if (spawnsShockwave[step] && (isPhase3 || hasPercussion))
                         {
                             SpawnPercussionShockwavePair(new Vector3(tube.Tip.x, Kyosho.ArenaFloorY, 0f));
+                        }
+                        if (isPhase3 && step == stepCount - 1)
+                        {
+                            SpawnPhase3FanBurst(tube.Tip, face, tipColor);
                         }
                     }
 
                     StepShockwaves(Time.deltaTime);
+                    StepFanBullets(Time.deltaTime);
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
             }
@@ -173,20 +213,22 @@ namespace RealSteel.Boss.Kyosho
             tube.danger = false;
             tube.glow = 0.2f;
 
-            // 3) 5박 회수 & 다음 패턴 예고(2페: 좌=스타카토, 상=페르마타)
+            // 3) 회수 & 다음 패턴 예고
             double recoverStart = Clock.TotalBeats;
             float telegraphAngle = curAngle;
-            if (isPhase2)
+            bool showNextTelegraph = isPhase2 || isPhase3;
+            if (showNextTelegraph)
             {
                 var upcoming = Kyosho.PeekNextPhase2PatternType();
                 telegraphAngle = upcoming == typeof(KyoshoStaccatoPatternGimmick) ? 180f : 90f;
             }
+            if (isPhase3) Kyosho.SetMaestroPose(KnightMove.Guard2, 0);
 
             while (Clock.TotalBeats < recoverStart + 1.0)
             {
                 token.ThrowIfCancellationRequested();
                 float k = Mathf.Clamp01((float)(Clock.TotalBeats - recoverStart));
-                if (isPhase2)
+                if (showNextTelegraph)
                 {
                     curAngle = Mathf.LerpAngle(curAngle, telegraphAngle, Time.deltaTime * 10f);
                     curLength = Mathf.Lerp(batonLength, 2.8f, Smooth(k));
@@ -200,6 +242,7 @@ namespace RealSteel.Boss.Kyosho
                 }
                 StepBaton(tube, Root(), curAngle, curLength, Time.deltaTime);
                 StepShockwaves(Time.deltaTime);
+                StepFanBullets(Time.deltaTime);
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
@@ -209,8 +252,11 @@ namespace RealSteel.Boss.Kyosho
         private void TakeBotsToTubeA(float frac, Vector3 near)
         {
             _batonBotIds.Clear();
-            int n = Mathf.Clamp(Mathf.RoundToInt(Swarm.Count * frac), 120, Mathf.Max(120, Swarm.guideCount[RSNanoSwarm.G_Blob] / 2));
-            Swarm.Collect(RSNanoSwarm.G_Blob, near, n, _batonBotIds);
+            int srcGuide = (Kyosho != null && Kyosho.IsPhase3 && Swarm.guideCount[RSNanoSwarm.G_Halo] > 0)
+                ? RSNanoSwarm.G_Halo
+                : RSNanoSwarm.G_Blob;
+            int n = Mathf.Clamp(Mathf.RoundToInt(Swarm.Count * frac), 100, Mathf.Max(100, Swarm.guideCount[srcGuide] / 2));
+            Swarm.Collect(srcGuide, near, n, _batonBotIds);
             var lat = NanoLattice.Taper(Mathf.Max(1, _batonBotIds.Count), Swarm.TubeA.r0, Swarm.TubeA.r1, batonLength);
             var bots = Swarm.Bots;
             for (int k = 0; k < _batonBotIds.Count; k++)
@@ -302,12 +348,15 @@ namespace RealSteel.Boss.Kyosho
         {
             if (Swarm != null)
             {
+                int returnGuide = (Kyosho != null && Kyosho.IsPhase3 && Swarm.guideCount[RSNanoSwarm.G_Halo] > 0)
+                    ? RSNanoSwarm.G_Halo
+                    : RSNanoSwarm.G_Blob;
                 var bots = Swarm.Bots;
                 foreach (int i in _batonBotIds)
                 {
                     if (i >= 0 && i < bots.Length && bots[i].mode == BotMode.Bound && bots[i].guide == RSNanoSwarm.G_TubeA)
                     {
-                        Swarm.Bind(i, RSNanoSwarm.G_Blob);
+                        Swarm.Bind(i, returnGuide);
                     }
                 }
                 Swarm.TubeA.danger = false;
@@ -317,11 +366,41 @@ namespace RealSteel.Boss.Kyosho
             _batonBotIds.Clear();
         }
 
+        private void SpawnPhase3FanBurst(Vector3 origin, float face, Color color)
+        {
+            KyoshoSfx.PlayPhase3FanBurstHarmony(origin);
+            Vector3 toPlayer = (Kyosho.GetPlayerAimCenter() - origin);
+            if (toPlayer.sqrMagnitude < 0.01f) toPlayer = new Vector3(face, -0.25f, 0f);
+            float baseAngle = Mathf.Atan2(toPlayer.y, toPlayer.x) * Mathf.Rad2Deg;
+            float[] spread = { -22f, 0f, 22f };
+
+            for (int i = 0; i < spread.Length; i++)
+            {
+                float rad = (baseAngle + spread[i]) * Mathf.Deg2Rad;
+                Vector3 dir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
+                var b = KyoshoNanobotAttackHelper.FireTrackedClump(
+                    Swarm, origin, origin, 0f, dir * 13.5f, 1.8f,
+                    12, 0.24f, color, 1.3f, 130, BodyPart.Core, 0, snapToHold: true);
+                _fanBullets.Add(b);
+            }
+        }
+
+        private void StepFanBullets(float dt)
+        {
+            if (_fanBullets.Count == 0) return;
+            KyoshoNanobotAttackHelper.StepTrackedBullets(_fanBullets, Swarm, Kyosho.PlayerTransform, dt, b =>
+            {
+                var p = FindPlayerObject();
+                if (p != null) ApplyCoreOnlyHit(p, b.Damage);
+            });
+        }
+
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
             ClearStrikeTelegraph();
             ReleaseBatonBots();
+            KyoshoNanobotAttackHelper.ClearTrackedBullets(_fanBullets, Swarm);
             foreach (var sw in _shockwaves)
             {
                 if (sw.VisualGo != null) Destroy(sw.VisualGo);

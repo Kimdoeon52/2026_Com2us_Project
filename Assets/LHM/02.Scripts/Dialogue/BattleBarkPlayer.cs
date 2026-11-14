@@ -71,7 +71,12 @@ namespace RealSteel.Dialogue
 
         public void NotifyBossPartBroken(string gimmickId)
         {
-            Bark(BattleBarkEvent.BossPartBroken, "none", gimmickId, -1);
+            NotifyBossPartBroken(gimmickId, false);
+        }
+
+        public void NotifyBossPartBroken(string gimmickId, bool ignoreCooldown)
+        {
+            Bark(BattleBarkEvent.BossPartBroken, "none", gimmickId, -1, ignoreCooldown);
         }
 
         public void NotifyBossGroggy(int bossHpPercentOverride = -1)
@@ -89,7 +94,7 @@ namespace RealSteel.Dialogue
             Debug.Log("[Bark] 전투 기록 초기화 (파괴된 파츠 수 0)");
         }
 
-        private bool Bark(BattleBarkEvent battleEvent, string brokenPart, string bossPartId, int bossHpOverride)
+        private bool Bark(BattleBarkEvent battleEvent, string brokenPart, string bossPartId, int bossHpOverride, bool ignoreCooldown = false)
         {
             if (manager == null || subtitle == null)
             {
@@ -112,7 +117,8 @@ namespace RealSteel.Dialogue
             }
 
             float now = Time.unscaledTime;
-            if (now - lastBarkAt < minInterval)
+            bool bypassCooldown = ignoreCooldown || bossPartId == "BARK_KYOSHO_ENCORE";
+            if (!bypassCooldown && now - lastBarkAt < minInterval)
             {
                 Debug.Log($"[Bark] {battleEvent} 무시 — 직전 바크 후 {minInterval}초 이내");
                 return false;

@@ -142,5 +142,11 @@ MonoBehaviour:
     - PATTERN_KYOSHO_STACCATO
     - PATTERN_KYOSHO_FERMATA
     - PATTERN_KYOSHO_FINALE
+  - phaseIndex: 3
+    hpThresholdRatio: 0.45
+    availableSkillIDs:
+    - PATTERN_KYOSHO_CONDUCT
+    - PATTERN_KYOSHO_FERMATA
+    - PATTERN_KYOSHO_FINALE
   rewardGold: 650
   rewardCoreExp: 312

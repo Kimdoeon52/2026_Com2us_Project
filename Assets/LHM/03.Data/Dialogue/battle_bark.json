@@ -151,6 +151,97 @@
       "lines": [
         { "speaker": "kyodai", "textKey": "bark.kyodai_groggy.1" }
       ]
+    },
+    {
+      "id": "bark_kyosho_groggy",
+      "band": "Reactive",
+      "subPriority": 20,
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossGroggy" },
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" }
+      ],
+      "lines": [
+        { "speaker": "kyosho", "textKey": "bark.kyosho_groggy.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_strings",
+      "band": "Reactive",
+      "subPriority": 50,
+      "cooldownSec": 2,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "PART_KYOSHO_STRINGS" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.kyosho_strings.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_percussion",
+      "band": "Reactive",
+      "subPriority": 50,
+      "cooldownSec": 2,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "PART_KYOSHO_PERCUSSION" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.kyosho_percussion.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_brass",
+      "band": "Reactive",
+      "subPriority": 50,
+      "cooldownSec": 2,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "PART_KYOSHO_BRASS" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.kyosho_brass.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_variation_symbol",
+      "band": "Reactive",
+      "subPriority": 40,
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "PART_KYOSHO_VARIATION_SYMBOL" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.kyosho_variation_symbol.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_bloom_stem",
+      "band": "Reactive",
+      "subPriority": 40,
+      "cooldownSec": 3,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "PART_KYOSHO_BLOOM_STEM" }
+      ],
+      "lines": [
+        { "speaker": "hero", "textKey": "bark.kyosho_bloom_stem.1" }
+      ]
+    },
+    {
+      "id": "bark_kyosho_encore",
+      "band": "Critical",
+      "subPriority": 99,
+      "cooldownSec": 0,
+      "conditions": [
+        { "variable": "battle.event", "op": "==", "value": "bossPartBroken" },
+        { "variable": "battle.bossPartId", "op": "==", "value": "BARK_KYOSHO_ENCORE" }
+      ],
+      "lines": [
+        { "speaker": "crowd", "textKey": "bark.kyosho_encore.1" }
+      ]
     }
   ]
 }

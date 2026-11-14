@@ -187,7 +187,12 @@ namespace RealSteel.NanoBoss
         // 덩어리 격자
         Vector4[] blobTable = Array.Empty<Vector4>();
         float4[] blobSlots = new float4[1];
+        uint[] blobColors = new uint[1];
         float blobAspectBuilt = -1f;
+        RSNanoSpriteShape blobShapeBuilt;
+        int blobFrameBuilt = -1;
+        float blobScaleBuilt = -1f;
+        int[] blobPerm = Array.Empty<int>();
         readonly NanoSlotSet blobSet = new NanoSlotSet();
         float blobExt;
 
@@ -445,6 +450,8 @@ namespace RealSteel.NanoBoss
                         center = Blob.center, radius = Blob.radius, bulgeDir = Blob.bulgeDir,
                         wobble = Blob.wobble, wobbleSpeed = Blob.wobbleSpeed, flow = Blob.flow, flowSpeed = Blob.flowSpeed,
                         bulge = Blob.bulge, floorY = Blob.floorY, ext = blobExt,
+                        sprite = (Blob.shape != null && Blob.shape.Ready) ? 1 : 0,
+                        artColor = Blob.shapeArtColor ? 1 : 0,
                     },
                     tubeA = new TubeSim { r0 = TubeA.er0, r1 = TubeA.er1 },
                     tubeB = new TubeSim { r0 = TubeB.er0, r1 = TubeB.er1 },
@@ -467,6 +474,7 @@ namespace RealSteel.NanoBoss
                     gravity = gravity, flashDecay = flashDecay,
                     viscosity = viscosity, dark = dark, spacing = spacing, cell = Cell,
                     frontZ = FrontZ, backZ = BackZ,
+                    blobSlotColor = (uint*)pins.Pin(blobColors),
                     limbSlotColor = (uint*)pins.Pin(lcolors),
                 };
                 job.Schedule(bots.Length, 64).Complete();
@@ -516,6 +524,57 @@ namespace RealSteel.NanoBoss
         void MaintainBlob(float time)
         {
             int n = bots.Length;
+            if (Blob.shape != null && Blob.shape.Ready)
+            {
+                int m = Blob.shape.botCount;
+                int f = Mathf.Clamp(Blob.shapeFrame, 0, Mathf.Max(0, Blob.shape.frameCount - 1));
+                float scale = Mathf.Max(0.1f, Blob.shapeScale);
+                float pxSize = Cell * scale;
+                bool rebuildTopology = blobTable.Length != n || blobShapeBuilt != Blob.shape || blobPerm.Length != m;
+                bool updateFrame = rebuildTopology || blobFrameBuilt != f || Mathf.Abs(blobScaleBuilt - scale) > 0.005f;
+                if (rebuildTopology)
+                {
+                    blobTable = new Vector4[n];
+                    if (blobSlots.Length != n) blobSlots = new float4[n];
+                    if (blobColors.Length != n) blobColors = new uint[n];
+                    blobPerm = BuildStratifiedPerm(m);
+                    blobSet.Resize(n);
+                }
+                if (updateFrame)
+                {
+                    bool hasCol = Blob.shapeArtColor && Blob.shape.HasColors;
+                    for (int k = 0; k < n; k++)
+                    {
+                        int idx = blobPerm[k % m];
+                        int layer = k / m;
+                        Vector3 p = Blob.shape.Local(f, idx, pxSize);
+                        float jx = 0f, jy = 0f;
+                        if (layer > 0)
+                        {
+                            float ang = layer * 2.3999632f + (k & 31) * 0.41f;
+                            float rad = pxSize * 0.34f * Mathf.Sqrt(Mathf.Min(1f, layer / 3f));
+                            jx = Mathf.Cos(ang) * rad;
+                            jy = Mathf.Sin(ang) * rad;
+                        }
+                        float jz = ((layer & 1) == 0 ? 1f : -1f) * 0.04f;
+                        blobTable[k] = new Vector4(p.x + jx, p.y + jy, jz, (float)k / Mathf.Max(1, n));
+                        blobSlots[k] = blobTable[k];
+                        blobColors[k] = hasCol ? Blob.shape.ColorOf(f, idx) : 0u;
+                    }
+                    blobShapeBuilt = Blob.shape;
+                    blobFrameBuilt = f;
+                    blobScaleBuilt = scale;
+                    blobAspectBuilt = -1f;
+                }
+                blobSet.Maintain(bots, null, G_Blob, -1, time, refillDelay, Mathf.Max(4, n / 60), null, blobTable);
+                blobExt = 1f;
+                BlobSpace = Mathf.Max(spacing * 0.65f, pxSize * 0.85f);
+                return;
+            }
+
+            blobShapeBuilt = null;
+            blobFrameBuilt = -1;
+            if (blobColors.Length < 1) blobColors = new uint[1];
             if (blobTable.Length != n || Mathf.Abs(blobAspectBuilt - Blob.aspect) > 0.01f)
             {
                 blobTable = NanoLattice.EllipseHex(n, Blob.aspect);   // 정사각 격자 (2D 칸)
@@ -527,6 +586,22 @@ namespace RealSteel.NanoBoss
             int occ = blobSet.Maintain(bots, null, G_Blob, -1, time, refillDelay, Mathf.Max(4, n / 60), null, blobTable);
             blobExt = occ > 0 ? blobTable[Mathf.Min(occ, n) - 1].w + 0.5f : 0f;
             BlobSpace = blobExt > 0f ? Blob.radius.y / blobExt : spacing;
+        }
+
+        static int[] BuildStratifiedPerm(int m)
+        {
+            if (m <= 0) return Array.Empty<int>();
+            int pow = 1, bits = 0;
+            while (pow < m) { pow <<= 1; bits++; }
+            var perm = new int[m];
+            int write = 0;
+            for (int i = 0; i < pow && write < m; i++)
+            {
+                int rev = 0, x = i;
+                for (int b = 0; b < bits; b++) { rev = (rev << 1) | (x & 1); x >>= 1; }
+                if (rev < m) perm[write++] = rev;
+            }
+            return perm;
         }
 
         // ── 그림 기사 (3페) ──────────────────────────────────────────

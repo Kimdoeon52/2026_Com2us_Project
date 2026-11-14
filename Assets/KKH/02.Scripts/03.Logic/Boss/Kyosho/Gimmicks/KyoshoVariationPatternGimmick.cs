@@ -103,7 +103,7 @@ namespace RealSteel.Boss.Kyosho
                 token.ThrowIfCancellationRequested();
                 int symIdx = _targetSequence[step];
                 ApplyBossMorphSprite(symIdx, targetCenter);
-                KyoshoSfx.PlaySolfegeNote(symIdx, targetCenter);
+                KyoshoSfx.PlaySolfegeNote(symIdx, targetCenter, 1f, step);
                 Kyosho.ScorePreviewHUD?.RevealVariationSlot(step, symIdx);
                 Kyosho.ScorePreviewHUD?.ShowVariationStatus($"변주곡 출제 ({step + 1}/3) : {KyoshoConstants.SymbolGlyphs[symIdx]} ({KyoshoConstants.SolfegeNames[symIdx]} · {KyoshoConstants.SymbolNames[symIdx]})");
 
@@ -241,7 +241,7 @@ namespace RealSteel.Boss.Kyosho
             int expected = _targetSequence[_currentStep];
             if (hitSym.SymbolIndex == expected)
             {
-                KyoshoSfx.PlaySolfegeNote(hitSym.SymbolIndex, hitSym.transform.position, 1.05f);
+                KyoshoSfx.PlaySolfegeNote(hitSym.SymbolIndex, hitSym.transform.position, 1.05f, _currentStep);
                 var bark = FindAnyObjectByType<BattleBarkPlayer>();
                 bark?.NotifyBossPartBroken(KyoshoConstants.BarkVariationSymbol);
 

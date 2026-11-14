@@ -10,8 +10,10 @@ namespace RealSteel.Boss.Kyosho
         Phase2 = 3,
         Variation2 = 4,
         Finale = 5,
-        FinalGroggy = 6,
-        Defeated = 7
+         FinalGroggy = 6,
+        Defeated = 7,
+        EncoreAwakening = 8,
+        Phase3 = 9
     }
 
     public enum KyoshoSectionType
@@ -64,11 +66,14 @@ namespace RealSteel.Boss.Kyosho
         public const string BarkBrassBroken = "PART_KYOSHO_BRASS";
         public const string BarkVariationSymbol = "PART_KYOSHO_VARIATION_SYMBOL";
         public const string BarkBloomStem = "PART_KYOSHO_BLOOM_STEM";
+        public const string BarkEncore = "BARK_KYOSHO_ENCORE";
 
         // HP 게이트 비율
         public const float Variation1HpRatio = 0.60f;
         public const float Variation2HpRatio = 0.30f;
         public const float FinaleHpRatio = 0.10f;
+        public const float Phase3HpRatio = 0.45f;
+        public const float Phase3Bpm = 160f;
 
         // 섹션 & 본체 컬러 팔레트 (§2.2)
         public static readonly Color OriginalPatternColor = new Color(0.910f, 0.957f, 1.000f, 1f); // #E8F4FF
@@ -77,6 +82,8 @@ namespace RealSteel.Boss.Kyosho
         public static readonly Color BrassMagentaColor = new Color(1.000f, 0.267f, 0.667f, 1f);    // #FF44AA
         public static readonly Color ConductP1TipColor = Color.white;                              // #FFFFFF
         public static readonly Color ConductP2TipColor = new Color(1.000f, 0.878f, 0.200f, 1f);    // #FFE033
+        public static readonly Color ConductP3TripleColor = new Color(0.267f, 0.867f, 1.000f, 1f);  // #44DDFF
+        public static readonly Color ConductP3CompoundColor = new Color(0.733f, 0.333f, 1.000f, 1f);// #BB55FF
         public static readonly Color SafeZoneGoldColor = new Color(1.000f, 0.840f, 0.280f, 1f);
 
         // 변주곡 6종 문양 고유 계이름 주파수 (도~라: C4, D4, E4, F4, G4, A4)

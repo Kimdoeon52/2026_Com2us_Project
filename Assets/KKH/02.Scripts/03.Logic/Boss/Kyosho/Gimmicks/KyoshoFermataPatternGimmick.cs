@@ -37,10 +37,11 @@ namespace RealSteel.Boss.Kyosho
         {
             if (Kyosho == null || Swarm == null || Clock == null) return;
 
-            bool isFirstFermata = !Kyosho.HasCompletedFirstPhase2Fermata;
-            bool hasBrass = !isFirstFermata && Kyosho.SectionManager != null && Kyosho.SectionManager.IsBrassAlive;
+            bool isPhase3 = Kyosho.IsPhase3;
+            bool isFirstFermata = !isPhase3 && !Kyosho.HasCompletedFirstPhase2Fermata;
+            bool hasBrass = !isPhase3 && !isFirstFermata && Kyosho.SectionManager != null && Kyosho.SectionManager.IsBrassAlive;
 
-            int baseCount = KyoshoConstants.GetFermataBaseBulletCount(Kyosho.SelectedDifficulty);
+            int baseCount = KyoshoConstants.GetFermataBaseBulletCount(Kyosho.SelectedDifficulty) + (isPhase3 ? 3 : 0);
             int extraCount = hasBrass ? 4 : 0;
             int totalCount = baseCount + extraCount;
 
@@ -50,14 +51,21 @@ namespace RealSteel.Boss.Kyosho
             float safeMinX = minX + 0.9f;
             float safeMaxX = maxX - 0.9f;
 
-            // 1박: 공중 배치 (RingGuide에서 음표 탄들을 상공 좌표에 흩어 배치)
+            // 1박: 공중 배치 (2페: Ring / 3페: Halo 후광에서 음표 탄들을 상공 좌표에 흩어 배치)
             var ring = Swarm.Ring;
-            ring.center = Swarm.Blob.center + Vector3.up * 1.4f;
+            ring.center = isPhase3
+                ? (Swarm.Halo.center + Vector3.up * 0.6f)
+                : (Swarm.Blob.center + Vector3.up * 1.4f);
             ring.axis = Vector3.up;
             ring.radius = 1.6f;
             ring.glow = 1.8f;
+            if (isPhase3)
+            {
+                Kyosho.SetMaestroPose(KnightMove.AirLoop, 0);
+                Swarm.Halo.glow = 1.6f;
+            }
 
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.fermataSpawn, "fermata_spawn", ring.center);
+            KyoshoSfx.PlayFermataSpawnHarmony(totalCount, ring.center);
 
             float holdDuration = Clock.BeatsToSeconds(2.9f);
             List<float> xPositions = BuildSpreadPositionsX(totalCount, safeMinX, safeMaxX);
@@ -95,7 +103,7 @@ namespace RealSteel.Boss.Kyosho
 
             // 2~3박: 페르마타(⌒) 정지 및 예고선 유지
             Kyosho.ScorePreviewHUD?.ShowFermataHold(true);
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.fermataHoldChord, "fermata_hold", Swarm.Blob.center);
+            KyoshoSfx.PlayFermataHoldHarmony(ring.center);
 
             await Clock.WaitBeatsAsync(2f, token);
 
@@ -103,10 +111,18 @@ namespace RealSteel.Boss.Kyosho
             ClearTelegraphLines();
 
             // 4박: 일제 수직 낙하 (Drop)
-            Swarm.Blob.bulgeDir = Vector3.down;
-            Swarm.Blob.bulge = 0.85f;
+            if (isPhase3)
+            {
+                Kyosho.SetMaestroPose(KnightMove.FrontHeavy, 2);
+                Swarm.Halo.glow = 0.25f;
+            }
+            else
+            {
+                Swarm.Blob.bulgeDir = Vector3.down;
+                Swarm.Blob.bulge = 0.85f;
+            }
             ring.glow = 0f;
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.fermataSlamDrop, "fermata_drop", Swarm.Blob.center);
+            KyoshoSfx.PlayFermataDropResolution(ring.center);
 
             // 대기 타이머 즉시 0으로 맞춰 정박 동시 낙하 동기화
             foreach (var b in _bullets)

@@ -135,7 +135,7 @@ namespace RealSteel.Boss.Kyosho
 
             if (playMetronomeTick)
             {
-                KyoshoSfx.PlayBeatTick(inBar == 0);
+                KyoshoSfx.PlayBeatTick(inBar == 0, bar, inBar);
             }
 
             OnBeat?.Invoke(inBar, beatIndex);

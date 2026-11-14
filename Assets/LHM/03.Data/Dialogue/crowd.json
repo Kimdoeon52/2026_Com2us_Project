@@ -40,6 +40,25 @@
       "lines": [ { "textKey": "crowd.cheer_kyodai.1" } ]
     },
     {
+      "id": "crowd_cheer_kyosho",
+      "band": "Ambient",
+      "cooldownSec": 8,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" }
+      ],
+      "lines": [ { "textKey": "crowd.cheer_kyosho.1" } ]
+    },
+    {
+      "id": "crowd_kyosho_encore",
+      "band": "Reactive",
+      "cooldownSec": 15,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" },
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [ { "textKey": "crowd.kyosho_encore.1" } ]
+    },
+    {
       "id": "crowd_basic_parts_easy",
       "band": "Reactive",
       "cooldownSec": 20,

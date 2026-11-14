@@ -24,7 +24,9 @@ namespace RealSteel.Boss.Kyosho
         [SerializeField] private RSNanoSwarm swarm = default;
         [SerializeField] private KyoshoRhythmTableSO rhythmTable = default;
         [SerializeField] private KyoshoSfxData sfxData = default;
+        [SerializeField] private RSNanoKnightMoves maestroMoves = default;
         [SerializeField] private Vector3 blobShapeRatio = new Vector3(3.4f, 2.7f, 0.9f);
+        [SerializeField] private float orchestraSilhouetteScale = 1.35f;
 
         [Header("아레나 및 이동 설정")]
         [SerializeField] private float fallbackArenaMinX = -7.75f;
@@ -71,6 +73,9 @@ namespace RealSteel.Boss.Kyosho
         private PendingGateType _pendingGate = PendingGateType.None;
         private bool _isTransitionRunning;
         private int _cycleStepIndex;
+        private bool _phase3Entered;
+        private int _phase3ConductSubIndex;
+        private bool _isEncoreRunning;
         private CancellationTokenSource _gateTransitionCts;
 
         public RSNanoSwarm Swarm => swarm;
@@ -78,6 +83,10 @@ namespace RealSteel.Boss.Kyosho
         public KyoshoSectionManager SectionManager => _sectionManager;
         public KyoshoScorePreviewHUD ScorePreviewHUD => _scorePreviewHud;
         public KyoshoPhaseState PhaseState => _phaseState;
+        public bool IsPhase3 => _phase3Entered;
+        public bool IsAtFinaleHpGate => Snapshot != null && Snapshot.maxHp > 0
+            && Snapshot.currentHp <= Mathf.Max(1, Mathf.RoundToInt(Snapshot.maxHp * KyoshoConstants.FinaleHpRatio)) + 1;
+        public RSNanoKnightMoves MaestroMoves => maestroMoves;
         public float ArenaFloorY => _arenaFloorY;
         public float ArenaMinX { get { GetArenaBounds(out float minX, out _); return minX; } }
         public float ArenaMaxX { get { GetArenaBounds(out _, out float maxX); return maxX; } }
@@ -103,6 +112,10 @@ namespace RealSteel.Boss.Kyosho
             if (sfxData == null)
             {
                 sfxData = UnityEditor.AssetDatabase.LoadAssetAtPath<KyoshoSfxData>("Assets/KKH/03.SOData/Boss/Kyosho/KyoshoSfxData.asset");
+            }
+            if (maestroMoves == null)
+            {
+                maestroMoves = UnityEditor.AssetDatabase.LoadAssetAtPath<RSNanoKnightMoves>("Assets/SYS/Data/NanoBoss/기사/기사_동작.asset");
             }
 #endif
             if (swarm == null) swarm = GetComponent<RSNanoSwarm>();
@@ -316,14 +329,14 @@ namespace RealSteel.Boss.Kyosho
         {
             var go = new GameObject(goName);
             go.transform.SetParent(_rigHostGo.transform, false);
-            go.transform.localScale = Vector3.one * 1.6f;
+            go.transform.localScale = Vector3.one * 1.15f;
             var limb = go.AddComponent<RSNanoLimb>();
             limb.type = LimbType.Sprite;
             limb.amount = 0f;
             limb.bind = 1f;
             limb.artColor = true;
             limb.picture = rhythmTable != null ? rhythmTable.GetSectionShape(type) : null;
-            if (limb.picture == null)
+            if (limb.picture == null || !limb.picture.Ready)
             {
                 limb.picture = CreateFallbackInstrumentShape(type);
             }
@@ -332,31 +345,7 @@ namespace RealSteel.Boss.Kyosho
 
         private static RSNanoSpriteShape CreateFallbackInstrumentShape(KyoshoSectionType type)
         {
-            Color col = type switch
-            {
-                KyoshoSectionType.Strings => KyoshoConstants.StringsMintColor,
-                KyoshoSectionType.Percussion => KyoshoConstants.PercussionAmberColor,
-                KyoshoSectionType.Brass => KyoshoConstants.BrassMagentaColor,
-                _ => Color.white
-            };
-            Color32 c32 = col;
-
-            return KyoshoNanobotAttackHelper.CreateRuntimeFallbackShape($"FallbackSection_{type}", 28, 28, (x, y) =>
-            {
-                float nx = (x - 13.5f) / 12f;
-                float ny = (y - 13.5f) / 12f;
-                bool draw = type switch
-                {
-                    KyoshoSectionType.Strings => (Mathf.Abs(nx) < 0.10f && ny > -0.8f)
-                        || ((nx * nx * 2.2f + (ny + 0.25f) * (ny + 0.25f) * 1.4f) < 0.35f)
-                        || ((nx * nx * 3.0f + (ny - 0.25f) * (ny - 0.25f) * 2.0f) < 0.25f),
-                    KyoshoSectionType.Percussion => (ny < 0.2f && ny > -0.65f && Mathf.Abs(nx) < 0.72f * (0.6f + 0.4f * (ny + 0.65f)))
-                        || (Mathf.Abs(ny - 0.25f) < 0.10f && Mathf.Abs(nx) < 0.76f),
-                    _ => (Mathf.Abs(Mathf.Sqrt(nx * nx + ny * ny) - 0.52f) < 0.16f)
-                        || (nx > 0.2f && Mathf.Abs(ny + 0.35f) < 0.28f && nx < 0.85f)
-                };
-                return draw ? c32 : (Color32?)null;
-            });
+            return KyoshoNanobotAttackHelper.GetOrCreateSectionEnsembleShape(type);
         }
 
         protected override void OnBossInitialized()
@@ -372,6 +361,9 @@ namespace RealSteel.Boss.Kyosho
             _pendingGate = PendingGateType.None;
             _isTransitionRunning = false;
             _cycleStepIndex = 0;
+            _phase3Entered = false;
+            _phase3ConductSubIndex = 0;
+            _isEncoreRunning = false;
             IsInvincible = false;
             IsWaitingFinalBlow = false;
             HasCompletedFirstPhase2Fermata = false;
@@ -379,12 +371,49 @@ namespace RealSteel.Boss.Kyosho
 
             if (swarm != null)
             {
+                swarm.dark = 0f;
+                swarm.Knight.moves = null;
+                swarm.Knight.reinforce = false;
+                swarm.Knight.scaleOverride = 0;
+                swarm.Knight.lean = 0f;
+                swarm.Knight.armAngle = 0f;
+                swarm.Knight.bladeAngle = 0f;
+                swarm.Knight.bladeDanger = false;
+                swarm.Halo.radius = 2.6f;
+
                 GetArenaBounds(out float minX, out float maxX);
                 float centerX = (minX + maxX) * 0.5f;
-                swarm.Blob.aspect = blobShapeRatio.x / Mathf.Max(0.01f, blobShapeRatio.y);
-                _blobBaseSize = swarm.BlobSize(swarm.botCount, blobShapeRatio);
-                swarm.Blob.radius = _blobBaseSize;
-                Vector3 center = new Vector3(centerX, _arenaFloorY + _blobBaseSize.y * 0.78f, 0f);
+                RSNanoSpriteShape bodyShape = (rhythmTable != null && rhythmTable.orchestraBodyShape != null && rhythmTable.orchestraBodyShape.Ready)
+                    ? rhythmTable.orchestraBodyShape
+                    : KyoshoNanobotAttackHelper.GetOrCreateOrchestraEnsembleShape();
+                swarm.Blob.shape = bodyShape;
+                swarm.Blob.shapeFrame = 0;
+                swarm.Blob.shapeScale = orchestraSilhouetteScale;
+                swarm.Blob.shapeArtColor = true;
+                Vector3 center;
+                if (bodyShape != null && bodyShape.Ready)
+                {
+                    swarm.Blob.wobble = 0.015f;
+                    swarm.Blob.flow = 0.04f;
+                    swarm.Blob.bind = 0.94f;
+                    swarm.Blob.stiffness = 78f;
+                    swarm.Blob.damping = 14f;
+                    swarm.Blob.maxSpeed = 34f;
+                    swarm.Blob.noise = 0.015f;
+                    float pxScale = swarm.Cell * Mathf.Max(0.1f, orchestraSilhouetteScale);
+                    float halfW = Mathf.Max(1.6f, (bodyShape.maxX - bodyShape.minX + 1) * 0.5f * pxScale);
+                    float halfH = Mathf.Max(1.2f, (bodyShape.maxY - bodyShape.minY + 1) * 0.5f * pxScale);
+                    _blobBaseSize = new Vector3(halfW, halfH, 0.9f);
+                    swarm.Blob.radius = _blobBaseSize;
+                    center = new Vector3(centerX, _arenaFloorY + 0.14f - bodyShape.minY * pxScale, 0f);
+                }
+                else
+                {
+                    swarm.Blob.aspect = blobShapeRatio.x / Mathf.Max(0.01f, blobShapeRatio.y);
+                    _blobBaseSize = swarm.BlobSize(swarm.botCount, blobShapeRatio);
+                    swarm.Blob.radius = _blobBaseSize;
+                    center = new Vector3(centerX, _arenaFloorY + _blobBaseSize.y * 0.78f, 0f);
+                }
                 swarm.Blob.center = center;
                 swarm.Build(center);
                 swarm.ResetBotLooks();
@@ -495,18 +524,49 @@ namespace RealSteel.Boss.Kyosho
             base.LateUpdate();
             if (swarm != null && !IsCombatStopped)
             {
-                // BossControllerBase.LateUpdate의 X클램프를 Blob.center에도 동기화
-                swarm.Blob.center.x = transform.position.x;
+                if (_phase3Entered)
+                {
+                    swarm.Knight.origin.x = transform.position.x;
+                }
+                else
+                {
+                    // BossControllerBase.LateUpdate의 X클램프를 Blob.center에도 동기화
+                    swarm.Blob.center.x = transform.position.x;
+                }
             }
         }
 
         private void UpdateBlobBodyAndCollider(float dt)
         {
+            if (_isEncoreRunning || _phaseState == KyoshoPhaseState.EncoreAwakening)
+            {
+                if (_hurtCollider != null) _hurtCollider.enabled = false;
+                return;
+            }
+
+            if (_phase3Entered)
+            {
+                UpdateMaestroBodyAndCollider(dt);
+                return;
+            }
+
             var blob = swarm.Blob;
-            Vector3 size = swarm.BlobSize(Mathf.Max(60, swarm.guideCount[RSNanoSwarm.G_Blob]), blobShapeRatio);
-            _blobBaseSize = Vector3.Lerp(_blobBaseSize, size, 1f - Mathf.Exp(-6f * dt));
-            blob.radius = _blobBaseSize;
-            blob.center.y = _arenaFloorY + blob.radius.y * 0.78f;
+            if (blob.shape != null && blob.shape.Ready)
+            {
+                float pxScale = swarm.Cell * Mathf.Max(0.1f, blob.shapeScale);
+                float halfW = Mathf.Max(1.6f, (blob.shape.maxX - blob.shape.minX + 1) * 0.5f * pxScale);
+                float halfH = Mathf.Max(1.2f, (blob.shape.maxY - blob.shape.minY + 1) * 0.5f * pxScale);
+                _blobBaseSize = new Vector3(halfW, halfH, 0.9f);
+                blob.radius = _blobBaseSize;
+                blob.center.y = _arenaFloorY + 0.14f - blob.shape.minY * pxScale;
+            }
+            else
+            {
+                Vector3 size = swarm.BlobSize(Mathf.Max(60, swarm.guideCount[RSNanoSwarm.G_Blob]), blobShapeRatio);
+                _blobBaseSize = Vector3.Lerp(_blobBaseSize, size, 1f - Mathf.Exp(-6f * dt));
+                blob.radius = _blobBaseSize;
+                blob.center.y = _arenaFloorY + blob.radius.y * 0.78f;
+            }
             blob.center.z = Mathf.MoveTowards(blob.center.z, 0f, dt * 6f);
             blob.bulge = Mathf.MoveTowards(blob.bulge, 0f, dt * 1.5f);
 
@@ -547,9 +607,54 @@ namespace RealSteel.Boss.Kyosho
             }
         }
 
+        private void UpdateMaestroBodyAndCollider(float dt)
+        {
+            var k = swarm.Knight;
+            k.facing = GetFacingToPlayerSign();
+            k.lookAt = GetPlayerAimCenter();
+            k.origin.y = _arenaFloorY;
+
+            if (_driftEnabled && !IsInvincible && Snapshot.isGroggy == false)
+            {
+                GetArenaBounds(out float minX, out float maxX);
+                float margin = 1.6f;
+                float playerX = PlayerTransform != null ? PlayerTransform.position.x : 0f;
+                float side = k.origin.x >= playerX ? 1f : -1f;
+                float wantX = Mathf.Clamp(playerX + side * (preferredDistance * 0.9f), minX + margin, maxX - margin);
+                float v = Mathf.Clamp(wantX - k.origin.x, -1f, 1f) * (driftSpeed * 1.15f);
+                k.origin.x += v * dt;
+            }
+
+            k.UpdatePose();
+            swarm.Halo.center = k.ChestWorld + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
+            swarm.Halo.spin += dt * 95f;
+
+            if (_beatPulseAmount > 0f)
+            {
+                _beatPulseAmount = Mathf.MoveTowards(_beatPulseAmount, 0f, dt * 5f);
+                swarm.Halo.glow = Mathf.Max(swarm.Halo.glow, _beatPulseAmount * 0.85f);
+            }
+            else if (_phaseState != KyoshoPhaseState.Finale && !Snapshot.isGroggy)
+            {
+                swarm.Halo.glow = Mathf.MoveTowards(swarm.Halo.glow, 0.28f, dt * 3f);
+            }
+
+            transform.position = k.ChestWorld;
+
+            if (_hurtCollider != null)
+            {
+                _hurtCollider.radius = 1.65f;
+                _hurtCollider.enabled = !IsInvincible && Snapshot.IsAlive;
+            }
+        }
+
         private void HandleBeatVisualPulse(int beatInBar, int totalBeat)
         {
             _beatPulseAmount = beatInBar == 0 ? 1.0f : 0.45f;
+            if (swarm != null && !_phase3Entered && swarm.Blob.shape != null && swarm.Blob.shape.Ready)
+            {
+                swarm.Blob.shapeFrame = Mathf.Abs(beatInBar) % Mathf.Max(1, swarm.Blob.shape.frameCount);
+            }
         }
 
         // ========================================================================
@@ -601,7 +706,7 @@ namespace RealSteel.Boss.Kyosho
 
         private void EnforceHpGateAfterDamage()
         {
-            if (Snapshot == null || Snapshot.maxHp <= 0) return;
+            if (Snapshot == null || Snapshot.maxHp <= 0 || _isEncoreRunning || IsWaitingFinalBlow) return;
 
             int gate60 = Mathf.RoundToInt(Snapshot.maxHp * KyoshoConstants.Variation1HpRatio);
             int gate30 = Mathf.RoundToInt(Snapshot.maxHp * KyoshoConstants.Variation2HpRatio);
@@ -658,6 +763,13 @@ namespace RealSteel.Boss.Kyosho
         private void SpawnBotHitSplash()
         {
             if (swarm == null) return;
+            if (_phase3Entered)
+            {
+                Vector3 kp = swarm.Knight.ChestWorld + new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), UnityEngine.Random.Range(-0.5f, 0.5f), 0f);
+                int mask = (1 << RSNanoSwarm.G_Knight) | (1 << RSNanoSwarm.G_Halo);
+                swarm.Hit(kp, 0.75f, new Vector3(UnityEngine.Random.Range(-2f, 2f), 2.5f, 0f), 0.10f, mask);
+                return;
+            }
             Vector3 p = swarm.Blob.center + new Vector3(UnityEngine.Random.Range(-0.6f, 0.6f), UnityEngine.Random.Range(-0.5f, 0.5f), 0f);
             swarm.Hit(p, 0.7f, new Vector3(UnityEngine.Random.Range(-2f, 2f), 2.5f, 0f), 0.08f, 1 << RSNanoSwarm.G_Blob);
         }
@@ -677,7 +789,7 @@ namespace RealSteel.Boss.Kyosho
                     await _beatClock.WaitUntilNextBarAsync(token);
                 }
 
-                if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
+                if (IsCombatStopped || _isEncoreRunning || Snapshot == null || !Snapshot.IsAlive) return;
 
                 PendingGateType gate = _pendingGate;
                 _pendingGate = PendingGateType.None;
@@ -731,10 +843,22 @@ namespace RealSteel.Boss.Kyosho
                 }
             }
 
-            bool isPhase2 = Snapshot != null && Snapshot.currentPhase >= 2;
             int step = _cycleStepIndex % 4;
             _cycleStepIndex++;
 
+            if (_phase3Entered)
+            {
+                // 헬 3페이즈 고정 4패턴 순환: ① 지휘(3/4·6/8) ➔ ② 페르마타(Halo) ➔ ③ 지휘(3/4·6/8) ➔ ④ 피날레
+                return step switch
+                {
+                    0 => conductPattern,
+                    1 => fermataPattern,
+                    2 => conductPattern,
+                    _ => finalePattern
+                };
+            }
+
+            bool isPhase2 = Snapshot != null && Snapshot.currentPhase >= 2;
             if (!isPhase2)
             {
                 // 1페이즈 순환: ① 지휘 도형 ➔ ② 스타카토 ➔ ③ 지휘 도형 ➔ ④ 개화
@@ -762,7 +886,26 @@ namespace RealSteel.Boss.Kyosho
         public Type PeekNextPhase2PatternType()
         {
             int nextStep = _cycleStepIndex % 4;
+            if (_phase3Entered)
+            {
+                return (nextStep == 1) ? typeof(KyoshoFermataPatternGimmick) : typeof(KyoshoFinalePatternGimmick);
+            }
             return (nextStep == 1) ? typeof(KyoshoStaccatoPatternGimmick) : typeof(KyoshoFermataPatternGimmick);
+        }
+
+        public bool NextPhase3ConductUsesCompound()
+        {
+            bool useCompound = (_phase3ConductSubIndex % 2) == 1;
+            _phase3ConductSubIndex++;
+            return useCompound;
+        }
+
+        public void SetMaestroPose(KnightMove move, int frame = 0)
+        {
+            if (!_phase3Entered || swarm == null || maestroMoves == null || !maestroMoves.Ready) return;
+            swarm.Knight.moves = maestroMoves;
+            swarm.Knight.SetPose(move, frame);
+            swarm.Knight.UpdatePose();
         }
 
         public void SetPhaseState(KyoshoPhaseState newState)
@@ -784,10 +927,20 @@ namespace RealSteel.Boss.Kyosho
 
             if (swarm != null)
             {
-                // 2페 나노봇 유동감 강화
-                swarm.Blob.wobble = 0.14f;
-                swarm.Blob.flow = 0.32f;
-                swarm.Blob.bind = 0.78f;
+                if (swarm.Blob.shape != null && swarm.Blob.shape.Ready)
+                {
+                    // 2페 오케스트라 실루엣 선명도 유지 + 약한 생동감만 보강
+                    swarm.Blob.wobble = 0.02f;
+                    swarm.Blob.flow = 0.06f;
+                    swarm.Blob.bind = 0.92f;
+                }
+                else
+                {
+                    // 2페 나노봇 유동감 강화
+                    swarm.Blob.wobble = 0.14f;
+                    swarm.Blob.flow = 0.32f;
+                    swarm.Blob.bind = 0.78f;
+                }
             }
 
             _sectionManager?.ActivatePhase2InitialSections();
@@ -827,38 +980,352 @@ namespace RealSteel.Boss.Kyosho
 
         private void OnFinalBlowWindowExpired()
         {
-            // 만약 4박 그로기 동안 플레이어가 한 번도 공격하지 못했다면, 2페 1순환 후 피날레 재진입으로 소프트락 방지
+            // 만약 4박 그로기 동안 플레이어가 한 번도 공격하지 못했다면, 현재 페이즈 1순환 후 피날레 재진입으로 소프트락 방지
             if (IsWaitingFinalBlow && Snapshot != null && Snapshot.IsAlive && !IsCombatStopped)
             {
                 IsWaitingFinalBlow = false;
-                _phaseState = KyoshoPhaseState.Phase2;
-                _sectionManager?.SetTemporarilyGatheredForFinale(false);
+                _phaseState = _phase3Entered ? KyoshoPhaseState.Phase3 : KyoshoPhaseState.Phase2;
+                if (!_phase3Entered)
+                {
+                    _sectionManager?.SetTemporarilyGatheredForFinale(false);
+                }
                 ScheduleFinaleRetryAfterOneCycle();
             }
         }
 
         public void ScheduleFinaleRetryAfterOneCycle()
         {
-            _phaseState = KyoshoPhaseState.Phase2;
+            _phaseState = _phase3Entered ? KyoshoPhaseState.Phase3 : KyoshoPhaseState.Phase2;
             _cycleStepIndex = 0;
-            _finaleRetryRemainingPatterns = 5; // 지휘→스타카토→지휘→페르마타(4패턴) 후 5번째에 피날레
+            _finaleRetryRemainingPatterns = 5; // 1순환(4패턴) 후 5번째에 피날레
         }
 
         private void ExecuteFinalBlowVictory()
         {
-            if (Snapshot == null || !IsWaitingFinalBlow) return;
+            if (Snapshot == null || !IsWaitingFinalBlow || _isEncoreRunning) return;
+
+            if (SelectedDifficulty == BossDifficulty.Hell && !_phase3Entered)
+            {
+                // 헬 3페이즈 [커튼콜 앙코르 & 픽셀 마에스트로 각성]
+                IsWaitingFinalBlow = false;
+                IsInvincible = true;
+                var encoreToken = RenewStateCancellationToken();
+                StateMachine.ChangeState(new KyoshoEncoreHoldState(this, encoreToken));
+                TriggerHellEncoreAwakeningAsync(encoreToken).Forget();
+                return;
+            }
+
             IsWaitingFinalBlow = false;
             _phaseState = KyoshoPhaseState.Defeated;
             Snapshot.currentHp = 0;
             SyncHpToHubAndViews();
 
-            Debug.Log("<color=green>[KyoshoBossController] ▶ 최후의 일격 적중! 쿄쇼 2페이즈 토벌 완료!</color>");
+            string clearLabel = _phase3Entered ? "헬 3페이즈 커튼콜" : "2페이즈";
+            Debug.Log($"<color=green>[KyoshoBossController] ▶ 최후의 일격 적중! 쿄쇼 {clearLabel} 토벌 완료!</color>");
             ProcessPostDamageReactions(Snapshot.maxHp);
+        }
+
+        private async UniTaskVoid TriggerHellEncoreAwakeningAsync(CancellationToken token)
+        {
+            _isEncoreRunning = true;
+            IsInvincible = true;
+            _phaseState = KyoshoPhaseState.EncoreAwakening;
+
+            try
+            {
+                if (Snapshot != null)
+                {
+                    Snapshot.isGroggy = false;
+                    Snapshot.currentDamageMultiplier = 1.0f;
+                    Snapshot.currentHp = 1;
+                    _lastAuthoritativeHp = 1;
+                    SyncHpToHubAndViews();
+                }
+
+                SetGroggyView(false, 0f);
+                InterruptActivePatterns();
+                _beatClock?.StopClock();
+                KyoshoSfx.StopBgm(0.18f);
+                _sectionManager?.SetTemporarilyGatheredForFinale(true);
+                _sectionStatusHud?.SetVisible(false);
+                if (_masterRig != null && _masterRig.Active) _masterRig.End();
+                if (_hurtCollider != null) _hurtCollider.enabled = false;
+                _scorePreviewHud?.ShowVariationStatus(null);
+
+                // 1) 페이크 격파(1.5초 정적) — 전 봇 바닥 붕괴
+                if (swarm != null)
+                {
+                    GetArenaBounds(out float minX, out float maxX);
+                    swarm.ScatterOnFloor(minX + 0.5f, maxX - 0.5f);
+                    swarm.Blob.glow = 0f;
+                    swarm.Ring.glow = 0f;
+                }
+
+                await UniTask.Delay(TimeSpan.FromSeconds(1.5f), cancellationToken: token);
+                if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
+
+                // 2) 4박 관중 박수(160 BPM Presto 정렬) & 강제 앙코르 대사
+                _beatClock?.StartClock(KyoshoConstants.Phase3Bpm, 4);
+                _beatIndicatorHud?.Bind(_beatClock, SelectedDifficulty);
+
+                var barkPlayer = FindAnyObjectByType<RealSteel.Dialogue.BattleBarkPlayer>();
+                barkPlayer?.NotifyBossPartBroken(KyoshoConstants.BarkEncore, ignoreCooldown: true);
+                _scorePreviewHud?.ShowVariationStatus("관중석: 앙코르!! (ENCORE!! — 160 BPM Presto)");
+
+                for (int b = 0; b < 4; b++)
+                {
+                    token.ThrowIfCancellationRequested();
+                    KyoshoSfx.PlayCue(sfxData?.encoreApplause, "encore_applause", transform.position, volumeScale: 0.72f + 0.08f * b);
+                    if (_beatClock != null && _beatClock.IsRunning)
+                    {
+                        await _beatClock.WaitBeatsAsync(1f, token);
+                    }
+                    else
+                    {
+                        await UniTask.Delay(TimeSpan.FromSeconds(60f / KyoshoConstants.Phase3Bpm), cancellationToken: token);
+                    }
+                }
+
+                if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
+
+                // 3) 픽셀 마에스트로 각성 + BGM 전환 + HP 45% 회복
+                _scorePreviewHud?.ShowVariationStatus("헬 3페이즈 각성 — 픽셀 마에스트로 (Pixel Maestro)");
+                KyoshoSfx.PlayCue(sfxData?.encoreAwaken, "encore_awaken", transform.position);
+                KyoshoSfx.PlayPhase3Bgm(0.35f);
+
+                await AssemblePixelMaestroSwarmAsync(token);
+                if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
+
+                _phase3Entered = true;
+                _phase3ConductSubIndex = 0;
+                _cycleStepIndex = 0;
+                _finaleTriggered = false;
+                _finaleRetryRemainingPatterns = 0;
+                _pendingGate = PendingGateType.None;
+
+                if (Snapshot != null)
+                {
+                    Snapshot.currentPhase = 3;
+                    int phase3Hp = Mathf.Max(2, Mathf.RoundToInt(Snapshot.maxHp * KyoshoConstants.Phase3HpRatio));
+                    Snapshot.currentHp = phase3Hp;
+                    _lastAuthoritativeHp = phase3Hp;
+                    SyncHpToHubAndViews();
+                }
+
+                if (_beatClock != null && _beatClock.IsRunning && _beatClock.BeatInBar != 0)
+                {
+                    await _beatClock.WaitUntilNextBarAsync(token);
+                }
+
+                _scorePreviewHud?.ShowVariationStatus(null);
+                IsInvincible = false;
+                _isEncoreRunning = false;
+                _phaseState = KyoshoPhaseState.Phase3;
+                if (_hurtCollider != null) _hurtCollider.enabled = true;
+
+                Debug.Log("<color=red>[KyoshoBossController] ▶ 헬 3페이즈 [픽셀 마에스트로] 각성 완료! (160 BPM Presto, HP 45% 재기동)</color>");
+                var p3Token = RenewStateCancellationToken();
+                StateMachine.ChangeState(new KyoshoBeatIdleState(this, p3Token, 0.5f));
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _isEncoreRunning = false;
+            }
+        }
+
+        private async UniTask AssemblePixelMaestroSwarmAsync(CancellationToken token)
+        {
+            if (swarm == null)
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(1.1f), cancellationToken: token);
+                return;
+            }
+
+            GetArenaBounds(out float minX, out float maxX);
+            float kx = Mathf.Clamp(swarm.Blob.center.x, minX + 3f, maxX - 3f);
+            bool useSprite = maestroMoves != null && maestroMoves.Ready;
+
+            var k = swarm.Knight;
+            k.moves = useSprite ? maestroMoves : null;
+            k.reinforce = false;
+            k.origin = new Vector3(kx, _arenaFloorY + (useSprite ? 0f : 0.6f), 0f);
+            if (useSprite)
+            {
+                int total = swarm.Count;
+                int sc = Mathf.Max(1, maestroMoves.pixelScale);
+                while (sc > 1 && maestroMoves.MaxBodyBots(sc) * 0.75f > total * 0.85f) sc--;
+                k.scaleOverride = sc;
+                k.SetPose(maestroMoves.idle, 0);
+            }
+            k.facing = GetFacingToPlayerSign();
+            k.lookAt = GetPlayerAimCenter();
+            k.lean = 0f;
+            k.armAngle = 0f;
+            k.bladeAngle = 0f;
+            k.bladeDanger = false;
+            k.UpdatePose();
+            k.stiffness = 12f;
+            k.damping = 4f;
+            k.maxSpeed = 6f;
+            k.noise = 0.004f;
+
+            var bots = swarm.Bots;
+            var eyeIds = new HashSet<int>();
+            var all = new List<int>(bots.Length);
+            for (int i = 0; i < bots.Length; i++) all.Add(i);
+
+            Vector3 under = new Vector3(kx, _arenaFloorY, 0f);
+            all.Sort((a, b) => (bots[a].pos - under).sqrMagnitude.CompareTo((bots[b].pos - under).sqrMagnitude));
+
+            // 붉은 3점 눈 먼저 점등
+            for (int j = 0; j < 3 && j < all.Count; j++)
+            {
+                int idx = all[j];
+                IgniteMaestroEyeBot(idx, j);
+                eyeIds.Add(idx);
+            }
+
+            // 나머지 봇을 기사 본체(G_Knight) + 후광 탄약(G_Halo)으로 흡입 조립
+            var rest = new List<int>(bots.Length);
+            Vector3 chest = k.ChestWorld;
+            for (int i = 0; i < bots.Length; i++)
+            {
+                if (!eyeIds.Contains(i)) rest.Add(i);
+            }
+            rest.Sort((a, b) => (bots[a].pos - chest).sqrMagnitude.CompareTo((bots[b].pos - chest).sqrMagnitude));
+
+            int desiredKnight = useSprite
+                ? Mathf.Max(200, maestroMoves.MaxBodyBots(k.Scale))
+                : Mathf.Clamp(Mathf.RoundToInt(KnightGuide.BodyArea / Mathf.Max(0.0001f, swarm.spacing * swarm.spacing)), 200, Mathf.Max(200, Mathf.RoundToInt(swarm.Count * 0.70f)));
+            int knightN = Mathf.Min(desiredKnight, Mathf.RoundToInt(rest.Count * 0.72f));
+
+            swarm.Halo.center = chest + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
+            swarm.Halo.radius = 2.6f;
+            swarm.Halo.bind = 0.90f;
+            swarm.Halo.glow = 0.45f;
+
+            float targetStiff = useSprite ? maestroMoves.bodySnap : 900f;
+            float targetDamp = useSprite ? 1.8f * Mathf.Sqrt(maestroMoves.bodySnap) : 55f;
+            float targetSpeed = useSprite ? maestroMoves.snapSpeed : 95f;
+
+            double gatherStart = _beatClock != null && _beatClock.IsRunning ? _beatClock.TotalBeats : 0.0;
+            const double gatherBeats = 3.0;
+            int next = 0;
+
+            float elapsed = 0f;
+            float fallbackDur = (float)(gatherBeats * (60.0 / KyoshoConstants.Phase3Bpm));
+            while (next < rest.Count)
+            {
+                token.ThrowIfCancellationRequested();
+                float q = (_beatClock != null && _beatClock.IsRunning)
+                    ? Mathf.Clamp01((float)((_beatClock.TotalBeats - gatherStart) / gatherBeats))
+                    : Mathf.Clamp01(elapsed / Mathf.Max(0.1f, fallbackDur));
+
+                int upto = Mathf.Min(rest.Count, Mathf.CeilToInt(rest.Count * q));
+                for (; next < upto; next++)
+                {
+                    BindAwakenedMaestroBot(rest[next], next < knightN, next, useSprite, kx);
+                }
+
+                swarm.dark = Mathf.Clamp01(q);
+                k.stiffness = Mathf.Lerp(12f, targetStiff, q * q);
+                k.damping = Mathf.Lerp(4f, targetDamp, q);
+                k.maxSpeed = Mathf.Lerp(6f, targetSpeed, q);
+                k.facing = GetFacingToPlayerSign();
+                k.UpdatePose();
+                swarm.Halo.center = k.ChestWorld + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
+                swarm.Halo.spin += Time.deltaTime * 110f;
+                transform.position = k.ChestWorld;
+
+                if (q >= 1f) break;
+                elapsed += Time.deltaTime;
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
+
+            for (; next < rest.Count; next++)
+            {
+                BindAwakenedMaestroBot(rest[next], next < knightN, next, useSprite, kx);
+            }
+
+            k.stiffness = targetStiff;
+            k.damping = targetDamp;
+            k.maxSpeed = targetSpeed;
+            k.reinforce = true;
+            swarm.dark = 1f;
+            transform.position = k.ChestWorld;
+        }
+
+        private void IgniteMaestroEyeBot(int botIdx, int eyeOrdinal)
+        {
+            ref NanoBot b = ref swarm.Bots[botIdx];
+            b.seg = -1;
+            b.segV = new Vector2(eyeOrdinal - 1, 0f);
+            b.tint = new Color32(255, 40, 36, 255);
+            b.glow = 7f;
+            b.rim = 0f;
+            swarm.Bind(botIdx, RSNanoSwarm.G_Knight);
+        }
+
+        private void BindAwakenedMaestroBot(int botIdx, bool toKnight, int ordinal, bool useSprite, float kx)
+        {
+            ref NanoBot b = ref swarm.Bots[botIdx];
+            b.glow = 0f;
+            b.tint = new Color32(255, 255, 255, 255);
+            if (b.mode == BotMode.Dead)
+            {
+                b.pos = new Vector3(kx + UnityEngine.Random.Range(-5f, 5f), _arenaFloorY, UnityEngine.Random.Range(-1f, 2f));
+                b.scale = 0f;
+            }
+            if (toKnight && useSprite)
+            {
+                b.seg = 0;
+                b.cell = -1;
+                b.rim = 0f;
+                swarm.Bind(botIdx, RSNanoSwarm.G_Knight);
+            }
+            else if (toKnight)
+            {
+                KnightGuide.Sample(ref b, NanoLattice.Halton(ordinal, 2), NanoLattice.Halton(ordinal, 3), NanoLattice.Halton(ordinal, 5), NanoLattice.Halton(ordinal, 7));
+                b.rim = 0f;
+                swarm.Bind(botIdx, RSNanoSwarm.G_Knight);
+            }
+            else
+            {
+                b.v = new Vector3(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
+                b.rim = 0.35f;
+                swarm.Bind(botIdx, RSNanoSwarm.G_Halo);
+            }
+        }
+
+        private sealed class KyoshoEncoreHoldState : RealSteel.Boss.FSM.BossStateBase
+        {
+            public override string StateName => "KyoshoEncoreAwakening";
+            public KyoshoEncoreHoldState(KyoshoBossController kyosho, CancellationToken token) : base(kyosho, token) { }
         }
 
         public void SetBlobGroggyVisual(bool groggy)
         {
             if (swarm == null) return;
+            if (_phase3Entered)
+            {
+                // 커튼콜 인사: 기사가 허리를 숙이고 후광이 밝아짐
+                swarm.Knight.lean = groggy ? -26f : 0f;
+                swarm.Knight.UpdatePose();
+                swarm.Halo.glow = groggy ? 1.4f : 0.3f;
+                return;
+            }
+            if (swarm.Blob.shape != null && swarm.Blob.shape.Ready)
+            {
+                swarm.Blob.shapeScale = orchestraSilhouetteScale;
+                swarm.Blob.bind = groggy ? 0.55f : (_variation1Completed ? 0.92f : 0.94f);
+                swarm.Blob.wobble = groggy ? 0.05f : (_variation1Completed ? 0.02f : 0.015f);
+                swarm.Blob.flow = groggy ? 0.18f : (_variation1Completed ? 0.06f : 0.04f);
+                swarm.Blob.glow = groggy ? 0.9f : 0f;
+                return;
+            }
             swarm.Blob.bind = groggy ? 0.35f : (_variation1Completed ? 0.78f : 1f);
             swarm.Blob.glow = groggy ? 0.9f : 0f;
         }
@@ -887,6 +1354,10 @@ namespace RealSteel.Boss.Kyosho
         {
             if (swarm != null)
             {
+                if (_phase3Entered)
+                {
+                    return swarm.Knight.HeadWorld + Vector3.up * 0.55f;
+                }
                 return swarm.Blob.center + new Vector3(0f, swarm.Blob.radius.y + 1.0f, 0f);
             }
             return transform.position + Vector3.up * 2.6f;

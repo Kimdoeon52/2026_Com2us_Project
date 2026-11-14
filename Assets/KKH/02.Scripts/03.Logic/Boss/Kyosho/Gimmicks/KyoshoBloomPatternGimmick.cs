@@ -49,8 +49,7 @@ namespace RealSteel.Boss.Kyosho
             List<float> spawnXs = PickValidStemPositionsX(count);
             float floorY = Kyosho.ArenaFloorY;
 
-            // 1박: 파편 살포 (모양으로 개화 종류 예고)
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomSeedToss, "bloom_toss", Swarm.Blob.center);
+            // 1박: 파편 살포 (모양으로 개화 종류 예고 + 펜타토닉 하프 아르페지오)
             var activeStems = new List<KyoshoBloomStemFieldGimmick>(count);
             for (int i = 0; i < spawnXs.Count; i++)
             {
@@ -61,6 +60,7 @@ namespace RealSteel.Boss.Kyosho
                 var stem = _stemPool[i];
                 stem.ActivateSeedPreview(landing, bType);
                 activeStems.Add(stem);
+                KyoshoSfx.PlayBloomSeedHarmony(i, landing);
 
                 // 씨앗 투척 궤적 나노봇
                 Vector3 vel = (landing - Swarm.Blob.center) / Mathf.Max(0.2f, Clock.BeatSec * 0.7f);
@@ -142,7 +142,7 @@ namespace RealSteel.Boss.Kyosho
                     continue;
                 }
 
-                TriggerBloomAttack(stem);
+                TriggerBloomAttack(stem, firedCount);
                 firedCount++;
 
                 if (firedCount < maxSimultaneous && firedCount < surviving.Count)
@@ -168,7 +168,7 @@ namespace RealSteel.Boss.Kyosho
             foreach (var stem in _stemPool) stem.DeactivateStem();
         }
 
-        private void TriggerBloomAttack(KyoshoBloomStemFieldGimmick stem)
+        private void TriggerBloomAttack(KyoshoBloomStemFieldGimmick stem, int openIndex)
         {
             if (stem == null || !stem.IsAliveAndUncut) return;
 
@@ -180,7 +180,7 @@ namespace RealSteel.Boss.Kyosho
             {
                 case KyoshoBloomType.Note:
                 {
-                    KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomOpenNote, "bloom_note", tip);
+                    KyoshoSfx.PlayBloomOpenHarmony(KyoshoBloomType.Note, openIndex, tip);
                     Vector3 baseDir = (playerCenter - tip);
                     baseDir.z = 0f;
                     if (baseDir.sqrMagnitude < 0.01f) baseDir = Vector3.left;
@@ -199,7 +199,7 @@ namespace RealSteel.Boss.Kyosho
                 }
                 case KyoshoBloomType.Trumpet:
                 {
-                    KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomOpenTrumpet, "bloom_trumpet", tip);
+                    KyoshoSfx.PlayBloomOpenHarmony(KyoshoBloomType.Trumpet, openIndex, tip);
                     float dirX = playerCenter.x >= tip.x ? 1f : -1f;
                     Vector3 beamStart = new Vector3(tip.x, Kyosho.ArenaFloorY + 0.85f, -0.08f);
                     Vector3 beamEnd = beamStart + Vector3.right * (dirX * 3.2f);
@@ -213,7 +213,7 @@ namespace RealSteel.Boss.Kyosho
                 }
                 case KyoshoBloomType.Cymbal:
                 {
-                    KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomOpenCymbal, "bloom_cymbal", stem.transform.position);
+                    KyoshoSfx.PlayBloomOpenHarmony(KyoshoBloomType.Cymbal, openIndex, stem.transform.position);
                     Vector3 center = stem.transform.position + Vector3.up * 0.9f;
                     SpawnTransientRingVisual(center, 1.55f, new Color(1f, 0.42f, 0.75f, 0.78f));
 

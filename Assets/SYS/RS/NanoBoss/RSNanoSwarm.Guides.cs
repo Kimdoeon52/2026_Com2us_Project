@@ -49,6 +49,11 @@ namespace RealSteel.NanoBoss
 
         public float aspect = 1.26f;          // 가로 ÷ 세로 (격자 자리표를 이 비율로 만든다)
 
+        public RSNanoSpriteShape shape;       // 스프라이트 실루엣 (null이면 기본 타원 덩어리)
+        public int shapeFrame;                // 현재 프레임 번호
+        public float shapeScale = 1.45f;      // 실루엣 크기 배율
+        public bool shapeArtColor = true;     // 픽셀 RGB 색상 반영 여부
+
         public BlobGuide() { name = "덩어리"; stiffness = 26f; damping = 6.5f; maxSpeed = 18f; noise = 0.05f; bind = 1f; }
     }
 

@@ -32,7 +32,7 @@ namespace RealSteel.NanoBoss
         public int lattice;     // 격자 판으로 그리는 가이드인가
     }
 
-    public struct BlobSim { public float3 center, radius, bulgeDir; public float wobble, wobbleSpeed, flow, flowSpeed, bulge, floorY, ext; }
+    public struct BlobSim { public float3 center, radius, bulgeDir; public float wobble, wobbleSpeed, flow, flowSpeed, bulge, floorY, ext; public int sprite, artColor; }
     public struct TubeSim { public float r0, r1; }
     public struct RingSim { public float3 center, axis; public float radius, length, angle; }
     public struct KnightSim
@@ -224,6 +224,7 @@ namespace RealSteel.NanoBoss
         [NativeDisableUnsafePtrRestriction] public int* sorted;
         [NativeDisableUnsafePtrRestriction] public float2* sortedPos;
         [NativeDisableUnsafePtrRestriction] public float4* cellVel;
+        [NativeDisableUnsafePtrRestriction] public uint* blobSlotColor;
         [NativeDisableUnsafePtrRestriction] public uint* limbSlotColor;
         [NativeDisableUnsafePtrRestriction] public float4* knightSlots;     // 그림 기사: 자리 (월드 xyz, w = 0 몸 · 1 칼날 · 2 효과)
         [NativeDisableUnsafePtrRestriction] public uint* knightColors;
@@ -410,6 +411,40 @@ namespace RealSteel.NanoBoss
 
         float3 BlobTarget(NanoBot* b, ref Feel f)
         {
+            if (blob.sprite != 0)
+            {
+                float3 local = b->blobV * new float3(blob.radius.x * 0.5f, blob.radius.y * 0.45f, 0f);
+                int sc = b->cell;
+                if (sc >= 0 && sc < blobSlotCount)
+                {
+                    float4 s = blobSlots[sc];
+                    local = s.xyz;
+                    if (blob.flow > 0.001f)
+                    {
+                        float sph = b->hash * 6.2832f;
+                        float sfs = time * blob.flowSpeed;
+                        local += new float3(math.sin(sfs * 1.1f + sph), math.cos(sfs * 0.9f + sph * 1.7f), 0f) * (blob.flow * 0.14f);
+                    }
+                    if (blob.artColor != 0 && blobSlotColor != null)
+                        f.slotColor = blobSlotColor[sc];
+                }
+                else f.lattice = false;
+
+                f.space = spacing * 0.78f;
+                float breath = 1f + blob.wobble * 0.25f * math.sin(time * blob.wobbleSpeed * 1.4f + b->hash * 0.5f);
+                local.y *= breath;
+                if (blob.bulge > 0f)
+                {
+                    float dm = math.length(local.xy);
+                    if (dm > 1e-4f)
+                    {
+                        float k = math.max(0f, (local.x * blob.bulgeDir.x + local.y * blob.bulgeDir.y) / dm);
+                        local += blob.bulgeDir * (blob.bulge * k * k * 0.45f);
+                    }
+                }
+                return blob.center + local;
+            }
+
             float3 vf = b->blobV;
             float ph = b->hash * 6.2832f, fs = time * blob.flowSpeed;
             vf += new float3(math.sin(fs * 0.9f + ph), math.sin(fs * 1.1f + ph * 1.7f), math.sin(fs * 0.6f + ph * 2.3f)) * blob.flow;

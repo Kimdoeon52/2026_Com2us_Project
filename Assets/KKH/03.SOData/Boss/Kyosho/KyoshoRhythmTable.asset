@@ -31,30 +31,44 @@ MonoBehaviour:
     notes:
     - beatOffset: 0
       noteType: 1
-      pitchIndex: 4
+      pitchIndex: 7
     - beatOffset: 1
       noteType: 0
       pitchIndex: 0
     - beatOffset: 2
       noteType: 1
-      pitchIndex: 2
+      pitchIndex: 4
     - beatOffset: 3
       noteType: 1
-      pitchIndex: 0
+      pitchIndex: 2
   - label: "\uAE30\uBCF8 3 [\u2669 \u2669 \u2669 \U0001D13D]"
     notes:
     - beatOffset: 0
       noteType: 1
-      pitchIndex: 0
+      pitchIndex: 2
     - beatOffset: 1
       noteType: 1
-      pitchIndex: 1
+      pitchIndex: 4
     - beatOffset: 2
       noteType: 1
-      pitchIndex: 2
+      pitchIndex: 7
     - beatOffset: 3
       noteType: 0
       pitchIndex: 0
+  - label: "\uAE30\uBCF8 4 [\u2669 \u2669 \u2669 \u2669]"
+    notes:
+    - beatOffset: 0
+      noteType: 1
+      pitchIndex: 4
+    - beatOffset: 1
+      noteType: 1
+      pitchIndex: 5
+    - beatOffset: 2
+      noteType: 1
+      pitchIndex: 6
+    - beatOffset: 3
+      noteType: 1
+      pitchIndex: 7
   normalBars:
   - label: "\uBCF4\uD1B5 1 [\u2669 \u266A\u266A \U0001D13D \u2669]"
     notes:
@@ -66,30 +80,30 @@ MonoBehaviour:
       pitchIndex: 2
     - beatOffset: 1.5
       noteType: 2
-      pitchIndex: 3
+      pitchIndex: 4
     - beatOffset: 2
       noteType: 0
       pitchIndex: 0
     - beatOffset: 3
       noteType: 1
-      pitchIndex: 4
+      pitchIndex: 7
   - label: "\uBCF4\uD1B5 2 [\u266A\u266A \u2669 \u266A\u266A \U0001D13D]"
     notes:
     - beatOffset: 0
       noteType: 2
-      pitchIndex: 2
+      pitchIndex: 4
     - beatOffset: 0.5
       noteType: 2
-      pitchIndex: 3
+      pitchIndex: 5
     - beatOffset: 1
       noteType: 1
-      pitchIndex: 4
+      pitchIndex: 7
     - beatOffset: 2
       noteType: 2
-      pitchIndex: 2
+      pitchIndex: 6
     - beatOffset: 2.5
       noteType: 2
-      pitchIndex: 1
+      pitchIndex: 4
     - beatOffset: 3
       noteType: 0
       pitchIndex: 0
@@ -97,7 +111,30 @@ MonoBehaviour:
     notes:
     - beatOffset: 0
       noteType: 1
+      pitchIndex: 2
+    - beatOffset: 1
+      noteType: 2
+      pitchIndex: 4
+    - beatOffset: 1.5
+      noteType: 2
+      pitchIndex: 5
+    - beatOffset: 2
+      noteType: 2
+      pitchIndex: 7
+    - beatOffset: 2.5
+      noteType: 2
+      pitchIndex: 4
+    - beatOffset: 3
+      noteType: 0
       pitchIndex: 0
+  - label: "\uBCF4\uD1B5 4 [\u266A\u266A \u266A\u266A \u2669 \U0001D13D]"
+    notes:
+    - beatOffset: 0
+      noteType: 2
+      pitchIndex: 5
+    - beatOffset: 0.5
+      noteType: 2
+      pitchIndex: 4
     - beatOffset: 1
       noteType: 2
       pitchIndex: 2
@@ -105,11 +142,8 @@ MonoBehaviour:
       noteType: 2
       pitchIndex: 4
     - beatOffset: 2
-      noteType: 2
-      pitchIndex: 5
-    - beatOffset: 2.5
-      noteType: 2
-      pitchIndex: 4
+      noteType: 1
+      pitchIndex: 7
     - beatOffset: 3
       noteType: 0
       pitchIndex: 0
@@ -121,30 +155,30 @@ MonoBehaviour:
       pitchIndex: 0
     - beatOffset: 1.5
       noteType: 2
-      pitchIndex: 2
+      pitchIndex: 4
     - beatOffset: 2
       noteType: 2
-      pitchIndex: 3
+      pitchIndex: 5
     - beatOffset: 2.5
       noteType: 2
-      pitchIndex: 4
+      pitchIndex: 6
     - beatOffset: 3
       noteType: 1
-      pitchIndex: 5
+      pitchIndex: 7
   - label: "\uC5B4\uB824\uC6C0 2 [\u266A\u266A \u2669. \u266A \u2669]"
     notes:
     - beatOffset: 0
       noteType: 2
-      pitchIndex: 4
+      pitchIndex: 7
     - beatOffset: 0.5
       noteType: 2
-      pitchIndex: 3
+      pitchIndex: 6
     - beatOffset: 1
       noteType: 1
-      pitchIndex: 2
+      pitchIndex: 4
     - beatOffset: 2.5
       noteType: 2
-      pitchIndex: 1
+      pitchIndex: 2
     - beatOffset: 3
       noteType: 1
       pitchIndex: 0
@@ -161,10 +195,30 @@ MonoBehaviour:
       pitchIndex: 0
     - beatOffset: 3
       noteType: 2
-      pitchIndex: 5
+      pitchIndex: 6
     - beatOffset: 3.5
       noteType: 2
+      pitchIndex: 7
+  - label: "\uC5B4\uB824\uC6C0 4 [\u266A\u266A \u266A\u266A \u2669 \u2669]"
+    notes:
+    - beatOffset: 0
+      noteType: 2
       pitchIndex: 4
+    - beatOffset: 0.5
+      noteType: 2
+      pitchIndex: 7
+    - beatOffset: 1
+      noteType: 2
+      pitchIndex: 6
+    - beatOffset: 1.5
+      noteType: 2
+      pitchIndex: 5
+    - beatOffset: 2
+      noteType: 1
+      pitchIndex: 4
+    - beatOffset: 3
+      noteType: 1
+      pitchIndex: 7
   hellBars:
   - label: "\uD5EC 1 [3\u9023 \u2669 3\u9023 \U0001D13D]"
     notes:
@@ -179,16 +233,16 @@ MonoBehaviour:
       pitchIndex: 4
     - beatOffset: 1
       noteType: 1
-      pitchIndex: 5
+      pitchIndex: 7
     - beatOffset: 2
       noteType: 4
-      pitchIndex: 4
+      pitchIndex: 6
     - beatOffset: 2.3333333
       noteType: 4
-      pitchIndex: 2
+      pitchIndex: 4
     - beatOffset: 2.6666667
       noteType: 4
-      pitchIndex: 0
+      pitchIndex: 2
     - beatOffset: 3
       noteType: 0
       pitchIndex: 0
@@ -196,22 +250,51 @@ MonoBehaviour:
     notes:
     - beatOffset: 0
       noteType: 1
-      pitchIndex: 0
+      pitchIndex: 4
     - beatOffset: 1.5
       noteType: 2
       pitchIndex: 2
     - beatOffset: 2
       noteType: 4
-      pitchIndex: 3
+      pitchIndex: 4
     - beatOffset: 2.3333333
       noteType: 4
-      pitchIndex: 4
+      pitchIndex: 5
     - beatOffset: 2.6666667
       noteType: 4
-      pitchIndex: 5
+      pitchIndex: 6
     - beatOffset: 3
       noteType: 1
+      pitchIndex: 7
+  - label: "\uD5EC 3 [3\u9023 3\u9023 \u266A\u266A \u2669]"
+    notes:
+    - beatOffset: 0
+      noteType: 4
+      pitchIndex: 7
+    - beatOffset: 0.33333334
+      noteType: 4
+      pitchIndex: 6
+    - beatOffset: 0.6666667
+      noteType: 4
+      pitchIndex: 5
+    - beatOffset: 1
+      noteType: 4
       pitchIndex: 4
+    - beatOffset: 1.3333334
+      noteType: 4
+      pitchIndex: 2
+    - beatOffset: 1.6666666
+      noteType: 4
+      pitchIndex: 4
+    - beatOffset: 2
+      noteType: 2
+      pitchIndex: 5
+    - beatOffset: 2.5
+      noteType: 2
+      pitchIndex: 6
+    - beatOffset: 3
+      noteType: 1
+      pitchIndex: 7
   variationSymbols:
   - symbolIndex: 0
     symbolName: "\uB192\uC740\uC74C\uC790\uB9AC\uD45C"
@@ -255,6 +338,7 @@ MonoBehaviour:
     frequencyHz: 440
     borderColor: {r: 1, g: 0.42, b: 0.72, a: 1}
     spriteShape: {fileID: 11400000, guid: 79e0a1b1d4c7b2f4a98c28beb0b31167, type: 2}
+  orchestraBodyShape: {fileID: 11400000, guid: a19d7e3c5b2f48609c1e3d5f7a9b2c4e, type: 2}
   stringsSectionShape: {fileID: 11400000, guid: 041ab48cff6c10e4dbf432ede3cd04ba, type: 2}
   percussionSectionShape: {fileID: 11400000, guid: 269b78beb5c507d4299086eb5215163d, type: 2}
   brassSectionShape: {fileID: 11400000, guid: 71576c96fab90ce49b2665650f513f07, type: 2}

@@ -20,6 +20,7 @@ namespace RealSteel.Boss.Kyosho
 
         private readonly List<KyoshoTrackedBullet> _bullets = new List<KyoshoTrackedBullet>();
         private readonly List<GameObject> _telegraphVisuals = new List<GameObject>();
+        private int _hellBgNoteStep;
 
         private void Awake()
         {
@@ -74,7 +75,7 @@ namespace RealSteel.Boss.Kyosho
                         called[i] = true;
                         if (ev.noteType != KyoshoNoteType.Rest)
                         {
-                            KyoshoSfx.PlayStaccatoCall(ev.pitchIndex, Kyosho.transform.position);
+                            KyoshoSfx.PlayStaccatoCall(ev.pitchIndex, Kyosho.transform.position, i, ev.noteType);
                             Swarm.Blob.bulgeDir = Vector3.up;
                             Swarm.Blob.bulge = 0.45f;
                         }
@@ -144,13 +145,13 @@ namespace RealSteel.Boss.Kyosho
                     if (!firedMain[i] && localBeat >= ev.beatOffset)
                     {
                         firedMain[i] = true;
-                        FireOriginalNoteBullet(ev.noteType, lockedDirX, rapidUseHighLane[i]);
+                        FireOriginalNoteBullet(ev.noteType, lockedDirX, rapidUseHighLane[i], ev.pitchIndex, i);
                     }
 
                     if (enableBonusForIndex[i] && !firedBonus[i] && localBeat >= ev.beatOffset + 0.5f)
                     {
                         firedBonus[i] = true;
-                        FireStringsSixteenthBullet(stringsDirX);
+                        FireStringsSixteenthBullet(stringsDirX, ev.pitchIndex, i);
                     }
                 }
 
@@ -176,7 +177,9 @@ namespace RealSteel.Boss.Kyosho
         /// </summary>
         public void FireSingleImmediateNote(KyoshoNoteType noteType)
         {
-            FireOriginalNoteBullet(noteType);
+            int[] bgMelody = { 0, 2, 4, 7, 5, 4, 2, 0 };
+            int step = _hellBgNoteStep++;
+            FireOriginalNoteBullet(noteType, pitchIndex: bgMelody[step % bgMelody.Length], noteOrderInBar: step);
         }
 
         public void StepActiveBullets(float dt)
@@ -184,7 +187,7 @@ namespace RealSteel.Boss.Kyosho
             KyoshoNanobotAttackHelper.StepTrackedBullets(_bullets, Swarm, Kyosho != null ? Kyosho.PlayerTransform : null, dt, HandleBulletHitPlayer);
         }
 
-        private void FireOriginalNoteBullet(KyoshoNoteType noteType, float? fixedDirX = null, bool useHighLane = false)
+        private void FireOriginalNoteBullet(KyoshoNoteType noteType, float? fixedDirX = null, bool useHighLane = false, int pitchIndex = 0, int noteOrderInBar = 0)
         {
             if (Swarm == null || Kyosho == null) return;
 
@@ -225,10 +228,10 @@ namespace RealSteel.Boss.Kyosho
                 snapToHold: true);
 
             _bullets.Add(b);
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.staccatoFire, "staccato_fire", origin);
+            KyoshoSfx.PlayStaccatoFireMelody(pitchIndex, noteType, noteOrderInBar, origin);
         }
 
-        private void FireStringsSixteenthBullet(float fixedDirX)
+        private void FireStringsSixteenthBullet(float fixedDirX, int basePitchIndex = 0, int bonusOrderInBar = 0)
         {
             if (Swarm == null || Kyosho == null) return;
             var stringsSec = Kyosho.SectionManager?.StringsSection;
@@ -256,7 +259,7 @@ namespace RealSteel.Boss.Kyosho
                 snapToHold: true);
 
             _bullets.Add(b);
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.stringsRapidFire, "strings_fire", origin);
+            KyoshoSfx.PlayStringsCounterMelody(basePitchIndex, bonusOrderInBar, origin);
         }
 
         private void SpawnLaneTelegraph(float startX, float endX, float y, Color color)

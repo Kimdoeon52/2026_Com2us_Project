@@ -296,9 +296,9 @@ namespace RealSteel.BossRace.EditorTools
                 },
                 new BossRaceEntry
                 {
-                    bossId = "boss.region3", regionLabel = 3, bossName = "쿄쇼", typeLabel = "상자형",
-                    tags = "상자형 몸통 · 기물 파괴 2 + 부위 파괴 1",
-                    description = "보스 기획 후 추가 예정입니다.",
+                    bossId = "boss.region3", regionLabel = 3, bossName = "쿄쇼", typeLabel = "나노봇 군집형",
+                    tags = "리듬 · 나노봇 군집 · 악기 섹션 3 + 변주곡",
+                    description = "박자와 지휘 궤적으로 전장을 지배하는 나노봇 오케스트라. 2페이즈에서 분리되는 현악·타악·금관 섹션을 파괴하고 변주곡 음계를 파훼하세요. (헬: 3페이즈 픽셀 마에스트로 각성)",
                     icon = BossRaceArt.Box,
                 },
                 new BossRaceEntry

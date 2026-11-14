@@ -427,9 +427,13 @@ public static class BattleSettlementProcessor
             {
                 string resultStr = playerWon ? "win" : "lose";
                 string diffStr = difficulty.ToString().ToLower();
-                string bossId = string.IsNullOrEmpty(bossMaster.bossID) || bossMaster.bossID == "BOSS_REGION_01"
-                    ? "boss.wheel"
-                    : bossMaster.bossID;
+                string bossId = bossMaster.bossID switch
+                {
+                    "BOSS_REGION_02" => "boss.kyodai",
+                    "BOSS_REGION_03" => "boss.region3",
+                    null or "" or "BOSS_REGION_01" => "boss.wheel",
+                    _ => bossMaster.bossID
+                };
                 progressStore.RecordHunt(resultStr, bossId, diffStr);
                 Debug.Log($"<color=cyan>[정산기] LHM BossProgressStore 토벌 기록 동기화 완료: {bossId} / {diffStr} / {resultStr}</color>");
             }

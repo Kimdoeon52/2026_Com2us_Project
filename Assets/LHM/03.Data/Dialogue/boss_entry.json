@@ -109,6 +109,58 @@
       "lines": [
         { "speaker": "receptionist", "textKey": "boss_entry.kyodai_retry.1" }
       ]
+    },
+    {
+      "id": "boss_entry_kyosho_hint",
+      "band": "Critical",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" },
+        { "variable": "hunt.bossLoseCount", "op": ">=", "value": "3" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyosho_hint.1" },
+        { "speaker": "hero", "textKey": "boss_entry.kyosho_hint.2" }
+      ]
+    },
+    {
+      "id": "boss_entry_kyosho_first_hell",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" },
+        { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" },
+        { "variable": "hunt.targetDifficulty", "op": "==", "value": "hell" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyosho_first_hell.1" },
+        { "speaker": "kyosho", "textKey": "boss_entry.kyosho_first_hell.2", "effects": [ { "type": "zoom", "value": 1.25 }, { "type": "shake", "value": 0.45 } ] },
+        { "speaker": "hero", "textKey": "boss_entry.kyosho_first_hell.3", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "boss_entry_kyosho_first",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" },
+        { "variable": "hunt.bossAttemptCount", "op": "==", "value": "0" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyosho_first.1" },
+        { "speaker": "kyosho", "textKey": "boss_entry.kyosho_first.2", "effects": [ { "type": "zoom", "value": 1.2 }, { "type": "shake", "value": 0.35 } ] },
+        { "speaker": "hero", "textKey": "boss_entry.kyosho_first.3", "effects": [ { "type": "zoom", "value": 1 } ] }
+      ]
+    },
+    {
+      "id": "boss_entry_kyosho_retry",
+      "band": "Fallback",
+      "conditions": [
+        { "variable": "hunt.targetBoss", "op": "==", "value": "boss.region3" }
+      ],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "boss_entry.kyosho_retry.1" }
+      ]
     }
   ]
 }

@@ -19,8 +19,12 @@ namespace RealSteel.Boss.Editor
         private const string SoDir = "Assets/KKH/03.SOData/Boss/Kyosho";
         private const string ShapesDir = SoDir + "/Shapes";
         private const string SpriteDir = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Sprites";
+        private const string SfxDir = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Sound/SFX";
         private const string PrefabPath = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Boss3_Kyosho.prefab";
+        private const string BgmPath = "Assets/LSH/09. Sound/FightSound/BGM/보스3.mp3";
+        private const string MaestroMovesPath = "Assets/SYS/Data/NanoBoss/기사/기사_동작.asset";
         private const string TestScenePath = "Assets/KKH/01.Scene/Battle_Boss_Test 3.unity";
+        private const string Battle3ScenePath = "Assets/NYH/01. SCENE/Battle3.unity";
 
         static KyoshoAssetFactory()
         {
@@ -65,7 +69,7 @@ namespace RealSteel.Boss.Editor
         {
             EnsureDirectories();
 
-            // 1. 6종 음악 문양 & 3종 악기 섹션 픽셀아트 PNG 생성 및 RSNanoSpriteShape 베이킹
+            // 1. 6종 음악 문양 · 4프레임 오케스트라 본체 · 3종 악기 섹션(2프레임) 픽셀아트 PNG 생성 및 RSNanoSpriteShape 베이킹
             var symbolShapes = new RSNanoSpriteShape[6];
             for (int i = 0; i < 6; i++)
             {
@@ -76,6 +80,7 @@ namespace RealSteel.Boss.Editor
                 symbolShapes[i] = BakeShapeAsset($"{ShapesDir}/Shape_Symbol_{i}_{GetSymbolFileSlug(i)}.asset", tex);
             }
 
+            var orchestraShape = BakeOrchestraEnsemblePngAndShape();
             var stringsShape = BakeSectionPngAndShape(KyoshoSectionType.Strings, "Strings", KyoshoConstants.StringsMintColor);
             var percShape = BakeSectionPngAndShape(KyoshoSectionType.Percussion, "Percussion", KyoshoConstants.PercussionAmberColor);
             var brassShape = BakeSectionPngAndShape(KyoshoSectionType.Brass, "Brass", KyoshoConstants.BrassMagentaColor);
@@ -87,12 +92,14 @@ namespace RealSteel.Boss.Editor
             {
                 rhythmTable.variationSymbols[i].spriteShape = symbolShapes[i];
             }
+            rhythmTable.orchestraBodyShape = orchestraShape;
             rhythmTable.stringsSectionShape = stringsShape;
             rhythmTable.percussionSectionShape = percShape;
             rhythmTable.brassSectionShape = brassShape;
             EditorUtility.SetDirty(rhythmTable);
 
             var sfxData = CreateOrLoadAsset<KyoshoSfxData>($"{SoDir}/KyoshoSfxData.asset");
+            GenerateAllSfxWavsAndBind(sfxData);
             EditorUtility.SetDirty(sfxData);
 
             // 3. 패턴 SO 6종 생성
@@ -188,6 +195,15 @@ namespace RealSteel.Boss.Editor
                     KyoshoConstants.PatternConductID, KyoshoConstants.PatternStaccatoID, KyoshoConstants.PatternFermataID, KyoshoConstants.PatternFinaleID
                 }
             });
+            master.phases.Add(new BossPhaseData
+            {
+                phaseIndex = 3,
+                hpThresholdRatio = KyoshoConstants.Phase3HpRatio,
+                availableSkillIDs = new System.Collections.Generic.List<string>
+                {
+                    KyoshoConstants.PatternConductID, KyoshoConstants.PatternFermataID, KyoshoConstants.PatternFinaleID
+                }
+            });
             EditorUtility.SetDirty(master);
 
             // 5. Boss3_Kyosho.prefab 생성
@@ -212,6 +228,11 @@ namespace RealSteel.Boss.Editor
             so.FindProperty("masterData").objectReferenceValue = master;
             so.FindProperty("rhythmTable").objectReferenceValue = rhythmTable;
             so.FindProperty("sfxData").objectReferenceValue = sfxData;
+            var moves = AssetDatabase.LoadAssetAtPath<RSNanoKnightMoves>(MaestroMovesPath);
+            if (moves != null)
+            {
+                so.FindProperty("maestroMoves").objectReferenceValue = moves;
+            }
             so.ApplyModifiedPropertiesWithoutUndo();
 
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
@@ -232,7 +253,48 @@ namespace RealSteel.Boss.Editor
             WireOpenTestScene(scene);
         }
 
+        [MenuItem("RealSteel/Boss/[2] 본 게임 Battle3.unity 에 쿄쇼(Boss3_Kyosho) 배치 및 연동", priority = 21)]
+        public static void WireBattle3Scene()
+        {
+            if (!File.Exists(Battle3ScenePath))
+            {
+                Debug.LogError($"[KyoshoAssetFactory] Battle3 씬을 찾을 수 없습니다: {Battle3ScenePath}");
+                return;
+            }
+            GenerateAssetsAndPrefab();
+            var scene = EditorSceneManager.OpenScene(Battle3ScenePath, OpenSceneMode.Single);
+            WireBattle3OpenScene(scene);
+            AssetDatabase.SaveAssets();
+            Debug.Log("<color=green>[KyoshoAssetFactory] 본 게임 Battle3.unity 에 쿄쇼(Boss3_Kyosho) 배치 및 BattleManager/Camera/Hub 연동 완료!</color>");
+        }
+
         private static void WireOpenTestScene(UnityEngine.SceneManagement.Scene scene)
+        {
+            WireCombatSceneCore(scene, addTester: true);
+        }
+
+        private static void WireBattle3OpenScene(UnityEngine.SceneManagement.Scene scene)
+        {
+            // 기존 2보스 복제 플레이스홀더 오브젝트가 남아있으면 비활성화
+            string[] placeholderNames =
+            {
+                "촉수 생성기", "왼손", "양손 협공", "어깨 레이저 X자", "손바닥 압착",
+                "마디", "=============Object================="
+            };
+            foreach (var rootGo in scene.GetRootGameObjects())
+            {
+                foreach (string name in placeholderNames)
+                {
+                    if (rootGo.name == name && rootGo.activeSelf)
+                    {
+                        rootGo.SetActive(false);
+                    }
+                }
+            }
+            WireCombatSceneCore(scene, addTester: false);
+        }
+
+        private static void WireCombatSceneCore(UnityEngine.SceneManagement.Scene scene, bool addTester)
         {
             var existingKyosho = UnityEngine.Object.FindFirstObjectByType<KyoshoBossController>(FindObjectsInactive.Include);
             GameObject bossGo;
@@ -278,8 +340,7 @@ namespace RealSteel.Boss.Editor
                 EditorUtility.SetDirty(hub);
             }
 
-            // 테스트 씬용 KyoshoGimmickTester 자동 부착 (비침투적 디버그 헬퍼)
-            if (UnityEngine.Object.FindFirstObjectByType<RealSteel.Boss.Test.KyoshoGimmickTester>() == null)
+            if (addTester && UnityEngine.Object.FindFirstObjectByType<RealSteel.Boss.Test.KyoshoGimmickTester>() == null)
             {
                 var testerGo = new GameObject("KyoshoGimmickTester");
                 testerGo.AddComponent<RealSteel.Boss.Test.KyoshoGimmickTester>();
@@ -288,27 +349,66 @@ namespace RealSteel.Boss.Editor
             EditorSceneManager.SaveScene(scene);
         }
 
+        private static RSNanoSpriteShape BakeOrchestraEnsemblePngAndShape()
+        {
+            string pngPath = $"{SpriteDir}/Orchestra_Ensemble.png";
+            GenerateOrchestraEnsemblePng(pngPath);
+            AssetDatabase.ImportAsset(pngPath, ImportAssetOptions.ForceUpdate);
+            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(pngPath);
+            return BakeShapeAsset(
+                $"{ShapesDir}/Shape_Kyosho_Orchestra.asset",
+                tex,
+                KyoshoNanobotAttackHelper.OrchestraFrameCount,
+                1);
+        }
+
         private static RSNanoSpriteShape BakeSectionPngAndShape(KyoshoSectionType type, string slug, Color color)
         {
             string pngPath = $"{SpriteDir}/Section_{slug}.png";
             GenerateSectionPng(pngPath, type, color);
             AssetDatabase.ImportAsset(pngPath, ImportAssetOptions.ForceUpdate);
             var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(pngPath);
-            return BakeShapeAsset($"{ShapesDir}/Shape_Section_{slug}.asset", tex);
+            return BakeShapeAsset(
+                $"{ShapesDir}/Shape_Section_{slug}.asset",
+                tex,
+                KyoshoNanobotAttackHelper.SectionFrameCount,
+                1);
         }
 
-        private static RSNanoSpriteShape BakeShapeAsset(string assetPath, Texture2D tex)
+        private static RSNanoSpriteShape BakeShapeAsset(string assetPath, Texture2D tex, int columns = 1, int rows = 1)
         {
             var shape = CreateOrLoadAsset<RSNanoSpriteShape>(assetPath);
             shape.sheet = tex;
-            shape.columns = 1;
-            shape.rows = 1;
+            shape.columns = Mathf.Max(1, columns);
+            shape.rows = Mathf.Max(1, rows);
             shape.pick = NanoSpritePick.Opaque;
             shape.alphaCut = 0.35f;
             shape.pivot = NanoSpritePivot.Center;
             RSNanoSpriteBaker.Bake(shape);
             EditorUtility.SetDirty(shape);
             return shape;
+        }
+
+        private static void GenerateOrchestraEnsemblePng(string path)
+        {
+            int fw = KyoshoNanobotAttackHelper.OrchestraFrameWidth;
+            int fh = KyoshoNanobotAttackHelper.OrchestraFrameHeight;
+            int fc = KyoshoNanobotAttackHelper.OrchestraFrameCount;
+            var tex = new Texture2D(fw * fc, fh, TextureFormat.RGBA32, false);
+            for (int f = 0; f < fc; f++)
+            {
+                for (int y = 0; y < fh; y++)
+                {
+                    for (int x = 0; x < fw; x++)
+                    {
+                        Color32 c = KyoshoNanobotAttackHelper.SampleOrchestraEnsemblePixel(f, x, y, fw, fh);
+                        tex.SetPixel(f * fw + x, y, c);
+                    }
+                }
+            }
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(tex);
         }
 
         private static void GenerateSymbolPng(string path, int symbolIndex)
@@ -361,31 +461,19 @@ namespace RealSteel.Boss.Editor
 
         private static void GenerateSectionPng(string path, KyoshoSectionType type, Color themeColor)
         {
-            const int S = 36;
-            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
-            for (int y = 0; y < S; y++)
+            int fw = KyoshoNanobotAttackHelper.SectionFrameWidth;
+            int fh = KyoshoNanobotAttackHelper.SectionFrameHeight;
+            int fc = KyoshoNanobotAttackHelper.SectionFrameCount;
+            var tex = new Texture2D(fw * fc, fh, TextureFormat.RGBA32, false);
+            for (int f = 0; f < fc; f++)
             {
-                for (int x = 0; x < S; x++)
+                for (int y = 0; y < fh; y++)
                 {
-                    float nx = (x - 17.5f) / 15f;
-                    float ny = (y - 17.5f) / 15f;
-                    bool on = type switch
+                    for (int x = 0; x < fw; x++)
                     {
-                        KyoshoSectionType.Strings =>
-                            (Mathf.Abs(nx) < 0.10f && ny > -0.85f && ny < 0.88f)
-                            || (nx * nx * 2.1f + (ny + 0.25f) * (ny + 0.25f) * 1.4f < 0.34f)
-                            || (nx * nx * 3.0f + (ny - 0.22f) * (ny - 0.22f) * 2.0f < 0.24f)
-                            || (Mathf.Abs(ny - 0.15f - nx * 0.6f) < 0.06f && Mathf.Abs(nx) < 0.85f),
-                        KyoshoSectionType.Percussion =>
-                            (ny < 0.20f && ny > -0.68f && Mathf.Abs(nx) < 0.75f * (0.58f + 0.42f * (ny + 0.68f)))
-                            || (Mathf.Abs(ny - 0.24f) < 0.10f && Mathf.Abs(nx) < 0.78f)
-                            || (Mathf.Abs(ny - 0.55f + Mathf.Abs(nx) * 0.45f) < 0.08f && Mathf.Abs(nx) > 0.12f && Mathf.Abs(nx) < 0.65f),
-                        _ =>
-                            (Mathf.Abs(Vector2.Distance(new Vector2(nx, ny), Vector2.zero) - 0.52f) < 0.16f)
-                            || (nx > 0.18f && Mathf.Abs(ny + 0.35f) < 0.26f * (nx + 0.2f) && nx < 0.88f)
-                            || (Mathf.Abs(ny) < 0.09f && nx < 0.2f && nx > -0.75f)
-                    };
-                    tex.SetPixel(x, y, on ? Color.Lerp(themeColor, Color.white, (ny + 1f) * 0.2f) : Color.clear);
+                        Color32 c = KyoshoNanobotAttackHelper.SampleSectionEnsemblePixel(type, f, x, y, fw, fh);
+                        tex.SetPixel(f * fw + x, y, c);
+                    }
                 }
             }
             tex.Apply();
@@ -433,11 +521,112 @@ namespace RealSteel.Boss.Editor
             };
         }
 
+        private static void GenerateAllSfxWavsAndBind(KyoshoSfxData sfxData)
+        {
+            if (sfxData == null) return;
+            if (!Directory.Exists(SfxDir)) Directory.CreateDirectory(SfxDir);
+
+            var bgm = AssetDatabase.LoadAssetAtPath<AudioClip>(BgmPath);
+            if (bgm != null)
+            {
+                if (sfxData.bgmMain == null) sfxData.bgmMain = bgm;
+                if (sfxData.bgmPhase2 == null) sfxData.bgmPhase2 = bgm;
+                if (sfxData.bgmPhase3 == null) sfxData.bgmPhase3 = bgm;
+            }
+
+            var mappings = new (KyoshoSfxCue cue, string key, string file)[]
+            {
+                (sfxData.beatDownbeat, "beat_down", "sfx_beat_down.wav"),
+                (sfxData.beatSub, "beat_sub", "sfx_beat_sub.wav"),
+                (sfxData.conductWhoosh, "conduct_whoosh", "sfx_conduct_whoosh.wav"),
+                (sfxData.conductTipFlash, "conduct_flash", "sfx_conduct_flash.wav"),
+                (sfxData.percussionShockwave, "percussion_shock", "sfx_percussion_shock.wav"),
+                (sfxData.staccatoCallNote, "staccato_call", "sfx_staccato_call.wav"),
+                (sfxData.staccatoFire, "staccato_fire", "sfx_staccato_fire.wav"),
+                (sfxData.stringsRapidFire, "strings_fire", "sfx_strings_fire.wav"),
+                (sfxData.bloomSeedToss, "bloom_toss", "sfx_bloom_toss.wav"),
+                (sfxData.bloomStemGrow, "bloom_grow", "sfx_bloom_grow.wav"),
+                (sfxData.bloomStemCut, "bloom_cut", "sfx_bloom_cut.wav"),
+                (sfxData.bloomOpenNote, "bloom_note", "sfx_bloom_note.wav"),
+                (sfxData.bloomOpenTrumpet, "bloom_trumpet", "sfx_bloom_trumpet.wav"),
+                (sfxData.bloomOpenCymbal, "bloom_cymbal", "sfx_bloom_cymbal.wav"),
+                (sfxData.fermataSpawn, "fermata_spawn", "sfx_fermata_spawn.wav"),
+                (sfxData.fermataHoldChord, "fermata_hold", "sfx_fermata_hold.wav"),
+                (sfxData.fermataSlamDrop, "fermata_drop", "sfx_fermata_drop.wav"),
+                (sfxData.brassBeam, "brass_beam", "sfx_brass_beam.wav"),
+                (sfxData.variationCorrect, "variation_ok", "sfx_variation_ok.wav"),
+                (sfxData.variationFailDissonance, "variation_fail", "sfx_variation_fail.wav"),
+                (sfxData.finaleGather, "finale_gather", "sfx_finale_gather.wav"),
+                (sfxData.finaleFullBlast, "finale_blast", "sfx_finale_blast.wav"),
+                (sfxData.sectionBroken, "section_broken", "sfx_section_broken.wav"),
+                (sfxData.encoreApplause, "encore_applause", "sfx_encore_applause.wav"),
+                (sfxData.encoreAwaken, "encore_awaken", "sfx_encore_awaken.wav"),
+            };
+
+            foreach (var (cue, key, file) in mappings)
+            {
+                BindOrGenerateCueWav(cue, key, $"{SfxDir}/{file}");
+            }
+
+            if (sfxData.variationMelodyNotes == null || sfxData.variationMelodyNotes.Length != 6)
+            {
+                sfxData.variationMelodyNotes = new KyoshoSfxCue[6];
+            }
+            string[] solfegeSlugs = { "do", "re", "mi", "fa", "sol", "la" };
+            for (int i = 0; i < 6; i++)
+            {
+                sfxData.variationMelodyNotes[i] ??= new KyoshoSfxCue();
+                BindOrGenerateCueWav(sfxData.variationMelodyNotes[i], $"solfege_{i}", $"{SfxDir}/sfx_solfege_{i}_{solfegeSlugs[i]}.wav");
+            }
+        }
+
+        private static void BindOrGenerateCueWav(KyoshoSfxCue cue, string key, string wavPath)
+        {
+            if (cue == null) return;
+            float[] samples = KyoshoSfx.SynthesizeCueSamples(key, out int sr);
+            if (samples != null && samples.Length > 0)
+            {
+                WritePcm16Wav(wavPath, samples, sr);
+                AssetDatabase.ImportAsset(wavPath, ImportAssetOptions.ForceUpdate);
+            }
+            if (!cue.HasValidClip)
+            {
+                var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(wavPath);
+                if (clip != null) cue.clips = new[] { clip };
+            }
+        }
+
+        private static void WritePcm16Wav(string path, float[] samples, int sampleRate)
+        {
+            using var fs = new FileStream(path, FileMode.Create, FileAccess.Write);
+            using var bw = new BinaryWriter(fs);
+            int dataLen = samples.Length * 2;
+            bw.Write(new[] { 'R', 'I', 'F', 'F' });
+            bw.Write(36 + dataLen);
+            bw.Write(new[] { 'W', 'A', 'V', 'E' });
+            bw.Write(new[] { 'f', 'm', 't', ' ' });
+            bw.Write(16);
+            bw.Write((short)1);
+            bw.Write((short)1);
+            bw.Write(sampleRate);
+            bw.Write(sampleRate * 2);
+            bw.Write((short)2);
+            bw.Write((short)16);
+            bw.Write(new[] { 'd', 'a', 't', 'a' });
+            bw.Write(dataLen);
+            for (int i = 0; i < samples.Length; i++)
+            {
+                short pcm = (short)Mathf.RoundToInt(Mathf.Clamp(samples[i], -1f, 1f) * 32767f);
+                bw.Write(pcm);
+            }
+        }
+
         private static void EnsureDirectories()
         {
             if (!Directory.Exists(SoDir)) Directory.CreateDirectory(SoDir);
             if (!Directory.Exists(ShapesDir)) Directory.CreateDirectory(ShapesDir);
             if (!Directory.Exists(SpriteDir)) Directory.CreateDirectory(SpriteDir);
+            if (!Directory.Exists(SfxDir)) Directory.CreateDirectory(SfxDir);
         }
     }
 }

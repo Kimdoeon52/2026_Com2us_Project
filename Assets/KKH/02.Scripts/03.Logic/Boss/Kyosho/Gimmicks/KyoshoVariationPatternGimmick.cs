@@ -67,11 +67,12 @@ namespace RealSteel.Boss.Kyosho
             bool allowDuplicates = diff == BossDifficulty.Hell;
             bool moveSymbols = diff >= BossDifficulty.Hard;
             bool fireHellStaccato = diff == BossDifficulty.Hell;
-            bool allowRetryOnce = diff <= BossDifficulty.Easy;
+            bool allowRetryOnce = diff <= BossDifficulty.Normal;
 
             Kyosho.IsInvincible = true;
             Kyosho.SetPhaseState(_isSecondVariation ? KyoshoPhaseState.Variation2 : KyoshoPhaseState.Variation1);
-            Kyosho.ScorePreviewHUD?.ShowVariationStatus(_isSecondVariation ? "변주곡 ② — 악상 순서 기억!" : "변주곡 ① — 3음 문양 기억!");
+            Kyosho.ScorePreviewHUD?.ShowVariationStatus(_isSecondVariation ? "변주곡 ② — 상단 카드의 3개 순서를 기억하세요!" : "변주곡 ① — 상단 3개 순서를 기억하세요!");
+            Kyosho.ScorePreviewHUD?.ResetVariationSlots(3);
 
             Kyosho.GetArenaBounds(out float minX, out float maxX);
             float centerX = (minX + maxX) * 0.5f;
@@ -103,7 +104,8 @@ namespace RealSteel.Boss.Kyosho
                 int symIdx = _targetSequence[step];
                 ApplyBossMorphSprite(symIdx, targetCenter);
                 KyoshoSfx.PlaySolfegeNote(symIdx, targetCenter);
-                Kyosho.ScorePreviewHUD?.ShowVariationStatus($"변주곡 출제 ({step + 1}/3) : {KyoshoConstants.SymbolGlyphs[symIdx]} ({KyoshoConstants.SolfegeNames[symIdx]})");
+                Kyosho.ScorePreviewHUD?.RevealVariationSlot(step, symIdx);
+                Kyosho.ScorePreviewHUD?.ShowVariationStatus($"변주곡 출제 ({step + 1}/3) : {KyoshoConstants.SymbolGlyphs[symIdx]} ({KyoshoConstants.SolfegeNames[symIdx]} · {KyoshoConstants.SymbolNames[symIdx]})");
 
                 await Clock.WaitBeatsAsync(morphBeats, token);
             }
@@ -119,7 +121,8 @@ namespace RealSteel.Boss.Kyosho
             _frameHitCandidates.Clear();
             _lastProcessedHitFrame = -1;
 
-            Kyosho.ScorePreviewHUD?.ShowVariationStatus($"순서대로 타격하세요! (0 / 3)  {(allowRetryOnce ? "[1회 재도전 가능]" : "[즉시 판정]")}");
+            Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(0);
+            Kyosho.ScorePreviewHUD?.ShowVariationStatus($"순서대로 타격하세요! (0 / 3)  {(allowRetryOnce ? "[1회 오답 재도전 가능]" : "[즉시 판정]")}");
 
             double inputStart = Clock.TotalBeats;
             double nextHellStaccatoBeat = inputStart + 1.0;
@@ -145,6 +148,7 @@ namespace RealSteel.Boss.Kyosho
             _isInputWindowActive = false;
             ClearSpawnedSymbols();
             Kyosho.ScorePreviewHUD?.ShowVariationStatus(null);
+            Kyosho.ScorePreviewHUD?.HideVariationSequenceSlots();
             Kyosho.IsInvincible = false;
 
             // 5. 결과 처리
@@ -252,6 +256,7 @@ namespace RealSteel.Boss.Kyosho
                 else hitSym.MarkConsumedVisual();
 
                 _currentStep++;
+                Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(_currentStep);
                 Kyosho.ScorePreviewHUD?.ShowVariationStatus($"순서대로 타격하세요! ({_currentStep} / 3)");
 
                 if (_currentStep >= _targetSequence.Count)
@@ -262,13 +267,14 @@ namespace RealSteel.Boss.Kyosho
             else
             {
                 _mistakesCount++;
-                bool allowRetryOnce = Kyosho.SelectedDifficulty <= BossDifficulty.Easy;
+                bool allowRetryOnce = Kyosho.SelectedDifficulty <= BossDifficulty.Normal;
                 if (allowRetryOnce && _mistakesCount == 1)
                 {
-                    // 아주쉬움·쉬움: 1회 오답 시 현재 진행 리셋 & 문양 복원 후 재도전 기회
+                    // 아주쉬움·쉬움·보통: 1회 오답 시 현재 진행 리셋 & 문양 복원 후 재도전 기회
                     KyoshoSfx.PlayCue(KyoshoSfx.Data?.variationFailDissonance, "variation_fail", hitSym.transform.position, 1f, 0.55f);
                     _currentStep = 0;
                     foreach (var s in _spawnedSymbols) s?.RearmForDuplicateStep();
+                    Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(0);
                     Kyosho.ScorePreviewHUD?.ShowVariationStatus("오답! 리셋되었습니다 — 처음부터 다시 타격하세요! (0 / 3)");
                 }
                 else
@@ -403,6 +409,7 @@ namespace RealSteel.Boss.Kyosho
             ClearBossMorphSprite();
             ClearSpawnedSymbols();
             Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
+            Kyosho?.ScorePreviewHUD?.HideVariationSequenceSlots();
             if (Kyosho != null) Kyosho.IsInvincible = false;
         }
     }

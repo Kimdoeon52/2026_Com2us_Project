@@ -23,7 +23,7 @@ namespace RealSteel.Boss.Kyosho
         private void Awake()
         {
             tellBeats = 1f;
-            postDelayBeats = 1f;
+            postDelayBeats = 1.5f;
         }
 
         public void InitializeStemPool(IReadOnlyList<RSNanoLimb> poolLimbs, RSNanoSwarm swarm, Transform poolParent)
@@ -85,15 +85,16 @@ namespace RealSteel.Boss.Kyosho
 
             await Clock.WaitBeatsAsync(1f, token);
 
-            // 2~3박: 줄기 성장 (절단 가능 구간)
+            // 2~4박: 줄기 성장 (절단 가능 구간 — 3박으로 여유 확보)
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomStemGrow, "bloom_grow", Swarm.Blob.center);
             double growStart = Clock.TotalBeats;
             bool isHell = Kyosho.SelectedDifficulty == BossDifficulty.Hell;
+            bool isHardOrHell = Kyosho.SelectedDifficulty >= BossDifficulty.Hard;
 
-            while (Clock.TotalBeats < growStart + 2.0)
+            while (Clock.TotalBeats < growStart + 3.0)
             {
                 token.ThrowIfCancellationRequested();
-                float p = Mathf.Clamp01((float)((Clock.TotalBeats - growStart) / 2.0));
+                float p = Mathf.Clamp01((float)((Clock.TotalBeats - growStart) / 3.0));
                 float sway = isHell && p > 0.75f ? Mathf.Sin((p - 0.75f) * 28f) * 0.65f : Mathf.Sin(Time.time * 4f) * 0.08f;
 
                 for (int i = 0; i < activeStems.Count; i++)
@@ -107,14 +108,14 @@ namespace RealSteel.Boss.Kyosho
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
-            // 4박: 살아남은 봉오리 만개 공격 (헬은 동시 2개 + 근접 휘두르기 판정)
+            // 만개: 살아남은 봉오리 중 동시 상한(Hard/Hell 2개, 이하 1개)만 개화하고 초과분은 회수
             var surviving = new List<KyoshoBloomStemFieldGimmick>();
             foreach (var s in activeStems)
             {
                 if (s.IsAliveAndUncut) surviving.Add(s);
             }
 
-            int maxSimultaneous = isHell ? 2 : 1;
+            int maxSimultaneous = isHardOrHell ? 2 : 1;
             int firedCount = 0;
 
             if (isHell && surviving.Count > 0)
@@ -135,24 +136,29 @@ namespace RealSteel.Boss.Kyosho
 
             foreach (var stem in surviving)
             {
-                if (firedCount >= maxSimultaneous && !isHell)
+                if (firedCount >= maxSimultaneous)
                 {
-                    // 비-헬 난이도: 1개 개화 후 남은 봉오리는 순차 개화 또는 1개 집중 후 회수
-                    TriggerBloomAttack(stem);
+                    stem.DeactivateStem();
+                    continue;
                 }
-                else
-                {
-                    TriggerBloomAttack(stem);
-                }
+
+                TriggerBloomAttack(stem);
                 firedCount++;
-                if (firedCount < surviving.Count && !isHell)
+
+                if (firedCount < maxSimultaneous && firedCount < surviving.Count)
                 {
-                    await Clock.WaitBeatsAsync(0.35f, token);
+                    double stepWaitEnd = Clock.TotalBeats + 0.45;
+                    while (Clock.TotalBeats < stepWaitEnd)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        KyoshoNanobotAttackHelper.StepTrackedBullets(_activeBullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHit);
+                        await UniTask.Yield(PlayerLoopTiming.Update, token);
+                    }
                 }
             }
 
             double tailStart = Clock.TotalBeats;
-            while (Clock.TotalBeats < tailStart + 1.0)
+            while (_activeBullets.Count > 0 && Clock.TotalBeats < tailStart + 1.4)
             {
                 token.ThrowIfCancellationRequested();
                 KyoshoNanobotAttackHelper.StepTrackedBullets(_activeBullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHit);
@@ -182,10 +188,10 @@ namespace RealSteel.Boss.Kyosho
 
                     for (int k = -1; k <= 1; k++)
                     {
-                        Vector3 dir = Quaternion.Euler(0f, 0f, k * 12f) * baseDir;
+                        Vector3 dir = Quaternion.Euler(0f, 0f, k * 16f) * baseDir;
                         var b = KyoshoNanobotAttackHelper.FireTrackedClump(
-                            Swarm, tip, tip, k * 0.08f + 0.08f, dir * 8.5f, 3.0f,
-                            20, 0.35f, new Color(0.55f, 0.90f, 1.00f, 1f), 1.3f,
+                            Swarm, tip, tip, k * 0.08f + 0.08f, dir * 6.8f, 3.0f,
+                            18, 0.26f, new Color(0.55f, 0.90f, 1.00f, 1f), 1.3f,
                             180, BodyPart.LeftLeg, 25, snapToHold: true);
                         _activeBullets.Add(b);
                     }
@@ -196,10 +202,10 @@ namespace RealSteel.Boss.Kyosho
                     KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomOpenTrumpet, "bloom_trumpet", tip);
                     float dirX = playerCenter.x >= tip.x ? 1f : -1f;
                     Vector3 beamStart = new Vector3(tip.x, Kyosho.ArenaFloorY + 0.85f, -0.08f);
-                    Vector3 beamEnd = beamStart + Vector3.right * (dirX * 4.0f);
-                    SpawnTransientBeamVisual((beamStart + beamEnd) * 0.5f, 4.0f, 0.55f, new Color(1f, 0.72f, 0.25f, 0.88f));
+                    Vector3 beamEnd = beamStart + Vector3.right * (dirX * 3.2f);
+                    SpawnTransientBeamVisual((beamStart + beamEnd) * 0.5f, 3.2f, 0.42f, new Color(1f, 0.72f, 0.25f, 0.88f));
 
-                    if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(beamStart, beamEnd, player.transform, 0.42f))
+                    if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(beamStart, beamEnd, player.transform, 0.30f))
                     {
                         ApplyOriginalPatternHit(player, 180, BodyPart.LeftLeg, 25);
                     }
@@ -209,9 +215,9 @@ namespace RealSteel.Boss.Kyosho
                 {
                     KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomOpenCymbal, "bloom_cymbal", stem.transform.position);
                     Vector3 center = stem.transform.position + Vector3.up * 0.9f;
-                    SpawnTransientRingVisual(center, 2.0f, new Color(1f, 0.42f, 0.75f, 0.78f));
+                    SpawnTransientRingVisual(center, 1.55f, new Color(1f, 0.42f, 0.75f, 0.78f));
 
-                    if (player != null && Vector2.Distance(playerCenter, center) <= 2.0f)
+                    if (player != null && Vector2.Distance(playerCenter, center) <= 1.55f)
                     {
                         ApplyOriginalPatternHit(player, 180, BodyPart.LeftLeg, 25);
                     }

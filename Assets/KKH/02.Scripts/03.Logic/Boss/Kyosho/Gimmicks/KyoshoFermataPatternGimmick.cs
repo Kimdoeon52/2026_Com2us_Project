@@ -19,7 +19,7 @@ namespace RealSteel.Boss.Kyosho
     {
         [Header("페르마타 설정")]
         [SerializeField] private float deployHeight = 5.5f;
-        [SerializeField] private float slamDropSpeed = 28f;
+        [SerializeField] private float slamDropSpeed = 18f;
         [SerializeField] private int brassExtraCoreDamage = 135;
         [SerializeField] private int brassBeamCoreDamage = 155;
 
@@ -30,7 +30,7 @@ namespace RealSteel.Boss.Kyosho
         private void Awake()
         {
             tellBeats = 3f;
-            postDelayBeats = 1f;
+            postDelayBeats = 1.5f;
         }
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
@@ -78,8 +78,8 @@ namespace RealSteel.Boss.Kyosho
                     holdDuration,
                     Vector3.down * slamDropSpeed,
                     2.5f,
-                    24,
-                    0.42f,
+                    20,
+                    0.28f,
                     col,
                     isBrassBonus ? 1.6f : 1.0f,
                     dmg,
@@ -123,29 +123,26 @@ namespace RealSteel.Boss.Kyosho
             }
 
             double dropStart = Clock.TotalBeats;
-            bool brassActionExecuted = false;
-
-            while (Clock.TotalBeats < dropStart + 1.2)
+            while (_bullets.Count > 0 && Clock.TotalBeats < dropStart + 1.5)
             {
                 token.ThrowIfCancellationRequested();
                 KyoshoNanobotAttackHelper.StepTrackedBullets(_bullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHit);
-
-                // 4.4박 시점: 금관 첫 생성 or 금관 수평 빔
-                if (!brassActionExecuted && Clock.TotalBeats >= dropStart + 0.45)
-                {
-                    brassActionExecuted = true;
-                    if (isFirstFermata)
-                    {
-                        Kyosho.MarkFirstPhase2FermataCompleted();
-                        Kyosho.SectionManager?.ActivateBrassSection();
-                    }
-                    else if (hasBrass && Kyosho.SectionManager != null && Kyosho.SectionManager.IsBrassAlive)
-                    {
-                        await FireBrassHorizontalBeamAsync(token);
-                    }
-                }
-
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
+
+            // 락하 완료 후 금관 첫 생성 or 금관 수평 빔 (동시 체크메이트/공중 정지 방지)
+            if (isFirstFermata)
+            {
+                Kyosho.MarkFirstPhase2FermataCompleted();
+                Kyosho.SectionManager?.ActivateBrassSection();
+            }
+            else if (hasBrass && Kyosho.SectionManager != null && Kyosho.SectionManager.IsBrassAlive)
+            {
+                await FireBrassHorizontalBeamAsync(token);
+            }
+            else
+            {
+                await Clock.WaitBeatsAsync(0.45f, token);
             }
 
             CleanupEffects();
@@ -161,27 +158,35 @@ namespace RealSteel.Boss.Kyosho
             Vector3 lowPos = new Vector3((minX + maxX) * 0.5f, floorY + 0.58f, 0f);
             brass.SetWorldPosition(lowPos);
 
-            await Clock.WaitBeatsAsync(0.25f, token);
-
-            KyoshoSfx.PlayCue(KyoshoSfx.Data?.brassBeam, "brass_beam", lowPos);
-
             float width = (maxX - minX);
             _brassBeamVisual = new GameObject("KyoshoBrassHorizontalBeam");
             _brassBeamVisual.transform.position = new Vector3((minX + maxX) * 0.5f, floorY + 0.52f, -0.1f);
-            _brassBeamVisual.transform.localScale = new Vector3(width, 0.42f, 1f);
+            _brassBeamVisual.transform.localScale = new Vector3(width, 0.30f, 1f);
             var sr = _brassBeamVisual.AddComponent<SpriteRenderer>();
             sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            sr.color = KyoshoConstants.BrassMagentaColor;
+            Color col = KyoshoConstants.BrassMagentaColor;
+            sr.color = new Color(col.r, col.g, col.b, 0.32f);
             sr.sortingOrder = 24;
 
+            Kyosho?.ScorePreviewHUD?.ShowVariationStatus("금관 하단 빔 예고 — 점프로 회피!");
+            await Clock.WaitBeatsAsync(0.85f, token);
+
+            KyoshoSfx.PlayCue(KyoshoSfx.Data?.brassBeam, "brass_beam", lowPos);
+            if (_brassBeamVisual != null)
+            {
+                _brassBeamVisual.transform.localScale = new Vector3(width, 0.46f, 1f);
+                sr.color = col;
+            }
+
             var player = FindPlayerObject();
-            if (player != null && player.transform.position.y <= floorY + 0.72f)
+            if (player != null && player.transform.position.y <= floorY + 0.68f)
             {
                 // 금관 수평 빔은 코어 HP만 차감 (점프 회피)
                 ApplyCoreOnlyHit(player, brassBeamCoreDamage);
             }
 
             await Clock.WaitBeatsAsync(0.4f, token);
+            Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             if (_brassBeamVisual != null) { Destroy(_brassBeamVisual); _brassBeamVisual = null; }
             brass.ResetToBasePosition();
         }
@@ -189,10 +194,20 @@ namespace RealSteel.Boss.Kyosho
         private List<float> BuildSpreadPositionsX(int count, float minX, float maxX)
         {
             var list = new List<float>(count);
-            for (int i = 0; i < count; i++)
+            if (count <= 0) return list;
+
+            // 최소 2개의 안전한 빈 슬롯을 보장해 플레이어가 확실한 회피 틈새를 읽을 수 있게 배치
+            int totalSlots = count + 2;
+            int safeSlotA = Mathf.Clamp(UnityEngine.Random.Range(1, Mathf.Max(2, totalSlots / 2)), 0, totalSlots - 1);
+            int safeSlotB = Mathf.Clamp(UnityEngine.Random.Range(Mathf.Max(safeSlotA + 2, totalSlots / 2), totalSlots), 0, totalSlots - 1);
+            if (safeSlotB == safeSlotA)
+                safeSlotB = (safeSlotA + 2) % totalSlots;
+
+            for (int slot = 0; slot < totalSlots && list.Count < count; slot++)
             {
-                float t = count > 1 ? i / (float)(count - 1) : 0.5f;
-                float jitter = UnityEngine.Random.Range(-0.35f, 0.35f);
+                if (slot == safeSlotA || slot == safeSlotB) continue;
+                float t = totalSlots > 1 ? slot / (float)(totalSlots - 1) : 0.5f;
+                float jitter = UnityEngine.Random.Range(-0.14f, 0.14f);
                 list.Add(Mathf.Clamp(Mathf.Lerp(minX, maxX, t) + jitter, minX, maxX));
             }
             return list;
@@ -202,10 +217,10 @@ namespace RealSteel.Boss.Kyosho
         {
             var go = new GameObject("FermataDropLine");
             go.transform.position = new Vector3(x, (floorY + airY) * 0.5f, 0.05f);
-            go.transform.localScale = new Vector3(0.08f, Mathf.Max(0.5f, airY - floorY), 1f);
+            go.transform.localScale = new Vector3(0.56f, Mathf.Max(0.5f, airY - floorY), 1f);
             var sr = go.AddComponent<SpriteRenderer>();
             sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            sr.color = new Color(color.r, color.g, color.b, 0.42f);
+            sr.color = new Color(color.r, color.g, color.b, 0.24f);
             sr.sortingOrder = 10;
             _telegraphLines.Add(go);
         }
@@ -238,6 +253,7 @@ namespace RealSteel.Boss.Kyosho
         {
             base.CleanupEffects();
             Kyosho?.ScorePreviewHUD?.ShowFermataHold(false);
+            Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             ClearTelegraphLines();
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_bullets, Swarm);
             if (_brassBeamVisual != null) { Destroy(_brassBeamVisual); _brassBeamVisual = null; }

@@ -62,7 +62,7 @@ namespace RealSteel.Boss.Kyosho
             }
             if (_subText != null)
             {
-                _subText.text = KyoshoConstants.SolfegeNames[SymbolIndex];
+                _subText.text = $"[{SymbolIndex + 1}] {KyoshoConstants.SolfegeNames[SymbolIndex]}";
                 _subText.color = borderCol;
             }
         }
@@ -124,14 +124,14 @@ namespace RealSteel.Boss.Kyosho
         {
             if (_collider == null) _collider = GetComponent<BoxCollider2D>();
             _collider.isTrigger = true;
-            _collider.size = new Vector2(1.05f, 1.15f);
+            _collider.size = new Vector2(1.30f, 1.35f);
             _collider.offset = Vector2.zero;
 
             if (_frameRenderer == null)
             {
                 var frameGo = new GameObject("Frame");
                 frameGo.transform.SetParent(transform, false);
-                frameGo.transform.localScale = new Vector3(1.08f, 1.08f, 1f);
+                frameGo.transform.localScale = new Vector3(1.30f, 1.30f, 1f);
                 _frameRenderer = frameGo.AddComponent<SpriteRenderer>();
                 _frameRenderer.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
                 _frameRenderer.sortingOrder = 18;
@@ -142,7 +142,7 @@ namespace RealSteel.Boss.Kyosho
                 var fillGo = new GameObject("Fill");
                 fillGo.transform.SetParent(transform, false);
                 fillGo.transform.localPosition = new Vector3(0f, 0f, -0.02f);
-                fillGo.transform.localScale = new Vector3(0.92f, 0.92f, 1f);
+                fillGo.transform.localScale = new Vector3(1.12f, 1.12f, 1f);
                 _fillRenderer = fillGo.AddComponent<SpriteRenderer>();
                 _fillRenderer.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
                 _fillRenderer.sortingOrder = 19;
@@ -152,10 +152,10 @@ namespace RealSteel.Boss.Kyosho
             {
                 var glyphGo = new GameObject("Glyph");
                 glyphGo.transform.SetParent(transform, false);
-                glyphGo.transform.localPosition = new Vector3(0f, 0.08f, -0.05f);
+                glyphGo.transform.localPosition = new Vector3(0f, 0.14f, -0.05f);
                 _glyphText = glyphGo.AddComponent<TextMeshPro>();
                 _glyphText.alignment = TextAlignmentOptions.Center;
-                _glyphText.fontSize = 5.5f;
+                _glyphText.fontSize = 6.2f;
                 _glyphText.sortingOrder = 20;
             }
 
@@ -163,10 +163,10 @@ namespace RealSteel.Boss.Kyosho
             {
                 var subGo = new GameObject("Solfege");
                 subGo.transform.SetParent(transform, false);
-                subGo.transform.localPosition = new Vector3(0f, -0.34f, -0.05f);
+                subGo.transform.localPosition = new Vector3(0f, -0.38f, -0.05f);
                 _subText = subGo.AddComponent<TextMeshPro>();
                 _subText.alignment = TextAlignmentOptions.Center;
-                _subText.fontSize = 2.6f;
+                _subText.fontSize = 3.0f;
                 _subText.sortingOrder = 20;
             }
         }

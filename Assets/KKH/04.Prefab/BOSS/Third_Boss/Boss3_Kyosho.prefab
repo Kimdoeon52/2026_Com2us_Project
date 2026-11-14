@@ -185,11 +185,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patternData: {fileID: 11400000, guid: 834d28b945cc646448eeb2ef07f6a5d7, type: 2}
   tellBeats: 1
-  postDelayBeats: 1
-  batonLength: 4.6
+  postDelayBeats: 2
+  batonLength: 4
   tipLagLeadSeconds: 0.08
-  shockwaveSpeed: 10
-  shockwaveHeight: 0.6
+  shockwaveSpeed: 7.5
+  shockwaveHeight: 0.48
   shockwaveCoreDamage: 135
 --- !u!114 &7084314016540671192
 MonoBehaviour:
@@ -205,7 +205,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patternData: {fileID: 11400000, guid: ee97797fa4f4d8e4895d55e4f469c653, type: 2}
   tellBeats: 1
-  postDelayBeats: 1
+  postDelayBeats: 1.5
   rhythmTable: {fileID: 0}
   bonusCoreDamage: 115
 --- !u!114 &6352023204691458755
@@ -222,7 +222,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patternData: {fileID: 11400000, guid: e673e773a731cef43a520736395e4ad5, type: 2}
   tellBeats: 1
-  postDelayBeats: 1
+  postDelayBeats: 1.5
 --- !u!114 &2795108970356153393
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -237,9 +237,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patternData: {fileID: 11400000, guid: 2ac80b2253c5b4c4397723bcb3c2e4d1, type: 2}
   tellBeats: 1
-  postDelayBeats: 1
+  postDelayBeats: 1.5
   deployHeight: 5.5
-  slamDropSpeed: 28
+  slamDropSpeed: 18
   brassExtraCoreDamage: 135
   brassBeamCoreDamage: 155
 --- !u!114 &5261337838454003490
@@ -275,5 +275,5 @@ MonoBehaviour:
   patternData: {fileID: 11400000, guid: e26a95fdaa0f9404286dd1bd436d1bbf, type: 2}
   tellBeats: 1
   postDelayBeats: 1
-  safeZoneWidth: 2.2
+  safeZoneWidth: 2.8
   pressureBulletDamage: 110

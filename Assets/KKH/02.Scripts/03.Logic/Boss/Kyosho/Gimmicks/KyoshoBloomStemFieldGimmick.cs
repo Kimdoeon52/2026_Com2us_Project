@@ -16,7 +16,7 @@ namespace RealSteel.Boss.Kyosho
     {
         public override string FieldGimmickID => "GIMMICK_KYOSHO_BLOOM_STEM";
 
-        [SerializeField] private int maxHp = 20;
+        [SerializeField] private int maxHp = 10;
 
         private RSNanoLimb _limb;
         private Transform _tipJoint;
@@ -99,10 +99,10 @@ namespace RealSteel.Boss.Kyosho
                 _iconText.color = GetTypeColor(bloomType);
                 _iconText.text = bloomType switch
                 {
-                    KyoshoBloomType.Note => "♩",
-                    KyoshoBloomType.Trumpet => "🎺",
-                    KyoshoBloomType.Cymbal => "◎",
-                    _ => "♩"
+                    KyoshoBloomType.Note => "♪\n음표",
+                    KyoshoBloomType.Trumpet => "▶\n나팔",
+                    KyoshoBloomType.Cymbal => "◎\n심벌",
+                    _ => "♪"
                 };
                 _iconText.transform.localPosition = new Vector3(0f, 0.55f, -0.1f);
             }
@@ -195,8 +195,8 @@ namespace RealSteel.Boss.Kyosho
         {
             if (_collider == null) _collider = GetComponent<BoxCollider2D>();
             _collider.isTrigger = true;
-            _collider.size = new Vector2(0.95f, 2.0f);
-            _collider.offset = new Vector2(0f, 1.0f);
+            _collider.size = new Vector2(1.25f, 2.2f);
+            _collider.offset = new Vector2(0f, 1.1f);
 
             if (_seedMarker == null)
             {

@@ -143,8 +143,8 @@ namespace RealSteel.Boss.Kyosho
                 {
                     float dx = Mathf.Abs(b.Position.x - playerCenter.x);
                     float dy = Mathf.Abs(b.Position.y - playerCenter.y);
-                    float rx = b.HitRadius + 0.32f;
-                    float ry = b.HitRadius + 0.52f;
+                    float rx = b.HitRadius + 0.22f;
+                    float ry = b.HitRadius + 0.36f;
                     if (dx * dx / (rx * rx) + dy * dy / (ry * ry) <= 1.0f)
                     {
                         b.HitResolved = true;
@@ -239,8 +239,8 @@ namespace RealSteel.Boss.Kyosho
             float t = lenSq > 1e-6f ? Mathf.Clamp01(Vector2.Dot(p - segA, ab) / lenSq) : 0f;
             Vector2 closest = segA + ab * t;
 
-            float rx = thickness + 0.34f;
-            float ry = thickness + 0.56f;
+            float rx = thickness + 0.24f;
+            float ry = thickness + 0.38f;
             float dx = closest.x - p.x;
             float dy = closest.y - p.y;
             return (dx * dx) / (rx * rx) + (dy * dy) / (ry * ry) <= 1.0f;

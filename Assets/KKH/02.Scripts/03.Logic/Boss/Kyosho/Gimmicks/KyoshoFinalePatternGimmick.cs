@@ -19,12 +19,13 @@ namespace RealSteel.Boss.Kyosho
     public class KyoshoFinalePatternGimmick : KyoshoPatternGimmickBase
     {
         [Header("피날레 설정")]
-        [SerializeField] private float safeZoneWidth = 2.2f;
+        [SerializeField] private float safeZoneWidth = 2.8f;
         [SerializeField] private int pressureBulletDamage = 110;
 
         private readonly List<SafeZoneEntry> _safeZones = new List<SafeZoneEntry>();
         private readonly List<KyoshoTrackedBullet> _pressureBullets = new List<KyoshoTrackedBullet>();
         private GameObject _fullScreenBlastVisual;
+        private int _pressureSlotIndex;
 
         private class SafeZoneEntry
         {
@@ -84,12 +85,12 @@ namespace RealSteel.Boss.Kyosho
                 {
                     movedForHell = true;
                     RelocateSingleSafeZoneToOpposite(minX, maxX);
-                    Kyosho.ScorePreviewHUD?.ShowVariationStatus("안전지대 이동! 반대편 쉼표(𝄽)로 이동하세요!");
+                    Kyosho.ScorePreviewHUD?.ShowVariationStatus("안전지대 이동! 반대편 쉼표(// SAFE)로 이동하세요!");
                 }
 
                 if (Clock.TotalBeats >= nextFireBeat)
                 {
-                    nextFireBeat += isHell ? 0.65 : 1.0;
+                    nextFireBeat += isHell ? 0.85 : 1.25;
                     FirePressureNote(gatherTarget);
                 }
 
@@ -204,26 +205,49 @@ namespace RealSteel.Boss.Kyosho
             glyphGo.transform.localPosition = new Vector3(0f, 1.35f, -0.05f);
             var tmp = glyphGo.AddComponent<TextMeshPro>();
             tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 6.0f;
+            tmp.fontSize = 4.2f;
             tmp.color = KyoshoConstants.SafeZoneGoldColor;
-            tmp.text = "𝄽";
+            tmp.text = "//\nSAFE";
 
             _safeZones.Add(new SafeZoneEntry { CenterX = x, Root = root, Fill = sr, Glyph = tmp });
         }
 
         private void FirePressureNote(Vector3 origin)
         {
-            Vector3 playerCenter = Kyosho.GetPlayerAimCenter();
-            Vector3 dir = (playerCenter - origin);
-            dir.z = 0f;
+            Kyosho.GetArenaBounds(out float minX, out float maxX);
+            float floorY = Kyosho.ArenaFloorY;
+
+            // 플레이어 실시간 추적(유도) 제거: 안전지대 중심을 피해 균일 부채꼴 레인으로 교대 발사
+            const int laneSlots = 7;
+            float targetX = origin.x;
+            for (int tries = 0; tries < laneSlots; tries++)
+            {
+                int slot = (_pressureSlotIndex + tries) % laneSlots;
+                float candX = Mathf.Lerp(minX + 1.0f, maxX - 1.0f, slot / (float)(laneSlots - 1));
+                bool insideSafeCore = false;
+                foreach (var sz in _safeZones)
+                {
+                    if (Mathf.Abs(candX - sz.CenterX) <= safeZoneWidth * 0.42f)
+                    {
+                        insideSafeCore = true;
+                        break;
+                    }
+                }
+                if (!insideSafeCore)
+                {
+                    targetX = candX;
+                    _pressureSlotIndex = (slot + 2) % laneSlots;
+                    break;
+                }
+            }
+
+            Vector3 dir = new Vector3(targetX - origin.x, floorY - origin.y, 0f);
             if (dir.sqrMagnitude < 0.01f) dir = Vector3.down;
             dir.Normalize();
 
-            // 산발적 방해 탄막 (플레이어 근처 약간의 각도 분산)
-            dir = Quaternion.Euler(0f, 0f, Random.Range(-18f, 18f)) * dir;
             var b = KyoshoNanobotAttackHelper.FireTrackedClump(
-                Swarm, origin, origin, 0f, dir * 6.5f, 3.0f,
-                16, 0.32f, KyoshoConstants.OriginalPatternColor, 1.1f,
+                Swarm, origin, origin, 0f, dir * 5.6f, 3.2f,
+                14, 0.25f, KyoshoConstants.OriginalPatternColor, 1.1f,
                 pressureBulletDamage, BodyPart.Core, 0, snapToHold: true);
             _pressureBullets.Add(b);
         }

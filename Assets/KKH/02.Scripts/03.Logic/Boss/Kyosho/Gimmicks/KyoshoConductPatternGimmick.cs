@@ -18,14 +18,15 @@ namespace RealSteel.Boss.Kyosho
     public class KyoshoConductPatternGimmick : KyoshoPatternGimmickBase
     {
         [Header("지휘 도형 설정")]
-        [SerializeField] private float batonLength = 4.6f;
+        [SerializeField] private float batonLength = 4.0f;
         [SerializeField] private float tipLagLeadSeconds = 0.08f;
-        [SerializeField] private float shockwaveSpeed = 10f;
-        [SerializeField] private float shockwaveHeight = 0.6f;
+        [SerializeField] private float shockwaveSpeed = 7.5f;
+        [SerializeField] private float shockwaveHeight = 0.48f;
         [SerializeField] private int shockwaveCoreDamage = 135;
 
         private readonly List<int> _batonBotIds = new List<int>();
         private readonly List<ActiveShockwave> _shockwaves = new List<ActiveShockwave>();
+        private GameObject _strikeTelegraphGo;
 
         private class ActiveShockwave
         {
@@ -40,7 +41,7 @@ namespace RealSteel.Boss.Kyosho
         private void Awake()
         {
             tellBeats = 1f;
-            postDelayBeats = 1f;
+            postDelayBeats = 2f;
         }
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
@@ -74,11 +75,14 @@ namespace RealSteel.Boss.Kyosho
             tube.ChainStep(Root(), initAngle, 0.5f, 0.016f);
             TakeBotsToTubeA(0.12f, Root());
 
-            // 1) 0박 예비(Tell): 지휘봉이 솟아오르며 발광
+            // 1) 0박 예비(Tell): 지휘봉이 솟아오르며 발광 + 1박 타격 방향 예고선 표시
             float leadBeats = Mathf.Min(0.35f, tipLagLeadSeconds / Mathf.Max(0.1f, Clock.BeatSec));
             float cockAngle = face >= 0f ? 115f : 65f;
+            float firstStrikeAngle = face >= 0f ? -35f : 215f;
             float curAngle = initAngle;
             float curLength = 0.5f;
+
+            SpawnStrikeTelegraph(Root(), firstStrikeAngle, batonLength, tipColor);
 
             while (Clock.TotalBeats < startBeat + 1.0 - leadBeats)
             {
@@ -87,10 +91,13 @@ namespace RealSteel.Boss.Kyosho
                 curLength = Mathf.Lerp(0.5f, batonLength, Smooth(t));
                 curAngle = Mathf.LerpAngle(initAngle, cockAngle, Smooth(t));
                 tube.glow = Mathf.Lerp(0.4f, 1.8f, t);
+                UpdateStrikeTelegraph(Root(), firstStrikeAngle, batonLength);
                 StepBaton(tube, Root(), curAngle, curLength, Time.deltaTime);
                 StepShockwaves(Time.deltaTime);
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
+
+            ClearStrikeTelegraph();
 
             // 2) 1~4박 4연격 (4/4: ↓←→↑  /  2/4: ↓↑↓↑)
             float[] strikeTargets = isPhase2
@@ -139,7 +146,7 @@ namespace RealSteel.Boss.Kyosho
                     if (!hitDealtThisBeat && nowBeat >= beatTarget - 0.08 && nowBeat <= beatTarget + 0.25)
                     {
                         var player = FindPlayerObject();
-                        if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(tube.nodes[3], tube.Tip, player.transform, 0.42f))
+                        if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(tube.nodes[3], tube.Tip, player.transform, 0.32f))
                         {
                             hitDealtThisBeat = true;
                             ApplyOriginalPatternHit(player, 190, BodyPart.RightArm, 25);
@@ -313,12 +320,43 @@ namespace RealSteel.Boss.Kyosho
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
+            ClearStrikeTelegraph();
             ReleaseBatonBots();
             foreach (var sw in _shockwaves)
             {
                 if (sw.VisualGo != null) Destroy(sw.VisualGo);
             }
             _shockwaves.Clear();
+        }
+
+        private void SpawnStrikeTelegraph(Vector3 rootPos, float angleDeg, float length, Color color)
+        {
+            ClearStrikeTelegraph();
+            _strikeTelegraphGo = new GameObject("KyoshoConductStrikeTelegraph");
+            var sr = _strikeTelegraphGo.AddComponent<SpriteRenderer>();
+            sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+            sr.color = new Color(color.r, color.g, color.b, 0.28f);
+            sr.sortingOrder = 16;
+            UpdateStrikeTelegraph(rootPos, angleDeg, length);
+        }
+
+        private void UpdateStrikeTelegraph(Vector3 rootPos, float angleDeg, float length)
+        {
+            if (_strikeTelegraphGo == null) return;
+            float rad = angleDeg * Mathf.Deg2Rad;
+            Vector3 dir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
+            _strikeTelegraphGo.transform.position = rootPos + dir * (length * 0.5f);
+            _strikeTelegraphGo.transform.rotation = Quaternion.Euler(0f, 0f, angleDeg);
+            _strikeTelegraphGo.transform.localScale = new Vector3(length, 0.28f, 1f);
+        }
+
+        private void ClearStrikeTelegraph()
+        {
+            if (_strikeTelegraphGo != null)
+            {
+                Destroy(_strikeTelegraphGo);
+                _strikeTelegraphGo = null;
+            }
         }
 
         private static float Smooth(float x) => x * x * (3f - 2f * x);

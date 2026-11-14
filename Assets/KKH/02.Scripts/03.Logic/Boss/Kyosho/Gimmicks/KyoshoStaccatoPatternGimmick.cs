@@ -19,11 +19,12 @@ namespace RealSteel.Boss.Kyosho
         [SerializeField] private int bonusCoreDamage = 115;
 
         private readonly List<KyoshoTrackedBullet> _bullets = new List<KyoshoTrackedBullet>();
+        private readonly List<GameObject> _telegraphVisuals = new List<GameObject>();
 
         private void Awake()
         {
             tellBeats = 4f;
-            postDelayBeats = 1f;
+            postDelayBeats = 1.5f;
         }
 
         public void SetRhythmTable(KyoshoRhythmTableSO table) => rhythmTable = table;
@@ -84,27 +85,56 @@ namespace RealSteel.Boss.Kyosho
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
-            scoreHud?.HideStaccatoScore();
+            scoreHud?.SetStaccatoPhase(true, allowStringsBonus);
 
-            // 2마디(4박): 리스폰스 (동일 타이밍 발사 + 현악 16분음표 추가타)
+            // 2마디(4박): 발사 방향 고정 (패턴 도중 재조준/유도 방지) + 상/하 고정 레인 예고선 표시
+            float lockedDirX = Kyosho.GetFacingToPlayerSign();
+            float floorY = Kyosho.ArenaFloorY;
+            float lowLaneY = floorY + 0.56f;
+            float highLaneY = floorY + 1.72f;
+            float originX = Swarm.Blob.center.x + lockedDirX * 1.1f;
+            Kyosho.GetArenaBounds(out float arenaMinX, out float arenaMaxX);
+            float endX = lockedDirX > 0f ? arenaMaxX + 0.5f : arenaMinX - 0.5f;
+
+            ClearTelegraphs();
+            SpawnLaneTelegraph(originX, endX, lowLaneY, new Color(1.00f, 0.78f, 0.28f, 0.22f));
+            SpawnLaneTelegraph(originX, endX, highLaneY, new Color(0.35f, 0.85f, 1.00f, 0.16f));
+
+            var stringsSec = Kyosho.SectionManager?.StringsSection;
+            Vector3 stringsOrigin = stringsSec != null
+                ? new Vector3(stringsSec.AnchorWorldPosition.x + 0.4f, Mathf.Max(stringsSec.AnchorWorldPosition.y + 0.5f, floorY + 1.55f), 0f)
+                : new Vector3(arenaMinX + 2.5f, floorY + 1.55f, 0f);
+            float stringsDirX = (Kyosho.PlayerTransform != null && Kyosho.PlayerTransform.position.x < stringsOrigin.x) ? -1f : 1f;
+
             double fireStartBeat = Clock.TotalBeats;
             bool[] firedMain = new bool[bar.notes.Count];
             bool[] firedBonus = new bool[bar.notes.Count];
-
-            // +50% 규칙: 휴지부가 아닌 음표 중 홀수/2개당 1개 이상 16분음표 추가
-            int activeNoteOrdinal = 0;
+            bool[] rapidUseHighLane = new bool[bar.notes.Count];
             bool[] enableBonusForIndex = new bool[bar.notes.Count];
+
+            // HUD 카드 배치와 정확히 일치하도록 8분/3연음표 교차 레인 및 16분 보너스(Quarter/Eighth +0.5박) 계산
+            int rapidIndex = 0;
             for (int i = 0; i < bar.notes.Count; i++)
             {
-                if (bar.notes[i].noteType == KyoshoNoteType.Rest) continue;
-                enableBonusForIndex[i] = allowStringsBonus && (activeNoteOrdinal % 2 == 0);
-                activeNoteOrdinal++;
+                var n = bar.notes[i];
+                if (n.noteType == KyoshoNoteType.Rest) continue;
+
+                if (n.noteType == KyoshoNoteType.Eighth || n.noteType == KyoshoNoteType.Triplet)
+                {
+                    rapidUseHighLane[i] = (rapidIndex % 2) == 1;
+                    rapidIndex++;
+                }
+
+                enableBonusForIndex[i] = allowStringsBonus
+                    && (n.noteType == KyoshoNoteType.Quarter || n.noteType == KyoshoNoteType.Eighth)
+                    && (n.beatOffset + 0.5f < 3.95f);
             }
 
             while (Clock.TotalBeats < fireStartBeat + 4.0)
             {
                 token.ThrowIfCancellationRequested();
                 float localBeat = (float)(Clock.TotalBeats - fireStartBeat);
+                scoreHud?.UpdateStaccatoCursor(localBeat);
 
                 for (int i = 0; i < bar.notes.Count; i++)
                 {
@@ -114,13 +144,13 @@ namespace RealSteel.Boss.Kyosho
                     if (!firedMain[i] && localBeat >= ev.beatOffset)
                     {
                         firedMain[i] = true;
-                        FireOriginalNoteBullet(ev.noteType);
+                        FireOriginalNoteBullet(ev.noteType, lockedDirX, rapidUseHighLane[i]);
                     }
 
-                    if (enableBonusForIndex[i] && !firedBonus[i] && localBeat >= ev.beatOffset + 0.25f)
+                    if (enableBonusForIndex[i] && !firedBonus[i] && localBeat >= ev.beatOffset + 0.5f)
                     {
                         firedBonus[i] = true;
-                        FireStringsSixteenthBullet();
+                        FireStringsSixteenthBullet(stringsDirX);
                     }
                 }
 
@@ -128,7 +158,7 @@ namespace RealSteel.Boss.Kyosho
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
-            // 비행 중인 잔여 탄환이 바닥/플레이어에 닿을 때까지 최대 1박 추적 유지
+            // 비행 중인 잔여 탄환이 바닥/플레이어에 닿을 때까지 최대 1.5박 추적 유지
             double tailStart = Clock.TotalBeats;
             while (_bullets.Count > 0 && Clock.TotalBeats < tailStart + 1.5)
             {
@@ -136,6 +166,9 @@ namespace RealSteel.Boss.Kyosho
                 KyoshoNanobotAttackHelper.StepTrackedBullets(_bullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHitPlayer);
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
+
+            scoreHud?.HideStaccatoScore();
+            ClearTelegraphs();
         }
 
         /// <summary>
@@ -151,7 +184,7 @@ namespace RealSteel.Boss.Kyosho
             KyoshoNanobotAttackHelper.StepTrackedBullets(_bullets, Swarm, Kyosho != null ? Kyosho.PlayerTransform : null, dt, HandleBulletHitPlayer);
         }
 
-        private void FireOriginalNoteBullet(KyoshoNoteType noteType)
+        private void FireOriginalNoteBullet(KyoshoNoteType noteType, float? fixedDirX = null, bool useHighLane = false)
         {
             if (Swarm == null || Kyosho == null) return;
 
@@ -161,21 +194,19 @@ namespace RealSteel.Boss.Kyosho
             switch (noteType)
             {
                 case KyoshoNoteType.Quarter:
-                    clump = 48; speed = 4.0f; radius = 0.55f;
+                    clump = 38; speed = 4.6f; radius = 0.40f;
                     break;
                 case KyoshoNoteType.Triplet:
                 case KyoshoNoteType.Eighth:
                 default:
-                    clump = 24; speed = 7.0f; radius = 0.38f;
+                    clump = 20; speed = 6.6f; radius = 0.30f;
                     break;
             }
 
-            Vector3 origin = Swarm.Blob.center + new Vector3(Kyosho.GetFacingToPlayerSign() * 1.1f, 0.3f, 0f);
-            Vector3 playerCenter = Kyosho.GetPlayerAimCenter();
-            Vector3 dir = (playerCenter - origin);
-            dir.z = 0f;
-            if (dir.sqrMagnitude < 0.01f) dir = Vector3.left;
-            dir.Normalize();
+            float dirX = fixedDirX ?? Kyosho.GetFacingToPlayerSign();
+            float laneY = Kyosho.ArenaFloorY + (useHighLane ? 1.72f : 0.56f);
+            Vector3 origin = new Vector3(Swarm.Blob.center.x + dirX * 1.1f, laneY, 0f);
+            Vector3 dir = new Vector3(dirX, 0f, 0f);
 
             var b = KyoshoNanobotAttackHelper.FireTrackedClump(
                 Swarm,
@@ -197,29 +228,26 @@ namespace RealSteel.Boss.Kyosho
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.staccatoFire, "staccato_fire", origin);
         }
 
-        private void FireStringsSixteenthBullet()
+        private void FireStringsSixteenthBullet(float fixedDirX)
         {
             if (Swarm == null || Kyosho == null) return;
             var stringsSec = Kyosho.SectionManager?.StringsSection;
+            float floorY = Kyosho.ArenaFloorY;
             Vector3 origin = stringsSec != null
-                ? stringsSec.AnchorWorldPosition + new Vector3(0.4f, 0.4f, 0f)
-                : new Vector3(Kyosho.ArenaMinX + 2.5f, Kyosho.ArenaFloorY + 1.2f, 0f);
+                ? new Vector3(stringsSec.AnchorWorldPosition.x + 0.4f, Mathf.Max(stringsSec.AnchorWorldPosition.y + 0.5f, floorY + 1.55f), 0f)
+                : new Vector3(Kyosho.ArenaMinX + 2.5f, floorY + 1.55f, 0f);
 
-            Vector3 playerCenter = Kyosho.GetPlayerAimCenter();
-            Vector3 dir = (playerCenter - origin);
-            dir.z = 0f;
-            if (dir.sqrMagnitude < 0.01f) dir = Vector3.right;
-            dir.Normalize();
+            Vector3 dir = new Vector3(fixedDirX, 0.08f, 0f).normalized;
 
             var b = KyoshoNanobotAttackHelper.FireTrackedClump(
                 Swarm,
                 origin,
                 origin,
                 0f,
-                dir * 10.0f,
+                dir * 8.2f,
                 3.5f,
                 12,
-                0.25f,
+                0.24f,
                 KyoshoConstants.StringsMintColor,
                 1.4f,
                 bonusCoreDamage,
@@ -229,6 +257,31 @@ namespace RealSteel.Boss.Kyosho
 
             _bullets.Add(b);
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.stringsRapidFire, "strings_fire", origin);
+        }
+
+        private void SpawnLaneTelegraph(float startX, float endX, float y, Color color)
+        {
+            float length = Mathf.Abs(endX - startX);
+            if (length < 0.25f) return;
+
+            var go = new GameObject("KyoshoStaccatoLaneTelegraph");
+            go.transform.position = new Vector3((startX + endX) * 0.5f, y, 0.05f);
+            go.transform.localScale = new Vector3(length, 0.22f, 1f);
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+            sr.color = color;
+            sr.sortingOrder = 14;
+            _telegraphVisuals.Add(go);
+        }
+
+        private void ClearTelegraphs()
+        {
+            for (int i = _telegraphVisuals.Count - 1; i >= 0; i--)
+            {
+                if (_telegraphVisuals[i] != null)
+                    Destroy(_telegraphVisuals[i]);
+            }
+            _telegraphVisuals.Clear();
         }
 
         private void HandleBulletHitPlayer(KyoshoTrackedBullet b)
@@ -250,6 +303,7 @@ namespace RealSteel.Boss.Kyosho
         {
             base.CleanupEffects();
             Kyosho?.ScorePreviewHUD?.HideStaccatoScore();
+            ClearTelegraphs();
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_bullets, Swarm);
         }
     }

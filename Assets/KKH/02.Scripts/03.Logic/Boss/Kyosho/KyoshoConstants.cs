@@ -90,7 +90,8 @@ namespace RealSteel.Boss.Kyosho
             440.00f  // 5: ⌒ 라 (A4)
         };
 
-        public static readonly string[] SymbolGlyphs = { "𝄞", "𝄢", "♯", "♭", "𝄽", "⌒" };
+        // TMP 기본 폰트 호환을 위해 BMP 영역 심볼만 사용 (서로게이트 페어 SMP 기호 제거)
+        public static readonly string[] SymbolGlyphs = { "♪", "♫", "♯", "♭", "//", "⌒" };
         public static readonly string[] SymbolNames = { "높은음자리표", "낮은음자리표", "샵", "플랫", "쉼표", "페르마타" };
         public static readonly string[] SolfegeNames = { "도", "레", "미", "파", "솔", "라" };
 
@@ -140,11 +141,11 @@ namespace RealSteel.Boss.Kyosho
             return difficulty switch
             {
                 BossDifficulty.VeryEasy => 2.0f,
-                BossDifficulty.Easy => 1.5f,
-                BossDifficulty.Normal => 1.0f,
-                BossDifficulty.Hard => 1.0f,
-                BossDifficulty.Hell => 0.5f,
-                _ => 1.0f
+                BossDifficulty.Easy => 1.75f,
+                BossDifficulty.Normal => 1.5f,
+                BossDifficulty.Hard => 1.25f,
+                BossDifficulty.Hell => 0.75f,
+                _ => 1.5f
             };
         }
 

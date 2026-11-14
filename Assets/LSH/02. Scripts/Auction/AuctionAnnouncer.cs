@@ -15,7 +15,7 @@ using UnityEngine;
 public class AuctionAnnouncer : MonoBehaviour
 {
     [Header("구성 요소 (비워두면 자식에서 자동 탐색)")]
-    [SerializeField] private RectTransform girlImage; // AuctionGrilImage
+    [SerializeField] private Transform girlImage; // AuctionGrilImage
     [SerializeField] private RectTransform textBox;   // TextBOx
     [SerializeField] private TextMeshProUGUI chatText; // Chat
 
@@ -28,7 +28,7 @@ public class AuctionAnnouncer : MonoBehaviour
     [Header("등장/퇴장 연출")]
     [SerializeField] private float showDuration = 0.4f;
     [SerializeField] private float hideDuration = 0.25f;
-    [SerializeField] private float slideDistance = 140f; // 왼쪽에서 미끄러져 들어오는 거리
+    //[SerializeField] private float slideDistance = 140f; // 왼쪽에서 미끄러져 들어오는 거리
 
     [Header("타자기 효과")]
     [SerializeField] private float charsPerSecond = 35f;
@@ -81,7 +81,7 @@ public class AuctionAnnouncer : MonoBehaviour
 
         if (girlImage != null)
         {
-            girlBasePos = girlImage.anchoredPosition;
+            girlBasePos = girlImage.localPosition;
             girlBaseScale = girlImage.localScale;
         }
         if (textBox != null) textBoxBaseScale = textBox.localScale;
@@ -152,7 +152,7 @@ public class AuctionAnnouncer : MonoBehaviour
             ResetPose();
             FitChatToTextBox();
             canvasGroup.alpha = 0f;
-            if (girlImage != null) girlImage.anchoredPosition = girlBasePos + Vector2.left * slideDistance;
+            //if (girlImage != null) girlImage.localPosition = girlBasePos + Vector2.left * slideDistance;
             if (textBox != null) textBox.localScale = textBoxBaseScale * 0.85f;
         }
         if (chatText != null)
@@ -164,7 +164,7 @@ public class AuctionAnnouncer : MonoBehaviour
         Sequence seq = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
         seq.Join(canvasGroup.DOFade(1f, showDuration * 0.6f).SetEase(Ease.OutQuad));
         if (girlImage != null)
-            seq.Join(girlImage.DOAnchorPos(girlBasePos, showDuration).SetEase(Ease.OutCubic));
+            seq.Join(girlImage.DOLocalMove(girlBasePos, showDuration).SetEase(Ease.OutCubic));
         if (textBox != null)
             seq.Insert(showDuration * 0.2f, textBox.DOScale(textBoxBaseScale, showDuration * 0.8f).SetEase(Ease.OutBack));
         visibilitySeq = seq;
@@ -182,8 +182,8 @@ public class AuctionAnnouncer : MonoBehaviour
         visibilitySeq?.Kill();
         Sequence seq = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
         seq.Join(canvasGroup.DOFade(0f, hideDuration).SetEase(Ease.InQuad));
-        if (girlImage != null)
-            seq.Join(girlImage.DOAnchorPos(girlBasePos + Vector2.left * slideDistance * 0.5f, hideDuration).SetEase(Ease.InCubic));
+        //if (girlImage != null)
+        //    seq.Join(girlImage.DOLocalMove(girlBasePos + Vector2.left * slideDistance * 0.5f, hideDuration).SetEase(Ease.InCubic));
         if (textBox != null)
             seq.Join(textBox.DOScale(textBoxBaseScale * 0.9f, hideDuration).SetEase(Ease.InQuad));
         seq.OnComplete(() =>
@@ -212,7 +212,7 @@ public class AuctionAnnouncer : MonoBehaviour
         hopTween?.Kill();
         if (girlImage != null)
         {
-            girlImage.anchoredPosition = girlBasePos;
+            girlImage.localPosition = girlBasePos;
             girlImage.localScale = girlBaseScale;
         }
         if (textBox != null) textBox.localScale = textBoxBaseScale;

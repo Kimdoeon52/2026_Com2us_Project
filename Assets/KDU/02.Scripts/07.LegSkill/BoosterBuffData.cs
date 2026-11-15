@@ -14,6 +14,10 @@ public class BoosterBuffData : TapSkillData
     [Tooltip("달리기 판정 유지")]
     [SerializeField] private bool keepRunning;
 
+    [Header("연출")]
+    [Tooltip("발광·잔상")]
+    [SerializeField] private BoosterVisualSettings visual;
+
     public int DurationFrames => durationFrames;
     public float SpeedMultiplier => speedMultiplier;
     public bool KeepRunning => keepRunning;
@@ -39,6 +43,7 @@ public class BoosterBuffData : TapSkillData
             }
 
             target.ApplySpeedBuff(data.speedMultiplier, data.durationFrames, data.keepRunning);
+            Ctx.Transform.GetOrAddComponent<BoosterBuffVisual>().Play(data.visual, data.durationFrames);
         }
     }
 }

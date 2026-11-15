@@ -39,6 +39,7 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx: []
   perBoxDamage: 0
   cooldownFrames: 840
   cooldownOwner: {fileID: 0}
@@ -66,3 +67,11 @@ MonoBehaviour:
   durationFrames: 180
   speedMultiplier: 2
   keepRunning: 1
+  visual:
+    glowMaterial: {fileID: 2100000, guid: b0c772c39d8d4db1ba399d6dfd74ab4d, type: 2}
+    glowColor: {r: 0.3, g: 0.75, b: 1, a: 0.55}
+    glowPulseSpeed: 3
+    glowPulseMin: 0.4
+    afterImageColor: {r: 0.25, g: 0.7, b: 1, a: 0.6}
+    afterImageIntervalFrames: 3
+    afterImageLifetime: 0.3

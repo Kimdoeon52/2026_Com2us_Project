@@ -26,7 +26,7 @@ MonoBehaviour:
   damage: 30
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: 
+  animationClipName: Leg_Stomp_Landing
   activeClipName: 
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
@@ -39,6 +39,49 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 5716823169876094026, guid: 00fc38747b9949108e3b772e8671f60f, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+  - prefab: {fileID: 2249098658059758238, guid: 38881bccc5aa44a784c51f9cf6407cb9, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+  - prefab: {fileID: 5051787410455962075, guid: b686c335f3d44051bfcad4804a4b5da0, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    followOwner: 0
+    flipWithFacing: 1
+    scale: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
   perBoxDamage: 0
   cooldownFrames: 0
   cooldownOwner: {fileID: 0}

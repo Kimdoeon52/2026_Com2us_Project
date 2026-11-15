@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8658a75328a1ec4c966d378a60c4459, type: 3}
+  m_Name: Tutorial_junkshop
+  m_EditorClassIdentifier: 
+  guideId: junkshop
+  title: "\uACE0\uBB3C\uC0C1"
+  steps:
+  - title: "\uACE0\uCCA0 \uCC3E\uAE30"
+    description: "\uACE0\uCCA0 \uB354\uBBF8\uC5D0 \uAC00\uAE4C\uC6CC\uC9C0\uBA74
+      \uC18C\uB9AC\uAC00 \uCEE4\uC9C0\uACE0 \uBB3C\uACB0\uC774 \uBCF4\uC785\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  - title: "\uCC44\uC9D1"
+    description: "E\uB97C \uB20C\uB7EC \uCC44\uC9D1\uD569\uB2C8\uB2E4. \uBBF8\uB2C8\uAC8C\uC784\uC5D0
+      \uC131\uACF5\uD558\uBA74 \uACE0\uCCA0\uC744 \uC5BB\uC2B5\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  - title: "\uD310\uB9E4"
+    description: "\uBAA8\uC740 \uACE0\uCCA0\uC740 \uACE0\uBB3C\uC0C1 \uC544\uC800\uC528\uC5D0\uAC8C
+      \uD314 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  trigger: 1
+  triggerTarget: JunkShop
+  introDialogueId: tutorial_t4_junkshop

@@ -160,7 +160,8 @@ namespace RealSteel.Dialogue
 
             if (shownFor != current)
             {
-                prompt.text = $"[E] {manager.GetSpeakerName(current.SpeakerId)}";
+                string speakerName = manager.GetSpeakerName(current.SpeakerId);
+                prompt.text = string.IsNullOrEmpty(speakerName) ? "[E]" : $"[E] {speakerName}";
                 shownFor = current;
             }
 

@@ -8,8 +8,8 @@
       "maxPlays": 1,
       "conditions": [],
       "lines": [
-        { "speaker": "hero", "textKey": "tutorial.t3_map.1" },
-        { "speaker": "hero", "textKey": "tutorial.t3_map.2" }
+        { "speaker": "system", "textKey": "tutorial.t3_map.1" },
+        { "speaker": "system", "textKey": "tutorial.t3_map.2" }
       ]
     },
     {
@@ -28,9 +28,9 @@
       "maxPlays": 1,
       "conditions": [],
       "lines": [
-        { "speaker": "hero", "textKey": "tutorial.t10_battle.1" },
-        { "speaker": "hero", "textKey": "tutorial.t10_battle.2" },
-        { "speaker": "hero", "textKey": "tutorial.t10_battle.3" }
+        { "speaker": "system", "textKey": "tutorial.t10_battle.1" },
+        { "speaker": "system", "textKey": "tutorial.t10_battle.2" },
+        { "speaker": "system", "textKey": "tutorial.t10_battle.3" }
       ]
     },
     {
@@ -41,8 +41,78 @@
         { "variable": "hunt.loseCount", "op": ">=", "value": "1" }
       ],
       "lines": [
-        { "speaker": "junkdealer", "textKey": "tutorial.t12_first_defeat.1" },
-        { "speaker": "junkdealer", "textKey": "tutorial.t12_first_defeat.2" }
+        { "speaker": "system", "textKey": "tutorial.t12_first_defeat.1" },
+        { "speaker": "system", "textKey": "tutorial.t12_first_defeat.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t1_controls",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "system", "textKey": "tutorial.t1_controls.1" },
+        { "speaker": "system", "textKey": "tutorial.t1_controls.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t4_junkshop",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "system", "textKey": "tutorial.t4_junkshop.1" },
+        { "speaker": "system", "textKey": "tutorial.t4_junkshop.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t6_inventory",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "system", "textKey": "tutorial.t6_inventory.1" },
+        { "speaker": "system", "textKey": "tutorial.t6_inventory.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t7_crafting",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "system", "textKey": "tutorial.t7_crafting.1" },
+        { "speaker": "system", "textKey": "tutorial.t7_crafting.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t13_repair",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "system", "textKey": "tutorial.t13_repair.1" },
+        { "speaker": "system", "textKey": "tutorial.t13_repair.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t15_auction",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "auctioneer", "textKey": "tutorial.t15_auction.1" },
+        { "speaker": "auctioneer", "textKey": "tutorial.t15_auction.2" }
+      ]
+    },
+    {
+      "id": "tutorial_t19_region",
+      "band": "Story",
+      "maxPlays": 1,
+      "conditions": [],
+      "lines": [
+        { "speaker": "receptionist", "textKey": "tutorial.t19_region.1" },
+        { "speaker": "receptionist", "textKey": "tutorial.t19_region.2" }
       ]
     }
   ]

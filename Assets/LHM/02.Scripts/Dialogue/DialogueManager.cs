@@ -33,6 +33,11 @@ namespace RealSteel.Dialogue
             { "menu.shop", "상점 열기" },
             { "menu.craft", "제작하기" },
             { "menu.repair", "수리하기" },
+            { "menu.auction", "경매" },
+            { "menu.auction_normal", "일반 경매" },
+            { "menu.auction_fist", "주먹 경매" },
+            { "menu.auction_option", "옵션" },
+            { "menu.back", "뒤로" },
             { "menu.exit", "나가기" },
         };
 
@@ -327,6 +332,20 @@ namespace RealSteel.Dialogue
             Debug.Log($"[DialogueManager] 직접 열기: {dialogueId} ({data.parsedDisplay})");
             dialogueBox.Open(lines, data.parsedDisplay, data.background);
             return true;
+        }
+
+        // 지정한 대화들의 본 기록만 지우고 저장 (1회 대사를 다시 보게 할 때). 지운 개수를 돌려줌
+        public int ForgetDialogues(IEnumerable<string> dialogueIds)
+        {
+            if (dialogueIds == null) return 0;
+
+            int count = 0;
+            foreach (string id in dialogueIds)
+            {
+                if (history.Forget(id)) count++;
+            }
+            if (count > 0) Save();
+            return count;
         }
 
         public void Save()

@@ -19,6 +19,8 @@ namespace RealSteel.Dialogue.EditorTools
         {
             public string speakerId;
             public string source;
+            // 여러 장이 든 시트면 그중 쓸 스프라이트 이름 (비우면 그림 전체)
+            public string spriteName;
             public float height;
         }
 
@@ -26,6 +28,7 @@ namespace RealSteel.Dialogue.EditorTools
         {
             new NpcArt { speakerId = "receptionist", source = "Assets/Sprites/imsinpc/소녀.png", height = 1.6f },
             new NpcArt { speakerId = "junkdealer", source = "Assets/Sprites/imsinpc/mobcha-C.png", height = 1.9f },
+            new NpcArt { speakerId = "auctioneer", source = "Assets/Sprites/NPC-PC.png", spriteName = "NPC-PC_1", height = 1.6f },
         };
 
         internal static void Setup()
@@ -33,8 +36,8 @@ namespace RealSteel.Dialogue.EditorTools
             Scene scene = SceneManager.GetActiveScene();
             if (!EditorUtility.DisplayDialog(UndoName,
                     $"'{scene.name}' 씬({(string.IsNullOrEmpty(scene.path) ? "저장 안 된 씬" : scene.path)})의 NPC에 스프라이트를 적용합니다.\n" +
-                    (SetupKit.IsLhmScene(scene) ? "" : "※ LHM 밖의 씬입니다. Speaker Id가 receptionist / junkdealer인 NPC만 바뀝니다.\n") +
-                    "- 길드 접수원 ← 소녀.png / 고물상 아저씨 ← mobcha-C.png\n" +
+                    (SetupKit.IsLhmScene(scene) ? "" : "※ LHM 밖의 씬입니다. Speaker Id가 receptionist / junkdealer / auctioneer인 NPC만 바뀝니다.\n") +
+                    "- 길드 접수원 ← 소녀.png / 고물상 아저씨 ← mobcha-C.png / 경매장 등록직원 ← NPC-PC.png의 NPC-PC_1\n" +
                     $"- 원본은 그대로 두고 {OutputFolder}로 복사 (투명 여백 자르기, 픽셀아트 설정, 발밑 기준점)\n" +
                     "- 필드: 캡슐은 숨기기만 하고 자식 'Sprite' 추가 (플레이어와 같은 RS 빌보드 머티리얼), [E]·클로즈업 높이를 그림에 맞춤\n" +
                     "씬은 자동 저장하지 않습니다. (Ctrl+Z로 씬 변경 되돌리기, 복사한 그림 파일은 남음)", "적용", "취소"))
@@ -92,7 +95,24 @@ namespace RealSteel.Dialogue.EditorTools
                 return null;
             }
 
-            RectInt bounds = OpaqueBounds(source);
+            RectInt area = new RectInt(0, 0, source.width, source.height);
+            if (!string.IsNullOrEmpty(art.spriteName))
+            {
+                Sprite part = AssetDatabase.LoadAllAssetsAtPath(art.source).OfType<Sprite>().FirstOrDefault(sp => sp.name == art.spriteName);
+                if (part == null)
+                {
+                    Object.DestroyImmediate(source);
+                    log.AppendLine($"- 실패: {art.source}에 '{art.spriteName}' 스프라이트가 없음");
+                    return null;
+                }
+
+                // 시트의 임포트 크기가 원본과 다르면(최대 크기 제한 등) 비율을 맞춤
+                float ratio = source.width / Mathf.Max(1f, part.texture.width);
+                Rect rect = part.rect;
+                area = new RectInt(Mathf.RoundToInt(rect.x * ratio), Mathf.RoundToInt(rect.y * ratio), Mathf.RoundToInt(rect.width * ratio), Mathf.RoundToInt(rect.height * ratio));
+            }
+
+            RectInt bounds = OpaqueBounds(source, area);
             var cropped = new Texture2D(bounds.width, bounds.height, TextureFormat.RGBA32, false);
             cropped.SetPixels(source.GetPixels(bounds.x, bounds.y, bounds.width, bounds.height));
             cropped.Apply();
@@ -118,19 +138,20 @@ namespace RealSteel.Dialogue.EditorTools
             importer.SetTextureSettings(settings);
             importer.SaveAndReimport();
 
-            log.AppendLine($"- {art.source} → {path} ({bounds.width}x{bounds.height}px로 여백 자름, 높이 {art.height}m)");
+            string from = string.IsNullOrEmpty(art.spriteName) ? art.source : $"{art.source} ({art.spriteName})";
+            log.AppendLine($"- {from} → {path} ({bounds.width}x{bounds.height}px로 여백 자름, 높이 {art.height}m)");
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
 
-        private static RectInt OpaqueBounds(Texture2D texture)
+        private static RectInt OpaqueBounds(Texture2D texture, RectInt area)
         {
             Color32[] pixels = texture.GetPixels32();
             int width = texture.width;
-            int minX = width, minY = texture.height, maxX = -1, maxY = -1;
+            int minX = int.MaxValue, minY = int.MaxValue, maxX = -1, maxY = -1;
 
-            for (int y = 0; y < texture.height; y++)
+            for (int y = Mathf.Max(0, area.yMin); y < Mathf.Min(texture.height, area.yMax); y++)
             {
-                for (int x = 0; x < width; x++)
+                for (int x = Mathf.Max(0, area.xMin); x < Mathf.Min(width, area.xMax); x++)
                 {
                     if (pixels[y * width + x].a == 0) continue;
                     if (x < minX) minX = x;
@@ -140,7 +161,7 @@ namespace RealSteel.Dialogue.EditorTools
                 }
             }
 
-            return maxX < 0 ? new RectInt(0, 0, width, texture.height) : new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
+            return maxX < 0 ? area : new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
         }
 
         internal static Vector3 FeetOf(Transform npc)

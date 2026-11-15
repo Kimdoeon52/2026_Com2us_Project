@@ -90,9 +90,12 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("NPC 스프라이트", NpcSpriteSetup.Setup, NpcSpriteSetup.IsApplied),
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
             new ToolGroup("튜토리얼 화면",
-                new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>)),
+                new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>),
+                new ToolItem("세분화 튜토리얼 9종 (자동 열기 · 대사 → 화면 · F10 도움말)", TutorialCatalogSetup.Setup, TutorialCatalogSetup.Exists)),
             new ToolGroup("메인 메뉴",
                 new ToolItem("메인 메뉴 씬 (Heat UI)", MainMenuSetup.Setup, MainMenuSetup.Exists)),
+            new ToolGroup("사운드",
+                new ToolItem("공용 사운드 매니저 (BGM · 효과음, 메인 메뉴면 음량 슬라이더도)", RealSteel.Sound.EditorTools.SoundManagerSetup.Setup, RealSteel.Sound.EditorTools.SoundManagerSetup.Exists)),
             new ToolGroup("컷신",
                 new ToolItem("오프닝 컷신 (프리팹 + 테스트 씬)", CutsceneSetup.Setup, CutsceneSetup.Exists)),
             new ToolGroup("씬 오브젝트에 NPC 기능 연결",
@@ -100,7 +103,8 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("경매장 NPC 연결 (Auction_Hall 1의 등록직원)", WorkbenchSetup.LinkAuction, WorkbenchSetup.AuctionExists)),
             new ToolGroup("작업대",
                 new ToolItem("씬의 작업대 오브젝트에 연결 + 제작 · 수리 창 (Home_Workshop 1 등)", WorkbenchSetup.LinkExisting, WorkbenchSetup.Exists),
-                new ToolItem("작업대 새로 배치 (대화 → 제작 · 수리 · 나가기)", WorkbenchSetup.Setup, WorkbenchSetup.Exists)),
+                new ToolItem("작업대 새로 배치 (대화 → 제작 · 수리 · 나가기)", WorkbenchSetup.Setup, WorkbenchSetup.Exists),
+                new ToolItem("제작 · 수리 테스트 지급 (영상 촬영용, 부품 · 손상 장비 · 골드)", RealSteel.TestTools.EditorTools.WorkshopTestKitSetup.Setup, RealSteel.TestTools.EditorTools.WorkshopTestKitSetup.Exists)),
             new ToolGroup("고물상 맵",
                 new ToolItem("고물상 맵 배치", JunkShopDialogueSetup.Setup, Has<FieldInputBridge>),
                 new ToolItem("연결 복구 (카메라 · 상점 창)", JunkShopDialogueSetup.RepairLinks, null)),
@@ -212,7 +216,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
             else if (!SetupKit.IsLhmScene(scene))
             {
-                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 단축키 정리, 컷신, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 길드 접수원 · 경매장 NPC 연결, 사운드 매니저, 단축키 정리, 컷신, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
             }
         }
 

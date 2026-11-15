@@ -19,6 +19,11 @@ namespace RealSteel.Dialogue
         Exit,
         Craft,
         Repair,
+        AuctionMenu,
+        AuctionNormal,
+        AuctionFist,
+        AuctionOption,
+        Back,
     }
 
     public class NpcChoiceMenu : MonoBehaviour
@@ -27,6 +32,9 @@ namespace RealSteel.Dialogue
         private static readonly NpcAction[] JunkDealerActions = { NpcAction.Shop, NpcAction.Talk, NpcAction.Exit };
         private static readonly NpcAction[] OtherActions = { NpcAction.Talk, NpcAction.Exit };
         private static readonly NpcAction[] WorkbenchActions = { NpcAction.Craft, NpcAction.Repair, NpcAction.Exit };
+        // 등록직원: 1. 경매 (→ 1. 일반 경매 2. 주먹 경매 3. 뒤로) 2. 옵션 3. 대화하기 4. 나가기
+        private static readonly NpcAction[] AuctionActions = { NpcAction.AuctionMenu, NpcAction.AuctionOption, NpcAction.Talk, NpcAction.Exit };
+        private static readonly NpcAction[] AuctionModeActions = { NpcAction.AuctionNormal, NpcAction.AuctionFist, NpcAction.Back };
 
         private enum State
         {
@@ -128,7 +136,12 @@ namespace RealSteel.Dialogue
             BuildButtons();
             selected = 0;
 
-            if (titleText != null) titleText.text = manager.GetSpeakerName(target.SpeakerId);
+            if (titleText != null)
+            {
+                // 이름이 없는 NPC는 제목 줄을 숨김
+                titleText.text = manager.GetSpeakerName(target.SpeakerId);
+                titleText.gameObject.SetActive(!string.IsNullOrEmpty(titleText.text));
+            }
             ClearUiSelection();
             UiStack.Push(this);
 
@@ -177,6 +190,7 @@ namespace RealSteel.Dialogue
                 case NpcRole.GuildReceptionist: return ReceptionistActions;
                 case NpcRole.JunkDealer: return JunkDealerActions;
                 case NpcRole.Workbench: return WorkbenchActions;
+                case NpcRole.Auction: return AuctionActions;
                 default: return OtherActions;
             }
         }
@@ -188,7 +202,12 @@ namespace RealSteel.Dialogue
                 case NpcAction.HuntApply: return manager.GetText("menu.hunt_apply");
                 case NpcAction.RankingBoard: return manager.GetText("menu.ranking_board");
                 case NpcAction.RewardClaim: return manager.GetText("menu.reward_claim");
-                case NpcAction.Talk: return manager.GetText(npc != null && npc.Role == NpcRole.JunkDealer ? "menu.talk_more" : "menu.talk");
+                case NpcAction.Talk: return manager.GetText(npc != null && (npc.Role == NpcRole.JunkDealer || npc.Role == NpcRole.Auction) ? "menu.talk_more" : "menu.talk");
+                case NpcAction.AuctionMenu: return manager.GetText("menu.auction");
+                case NpcAction.AuctionNormal: return manager.GetText("menu.auction_normal");
+                case NpcAction.AuctionFist: return manager.GetText("menu.auction_fist");
+                case NpcAction.AuctionOption: return manager.GetText("menu.auction_option");
+                case NpcAction.Back: return manager.GetText("menu.back");
                 case NpcAction.Shop: return manager.GetText("menu.shop");
                 case NpcAction.Craft: return manager.GetText("menu.craft");
                 case NpcAction.Repair: return manager.GetText("menu.repair");
@@ -264,7 +283,7 @@ namespace RealSteel.Dialogue
             else if (up) Move(-1);
             else if (down) Move(1);
             else if (select) Choose(selected);
-            else if (cancel) Choose(Array.IndexOf(actions, NpcAction.Exit));
+            else if (cancel) Choose(Array.IndexOf(actions, Array.IndexOf(actions, NpcAction.Back) >= 0 ? NpcAction.Back : NpcAction.Exit));
         }
 
         // 숫자 키 1~9 (위 숫자줄 · 키패드) → 0부터 시작하는 번호, 없으면 -1
@@ -294,6 +313,12 @@ namespace RealSteel.Dialogue
 
             NpcAction action = actions[index];
             Debug.Log($"[NPC] 선택: {GetLabel(action)}");
+
+            if (action == NpcAction.AuctionMenu || action == NpcAction.Back)
+            {
+                SwitchActions(action == NpcAction.AuctionMenu ? AuctionModeActions : GetActions(npc.Role), action == NpcAction.Back ? Array.IndexOf(GetActions(npc.Role), NpcAction.AuctionMenu) : 0);
+                return;
+            }
 
             ClearUiSelection();
             panel.SetActive(false);
@@ -328,6 +353,16 @@ namespace RealSteel.Dialogue
 
                 case NpcAction.Repair:
                     if (!OpenCraftingUi("fixWindow", "OpenFixWindow", "CloseFixWindow", "수리")) End();
+                    break;
+
+                case NpcAction.AuctionNormal:
+                case NpcAction.AuctionFist:
+                    AuctionBridge.StartAuction(action == NpcAction.AuctionNormal ? AuctionBridge.Mode.Normal : AuctionBridge.Mode.Fist, this);
+                    End();
+                    break;
+
+                case NpcAction.AuctionOption:
+                    if (!OpenAuctionOption()) End();
                     break;
 
                 case NpcAction.Exit:
@@ -405,6 +440,32 @@ namespace RealSteel.Dialogue
             openWindowClose = closeMethod;
             ChangeState(State.Window);
             Debug.Log($"[NPC] {label} 창 열림 ({window.name}) — 창의 닫기 버튼 또는 Esc로 닫으면 상호작용 종료");
+            if (!window.activeInHierarchy) Debug.LogWarning($"[NPC] '{window.name}'의 부모가 꺼져 있어 화면에 보이지 않습니다.", window);
+            return true;
+        }
+
+        // 선택지 목록만 바꿈 (경매 → 일반 · 주먹 경매, 뒤로)
+        private void SwitchActions(NpcAction[] next, int select)
+        {
+            actions = next;
+            BuildButtons();
+            selected = Mathf.Clamp(select, 0, actions.Length - 1);
+            ClearUiSelection();
+            RefreshHighlight();
+            ChangeState(State.Menu);
+        }
+
+        // 경매장 판매 옵션 창: 창의 닫기 버튼 또는 Esc로 닫으면 상호작용 종료
+        private bool OpenAuctionOption()
+        {
+            GameObject window = AuctionBridge.OpenOption(out MonoBehaviour owner);
+            if (window == null) return false;
+
+            openWindow = window;
+            openWindowOwner = owner;
+            openWindowClose = AuctionBridge.CloseOptionMethod;
+            ChangeState(State.Window);
+            Debug.Log($"[NPC] 옵션 창 열림 ({window.name}) — 창의 닫기 버튼 또는 Esc로 닫으면 상호작용 종료");
             if (!window.activeInHierarchy) Debug.LogWarning($"[NPC] '{window.name}'의 부모가 꺼져 있어 화면에 보이지 않습니다.", window);
             return true;
         }

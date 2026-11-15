@@ -173,6 +173,16 @@ namespace RealSteel.Dialogue
             }
         }
 
+        // 특정 대화의 본 기록만 지움 (튜토리얼 다시 보기 테스트용). 지웠으면 true
+        public bool Forget(string id)
+        {
+            if (string.IsNullOrEmpty(id)) return false;
+            bool removed = records.Remove(id);
+            removed |= eventMarks.Remove(id);
+            removed |= lastPlayedTimes.Remove(id);
+            return removed;
+        }
+
         public void Clear()
         {
             records.Clear();

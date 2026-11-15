@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8658a75328a1ec4c966d378a60c4459, type: 3}
+  m_Name: Tutorial_auction
+  m_EditorClassIdentifier: 
+  guideId: auction
+  title: "\uACBD\uB9E4\uC7A5"
+  steps:
+  - title: "\uC704\uD0C1"
+    description: "\uC6D4 ~ \uD1A0\uC694\uC77C\uC5D0\uB294 \uBB3C\uAC74\uC744 \uACBD\uB9E4\uC5D0
+      \uB9E1\uACA8 \uB458 \uC218 \uC788\uC2B5\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  - title: "\uC77C\uC694\uC77C \uACBD\uB9E4"
+    description: "\uC77C\uC694\uC77C\uC5D0 \uACBD\uB9E4\uAC00 \uC5F4\uB9AC\uBA74,
+      \uB9E1\uAE34 \uBB3C\uAC74\uC774 \uB099\uCC30\uAC00\uB85C \uD314\uB9BD\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  trigger: 1
+  triggerTarget: Auction
+  introDialogueId: tutorial_t15_auction

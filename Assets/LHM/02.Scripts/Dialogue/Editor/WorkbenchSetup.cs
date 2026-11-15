@@ -26,6 +26,10 @@ namespace RealSteel.Dialogue.EditorTools
             public string GreetingPoolId;
             public string Flow;
             public bool ImportCrafting;
+            // true면 LHM 밖의 씬(다른 팀 씬)에서도 실행 가능
+            public bool AllowOutsideLhm;
+            // 이름에 이 키워드가 든 오브젝트(데스크 등) 쪽을 NPC의 정면으로 보고, 그쪽에 클로즈업 카메라 자리를 만듦. 비우면 만들지 않음
+            public string[] FrontKeywords;
         }
 
         private static readonly SlotNpcSpec WorkbenchSpec = new SlotNpcSpec
@@ -56,6 +60,7 @@ namespace RealSteel.Dialogue.EditorTools
                    "  토벌 신청 → 이번 시즌 보스 난이도 선택 → 보스 진입 대사 → 전투 씬 (대화 시스템 프리팹에 포함)\n" +
                    "  랭킹 보드 · 포상 수령은 시스템 연결 전이라 로그만",
             ImportCrafting = false,
+            AllowOutsideLhm = true,
         };
 
         private const string Title = "작업대 배치";
@@ -68,18 +73,21 @@ namespace RealSteel.Dialogue.EditorTools
             Title = "경매장 NPC 연결",
             Label = "등록직원",
             Keywords = new[] { "등록직원", "Registrar" },
-            Role = NpcRole.Other,
+            Role = NpcRole.Auction,
             PoolId = "auction_npc",
             PoolPath = "Assets/LHM/03.Data/Dialogue/auction_npc.json",
             SpeakerId = "auctioneer",
             GreetingPoolId = "",
-            Flow = "E → 1. 대화  2. 나가기 (경매장 NPC 대사: 낙찰 후 · 주말 · 기본 등 상황별)",
+            Flow = "E → 1. 경매 (→ 1. 일반 경매  2. 주먹 경매  3. 뒤로)  2. 옵션 (경매장 판매 창)  3. 대화하기  4. 나가기\n" +
+                   "  경매 · 옵션은 씬의 경매 관리자(LSH Auction)를 그대로 씀 — 경매 시작 후 모드 선택 창에서 고른 모드를 대신 누름",
             ImportCrafting = false,
+            AllowOutsideLhm = true,
+            FrontKeywords = new[] { "등록데스크", "Reception" },
         };
 
         internal static bool Exists() => HasRole(NpcRole.Workbench);
         internal static bool ReceptionistExists() => HasRole(NpcRole.GuildReceptionist);
-        internal static bool AuctionExists() => Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(n => n.SpeakerId == AuctionSpec.SpeakerId);
+        internal static bool AuctionExists() => Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None).Any(n => n.SpeakerId == AuctionSpec.SpeakerId && n.Role == AuctionSpec.Role);
         internal static void LinkAuction() => Link(AuctionSpec);
 
         private static bool HasRole(NpcRole role)
@@ -158,7 +166,8 @@ namespace RealSteel.Dialogue.EditorTools
         {
             string title = spec.Title;
             Scene scene = SceneManager.GetActiveScene();
-            if (!SetupKit.RequireLhmScene(scene, title)) return;
+            if (!spec.AllowOutsideLhm && !SetupKit.RequireLhmScene(scene, title)) return;
+            bool outside = !SetupKit.IsLhmScene(scene);
 
             GameObject target = FindTarget(scene, spec.Keywords, out string how);
             if (target == null)
@@ -179,6 +188,12 @@ namespace RealSteel.Dialogue.EditorTools
                 return;
             }
 
+            // 같은 NPC 기능이 다른 오브젝트에도 붙어 있으면 '[E] 이름' 안내가 두 번 뜸 → 대상 하나만 남기고 지움
+            NpcInteractable[] duplicates = FindDuplicates(scene, spec, target);
+            string duplicateLine = duplicates.Length == 0 ? ""
+                : $"- 중복 정리: 같은 NPC 기능이 {duplicates.Length}곳에 더 붙어 있어 지움 (안내가 두 번 뜨던 원인)\n" +
+                  string.Concat(duplicates.Select(d => $"    {PathOf(d.transform)}\n"));
+
             bool importCrafting = spec.ImportCrafting && !CraftingSystemImport.HasCraftingUi(scene);
             string craftingLine = !spec.ImportCrafting ? ""
                 : !importCrafting ? "- 제작 · 수리 창: 이미 있음 → 1. 제작하기 · 2. 수리하기로 실제 창이 열림\n"
@@ -187,11 +202,13 @@ namespace RealSteel.Dialogue.EditorTools
 
             if (!SetupKit.Dialog(title,
                     $"'{scene.name}' 씬의 {spec.Label}에 NPC 기능을 연결합니다.\n" +
+                    (outside ? $"※ LHM 밖의 씬입니다: {(string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path)}\n  다른 팀 씬이면 저장 전에 담당자와 확인하세요.\n" : "") +
                     $"- 대상: {PathOf(target.transform)} ({how})\n" +
                     "  (모양은 그대로, 상호작용 컴포넌트만 추가)\n" +
                     craftingLine +
                     $"- 대화 시스템: {SystemStatus(manager, player)}\n" +
                     $"- EventSystem: {(hasEventSystem ? "이미 있음" : "없음 → 추가 (선택지 마우스 클릭용)")}\n" +
+                    duplicateLine +
                     $"- {spec.Flow}\n" +
                     "씬은 자동 저장하지 않습니다." +
                     (importCrafting ? "\n복사해 온 창은 Ctrl+Z로 되돌릴 수 없으니, 되돌리려면 저장하지 말고 씬을 다시 여세요." : " (Ctrl+Z로 되돌리기)"),
@@ -221,10 +238,18 @@ namespace RealSteel.Dialogue.EditorTools
 
             EnsureSystem(scene, manager, pool, hasEventSystem, log);
 
+            foreach (NpcInteractable duplicate in duplicates)
+            {
+                string path = PathOf(duplicate.transform);
+                Undo.DestroyObjectImmediate(duplicate);
+                log.AppendLine($"- 중복 삭제: {path}의 NpcInteractable");
+            }
+
             bool existed = target.TryGetComponent(out NpcInteractable npc);
             if (!existed) npc = Undo.AddComponent<NpcInteractable>(target);
             else Undo.RecordObject(npc, title);
             Configure(npc, HeightOf(target), spec, log);
+            if (spec.FrontKeywords != null && spec.FrontKeywords.Length > 0) SetupCloseUpPoint(npc, scene, spec, HeightOf(target), log);
             log.AppendLine($"- 대상: {PathOf(target.transform)} — NpcInteractable {(existed ? "설정 갱신" : "추가")}");
 
             Selection.activeGameObject = target;
@@ -232,6 +257,15 @@ namespace RealSteel.Dialogue.EditorTools
             EditorSceneManager.MarkSceneDirty(scene);
             log.AppendLine($"완료. Ctrl+S로 저장 후 Play → {spec.Label}에게 다가가 E → 숫자 키 또는 방향키 + E");
             Debug.Log(log.ToString());
+        }
+
+        // 대상이 아닌 오브젝트에 붙은 같은 NPC(같은 화자, 접수원 · 작업대는 같은 역할) 기능
+        private static NpcInteractable[] FindDuplicates(Scene scene, SlotNpcSpec spec, GameObject target)
+        {
+            return JunkShopDialogueSetup.FindInScene<NpcInteractable>(scene)
+                .Where(n => n.gameObject != target)
+                .Where(n => n.SpeakerId == spec.SpeakerId || (spec.Role != NpcRole.Other && n.Role == spec.Role))
+                .ToArray();
         }
 
         private static GameObject FindTarget(Scene scene, string[] keywords, out string how)
@@ -293,6 +327,53 @@ namespace RealSteel.Dialogue.EditorTools
             so.ApplyModifiedProperties();
             string greeting = string.IsNullOrEmpty(spec.GreetingPoolId) ? "없음 (바로 선택지)" : spec.GreetingPoolId;
             log.AppendLine($"- NpcInteractable: 역할 {spec.Role} / 대사 풀 {spec.PoolId} / 화자 {spec.SpeakerId} / 인사 대사 {greeting} / 반경 2m / 안내 높이 {height + 0.4f:0.0}m");
+        }
+
+        private const string CloseUpPointName = "CloseUpPoint";
+        private const float CloseUpDistance = 2.2f;
+        private const float CloseUpCameraHeightRatio = 1.05f;
+        private const float CloseUpLookHeightRatio = 0.85f;
+
+        // NPC 정면(데스크 쪽)에 카메라 자리를 만들어 클로즈업이 등 뒤가 아니라 얼굴 쪽에서, 머리까지 보이게 함
+        private static void SetupCloseUpPoint(NpcInteractable npc, Scene scene, SlotNpcSpec spec, float height, StringBuilder log)
+        {
+            Transform npcTransform = npc.transform;
+            Transform front = scene.GetRootGameObjects()
+                .SelectMany(r => r.GetComponentsInChildren<Transform>(true))
+                .Where(t => t != npcTransform && !t.IsChildOf(npcTransform) && spec.FrontKeywords.Any(k => t.name.Contains(k)))
+                .OrderBy(t => t.name.StartsWith(SlotPrefix) ? 0 : 1)
+                .ThenBy(t => (t.position - npcTransform.position).sqrMagnitude)
+                .FirstOrDefault();
+
+            Vector3 forward = front != null ? Vector3.ProjectOnPlane(front.position - npcTransform.position, Vector3.up) : Vector3.zero;
+            if (forward.sqrMagnitude < 0.0001f) forward = Vector3.ProjectOnPlane(npcTransform.forward, Vector3.up);
+            if (forward.sqrMagnitude < 0.0001f) forward = Vector3.back;
+            forward.Normalize();
+
+            Transform point = npcTransform.Find(CloseUpPointName);
+            if (point == null)
+            {
+                var go = new GameObject(CloseUpPointName);
+                Undo.RegisterCreatedObjectUndo(go, spec.Title);
+                Undo.SetTransformParent(go.transform, npcTransform, spec.Title);
+                point = go.transform;
+            }
+            else
+            {
+                Undo.RecordObject(point, spec.Title);
+            }
+
+            Vector3 basePosition = npcTransform.position;
+            Vector3 cameraPosition = basePosition + forward * CloseUpDistance + Vector3.up * (height * CloseUpCameraHeightRatio);
+            Vector3 lookAt = basePosition + Vector3.up * (height * CloseUpLookHeightRatio);
+            point.SetPositionAndRotation(cameraPosition, Quaternion.LookRotation(lookAt - cameraPosition, Vector3.up));
+
+            var so = new SerializedObject(npc);
+            so.FindProperty("closeUpPoint").objectReferenceValue = point;
+            so.ApplyModifiedProperties();
+
+            string basis = front != null ? $"'{front.name}' 쪽을 정면으로" : "오브젝트 앞쪽을 정면으로";
+            log.AppendLine($"- 클로즈업 카메라: {basis}, {CloseUpDistance}m 앞 · 높이 {height * CloseUpCameraHeightRatio:0.00}m에서 얼굴 쪽을 봄 ({PathOf(point)}, 위치는 직접 옮겨도 됨)");
         }
 
         private static string PathOf(Transform t)

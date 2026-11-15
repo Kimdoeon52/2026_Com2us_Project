@@ -9,6 +9,7 @@ namespace RealSteel.Dialogue
         GuildReceptionist,
         JunkDealer,
         Workbench,
+        Auction,
     }
 
     public class NpcInteractable : MonoBehaviour

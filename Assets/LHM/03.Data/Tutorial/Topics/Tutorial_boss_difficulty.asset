@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8658a75328a1ec4c966d378a60c4459, type: 3}
+  m_Name: Tutorial_boss_difficulty
+  m_EditorClassIdentifier: 
+  guideId: boss_difficulty
+  title: "\uBCF4\uC2A4 \uB09C\uC774\uB3C4 \uC120\uD0DD"
+  steps:
+  - title: "\uB09C\uC774\uB3C4"
+    description: "\uB09C\uC774\uB3C4\uAC00 \uB192\uC744\uC218\uB85D \uD3EC\uC0C1\uC774
+      \uCEE4\uC9C0\uC9C0\uB9CC, \uC2E0\uCCAD\uBE44\uB3C4 \uC62C\uB77C\uAC11\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  - title: "\uD30C\uCE20 \uC810\uAC80"
+    description: "\uC2E0\uCCAD \uC804\uC5D0 \uD30C\uCE20 \uB0B4\uAD6C\uB3C4\uB97C
+      \uD655\uC778\uD558\uC138\uC694. \uBD80\uC11C\uC9C4 \uD30C\uCE20\uB294 \uC804\uD22C\uC5D0\uC11C
+      \uC4F8 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4."
+    clip: {fileID: 0}
+    frames: []
+    framesPerSecond: 12
+    image: {fileID: 0}
+  trigger: 3
+  triggerTarget: BossDifficultySelectUI.IsOpen
+  introDialogueId: tutorial_t9_hunt_apply

@@ -139,7 +139,7 @@ namespace RealSteel.Tutorial
             if (!string.IsNullOrEmpty(guideId)) PlayerPrefs.DeleteKey(SeenPrefix + guideId);
         }
 
-        private static void MarkSeen(string guideId)
+        public static void MarkSeen(string guideId)
         {
             if (string.IsNullOrEmpty(guideId)) return;
             PlayerPrefs.SetInt(SeenPrefix + guideId, 1);

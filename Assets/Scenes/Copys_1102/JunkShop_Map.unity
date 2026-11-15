@@ -44900,6 +44900,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 20081c446e3bf8e43bc60c2035260cbe, type: 3}
+--- !u!1 &2099900001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2099900003}
+  - component: {fileID: 2099900002}
+  m_Layer: 0
+  m_Name: '[Hunt] HuntDeparture'
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2099900002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099900001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06313b210bff7864da8d2d2ae765d0f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  manager: {fileID: 1960590001}
+  menu: {fileID: 2100232789}
+  bossList: {fileID: 1545875830}
+  difficultySelect: {fileID: 958886288}
+  entryDialogue: {fileID: 2077136371}
+  progressSource: {fileID: 1960590002}
+  defaultBattleScene: Battle_Boss_Test
+  battleScenes:
+  - bossId: boss.wheel
+    sceneName: Battle_Boss_Test
+  - bossId: boss.kyodai
+    sceneName: Battle3
+  - bossId: boss.region3
+    sceneName: Battle_Boss_Test 3
+  raceIds:
+  - race1
+  - race2
+  - race3
+  - final
+  fallbackBossId: boss.wheel
+  backLabel: "\uAE38\uB4DC \uC811\uC218\uCC98"
+--- !u!4 &2099900003
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099900001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -44948,3 +45013,4 @@ SceneRoots:
   - {fileID: 1071226001}
   - {fileID: 2098536930}
   - {fileID: 2084880553}
+  - {fileID: 2099900003}

@@ -897,5 +897,599 @@ namespace RealSteel.Boss.Kyosho
                 }
             }
         }
+
+        // ══════════════════════════════════════════════════════════════
+        // [Phase 3 Pixel Maestro 스프라이트 & RSNanoKnightMoves 런타임/에디터 생성기]
+        // ══════════════════════════════════════════════════════════════
+        public const int MaestroCellWidth = 96;
+        public const int MaestroCellHeight = 64;
+        public const int MaestroRootX = 48;
+        public const int MaestroRootY = 4;
+
+        private static RSNanoKnightMoves _runtimeMaestroMoves;
+
+        private struct MaestroPose
+        {
+            public float CenterX;
+            public float FootY;
+            public float BodyLeanDeg;
+            public float Stride;
+            public float BatonElbowX, BatonElbowY;
+            public float BatonHandX, BatonHandY;
+            public float BatonTipX, BatonTipY;
+            public float OffHandX, OffHandY;
+            public float TailLift;
+            public bool ShowFxArc;
+            public float FxArcRadius;
+            public float FxArcAngleDeg;
+            public float FxCenterX, FxCenterY;
+            public float FxSpread;
+        }
+
+        public static int GetMaestroFrameCount(KnightMove move)
+        {
+            return move switch
+            {
+                KnightMove.RunIn => 3,
+                KnightMove.Running => 6,
+                KnightMove.RunOut => 3,
+                KnightMove.Dash => 3,
+                KnightMove.BackDash => 3,
+                KnightMove.Light1 => 4,
+                KnightMove.Light2 => 4,
+                KnightMove.Light3 => 4,
+                KnightMove.Light4 => 4,
+                KnightMove.FrontHeavy => 5,
+                KnightMove.DashAtk => 4,
+                KnightMove.DashHeavy => 4,
+                KnightMove.Rush => 6,
+                KnightMove.Jump => 4,
+                KnightMove.AirIn => 3,
+                KnightMove.AirLoop => 4,
+                KnightMove.AirLand => 3,
+                KnightMove.Guard1 => 4,
+                KnightMove.Guard2 => 4,
+                KnightMove.Guard3 => 6,
+                _ => 4
+            };
+        }
+
+        public static RSNanoKnightMoves GetOrCreateMaestroMoves()
+        {
+            if (_runtimeMaestroMoves != null && _runtimeMaestroMoves.Ready)
+            {
+                return _runtimeMaestroMoves;
+            }
+
+            var asset = ScriptableObject.CreateInstance<RSNanoKnightMoves>();
+            asset.name = "Kyosho_Maestro_Moves_Runtime";
+            asset.cellSize = new Vector2Int(MaestroCellWidth, MaestroCellHeight);
+            asset.root = new Vector2Int(MaestroRootX, MaestroRootY);
+            asset.alphaCut = 0.5f;
+            asset.pixelScale = 3;
+            asset.darkSilhouette = false;
+            asset.bladeGlow = 1.4f;
+            asset.fxGlow = 2.6f;
+            asset.bodySnap = 42000f;
+            asset.snapSpeed = 420f;
+            asset.idle = KnightMove.Guard1;
+
+            foreach (KnightMove move in RSNanoKnightMoves.All)
+            {
+                NanoKnightClip clip = asset.Get(move);
+                BakeRuntimeMaestroClip(move, clip);
+            }
+
+            _runtimeMaestroMoves = asset;
+            return _runtimeMaestroMoves;
+        }
+
+        private static void BakeRuntimeMaestroClip(KnightMove move, NanoKnightClip clip)
+        {
+            int frameCount = GetMaestroFrameCount(move);
+            clip.frames = frameCount;
+            clip.fps = (move == KnightMove.Dash || move == KnightMove.Light1 || move == KnightMove.Light2) ? 18f : 14f;
+            clip.start = new int[frameCount + 1];
+            clip.counts = new int[frameCount * 3];
+
+            var pxList = new List<int>(frameCount * 850);
+            var colList = new List<int>(frameCount * 850);
+            var framePixels = new List<(int hilbert, int px, int col, int kind)>(900);
+
+            for (int f = 0; f < frameCount; f++)
+            {
+                clip.start[f] = pxList.Count;
+                framePixels.Clear();
+
+                for (int y = 0; y < MaestroCellHeight; y++)
+                {
+                    for (int x = 0; x < MaestroCellWidth; x++)
+                    {
+                        SampleMaestroFramePixel(move, f, x, y, out byte alpha, out Color32 col);
+                        if (alpha < 128) continue;
+
+                        int kind = ClassifyMaestroPixelKind(col, move);
+                        int packedPx = (x + 2048) | ((y + 2048) << 12) | (kind << 24);
+                        int packedCol = col.r | (col.g << 8) | (col.b << 16);
+                        framePixels.Add((HilbertEncode(128, x, y), packedPx, packedCol, kind));
+                        clip.counts[f * 3 + kind]++;
+                    }
+                }
+
+                framePixels.Sort((a, b) =>
+                {
+                    int cmp = a.kind.CompareTo(b.kind);
+                    return cmp != 0 ? cmp : a.hilbert.CompareTo(b.hilbert);
+                });
+
+                for (int i = 0; i < framePixels.Count; i++)
+                {
+                    pxList.Add(framePixels[i].px);
+                    colList.Add(framePixels[i].col);
+                }
+            }
+
+            clip.start[frameCount] = pxList.Count;
+            clip.px = pxList.ToArray();
+            clip.color = colList.ToArray();
+            clip.bakedKey = $"runtime_{move}_{frameCount}";
+        }
+
+        private static int ClassifyMaestroPixelKind(Color32 c, KnightMove move)
+        {
+            bool isBaseMove = move == KnightMove.RunIn || move == KnightMove.Running || move == KnightMove.RunOut
+                || move == KnightMove.Dash || move == KnightMove.BackDash;
+            if (!isBaseMove && IsMaestroFxColor(c)) return 2;
+
+            float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) / 255f;
+            if (c.b >= c.r + 15 && lum >= 0.6f) return 1;
+            return 0;
+        }
+
+        private static bool IsMaestroFxColor(Color32 c)
+        {
+            // BaseMoves 팔레트에 존재하지 않는 Fx 전용 RGB 판별
+            return (c.r == 255 && c.g == 224 && c.b == 64)
+                || (c.r == 64 && c.g == 245 && c.b == 255)
+                || (c.r == 255 && c.g == 72 && c.b == 136);
+        }
+
+        private static int HilbertEncode(int n, int x, int y)
+        {
+            int d = 0;
+            for (int s = n >> 1; s > 0; s >>= 1)
+            {
+                int rx = (x & s) != 0 ? 1 : 0;
+                int ry = (y & s) != 0 ? 1 : 0;
+                d += s * s * ((3 * rx) ^ ry);
+                if (ry == 0)
+                {
+                    if (rx == 1)
+                    {
+                        x = (n - 1) - x;
+                        y = (n - 1) - y;
+                    }
+                    int t = x;
+                    x = y;
+                    y = t;
+                }
+            }
+            return d;
+        }
+
+        public static void SampleMaestroFramePixel(KnightMove move, int frame, int x, int y, out byte a, out Color32 col)
+        {
+            a = 0;
+            col = default;
+
+            // Body / Blade(지휘봉) 팔레트 - BaseMoves와 100% 동일해야 RSNanoKnightBaker가 올바르게 분류한다.
+            Color32 colCoat = new Color32(34, 38, 52, 255);
+            Color32 colVest = new Color32(62, 70, 92, 255);
+            Color32 colShirt = new Color32(230, 232, 240, 255);   // b-r=10 < 15 -> Body
+            Color32 colTrim = new Color32(218, 172, 68, 255);     // b < r -> Body
+            Color32 colBaton = new Color32(120, 205, 255, 255);   // b-r=135>=15 & lum=0.73>=0.6 -> Blade
+
+            // Fx 팔레트 - BaseMoves 이외의 동작에서만 등장
+            Color32 colFxGold = new Color32(255, 224, 64, 255);
+            Color32 colFxCyan = new Color32(64, 245, 255, 255);
+            Color32 colFxCrimson = new Color32(255, 72, 136, 255);
+
+            int total = Mathf.Max(1, GetMaestroFrameCount(move));
+            MaestroPose p = BuildMaestroPose(move, Mathf.Clamp(frame, 0, total - 1), total);
+
+            float rad = p.BodyLeanDeg * Mathf.Deg2Rad;
+            float sinL = Mathf.Sin(rad);
+            float cosL = Mathf.Cos(rad);
+
+            // 골반 중심 및 상체 좌표 계산 (몸통~머리 축)
+            float hipX = p.CenterX;
+            float hipY = p.FootY + 14.5f;
+            float chestX = hipX + sinL * 11f;
+            float chestY = hipY + cosL * 11f;
+            float shoulderX = hipX + sinL * 16.5f;
+            float shoulderY = hipY + cosL * 16.5f;
+            float headX = hipX + sinL * 23.5f;
+            float headY = hipY + cosL * 23.5f;
+
+            // 1. 효과 픽셀(음파 호/지휘 궤적) 우선 또는 외곽 레이어 판정
+            if (p.ShowFxArc)
+            {
+                float dx = x - p.FxCenterX;
+                float dy = y - p.FxCenterY;
+                float dist = Mathf.Sqrt(dx * dx + dy * dy);
+                if (Mathf.Abs(dist - p.FxArcRadius) <= 2.3f)
+                {
+                    float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                    float diff = Mathf.Abs(Mathf.DeltaAngle(ang, p.FxArcAngleDeg));
+                    if (diff <= p.FxSpread)
+                    {
+                        a = 255;
+                        col = move == KnightMove.FrontHeavy || move == KnightMove.DashHeavy ? colFxCrimson
+                            : (Mathf.Abs(dist - p.FxArcRadius) < 1.1f ? colFxGold : colFxCyan);
+                        return;
+                    }
+                }
+                // 보조 공명 파문 호
+                if (p.FxSpread > 50f && Mathf.Abs(dist - (p.FxArcRadius - 6.5f)) <= 1.25f)
+                {
+                    float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg;
+                    if (Mathf.Abs(Mathf.DeltaAngle(ang, p.FxArcAngleDeg)) <= p.FxSpread * 0.78f)
+                    {
+                        a = 255;
+                        col = colFxCyan;
+                        return;
+                    }
+                }
+            }
+
+            // 2. 빛나는 지휘봉(Blade, kind=1) — 손에서 끝까지 선명한 굵기
+            if (InCapsule(x, y, p.BatonHandX, p.BatonHandY, p.BatonTipX, p.BatonTipY, 1.05f))
+            {
+                a = 255;
+                col = colBaton;
+                return;
+            }
+            // 손잡이 금장 링
+            if (InEllipse(x, y, p.BatonHandX, p.BatonHandY, 1.6f, 1.6f))
+            {
+                a = 255;
+                col = colTrim;
+                return;
+            }
+
+            // 3. 흰 장갑/손
+            if (InEllipse(x, y, p.BatonHandX, p.BatonHandY, 1.4f, 1.4f)
+                || InEllipse(x, y, p.OffHandX, p.OffHandY, 1.5f, 1.5f))
+            {
+                a = 255;
+                col = colShirt;
+                return;
+            }
+
+            // 4. 머리 & 휘날리는 지휘자 헤어 실루엣
+            if (InEllipse(x, y, headX, headY, 3.8f, 4.3f))
+            {
+                a = 255;
+                col = colCoat;
+                return;
+            }
+            if (InCapsule(x, y, headX - 2f, headY + 2f, headX - 5.2f - sinL * 2f, headY + 3.8f, 1.6f))
+            {
+                a = 255;
+                col = colVest;
+                return;
+            }
+
+            // 5. 앞팔(지휘팔) & 뒷팔(왼팔)
+            float rShX = shoulderX + 2.8f * cosL;
+            float rShY = shoulderY - 2.8f * sinL;
+            float lShX = shoulderX - 3.2f * cosL;
+            float lShY = shoulderY + 3.2f * sinL;
+            if (InCapsule(x, y, rShX, rShY, p.BatonElbowX, p.BatonElbowY, 1.75f)
+                || InCapsule(x, y, p.BatonElbowX, p.BatonElbowY, p.BatonHandX, p.BatonHandY, 1.45f))
+            {
+                a = 255;
+                col = colCoat;
+                return;
+            }
+            if (InCapsule(x, y, lShX, lShY, (lShX + p.OffHandX) * 0.5f - 1.5f, (lShY + p.OffHandY) * 0.5f - 1.2f, 1.65f)
+                || InCapsule(x, y, (lShX + p.OffHandX) * 0.5f - 1.5f, (lShY + p.OffHandY) * 0.5f - 1.2f, p.OffHandX, p.OffHandY, 1.4f))
+            {
+                a = 255;
+                col = colVest;
+                return;
+            }
+
+            // 6. 몸통(연미복 코트 + 중앙 셔츠 + 금장 견장)
+            if (InEllipse(x, y, shoulderX, shoulderY - 0.5f, 5.4f, 2.2f))
+            {
+                a = 255;
+                col = (Mathf.Abs(x - shoulderX) > 3.6f) ? colTrim : colCoat;
+                return;
+            }
+            if (InCapsule(x, y, chestX, chestY, hipX, hipY, 4.1f))
+            {
+                // V자 흰 셔츠 가슴 + 단추 금장 라인
+                float torsoDist = Mathf.Abs((x - chestX) * cosL - (y - chestY) * sinL);
+                a = 255;
+                if (y > chestY - 2f && torsoDist < 1.5f) col = colShirt;
+                else if (torsoDist < 2.6f) col = colVest;
+                else col = colCoat;
+                return;
+            }
+
+            // 7. 연미복 뒷자락(Coattails) — 역동적으로 휘날리는 좌우 제비꼬리
+            float tailTip1X = hipX - 6.8f - sinL * 4f - p.TailLift * 2.5f;
+            float tailTip1Y = hipY - 9.5f + p.TailLift * 4.5f;
+            float tailTip2X = hipX - 4.0f - sinL * 3f - p.TailLift * 1.5f;
+            float tailTip2Y = hipY - 11.0f + p.TailLift * 3.5f;
+            if (InCapsule(x, y, hipX - 2.2f, hipY + 1f, tailTip1X, tailTip1Y, 2.0f)
+                || InCapsule(x, y, hipX - 1.0f, hipY + 0.5f, tailTip2X, tailTip2Y, 1.8f))
+            {
+                a = 255;
+                col = colCoat;
+                return;
+            }
+
+            // 8. 다리 & 부츠
+            float frontFootX = hipX + 2.4f + p.Stride;
+            float backFootX = hipX - 2.4f - p.Stride * 0.85f;
+            if (InCapsule(x, y, hipX + 1.4f, hipY, frontFootX, p.FootY + 1f, 2.0f)
+                || InCapsule(x, y, hipX - 1.4f, hipY, backFootX, p.FootY + 1f, 1.9f))
+            {
+                a = 255;
+                col = (y < p.FootY + 5f) ? colCoat : colVest;
+                return;
+            }
+        }
+
+        private static MaestroPose BuildMaestroPose(KnightMove move, int frame, int total)
+        {
+            float t = total > 1 ? (float)frame / (total - 1) : 0f;
+            float cx = 48f;
+            float fy = MaestroRootY;
+
+            var p = new MaestroPose
+            {
+                CenterX = cx,
+                FootY = fy,
+                BodyLeanDeg = 6f,
+                Stride = 1.6f,
+                BatonElbowX = cx + 8f,
+                BatonElbowY = fy + 29f,
+                BatonHandX = cx + 14f,
+                BatonHandY = fy + 34f,
+                BatonTipX = cx + 28f,
+                BatonTipY = fy + 47f,
+                OffHandX = cx - 8f,
+                OffHandY = fy + 29f,
+                TailLift = 0.25f
+            };
+
+            switch (move)
+            {
+                case KnightMove.RunIn:
+                case KnightMove.Running:
+                case KnightMove.RunOut:
+                {
+                    float phase = t * Mathf.PI * 2f;
+                    p.BodyLeanDeg = 18f;
+                    p.Stride = Mathf.Sin(phase) * 4.5f;
+                    p.FootY = fy + Mathf.Abs(Mathf.Cos(phase)) * 1.6f;
+                    p.BatonElbowX = cx - 4f;
+                    p.BatonElbowY = p.FootY + 26f;
+                    p.BatonHandX = cx - 10f;
+                    p.BatonHandY = p.FootY + 24f;
+                    p.BatonTipX = cx - 25f;
+                    p.BatonTipY = p.FootY + 32f + Mathf.Sin(phase) * 3f;
+                    p.OffHandX = cx + 10f;
+                    p.OffHandY = p.FootY + 31f;
+                    p.TailLift = 0.85f + Mathf.Abs(Mathf.Sin(phase)) * 0.35f;
+                    break;
+                }
+                case KnightMove.Dash:
+                {
+                    p.BodyLeanDeg = 28f;
+                    p.Stride = 6.2f;
+                    p.BatonElbowX = cx - 6f;
+                    p.BatonElbowY = fy + 24f;
+                    p.BatonHandX = cx - 12f;
+                    p.BatonHandY = fy + 22f;
+                    p.BatonTipX = cx - 30f;
+                    p.BatonTipY = fy + 24f;
+                    p.OffHandX = cx + 14f;
+                    p.OffHandY = fy + 28f;
+                    p.TailLift = 1.25f;
+                    break;
+                }
+                case KnightMove.BackDash:
+                {
+                    p.BodyLeanDeg = -14f;
+                    p.Stride = 5.0f;
+                    p.BatonElbowX = cx + 9f;
+                    p.BatonElbowY = fy + 31f;
+                    p.BatonHandX = cx + 15f;
+                    p.BatonHandY = fy + 34f;
+                    p.BatonTipX = cx + 28f;
+                    p.BatonTipY = fy + 40f;
+                    p.OffHandX = cx - 9f;
+                    p.OffHandY = fy + 32f;
+                    p.TailLift = 0.95f;
+                    break;
+                }
+                case KnightMove.Light1:
+                case KnightMove.Light2:
+                case KnightMove.Light3:
+                case KnightMove.Light4:
+                {
+                    float swing = Mathf.Lerp(78f, -52f, t);
+                    if (move == KnightMove.Light2 || move == KnightMove.Light4) swing = -swing;
+                    p.BodyLeanDeg = Mathf.Lerp(-6f, 20f, t);
+                    p.Stride = 3.5f;
+                    p.BatonElbowX = cx + 10f;
+                    p.BatonElbowY = fy + 31f;
+                    p.BatonHandX = cx + 16f + Mathf.Cos(swing * Mathf.Deg2Rad) * 3f;
+                    p.BatonHandY = fy + 32f + Mathf.Sin(swing * Mathf.Deg2Rad) * 5f;
+                    p.BatonTipX = p.BatonHandX + Mathf.Cos(swing * Mathf.Deg2Rad) * 18f;
+                    p.BatonTipY = p.BatonHandY + Mathf.Sin(swing * Mathf.Deg2Rad) * 18f;
+                    p.OffHandX = cx - 10f;
+                    p.OffHandY = fy + 34f;
+                    p.TailLift = 0.7f;
+                    if (frame >= 1 && frame <= 2)
+                    {
+                        p.ShowFxArc = true;
+                        p.FxCenterX = cx + 14f;
+                        p.FxCenterY = fy + 31f;
+                        p.FxArcRadius = 21f;
+                        p.FxArcAngleDeg = 8f;
+                        p.FxSpread = 68f;
+                    }
+                    break;
+                }
+                case KnightMove.FrontHeavy:
+                {
+                    // 프레임 0-1: 지휘봉을 머리 위로 높이 들어올린 예고 / 프레임 2-3: 강렬한 내리꽂기 (ActiveFx!)
+                    float swing = frame < 2 ? Mathf.Lerp(108f, 92f, frame) : Mathf.Lerp(-12f, -48f, (frame - 2) / 2f);
+                    p.BodyLeanDeg = frame < 2 ? -12f : 26f;
+                    p.Stride = frame < 2 ? 2.0f : 5.4f;
+                    p.BatonElbowX = cx + 8f;
+                    p.BatonElbowY = fy + (frame < 2 ? 38f : 28f);
+                    p.BatonHandX = cx + (frame < 2 ? 6f : 17f);
+                    p.BatonHandY = fy + (frame < 2 ? 46f : 26f);
+                    p.BatonTipX = p.BatonHandX + Mathf.Cos(swing * Mathf.Deg2Rad) * 19f;
+                    p.BatonTipY = p.BatonHandY + Mathf.Sin(swing * Mathf.Deg2Rad) * 19f;
+                    p.OffHandX = cx - 11f;
+                    p.OffHandY = fy + 36f;
+                    p.TailLift = frame < 2 ? 0.5f : 1.15f;
+                    if (frame >= 2 && frame <= 3)
+                    {
+                        p.ShowFxArc = true;
+                        p.FxCenterX = cx + 13f;
+                        p.FxCenterY = fy + 28f;
+                        p.FxArcRadius = 24f;
+                        p.FxArcAngleDeg = 0f;
+                        p.FxSpread = 82f;
+                    }
+                    break;
+                }
+                case KnightMove.DashAtk:
+                case KnightMove.DashHeavy:
+                case KnightMove.Rush:
+                {
+                    float osc = Mathf.Sin(t * Mathf.PI * 2f);
+                    p.BodyLeanDeg = 24f;
+                    p.Stride = 5.6f;
+                    p.BatonElbowX = cx + 10f;
+                    p.BatonElbowY = fy + 30f;
+                    p.BatonHandX = cx + 17f;
+                    p.BatonHandY = fy + 30f + osc * 4f;
+                    p.BatonTipX = p.BatonHandX + 19f;
+                    p.BatonTipY = p.BatonHandY + osc * 8f;
+                    p.OffHandX = cx - 9f;
+                    p.OffHandY = fy + 31f;
+                    p.TailLift = 1.2f;
+                    if (frame >= 1)
+                    {
+                        p.ShowFxArc = true;
+                        p.FxCenterX = cx + 16f;
+                        p.FxCenterY = fy + 30f;
+                        p.FxArcRadius = 22f;
+                        p.FxArcAngleDeg = 0f;
+                        p.FxSpread = 74f;
+                    }
+                    break;
+                }
+                case KnightMove.Jump:
+                case KnightMove.AirIn:
+                case KnightMove.AirLoop:
+                {
+                    float bob = Mathf.Sin(t * Mathf.PI * 2f) * 2.5f;
+                    p.FootY = fy + 5f + bob;
+                    p.BodyLeanDeg = -8f;
+                    p.Stride = 1.2f;
+                    p.BatonElbowX = cx + 9f;
+                    p.BatonElbowY = p.FootY + 32f;
+                    p.BatonHandX = cx + 15f;
+                    p.BatonHandY = p.FootY + 41f;
+                    p.BatonTipX = cx + 26f;
+                    p.BatonTipY = p.FootY + 52f;
+                    p.OffHandX = cx - 10f;
+                    p.OffHandY = p.FootY + 38f;
+                    p.TailLift = 1.0f;
+                    break;
+                }
+                case KnightMove.AirLand:
+                {
+                    p.BodyLeanDeg = 16f;
+                    p.Stride = 4.0f;
+                    p.BatonElbowX = cx + 10f;
+                    p.BatonElbowY = fy + 28f;
+                    p.BatonHandX = cx + 16f;
+                    p.BatonHandY = fy + 25f;
+                    p.BatonTipX = cx + 31f;
+                    p.BatonTipY = fy + 18f;
+                    p.TailLift = 0.9f;
+                    if (frame >= 1)
+                    {
+                        p.ShowFxArc = true;
+                        p.FxCenterX = cx + 12f;
+                        p.FxCenterY = fy + 22f;
+                        p.FxArcRadius = 21f;
+                        p.FxArcAngleDeg = -8f;
+                        p.FxSpread = 70f;
+                    }
+                    break;
+                }
+                case KnightMove.Guard2:
+                {
+                    p.BodyLeanDeg = -4f;
+                    p.Stride = 2.0f;
+                    p.BatonElbowX = cx + 7f;
+                    p.BatonElbowY = fy + 30f;
+                    p.BatonHandX = cx + 11f;
+                    p.BatonHandY = fy + 33f;
+                    p.BatonTipX = cx - 4f;
+                    p.BatonTipY = fy + 44f;
+                    p.OffHandX = cx + 8f;
+                    p.OffHandY = fy + 35f;
+                    break;
+                }
+                case KnightMove.Guard3:
+                {
+                    // 커튼콜 정중한 인사 (프레임 0 직립 -> 프레임 5 깊이 숙여 인사)
+                    float bow = t;
+                    p.BodyLeanDeg = Mathf.Lerp(2f, 38f, bow);
+                    p.Stride = Mathf.Lerp(1.5f, 3.0f, bow);
+                    p.BatonElbowX = Mathf.Lerp(cx + 8f, cx + 14f, bow);
+                    p.BatonElbowY = Mathf.Lerp(fy + 31f, fy + 23f, bow);
+                    p.BatonHandX = Mathf.Lerp(cx + 15f, cx + 20f, bow);
+                    p.BatonHandY = Mathf.Lerp(fy + 37f, fy + 17f, bow);
+                    p.BatonTipX = p.BatonHandX + Mathf.Lerp(11f, 16f, bow);
+                    p.BatonTipY = p.BatonHandY + Mathf.Lerp(12f, -8f, bow);
+                    // 왼손은 정중히 가슴 위에 얹는다
+                    p.OffHandX = Mathf.Lerp(cx - 8f, cx + 4f, bow);
+                    p.OffHandY = Mathf.Lerp(fy + 30f, fy + 27f, bow);
+                    p.TailLift = Mathf.Lerp(0.2f, 1.15f, bow);
+                    break;
+                }
+                default: // Guard1: 우아한 지휘 대기 자세
+                {
+                    float sway = Mathf.Sin(t * Mathf.PI * 2f);
+                    p.BodyLeanDeg = sway * 3.5f;
+                    p.BatonElbowX = cx + 8f;
+                    p.BatonElbowY = fy + 31f + sway * 1.5f;
+                    p.BatonHandX = cx + 14f;
+                    p.BatonHandY = fy + 37f + sway * 3.0f;
+                    p.BatonTipX = cx + 26f + sway * 3.0f;
+                    p.BatonTipY = fy + 48f + sway * 4.5f;
+                    p.OffHandX = cx - 9f;
+                    p.OffHandY = fy + 31f - sway * 2.5f;
+                    p.TailLift = 0.3f + Mathf.Abs(sway) * 0.15f;
+                    break;
+                }
+            }
+
+            return p;
+        }
     }
 }

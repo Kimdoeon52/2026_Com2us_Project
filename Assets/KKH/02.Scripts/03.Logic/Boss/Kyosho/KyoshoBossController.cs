@@ -44,7 +44,7 @@ namespace RealSteel.Boss.Kyosho
 
         [Header("테스트 밸런스 설정 (본 밸런스 복원 시 1.0)")]
         [Tooltip("테스트용 전체 공격력/파츠 피해 배율 (기획 Lv.21~30 기준 원복 시 1.0으로 설정)")]
-        [SerializeField, Range(0.05f, 2f)] private float testDamageScale = 0.2f;
+        [SerializeField, Range(0.05f, 2f)] private float testDamageScale = 1.0f;
 
         private KyoshoBeatClock _beatClock;
         private KyoshoSectionManager _sectionManager;
@@ -76,7 +76,11 @@ namespace RealSteel.Boss.Kyosho
         private bool _phase3Entered;
         private int _phase3ConductSubIndex;
         private bool _isEncoreRunning;
+        private bool _isCurtainCallDefeatRunning;
+        private bool _phase3CurtainCallDone;
         private CancellationTokenSource _gateTransitionCts;
+        private RealSteel.Dialogue.BattleBarkPlayer _barkPlayer;
+        private RealSteel.Dialogue.CrowdBubbles _crowdBubbles;
 
         public RSNanoSwarm Swarm => swarm;
         public KyoshoBeatClock BeatClock => _beatClock;
@@ -115,7 +119,8 @@ namespace RealSteel.Boss.Kyosho
             }
             if (maestroMoves == null)
             {
-                maestroMoves = UnityEditor.AssetDatabase.LoadAssetAtPath<RSNanoKnightMoves>("Assets/SYS/Data/NanoBoss/기사/기사_동작.asset");
+                maestroMoves = UnityEditor.AssetDatabase.LoadAssetAtPath<RSNanoKnightMoves>("Assets/KKH/03.SOData/Boss/Kyosho/Kyosho_Maestro_Moves.asset")
+                    ?? UnityEditor.AssetDatabase.LoadAssetAtPath<RSNanoKnightMoves>("Assets/SYS/Data/NanoBoss/기사/기사_동작.asset");
             }
 #endif
             if (swarm == null) swarm = GetComponent<RSNanoSwarm>();
@@ -209,6 +214,17 @@ namespace RealSteel.Boss.Kyosho
         {
             float beats = (_beatClock != null && _beatClock.BeatSec > 0.01f) ? Mathf.Max(1f, Mathf.Round(duration / _beatClock.BeatSec)) : 4f;
             EnterBeatGroggy(beats, damageMultiplier);
+        }
+
+        protected override void AutoWireSceneSystems()
+        {
+            base.AutoWireSceneSystems();
+            var dialogueRig = KyoshoCombatDialogueRig.EnsureInScene(this, _hasFloorY ? _arenaFloorY : transform.position.y);
+            if (dialogueRig != null)
+            {
+                _barkPlayer = dialogueRig.BarkPlayer;
+                _crowdBubbles = dialogueRig.CrowdBubbles;
+            }
         }
 
         protected override void SetupAnimationController()
@@ -364,6 +380,8 @@ namespace RealSteel.Boss.Kyosho
             _phase3Entered = false;
             _phase3ConductSubIndex = 0;
             _isEncoreRunning = false;
+            _isCurtainCallDefeatRunning = false;
+            _phase3CurtainCallDone = false;
             IsInvincible = false;
             IsWaitingFinalBlow = false;
             HasCompletedFirstPhase2Fermata = false;
@@ -538,7 +556,7 @@ namespace RealSteel.Boss.Kyosho
 
         private void UpdateBlobBodyAndCollider(float dt)
         {
-            if (_isEncoreRunning || _phaseState == KyoshoPhaseState.EncoreAwakening)
+            if (_isEncoreRunning || _isCurtainCallDefeatRunning || _phaseState == KyoshoPhaseState.EncoreAwakening)
             {
                 if (_hurtCollider != null) _hurtCollider.enabled = false;
                 return;
@@ -945,10 +963,7 @@ namespace RealSteel.Boss.Kyosho
 
             _sectionManager?.ActivatePhase2InitialSections();
 
-            if (sfxData != null && sfxData.bgmPhase2 != null)
-            {
-                KyoshoSfx.PlayBgm(sfxData.bgmPhase2, 0.6f);
-            }
+            KyoshoSfx.PlayPhase2Bgm(0.6f);
 
             Debug.Log("<color=yellow>[KyoshoBossController] ▶ 2페이즈 개막! 현악(좌)·타악(우) 악기 섹션 분리 배치 완료!</color>");
         }
@@ -960,6 +975,8 @@ namespace RealSteel.Boss.Kyosho
 
         public void EnterBeatGroggy(float beats = 4f, float damageMultiplier = 1.5f)
         {
+            if (_crowdBubbles == null) _crowdBubbles = FindAnyObjectByType<RealSteel.Dialogue.CrowdBubbles>();
+            _crowdBubbles?.ShowOne();
             var token = RenewStateCancellationToken();
             StateMachine.ChangeState(new KyoshoGroggyState(this, token, beats, damageMultiplier));
         }
@@ -1002,7 +1019,7 @@ namespace RealSteel.Boss.Kyosho
 
         private void ExecuteFinalBlowVictory()
         {
-            if (Snapshot == null || !IsWaitingFinalBlow || _isEncoreRunning) return;
+            if (Snapshot == null || !IsWaitingFinalBlow || _isEncoreRunning || _isCurtainCallDefeatRunning) return;
 
             if (SelectedDifficulty == BossDifficulty.Hell && !_phase3Entered)
             {
@@ -1015,14 +1032,120 @@ namespace RealSteel.Boss.Kyosho
                 return;
             }
 
+            if (_phase3Entered)
+            {
+                IsWaitingFinalBlow = false;
+                IsInvincible = true;
+                Snapshot.currentHp = Mathf.Max(1, Snapshot.currentHp);
+                var curtainToken = RenewStateCancellationToken();
+                StateMachine.ChangeState(new KyoshoEncoreHoldState(this, curtainToken));
+                PlayPhase3CurtainCallDefeatAsync(curtainToken).Forget();
+                return;
+            }
+
             IsWaitingFinalBlow = false;
             _phaseState = KyoshoPhaseState.Defeated;
             Snapshot.currentHp = 0;
             SyncHpToHubAndViews();
 
-            string clearLabel = _phase3Entered ? "헬 3페이즈 커튼콜" : "2페이즈";
-            Debug.Log($"<color=green>[KyoshoBossController] ▶ 최후의 일격 적중! 쿄쇼 {clearLabel} 토벌 완료!</color>");
+            Debug.Log("<color=green>[KyoshoBossController] ▶ 최후의 일격 적중! 쿄쇼 2페이즈 토벌 완료!</color>");
             ProcessPostDamageReactions(Snapshot.maxHp);
+        }
+
+        private async UniTaskVoid PlayPhase3CurtainCallDefeatAsync(CancellationToken token)
+        {
+            _isCurtainCallDefeatRunning = true;
+            IsInvincible = true;
+            if (_hurtCollider != null) _hurtCollider.enabled = false;
+
+            try
+            {
+                InterruptActivePatterns();
+                if (_crowdBubbles == null) _crowdBubbles = FindAnyObjectByType<RealSteel.Dialogue.CrowdBubbles>();
+
+                _scorePreviewHud?.ShowVariationStatus("CURTAIN CALL — 마에스트로 종연 (Fin.)");
+                KyoshoSfx.PlayCue(sfxData?.encoreApplause, "encore_applause", transform.position, volumeScale: 1.0f);
+                _crowdBubbles?.ShowOne();
+
+                if (swarm != null)
+                {
+                    swarm.Halo.glow = 2.2f;
+                    int totalBowFrames = maestroMoves != null && maestroMoves.Has(KnightMove.Guard3)
+                        ? Mathf.Max(1, maestroMoves.Get(KnightMove.Guard3).frames)
+                        : 6;
+
+                    float bowElapsed = 0f;
+                    const float bowDuration = 0.85f;
+                    while (bowElapsed < bowDuration)
+                    {
+                        token.ThrowIfCancellationRequested();
+                        float p = Mathf.Clamp01(bowElapsed / bowDuration);
+                        int f = Mathf.Clamp(Mathf.FloorToInt(p * totalBowFrames), 0, totalBowFrames - 1);
+                        if (maestroMoves != null && maestroMoves.Ready)
+                        {
+                            swarm.Knight.SetPose(KnightMove.Guard3, f);
+                            swarm.Knight.UpdatePose();
+                        }
+                        else
+                        {
+                            swarm.Knight.lean = Mathf.Lerp(0f, -32f, p);
+                            swarm.Knight.armAngle = Mathf.Lerp(0f, -35f, p);
+                        }
+                        bowElapsed += Time.deltaTime;
+                        await UniTask.Yield(PlayerLoopTiming.Update, token);
+                    }
+
+                    await UniTask.Delay(TimeSpan.FromSeconds(0.20f), cancellationToken: token);
+                    _crowdBubbles?.ShowOne();
+
+                    DropMaestroBotsToSand();
+                    await UniTask.Delay(TimeSpan.FromSeconds(0.25f), cancellationToken: token);
+                }
+                else
+                {
+                    await UniTask.Delay(TimeSpan.FromSeconds(1.1f), cancellationToken: token);
+                }
+
+                _phase3CurtainCallDone = true;
+                _phaseState = KyoshoPhaseState.Defeated;
+                _scorePreviewHud?.ShowVariationStatus(null);
+                if (Snapshot != null)
+                {
+                    Snapshot.currentHp = 0;
+                    SyncHpToHubAndViews();
+                    Debug.Log("<color=green>[KyoshoBossController] ▶ 최후의 일격 & 커튼콜 인사 완료! 쿄쇼 헬 3페이즈 토벌!</color>");
+                    ProcessPostDamageReactions(Snapshot.maxHp);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            finally
+            {
+                _isCurtainCallDefeatRunning = false;
+            }
+        }
+
+        private void DropMaestroBotsToSand()
+        {
+            if (swarm == null) return;
+            swarm.Knight.moves = null;
+            swarm.Knight.reinforce = false;
+            swarm.Halo.glow = 0f;
+
+            var bots = swarm.Bots;
+            if (bots == null) return;
+            float centerX = swarm.Knight.origin.x;
+            for (int i = 0; i < bots.Length; i++)
+            {
+                ref var b = ref bots[i];
+                if (b.mode == BotMode.Bound && (b.guide == RSNanoSwarm.G_Knight || b.guide == RSNanoSwarm.G_Halo))
+                {
+                    float spreadX = (b.pos.x - centerX) * 1.15f + UnityEngine.Random.Range(-1.4f, 1.4f);
+                    float upVel = UnityEngine.Random.Range(0.4f, 2.2f);
+                    swarm.Drop(i, new Vector3(spreadX, upVel, UnityEngine.Random.Range(-0.5f, 0.5f)));
+                }
+            }
         }
 
         private async UniTaskVoid TriggerHellEncoreAwakeningAsync(CancellationToken token)
@@ -1068,7 +1191,8 @@ namespace RealSteel.Boss.Kyosho
                 _beatClock?.StartClock(KyoshoConstants.Phase3Bpm, 4);
                 _beatIndicatorHud?.Bind(_beatClock, SelectedDifficulty);
 
-                var barkPlayer = FindAnyObjectByType<RealSteel.Dialogue.BattleBarkPlayer>();
+                var barkPlayer = _barkPlayer != null ? _barkPlayer : FindAnyObjectByType<RealSteel.Dialogue.BattleBarkPlayer>();
+                if (_crowdBubbles == null) _crowdBubbles = FindAnyObjectByType<RealSteel.Dialogue.CrowdBubbles>();
                 barkPlayer?.NotifyBossPartBroken(KyoshoConstants.BarkEncore, ignoreCooldown: true);
                 _scorePreviewHud?.ShowVariationStatus("관중석: 앙코르!! (ENCORE!! — 160 BPM Presto)");
 
@@ -1076,6 +1200,10 @@ namespace RealSteel.Boss.Kyosho
                 {
                     token.ThrowIfCancellationRequested();
                     KyoshoSfx.PlayCue(sfxData?.encoreApplause, "encore_applause", transform.position, volumeScale: 0.72f + 0.08f * b);
+                    if (b == 0 || b == 2)
+                    {
+                        _crowdBubbles?.ShowOne();
+                    }
                     if (_beatClock != null && _beatClock.IsRunning)
                     {
                         await _beatClock.WaitBeatsAsync(1f, token);
@@ -1146,6 +1274,10 @@ namespace RealSteel.Boss.Kyosho
 
             GetArenaBounds(out float minX, out float maxX);
             float kx = Mathf.Clamp(swarm.Blob.center.x, minX + 3f, maxX - 3f);
+            if (maestroMoves == null || !maestroMoves.Ready)
+            {
+                maestroMoves = KyoshoNanobotAttackHelper.GetOrCreateMaestroMoves();
+            }
             bool useSprite = maestroMoves != null && maestroMoves.Ready;
 
             var k = swarm.Knight;
@@ -1403,10 +1535,17 @@ namespace RealSteel.Boss.Kyosho
             _phaseState = KyoshoPhaseState.Defeated;
             if (_masterRig != null && _masterRig.Active) _masterRig.End();
 
-            if (swarm != null)
+            if (swarm != null && !_phase3CurtainCallDone)
             {
-                GetArenaBounds(out float minX, out float maxX);
-                swarm.ScatterOnFloor(minX + 0.5f, maxX - 0.5f);
+                if (_phase3Entered)
+                {
+                    DropMaestroBotsToSand();
+                }
+                else
+                {
+                    GetArenaBounds(out float minX, out float maxX);
+                    swarm.ScatterOnFloor(minX + 0.5f, maxX - 0.5f);
+                }
             }
             if (_hurtCollider != null) _hurtCollider.enabled = false;
         }

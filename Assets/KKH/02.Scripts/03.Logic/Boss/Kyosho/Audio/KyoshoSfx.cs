@@ -457,11 +457,32 @@ namespace RealSteel.Boss.Kyosho
         // BGM & 덕킹
         // ====================================================================
 
+        public static void PlayPhase2Bgm(float fadeIn = 0.6f)
+        {
+            AudioClip clip = null;
+            if (_data != null && _data.bgmPhase2 != null && _data.bgmPhase2 != _data.bgmMain)
+            {
+                clip = _data.bgmPhase2;
+            }
+            if (clip == null)
+            {
+                clip = GetOrCreateFallbackCue("bgm_phase2");
+            }
+            if (clip != null) PlayBgm(clip, fadeIn);
+        }
+
         public static void PlayPhase3Bgm(float fadeIn = 0.25f)
         {
-            if (_data == null) return;
-            AudioClip clip = _data.bgmPhase3 != null ? _data.bgmPhase3
-                           : (_data.bgmPhase2 != null ? _data.bgmPhase2 : _data.bgmMain);
+            AudioClip clip = null;
+            if (_data != null && _data.bgmPhase3 != null
+                && _data.bgmPhase3 != _data.bgmMain && _data.bgmPhase3 != _data.bgmPhase2)
+            {
+                clip = _data.bgmPhase3;
+            }
+            if (clip == null)
+            {
+                clip = GetOrCreateFallbackCue("bgm_phase3");
+            }
             if (clip != null) PlayBgm(clip, fadeIn);
         }
 
@@ -691,6 +712,15 @@ namespace RealSteel.Boss.Kyosho
             WarmIfMissing(data.encoreApplause, "encore_applause");
             WarmIfMissing(data.encoreAwaken, "encore_awaken");
 
+            if (data.bgmPhase2 == null || data.bgmPhase2 == data.bgmMain)
+            {
+                GetOrCreateFallbackCue("bgm_phase2");
+            }
+            if (data.bgmPhase3 == null || data.bgmPhase3 == data.bgmMain || data.bgmPhase3 == data.bgmPhase2)
+            {
+                GetOrCreateFallbackCue("bgm_phase3");
+            }
+
             if (data.variationMelodyNotes != null)
             {
                 for (int i = 0; i < data.variationMelodyNotes.Length && i < KyoshoConstants.SolfegeFrequencies.Length; i++)
@@ -720,6 +750,8 @@ namespace RealSteel.Boss.Kyosho
         public static float[] SynthesizeCueSamples(string key, out int sampleRate)
         {
             sampleRate = SampleRate;
+            if (key == "bgm_phase2") return SynthesizeBgmLoopSamples(2, out sampleRate);
+            if (key == "bgm_phase3") return SynthesizeBgmLoopSamples(3, out sampleRate);
             if (key != null && key.StartsWith("solfege_") && int.TryParse(key.Substring(8), out int sIdx))
             {
                 sIdx = Mathf.Clamp(sIdx, 0, KyoshoConstants.SolfegeFrequencies.Length - 1);
@@ -975,6 +1007,110 @@ namespace RealSteel.Boss.Kyosho
                 }
                 float bassHit = Mathf.Sin(2f * Mathf.PI * Mathf.Lerp(110f, 55f, Mathf.Clamp01(t / 0.3f)) * t) * Mathf.Exp(-7f * t);
                 data[i] = Mathf.Clamp(((sum / freqs.Length) * riseEnv + bassHit * 0.65f) * amp, -0.98f, 0.98f);
+            }
+            return data;
+        }
+
+        /// <summary>
+        /// Phase 2(132 BPM D단조 긴장감 있는 오케스트라) 및 Phase 3(160 BPM 프레스토 헬 앙코르 투티) 루프 BGM 생성기.
+        /// </summary>
+        public static float[] SynthesizeBgmLoopSamples(int phase, out int sampleRate)
+        {
+            sampleRate = SampleRate;
+            bool isPresto = phase >= 3;
+            float bpm = isPresto ? 160f : 132f;
+            const int totalBars = 8;
+            const int beatsPerBar = 4;
+            float beatDur = 60f / bpm;
+            float barDur = beatDur * beatsPerBar;
+            float totalDur = barDur * totalBars;
+            int totalSamples = Mathf.Max(SampleRate, Mathf.RoundToInt(totalDur * SampleRate));
+            float[] data = new float[totalSamples];
+
+            // 8마디 화성 진행 (D단조): Dm - Bb - Gm - A7 | Dm - F - Bb - A7
+            float[] bassRoots = isPresto
+                ? new[] { 73.42f, 58.27f, 98.00f, 55.00f, 73.42f, 87.31f, 58.27f, 55.00f }
+                : new[] { 73.42f, 58.27f, 49.00f, 55.00f, 73.42f, 65.41f, 58.27f, 55.00f };
+
+            float[][] chordTriads =
+            {
+                new[] { 293.66f, 349.23f, 440.00f }, // Dm
+                new[] { 233.08f, 293.66f, 349.23f }, // Bb
+                new[] { 196.00f, 233.08f, 293.66f }, // Gm
+                new[] { 220.00f, 277.18f, 329.63f }, // A
+                new[] { 293.66f, 349.23f, 440.00f }, // Dm
+                new[] { 261.63f, 349.23f, 440.00f }, // F
+                new[] { 233.08f, 293.66f, 349.23f }, // Bb
+                new[] { 220.00f, 277.18f, 392.00f }  // A7
+            };
+
+            // 멜로디 인덱스 (트라이어드 순환 + 옥타브 도약)
+            int[] melodyPattern = isPresto
+                ? new[] { 0, 1, 2, 1, 0, 2, 1, 2, 0, 1, 2, 2, 1, 0, 2, 1 }
+                : new[] { 0, 2, 1, 2, 0, 1, 2, 1 };
+
+            int subdivsPerBar = isPresto ? 16 : 8;
+            float stepDur = barDur / subdivsPerBar;
+            int noiseSeed = isPresto ? 907 : 313;
+
+            for (int i = 0; i < totalSamples; i++)
+            {
+                float t = i / (float)SampleRate;
+                int barIdx = Mathf.Clamp((int)(t / barDur), 0, totalBars - 1);
+                float barLocal = t - barIdx * barDur;
+                int beatIdx = Mathf.Clamp((int)(barLocal / beatDur), 0, beatsPerBar - 1);
+                float beatLocal = barLocal - beatIdx * beatDur;
+
+                int stepIdx = Mathf.Clamp((int)(barLocal / stepDur), 0, subdivsPerBar - 1);
+                float stepLocal = barLocal - stepIdx * stepDur;
+
+                float bassHz = bassRoots[barIdx];
+                float[] triad = chordTriads[barIdx];
+
+                // 1. 저음 첼로/팀파니 펄스 (박자 정박 타격 + 서스테인)
+                float bassHitEnv = Mathf.Min(1f, beatLocal / 0.008f) * Mathf.Exp(-(isPresto ? 7.5f : 5.2f) * beatLocal);
+                float bassWave = Mathf.Sin(2f * Mathf.PI * bassHz * t)
+                               + 0.45f * Mathf.Sin(4f * Mathf.PI * bassHz * t);
+                float drumPitch = Mathf.Lerp(isPresto ? 130f : 105f, 52f, Mathf.Clamp01(beatLocal / 0.09f));
+                float timpani = (beatIdx == 0 || beatIdx == 2 || isPresto)
+                    ? Mathf.Sin(2f * Mathf.PI * drumPitch * beatLocal) * Mathf.Exp(-14f * beatLocal) * (beatIdx == 0 ? 0.34f : 0.22f)
+                    : 0f;
+
+                // 2. 스타카토 현악 아르페지오 오스티나토 + 멜로디 리드
+                float arpHz = triad[melodyPattern[stepIdx % melodyPattern.Length]] * (isPresto && (stepIdx % 4 == 3) ? 2f : 1f);
+                float arpEnv = Mathf.Min(1f, stepLocal / 0.005f) * Mathf.Exp(-(isPresto ? 18f : 11f) * stepLocal);
+                float arpWave = 0.65f * Mathf.Sin(2f * Mathf.PI * arpHz * t)
+                              + 0.28f * Mathf.Sin(4f * Mathf.PI * arpHz * t)
+                              + 0.14f * Mathf.Sin(6f * Mathf.PI * arpHz * t);
+
+                // 3. 브라스/현악 화성 패드 (마디 1, 5, 7에 웅장한 강조)
+                float chordSum = 0f;
+                for (int c = 0; c < triad.Length; c++)
+                {
+                    float f = triad[c] * (isPresto ? 2f : 1f);
+                    chordSum += Mathf.Sin(2f * Mathf.PI * f * t) + 0.35f * Mathf.Sin(4f * Mathf.PI * f * t);
+                }
+                float padEnv = 0.25f + 0.30f * Mathf.Sin(Mathf.PI * Mathf.Clamp01(barLocal / barDur));
+
+                // 4. 프레스토 전용 스네어/하이햇 리듬 노이즈
+                float perc = 0f;
+                if (isPresto && (stepIdx % 2 == 1 || beatIdx == 1 || beatIdx == 3))
+                {
+                    noiseSeed = unchecked(noiseSeed * 1664525 + 1013904223);
+                    float rnd = ((noiseSeed >> 8) & 0xFFFF) / 32768f - 1f;
+                    float decay = (beatIdx == 1 || beatIdx == 3) && (stepIdx % 4 == 0) ? 28f : 55f;
+                    perc = rnd * Mathf.Exp(-decay * stepLocal) * 0.14f;
+                }
+
+                // 루프 시작/끝 25ms 미세 페이드로 클릭음 제로화
+                float loopFade = Mathf.Clamp01(t / 0.025f) * Mathf.Clamp01((totalDur - t) / 0.025f);
+                float mix = bassWave * bassHitEnv * 0.34f
+                          + timpani
+                          + arpWave * arpEnv * (isPresto ? 0.34f : 0.28f)
+                          + (chordSum / 3f) * padEnv * (isPresto ? 0.22f : 0.20f)
+                          + perc;
+
+                data[i] = Mathf.Clamp(mix * 0.85f * loopFade, -0.96f, 0.96f);
             }
             return data;
         }

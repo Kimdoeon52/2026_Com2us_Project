@@ -1303,8 +1303,14 @@ MonoBehaviour:
   difficultySelect: {fileID: 5132096703082599170}
   entryDialogue: {fileID: 3893411068354327625}
   progressSource: {fileID: 9211482739731581967}
-  defaultBattleScene: Copys_1020/Battle
-  battleScenes: []
+  defaultBattleScene: Battle_Boss_Test
+  battleScenes:
+  - bossId: boss.wheel
+    sceneName: Battle_Boss_Test
+  - bossId: boss.kyodai
+    sceneName: Battle3
+  - bossId: boss.region3
+    sceneName: Battle_Boss_Test 3
   raceIds:
   - race1
   - race2

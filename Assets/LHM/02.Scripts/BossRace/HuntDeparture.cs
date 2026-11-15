@@ -45,6 +45,8 @@ namespace RealSteel.BossRace
 
         private void Start()
         {
+            AutoResolveReferencesIfMissing();
+
             if (manager == null || menu == null || bossList == null || difficultySelect == null || entryDialogue == null || Progress == null)
             {
                 Debug.LogError("[Hunt] Manager, Menu, Boss List, Difficulty Select, Entry Dialogue, Progress Source(IBossRaceProgress) 중 연결되지 않은 칸이 있습니다.", this);
@@ -53,6 +55,27 @@ namespace RealSteel.BossRace
             }
 
             menu.ActionChosen += OnActionChosen;
+        }
+
+        private void AutoResolveReferencesIfMissing()
+        {
+            if (manager == null) manager = FindAnyObjectByType<DialogueManager>(FindObjectsInactive.Include);
+            if (menu == null) menu = FindAnyObjectByType<NpcChoiceMenu>(FindObjectsInactive.Include);
+            if (bossList == null) bossList = FindAnyObjectByType<BossRaceSelectUI>(FindObjectsInactive.Include);
+            if (difficultySelect == null) difficultySelect = FindAnyObjectByType<BossDifficultySelectUI>(FindObjectsInactive.Include);
+            if (entryDialogue == null) entryDialogue = FindAnyObjectByType<BossEntryDialogue>(FindObjectsInactive.Include);
+            if (progressSource == null)
+            {
+                var allBehaviours = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                for (int i = 0; i < allBehaviours.Length; i++)
+                {
+                    if (allBehaviours[i] is IBossRaceProgress)
+                    {
+                        progressSource = allBehaviours[i];
+                        break;
+                    }
+                }
+            }
         }
 
         private void OnDestroy()
@@ -158,7 +181,13 @@ namespace RealSteel.BossRace
             {
                 if (item != null && item.bossId == id && !string.IsNullOrEmpty(item.sceneName)) return item.sceneName;
             }
-            return defaultBattleScene;
+            return id switch
+            {
+                "boss.region3" => "Battle_Boss_Test 3",
+                "boss.kyodai" => "Battle3",
+                "boss.wheel" => "Battle_Boss_Test",
+                _ => defaultBattleScene
+            };
         }
     }
 }

@@ -19,12 +19,14 @@ namespace RealSteel.Boss.Editor
         private const string SoDir = "Assets/KKH/03.SOData/Boss/Kyosho";
         private const string ShapesDir = SoDir + "/Shapes";
         private const string SpriteDir = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Sprites";
+        private const string MaestroSpriteDir = SpriteDir + "/Maestro";
         private const string SfxDir = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Sound/SFX";
+        private const string BgmDir = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Sound/BGM";
         private const string PrefabPath = "Assets/KKH/04.Prefab/BOSS/Third_Boss/Boss3_Kyosho.prefab";
         private const string BgmPath = "Assets/LSH/09. Sound/FightSound/BGM/보스3.mp3";
-        private const string MaestroMovesPath = "Assets/SYS/Data/NanoBoss/기사/기사_동작.asset";
+        private const string MaestroMovesPath = "Assets/KKH/03.SOData/Boss/Kyosho/Kyosho_Maestro_Moves.asset";
         private const string TestScenePath = "Assets/KKH/01.Scene/Battle_Boss_Test 3.unity";
-        private const string Battle3ScenePath = "Assets/NYH/01. SCENE/Battle3.unity";
+        private const string Battle3ScenePath = "Assets/KKH/01.Scene/Battle_Boss_Test 3.unity";
 
         static KyoshoAssetFactory()
         {
@@ -84,6 +86,8 @@ namespace RealSteel.Boss.Editor
             var stringsShape = BakeSectionPngAndShape(KyoshoSectionType.Strings, "Strings", KyoshoConstants.StringsMintColor);
             var percShape = BakeSectionPngAndShape(KyoshoSectionType.Percussion, "Percussion", KyoshoConstants.PercussionAmberColor);
             var brassShape = BakeSectionPngAndShape(KyoshoSectionType.Brass, "Brass", KyoshoConstants.BrassMagentaColor);
+
+            BakeMaestroSpriteSheetsAndMoves();
 
             // 2. RhythmTable & SfxData SO 생성
             var rhythmTable = CreateOrLoadAsset<KyoshoRhythmTableSO>($"{SoDir}/KyoshoRhythmTable.asset");
@@ -253,19 +257,19 @@ namespace RealSteel.Boss.Editor
             WireOpenTestScene(scene);
         }
 
-        [MenuItem("RealSteel/Boss/[2] 본 게임 Battle3.unity 에 쿄쇼(Boss3_Kyosho) 배치 및 연동", priority = 21)]
+        [MenuItem("RealSteel/Boss/[2] 본 게임 3지역 보스 씬(Battle_Boss_Test 3)에 쿄쇼(Boss3_Kyosho) 배치 및 연동", priority = 21)]
         public static void WireBattle3Scene()
         {
             if (!File.Exists(Battle3ScenePath))
             {
-                Debug.LogError($"[KyoshoAssetFactory] Battle3 씬을 찾을 수 없습니다: {Battle3ScenePath}");
+                Debug.LogError($"[KyoshoAssetFactory] 3지역 보스 전투 씬을 찾을 수 없습니다: {Battle3ScenePath}");
                 return;
             }
             GenerateAssetsAndPrefab();
             var scene = EditorSceneManager.OpenScene(Battle3ScenePath, OpenSceneMode.Single);
             WireBattle3OpenScene(scene);
             AssetDatabase.SaveAssets();
-            Debug.Log("<color=green>[KyoshoAssetFactory] 본 게임 Battle3.unity 에 쿄쇼(Boss3_Kyosho) 배치 및 BattleManager/Camera/Hub 연동 완료!</color>");
+            Debug.Log("<color=green>[KyoshoAssetFactory] 3지역 보스 씬(Battle_Boss_Test 3.unity) 에 쿄쇼(Boss3_Kyosho) 배치 및 BattleManager/Camera/Hub 연동 완료!</color>");
         }
 
         private static void WireOpenTestScene(UnityEngine.SceneManagement.Scene scene)
@@ -291,6 +295,16 @@ namespace RealSteel.Boss.Editor
                     }
                 }
             }
+
+            var otherBosses = UnityEngine.Object.FindObjectsByType<RealSteel.Boss.Core.BossControllerBase>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (var b in otherBosses)
+            {
+                if (b != null && !(b is KyoshoBossController) && b.gameObject.activeSelf)
+                {
+                    b.gameObject.SetActive(false);
+                }
+            }
+
             WireCombatSceneCore(scene, addTester: false);
         }
 
@@ -525,13 +539,38 @@ namespace RealSteel.Boss.Editor
         {
             if (sfxData == null) return;
             if (!Directory.Exists(SfxDir)) Directory.CreateDirectory(SfxDir);
+            if (!Directory.Exists(BgmDir)) Directory.CreateDirectory(BgmDir);
 
             var bgm = AssetDatabase.LoadAssetAtPath<AudioClip>(BgmPath);
-            if (bgm != null)
+            if (bgm != null && sfxData.bgmMain == null)
             {
-                if (sfxData.bgmMain == null) sfxData.bgmMain = bgm;
-                if (sfxData.bgmPhase2 == null) sfxData.bgmPhase2 = bgm;
-                if (sfxData.bgmPhase3 == null) sfxData.bgmPhase3 = bgm;
+                sfxData.bgmMain = bgm;
+            }
+
+            string phase2WavPath = $"{BgmDir}/bgm_kyosho_phase2.wav";
+            float[] p2Samples = KyoshoSfx.SynthesizeBgmLoopSamples(2, out int p2Sr);
+            if (p2Samples != null && p2Samples.Length > 0)
+            {
+                WritePcm16Wav(phase2WavPath, p2Samples, p2Sr);
+                AssetDatabase.ImportAsset(phase2WavPath, ImportAssetOptions.ForceUpdate);
+                var p2Clip = AssetDatabase.LoadAssetAtPath<AudioClip>(phase2WavPath);
+                if (p2Clip != null && (sfxData.bgmPhase2 == null || sfxData.bgmPhase2 == sfxData.bgmMain))
+                {
+                    sfxData.bgmPhase2 = p2Clip;
+                }
+            }
+
+            string phase3WavPath = $"{BgmDir}/bgm_kyosho_phase3.wav";
+            float[] p3Samples = KyoshoSfx.SynthesizeBgmLoopSamples(3, out int p3Sr);
+            if (p3Samples != null && p3Samples.Length > 0)
+            {
+                WritePcm16Wav(phase3WavPath, p3Samples, p3Sr);
+                AssetDatabase.ImportAsset(phase3WavPath, ImportAssetOptions.ForceUpdate);
+                var p3Clip = AssetDatabase.LoadAssetAtPath<AudioClip>(phase3WavPath);
+                if (p3Clip != null && (sfxData.bgmPhase3 == null || sfxData.bgmPhase3 == sfxData.bgmMain || sfxData.bgmPhase3 == sfxData.bgmPhase2))
+                {
+                    sfxData.bgmPhase3 = p3Clip;
+                }
             }
 
             var mappings = new (KyoshoSfxCue cue, string key, string file)[]
@@ -626,7 +665,70 @@ namespace RealSteel.Boss.Editor
             if (!Directory.Exists(SoDir)) Directory.CreateDirectory(SoDir);
             if (!Directory.Exists(ShapesDir)) Directory.CreateDirectory(ShapesDir);
             if (!Directory.Exists(SpriteDir)) Directory.CreateDirectory(SpriteDir);
+            if (!Directory.Exists(MaestroSpriteDir)) Directory.CreateDirectory(MaestroSpriteDir);
             if (!Directory.Exists(SfxDir)) Directory.CreateDirectory(SfxDir);
+            if (!Directory.Exists(BgmDir)) Directory.CreateDirectory(BgmDir);
+        }
+
+        private static RSNanoKnightMoves BakeMaestroSpriteSheetsAndMoves()
+        {
+            if (!Directory.Exists(MaestroSpriteDir)) Directory.CreateDirectory(MaestroSpriteDir);
+
+            var moves = CreateOrLoadAsset<RSNanoKnightMoves>(MaestroMovesPath);
+            moves.cellSize = new Vector2Int(KyoshoNanobotAttackHelper.MaestroCellWidth, KyoshoNanobotAttackHelper.MaestroCellHeight);
+            moves.root = new Vector2Int(KyoshoNanobotAttackHelper.MaestroRootX, KyoshoNanobotAttackHelper.MaestroRootY);
+            moves.alphaCut = 0.5f;
+            moves.pixelScale = 3;
+            moves.darkSilhouette = false;
+            moves.bladeGlow = 1.4f;
+            moves.fxGlow = 2.6f;
+            moves.bodySnap = 42000f;
+            moves.snapSpeed = 420f;
+            moves.idle = KnightMove.Guard1;
+
+            int cellW = KyoshoNanobotAttackHelper.MaestroCellWidth;
+            int cellH = KyoshoNanobotAttackHelper.MaestroCellHeight;
+            foreach (KnightMove m in RSNanoKnightMoves.All)
+            {
+                int fc = KyoshoNanobotAttackHelper.GetMaestroFrameCount(m);
+                string pngPath = $"{MaestroSpriteDir}/Maestro_{m}.png";
+                var tex = new Texture2D(cellW * fc, cellH, TextureFormat.RGBA32, false);
+                for (int f = 0; f < fc; f++)
+                {
+                    for (int y = 0; y < cellH; y++)
+                    {
+                        for (int x = 0; x < cellW; x++)
+                        {
+                            KyoshoNanobotAttackHelper.SampleMaestroFramePixel(m, f, x, y, out byte alpha, out Color32 col);
+                            col.a = alpha;
+                            tex.SetPixel(f * cellW + x, y, col);
+                        }
+                    }
+                }
+                tex.Apply();
+                File.WriteAllBytes(pngPath, tex.EncodeToPNG());
+                UnityEngine.Object.DestroyImmediate(tex);
+
+                AssetDatabase.ImportAsset(pngPath, ImportAssetOptions.ForceUpdate);
+                if (AssetImporter.GetAtPath(pngPath) is TextureImporter importer)
+                {
+                    importer.isReadable = true;
+                    importer.filterMode = FilterMode.Point;
+                    importer.mipmapEnabled = false;
+                    importer.textureCompression = TextureImporterCompression.Uncompressed;
+                    importer.npotScale = TextureImporterNPOTScale.None;
+                    importer.SaveAndReimport();
+                }
+
+                var sheetTex = AssetDatabase.LoadAssetAtPath<Texture2D>(pngPath);
+                var clip = moves.Get(m);
+                clip.sheet = sheetTex;
+                clip.fps = (m == KnightMove.Dash || m == KnightMove.Light1 || m == KnightMove.Light2) ? 18f : 14f;
+            }
+
+            RSNanoKnightBaker.Bake(moves);
+            EditorUtility.SetDirty(moves);
+            return moves;
         }
     }
 }

@@ -588,6 +588,7 @@ GameObject:
   m_Component:
   - component: {fileID: 34888847}
   - component: {fileID: 34888848}
+  - component: {fileID: 34888849}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Reception_\uB4F1\uB85D\uB370\uC2A4\uD06C (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
@@ -630,7 +631,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 5f9e2240d25c6a84697d2bf5da9f566b, type: 2}
@@ -641,6 +642,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 2e02280dd39658940b33930c80c98ef5, type: 2}
   cacheKinds: 00000000000000000000000000000000
+--- !u!65 &34888849
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 34888846}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.3999999, y: 1.8, z: 0.67199993}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &36359640
 GameObject:
   m_ObjectHideFlags: 0
@@ -651,6 +673,7 @@ GameObject:
   m_Component:
   - component: {fileID: 36359641}
   - component: {fileID: 36359642}
+  - component: {fileID: 36359643}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_1"
   m_TagString: Untagged
@@ -696,7 +719,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a80f6e54a0829ab47a00ec23f2e7ca25, type: 2}
@@ -706,6 +729,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &36359643
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 36359640}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360003, y: 1.8, z: 0.49919996}
+  m_Center: {x: 0.000000059604645, y: 0.9, z: -0.009999871}
 --- !u!1 &44282823
 GameObject:
   m_ObjectHideFlags: 0
@@ -953,6 +997,7 @@ GameObject:
   m_Component:
   - component: {fileID: 72308615}
   - component: {fileID: 72308616}
+  - component: {fileID: 72308617}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_2"
   m_TagString: Untagged
@@ -998,7 +1043,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 596ed751038c116408703843c2200e68, type: 2}
@@ -1008,6 +1053,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &72308617
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 72308614}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: -0.000000029802322, y: 0.9, z: -0.01000002}
 --- !u!1 &90319565
 GameObject:
   m_ObjectHideFlags: 0
@@ -1081,6 +1147,7 @@ GameObject:
   m_Component:
   - component: {fileID: 91682024}
   - component: {fileID: 91682025}
+  - component: {fileID: 91682026}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_8"
   m_TagString: Untagged
@@ -1126,7 +1193,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c3fd5ea50809e5249bc6c605466d28f1, type: 2}
@@ -1136,6 +1203,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &91682026
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 91682023}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920014}
+  m_Center: {x: 0, y: 0.9, z: -0.01000002}
 --- !u!1 &91734979
 GameObject:
   m_ObjectHideFlags: 0
@@ -1931,6 +2019,7 @@ GameObject:
   m_Component:
   - component: {fileID: 172536564}
   - component: {fileID: 172536565}
+  - component: {fileID: 172536566}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_3"
   m_TagString: Untagged
@@ -1976,7 +2065,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 32e1131506a402f428723c864dd29118, type: 2}
@@ -1986,6 +2075,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &172536566
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 172536563}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600016, y: 1.8, z: 0.4991998}
+  m_Center: {x: 0, y: 0.9, z: -0.01000008}
 --- !u!1 &183367906
 GameObject:
   m_ObjectHideFlags: 0
@@ -2059,6 +2169,7 @@ GameObject:
   m_Component:
   - component: {fileID: 185427773}
   - component: {fileID: 185427774}
+  - component: {fileID: 185427775}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_4"
   m_TagString: Untagged
@@ -2104,7 +2215,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8e8239f61fc33db44a3ff2a3f9225971, type: 2}
@@ -2114,6 +2225,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &185427775
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 185427772}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600004, y: 1.8, z: 0.49920008}
+  m_Center: {x: 0.000000029802322, y: 0.9, z: -0.00999999}
 --- !u!1 &190858355
 GameObject:
   m_ObjectHideFlags: 0
@@ -2290,6 +2422,7 @@ GameObject:
   m_Component:
   - component: {fileID: 207394622}
   - component: {fileID: 207394623}
+  - component: {fileID: 207394624}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Rostrum_\uACBD\uB9E4\uC0AC\uC5F0\uB2E8 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
@@ -2334,7 +2467,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 0a24b15a9cad0ea41b81a616d86c0534, type: 2}
@@ -2344,6 +2477,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &207394624
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 207394621}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.1520003, y: 1.8, z: 0.7680002}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &219356893
 GameObject:
   m_ObjectHideFlags: 0
@@ -2480,6 +2634,7 @@ GameObject:
   m_Component:
   - component: {fileID: 234228375}
   - component: {fileID: 234228376}
+  - component: {fileID: 234228377}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_1"
   m_TagString: Untagged
@@ -2525,7 +2680,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: be7f8c36c1de09342be6db63663918c4, type: 2}
@@ -2535,6 +2690,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &234228377
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 234228374}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920014}
+  m_Center: {x: 0, y: 0.9, z: -0.01000002}
 --- !u!1 &240921130
 GameObject:
   m_ObjectHideFlags: 0
@@ -3383,6 +3559,7 @@ GameObject:
   m_Component:
   - component: {fileID: 355341801}
   - component: {fileID: 355341802}
+  - component: {fileID: 355341803}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Showcase_\uBBF8\uB9AC\uBCF4\uAE30\uC9C4\uC5F4\uC7A5_1"
   m_TagString: Untagged
@@ -3425,7 +3602,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: d9244ee65c06539409265a555f8b2938, type: 2}
@@ -3435,6 +3612,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2279f698c5b2a5d4888899771d8087ca, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &355341803
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 355341800}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2000002, y: 1.9625, z: 0.7200002}
+  m_Center: {x: 0, y: 0.98125, z: 0}
 --- !u!1 &358089937
 GameObject:
   m_ObjectHideFlags: 0
@@ -5461,6 +5659,7 @@ GameObject:
   m_Component:
   - component: {fileID: 568798283}
   - component: {fileID: 568798284}
+  - component: {fileID: 568798285}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Turntable_\uD68C\uC804\uC804\uC2DC\uB300"
   m_TagString: Untagged
@@ -5502,7 +5701,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 774d59eaf9c081f429fbe988ffda6ce8, type: 2}
@@ -5511,6 +5710,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   - {fileID: 11400000, guid: 6a66a06be5430644ba41d07c22109fa6, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &568798285
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 568798282}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.3040001, y: 1.8, z: 2.3039997}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &578422017
 GameObject:
   m_ObjectHideFlags: 0
@@ -5521,6 +5741,7 @@ GameObject:
   m_Component:
   - component: {fileID: 578422018}
   - component: {fileID: 578422019}
+  - component: {fileID: 578422020}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_NPC_\uACBD\uB9E4\uC0AC"
   m_TagString: Untagged
@@ -5561,7 +5782,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: dbc6d3128e959824a8d0e6e0e24874d2, type: 2}
@@ -5569,6 +5790,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
+--- !u!65 &578422020
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578422017}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48, y: 1.8, z: 0.48}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &594267116
 GameObject:
   m_ObjectHideFlags: 0
@@ -5807,6 +6049,7 @@ GameObject:
   m_Component:
   - component: {fileID: 613963298}
   - component: {fileID: 613963299}
+  - component: {fileID: 613963300}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_5"
   m_TagString: Untagged
@@ -5852,7 +6095,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 9f27d0a8643f98c45b767386b823b998, type: 2}
@@ -5862,6 +6105,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &613963300
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 613963297}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.4992003}
+  m_Center: {x: 0.000000029802322, y: 0.9, z: -0.01000005}
 --- !u!1 &618528457
 GameObject:
   m_ObjectHideFlags: 0
@@ -6093,6 +6357,7 @@ GameObject:
   m_Component:
   - component: {fileID: 645681364}
   - component: {fileID: 645681365}
+  - component: {fileID: 645681366}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_7"
   m_TagString: Untagged
@@ -6138,7 +6403,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8cf8267fac4598d458087f7af86fffae, type: 2}
@@ -6148,6 +6413,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &645681366
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 645681363}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.4992002}
+  m_Center: {x: -0.00000008940697, y: 0.9, z: -0.01000002}
 --- !u!1 &649869720
 GameObject:
   m_ObjectHideFlags: 0
@@ -6221,6 +6507,7 @@ GameObject:
   m_Component:
   - component: {fileID: 654627036}
   - component: {fileID: 654627037}
+  - component: {fileID: 654627038}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_2"
   m_TagString: Untagged
@@ -6266,7 +6553,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: f9aa77c1beeb7424f8c3928b3d4cf3c7, type: 2}
@@ -6276,6 +6563,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &654627038
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 654627035}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: -0.000000059604645, y: 0.9, z: -0.009999961}
 --- !u!1 &656327249
 GameObject:
   m_ObjectHideFlags: 0
@@ -8039,6 +8347,7 @@ GameObject:
   m_Component:
   - component: {fileID: 862146674}
   - component: {fileID: 862146675}
+  - component: {fileID: 862146676}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_8"
   m_TagString: Untagged
@@ -8084,7 +8393,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 1519239353c6879459b17d11c7b06392, type: 2}
@@ -8094,6 +8403,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &862146676
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 862146673}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360003, y: 1.8, z: 0.49919996}
+  m_Center: {x: -0.000000059604645, y: 0.9, z: -0.009999871}
 --- !u!1 &863919826
 GameObject:
   m_ObjectHideFlags: 0
@@ -8167,6 +8497,7 @@ GameObject:
   m_Component:
   - component: {fileID: 876091492}
   - component: {fileID: 876091493}
+  - component: {fileID: 876091494}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_2"
   m_TagString: Untagged
@@ -8212,7 +8543,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 19e5affd251443e4c893107b7c5cb231, type: 2}
@@ -8222,6 +8553,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &876091494
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 876091491}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.4992002}
+  m_Center: {x: 0.000000059604645, y: 0.9, z: -0.01000002}
 --- !u!1 &887824677
 GameObject:
   m_ObjectHideFlags: 0
@@ -9952,6 +10304,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1017607355}
   - component: {fileID: 1017607356}
+  - component: {fileID: 1017607357}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_Player_\uD50C\uB808\uC774\uC5B4\uC11D"
   m_TagString: Untagged
@@ -9997,7 +10350,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 6e6d3001d1409c24eab9c40434166e16, type: 2}
@@ -10007,6 +10360,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1017607357
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1017607354}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600004, y: 1.8, z: 0.49920002}
+  m_Center: {x: 0, y: 0.9, z: -0.00999999}
 --- !u!1 &1022000286
 GameObject:
   m_ObjectHideFlags: 0
@@ -10080,6 +10454,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1032309794}
   - component: {fileID: 1032309795}
+  - component: {fileID: 1032309796}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_6"
   m_TagString: Untagged
@@ -10125,7 +10500,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: e47918376c2d03e4eb89b186f611749b, type: 2}
@@ -10135,6 +10510,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1032309796
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1032309793}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: 0.000000059604645, y: 0.9, z: -0.01000002}
 --- !u!1 &1036292655
 GameObject:
   m_ObjectHideFlags: 0
@@ -12253,6 +12649,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1251018218}
   - component: {fileID: 1251018219}
+  - component: {fileID: 1251018220}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_4"
   m_TagString: Untagged
@@ -12298,7 +12695,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b4ee6650ea8ace149800d64bde7a2928, type: 2}
@@ -12308,6 +12705,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1251018220
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1251018217}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600004, y: 1.8, z: 0.49919996}
+  m_Center: {x: 0, y: 0.9, z: -0.00999999}
 --- !u!1 &1255797165
 GameObject:
   m_ObjectHideFlags: 0
@@ -13271,6 +13689,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1360405618}
   - component: {fileID: 1360405619}
+  - component: {fileID: 1360405620}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_6"
   m_TagString: Untagged
@@ -13316,7 +13735,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c61c720692dc6114b816bfe874ce55e0, type: 2}
@@ -13326,6 +13745,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1360405620
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1360405617}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600004, y: 1.8, z: 0.49920002}
+  m_Center: {x: 0.000000029802322, y: 0.9, z: -0.00999999}
 --- !u!1 &1363567687
 GameObject:
   m_ObjectHideFlags: 0
@@ -13441,6 +13881,39 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: 9df9a5a9526e
+--- !u!114 &1369500305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1575142987}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e96b55827f42d0b4c32aa206c75d78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 0.32
+  widthScale: 1.15
+  strength: 0.55
+  color: {r: 0.12, g: 0.1, b: 0.2, a: 1}
+  softness: 0.45
+  bands: 3
+  pixelSnap: 1
+  pixelsPerMeter: 32
+  offset: {x: 0, y: 0}
+  fadeHeight: 2.5
+  minScale: 0.55
+  minStrength: 0.35
+  resolution: 7
+  maxStep: 0.45
+  probeUp: 0.5
+  probeDown: 6
+  lift: 0.02
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  shader: {fileID: 4800000, guid: c6710f7f04c94e6b85745b4443078fdc, type: 3}
 --- !u!1 &1371970025
 GameObject:
   m_ObjectHideFlags: 0
@@ -14259,6 +14732,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1467947188}
   - component: {fileID: 1467947189}
+  - component: {fileID: 1467947190}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Showcase_\uBBF8\uB9AC\uBCF4\uAE30\uC9C4\uC5F4\uC7A5_2"
   m_TagString: Untagged
@@ -14301,7 +14775,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3cace653e13f64c4b9bd5c7a3d312109, type: 2}
@@ -14311,6 +14785,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2279f698c5b2a5d4888899771d8087ca, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1467947190
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1467947187}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2000002, y: 1.9625, z: 0.7200002}
+  m_Center: {x: 0, y: 0.98125, z: 0}
 --- !u!1 &1472378708
 GameObject:
   m_ObjectHideFlags: 0
@@ -14321,6 +14816,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1472378709}
   - component: {fileID: 1472378710}
+  - component: {fileID: 1472378711}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Lot_\uACBD\uB9E4\uBB3C\uAC74"
   m_TagString: Untagged
@@ -14362,7 +14858,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8cc67a418e9b12542bd7140bf85f83b0, type: 2}
@@ -14371,6 +14867,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1472378711
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1472378708}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.768, y: 1.8, z: 0.6719998}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &1477135331
 GameObject:
   m_ObjectHideFlags: 0
@@ -14803,6 +15320,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1516402173}
   - component: {fileID: 1516402174}
+  - component: {fileID: 1516402175}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_4"
   m_TagString: Untagged
@@ -14848,7 +15366,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a7b64f77f8c11e446929fb9e00ab0125, type: 2}
@@ -14858,6 +15376,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1516402175
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1516402172}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920037}
+  m_Center: {x: 0, y: 0.9, z: -0.01000002}
 --- !u!1 &1524177046
 GameObject:
   m_ObjectHideFlags: 0
@@ -14868,6 +15407,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1524177047}
   - component: {fileID: 1524177048}
+  - component: {fileID: 1524177049}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_7"
   m_TagString: Untagged
@@ -14913,7 +15453,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 5cbd1cff57fec48429f5e35a0d5a1884, type: 2}
@@ -14923,6 +15463,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1524177049
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1524177046}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: 0.000000059604645, y: 0.9, z: -0.009999961}
 --- !u!1 &1524707006
 GameObject:
   m_ObjectHideFlags: 0
@@ -15091,6 +15652,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1533092294}
   - component: {fileID: 1533092295}
+  - component: {fileID: 1533092296}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uB4B7\uC904_5"
   m_TagString: Untagged
@@ -15136,7 +15698,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: ea99cfbaadf20794d99f20affe77ad2e, type: 2}
@@ -15146,6 +15708,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1533092296
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1533092293}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600004, y: 1.8, z: 0.49920008}
+  m_Center: {x: -0.000000029802322, y: 0.9, z: -0.00999999}
 --- !u!1 &1535067993
 GameObject:
   m_ObjectHideFlags: 0
@@ -15468,6 +16051,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1556025687}
   - component: {fileID: 1556025688}
+  - component: {fileID: 1556025689}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_3"
   m_TagString: Untagged
@@ -15513,7 +16097,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3995a0a72218feb48972bd6c7e0edb4a, type: 2}
@@ -15523,6 +16107,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1556025689
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1556025686}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.4992002}
+  m_Center: {x: -0.000000029802322, y: 0.9, z: -0.01000002}
 --- !u!1 &1567236753
 GameObject:
   m_ObjectHideFlags: 0
@@ -15533,6 +16138,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1567236754}
   - component: {fileID: 1567236755}
+  - component: {fileID: 1567236756}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_NPC_\uC785\uCC30\uB2F4\uB2F9_1"
   m_TagString: Untagged
@@ -15573,7 +16179,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: cc3228c5c4377594aa74bf4f2c331118, type: 2}
@@ -15581,6 +16187,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
+--- !u!65 &1567236756
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1567236753}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48, y: 1.8, z: 0.48}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &1571172262
 GameObject:
   m_ObjectHideFlags: 0
@@ -15775,9 +16402,11 @@ MonoBehaviour:
   acceleration: 40
   turnSpeed: 900
   cameraRelative: 1
-  jumpHeight: 1.1
+  stickDistance: 0.6
   gravity: -25
   snapToRSTerrain: 1
+  keepOnWalkable: 1
+  maxSlideSpeed: 6
   cam: {fileID: 494996936}
   keepCurrentAngle: 1
   pitch: 35
@@ -15802,19 +16431,7 @@ MonoBehaviour:
   walkAnimSpeed: 0.75
   autoSeeThrough: 1
   autoFoliagePush: 1
---- !u!114 &1369500305
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1575142987}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 16e96b55827f42d0b4c32aa206c75d78, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shader: {fileID: 4800000, guid: c6710f7f04c94e6b85745b4443078fdc, type: 3}
+  autoBlobShadow: 1
 --- !u!143 &1575142990
 CharacterController:
   m_ObjectHideFlags: 0
@@ -16903,6 +17520,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1669032055}
   - component: {fileID: 1669032056}
+  - component: {fileID: 1669032057}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_PhoneDesk_\uC804\uD654\uC785\uCC30\uC11D (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
@@ -16946,7 +17564,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3df82d5d92a6b15429a91c626302a6cd, type: 2}
@@ -16957,6 +17575,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 2e02280dd39658940b33930c80c98ef5, type: 2}
   cacheKinds: 00000000000000000000000000000000
+--- !u!65 &1669032057
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1669032054}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.3999999, y: 1.8, z: 0.6719998}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &1669681400
 GameObject:
   m_ObjectHideFlags: 0
@@ -17685,6 +18324,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1736981191}
   - component: {fileID: 1736981192}
+  - component: {fileID: 1736981193}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uC55E\uC904_6"
   m_TagString: Untagged
@@ -17730,7 +18370,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 420aed5a50ab6544cafed6fdc2cd347c, type: 2}
@@ -17740,6 +18380,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1736981193
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1736981190}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.63600016, y: 1.8, z: 0.49919987}
+  m_Center: {x: 0, y: 0.9, z: -0.01000005}
 --- !u!1 &1752050955
 GameObject:
   m_ObjectHideFlags: 0
@@ -17782,6 +18443,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1758108983}
   - component: {fileID: 1758108984}
+  - component: {fileID: 1758108985}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_7"
   m_TagString: Untagged
@@ -17827,7 +18489,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: be1cd9c861219d240b0aa6c06be835d2, type: 2}
@@ -17837,6 +18499,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1758108985
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1758108982}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: 0, y: 0.9, z: -0.00999999}
 --- !u!1 &1762839080
 GameObject:
   m_ObjectHideFlags: 0
@@ -18625,6 +19308,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1896828618}
   - component: {fileID: 1896828619}
+  - component: {fileID: 1896828620}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_5"
   m_TagString: Untagged
@@ -18670,7 +19354,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 9646bff229c77af4c9f79d87f6e822dc, type: 2}
@@ -18680,6 +19364,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &1896828620
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1896828617}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.4992002}
+  m_Center: {x: 0.000000059604645, y: 0.9, z: -0.01000002}
 --- !u!1 &1897590938
 GameObject:
   m_ObjectHideFlags: 0
@@ -20292,6 +20997,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2042244585}
   - component: {fileID: 2042244586}
+  - component: {fileID: 2042244587}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_NPC_\uB4F1\uB85D\uC9C1\uC6D0"
   m_TagString: Untagged
@@ -20332,7 +21038,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8862a8b3c7d764248b5d18f16eaacdf7, type: 2}
@@ -20340,6 +21046,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
+--- !u!65 &2042244587
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2042244584}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48, y: 1.8, z: 0.48}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &2045651895
 GameObject:
   m_ObjectHideFlags: 0
@@ -20665,6 +21392,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2102354186}
   - component: {fileID: 2102354187}
+  - component: {fileID: 2102354188}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_Seat_\uAC00\uC6B4\uB370\uC904_1"
   m_TagString: Untagged
@@ -20710,7 +21438,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 6242916d14136d846b838aa7f24e571b, type: 2}
@@ -20720,6 +21448,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   cacheKinds: 000000000000000000000000
+--- !u!65 &2102354188
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2102354185}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6360001, y: 1.8, z: 0.49920008}
+  m_Center: {x: -0.000000029802322, y: 0.9, z: -0.00999999}
 --- !u!1 &2103682128
 GameObject:
   m_ObjectHideFlags: 0
@@ -20982,6 +21731,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2142914007}
   - component: {fileID: 2142914008}
+  - component: {fileID: 2142914009}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_NPC_\uC785\uCC30\uB2F4\uB2F9_2"
   m_TagString: Untagged
@@ -21022,7 +21772,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a7d7f7ba1945fe64a9c4b724cd75270f, type: 2}
@@ -21030,6 +21780,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
+--- !u!65 &2142914009
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2142914006}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48, y: 1.8, z: 0.48}
+  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &2144486990
 GameObject:
   m_ObjectHideFlags: 0

@@ -1891,6 +1891,7 @@ GameObject:
   m_Component:
   - component: {fileID: 36485378}
   - component: {fileID: 36485379}
+  - component: {fileID: 36485380}
   m_Layer: 0
   m_Name: "\uC138\uD0C1\uAE30"
   m_TagString: Untagged
@@ -1931,7 +1932,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 20416b920e939de4c89b9d7ace97c2e4, type: 2}
@@ -1940,6 +1941,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 17b4d3e933df52246985ea79533a9e0a, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &36485380
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 36485377}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7200009, y: 2.3999999, z: 0.66000044}
+  m_Center: {x: 0.0000002682209, y: 1.1999999, z: 0}
 --- !u!1 &37599241
 GameObject:
   m_ObjectHideFlags: 0
@@ -2013,6 +2035,7 @@ GameObject:
   m_Component:
   - component: {fileID: 37684569}
   - component: {fileID: 37684570}
+  - component: {fileID: 37684571}
   m_Layer: 0
   m_Name: "\uD0C0\uC774\uC5B4 \uB354\uBBF8"
   m_TagString: Untagged
@@ -2056,7 +2079,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: ed5fc778e46bd8547b0a133ef4e02ed0, type: 2}
@@ -2065,6 +2088,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bf724af4bc6c7ff4fa69ad492d53c891, type: 2}
   - {fileID: 11400000, guid: ccdd1fe20b2df674cb5f162d8ae1c484, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &37684571
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37684568}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.75, y: 2.3999999, z: 0.81}
+  m_Center: {x: 0.015625, y: 1.1999999, z: -0.015625}
 --- !u!1 &38079435
 GameObject:
   m_ObjectHideFlags: 0
@@ -3727,8 +3771,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1500007, y: 0.75, z: 0.5750001}
-  m_Center: {x: 0.0000005364418, y: 0.375, z: -0.00000014901161}
+  m_Size: {x: 1.1500007, y: 2.3999999, z: 0.5750001}
+  m_Center: {x: 0.0000005364418, y: 1.1999999, z: -0.00000014901161}
 --- !u!1 &70687476
 GameObject:
   m_ObjectHideFlags: 0
@@ -4599,8 +4643,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1500012, y: 0.75, z: 0.575001}
-  m_Center: {x: 0.0000014901161, y: 0.375, z: -0.00000008940697}
+  m_Size: {x: 1.1500012, y: 2.3999999, z: 0.575001}
+  m_Center: {x: 0.0000014901161, y: 1.1999999, z: -0.00000008940697}
 --- !u!1 &89546937
 GameObject:
   m_ObjectHideFlags: 0
@@ -5426,8 +5470,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.6225002, y: 1.0845226, z: 0.8594374}
-  m_Center: {x: 0.21875, y: 0.5422613, z: -0.016560227}
+  m_Size: {x: 3.6225002, y: 2.3999999, z: 0.8594374}
+  m_Center: {x: 0.21875, y: 1.1999999, z: -0.016560227}
 --- !u!1 &104714489
 GameObject:
   m_ObjectHideFlags: 0
@@ -8307,8 +8351,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7830088, y: 0.4375, z: 0.69}
-  m_Center: {x: -0.00000029802322, y: 0.21875, z: 0.03125}
+  m_Size: {x: 0.7830088, y: 2.3999999, z: 0.69}
+  m_Center: {x: -0.00000029802322, y: 1.1999999, z: 0.03125}
 --- !u!1 &193546370
 GameObject:
   m_ObjectHideFlags: 0
@@ -10474,6 +10518,7 @@ GameObject:
   m_Component:
   - component: {fileID: 247334693}
   - component: {fileID: 247334694}
+  - component: {fileID: 247334695}
   m_Layer: 0
   m_Name: "\uC138\uD0C1\uAE30"
   m_TagString: Untagged
@@ -10514,7 +10559,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: d25341f0242bb2d4a9d240124eab592e, type: 2}
@@ -10523,6 +10568,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 17b4d3e933df52246985ea79533a9e0a, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &247334695
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 247334692}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.72000027, y: 2.3999999, z: 0.6600002}
+  m_Center: {x: 0.000000029802322, y: 1.1999999, z: -0.00000059604645}
 --- !u!1 &247349269
 GameObject:
   m_ObjectHideFlags: 0
@@ -11070,8 +11136,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.0563948, y: 2, z: 0.05750042}
-  m_Center: {x: 0.0000014305115, y: 1, z: -0.00000022724271}
+  m_Size: {x: 3.0563948, y: 2.3999999, z: 0.05750042}
+  m_Center: {x: 0.0000014305115, y: 1.1999999, z: -0.00000022724271}
 --- !u!1 &259832274
 GameObject:
   m_ObjectHideFlags: 0
@@ -11409,6 +11475,7 @@ GameObject:
   m_Component:
   - component: {fileID: 271533838}
   - component: {fileID: 271533839}
+  - component: {fileID: 271533840}
   m_Layer: 0
   m_Name: "\uB4DC\uB7FC\uD1B5"
   m_TagString: Untagged
@@ -11449,7 +11516,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c39e19df86cd11d41884e3fe68a3b2d1, type: 2}
@@ -11458,6 +11525,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e4a25f2be86970046b1c327d4f877179, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &271533840
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 271533837}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5399998, y: 2.3999999, z: 0.5399999}
+  m_Center: {x: -0.000000029802322, y: 1.1999999, z: 0}
 --- !u!1 &272157838
 GameObject:
   m_ObjectHideFlags: 0
@@ -11883,6 +11971,7 @@ GameObject:
   - component: {fileID: 277617050}
   - component: {fileID: 277617052}
   - component: {fileID: 277617051}
+  - component: {fileID: 277617053}
   m_Layer: 0
   m_Name: "\uC790\uD310\uAE30"
   m_TagString: Untagged
@@ -11949,7 +12038,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a2301cda16ce7964dbd6ad78dfe19053, type: 2}
@@ -11958,6 +12047,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8b163a89ae4d33646beec05079672578, type: 2}
   - {fileID: 11400000, guid: 444f184592880ef4cbe471431b10ed32, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &277617053
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 277617049}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9600001, y: 2.3999999, z: 0.71999997}
+  m_Center: {x: 0.000000059604645, y: 1.1999999, z: 0}
 --- !u!1 &278197063
 GameObject:
   m_ObjectHideFlags: 0
@@ -12229,8 +12339,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4935588, y: 1.6322892, z: 0.9017457}
-  m_Center: {x: 0.18671668, y: 0.8102914, z: 0.009920061}
+  m_Size: {x: 1.4935588, y: 2.3999999, z: 0.9017457}
+  m_Center: {x: 0.18671668, y: 1.1941468, z: 0.009920061}
 --- !u!1 &281077086
 GameObject:
   m_ObjectHideFlags: 0
@@ -13599,6 +13709,7 @@ GameObject:
   m_Component:
   - component: {fileID: 317606241}
   - component: {fileID: 317606242}
+  - component: {fileID: 317606243}
   m_Layer: 0
   m_Name: "\uC555\uCD95 \uD050\uBE0C \uB354\uBBF8"
   m_TagString: Untagged
@@ -13648,7 +13759,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 17f40fb438060f64baa8bf4a0068a164, type: 2}
@@ -13657,6 +13768,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 562659d135996234698526f8e8926471, type: 2}
   - {fileID: 11400000, guid: abecd8fa388982345b08c0427592e10f, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &317606243
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 317606240}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.960685, y: 3, z: 1.1414868}
+  m_Center: {x: -0.035371065, y: 1.5, z: 0}
 --- !u!1 &320720159
 GameObject:
   m_ObjectHideFlags: 0
@@ -13849,6 +13981,7 @@ GameObject:
   m_Component:
   - component: {fileID: 322842426}
   - component: {fileID: 322842427}
+  - component: {fileID: 322842428}
   m_Layer: 0
   m_Name: "\uB118\uC5B4\uC9C4 \uB0C9\uC7A5\uACE0"
   m_TagString: Untagged
@@ -13889,7 +14022,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: fd0bc033ef83dd24b94e2dc105e3c015, type: 2}
@@ -13898,6 +14031,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a481808c48f05af4682ddc49c2b371eb, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &322842428
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322842425}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.71999997, y: 2.4, z: 0.6600009}
+  m_Center: {x: 0, y: 1.1999991, z: -0.00000008940697}
 --- !u!1 &322986572
 GameObject:
   m_ObjectHideFlags: 0
@@ -14799,8 +14953,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7255089, y: 0.21875, z: 0.6900004}
-  m_Center: {x: -0.0625, y: 0.109375, z: 0.031249315}
+  m_Size: {x: 0.7255089, y: 2.3999999, z: 0.6900004}
+  m_Center: {x: -0.0625, y: 1.1999999, z: 0.031249315}
 --- !u!1 &338422760
 GameObject:
   m_ObjectHideFlags: 0
@@ -15187,6 +15341,7 @@ GameObject:
   m_Component:
   - component: {fileID: 347151726}
   - component: {fileID: 347151727}
+  - component: {fileID: 347151728}
   m_Layer: 0
   m_Name: "\uD314\uB808\uD2B8 \uB354\uBBF8"
   m_TagString: Untagged
@@ -15230,7 +15385,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b7a06f25cabfa6a4f87ec66e8dfd95af, type: 2}
@@ -15238,6 +15393,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 78c2128476e0c4045939aca047ea361b, type: 2}
   cacheKinds: 00000000
+--- !u!65 &347151728
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 347151725}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2341889, y: 2.3999999, z: 1.0585928}
+  m_Center: {x: 0.015624821, y: 1.1999999, z: -0.020100057}
 --- !u!1 &347304040
 GameObject:
   m_ObjectHideFlags: 0
@@ -15770,8 +15946,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3799998, y: 1, z: 1.8400005}
-  m_Center: {x: -0.25000012, y: 0.5, z: -0.49999976}
+  m_Size: {x: 1.3799998, y: 2.3999999, z: 1.8400005}
+  m_Center: {x: -0.25000012, y: 1.1999999, z: -0.49999976}
 --- !u!1 &358307196
 GameObject:
   m_ObjectHideFlags: 0
@@ -19458,6 +19634,7 @@ GameObject:
   m_Component:
   - component: {fileID: 426233330}
   - component: {fileID: 426233331}
+  - component: {fileID: 426233332}
   m_Layer: 0
   m_Name: "\uC0C1\uC790"
   m_TagString: Untagged
@@ -19499,7 +19676,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: f90986af441a5ec4ba14ec10a18f8cc8, type: 2}
@@ -19508,6 +19685,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 18314958c6b511b449ab20e9dadea535, type: 2}
   - {fileID: 11400000, guid: 87681d524086da3488499fa733564e9c, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &426233332
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 426233329}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4399999, y: 2.3999999, z: 0.95999974}
+  m_Center: {x: -0.25, y: 1.1999999, z: 0.000000059604645}
 --- !u!1 &426984881
 GameObject:
   m_ObjectHideFlags: 0
@@ -20452,6 +20650,7 @@ GameObject:
   m_Component:
   - component: {fileID: 447238218}
   - component: {fileID: 447238219}
+  - component: {fileID: 447238220}
   m_Layer: 0
   m_Name: "\uD0C0\uC774\uC5B4 \uB354\uBBF8"
   m_TagString: Untagged
@@ -20494,7 +20693,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 174bc02445eee0741b0e4225bd4df625, type: 2}
@@ -20503,6 +20702,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bf724af4bc6c7ff4fa69ad492d53c891, type: 2}
   - {fileID: 11400000, guid: ccdd1fe20b2df674cb5f162d8ae1c484, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &447238220
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 447238217}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.74999964, y: 2.3999999, z: 0.84000087}
+  m_Center: {x: 0.04687512, y: 1.1999999, z: 0}
 --- !u!1 &448578577
 GameObject:
   m_ObjectHideFlags: 0
@@ -23398,6 +23618,7 @@ GameObject:
   m_Component:
   - component: {fileID: 527426967}
   - component: {fileID: 527426968}
+  - component: {fileID: 527426969}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -23438,7 +23659,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b0dd3dc13299ed545b2ae26c28d06af3, type: 2}
@@ -23447,6 +23668,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &527426969
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 527426966}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48000017, y: 2.3999999, z: 0.4200013}
+  m_Center: {x: 0.00000008940697, y: 1.1999996, z: -0.00000023841858}
 --- !u!1 &527497598
 GameObject:
   m_ObjectHideFlags: 0
@@ -26504,8 +26746,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.72550815, y: 0.21875, z: 0.6900002}
-  m_Center: {x: 0.0000005364418, y: 0.109375, z: -0.06250009}
+  m_Size: {x: 0.72550815, y: 2.3999999, z: 0.6900002}
+  m_Center: {x: 0.0000005364418, y: 1.1999999, z: -0.06250009}
 --- !u!1 &584377351
 GameObject:
   m_ObjectHideFlags: 0
@@ -26839,8 +27081,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.97750026, y: 0.5625, z: 0.5175001}
-  m_Center: {x: 0.34375027, y: 0.28125, z: 0.09375006}
+  m_Size: {x: 0.97750026, y: 2.3999999, z: 0.5175001}
+  m_Center: {x: 0.34375027, y: 1.1999999, z: 0.09375006}
 --- !u!1 &595120568
 GameObject:
   m_ObjectHideFlags: 0
@@ -28354,8 +28596,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.9775007, y: 0.5625, z: 0.5175026}
-  m_Center: {x: 0.3437502, y: 0.28125, z: 0.09374933}
+  m_Size: {x: 0.9775007, y: 2.3999999, z: 0.5175026}
+  m_Center: {x: 0.3437502, y: 1.1999999, z: 0.09374933}
 --- !u!1 &652416081
 GameObject:
   m_ObjectHideFlags: 0
@@ -30311,6 +30553,7 @@ GameObject:
   m_Component:
   - component: {fileID: 682832351}
   - component: {fileID: 682832352}
+  - component: {fileID: 682832353}
   m_Layer: 0
   m_Name: "\uC791\uC5C5\uB300 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
@@ -30366,7 +30609,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 9c15b9294c7630746bde1a88a93c6b4b, type: 2}
@@ -30380,6 +30623,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e4a25f2be86970046b1c327d4f877179, type: 2}
   - {fileID: 11400000, guid: 87681d524086da3488499fa733564e9c, type: 2}
   cacheKinds: 00000000000000000000000000000000000000000000000000000000
+--- !u!65 &682832353
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 682832350}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8, y: 2.3999999, z: 0.81}
+  m_Center: {x: 0, y: 1.1999999, z: -0.046875}
 --- !u!1 &684812622
 GameObject:
   m_ObjectHideFlags: 0
@@ -30915,6 +31179,7 @@ GameObject:
   m_Component:
   - component: {fileID: 696732647}
   - component: {fileID: 696732648}
+  - component: {fileID: 696732649}
   m_Layer: 0
   m_Name: "\uBC30\uAD00 \uB354\uBBF8"
   m_TagString: Untagged
@@ -30963,7 +31228,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 02929fc3738342e4c8456d183a6bfe68, type: 2}
@@ -30972,6 +31237,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b56c0c9b876b7494dbf34e3aff795937, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &696732649
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 696732646}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.060001, y: 2.3999999, z: 0.8400006}
+  m_Center: {x: -0.03125024, y: 1.1999995, z: 0}
 --- !u!1 &697110428
 GameObject:
   m_ObjectHideFlags: 0
@@ -31261,6 +31547,7 @@ GameObject:
   m_Component:
   - component: {fileID: 717769698}
   - component: {fileID: 717769699}
+  - component: {fileID: 717769700}
   m_Layer: 0
   m_Name: "\uAC00\uC2A4\uD1B5"
   m_TagString: Untagged
@@ -31307,7 +31594,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 0d4adf328dabae14cb1a3c319ec84172, type: 2}
@@ -31316,6 +31603,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0bfc8021a2e28084fb6b50c8ae9ca9e1, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &717769700
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 717769697}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9, y: 2.3999999, z: 0.255}
+  m_Center: {x: 0, y: 1.1999999, z: -0.0078125}
 --- !u!1 &718172777
 GameObject:
   m_ObjectHideFlags: 0
@@ -33752,6 +34060,7 @@ GameObject:
   m_Component:
   - component: {fileID: 773260858}
   - component: {fileID: 773260859}
+  - component: {fileID: 773260860}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -33792,7 +34101,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 1b4ae350783096148acde58be3696860, type: 2}
@@ -33801,6 +34110,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &773260860
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 773260857}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48000106, y: 2.3999999, z: 0.42000073}
+  m_Center: {x: 0.00000032782555, y: 1.1999999, z: -0.00000014901161}
 --- !u!1 &773269674
 GameObject:
   m_ObjectHideFlags: 0
@@ -33882,8 +34212,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4935588, y: 1.6322889, z: 0.90174544}
-  m_Center: {x: 0.18671739, y: 0.81029147, z: 0.009921581}
+  m_Size: {x: 1.4935588, y: 2.3999999, z: 0.90174544}
+  m_Center: {x: 0.18671739, y: 1.1941469, z: 0.009921581}
 --- !u!1 &773513578
 GameObject:
   m_ObjectHideFlags: 0
@@ -34637,7 +34967,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 6.100329, y: 2.495589}
+  m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -36937,6 +37267,7 @@ GameObject:
   m_Component:
   - component: {fileID: 858408597}
   - component: {fileID: 858408598}
+  - component: {fileID: 858408599}
   m_Layer: 0
   m_Name: "\uD0C0\uC774\uC5B4 \uB354\uBBF8"
   m_TagString: Untagged
@@ -36979,7 +37310,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: e421aa7646427cd4abf9bc49c2b1dd30, type: 2}
@@ -36988,6 +37319,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bf724af4bc6c7ff4fa69ad492d53c891, type: 2}
   - {fileID: 11400000, guid: ccdd1fe20b2df674cb5f162d8ae1c484, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &858408599
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 858408596}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.75, y: 2.3999999, z: 0.78}
+  m_Center: {x: 0.046875, y: 1.1999999, z: 0}
 --- !u!1 &860316890
 GameObject:
   m_ObjectHideFlags: 0
@@ -37068,8 +37420,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.8117596, y: 0.4375, z: 0.77624935}
-  m_Center: {x: -0.015624642, y: 0.21875, z: 0.015625834}
+  m_Size: {x: 0.8117596, y: 2.3999999, z: 0.77624935}
+  m_Center: {x: -0.015624642, y: 1.1999999, z: 0.015625834}
 --- !u!1 &865518473
 GameObject:
   m_ObjectHideFlags: 0
@@ -37921,8 +38273,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7542589, y: 0.4375, z: 0.71875083}
-  m_Center: {x: 0.015625685, y: 0.21875, z: -0.01562503}
+  m_Size: {x: 0.7542589, y: 2.3999999, z: 0.71875083}
+  m_Center: {x: 0.015625685, y: 1.1999999, z: -0.01562503}
 --- !u!1 &879223721
 GameObject:
   m_ObjectHideFlags: 0
@@ -38719,6 +39071,7 @@ GameObject:
   m_Component:
   - component: {fileID: 890231456}
   - component: {fileID: 890231457}
+  - component: {fileID: 890231458}
   m_Layer: 0
   m_Name: "\uC555\uCD95 \uD050\uBE0C \uB354\uBBF8"
   m_TagString: Untagged
@@ -38763,7 +39116,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 5b60278f2d1d2074c8978b4a84218f75, type: 2}
@@ -38772,6 +39125,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 562659d135996234698526f8e8926471, type: 2}
   - {fileID: 11400000, guid: abecd8fa388982345b08c0427592e10f, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &890231458
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 890231455}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.700686, y: 2.3999999, z: 1.1013904}
+  m_Center: {x: -0.035371184, y: 1.1999999, z: -0.02088356}
 --- !u!1 &892338483
 GameObject:
   m_ObjectHideFlags: 0
@@ -38782,6 +39156,7 @@ GameObject:
   m_Component:
   - component: {fileID: 892338484}
   - component: {fileID: 892338485}
+  - component: {fileID: 892338486}
   m_Layer: 0
   m_Name: "\uAE34 \uC758\uC790"
   m_TagString: Untagged
@@ -38827,7 +39202,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 91b5d7d8af50f3d40bf9569a953f5dc6, type: 2}
@@ -38836,6 +39211,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 000626db52910c241802b3b7928247eb, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &892338486
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 892338483}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.3800004, y: 2.3999999, z: 0.405001}
+  m_Center: {x: 0.000000059604645, y: 0.9179999, z: 0.0078125}
 --- !u!1 &893400651
 GameObject:
   m_ObjectHideFlags: 0
@@ -40148,8 +40544,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7830086, y: 0.4375, z: 0.6900011}
-  m_Center: {x: -0.0000006556511, y: 0.21875, z: -0.062499434}
+  m_Size: {x: 0.7830086, y: 2.3999999, z: 0.6900011}
+  m_Center: {x: -0.0000006556511, y: 1.1999999, z: -0.062499434}
 --- !u!1 &935118929
 GameObject:
   m_ObjectHideFlags: 0
@@ -41643,6 +42039,7 @@ GameObject:
   m_Component:
   - component: {fileID: 964440979}
   - component: {fileID: 964440980}
+  - component: {fileID: 964440981}
   m_Layer: 0
   m_Name: "\uC0C1\uC790"
   m_TagString: Untagged
@@ -41684,7 +42081,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 5171a6c1811080b4496ed00289402e5f, type: 2}
@@ -41693,6 +42090,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 18314958c6b511b449ab20e9dadea535, type: 2}
   - {fileID: 11400000, guid: 87681d524086da3488499fa733564e9c, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &964440981
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 964440978}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4399999, y: 2.3999999, z: 0.96000046}
+  m_Center: {x: -0.2499997, y: 1.1999999, z: 0.00000023841858}
 --- !u!1 &966074709
 GameObject:
   m_ObjectHideFlags: 0
@@ -42842,6 +43260,7 @@ GameObject:
   m_Component:
   - component: {fileID: 995541609}
   - component: {fileID: 995541610}
+  - component: {fileID: 995541611}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -42882,7 +43301,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 1c5a5e325c112094fbf2e1a2ad48389f, type: 2}
@@ -42891,6 +43310,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &995541611
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 995541608}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.4800005, y: 2.3999999, z: 0.41999972}
+  m_Center: {x: -0.00000029802322, y: 1.1999996, z: 0.00000055134296}
 --- !u!1 &997107216
 GameObject:
   m_ObjectHideFlags: 0
@@ -43700,8 +44140,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.9775009, y: 0.5625, z: 0.5175011}
-  m_Center: {x: 0.34375036, y: 0.28125, z: 0.093750775}
+  m_Size: {x: 0.9775009, y: 2.3999999, z: 0.5175011}
+  m_Center: {x: 0.34375036, y: 1.1999999, z: 0.093750775}
 --- !u!1 &1014194575
 GameObject:
   m_ObjectHideFlags: 0
@@ -44077,6 +44517,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1031419120}
   - component: {fileID: 1031419121}
+  - component: {fileID: 1031419122}
   m_Layer: 0
   m_Name: "\uD3D0\uCC28"
   m_TagString: Untagged
@@ -44128,7 +44569,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 121112e5b57991d42a6a650110edf497, type: 2}
@@ -44141,6 +44582,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bf724af4bc6c7ff4fa69ad492d53c891, type: 2}
   - {fileID: 11400000, guid: 65c1ba9cfb9679e48a1e5a3705f2b830, type: 2}
   cacheKinds: 000000000000000000000000000000000000000000000000
+--- !u!65 &1031419122
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1031419119}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.87, y: 2.3999999, z: 1.68}
+  m_Center: {x: 0, y: 1.1999998, z: 0}
 --- !u!1 &1032160517
 GameObject:
   m_ObjectHideFlags: 0
@@ -44848,8 +45310,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3800002, y: 1, z: 1.8400007}
-  m_Center: {x: -0.25, y: 0.5, z: -0.5000001}
+  m_Size: {x: 1.3800002, y: 2.3999999, z: 1.8400007}
+  m_Center: {x: -0.25, y: 1.1999999, z: -0.5000001}
 --- !u!1 &1050132616
 GameObject:
   m_ObjectHideFlags: 0
@@ -48275,6 +48737,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1128031071}
   - component: {fileID: 1128031072}
+  - component: {fileID: 1128031073}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -48315,7 +48778,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: be4dddd6ff6a6a94aa73ecb49cd42077, type: 2}
@@ -48324,6 +48787,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1128031073
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1128031070}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.4800013, y: 2.3999999, z: 0.42000154}
+  m_Center: {x: 0.000000029802322, y: 1.1999999, z: -0.00000020861626}
 --- !u!1 &1128622142
 GameObject:
   m_ObjectHideFlags: 0
@@ -48406,8 +48890,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.2875001, y: 1.25, z: 0.37375}
-  m_Center: {x: 0.015624613, y: 0.625, z: -0.00000008940697}
+  m_Size: {x: 0.2875001, y: 2.3999999, z: 0.37375}
+  m_Center: {x: 0.015624613, y: 1.1999999, z: -0.00000008940697}
 --- !u!1 &1130124766
 GameObject:
   m_ObjectHideFlags: 0
@@ -50200,6 +50684,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1183543535}
   - component: {fileID: 1183543536}
+  - component: {fileID: 1183543537}
   m_Layer: 0
   m_Name: "\uD3D0\uCC28"
   m_TagString: Untagged
@@ -50251,7 +50736,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a51019a627e926b4cabbbd6b9604ba39, type: 2}
@@ -50264,6 +50749,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bf724af4bc6c7ff4fa69ad492d53c891, type: 2}
   - {fileID: 11400000, guid: 65c1ba9cfb9679e48a1e5a3705f2b830, type: 2}
   cacheKinds: 000000000000000000000000000000000000000000000000
+--- !u!65 &1183543537
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1183543534}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8700008, y: 2.3999999, z: 1.6800009}
+  m_Center: {x: 0, y: 1.1999998, z: 0}
 --- !u!1 &1183590217
 GameObject:
   m_ObjectHideFlags: 0
@@ -52701,6 +53207,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1233801679}
   - component: {fileID: 1233801680}
+  - component: {fileID: 1233801681}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -52741,7 +53248,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 0032087a26262d74299685e3107f13b0, type: 2}
@@ -52750,6 +53257,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1233801681
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233801678}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.47999948, y: 2.3999999, z: 0.42000014}
+  m_Center: {x: -0.00000023841858, y: 1.1999999, z: -0.000000074505806}
 --- !u!1 &1238049759
 GameObject:
   m_ObjectHideFlags: 0
@@ -53947,8 +54475,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.4980047, y: 0.43998277, z: 0.8681593}
-  m_Center: {x: -0.08811009, y: 0.15951091, z: -0.08093479}
+  m_Size: {x: 1.4980047, y: 2.3999999, z: 0.8681593}
+  m_Center: {x: -0.08811009, y: 1.1395195, z: -0.08093479}
 --- !u!1 &1270142455
 GameObject:
   m_ObjectHideFlags: 0
@@ -54022,6 +54550,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1271086337}
   - component: {fileID: 1271086338}
+  - component: {fileID: 1271086339}
   m_Layer: 0
   m_Name: "\uD314\uB808\uD2B8 \uB354\uBBF8"
   m_TagString: Untagged
@@ -54064,7 +54593,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: acc3dd28ccbe9864d8042633fb993167, type: 2}
@@ -54072,6 +54601,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 78c2128476e0c4045939aca047ea361b, type: 2}
   cacheKinds: 00000000
+--- !u!65 &1271086339
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1271086336}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.1782899, y: 2.3999999, z: 0.97974914}
+  m_Center: {x: -0.01994282, y: 1.1999999, z: -0.00000017881393}
 --- !u!1 &1272073790
 GameObject:
   m_ObjectHideFlags: 0
@@ -56930,8 +57480,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.97750026, y: 0.5625, z: 0.5175002}
-  m_Center: {x: 0.34375006, y: 0.28125, z: 0.09374997}
+  m_Size: {x: 0.97750026, y: 2.3999999, z: 0.5175002}
+  m_Center: {x: 0.34375006, y: 1.1999999, z: 0.09374997}
 --- !u!1 &1342602717
 GameObject:
   m_ObjectHideFlags: 0
@@ -58918,8 +59468,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.72550976, y: 0.21875, z: 0.6900001}
-  m_Center: {x: 0.031248927, y: 0.109375, z: 0.031249642}
+  m_Size: {x: 0.72550976, y: 2.3999999, z: 0.6900001}
+  m_Center: {x: 0.031248927, y: 1.1999999, z: 0.031249642}
 --- !u!1 &1410989175
 GameObject:
   m_ObjectHideFlags: 0
@@ -62408,8 +62958,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.498005, y: 0.43998277, z: 0.8681601}
-  m_Center: {x: -0.08811033, y: 0.15951091, z: -0.08093554}
+  m_Size: {x: 1.498005, y: 2.3999999, z: 0.8681601}
+  m_Center: {x: -0.08811033, y: 1.1395195, z: -0.08093554}
 --- !u!1 &1509054373
 GameObject:
   m_ObjectHideFlags: 0
@@ -63095,6 +63645,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1528749174}
   - component: {fileID: 1528749175}
+  - component: {fileID: 1528749176}
   m_Layer: 0
   m_Name: "\uB9C8\uB2F9 \uD3C9\uC0C1"
   m_TagString: Untagged
@@ -63140,7 +63691,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a5a466e5fa07b1e419f7dfb754545951, type: 2}
@@ -63152,6 +63703,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 440fa6e53e6e7014e853cbba0f913998, type: 2}
   - {fileID: 11400000, guid: 9bb00919cf029f143a8729dd2c35811e, type: 2}
   cacheKinds: 0000000000000000000000000000000000000000
+--- !u!65 &1528749176
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1528749173}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.28, y: 2.3999999, z: 1.92}
+  m_Center: {x: 0, y: 1.1999999, z: 0}
 --- !u!1 &1535002423
 GameObject:
   m_ObjectHideFlags: 0
@@ -63960,6 +64532,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1570858254}
   - component: {fileID: 1570858255}
+  - component: {fileID: 1570858256}
   m_Layer: 0
   m_Name: "\uC0C1\uC790"
   m_TagString: Untagged
@@ -64000,7 +64573,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b07c65391294eb84299d41c516afb690, type: 2}
@@ -64008,6 +64581,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 18314958c6b511b449ab20e9dadea535, type: 2}
   cacheKinds: 00000000
+--- !u!65 &1570858256
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1570858253}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9600011, y: 2.3999999, z: 0.9600017}
+  m_Center: {x: -0.50000036, y: 1.1999999, z: -0.00000029802322}
 --- !u!1 &1574476026
 GameObject:
   m_ObjectHideFlags: 0
@@ -64576,6 +65170,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1595893141}
   - component: {fileID: 1595893142}
+  - component: {fileID: 1595893143}
   m_Layer: 0
   m_Name: "\uC555\uCD95 \uD050\uBE0C \uB354\uBBF8"
   m_TagString: Untagged
@@ -64620,7 +65215,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8de980a314340da4f84390e70504fbec, type: 2}
@@ -64629,6 +65224,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: abecd8fa388982345b08c0427592e10f, type: 2}
   - {fileID: 11400000, guid: 562659d135996234698526f8e8926471, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1595893143
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1595893140}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.6327734, y: 2.3999999, z: 1.060398}
+  m_Center: {x: 0, y: 1.1999999, z: 0.021040618}
 --- !u!1 &1599926450
 GameObject:
   m_ObjectHideFlags: 0
@@ -65567,8 +66183,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.5541139, y: 0.46879977, z: 0.9091867}
-  m_Center: {x: -0.28037435, y: 0.18095922, z: 0.13025248}
+  m_Size: {x: 1.5541139, y: 2.3999999, z: 0.9091867}
+  m_Center: {x: -0.28037435, y: 1.1465592, z: 0.13025248}
 --- !u!1 &1621404919
 GameObject:
   m_ObjectHideFlags: 0
@@ -66481,8 +67097,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.72550887, y: 0.21875, z: 0.6900006}
-  m_Center: {x: -0.000000029802322, y: 0.109375, z: -0.06249991}
+  m_Size: {x: 0.72550887, y: 2.3999999, z: 0.6900006}
+  m_Center: {x: -0.000000029802322, y: 1.1999999, z: -0.06249991}
 --- !u!1 &1638989515
 GameObject:
   m_ObjectHideFlags: 0
@@ -66906,6 +67522,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1649197731}
   - component: {fileID: 1649197732}
+  - component: {fileID: 1649197733}
   m_Layer: 0
   m_Name: "\uACF5\uAD6C\uD568"
   m_TagString: Untagged
@@ -66946,7 +67563,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c2203c76d728b0845afd01c961dd8878, type: 2}
@@ -66955,6 +67572,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 33f9f32654176df44b728642a0df4cbd, type: 2}
   - {fileID: 11400000, guid: 9bb00919cf029f143a8729dd2c35811e, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1649197733
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1649197730}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7199989, y: 2.3999999, z: 0.48000035}
+  m_Center: {x: 0.000000059604645, y: 1.1999999, z: 0}
 --- !u!1 &1650411642
 GameObject:
   m_ObjectHideFlags: 0
@@ -67026,6 +67664,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1652403375}
   - component: {fileID: 1652403376}
+  - component: {fileID: 1652403377}
   m_Layer: 0
   m_Name: "\uBAA8\uB2C8\uD130"
   m_TagString: Untagged
@@ -67066,7 +67705,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 0c610e049f6950546ab1873f70464c8a, type: 2}
@@ -67075,6 +67714,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: efbbe59b2b333664fbe43e4af248437e, type: 2}
   - {fileID: 11400000, guid: 0ed77ff9d35212947bed3a32e54242b3, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1652403377
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652403374}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.48000142, y: 2.3999999, z: 0.42000028}
+  m_Center: {x: 0.00000029802322, y: 1.1999999, z: 0.000000029802322}
 --- !u!1 &1653414737
 GameObject:
   m_ObjectHideFlags: 0
@@ -67216,6 +67876,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1662769605}
   - component: {fileID: 1662769606}
+  - component: {fileID: 1662769607}
   m_Layer: 0
   m_Name: "\uB0C9\uC7A5\uACE0"
   m_TagString: Untagged
@@ -67256,7 +67917,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: f0281d11af1bd1e4181b485a1d24c9f5, type: 2}
@@ -67265,6 +67926,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a481808c48f05af4682ddc49c2b371eb, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1662769607
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1662769604}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7200002, y: 2.3999999, z: 0.6599996}
+  m_Center: {x: -0.00000035762787, y: 1.1999999, z: 0.0000006854534}
 --- !u!1 &1664469359
 GameObject:
   m_ObjectHideFlags: 0
@@ -67741,6 +68423,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1677343822}
   - component: {fileID: 1677343823}
+  - component: {fileID: 1677343824}
   m_Layer: 0
   m_Name: "\uC2E4\uC678\uAE30"
   m_TagString: Untagged
@@ -67781,7 +68464,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c75630ecff877a4448ad20454a663edb, type: 2}
@@ -67790,6 +68473,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8e997ddfc000b03428af086d5b26b818, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1677343824
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1677343821}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.8400011, y: 2.3999999, z: 0.3000004}
+  m_Center: {x: 0.00000023841858, y: 1.1999999, z: -0.000000074505806}
 --- !u!1 &1678000314
 GameObject:
   m_ObjectHideFlags: 0
@@ -67939,8 +68643,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.72550887, y: 0.21875, z: 0.69}
-  m_Center: {x: 0.03125003, y: 0.109375, z: 0.031249821}
+  m_Size: {x: 0.72550887, y: 2.3999999, z: 0.69}
+  m_Center: {x: 0.03125003, y: 1.1999999, z: 0.031249821}
 --- !u!1 &1681470801
 GameObject:
   m_ObjectHideFlags: 0
@@ -68880,8 +69584,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3454858, y: 0.6157759, z: 0.81026214}
-  m_Center: {x: 0.15311849, y: 0.13859195, z: 0.0497362}
+  m_Size: {x: 1.3454858, y: 2.3999999, z: 0.81026214}
+  m_Center: {x: 0.15311849, y: 1.0307039, z: 0.0497362}
 --- !u!1 &1713134080
 GameObject:
   m_ObjectHideFlags: 0
@@ -71794,6 +72498,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1778229502}
   - component: {fileID: 1778229503}
+  - component: {fileID: 1778229504}
   m_Layer: 0
   m_Name: "\uAC00\uC2A4\uD1B5"
   m_TagString: Untagged
@@ -71840,7 +72545,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 00f470733e869174585b85e06b037296, type: 2}
@@ -71849,6 +72554,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 0bfc8021a2e28084fb6b50c8ae9ca9e1, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1778229504
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1778229501}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9, y: 2.3999999, z: 0.255}
+  m_Center: {x: 0, y: 1.1999999, z: -0.0078125}
 --- !u!1 &1779550023
 GameObject:
   m_ObjectHideFlags: 0
@@ -72944,6 +73670,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1804499724}
   - component: {fileID: 1804499725}
+  - component: {fileID: 1804499726}
   m_Layer: 0
   m_Name: "\uB4DC\uB7FC\uD1B5"
   m_TagString: Untagged
@@ -72984,7 +73711,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: ab41e5b7f99d8f44197b6ea6d2ad1811, type: 2}
@@ -72993,6 +73720,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 825425d28e9e03a41bf1b6f0b6135595, type: 2}
   - {fileID: 11400000, guid: 560f79217ce2fb145813fddd7282f5ce, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1804499726
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1804499723}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5400002, y: 2.3999999, z: 0.5400002}
+  m_Center: {x: 0, y: 1.1999999, z: 0}
 --- !u!1 &1805544709
 GameObject:
   m_ObjectHideFlags: 0
@@ -73246,6 +73994,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1810992015}
   - component: {fileID: 1810992016}
+  - component: {fileID: 1810992017}
   m_Layer: 0
   m_Name: "\uC2E4\uC678\uAE30"
   m_TagString: Untagged
@@ -73286,7 +74035,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 43efe17a51d14754fa58ad8b0abff6ac, type: 2}
@@ -73295,6 +74044,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 8e997ddfc000b03428af086d5b26b818, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1810992017
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1810992014}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.8400001, y: 2.3999999, z: 0.30000082}
+  m_Center: {x: 0, y: 1.1999999, z: 0.00000031292439}
 --- !u!1 &1811426652
 GameObject:
   m_ObjectHideFlags: 0
@@ -74154,6 +74924,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1840700183}
   - component: {fileID: 1840700184}
+  - component: {fileID: 1840700185}
   m_Layer: 0
   m_Name: "\uD314\uB808\uD2B8 \uB354\uBBF8"
   m_TagString: Untagged
@@ -74196,7 +74967,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: e9016989a22e4274da0bbb7bde19360b, type: 2}
@@ -74204,6 +74975,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 78c2128476e0c4045939aca047ea361b, type: 2}
   cacheKinds: 00000000
+--- !u!65 &1840700185
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1840700182}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2107449, y: 2.3999999, z: 1.0387734}
+  m_Center: {x: 0.019758463, y: 1.1999999, z: 0.010639548}
 --- !u!1 &1843020468
 GameObject:
   m_ObjectHideFlags: 0
@@ -76305,6 +77097,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1895705142}
   - component: {fileID: 1895705143}
+  - component: {fileID: 1895705144}
   m_Layer: 0
   m_Name: "\uD314\uB808\uD2B8 \uB354\uBBF8"
   m_TagString: Untagged
@@ -76347,7 +77140,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 8b4650c88d8ca884899e1036bd6c7a27, type: 2}
@@ -76355,6 +77148,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 78c2128476e0c4045939aca047ea361b, type: 2}
   cacheKinds: 00000000
+--- !u!65 &1895705144
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1895705141}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.2041894, y: 2.3999999, z: 1.0577657}
+  m_Center: {x: 0.000000059604645, y: 1.1999999, z: 0.020529926}
 --- !u!1 &1898168063
 GameObject:
   m_ObjectHideFlags: 0
@@ -77175,6 +77989,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1908502178}
   - component: {fileID: 1908502179}
+  - component: {fileID: 1908502180}
   m_Layer: 0
   m_Name: "\uC791\uC5C5\uB300 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
@@ -77229,7 +78044,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 4abfc33a2fbb0d846b0ee9ef40d66dbe, type: 2}
@@ -77243,6 +78058,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e4a25f2be86970046b1c327d4f877179, type: 2}
   - {fileID: 11400000, guid: 87681d524086da3488499fa733564e9c, type: 2}
   cacheKinds: 00000000000000000000000000000000000000000000000000000000
+--- !u!65 &1908502180
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1908502177}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.8, y: 2.3999999, z: 0.81}
+  m_Center: {x: 0, y: 1.1999999, z: -0.046875}
 --- !u!1 &1909716058
 GameObject:
   m_ObjectHideFlags: 0
@@ -77316,6 +78152,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1911912632}
   - component: {fileID: 1911912633}
+  - component: {fileID: 1911912634}
   m_Layer: 0
   m_Name: "\uB0C9\uC7A5\uACE0"
   m_TagString: Untagged
@@ -77356,7 +78193,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 13e558d3df6b07447b898d28e6f9872a, type: 2}
@@ -77365,6 +78202,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a481808c48f05af4682ddc49c2b371eb, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1911912634
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1911912631}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.72000045, y: 2.3999999, z: 0.6600001}
+  m_Center: {x: 0.000000029802322, y: 1.1999999, z: 0.000000059604645}
 --- !u!1 &1914062577
 GameObject:
   m_ObjectHideFlags: 0
@@ -77557,8 +78415,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.4600002, y: 1.8125, z: 0.08625}
-  m_Center: {x: 0.00000008940697, y: 0.90625, z: -0.015625}
+  m_Size: {x: 0.4600002, y: 2.3999999, z: 0.08625}
+  m_Center: {x: 0.00000008940697, y: 1.1999999, z: -0.015625}
 --- !u!1 &1925670393
 GameObject:
   m_ObjectHideFlags: 0
@@ -79629,8 +80487,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.9200004, y: 1.25, z: 0.071875095}
-  m_Center: {x: 0.000000059604645, y: 0.625, z: -0.0078122243}
+  m_Size: {x: 0.9200004, y: 2.3999999, z: 0.071875095}
+  m_Center: {x: 0.000000059604645, y: 1.1999999, z: -0.0078122243}
 --- !u!1 &1987498475
 GameObject:
   m_ObjectHideFlags: 0
@@ -79641,6 +80499,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1987498476}
   - component: {fileID: 1987498477}
+  - component: {fileID: 1987498478}
   m_Layer: 0
   m_Name: "\uACE0\uCCA0 \uC218\uAC70\uD568"
   m_TagString: Untagged
@@ -79688,7 +80547,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 46c305ed5cb1b4143ab67ceded8aaa6a, type: 2}
@@ -79701,6 +80560,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b56c0c9b876b7494dbf34e3aff795937, type: 2}
   - {fileID: 11400000, guid: 3cfd5f341628a7140a709b38e044e8af, type: 2}
   cacheKinds: 000000000000000000000000000000000000000000000000
+--- !u!65 &1987498478
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1987498475}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.0300007, y: 2.3999999, z: 1.6200004}
+  m_Center: {x: 0, y: 1.1999999, z: 0}
 --- !u!1 &1988081309
 GameObject:
   m_ObjectHideFlags: 0
@@ -79774,6 +80654,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1988633284}
   - component: {fileID: 1988633285}
+  - component: {fileID: 1988633286}
   m_Layer: 0
   m_Name: "\uB118\uC5B4\uC9C4 \uB0C9\uC7A5\uACE0"
   m_TagString: Untagged
@@ -79814,7 +80695,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: cc776d040184fd44fa75f00427760732, type: 2}
@@ -79823,6 +80704,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a481808c48f05af4682ddc49c2b371eb, type: 2}
   - {fileID: 11400000, guid: c98ab8c7b0d59c94fbbece950b5aa095, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &1988633286
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988633283}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.7199997, y: 2.3999999, z: 0.6600017}
+  m_Center: {x: -0.00000014901161, y: 1.1999998, z: 0.00000008940697}
 --- !u!1 &1991817297
 GameObject:
   m_ObjectHideFlags: 0
@@ -81279,8 +82181,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1500005, y: 0.75, z: 0.5750005}
-  m_Center: {x: 0.00000023841858, y: 0.375, z: -0.00000020861626}
+  m_Size: {x: 1.1500005, y: 2.3999999, z: 0.5750005}
+  m_Center: {x: 0.00000023841858, y: 1.1999999, z: -0.00000020861626}
 --- !u!1 &2015597405
 GameObject:
   m_ObjectHideFlags: 0
@@ -82440,6 +83342,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2043922755}
   - component: {fileID: 2043922756}
+  - component: {fileID: 2043922757}
   m_Layer: 0
   m_Name: "\uC784\uC2DC_\uC815\uBE44 \uC911\uC778 \uB85C\uBD07"
   m_TagString: Untagged
@@ -82502,7 +83405,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 7fedd1979aa50da4782e78cf3c413ad3, type: 2}
@@ -82514,6 +83417,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6ba3ec53ee75f654e99af8708709317f, type: 2}
   - {fileID: 11400000, guid: 732bd8377aa8e704f9bdeae33d7ed0f9, type: 2}
   cacheKinds: 0000000000000000000000000000000000000000
+--- !u!65 &2043922757
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2043922754}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.59, y: 2.65625, z: 0.9}
+  m_Center: {x: -0.015625179, y: 1.328125, z: 0}
 --- !u!1 &2045592026
 GameObject:
   m_ObjectHideFlags: 0
@@ -82874,6 +83798,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2049303523}
   - component: {fileID: 2049303524}
+  - component: {fileID: 2049303525}
   m_Layer: 0
   m_Name: "\uCCA0\uACE8 \uB354\uBBF8"
   m_TagString: Untagged
@@ -82918,7 +83843,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b3eecf40f472c33459b5ebbc747d3767, type: 2}
@@ -82926,6 +83851,27 @@ MonoBehaviour:
   cacheSurfaces:
   - {fileID: 11400000, guid: 3cfd5f341628a7140a709b38e044e8af, type: 2}
   cacheKinds: 00000000
+--- !u!65 &2049303525
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2049303522}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.9940054, y: 2.3999999, z: 0.7393652}
+  m_Center: {x: 0.059377193, y: 1.1999999, z: -0.020478696}
 --- !u!1 &2050034598
 GameObject:
   m_ObjectHideFlags: 0
@@ -83426,6 +84372,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2060692349}
   - component: {fileID: 2060692350}
+  - component: {fileID: 2060692351}
   m_Layer: 0
   m_Name: "\uC0C1\uC790"
   m_TagString: Untagged
@@ -83468,7 +84415,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: de697518d171e5446b9b47f0f5833eca, type: 2}
@@ -83477,6 +84424,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 18314958c6b511b449ab20e9dadea535, type: 2}
   - {fileID: 11400000, guid: 87681d524086da3488499fa733564e9c, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &2060692351
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2060692348}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4400003, y: 2.3999999, z: 0.9600002}
+  m_Center: {x: -0.24999994, y: 1.1999999, z: 0.000000059604645}
 --- !u!1 &2060962389
 GameObject:
   m_ObjectHideFlags: 0
@@ -85652,6 +86620,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2113570309}
   - component: {fileID: 2113570310}
+  - component: {fileID: 2113570311}
   m_Layer: 0
   m_Name: "\uBB3C\uD0F1\uD06C"
   m_TagString: Untagged
@@ -85699,7 +86668,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3d6c3805e78d4eb49a1968cb2dc511f7, type: 2}
@@ -85710,6 +86679,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 5c5caafa37ea44c4688b7ebef43032d7, type: 2}
   - {fileID: 11400000, guid: 440fa6e53e6e7014e853cbba0f913998, type: 2}
   cacheKinds: 00000000000000000000000000000000
+--- !u!65 &2113570311
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2113570308}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.3349999, y: 2.65625, z: 1.3199999}
+  m_Center: {x: 0.0078125, y: 1.328125, z: 0}
 --- !u!1 &2118094922
 GameObject:
   m_ObjectHideFlags: 0
@@ -86873,8 +87863,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.3799998, y: 1, z: 1.8399998}
-  m_Center: {x: -0.25, y: 0.5, z: -0.49999988}
+  m_Size: {x: 1.3799998, y: 2.3999999, z: 1.8399998}
+  m_Center: {x: -0.25, y: 1.1999999, z: -0.49999988}
 --- !u!1 &2137307908
 GameObject:
   m_ObjectHideFlags: 0
@@ -86885,6 +87875,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2137307909}
   - component: {fileID: 2137307910}
+  - component: {fileID: 2137307911}
   m_Layer: 0
   m_Name: "\uC555\uCD95 \uD050\uBE0C \uB354\uBBF8"
   m_TagString: Untagged
@@ -86930,7 +87921,7 @@ MonoBehaviour:
   snap: 0
   sheet: {fileID: 0}
   copyHints: []
-  colliders: 1
+  colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 44d008bc6959dce48b6b483798239bde, type: 2}
@@ -86939,6 +87930,27 @@ MonoBehaviour:
   - {fileID: 11400000, guid: abecd8fa388982345b08c0427592e10f, type: 2}
   - {fileID: 11400000, guid: 562659d135996234698526f8e8926471, type: 2}
   cacheKinds: 0000000000000000
+--- !u!65 &2137307911
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2137307908}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.6927729, y: 2.3999999, z: 1.1313916}
+  m_Center: {x: -0.031249642, y: 1.1999999, z: -0.00525856}
 --- !u!1 &2137508622
 GameObject:
   m_ObjectHideFlags: 0

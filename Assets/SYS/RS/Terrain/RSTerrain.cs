@@ -120,6 +120,11 @@ namespace RealSteel.Terrain
         [RSKey]
         public RSTerrainData data;
 
+        [RSGroup("캐시")]
+        [RSHelp("요소들로 높이 · 칠을 계산한 결과(가장 무거운 단계)를 저장해 둔 파일. 씬을 저장할 때 자동으로 구워지고, 요소를 고치면 자동으로 무시된 뒤 다음 저장 때 새로 구워진다. 비워도 된다 (그럼 켤 때마다 계산).")]
+        [Tooltip("절차 계산 캐시 (Data/Cache/지형/*.bytes) — 씬 저장 때 자동")]
+        public TextAsset proceduralCache;
+
         [RSGroup("편집")]
         [Tooltip("요소를 옮기거나 값을 바꾸면 자동으로 다시 만든다")]
         public bool autoRebuild = true;
@@ -298,7 +303,15 @@ namespace RealSteel.Terrain
 
         public void Rebuild()
         {
-            ComputeProcedural();
+            if (TryLoadProcedural()) builtProcHash = loadedProcHash;
+            else
+            {
+                ComputeProcedural();
+                builtProcHash = null;
+#if UNITY_EDITOR
+                if (!Application.isPlaying) builtProcHash = ProceduralHash();   // 씬 저장 때 다시 계산하지 않고 바로 굽게
+#endif
+            }
             SyncData();
             Compose(0, vx - 1, 0, vz - 1);
             BuildChunks();

@@ -30,6 +30,7 @@ namespace RealSteel.Common
         public bool depthOfField = true;
         public bool bloom = true;
         public bool bloomHighQuality = true;
+        [Range(0, 3), Tooltip("0 = 끔 · 1 = FXAA · 2 = SMAA 보통 · 3 = SMAA 높음")] public int antialiasing = 3;
         [Range(0, 2)] public int shadows = 2;
 
         public void CopyTo(RSGraphicsOptions o)
@@ -39,6 +40,7 @@ namespace RealSteel.Common
             o.cloudShadows = cloudShadows; o.lightShafts = lightShafts; o.characterGlow = characterGlow;
             o.wetFloor = wetFloor; o.water = water; o.indirect = indirect;
             o.depthOfField = depthOfField; o.bloom = bloom; o.bloomHighQuality = bloomHighQuality;
+            o.antialiasing = antialiasing;
             o.shadows = shadows;
         }
 
@@ -51,6 +53,7 @@ namespace RealSteel.Common
             water = Mathf.Clamp(water, 0, 2);
             indirect = Mathf.Clamp(indirect, 0, 2);
             shadows = Mathf.Clamp(shadows, 0, 2);
+            antialiasing = Mathf.Clamp(antialiasing, 0, 3);
         }
     }
 
@@ -129,6 +132,7 @@ namespace RealSteel.Common
                 cloudShadows = false, lightShafts = 0f, characterGlow = true,   // 밤 전투 가독성 때문에 밤 빛은 남긴다
                 wetFloor = 0, water = 0, indirect = 0,
                 depthOfField = false, bloom = true, bloomHighQuality = false,   // 블룸이 없으면 네온 · 발광이 안 빛난다
+                antialiasing = 1,                                                // FXAA — 거의 공짜
                 shadows = 0,
             };
         }
@@ -142,6 +146,7 @@ namespace RealSteel.Common
                 cloudShadows = true, lightShafts = 0.5f, characterGlow = true,
                 wetFloor = 1, water = 1, indirect = 1,
                 depthOfField = true, bloom = true, bloomHighQuality = false,
+                antialiasing = 2,
                 shadows = 1,
             };
         }

@@ -49,6 +49,24 @@ namespace RealSteel.Build
 
         [SerializeField, HideInInspector] Shader shader;
 
+        // ── 메시 캐시 (씬을 저장할 때 에디터가 굽는다 — RSCacheBaker) ──
+        // 부품 데이터는 그대로 두고, 만든 메시만 에셋으로 저장해 둔다. 켤 때 부품 내용 해시가 같으면 다시 만들지 않고 그것을 쓴다.
+        // 부품을 고치면 해시가 달라져 원래대로 다시 만들고, 다음 저장 때 새 캐시를 굽는다 (내용 기준 파일 이름 → 복제본끼리 같이 써도 안전)
+        /// <summary>메시 만드는 방식(RSMeshBuilder · RSShapes)을 바꾸면 올린다 → 예전 캐시는 모두 무시된다</summary>
+        public const int CacheVersion = 1;
+        [SerializeField, HideInInspector] Mesh cacheMesh;
+        [SerializeField, HideInInspector] string cacheHash = "";
+        [SerializeField, HideInInspector] RSSurface[] cacheSurfaces;   // 서브메시마다 재질
+        [SerializeField, HideInInspector] int[] cacheKinds;             // 0 = 재질 · 1 = 도안 · 2 = 기본 회색
+        [NonSerialized] bool fromCache;
+        [NonSerialized] readonly Dictionary<Material, int> matKind = new Dictionary<Material, int>();
+        [NonSerialized] readonly Dictionary<Material, RSSurface> matSurf = new Dictionary<Material, RSSurface>();
+        [NonSerialized] int[] builtKinds;
+        [NonSerialized] RSSurface[] builtSurfaces;
+
+        /// <summary>지금 캐시 메시로 그리고 있는지 (편집 도구는 부품을 고르기 전에 다시 만든다)</summary>
+        public bool FromCache { get { return fromCache; } }
+
         /// <summary>스냅 간격 (m)</summary>
         public float SnapStep
         {
@@ -77,6 +95,7 @@ namespace RealSteel.Build
             if (shader == null) shader = Shader.Find(RSSurface.ShaderName);
             queued = false;
             dirty = true;
+            if (TryUseCache()) return;
             Rebuild();
         }
 
@@ -179,7 +198,9 @@ namespace RealSteel.Build
             if (this == null) return;
             Parts(parts);
             FixDuplicateIds();
-            EnsureMeshObject();
+            fromCache = false;
+            matKind.Clear(); matSurf.Clear();
+            EnsureMeshObject(true);
             var b = new RSMeshBuilder(this);
             builtParts.Clear();
             pickTris.Clear();
@@ -191,6 +212,15 @@ namespace RealSteel.Build
                 parts[i].transform.hasChanged = false;
             }
             b.Apply(mesh);
+            builtKinds = new int[b.Materials.Count];
+            builtSurfaces = new RSSurface[b.Materials.Count];
+            for (int i = 0; i < b.Materials.Count; i++)
+            {
+                var m = b.Materials[i];
+                int k; RSSurface sf;
+                builtKinds[i] = m != null && matKind.TryGetValue(m, out k) ? k : -1;
+                builtSurfaces[i] = m != null && matSurf.TryGetValue(m, out sf) ? sf : null;
+            }
             var mr = meshGo.GetComponent<MeshRenderer>();
             mr.sharedMaterials = b.Materials.ToArray();
             mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
@@ -225,7 +255,7 @@ namespace RealSteel.Build
             }
         }
 
-        void EnsureMeshObject()
+        void EnsureMeshObject(bool dynamicMesh)
         {
             if (meshGo == null)
             {
@@ -242,6 +272,7 @@ namespace RealSteel.Build
             meshGo.GetComponent<MeshRenderer>().enabled = true;
             var col = meshGo.GetComponent<MeshCollider>();
             if (col != null) col.enabled = true;
+            if (!dynamicMesh) return;
             if (mesh == null)
             {
                 mesh = new Mesh { name = name + " (조립 메시)", hideFlags = HideFlags.DontSave };
@@ -256,8 +287,15 @@ namespace RealSteel.Build
             if (s != null)
             {
                 var m = s.GetMaterial(shader);
-                if (m != null) return m;
+                if (m != null) { matKind[m] = 0; matSurf[m] = s; return m; }
             }
+            var g = GrayMaterial();
+            if (g != null) matKind[g] = 2;
+            return g;
+        }
+
+        Material GrayMaterial()
+        {
             if (grayMat == null)
             {
                 var sh = shader != null ? shader : Shader.Find(RSSurface.ShaderName);
@@ -279,8 +317,145 @@ namespace RealSteel.Build
                 sheetMat = new Material(sh) { name = name + " (도안)", hideFlags = HideFlags.DontSave };
             }
             if (sheetMat.GetTexture("_BaseMap") != tex) sheetMat.SetTexture("_BaseMap", tex);
+            matKind[sheetMat] = 1;
             return sheetMat;
         }
+
+        // ─────────────────────────────────────────────────────────────
+        // 메시 캐시
+        // ─────────────────────────────────────────────────────────────
+
+        /// <summary>캐시를 쓸 수 있는 조립품인지 (도안 칸 그림은 해시로 못 가려서 캐시 안 함)</summary>
+        bool CanCache()
+        {
+            if (sheet != null) return false;
+            foreach (var p in parts)
+            {
+                if (p.paint != null && p.paint.mode == RSPaintMode.도안칸) return false;
+                if (p.facePaints != null) foreach (var f in p.facePaints) if (f != null && f.mode == RSPaintMode.도안칸) return false;
+            }
+            return true;
+        }
+
+        static void AddSurface(ref RSHash h, RSSurface s)
+        {
+            if (s == null) { h.Add("-"); return; }
+            h.Add(s.name);
+            var px = s.TexturePixels;
+            h.Add(px.x); h.Add(px.y);
+        }
+
+        static void AddPaint(ref RSHash h, RSFacePaint p)
+        {
+            if (p == null) { h.Add(-7); return; }
+            h.Add(p.face); h.Add((int)p.mode); AddSurface(ref h, p.surface);
+            h.Add(p.offset.x); h.Add(p.offset.y); h.Add(p.rotate); h.Add(p.flip); h.Add(p.border);
+        }
+
+        /// <summary>부품 내용 해시 (Parts(parts) 를 먼저 채워 둘 것)</summary>
+        string ContentHash()
+        {
+            var h = RSHash.New();
+            h.Add(CacheVersion);
+            AddSurface(ref h, defaultSurface);
+            h.Add(parts.Count);
+            foreach (var p in parts)
+            {
+                h.Add(p.Id); h.Add((int)p.shape); h.Add(p.size); h.Add(p.sides); h.Add(p.topScale); h.Add(p.steps);
+                h.Add((int)p.roof); h.Add(p.overhang); h.Add(p.thickness); h.Add(p.brightJitter);
+                AddPaint(ref h, p.paint);
+                int n = p.facePaints != null ? p.facePaints.Count : 0;
+                h.Add(n);
+                for (int i = 0; i < n; i++) AddPaint(ref h, p.facePaints[i]);
+                var t = p.transform;
+                if (t.parent == transform) { h.Add(t.localPosition); h.Add(t.localRotation); h.Add(t.localScale); }
+                else h.Add(transform.worldToLocalMatrix * t.localToWorldMatrix);
+            }
+            return h.Hex;
+        }
+
+        /// <summary>저장된 캐시가 지금 부품과 맞으면 그 메시를 쓴다</summary>
+        bool TryUseCache()
+        {
+            if (cacheMesh == null || string.IsNullOrEmpty(cacheHash) || cacheKinds == null || cacheSurfaces == null) return false;
+            if (cacheKinds.Length != cacheMesh.subMeshCount || cacheSurfaces.Length != cacheKinds.Length) return false;
+            Parts(parts);
+            if (!CanCache() || ContentHash() != cacheHash) return false;
+            var mats = new Material[cacheKinds.Length];
+            for (int i = 0; i < mats.Length; i++)
+            {
+                switch (cacheKinds[i])
+                {
+                    case 0: mats[i] = cacheSurfaces[i] != null ? cacheSurfaces[i].GetMaterial(shader) : null; break;
+                    case 2: mats[i] = GrayMaterial(); break;
+                    default: mats[i] = null; break;
+                }
+                if (mats[i] == null) return false;
+            }
+            EnsureMeshObject(false);
+            meshGo.GetComponent<MeshFilter>().sharedMesh = cacheMesh;
+            var mr = meshGo.GetComponent<MeshRenderer>();
+            mr.sharedMaterials = mats;
+            mr.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
+            var mc = meshGo.GetComponent<MeshCollider>();
+            if (colliders && cacheMesh.vertexCount > 0)
+            {
+                if (mc == null) mc = meshGo.AddComponent<MeshCollider>();
+                mc.sharedMesh = null;
+                mc.sharedMesh = cacheMesh;
+            }
+            else if (mc != null) Kill(mc);
+            meshGo.layer = gameObject.layer;
+            foreach (var p in parts) p.transform.hasChanged = false;
+            builtParts.Clear(); pickTris.Clear(); outlines.Clear();
+            Kill(mesh); mesh = null;
+            fromCache = true;
+            dirty = false;
+            return true;
+        }
+
+#if UNITY_EDITOR
+        /// <summary>[에디터] 캐시가 지금 부품과 다르면 새로 굽는다 (folder = 메시 에셋 폴더). 바꿨으면 true</summary>
+        public bool BakeCache(string folder)
+        {
+            if (!isActiveAndEnabled) return false;
+            Parts(parts);
+            if (!CanCache())
+            {
+                if (cacheMesh == null && string.IsNullOrEmpty(cacheHash)) return false;
+                cacheMesh = null; cacheHash = ""; cacheKinds = null; cacheSurfaces = null;
+                UnityEditor.EditorUtility.SetDirty(this);
+                return true;
+            }
+            string hash = ContentHash();
+            if (hash == cacheHash && cacheMesh != null) return false;
+            if (dirty || fromCache || mesh == null || builtKinds == null) Rebuild();
+            if (mesh == null || builtKinds == null) return false;
+            foreach (int k in builtKinds) if (k != 0 && k != 2) return false;   // 도안 · 알 수 없는 머티리얼은 캐시 안 함
+            string path = folder + "/" + hash + ".asset";
+            var asset = UnityEditor.AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (asset == null)
+            {
+                asset = Instantiate(mesh);
+                asset.name = "조립 캐시 " + hash;
+                asset.hideFlags = HideFlags.None;
+                UnityEditor.AssetDatabase.CreateAsset(asset, path);
+            }
+            cacheMesh = asset;
+            cacheHash = hash;
+            cacheKinds = (int[])builtKinds.Clone();
+            cacheSurfaces = (RSSurface[])builtSurfaces.Clone();
+            UnityEditor.EditorUtility.SetDirty(this);
+            return true;
+        }
+
+        /// <summary>[에디터] 캐시 연결을 끊는다 (다음에 켤 때 다시 만든다)</summary>
+        public void ClearCache()
+        {
+            cacheMesh = null; cacheHash = ""; cacheKinds = null; cacheSurfaces = null;
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+#endif
 
         // ─────────────────────────────────────────────────────────────
         // 도안 칸이 필요한 면 (에디터가 도안을 만들 때)
@@ -305,7 +480,7 @@ namespace RealSteel.Build
         public bool Raycast(Ray worldRay, out RSPart part, out int face, out Vector3 point, out Vector3 normal)
         {
             part = null; face = -1; point = Vector3.zero; normal = Vector3.up;
-            if (dirty) Rebuild();
+            if (dirty || fromCache) Rebuild();
             var w2l = transform.worldToLocalMatrix;
             Vector3 o = w2l.MultiplyPoint3x4(worldRay.origin);
             Vector3 d = w2l.MultiplyVector(worldRay.direction);

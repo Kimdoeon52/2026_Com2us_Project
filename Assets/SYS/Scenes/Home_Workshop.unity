@@ -20,7 +20,7 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.06, g: 0.08, b: 0.15, a: 1}
+  m_AmbientSkyColor: {r: 0.27, g: 0.28, b: 0.34, a: 1}
   m_AmbientEquatorColor: {r: 0.47631148, g: 0.333492, b: 0.29680353, a: 0.95}
   m_AmbientGroundColor: {r: 0.28565574, g: 0.19459027, b: 0.15659025, a: 0.95}
   m_AmbientIntensity: 1
@@ -198,7 +198,7 @@ Transform:
   m_GameObject: {fileID: 38650013}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.4, y: 0.9625, z: 0}
+  m_LocalPosition: {x: 0.4, y: 0.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -280,7 +280,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -361,6 +361,15 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 91983bc5561af3d49b61353c203e0ae8, type: 2}
+  cacheHash: 778d79cd74de069a
+  cacheSurfaces:
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 2754ff12c960b074d82f5e3e0a1151f8, type: 2}
+  - {fileID: 11400000, guid: 5e4581c9a505c2648b55274b14b62c7e, type: 2}
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  cacheKinds: 0000000000000000000000000000000000000000
 --- !u!1 &59974082
 GameObject:
   m_ObjectHideFlags: 0
@@ -387,7 +396,7 @@ Transform:
   m_GameObject: {fileID: 59974082}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 1.4, z: 0.18}
+  m_LocalPosition: {x: 0.5, y: 1.21125, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -617,7 +626,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -753,6 +762,13 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 8ec3c8b848669274e8ebdbdf68b9ba75, type: 2}
+  cacheHash: 38212d73aa422262
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 1d7690248fb7bb544817dfb269b2c848, type: 2}
+  - {fileID: 11400000, guid: 664416e96c57a614a802bc2acba8138b, type: 2}
+  cacheKinds: 000000000000000000000000
 --- !u!1 &133411586
 GameObject:
   m_ObjectHideFlags: 0
@@ -809,6 +825,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 47a3883cdb0996144bfe2508ea680813, type: 2}
+  cacheHash: f7e35f32c8088229
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &133735856
 GameObject:
   m_ObjectHideFlags: 0
@@ -1092,7 +1114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -1270,6 +1292,14 @@ MonoBehaviour:
   colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 951e1dfb40fd72a4a9b7f4b9d46b0c2d, type: 2}
+  cacheHash: 6d38bbfc587c9bbf
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 8b123fb0c7e201e4cadae440be58ccc7, type: 2}
+  - {fileID: 11400000, guid: db32dbd768458ec40a177cd8a1a02e0e, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  cacheKinds: 00000000000000000000000000000000
 --- !u!1 &175902951
 GameObject:
   m_ObjectHideFlags: 0
@@ -1359,7 +1389,7 @@ Transform:
   m_GameObject: {fileID: 177028474}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9, z: 0.18}
+  m_LocalPosition: {x: 0, y: 0.71124995, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1490,7 +1520,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.1, y: 0.72, z: 0.8}
+  size: {x: 0.1, y: 0.53125, z: 0.8}
   sides: 8
   topScale: 1
   steps: 4
@@ -1663,7 +1693,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9af8c71fdcf229a48bc7b2e7e8dd5178, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  night: 1
+  night: 0
   duration: 1.5
   lamps:
   - {fileID: 1013460686}
@@ -1772,6 +1802,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: ea12fdcb5a1ad2749adec00811e3fe04, type: 2}
+  cacheHash: f67c85e40bf811e1
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &236032314
 GameObject:
   m_ObjectHideFlags: 0
@@ -2037,7 +2073,7 @@ Transform:
   m_GameObject: {fileID: 269128584}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.5, y: 0.9, z: 0.18}
+  m_LocalPosition: {x: 0.5, y: 0.71124995, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2100,7 +2136,7 @@ Transform:
   m_GameObject: {fileID: 278441707}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.7, z: 0}
+  m_LocalPosition: {x: 0, y: 0.53125, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2262,7 +2298,7 @@ Transform:
   m_GameObject: {fileID: 299058597}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 0.57}
+  m_LocalPosition: {x: 0, y: 1.81125, z: 0.57}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2451,7 +2487,7 @@ Transform:
   m_GameObject: {fileID: 358746627}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.35, z: 0}
+  m_LocalPosition: {x: 0, y: 0.25, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2546,7 +2582,7 @@ Transform:
   m_GameObject: {fileID: 365557506}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.6, z: 0.2}
+  m_LocalPosition: {x: 0, y: 1.3875, z: 0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2594,7 +2630,7 @@ GameObject:
   - component: {fileID: 368106867}
   - component: {fileID: 368106868}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Desk_\uCC45\uC0C1"
+  m_Name: "\uC784\uC2DC_Desk_\uCC45\uC0C1 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2644,6 +2680,14 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 3c00296a663a8b045bc2df4aa6792eb9, type: 2}
+  cacheHash: 97b4562a0b263ff0
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 664416e96c57a614a802bc2acba8138b, type: 2}
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 00000000000000000000000000000000
 --- !u!1 &372257906
 GameObject:
   m_ObjectHideFlags: 0
@@ -2755,7 +2799,7 @@ MonoBehaviour:
   note: "\uD30C\uCE20 \uC81C\uC791 \uC791\uC5C5\uB300 (E \uC81C\uC791\uCC3D\uC744
     \uC5EC\uB294 \uC790\uB9AC). \uC11C\uB78D\uC7A5 2 + \uC0C1\uD310 + \uBCBD \uACF5\uAD6C\uD310
     + \uBC14\uC774\uC2A4 + \uC2A4\uD0E0\uB4DC"
-  size: {x: 4, y: 2, z: 0.9}
+  size: {x: 4, y: 1.78125, z: 0.9}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &409673141
@@ -2964,7 +3008,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -3025,8 +3069,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.3, g: 0.4, b: 0.7, a: 1}
-  m_Intensity: 0.08
+  m_Color: {r: 0.55, g: 0.64, b: 0.85, a: 1}
+  m_Intensity: 0.18
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -3255,7 +3299,7 @@ Transform:
   m_GameObject: {fileID: 461312815}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5, y: 1.4, z: 0.18}
+  m_LocalPosition: {x: -0.5, y: 1.21125, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3647,11 +3691,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 536306179}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.95, b: 0.85, a: 1}
-  m_Intensity: 0
+  m_Intensity: 3.5
   m_Range: 7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -3817,7 +3861,7 @@ Transform:
   m_GameObject: {fileID: 555019111}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.95, z: -0.05}
+  m_LocalPosition: {x: 0, y: 0.72499996, z: -0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3959,6 +4003,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 71028aa36619b264e9d132d61d06cd32, type: 2}
+  cacheHash: 6aa038e5717c594d
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 8b123fb0c7e201e4cadae440be58ccc7, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &578479776
 GameObject:
   m_ObjectHideFlags: 0
@@ -4029,6 +4079,16 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: b93e4333ce957c04390927d4f10b3788, type: 2}
+  cacheHash: 394f4e1390f473a3
+  cacheSurfaces:
+  - {fileID: 11400000, guid: c4f689132371d8d48ab5a7b2337c3821, type: 2}
+  - {fileID: 11400000, guid: d4026ea6a300f754bb546311c69d4682, type: 2}
+  - {fileID: 11400000, guid: db32dbd768458ec40a177cd8a1a02e0e, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 8b123fb0c7e201e4cadae440be58ccc7, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  cacheKinds: 000000000000000000000000000000000000000000000000
 --- !u!1 &588917224
 GameObject:
   m_ObjectHideFlags: 0
@@ -4279,7 +4339,7 @@ GameObject:
   - component: {fileID: 608893106}
   - component: {fileID: 608893107}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Workbench_\uC791\uC5C5\uB300"
+  m_Name: "\uC784\uC2DC_Workbench_\uC791\uC5C5\uB300 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4328,6 +4388,17 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: a338c60dafef8ae4dab0b257bf3e8589, type: 2}
+  cacheHash: 410863648aa51184
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 5e4581c9a505c2648b55274b14b62c7e, type: 2}
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: b7353191fea91f34a816d60ff814fab1, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 664416e96c57a614a802bc2acba8138b, type: 2}
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 00000000000000000000000000000000000000000000000000000000
 --- !u!1 &624189479
 GameObject:
   m_ObjectHideFlags: 0
@@ -4354,7 +4425,7 @@ Transform:
   m_GameObject: {fileID: 624189479}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalPosition: {x: 0, y: 0.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4549,7 +4620,7 @@ Light:
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 0.5, g: 0.85, b: 1, a: 1}
-  m_Intensity: 0.55
+  m_Intensity: 2.2
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -4832,7 +4903,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   note: "\uC18C\uD30C \uC55E \uB0AE\uC740 \uD0C1\uC790 (\uBD80\uD488 \xB7 \uCEF5
     \xB7 \uC7A1\uC9C0)"
-  size: {x: 0.8, y: 0.45, z: 1.2}
+  size: {x: 0.8, y: 0.34375, z: 1.2}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &678137098
@@ -4888,6 +4959,11 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: be620a2b773f4ff4b9287b3e44ab905a, type: 2}
+  cacheHash: 8d204dc87a2bc473
+  cacheSurfaces:
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &680709872
 GameObject:
   m_ObjectHideFlags: 0
@@ -5003,7 +5079,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.125, y: 0.1, z: 0.5}
+  size: {x: 0.125, y: 0.0625, z: 0.5}
   sides: 8
   topScale: 1
   steps: 4
@@ -5236,7 +5312,7 @@ Transform:
   m_GameObject: {fileID: 725620144}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalPosition: {x: 0, y: 0.0625, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5255,7 +5331,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 1.2, y: 0.9, z: 0.6}
+  size: {x: 1.2, y: 0.6875, z: 0.6}
   sides: 8
   topScale: 1
   steps: 4
@@ -5318,7 +5394,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -5450,8 +5526,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.5, y: 2, z: 6}
-  m_Center: {x: 8.25, y: 5, z: 3}
+  m_Size: {x: 0.5, y: 2, z: 6.630817}
+  m_Center: {x: 8.25, y: 5, z: 3.3154085}
 --- !u!1 &753932176
 GameObject:
   m_ObjectHideFlags: 0
@@ -5510,6 +5586,12 @@ MonoBehaviour:
   colliders: 0
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 49be88824c2db0441890a5d99a772624, type: 2}
+  cacheHash: 4a7e8899eafc38e0
+  cacheSurfaces:
+  - {fileID: 11400000, guid: b6c569aab3f225640a93b4b77ab5e57d, type: 2}
+  - {fileID: 11400000, guid: d103bd86ab36c5c498a4b68362a35b7b, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &758816383
 GameObject:
   m_ObjectHideFlags: 0
@@ -5536,7 +5618,7 @@ Transform:
   m_GameObject: {fileID: 758816383}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.85, z: 0.22}
+  m_LocalPosition: {x: 0, y: 0.66125, z: 0.22}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5682,7 +5764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   note: "\uC2DD\uD0C1 + \uC758\uC790 2"
-  size: {x: 1.9, y: 0.8, z: 0.9}
+  size: {x: 1.9, y: 0.625, z: 0.9}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &801203943
@@ -5788,11 +5870,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 807564242}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 2.8
   m_Range: 7
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -5932,6 +6014,14 @@ MonoBehaviour:
   colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: b87ee6a45236ac348bac2610e98df0c8, type: 2}
+  cacheHash: 6b1abb175d0178c7
+  cacheSurfaces:
+  - {fileID: 11400000, guid: db32dbd768458ec40a177cd8a1a02e0e, type: 2}
+  - {fileID: 11400000, guid: c10f800066f00324a896db36ef0ca714, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 664416e96c57a614a802bc2acba8138b, type: 2}
+  cacheKinds: 00000000000000000000000000000000
 --- !u!1 &838119261
 GameObject:
   m_ObjectHideFlags: 0
@@ -6098,11 +6188,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 845679255}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 2.2
   m_Range: 6
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -6226,7 +6316,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   note: "\uCC45\uC0C1 + \uC2A4\uD0E0\uB4DC + \uC561\uC790 (\uC544\uBC84\uC9C0 \uC0AC\uC9C4
     \uC790\uB9AC) + \uC758\uC790"
-  size: {x: 1.5, y: 1.2, z: 0.7}
+  size: {x: 1.5, y: 1.03125, z: 0.7}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &850905231
@@ -6240,7 +6330,7 @@ GameObject:
   - component: {fileID: 850905232}
   - component: {fileID: 850905233}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Kitchen_\uAC04\uC774\uC8FC\uBC29"
+  m_Name: "\uC784\uC2DC_Kitchen_\uAC04\uC774\uC8FC\uBC29 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6285,6 +6375,13 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: db86e9f5adb82e1429bd30a064cd1be2, type: 2}
+  cacheHash: f2906a867ad7992f
+  cacheSurfaces:
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 000000000000000000000000
 --- !u!1 &861317498
 GameObject:
   m_ObjectHideFlags: 0
@@ -6432,7 +6529,7 @@ Transform:
   m_GameObject: {fileID: 866583311}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.45, y: 0.7625, z: 0.2}
+  m_LocalPosition: {x: 0.45, y: 0.59375, z: 0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6585,6 +6682,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 1b0c3c0d2c9effc4581a88dc6c719b82, type: 2}
+  cacheHash: 073079f2d5abf256
+  cacheSurfaces:
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &891701278
 GameObject:
   m_ObjectHideFlags: 0
@@ -6737,7 +6840,7 @@ Transform:
   m_GameObject: {fileID: 898577467}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.55, y: 0.7625, z: 0.2}
+  m_LocalPosition: {x: -0.55, y: 0.59375, z: 0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7026,7 +7129,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -7089,7 +7192,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -7327,7 +7430,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.125, y: 0.1, z: 0.5}
+  size: {x: 0.125, y: 0.0625, z: 0.5}
   sides: 8
   topScale: 1
   steps: 4
@@ -7390,7 +7493,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.6, y: 0.35, z: 1}
+  size: {x: 0.6, y: 0.25, z: 1}
   sides: 8
   topScale: 1
   steps: 4
@@ -7434,7 +7537,7 @@ Transform:
   m_GameObject: {fileID: 1009994722}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.72, z: 0}
+  m_LocalPosition: {x: 0, y: 0.53125, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7637,11 +7740,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1013460684}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 3
   m_Range: 6
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -7773,6 +7876,13 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: ee1ecbb18a7a3ad48b9f22ceb1ea6f4c, type: 2}
+  cacheHash: 26f059582f093ca5
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 5e4581c9a505c2648b55274b14b62c7e, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 000000000000000000000000
 --- !u!1 &1027217695
 GameObject:
   m_ObjectHideFlags: 0
@@ -7826,6 +7936,11 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 1a01879356ad55945bbe2a509f55c182, type: 2}
+  cacheHash: b5d164a59d7fbcd5
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &1055647133
 GameObject:
   m_ObjectHideFlags: 0
@@ -7884,7 +7999,7 @@ Transform:
   m_GameObject: {fileID: 1062749764}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.55, y: 1.1625, z: 0.1}
+  m_LocalPosition: {x: -0.55, y: 0.99375004, z: 0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8037,6 +8152,11 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 52f94cfd90f7bf24ba8d9d72744df5a3, type: 2}
+  cacheHash: 8deea44ed12a63f1
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &1072931483
 GameObject:
   m_ObjectHideFlags: 0
@@ -8128,8 +8248,8 @@ MonoBehaviour:
   fixedLight: 1
   fixedLightFrom: {fileID: 2066272930}
   fixedLightEuler: {x: 25, y: 205, z: 0}
-  fixedLightColor: {r: 0.62, g: 0.76, b: 1, a: 1}
-  fixedLightIntensity: 1.5
+  fixedLightColor: {r: 1, g: 0.9, b: 0.72, a: 1}
+  fixedLightIntensity: 1.1
   steps: 28
   stepLength: 0.6
   maxDistance: 60
@@ -8320,7 +8440,7 @@ GameObject:
   - component: {fileID: 1082671308}
   - component: {fileID: 1082671309}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_ToolChest_\uACF5\uAD6C\uD568"
+  m_Name: "\uC784\uC2DC_ToolChest_\uACF5\uAD6C\uD568 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8365,6 +8485,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 4e2c72aa0fb3c54418f4f995512db6ba, type: 2}
+  cacheHash: c610628d2d484e9f
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 5e4581c9a505c2648b55274b14b62c7e, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1087759128
 GameObject:
   m_ObjectHideFlags: 0
@@ -8517,11 +8643,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1114438643}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 2
   m_Range: 6
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -8828,6 +8954,10 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 260fe49838f94434c9fc74c073bd55f2, type: 2}
+  cacheHash: f6e2d37eba1db7aa
+  cacheSurfaces: []
+  cacheKinds: 
 --- !u!1 &1149143352
 GameObject:
   m_ObjectHideFlags: 0
@@ -8881,6 +9011,11 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: e1944b8731fac5b4eb04f53f79097231, type: 2}
+  cacheHash: 591e5706b2733ce6
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &1151509238
 GameObject:
   m_ObjectHideFlags: 0
@@ -9018,7 +9153,7 @@ GameObject:
   - component: {fileID: 1157886846}
   - component: {fileID: 1157886847}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Terminal_\uC124\uACC4\uB2E8\uB9D0"
+  m_Name: "\uC784\uC2DC_Terminal_\uC124\uACC4\uB2E8\uB9D0 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9071,6 +9206,13 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 2ee600dd51b13074d8d03efe4753a71e, type: 2}
+  cacheHash: d2e2ade99400025c
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 509e3d5c99af7d94e85122616497f8f5, type: 2}
+  - {fileID: 11400000, guid: 81cf9888130eb6c49a9a700998983381, type: 2}
+  cacheKinds: 000000000000000000000000
 --- !u!1 &1174523326
 GameObject:
   m_ObjectHideFlags: 0
@@ -9176,6 +9318,12 @@ MonoBehaviour:
   colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: d7244e99ce74c0349b40e1053880df7a, type: 2}
+  cacheHash: 4c2d615c4a97d287
+  cacheSurfaces:
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1211430836
 GameObject:
   m_ObjectHideFlags: 0
@@ -9265,7 +9413,7 @@ Transform:
   m_GameObject: {fileID: 1231574217}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.2, y: 0.95, z: -0.1}
+  m_LocalPosition: {x: 1.2, y: 0.72499996, z: -0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9312,8 +9460,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1234386974}
   - component: {fileID: 1234386975}
+  - component: {fileID: 1912965988}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: PlayerSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9357,7 +9506,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6906d24838a66a44b85dcfd29c5e1db2, type: 2}
+  - {fileID: 2100000, guid: 07ce485f673d13a2c9b7a90f1cf178eb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9378,7 +9527,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -490166572, guid: 57b0ddbdc56d71a45a4a53003fd1cfd7, type: 3}
+  m_Sprite: {fileID: 7890110710167757771, guid: 70057f540649725e7f47cc862103b33e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -9717,7 +9866,7 @@ Transform:
   m_GameObject: {fileID: 1321147116}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.5, y: 0.9, z: 0.18}
+  m_LocalPosition: {x: -0.5, y: 0.71124995, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9969,7 +10118,7 @@ Transform:
   m_GameObject: {fileID: 1336000848}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: 0.5}
+  m_LocalPosition: {x: 0, y: 0.775, z: 0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10383,7 +10532,7 @@ Transform:
   m_GameObject: {fileID: 1393425199}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.85, z: 0}
+  m_LocalPosition: {x: 0, y: 0.625, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10483,6 +10632,13 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 8ce89f6f705e2114b81408809a9102df, type: 2}
+  cacheHash: 7bb2e59dffc41592
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 9ce57bb59d8a64b48b502dbe330a779d, type: 2}
+  - {fileID: 11400000, guid: 9c33a2a128b3e6541993ffed00e73a89, type: 2}
+  - {fileID: 11400000, guid: 377427a313e206847b3f8228cdca5d63, type: 2}
+  cacheKinds: 000000000000000000000000
 --- !u!1 &1395683828
 GameObject:
   m_ObjectHideFlags: 0
@@ -10572,7 +10728,7 @@ Transform:
   m_GameObject: {fileID: 1395845271}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.4, z: 0.18}
+  m_LocalPosition: {x: 0, y: 1.21125, z: 0.18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10663,6 +10819,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 7db1f9a95788181498822cfe2d357bdd, type: 2}
+  cacheHash: 65a6ada54af3dfe9
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 2754ff12c960b074d82f5e3e0a1151f8, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1419858208
 GameObject:
   m_ObjectHideFlags: 0
@@ -11140,6 +11302,15 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 545cffc18ca28da40b3ae5433ce16965, type: 2}
+  cacheHash: c4348ee8fda415bd
+  cacheSurfaces:
+  - {fileID: 11400000, guid: db32dbd768458ec40a177cd8a1a02e0e, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  - {fileID: 11400000, guid: 5e4581c9a505c2648b55274b14b62c7e, type: 2}
+  - {fileID: 11400000, guid: 664416e96c57a614a802bc2acba8138b, type: 2}
+  cacheKinds: 0000000000000000000000000000000000000000
 --- !u!1 &1485831220
 GameObject:
   m_ObjectHideFlags: 0
@@ -11340,7 +11511,7 @@ GameObject:
   - component: {fileID: 1499763919}
   - component: {fileID: 1499763920}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Table_\uD0C1\uC790"
+  m_Name: "\uC784\uC2DC_Table_\uD0C1\uC790 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -11383,6 +11554,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 844057bccfb02e64496725ee76c578ed, type: 2}
+  cacheHash: 4b31767fb4606237
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1517299407
 GameObject:
   m_ObjectHideFlags: 0
@@ -11691,7 +11868,7 @@ Transform:
   m_GameObject: {fileID: 1534903606}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.2, y: 0.95, z: 0.2}
+  m_LocalPosition: {x: -1.2, y: 0.72499996, z: 0.2}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -11784,6 +11961,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 177aff71571546c4bbfa23a72a1aa750, type: 2}
+  cacheHash: 42c312960ea7de6a
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 1d7690248fb7bb544817dfb269b2c848, type: 2}
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1565090884
 GameObject:
   m_ObjectHideFlags: 0
@@ -11926,7 +12109,7 @@ Transform:
   m_GameObject: {fileID: 1579701016}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.2, y: 1.45, z: 0.05}
+  m_LocalPosition: {x: -1.2, y: 1.225, z: 0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12017,6 +12200,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: b607ac00476f329479bed52ccd527695, type: 2}
+  cacheHash: b5605ade73105ab3
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: e114c640e98bd7b4fbe653f2a7ee83e3, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1586672360
 GameObject:
   m_ObjectHideFlags: 0
@@ -12062,7 +12251,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 1.5, y: 0.9, z: 0.6}
+  size: {x: 1.5, y: 0.6875, z: 0.6}
   sides: 8
   topScale: 1
   steps: 4
@@ -12259,6 +12448,11 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 2e4c6c9e659d5724aba7a5fb821d81f7, type: 2}
+  cacheHash: 37a62d211ec788f9
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 8b123fb0c7e201e4cadae440be58ccc7, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &1615560988
 GameObject:
   m_ObjectHideFlags: 0
@@ -12474,7 +12668,7 @@ Transform:
   m_GameObject: {fileID: 1639852908}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9, z: 0}
+  m_LocalPosition: {x: 0, y: 0.6875, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12943,6 +13137,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: e9e5d28bea6e4184face23eba1861cd5, type: 2}
+  cacheHash: cc681718add7b4a4
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 5a0d5bb72e4e3e040abb392b791e186c, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1696603652
 GameObject:
   m_ObjectHideFlags: 0
@@ -12988,7 +13188,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 1, y: 0.85, z: 0.75}
+  size: {x: 1, y: 0.625, z: 0.75}
   sides: 8
   topScale: 1
   steps: 4
@@ -13155,6 +13355,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 08c238276cf0f7d42bf092d8d1416c92, type: 2}
+  cacheHash: 4c416bc219bee063
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  - {fileID: 11400000, guid: 2754ff12c960b074d82f5e3e0a1151f8, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1755072572
 GameObject:
   m_ObjectHideFlags: 0
@@ -13201,7 +13407,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   note: "\uAC04\uC774 \uC8FC\uBC29 (\uC870\uB9AC\uB300 + \uC120\uBC18)"
-  size: {x: 1.55, y: 1.7, z: 0.65}
+  size: {x: 1.55, y: 1.5, z: 0.65}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &1760762307
@@ -13313,7 +13519,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   note: "\uBC14\uD034 \uB2EC\uB9B0 \uBE68\uAC04 \uACF5\uAD6C\uD568"
-  size: {x: 1.25, y: 1.1, z: 0.65}
+  size: {x: 1.25, y: 0.84375, z: 0.65}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &1772368954
@@ -13550,7 +13756,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.1, y: 0.72, z: 0.8}
+  size: {x: 0.1, y: 0.53125, z: 0.8}
   sides: 8
   topScale: 1
   steps: 4
@@ -13616,7 +13822,7 @@ MonoBehaviour:
   note: "\uCC9C\uC7AC \uC815\uBE44\uACF5\uC758 \uC124\uACC4 \uCC45\uC0C1 \u2014 \uBAA8\uB2C8\uD130
     6\uB300 + \uBCBD \uC124\uACC4\uB3C4. \uB85C\uBD07 \uC0C1\uD0DC \xB7 \uC2A4\uD0AC
     \uD655\uC778 \uC790\uB9AC"
-  size: {x: 2.4, y: 3, z: 0.9}
+  size: {x: 2.4, y: 2.8125, z: 0.9}
   autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &1788311490
@@ -14087,6 +14293,8 @@ MonoBehaviour:
   angleSharpness: 10
   placeholderIfEmpty: 1
   flipSprites: 1
+  sideBias: 0.6
+  walkAnimSpeed: 0.75
   autoSeeThrough: 1
   autoFoliagePush: 1
 --- !u!143 &1822712859
@@ -14107,13 +14315,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
+  m_Height: 0.81
   m_Radius: 0.12
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.97999996, z: 0}
+  m_Center: {x: 0, y: 0.41, z: 0}
 --- !u!4 &1822712860
 Transform:
   m_ObjectHideFlags: 0
@@ -14311,6 +14519,11 @@ MonoBehaviour:
   colliders: 0
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 363f72ae287be9943b6f34acbbb3bc88, type: 2}
+  cacheHash: 40922ba995a01134
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 8b123fb0c7e201e4cadae440be58ccc7, type: 2}
+  cacheKinds: 00000000
 --- !u!1 &1843480648
 GameObject:
   m_ObjectHideFlags: 0
@@ -14419,7 +14632,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 1, y: 0.85, z: 0.75}
+  size: {x: 1, y: 0.625, z: 0.75}
   sides: 8
   topScale: 1
   steps: 4
@@ -14809,6 +15022,28 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: c2388cb5871f
+--- !u!95 &1912965988
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1234386973}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b945d7063c67ae5241ef8ad198aa34f4, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1919408717
 GameObject:
   m_ObjectHideFlags: 0
@@ -14946,7 +15181,7 @@ GameObject:
   - component: {fileID: 1923397146}
   - component: {fileID: 1923397147}
   m_Layer: 0
-  m_Name: "\uC784\uC2DC_Dining_\uC2DD\uD0C1"
+  m_Name: "\uC784\uC2DC_Dining_\uC2DD\uD0C1 (\uD0A4 \uB9DE\uCDA4)"
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14994,6 +15229,12 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 8abd80d7a393c5a4488b2bb0e235857d, type: 2}
+  cacheHash: 1b09051d96b7e199
+  cacheSurfaces:
+  - {fileID: 11400000, guid: 47eac959a2ec623499c6ef6d62f51372, type: 2}
+  - {fileID: 11400000, guid: 09cdf43cbf8ed684bbea25121b2df138, type: 2}
+  cacheKinds: 0000000000000000
 --- !u!1 &1957327129
 GameObject:
   m_ObjectHideFlags: 0
@@ -15039,7 +15280,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 0.0625, y: 0.7, z: 0.0625}
+  size: {x: 0.0625, y: 0.53125, z: 0.0625}
   sides: 8
   topScale: 1
   steps: 4
@@ -15245,6 +15486,14 @@ MonoBehaviour:
   colliders: 0
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: f7de085463ed44e4bafbcbc3a81b5322, type: 2}
+  cacheHash: 12e8da10955616ff
+  cacheSurfaces:
+  - {fileID: 11400000, guid: ee3e8665a057a324081dfd6e67c714f8, type: 2}
+  - {fileID: 11400000, guid: bc3654c13f405654eb092edfb32e0be0, type: 2}
+  - {fileID: 11400000, guid: f63b331de2d032540b2d3c6d88b689d7, type: 2}
+  - {fileID: 11400000, guid: c6004a6df70e29746aa15e0f36bfadc3, type: 2}
+  cacheKinds: 00000000000000000000000000000000
 --- !u!1 &1993679670
 GameObject:
   m_ObjectHideFlags: 0
@@ -15430,7 +15679,7 @@ Transform:
   m_GameObject: {fileID: 2010087947}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.7, z: 0}
+  m_LocalPosition: {x: 0, y: 0.53125, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15797,11 +16046,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2075674577}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 2.4
   m_Range: 6
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -16030,11 +16279,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2107845734}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 2.6
   m_Range: 6
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -16154,8 +16403,8 @@ Light:
   m_Enabled: 1
   serializedVersion: 11
   m_Type: 1
-  m_Color: {r: 0.5, g: 0.64, b: 1, a: 1}
-  m_Intensity: 0.3
+  m_Color: {r: 1, g: 0.93, b: 0.84, a: 1}
+  m_Intensity: 0.55
   m_Range: 10
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208

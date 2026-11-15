@@ -67,6 +67,7 @@ namespace RealSteel.Common.EditorTools
         static readonly string[] WaterOpts = { "하늘색만", "화면 반사", "설정대로" };
         static readonly string[] IndirectOpts = { "끔", "거칠게", "원래대로" };
         static readonly string[] ShadowOpts = { "짧게", "중간", "원래대로" };
+        static readonly string[] AAOpts = { "끔", "FXAA", "SMAA 보통", "SMAA 높음" };
         static readonly string[] Levels = { "low", "mid", "high" };
         static readonly string[] Tri = { "low", "mid", "high" };
 
@@ -106,6 +107,7 @@ namespace RealSteel.Common.EditorTools
             Row("피사계 심도", "후처리 중 가장 무겁다", "depthOfField", null);
             Row("블룸", "끄면 네온 · 발광이 안 빛난다", "bloom", null);
             Row("  블룸 고품질 필터", "", "bloomHighQuality", null);
+            Row("안티에일리어싱", "모서리 계단 · 무아레 줄이기. FXAA = 거의 공짜 · SMAA = 더 깔끔 (1060 에서 1 ms 안팎)", "antialiasing", AAOpts);
             Row("그림자 거리", "아래 '품질 숫자' 의 그림자 거리 배율 중 어느 것을 쓸지", "shadows", ShadowOpts);
 
             // ── 품질 숫자 표 ──

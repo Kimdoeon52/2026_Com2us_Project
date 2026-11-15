@@ -2171,7 +2171,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 30.103882, y: 12.315247}
+  m_LightCookieOffset: {x: 0, y: 0}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -2378,6 +2378,8 @@ MonoBehaviour:
   angleSharpness: 10
   placeholderIfEmpty: 1
   flipSprites: 1
+  sideBias: 0.6
+  walkAnimSpeed: 0.75
   autoSeeThrough: 1
   autoFoliagePush: 1
 --- !u!143 &871041233
@@ -2398,13 +2400,13 @@ CharacterController:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Height: 1.8
+  m_Height: 0.81
   m_Radius: 0.4
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.97999996, z: 0}
+  m_Center: {x: 0, y: 0.41, z: 0}
 --- !u!4 &871041234
 Transform:
   m_ObjectHideFlags: 0
@@ -3322,8 +3324,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1395026816}
   - component: {fileID: 1395026817}
+  - component: {fileID: 1498478674}
   m_Layer: 0
-  m_Name: GameObject
+  m_Name: PlayerSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3367,7 +3370,7 @@ SpriteRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 6906d24838a66a44b85dcfd29c5e1db2, type: 2}
+  - {fileID: 2100000, guid: 07ce485f673d13a2c9b7a90f1cf178eb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3388,7 +3391,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -490166572, guid: 57b0ddbdc56d71a45a4a53003fd1cfd7, type: 3}
+  m_Sprite: {fileID: 7890110710167757771, guid: 70057f540649725e7f47cc862103b33e, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -3529,6 +3532,28 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
+--- !u!95 &1498478674
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1395026815}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: b945d7063c67ae5241ef8ad198aa34f4, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &1520000001
 GameObject:
   m_ObjectHideFlags: 0
@@ -3609,6 +3634,7 @@ MonoBehaviour:
   outerJunk: 0.35
   outerCollider: 1
   data: {fileID: 11400000, guid: 9e8fc1dfde2e0954bbaa31854f0e4e6b, type: 2}
+  proceduralCache: {fileID: 4900000, guid: a30639f4dcabc5b4fb884e9acd83b83c, type: 3}
   autoRebuild: 1
   rebuildWhileDragging: 0
 --- !u!1 &1520000011
@@ -4454,6 +4480,11 @@ MonoBehaviour:
     shaftsFollowTime: 1
     moonShafts: 0.6
   ownLook: 0
+  fixedLight: 0
+  fixedLightFrom: {fileID: 0}
+  fixedLightEuler: {x: 25, y: 205, z: 0}
+  fixedLightColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  fixedLightIntensity: 1
   steps: 16
   stepLength: 1.5
   maxDistance: 40

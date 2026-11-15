@@ -9,6 +9,9 @@
 //  · 카메라(기본 Main Camera)는 지금 각도를 그대로 유지한 채 부드럽게 따라온다 (옥토패스식 고정 각도)
 //  · RS 지형 위라면 콜라이더가 없어도 지면에 붙는다
 //  · Animator 가 있으면 Speed(float) · Grounded(bool) · Jump(trigger) 파라미터를 있는 것만 넣어 준다
+//  · 4방향 스프라이트: Animator 에 FaceX · FaceY(float) 가 있으면 바라보는 방향을 (0,-1)정면 · (0,1)뒷면 ·
+//    (±1,0)옆 으로 딱 잘라 넣고, 옆모습일 때만 왼쪽으로 뒤집는다 (옆 그림은 오른쪽을 보고 그려 둔다).
+//    MoveAnimSpeed(float) 가 있으면 걷기 ~ 달리기 속도에 맞춰 재생 속도를 넣어 준다.
 //
 // Input System · 예전 Input Manager 둘 다 동작한다 (프로젝트 설정에 따라 자동).
 using UnityEngine;
@@ -102,6 +105,10 @@ public class RSSimpleCharacter : MonoBehaviour
     public bool placeholderIfEmpty = true;
     [Tooltip("SpriteRenderer 가 있으면 몸을 돌리는 대신 좌우로 뒤집는다 (2D 스프라이트 캐릭터)")]
     public bool flipSprites = true;
+    [Range(0.2f, 2f), Tooltip("4방향 그림일 때 대각선으로 가면 옆모습을 얼마나 쉽게 보여 줄지. 1 = 정확히 45° 기준, 작을수록 옆모습이 잘 나온다 (0.6 ≈ 31°)")]
+    public float sideBias = 0.6f;
+    [Range(0.3f, 1.5f), Tooltip("걷기 속도일 때 이동 애니메이션 재생 배율 (달리기 속도 = 1). 걷기 그림이 따로 없을 때 달리기 그림을 조금 느리게 돌린다")]
+    public float walkAnimSpeed = 0.75f;
     [Tooltip("플레이할 때 '시야 가림 투명'(RSSeeThrough)이 없으면 붙인다 — 벽 · 건물 · 절벽 뒤로 가도 캐릭터가 보인다")]
     public bool autoSeeThrough = true;
     [Tooltip("플레이할 때 '풀 눕히기'(RSFoliagePusher)가 없으면 붙인다 — 지나가면 둘레 풀 · 꽃이 눕는다")]
@@ -122,6 +129,15 @@ public class RSSimpleCharacter : MonoBehaviour
 
     int hSpeed, hGrounded, hJump;
     bool pSpeed, pGrounded, pJump;
+    // 4방향 스프라이트
+    static readonly int hFaceX = Animator.StringToHash("FaceX");
+    static readonly int hFaceY = Animator.StringToHash("FaceY");
+    static readonly int hMoveAnimSpeed = Animator.StringToHash("MoveAnimSpeed");
+    static readonly int FlipXId = Shader.PropertyToID("_FlipX");
+    bool pFace, pMoveAnimSpeed;
+    bool faceSide;                 // 지금 옆모습인가
+    bool flipped;                  // 지금 왼쪽으로 뒤집혔나
+    MaterialPropertyBlock flipBlock;
 
     // ─────────────────────────────────────────────────────────────
 
@@ -158,7 +174,13 @@ public class RSSimpleCharacter : MonoBehaviour
                 if (p.name == "Speed" && p.type == AnimatorControllerParameterType.Float) pSpeed = true;
                 if (p.name == "Grounded" && p.type == AnimatorControllerParameterType.Bool) pGrounded = true;
                 if (p.name == "Jump" && p.type == AnimatorControllerParameterType.Trigger) pJump = true;
+                if (p.name == "FaceX" && p.type == AnimatorControllerParameterType.Float) pFace = true;
+                if (p.name == "MoveAnimSpeed" && p.type == AnimatorControllerParameterType.Float) pMoveAnimSpeed = true;
             }
+            bool hasFaceY = false;
+            foreach (var p in anim.parameters)
+                if (p.name == "FaceY" && p.type == AnimatorControllerParameterType.Float) hasFaceY = true;
+            pFace &= hasFaceY;
             hSpeed = Animator.StringToHash("Speed");
             hGrounded = Animator.StringToHash("Grounded");
             hJump = Animator.StringToHash("Jump");
@@ -170,6 +192,7 @@ public class RSSimpleCharacter : MonoBehaviour
         if (cam == null) cam = Camera.main;
         SetupCamera();
         SnapToGround(true);
+        if (pFace) SetFlip(false, true);   // 4방향 그림은 원본 그대로(정면)에서 시작
     }
 
     void Update()
@@ -210,7 +233,11 @@ public class RSSimpleCharacter : MonoBehaviour
         Vector3 flat = new Vector3(velocity.x, 0f, velocity.z);
         if (flat.sqrMagnitude > 0.04f)
         {
-            if (flipSprites && sprites != null && sprites.Length > 0)
+            if (pFace && anim != null)
+            {
+                UpdateFacing(flat);
+            }
+            else if (flipSprites && sprites != null && sprites.Length > 0)
             {
                 float side = cam != null ? Vector3.Dot(flat, cam.transform.right) : flat.x;
                 if (Mathf.Abs(side) > 0.05f) foreach (var s in sprites) if (s != null) s.flipX = side < 0f;
@@ -227,6 +254,11 @@ public class RSSimpleCharacter : MonoBehaviour
         {
             if (pSpeed) anim.SetFloat(hSpeed, flat.magnitude);
             if (pGrounded) anim.SetBool(hGrounded, grounded);
+            if (pMoveAnimSpeed)
+            {
+                float t = runSpeed > walkSpeed + 0.01f ? Mathf.InverseLerp(walkSpeed, runSpeed, flat.magnitude) : 1f;
+                anim.SetFloat(hMoveAnimSpeed, Mathf.Lerp(walkAnimSpeed, 1f, t));
+            }
         }
 
         // ── 카메라 입력 ──
@@ -265,6 +297,56 @@ public class RSSimpleCharacter : MonoBehaviour
         Vector3 dir = Quaternion.Euler(curPitch, curYaw, 0f) * Vector3.forward;
         cam.transform.position = camFocus - dir * (Mathf.Max(0.5f, distance) * zoom);
         cam.transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+    }
+
+    // ── 4방향 스프라이트: 정면 · 뒷면 · 옆 고르기 ──
+    void UpdateFacing(Vector3 flat)
+    {
+        // 화면 기준 좌우(sx) · 앞뒤(sy) 성분
+        Vector3 camRight = Vector3.right, camFwd = Vector3.forward;
+        if (cam != null)
+        {
+            camRight = cam.transform.right; camRight.y = 0f;
+            camFwd = cam.transform.forward; camFwd.y = 0f;
+            if (camFwd.sqrMagnitude < 1e-4f) camFwd = cam.transform.up;
+            camFwd.y = 0f;
+            camRight.Normalize(); camFwd.Normalize();
+        }
+        float sx = Vector3.Dot(flat, camRight);
+        float sy = Vector3.Dot(flat, camFwd);
+
+        // 경계에서 깜빡이지 않게 지금 상태 쪽으로 조금 더 버틴다
+        float bias = Mathf.Max(0.05f, sideBias) * (faceSide ? 0.8f : 1.25f);
+        faceSide = Mathf.Abs(sx) >= Mathf.Abs(sy) * bias;
+
+        if (faceSide)
+        {
+            anim.SetFloat(hFaceX, 1f);          // 옆 그림 하나를 뒤집어 쓴다
+            anim.SetFloat(hFaceY, 0f);
+            SetFlip(sx < 0f);
+        }
+        else
+        {
+            anim.SetFloat(hFaceX, 0f);
+            anim.SetFloat(hFaceY, sy >= 0f ? 1f : -1f);   // 화면 위쪽으로 가면 뒷면
+            SetFlip(false);                                 // 정면 · 뒷면은 뒤집지 않는다 (팔 색이 바뀌므로)
+        }
+    }
+
+    /// <summary>빌보드 셰이더의 _FlipX 를 렌더러마다 넣는다 (SpriteRenderer.flipX 는 빌보드 셰이더에서 안 먹는다).</summary>
+    void SetFlip(bool on, bool force = false)
+    {
+        if (!force && on == flipped) return;
+        flipped = on;
+        if (sprites == null) return;
+        if (flipBlock == null) flipBlock = new MaterialPropertyBlock();
+        foreach (var s in sprites)
+        {
+            if (s == null) continue;
+            s.GetPropertyBlock(flipBlock);      // SpriteFlash 등 다른 값은 그대로 둔다
+            flipBlock.SetFloat(FlipXId, on ? 1f : 0f);
+            s.SetPropertyBlock(flipBlock);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────

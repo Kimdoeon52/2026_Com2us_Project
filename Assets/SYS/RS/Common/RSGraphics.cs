@@ -65,6 +65,8 @@ namespace RealSteel.Common
         public bool bloom = true;
         [Tooltip("블룸 고품질 필터")]
         public bool bloomHighQuality = true;
+        [Range(0, 3), Tooltip("안티에일리어싱 — 모서리 계단 · 무아레 줄이기 (0 = 끔 · 1 = FXAA 가벼움 · 2 = SMAA 보통 · 3 = SMAA 높음)")]
+        public int antialiasing = 3;
 
         // ── 그림자 (URP 에셋) ───────────────────────────────
         [Range(0, 2), Tooltip("그림자 거리 (0 = 절반 · 1 = 3/4 · 2 = 원래대로). 안개 빛줄기도 이 그림자를 쓴다")]
@@ -94,6 +96,7 @@ namespace RealSteel.Common
             cloudShadows = p.cloudShadows; lightShafts = p.lightShafts; characterGlow = p.characterGlow;
             wetFloor = p.wetFloor; water = p.water; indirect = p.indirect;
             depthOfField = p.depthOfField; bloom = p.bloom; bloomHighQuality = p.bloomHighQuality;
+            antialiasing = p.antialiasing;
             shadows = p.shadows;
             level = l;
         }
@@ -106,6 +109,7 @@ namespace RealSteel.Common
                 && cloudShadows == p.cloudShadows && Mathf.Approximately(lightShafts, p.lightShafts) && characterGlow == p.characterGlow
                 && wetFloor == p.wetFloor && water == p.water && indirect == p.indirect
                 && depthOfField == p.depthOfField && bloom == p.bloom && bloomHighQuality == p.bloomHighQuality
+                && antialiasing == p.antialiasing
                 && shadows == p.shadows;
         }
 
@@ -118,6 +122,7 @@ namespace RealSteel.Common
             water = Mathf.Clamp(water, 0, 2);
             indirect = Mathf.Clamp(indirect, 0, 2);
             shadows = Mathf.Clamp(shadows, 0, 2);
+            antialiasing = Mathf.Clamp(antialiasing, 0, 3);
             brightness = Mathf.Clamp(brightness, -1f, 1f);
             if (width < 0) width = 0;
             if (height < 0) height = 0;
@@ -240,6 +245,9 @@ namespace RealSteel.Common
                 o = new RSGraphicsOptions();
                 o.ApplyLevel(Recommended());
             }
+            // 안티에일리어싱이 생기기 전에 저장된 파일 → 저장 당시 단계 값으로 채운다 (안 그러면 '사용자' 로 바뀜)
+            if (!string.IsNullOrEmpty(json) && json.IndexOf("\"antialiasing\"", StringComparison.Ordinal) < 0)
+                o.antialiasing = Preset(o.level == RSGraphicsLevel.사용자 ? RSGraphicsLevel.높음 : o.level).antialiasing;
             o.Clamp();
             o.level = Detect(o);
             options = o;

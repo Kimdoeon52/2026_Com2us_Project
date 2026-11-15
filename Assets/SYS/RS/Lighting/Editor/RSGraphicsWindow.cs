@@ -64,6 +64,8 @@ namespace RealSteel.Lighting.EditorTools
             o.bloom = EditorGUILayout.Toggle("블룸", o.bloom);
             using (new EditorGUI.DisabledScope(!o.bloom))
                 o.bloomHighQuality = EditorGUILayout.Toggle("  블룸 고품질 필터", o.bloomHighQuality);
+            o.antialiasing = EditorGUILayout.Popup(new GUIContent("안티에일리어싱", "모서리 계단 · 무아레 줄이기. 플레이 중 게임 카메라에 건다"), o.antialiasing,
+                new[] { "끔", "FXAA (가벼움)", "SMAA 보통", "SMAA 높음" });
 
             Header("그림자");
             o.shadows = EditorGUILayout.Popup(new GUIContent("그림자 거리", "URP 에셋 값 × 배율. 플레이를 멈추면 원래 값으로 돌아간다"), o.shadows, new[] { "절반", "3/4", "원래대로" });

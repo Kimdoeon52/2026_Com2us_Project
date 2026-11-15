@@ -74,6 +74,8 @@ namespace RealSteel.Lighting
         {
             // 밝기: 시간대가 노출을 쥐고 있는지는 씬에 따라 바뀌므로 가끔 다시 본다
             if (appliedRevision != RSGraphics.Revision || (Time.frameCount % 30) == 0) ApplyPost();
+            // 안티에일리어싱: 씬이 바뀌거나 카메라가 새로 생길 수 있어 가끔 다시 건다 (값이 같으면 아무것도 안 함)
+            if ((Time.frameCount % 30) == 7) ApplyAntialiasing();
         }
 
         void ApplyAll()
@@ -81,6 +83,7 @@ namespace RealSteel.Lighting
             ApplyPost();
             ApplyShadows();
             ApplyDisplay();
+            ApplyAntialiasing();
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -156,6 +159,33 @@ namespace RealSteel.Lighting
             if (touchedAsset != null && originalShadowDistance >= 0f) touchedAsset.shadowDistance = originalShadowDistance;
             touchedAsset = null;
             originalShadowDistance = -1f;
+        }
+
+        // ─────────────────────────────────────────────────────────────
+        // 안티에일리어싱 (게임 카메라마다 — URP 카메라의 Anti-aliasing 설정)
+        // ─────────────────────────────────────────────────────────────
+
+        static Camera[] camBuf = new Camera[16];
+
+        void ApplyAntialiasing()
+        {
+            int aa = RSGraphics.Effective.antialiasing;
+            var mode = aa <= 0 ? AntialiasingMode.None : aa == 1 ? AntialiasingMode.FastApproximateAntialiasing : AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+            var q = aa >= 3 ? AntialiasingQuality.High : AntialiasingQuality.Medium;
+            int n = Camera.allCamerasCount;
+            if (camBuf.Length < n) camBuf = new Camera[n * 2];
+            n = Camera.GetAllCameras(camBuf);
+            for (int i = 0; i < n; i++)
+            {
+                var c = camBuf[i];
+                camBuf[i] = null;
+                // 화면에 그리는 게임 카메라만 (반사 · 렌더 텍스처 카메라는 그대로)
+                if (c == null || c.cameraType != CameraType.Game || c.targetTexture != null) continue;
+                var d = c.GetComponent<UniversalAdditionalCameraData>();
+                if (d == null || d.renderType != CameraRenderType.Base) continue;
+                if (d.antialiasing != mode) d.antialiasing = mode;
+                if (d.antialiasingQuality != q) d.antialiasingQuality = q;
+            }
         }
 
         // ─────────────────────────────────────────────────────────────

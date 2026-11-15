@@ -35,7 +35,7 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
         [Header(Billboard)]
         [Space(4)]
         _PitchFollow ("카메라 기울기 따라가기   (0 수직 / 1 완전 빌보드)", Range(0, 1)) = 0.35
-        [Toggle(_FLIP_X)] _FlipX ("좌우 반전", Float) = 0
+        [ToggleUI] _FlipX ("좌우 반전", Float) = 0
 
         [Header(Lighting)]
         [Space(4)]
@@ -113,9 +113,10 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             float sy = length(float3(unity_ObjectToWorld._m01, unity_ObjectToWorld._m11, unity_ObjectToWorld._m21));
 
             float2 local = positionOS.xy * float2(sx, sy);
-        #ifdef _FLIP_X
-            local.x = -local.x;
-        #endif
+            // 좌우 반전: 키워드가 아니라 값으로 본다 → 머티리얼을 안 건드리고도 렌더러마다
+            // MaterialPropertyBlock 으로 바꿀 수 있다 (플레이어가 왼쪽으로 갈 때 뒤집기).
+            // SpriteRenderer.flipX 는 이 셰이더에서 안 먹으니 이쪽을 쓴다.
+            if (_FlipX > 0.5) local.x = -local.x;
 
             // 수평면에서 카메라를 향하는 방향. y 를 버리는 게 Y축 빌보드다.
             float3 toCam = _WorldSpaceCameraPos - pivotWS;
@@ -178,7 +179,6 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             #pragma vertex   BbVert
             #pragma fragment BbFrag
 
-            #pragma shader_feature_local _FLIP_X
             #pragma shader_feature_local_fragment _OUTLINE_ON
 
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
@@ -293,7 +293,6 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             #pragma vertex   ShadowVert
             #pragma fragment ShadowFrag
 
-            #pragma shader_feature_local _FLIP_X
             #pragma shader_feature_local_fragment _OUTLINE_ON
             #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
 
@@ -367,7 +366,6 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             #pragma vertex   DepthVert
             #pragma fragment DepthFrag
 
-            #pragma shader_feature_local _FLIP_X
             #pragma shader_feature_local_fragment _OUTLINE_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -423,7 +421,6 @@ Shader "RE_AL STEEL/Billboard Pixel Lit"
             #pragma vertex   DNVert
             #pragma fragment DNFrag
 
-            #pragma shader_feature_local _FLIP_X
             #pragma shader_feature_local_fragment _OUTLINE_ON
 
             struct DNAttributes

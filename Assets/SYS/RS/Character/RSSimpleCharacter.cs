@@ -1,14 +1,15 @@
-// RE:AL STEEL - 간단 캐릭터 (이동 + 점프 + 카메라 따라가기)
+// RE:AL STEEL - 간단 캐릭터 (이동 + 카메라 따라가기)
 //
 // 아무 오브젝트에 이것 하나만 붙이면 바로 움직인다.
-//  · 조작: WASD / 방향키 이동 · Shift 달리기 · Space 점프
+//  · 조작: WASD / 방향키 이동 · Shift 달리기 (점프 없음 — 바닥에 붙어 다닌다)
 //          카메라: 마우스 오른쪽 드래그 돌리기 · 휠 · +/- 줌 · Q / E 45° · R / F 위아래 기울이기 · Home 처음 각도
-//          게임패드: 왼쪽 스틱 이동 · 남쪽 버튼(A) 점프 · 왼쪽 트리거 달리기 · 어깨 버튼 카메라 돌리기
+//          게임패드: 왼쪽 스틱 이동 · 왼쪽 트리거 달리기 · 어깨 버튼 카메라 돌리기
 //  · 이동은 카메라 기준 (화면 위 = 앞)
 //  · CharacterController 가 자동으로 붙는다. 모델이 없으면 플레이할 때 임시 캡슐을 만든다
 //  · 카메라(기본 Main Camera)는 지금 각도를 그대로 유지한 채 부드럽게 따라온다 (옥토패스식 고정 각도)
 //  · RS 지형 위라면 콜라이더가 없어도 지면에 붙는다
-//  · Animator 가 있으면 Speed(float) · Grounded(bool) · Jump(trigger) 파라미터를 있는 것만 넣어 준다
+//  · 바닥에 붙이기: 내려가는 계단 · 경사에서 붕 뜨지 않고 따라 내려간다. '붙이는 높이'보다 높은 턱에서는 떨어진다
+//  · Animator 가 있으면 Speed(float) · Grounded(bool) 파라미터를 있는 것만 넣어 준다
 //  · 4방향 스프라이트: Animator 에 FaceX · FaceY(float) 가 있으면 바라보는 방향을 (0,-1)정면 · (0,1)뒷면 ·
 //    (±1,0)옆 으로 딱 잘라 넣고, 옆모습일 때만 왼쪽으로 뒤집는다 (옆 그림은 오른쪽을 보고 그려 둔다).
 //    MoveAnimSpeed(float) 가 있으면 걷기 ~ 달리기 속도에 맞춰 재생 속도를 넣어 준다.
@@ -23,7 +24,7 @@ using RealSteel.Terrain;
 
 [RSSummary("간단 캐릭터 (이동 + 카메라)",
     "붙이기만 하면 움직이는 테스트용 캐릭터.\n" +
-    "· 조작: WASD/방향키 이동 · Shift 달리기 · Space 점프 (게임패드도 됨)\n" +
+    "· 조작: WASD/방향키 이동 · Shift 달리기 (게임패드도 됨). 점프 없이 바닥에 붙어 다닌다 — 계단 · 경사는 그대로 오르내림\n" +
     "· 카메라: 마우스 오른쪽 드래그 돌리기 · 휠 · +/- 키 줌 · Q/E 45° · R/F 기울기 · Home 처음 각도\n" +
     "· 이동은 카메라 기준 (화면 위 = 앞)\n" +
     "· 모델이 없으면 플레이할 때 임시 캡슐이 생긴다. 모델을 자식으로 넣으면 그걸 쓴다\n" +
@@ -48,14 +49,19 @@ public class RSSimpleCharacter : MonoBehaviour
     [Tooltip("카메라 기준으로 움직인다 (끄면 월드 기준: W = +Z)")]
     public bool cameraRelative = true;
 
-    [RSGroup("점프 · 중력")]
-    [Tooltip("점프 높이 (m). 0 = 점프 없음")]
+    [RSGroup("중력 · 바닥")]
+    [RSHelp("점프는 없다. 계단 · 경사는 CharacterController 의 Step Offset · Slope Limit 대로 오르고, Slope Limit 보다 가파른 곳(절벽 · 둑)은 못 오른다. 내려가는 쪽은 제한 없음. 내려갈 때는 '붙이는 높이' 안의 바닥에 바로 붙인다 → 발이 뜨지 않는다.")]
+    [Tooltip("내려가는 계단 · 경사에서 바닥에 붙여 주는 최대 높이 (m). 이보다 높은 턱에서는 중력으로 떨어진다")]
     [RSKey]
-    public float jumpHeight = 1.1f;
+    public float stickDistance = 0.6f;
     [Tooltip("중력 (m/s², 음수)")]
     public float gravity = -25f;
     [Tooltip("RS 지형 위라면 콜라이더가 없어도 지면에 붙인다")]
     public bool snapToRSTerrain = true;
+    [Tooltip("CharacterController 의 Slope Limit 보다 가파른 바닥(절벽 · 둑 · 고철 더미)은 못 오르고, 올라서면 미끄러져 내려온다. 내려가는 쪽은 제한 없음")]
+    public bool keepOnWalkable = true;
+    [Tooltip("걸을 수 없는 경사에서 미끄러져 내려가는 최고 속도 (m/s)")]
+    public float maxSlideSpeed = 6f;
 
     [RSGroup("카메라")]
     [RSHelp("비워 두면 Main Camera 를 쓴다. 플레이 중에 Pitch · Yaw · Distance 를 인스펙터에서 바로 바꿔 볼 수 있고, 게임 안에서도 돌릴 수 있다:\n· 마우스 오른쪽 드래그 = 돌리기 · 휠 · +/- 키 = 줌 · Q/E = 45° 돌리기 · R/F = 위아래 기울이기 · Home = 처음 각도로\n· 게임패드: 오른쪽 스틱 = 돌리기 · 어깨 버튼 = 45° · 오른쪽 스틱 누르기 = 처음 각도로")]
@@ -113,9 +119,13 @@ public class RSSimpleCharacter : MonoBehaviour
     public bool autoSeeThrough = true;
     [Tooltip("플레이할 때 '풀 눕히기'(RSFoliagePusher)가 없으면 붙인다 — 지나가면 둘레 풀 · 꽃이 눕는다")]
     public bool autoFoliagePush = true;
+    [Tooltip("플레이할 때 '원형 그림자'(RSBlobShadow)가 없으면 붙인다 — 발밑 동그란 그림자")]
+    public bool autoBlobShadow = true;
 
     // ── 상태 ──
     CharacterController cc;
+    readonly RaycastHit[] rayHits = new RaycastHit[8];
+    float slideSpeed;          // 걸을 수 없는 경사에서 미끄러지는 속도
     Animator anim;
     SpriteRenderer[] sprites;
     Vector3 velocity;          // 수평 속도
@@ -127,8 +137,8 @@ public class RSSimpleCharacter : MonoBehaviour
     Vector3 camFocus, camFocusVel;
     bool camReady;
 
-    int hSpeed, hGrounded, hJump;
-    bool pSpeed, pGrounded, pJump;
+    int hSpeed, hGrounded;
+    bool pSpeed, pGrounded;
     // 4방향 스프라이트
     static readonly int hFaceX = Animator.StringToHash("FaceX");
     static readonly int hFaceY = Animator.StringToHash("FaceY");
@@ -162,6 +172,7 @@ public class RSSimpleCharacter : MonoBehaviour
         if (cc.center == Vector3.zero) Reset();
         if (autoSeeThrough && Application.isPlaying && GetComponent<RSSeeThrough>() == null) gameObject.AddComponent<RSSeeThrough>();
         if (autoFoliagePush && Application.isPlaying && GetComponent<RSFoliagePusher>() == null) gameObject.AddComponent<RSFoliagePusher>();
+        if (autoBlobShadow && Application.isPlaying && GetComponent<RSBlobShadow>() == null) gameObject.AddComponent<RSBlobShadow>();
 
         if (placeholderIfEmpty && GetComponentInChildren<Renderer>() == null) MakePlaceholder();
 
@@ -173,7 +184,6 @@ public class RSSimpleCharacter : MonoBehaviour
             {
                 if (p.name == "Speed" && p.type == AnimatorControllerParameterType.Float) pSpeed = true;
                 if (p.name == "Grounded" && p.type == AnimatorControllerParameterType.Bool) pGrounded = true;
-                if (p.name == "Jump" && p.type == AnimatorControllerParameterType.Trigger) pJump = true;
                 if (p.name == "FaceX" && p.type == AnimatorControllerParameterType.Float) pFace = true;
                 if (p.name == "MoveAnimSpeed" && p.type == AnimatorControllerParameterType.Float) pMoveAnimSpeed = true;
             }
@@ -183,7 +193,6 @@ public class RSSimpleCharacter : MonoBehaviour
             pFace &= hasFaceY;
             hSpeed = Animator.StringToHash("Speed");
             hGrounded = Animator.StringToHash("Grounded");
-            hJump = Animator.StringToHash("Jump");
         }
     }
 
@@ -197,7 +206,7 @@ public class RSSimpleCharacter : MonoBehaviour
 
     void Update()
     {
-        ReadInput(out Vector2 move, out bool run, out bool jump, out float rot, out float scroll,
+        ReadInput(out Vector2 move, out bool run, out float rot, out float scroll,
                   out Vector2 orbit, out float tilt, out bool resetCam);
 
         // ── 방향 (카메라 기준) ──
@@ -216,18 +225,44 @@ public class RSSimpleCharacter : MonoBehaviour
         float maxSpeed = run ? runSpeed : walkSpeed;
         velocity = Vector3.MoveTowards(velocity, wish * maxSpeed, acceleration * Time.deltaTime);
 
-        // ── 점프 · 중력 ──
-        grounded = cc.isGrounded || IsOnRSTerrain(0.05f);
+        // ── 바닥 판정 (현업 방식: 발밑 바닥 면의 기울기로 '걸을 수 있는 바닥'인지 본다) ──
+        Vector3 pos = transform.position;
+        bool steep = false;
+        Vector3 floorN = Vector3.up;
+        if (keepOnWalkable && GroundAt(pos, pos.y, out float floorY, out floorN) && floorY >= pos.y - FloorReach())
+            steep = floorN.y < CosLimit();
+
+        // ── 중력 ──
+        grounded = (cc.isGrounded || IsOnRSTerrain(0.05f)) && !steep;
         if (grounded && vy < 0f) vy = -2f;   // 비탈에서 붙어 있게
-        if (grounded && jump && jumpHeight > 0f)
-        {
-            vy = Mathf.Sqrt(2f * jumpHeight * -gravity);
-            if (anim != null && pJump) anim.SetTrigger(hJump);
-        }
         vy += gravity * Time.deltaTime;
 
-        cc.Move((velocity + Vector3.up * vy) * Time.deltaTime);
+        Vector3 slide = Vector3.zero;
+        if (steep)
+        {
+            // 걸을 수 없는 경사 위: 오르는 쪽 입력은 지우고, 경사를 따라 미끄러져 내려간다 (높이를 얻을 방법이 없다 → 비벼도 못 오른다)
+            Vector3 downhill = new Vector3(floorN.x, 0f, floorN.z);
+            if (downhill.sqrMagnitude > 1e-6f)
+            {
+                downhill.Normalize();
+                float uphill = -Vector3.Dot(velocity, downhill);
+                if (uphill > 0f) velocity += downhill * uphill;
+                float sinA = Mathf.Sqrt(Mathf.Max(0f, 1f - floorN.y * floorN.y));
+                slideSpeed = Mathf.Min(slideSpeed + Mathf.Abs(gravity) * sinA * Time.deltaTime, Mathf.Max(0.5f, maxSlideSpeed));
+                slide = downhill * slideSpeed;
+            }
+        }
+        else
+        {
+            slideSpeed = 0f;
+            if (grounded && keepOnWalkable) BlockSteepAhead(pos);   // 앞의 가파른 경사는 벽처럼 — 올라타지 않고 따라 걷는다
+        }
+
+        cc.Move((velocity + slide + Vector3.up * vy) * Time.deltaTime);
         SnapToGround(false);
+
+        // ── 바닥에 붙이기: 땅에 있다가 이번 움직임으로 떴으면(내려가는 계단 · 경사) 아래 바닥으로 바로 내린다 ──
+        if (grounded && !cc.isGrounded && !IsOnRSTerrain(0.05f)) StickDown();
 
         // ── 방향 돌리기 / 스프라이트 뒤집기 ──
         Vector3 flat = new Vector3(velocity.x, 0f, velocity.z);
@@ -253,7 +288,7 @@ public class RSSimpleCharacter : MonoBehaviour
         if (anim != null)
         {
             if (pSpeed) anim.SetFloat(hSpeed, flat.magnitude);
-            if (pGrounded) anim.SetBool(hGrounded, grounded);
+            if (pGrounded) anim.SetBool(hGrounded, grounded || steep);
             if (pMoveAnimSpeed)
             {
                 float t = runSpeed > walkSpeed + 0.01f ? Mathf.InverseLerp(walkSpeed, runSpeed, flat.magnitude) : 1f;
@@ -389,18 +424,146 @@ public class RSSimpleCharacter : MonoBehaviour
         return TryTerrainHeight(transform.position, out float h) && transform.position.y <= h + tolerance;
     }
 
+    /// <summary>
+    /// 발밑 stickDistance 안에 바닥(콜라이더 · RS 지형)이 있으면 거기로 내린다. 없으면(높은 턱) 그대로 두고 떨어지게.
+    /// 콜라이더는 CharacterController 로 아래로 밀어 보고 닿았는지로 판단한다 (닿은 곳에서 멈추므로 정확히 붙는다).
+    /// </summary>
+    void StickDown()
+    {
+        float d = Mathf.Max(0f, stickDistance);
+        if (d <= 0f) return;
+        Vector3 before = transform.position;
+
+        cc.Move(Vector3.down * d);
+        bool ok = cc.isGrounded;
+
+        // RS 지형 (콜라이더가 없어도)
+        if (snapToRSTerrain && RSTerrain.All.Count > 0 && TryTerrainHeight(before, out float h)
+            && h <= before.y + 0.001f && before.y - h <= d)
+        {
+            if (transform.position.y < h) SetPosition(new Vector3(transform.position.x, h, transform.position.z));
+            ok = true;
+        }
+
+        if (!ok) SetPosition(before);       // 붙일 바닥이 없다 → 원래 자리에서 떨어진다
+        else if (vy < 0f) vy = -2f;
+    }
+
+    // ── 걸을 수 있는 바닥 (언리얼 CharacterMovement · KCC 와 같은 방식) ──
+    //  1. 발밑 바닥 면의 기울기가 Slope Limit(CharacterController) 이하 = 걸을 수 있음. RS 지형은 잔요철에 안 걸리게 높이맵 기울기(0.2 m)로 본다
+    //  2. 걸을 수 없는 경사 위에 있으면 '미끄러짐' 상태: 오르는 쪽 입력은 지우고 중력 방향으로 미끄러져 내려간다
+    //     → 비스듬히 비비며 타고 오르기가 불가능하고, 경사 한가운데 멈춰 갇히지도 않는다
+    //  3. 걷는 중 바로 앞이 걸을 수 없는 오르막이면 그 면을 벽으로 보고 파고드는 속도만 지운다 (따라 걷기). 작은 턱(Step Offset 이하)은 그냥 넘는다
+    //  4. 내려가는 쪽은 제한 없음
+    //  5. 지형 높이로 위로 끌어올리는 일은 하지 않는다 (콜라이더 없는 지형 · 바닥을 뚫고 빠졌을 때만)
+
+    float CosLimit() => Mathf.Cos(Mathf.Clamp(cc.slopeLimit, 1f, 89f) * Mathf.Deg2Rad);
+
+    float StepUp() => Mathf.Max(0.3f, cc.stepOffset) + 0.2f;
+
+    float CapsuleRadius() => cc.radius * Mathf.Max(Mathf.Abs(transform.lossyScale.x), Mathf.Abs(transform.lossyScale.z));
+
+    /// <summary>발밑 바닥으로 인정하는 깊이. 가파른 경사에서는 캡슐 바닥이 면보다 떠 있으므로 그만큼 여유</summary>
+    float FloorReach() => 0.1f + CapsuleRadius();
+
+    void BlockSteepAhead(Vector3 pos)
+    {
+        Vector3 h = new Vector3(velocity.x, 0f, velocity.z);
+        float sp = h.magnitude;
+        if (sp < 0.01f) return;
+        Vector3 dir = h / sp;
+        float near = CapsuleRadius() + 0.1f;
+        // 바로 앞 면이 걸을 수 없는 기울기이고
+        if (!GroundAt(pos + dir * near, pos.y, out float y1, out Vector3 n1) || n1.y >= CosLimit()) return;
+        // 조금 더 앞까지 Step Offset 넘게 오르면(작은 턱이 아니면) 벽
+        if (!GroundAt(pos + dir * (near + 0.3f), pos.y, out float y2, out _)) return;
+        if (Mathf.Max(y1, y2) - pos.y <= cc.stepOffset) return;
+
+        Vector3 nh = new Vector3(n1.x, 0f, n1.z);
+        if (nh.sqrMagnitude < 1e-6f) return;
+        nh.Normalize();
+        float d = Vector3.Dot(velocity, nh);
+        if (d < 0f) velocity -= nh * d;
+    }
+
+    /// <summary>pos 의 발밑 바닥 높이 · 노멀. refY + 계단 높이에서 아래로 쏜다. 콜라이더가 없으면 RS 지형 높이맵</summary>
+    bool GroundAt(Vector3 pos, float refY, out float y, out Vector3 n)
+    {
+        float top = refY + StepUp();
+        float dist = top - refY + Mathf.Max(0.05f, stickDistance) + 0.5f;
+        // 작은 구로 쏜다 — 다리 판자 틈 · 계단 모서리에서 바닥을 놓치지 않게
+        const float probeR = 0.1f;
+        int count = Physics.SphereCastNonAlloc(new Vector3(pos.x, top + probeR, pos.z), probeR, Vector3.down, rayHits, dist,
+                                               Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+        float best = float.MaxValue; int bi = -1;
+        for (int i = 0; i < count; i++)
+        {
+            var c = rayHits[i].collider;
+            if (c == null || c == cc || c.transform.IsChildOf(transform)) continue;
+            if (rayHits[i].distance <= 0f && rayHits[i].point == Vector3.zero) continue;   // 처음부터 겹친 것
+            if (rayHits[i].distance < best) { best = rayHits[i].distance; bi = i; }
+        }
+        if (bi >= 0)
+        {
+            var h = rayHits[bi];
+            y = h.point.y;
+            // 노멀은 발 중심 바로 아래 면으로 (구가 모서리에 닿으면 노멀이 기울어 계단을 못 오르므로). 틈이면 위로 본다
+            n = h.collider.Raycast(new Ray(new Vector3(pos.x, top, pos.z), Vector3.down), out RaycastHit fh, dist + probeR)
+                ? fh.normal : Vector3.up;
+            if (h.collider.GetComponentInParent<RSTerrain>() != null && TerrainNormal(h.point, out Vector3 tn)) n = tn;
+            return true;
+        }
+        // 콜라이더 없는 RS 지형
+        if (snapToRSTerrain && RSTerrain.All.Count > 0 && TryTerrainHeight(pos, out float th)
+            && th <= top && th >= top - dist && TerrainNormal(new Vector3(pos.x, th, pos.z), out n))
+        { y = th; return true; }
+        y = 0f; n = Vector3.up;
+        return false;
+    }
+
+    static bool TerrainNormal(Vector3 p, out Vector3 n)
+    {
+        const float e = 0.2f;
+        n = Vector3.up;
+        if (!TryTerrainHeight(p + new Vector3(e, 0f, 0f), out float hx1) || !TryTerrainHeight(p - new Vector3(e, 0f, 0f), out float hx0) ||
+            !TryTerrainHeight(p + new Vector3(0f, 0f, e), out float hz1) || !TryTerrainHeight(p - new Vector3(0f, 0f, e), out float hz0))
+            return false;
+        n = new Vector3(hx0 - hx1, 2f * e, hz0 - hz1).normalized;
+        return true;
+    }
+
+    void SetPosition(Vector3 p)
+    {
+        cc.enabled = false;
+        transform.position = p;
+        cc.enabled = true;
+    }
+
     void SnapToGround(bool force)
     {
         if (!snapToRSTerrain || RSTerrain.All.Count == 0) return;
         if (!TryTerrainHeight(transform.position, out float h)) return;
         var p = transform.position;
-        if (p.y < h || (force && p.y > h))
+        // 위로 끌어올리기는 콜라이더 없는 지형이거나 바닥을 뚫고 빠졌을 때만 (안 그러면 경사 제한을 무시하고 둑 · 절벽을 타고 오른다)
+        float under = TerrainHasCollider(p) ? 0.3f : 0f;
+        if (p.y < h - under || (force && p.y > h))
         {
             cc.enabled = false;
             transform.position = new Vector3(p.x, h, p.z);
             cc.enabled = true;
             if (vy < 0f) vy = 0f;
         }
+    }
+
+    static bool TerrainHasCollider(Vector3 world)
+    {
+        foreach (var t in RSTerrain.All)
+        {
+            if (t == null || !t.HasHeights || !t.generateCollider) continue;
+            var l = t.transform.InverseTransformPoint(world);
+            if (t.InsideXZ(l.x, l.z)) return true;
+        }
+        return false;
     }
 
     static bool TryTerrainHeight(Vector3 world, out float h)
@@ -419,10 +582,10 @@ public class RSSimpleCharacter : MonoBehaviour
     }
 
     // ── 입력 (Input System / 예전 Input Manager) ──
-    void ReadInput(out Vector2 move, out bool run, out bool jump, out float rot, out float scroll,
+    void ReadInput(out Vector2 move, out bool run, out float rot, out float scroll,
                    out Vector2 orbit, out float tilt, out bool resetCam)
     {
-        move = Vector2.zero; run = false; jump = false; rot = 0f; scroll = 0f;
+        move = Vector2.zero; run = false; rot = 0f; scroll = 0f;
         orbit = Vector2.zero; tilt = 0f; resetCam = false;
 #if ENABLE_INPUT_SYSTEM
         var kb = Keyboard.current;
@@ -433,7 +596,6 @@ public class RSSimpleCharacter : MonoBehaviour
             if (kb.sKey.isPressed || kb.downArrowKey.isPressed) move.y -= 1f;
             if (kb.wKey.isPressed || kb.upArrowKey.isPressed) move.y += 1f;
             run |= kb.leftShiftKey.isPressed || kb.rightShiftKey.isPressed;
-            jump |= kb.spaceKey.wasPressedThisFrame;
             if (kb.qKey.wasPressedThisFrame) rot -= 1f;
             if (kb.eKey.wasPressedThisFrame) rot += 1f;
             if (kb.rKey.isPressed) tilt += 1f;
@@ -448,7 +610,6 @@ public class RSSimpleCharacter : MonoBehaviour
             Vector2 s = gp.leftStick.ReadValue();
             if (s.sqrMagnitude > 0.04f) move += s;
             run |= gp.leftTrigger.ReadValue() > 0.5f;
-            jump |= gp.buttonSouth.wasPressedThisFrame;
             if (gp.leftShoulder.wasPressedThisFrame) rot -= 1f;
             if (gp.rightShoulder.wasPressedThisFrame) rot += 1f;
             Vector2 rs = gp.rightStick.ReadValue();
@@ -474,7 +635,6 @@ public class RSSimpleCharacter : MonoBehaviour
 #elif ENABLE_LEGACY_INPUT_MANAGER
         move = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
         run = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
-        jump = Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.JoystickButton0);
         if (Input.GetKeyDown(KeyCode.Q)) rot -= 1f;
         if (Input.GetKeyDown(KeyCode.E)) rot += 1f;
         if (Input.GetKey(KeyCode.R)) tilt += 1f;

@@ -31,7 +31,7 @@ Material:
     - _Clouds: 0.35
     - _Dither: 0.7
     - _DitherPixel: 2
-    - _GlowAmount: 1.089331
+    - _GlowAmount: 0.15
     - _HorizonHeight: 0.35
     - _IsMoon: 0
     - _MoonSize: 0.035
@@ -41,11 +41,11 @@ Material:
     - _SunGlow: 1
     - _SunSize: 0.045
     m_Colors:
-    - _GlowColor: {r: 1, g: 0.4865745, b: 0.2578268, a: 1}
-    - _GroundColor: {r: 0.34296432, g: 0.19598114, b: 0.111999996, a: 0.35}
-    - _HorizonColor: {r: 0.9798981, g: 0.5599461, b: 0.32, a: 1}
-    - _LightDir: {r: -0.501108, g: 0.20595458, b: -0.8405198, a: 0}
-    - _SunColor: {r: 0.99500024, g: 0.74500227, b: 0.56500113, a: 1}
-    - _ZenithColor: {r: 0.24332748, g: 0.28332597, b: 0.49998933, a: 1}
+    - _GlowColor: {r: 1, g: 0.87930137, b: 0.7293014, a: 1}
+    - _GroundColor: {r: 0.24814999, g: 0.287, b: 0.31885, a: 0.35}
+    - _HorizonColor: {r: 0.709, g: 0.82, b: 0.911, a: 1}
+    - _LightDir: {r: 0.3315006, g: 0.8400399, b: -0.42946532, a: 0}
+    - _SunColor: {r: 1, g: 0.93599975, b: 0.8142495, a: 1}
+    - _ZenithColor: {r: 0.3, g: 0.5, b: 0.82, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

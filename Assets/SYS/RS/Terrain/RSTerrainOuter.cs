@@ -59,9 +59,15 @@ namespace RealSteel.Terrain
                         + RSMath.SNoise(x, z, bumpFreq, 1, seed) * bumpAmp;
             float h = Mathf.Lerp(edgeH, baseH, tBlend);
 
-            // 솟기
-            float span = Mathf.Max(1f, outerWidth - outerFlat);
-            float t = Mathf.Clamp01((d - outerFlat) / span);
+            // 솟기 (카메라 쪽 = 남쪽은 outerFrontFlat 만큼 더 평평하게. 모서리는 방향에 따라 섞는다)
+            float flatHere = outerFlat;
+            if (outerFrontFlat > 0f && z < -hz)
+            {
+                float south = Mathf.Clamp01((-hz - z) / Mathf.Max(0.001f, d));
+                flatHere = Mathf.Lerp(outerFlat, Mathf.Max(outerFlat, outerFrontFlat), RSMath.SmoothStep(south));
+            }
+            float span = Mathf.Max(1f, outerWidth - flatHere);
+            float t = Mathf.Clamp01((d - flatHere) / span);
             float sky = Mathf.Max(0.1f, 1f + outerSkylineVar * RSMath.SNoise(x, z, 0.035f, 61, seed));
             float rise = Mathf.Max(0f, outerRise) * sky * Mathf.Pow(t, Mathf.Max(0.5f, outerRiseCurve));
             float grow = RSMath.SmoothStep(Mathf.Clamp01(t * 3f));

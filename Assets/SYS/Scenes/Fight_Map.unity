@@ -2331,6 +2331,7 @@ GameObject:
   - component: {fileID: 871041233}
   - component: {fileID: 871041232}
   - component: {fileID: 871041235}
+  - component: {fileID: 529829482}
   m_Layer: 0
   m_Name: TestCharacter
   m_TagString: Untagged
@@ -2382,6 +2383,19 @@ MonoBehaviour:
   walkAnimSpeed: 0.75
   autoSeeThrough: 1
   autoFoliagePush: 1
+--- !u!114 &529829482
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 871041231}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e96b55827f42d0b4c32aa206c75d78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  shader: {fileID: 4800000, guid: c6710f7f04c94e6b85745b4443078fdc, type: 3}
 --- !u!143 &871041233
 CharacterController:
   m_ObjectHideFlags: 0

@@ -97,6 +97,8 @@ namespace RealSteel.Terrain
         public float outerCell = 1f;
         [Tooltip("가장자리에서 평평하게 이어지는 폭 (m). 이 뒤부터 솟는다")]
         public float outerFlat = 3f;
+        [Tooltip("카메라 쪽(남쪽, -Z) 외곽만 이 폭까지 평평하게 둔다 (m). 정면 고정 카메라는 캐릭터 뒤 12 m 쯤에 있어서, 남쪽이 솟으면 카메라가 언덕 속에 들어가거나 언덕이 화면을 가린다. 0 = 다른 변과 똑같이 솟음")]
+        public float outerFrontFlat = 0f;
         [Tooltip("가장 바깥 높이 (m). 8 ~ 12 면 둘러싼 언덕 · 고철 산")]
         public float outerRise = 9f;
         [Range(0.5f, 4f), Tooltip("솟는 모양. 1 = 일정한 경사, 2 안팎 = 처음엔 완만하다 바깥에서 가파르게 (분지)")]

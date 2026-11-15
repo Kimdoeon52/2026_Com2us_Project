@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e95e82d7e5700e043b761bd514a686df, type: 3}
   m_Name: BooberShotProjEnhanced
-  m_EditorClassIdentifier:
+  m_EditorClassIdentifier: 
   speed: 8
   lifetimeFrames: 45
   hitBox:
@@ -21,11 +21,19 @@ MonoBehaviour:
     width: 0.16
     height: 0.1
   animatorController: {fileID: 9100000, guid: ba5c30d72b3c0b14280aaa7fcf2f1fcd, type: 2}
-  flyStateName:
-  impactStateName:
+  flyStateName: 
+  impactStateName: 
   impactFrames: 15
   <ExplosionRadius>k__BackingField: 2.5
   <HitRobots>k__BackingField: 1
   <HitBoss>k__BackingField: 1
   <TriggerFieldGimmicks>k__BackingField: 1
-  explosionVfx: []
+  explosionVfx:
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    offset: {x: -0.15, y: 0.093}
+    rotation: 90
+    flipWithFacing: 1
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0
+    sortingOrderOffset: 5

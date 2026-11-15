@@ -1,4 +1,5 @@
 using Michsky.UI.Heat;
+using RealSteel.Sound;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -121,9 +122,21 @@ namespace RealSteel.MainMenu
 #endif
         }
 
+        // 설정 > 사운드 슬라이더 → 공용 사운드 매니저 (씬에 없으면 실행 중에 자동으로 만들어짐)
         public void SetMasterVolume(float volume)
         {
             AudioListener.volume = Mathf.Clamp01(volume);
+            if (Application.isPlaying) SoundManager.Instance?.SetMasterVolume(volume);
+        }
+
+        public void SetBgmVolume(float volume)
+        {
+            if (Application.isPlaying) SoundManager.Instance?.SetBgmVolume(volume);
+        }
+
+        public void SetSfxVolume(float volume)
+        {
+            if (Application.isPlaying) SoundManager.Instance?.SetSfxVolume(volume);
         }
 
         // Heat GraphicsManager.SetVSync는 vSyncCount = 2 (주사율 절반)라서 따로 둠

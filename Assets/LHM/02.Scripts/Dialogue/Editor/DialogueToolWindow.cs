@@ -88,6 +88,7 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("원신 스타일 대화창 (프리팹 수정)", GenshinDialogueStyleSetup.Setup, GenshinDialogueStyleSetup.IsApplied),
                 new ToolItem("원신 스타일 대화창 (현재 씬, 프리팹 아닌 대화창)", GenshinDialogueStyleSetup.SetupScene, GenshinDialogueStyleSetup.IsAppliedInScene),
                 new ToolItem("NPC 스프라이트", NpcSpriteSetup.Setup, NpcSpriteSetup.IsApplied),
+                new ToolItem("집 문 → 집 씬 이동 ([E] 들어가기, 문 선택 또는 자동)", DoorSetup.Setup, DoorSetup.Exists),
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
             new ToolGroup("튜토리얼 화면",
                 new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>),

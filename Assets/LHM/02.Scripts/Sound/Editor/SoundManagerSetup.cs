@@ -25,9 +25,13 @@ namespace RealSteel.Sound.EditorTools
 
         internal static bool Exists()
         {
-            return Object.FindObjectsByType<SoundManager>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                .Any(m => m.gameObject.scene == SceneManager.GetActiveScene());
+            Scene scene = SceneManager.GetActiveScene();
+            bool inScene = Object.FindObjectsByType<SoundManager>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .Any(m => m.gameObject.scene == scene);
+            return inScene && !NeedsSliders(scene);
         }
+
+        private static bool NeedsSliders(Scene scene) => FindMasterSlider(scene) != null && FindSlider(scene, SoundManager.BgmVolumeKey) == null;
 
         internal static void Setup()
         {
@@ -35,7 +39,7 @@ namespace RealSteel.Sound.EditorTools
             bool hasPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath) != null;
             bool inScene = Exists();
             SliderManager master = FindMasterSlider(scene);
-            bool needSliders = master != null && FindSlider(scene, SoundManager.BgmVolumeKey) == null;
+            bool needSliders = NeedsSliders(scene);
 
             if (hasPrefab && inScene && !needSliders)
             {
@@ -159,11 +163,23 @@ namespace RealSteel.Sound.EditorTools
                 return;
             }
 
+            // 메인 메뉴 컨트롤러가 있으면 거기로 (전체 음량과 같은 경로 → 사운드 매니저로 전달)
+            var controller = Object.FindObjectsByType<RealSteel.MainMenu.MainMenuController>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+                .FirstOrDefault(c => c.gameObject.scene == master.gameObject.scene);
+
             int index = element.GetSiblingIndex();
             SliderManager bgm = AddSlider(list, ++index, "BGM Volume", "BGM 음량", SoundManager.BgmVolumeKey, 0.7f);
-            if (bgm != null) HeatKit.Listen(bgm.onValueChanged, manager.SetBgmVolume);
+            if (bgm != null)
+            {
+                if (controller != null) HeatKit.Listen(bgm.onValueChanged, controller.SetBgmVolume);
+                else HeatKit.Listen(bgm.onValueChanged, manager.SetBgmVolume);
+            }
             SliderManager sfx = AddSlider(list, ++index, "SFX Volume", "효과음 음량", SoundManager.SfxVolumeKey, 1f);
-            if (sfx != null) HeatKit.Listen(sfx.onValueChanged, manager.SetSfxVolume);
+            if (sfx != null)
+            {
+                if (controller != null) HeatKit.Listen(sfx.onValueChanged, controller.SetSfxVolume);
+                else HeatKit.Listen(sfx.onValueChanged, manager.SetSfxVolume);
+            }
             log.AppendLine("- 설정 > 사운드: 'BGM 음량' · '효과음 음량' 슬라이더 추가 (값은 PlayerPrefs에 저장, 모든 씬에 적용)");
         }
 

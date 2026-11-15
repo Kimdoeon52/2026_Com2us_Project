@@ -7,7 +7,7 @@ using Dropdown = Michsky.UI.Heat.Dropdown;
 
 namespace RealSteel.MainMenu.EditorTools
 {
-    // 설정 패널: 화면 (해상도 · 화면 모드 · 수직 동기화) + 사운드 (전체 음량)
+    // 설정 패널: 화면 (해상도 · 화면 모드 · 수직 동기화) + 사운드 (전체 · BGM · 효과음 음량)
     internal static class MainMenuSettingsBuilder
     {
         private const string Elements = "UI Elements/Settings/";
@@ -39,12 +39,14 @@ namespace RealSteel.MainMenu.EditorTools
 
             Header(list, "사운드");
             BuildMasterVolume(ctx, list);
+            BuildVolume(ctx, list, "BGM Volume", "BGM 음량", RealSteel.Sound.SoundManager.BgmVolumeKey, 0.7f, ctx.controller.SetBgmVolume);
+            BuildVolume(ctx, list, "SFX Volume", "효과음 음량", RealSteel.Sound.SoundManager.SfxVolumeKey, 1f, ctx.controller.SetSfxVolume);
 
             Transform hotkeys = MainMenuBuilder.Hotkeys(content);
             HotkeyEvent back = MainMenuBuilder.Hotkey(hotkeys, "Back", "뒤로");
             Listen(back.onHotkeyPress, ctx.controller.OpenHome);
 
-            ctx.log.AppendLine("- 설정: 해상도 · 화면 모드 · 수직 동기화 · 전체 음량 (값은 PlayerPrefs에 저장)");
+            ctx.log.AppendLine("- 설정: 해상도 · 화면 모드 · 수직 동기화 · 전체 · BGM · 효과음 음량 (값은 PlayerPrefs에 저장, 공용 사운드 매니저로 전달)");
             return hotkeys;
         }
 
@@ -118,6 +120,24 @@ namespace RealSteel.MainMenu.EditorTools
             slider.mainSlider.wholeNumbers = false;
             slider.mainSlider.value = 1f;
             Listen(slider.onValueChanged, ctx.controller.SetMasterVolume);
+        }
+
+        private static void BuildVolume(MainMenuBuilder.Context ctx, Transform parent, string name, string label, string saveKey, float defaultValue, UnityEngine.Events.UnityAction<float> target)
+        {
+            GameObject element = Element(parent, "Settings Element (Slider).prefab", name, label);
+            var slider = element.GetComponentInChildren<SliderManager>(true);
+            if (slider == null || slider.mainSlider == null) return;
+
+            // 저장 키는 SoundManager가 시작할 때 읽는 키와 같아야 함
+            slider.saveValue = true;
+            slider.saveKey = saveKey;
+            slider.usePercent = true;
+            slider.useRoundValue = false;
+            slider.mainSlider.minValue = 0f;
+            slider.mainSlider.maxValue = 1f;
+            slider.mainSlider.wholeNumbers = false;
+            slider.mainSlider.value = defaultValue;
+            Listen(slider.onValueChanged, target);
         }
 
         private static GameObject Element(Transform parent, string prefab, string name, string label)

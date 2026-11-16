@@ -104,6 +104,9 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     /// <summary>땅에 있는지. RobotView(점프/착지 그림), AI(상대가 공중인지), HitReactionSystem(공중 경직 여부)이 읽는다</summary>
     public bool IsGrounded => isGrounded;
 
+    /// <summary>바닥 높이(Init 때 발밑). RobotView(바닥 그림자 — 점프 높이 = 지금 y − 바닥)가 읽는다</summary>
+    public float GroundY => groundY;
+
     /// <summary>현재 위아래 속도. 양수면 올라가는 중</summary>
     public float VerticalVelocity => verticalVelocity;
 

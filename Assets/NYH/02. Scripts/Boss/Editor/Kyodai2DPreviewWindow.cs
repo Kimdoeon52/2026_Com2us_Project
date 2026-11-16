@@ -352,6 +352,8 @@ public class Kyodai2DPreviewWindow : EditorWindow
         public Quaternion visualRot, shadowRot;
         public Sprite sprite;
         public Color color, shadowColor;
+        public Sprite shadowSprite;   // 2026-11-16: 그림자 시스템이 그림을 코드 생성(저장 안 됨)으로 바꾸므로 원래 그림도 되돌린다
+        public bool shadowEnabled;
         public Vector2 boxSize, boxOffset;
     }
 
@@ -378,6 +380,7 @@ public class Kyodai2DPreviewWindow : EditorWindow
             {
                 s.shadowPos = h.Shadow.transform.position; s.shadowRot = h.Shadow.transform.rotation;
                 s.shadowScale = h.Shadow.transform.localScale; s.shadowColor = h.Shadow.color;
+                s.shadowSprite = h.Shadow.sprite; s.shadowEnabled = h.Shadow.enabled;
             }
             if (h.HurtZone != null) { s.boxSize = h.HurtZone.Box.size; s.boxOffset = h.HurtZone.Box.offset; }
             snapshots.Add(s);
@@ -415,6 +418,7 @@ public class Kyodai2DPreviewWindow : EditorWindow
             {
                 s.hand.Shadow.transform.position = s.shadowPos; s.hand.Shadow.transform.rotation = s.shadowRot;
                 s.hand.Shadow.transform.localScale = s.shadowScale; s.hand.Shadow.color = s.shadowColor;
+                s.hand.Shadow.sprite = s.shadowSprite; s.hand.Shadow.enabled = s.shadowEnabled;
             }
             if (s.hand.HurtZone != null) { s.hand.HurtZone.Box.size = s.boxSize; s.hand.HurtZone.Box.offset = s.boxOffset; }
         }

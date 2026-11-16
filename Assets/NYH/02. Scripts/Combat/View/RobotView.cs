@@ -40,6 +40,10 @@ public class RobotView : MonoBehaviour
     // 꺼져 있으면 마지막 장에서 멈춘다 — "고정" 방식은 클립 설정으로 고른다
     [Tooltip("폭발이 끝난 뒤 계속 보여줄 스테이트(잔해). 비우면 예전처럼 스프라이트를 끈다")]
     [SerializeField] private string deadStateName;
+    [Header("바닥 그림자 (2026-11-16 — 점프하면 작고 옅어짐)")]
+    [Tooltip("켜면 발밑에 그림자를 그린다. 크기·옅어짐 값은 자식 '바닥 그림자'의 GroundShadow — 씬에서 미리 만들어 두면 그 값을 쓴다")]
+    [SerializeField] private bool castGroundShadow = true;
+
     [SerializeField] private RuntimeAnimatorController explosionController;
     [SerializeField] private string explosionStateName;
     [Tooltip("TODO: 임시값. 폭발이 하나씩 터지는 간격(프레임)")]
@@ -127,6 +131,25 @@ public class RobotView : MonoBehaviour
         if (executor != null) executor.OnDamaged += OnDamaged;
 
         EnsureEffectComponents(executor);
+
+        // 바닥 그림자 — 로봇 그림 바로 뒤
+        if (castGroundShadow && mover != null)
+            groundShadow = GroundShadow.Ensure(transform, "바닥 그림자", spriteRenderer != null ? spriteRenderer.sortingOrder - 1 : 0);
+    }
+
+    private GroundShadow groundShadow;
+
+    // 렌더 직전: 발밑 바닥에 그림자. 점프 높이(지금 y − 바닥)만큼 작고 옅어진다. 그림이 꺼지면(사망 후 사라짐) 같이 끔
+    private void UpdateGroundShadow()
+    {
+        if (groundShadow == null) return;
+        if (spriteRenderer != null && !spriteRenderer.enabled)
+        {
+            groundShadow.Hide();
+            return;
+        }
+        Vector3 p = transform.position;
+        groundShadow.Place(p.x, mover.GroundY, p.y - mover.GroundY);
     }
 
     /// <summary>
@@ -395,6 +418,7 @@ public class RobotView : MonoBehaviour
     //  · 때린 쪽의 "정지 중 느린 움직임"은 여기가 아니라 애니메이션 배속(UpdateHitStopPause)·RobotMover(이동·낙하)가 맡는다
     private void LateUpdate()
     {
+        UpdateGroundShadow();
         if (visualTransform == null) return;
 
         Vector3 shake = Vector3.zero;

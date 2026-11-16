@@ -88,6 +88,24 @@ public class ActionVfxEntry
     [Tooltip("로봇 그림보다 몇 칸 앞에 그릴지 (sortingOrder 가산)")]
     public int sortingOrderOffset = 1;
 
+    [Header("차지 단계별 크기 (차지 샷 등 홀드형)")]
+    [Tooltip("차지 단계별 크기 배율. [0] = 1단계, [1] = 2단계, [2] = 3단계. scale·scaleXY에 한 번 더 곱해진다. " +
+             "비워두면 단계와 무관하게 크기 고정. 단계가 목록보다 높으면 마지막 값을 쓴다")]
+    public float[] chargeLevelScales;
+
+    [Tooltip("단계가 바뀔 때 새 크기까지 걸리는 시간(초). 0이면 즉시 바뀐다")]
+    [Min(0f)] public float chargeScaleBlendTime = 0.15f;
+
+    /// <summary>차지 단계 level의 크기 배율. 목록이 비었으면 1</summary>
+    public float ChargeScale(int level)
+    {
+        if (chargeLevelScales == null || chargeLevelScales.Length == 0) return 1f;
+        float s = chargeLevelScales[Math.Clamp(level, 0, chargeLevelScales.Length - 1)];
+        return s > 0f ? s : 1f; // 인스펙터 + 버튼으로 생긴 0은 1로 취급 (안 그러면 이펙트가 사라진다)
+    }
+
+    public bool ScalesWithCharge => chargeLevelScales != null && chargeLevelScales.Length > 0;
+
     // 구간 범위 — Startup=0, Active=1, Recovery=2
     public int StartIndex => phase switch
     {

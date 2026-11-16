@@ -280,8 +280,16 @@ public class RobotView : MonoBehaviour
 
         // 길이를 읽기 전에 speed를 1로 되돌리고 Update(0)으로 상태를 확정한다. 안 그러면 Play 직후 이전 상태/속도가 섞여 길이가 틀리게 읽힌다
         animator.speed = 1f;
-        animator.Play(action.AnimationClipName, 0, 0f);
-        animator.Update(0f);
+
+        // 최. 추가 — 진행 중 행동 교체(차지 단계 등)인데 이미 같은 스테이트를 재생 중이면 처음부터 다시 틀지 않는다.
+        // 자세가 1프레임으로 튀지 않게 재생 위치는 그대로 두고, 아래에서 속도만 새 행동 길이에 맞춘다
+        bool continueSameState = actionState != null && actionState.IsSwappingAction
+                                 && animator.GetCurrentAnimatorStateInfo(0).IsName(action.AnimationClipName);
+        if (!continueSameState)
+        {
+            animator.Play(action.AnimationClipName, 0, 0f);
+            animator.Update(0f);
+        }
 
         float clipLength = animator.GetCurrentAnimatorStateInfo(0).length; // 원본 클립이 실제로 몇 초짜리인지
 

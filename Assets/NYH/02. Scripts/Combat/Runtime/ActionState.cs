@@ -122,6 +122,23 @@ public class ActionState
     {
         modifierResolver = resolver;
     }
+
+    /// <summary>
+    /// 지금 행동의 차지 단계 (0 = 기본). 홀드형 러너(차지 샷 등)가 누른 시간에 따라 올린다.
+    /// 판정과는 무관한 연출용 값 — ActionVfxPlayer가 차지 중 이펙트 크기를 바꿀 때 읽는다. Begin마다 0으로 돌아간다
+    /// </summary>
+    public int ChargeLevel { get; private set; }
+
+    /// <summary>ChargeLevel이 바뀌는 순간 (새 단계)</summary>
+    public event Action<int> OnChargeLevelChanged;
+
+    public void SetChargeLevel(int level)
+    {
+        if (level < 0) level = 0;
+        if (level == ChargeLevel) return;
+        ChargeLevel = level;
+        OnChargeLevelChanged?.Invoke(level);
+    }
     #endregion
 
     /// <summary>
@@ -154,6 +171,7 @@ public class ActionState
         FrameInPhase = 0;
         GlobalFrame = 0;
         HasHitThisAction = false; // 새 행동이 시작됐으니 "이미 맞혔음" 기록도 초기화 — 이번 공격은 아직 아무도 못 맞혔다
+        ChargeLevel = 0;          // 최. 추가 — 이전 행동의 차지 단계가 남지 않게 (이벤트는 안 쏜다: 이펙트는 Begin에서 새로 만들어진다)
         Phase = ActionPhase.Startup;
         OnActionBegin?.Invoke(action);
     }
@@ -240,8 +258,20 @@ public class ActionState
         Timeline = ResolvedAction.Resolve(action, BuildAdjustment(Resolved));
         HasHitThisAction = false;
 
-        if (restartPresentation) OnActionBegin?.Invoke(action);
+        if (restartPresentation)
+        {
+            // 구독자(RobotView)가 "새 행동 시작"과 "진행 중 행동 교체"를 구분할 수 있게 이벤트 동안만 켠다
+            IsSwappingAction = true;
+            try { OnActionBegin?.Invoke(action); }
+            finally { IsSwappingAction = false; }
+        }
     }
+
+    /// <summary>
+    /// 지금 나가는 OnActionBegin이 진행 중 행동 교체(SwapExternalAction — 차지 단계, 강화판정)인가.
+    /// RobotView는 이때 같은 스테이트면 애니메이션을 처음부터 다시 틀지 않고 이어서 재생한다
+    /// </summary>
+    public bool IsSwappingAction { get; private set; }
 
     /// <summary>
     /// 러너의 구간·프레임을 바깥(HitDetection, RobotView 등)에 보이는 값으로 옮긴다. 매 틱 1회.

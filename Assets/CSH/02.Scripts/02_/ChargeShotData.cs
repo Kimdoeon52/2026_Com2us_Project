@@ -23,6 +23,14 @@ public class ChargeShotData : HoldSkillData
         return this;
     }
 
+    // 지금 누른 시간이면 몇 단계인지 (0 = 1단계, 1 = 2단계, 2 = 3단계). SelectStage와 같은 규칙 — 빈 단계는 건너뛴다
+    private int StageIndex(int heldFrames)
+    {
+        if (heldFrames >= stage3Frames && stage3 != null) return 2;
+        if (heldFrames >= stage2Frames && stage2 != null) return 1;
+        return 0;
+    }
+
     private sealed class Runner : HoldSkillRunner
     {
         private readonly ChargeShotData data;
@@ -30,6 +38,12 @@ public class ChargeShotData : HoldSkillData
 
         // 강화 없이 뗄 때 한 번 불린다. 돌려준 에셋으로 판정이 바뀌고 쿨타임·탄이 확정된다
         protected override ActionData SelectReleaseVariant(int heldFrames) => data.SelectStage(heldFrames);
+
+        // 차지 중 매 틱: 단계가 오르면 ActionState에 알린다 → ActionVfxPlayer가 차지 이펙트 크기를 바꾼다 (연출 전용)
+        protected override void OnHoldTick(in SkillInputFrame input)
+        {
+            Ctx.State.SetChargeLevel(data.StageIndex(HeldFrames));
+        }
 
         // 강화(홀드 중 D)는 누르는 순간 탄·쿨이 확정되고 강화 에셋으로 바뀐다. 단계는 아직 모르므로
         // 뗄 때 단계 판정으로 다시 바꾸고 그 행동의 피해 보정(State.Resolved, KKH 계산식이 읽는 값)에 배율을 곱한다.

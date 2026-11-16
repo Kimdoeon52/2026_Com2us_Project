@@ -15,8 +15,8 @@ MonoBehaviour:
   actionName: ChargeShot
   source: 1
   requiredPart: 2
-  startupFrames: 17
-  activeFrames: 8
+  startupFrames: 19
+  activeFrames: 6
   recoveryFrames: 30
   isInvincibleDuringActive: 0
   isGuardable: 1
@@ -28,7 +28,8 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Straight
   activeClipName: 
-  keepClipSpeed: 0
+  activeClipFrames: 0
+  keepClipSpeed: 1
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: 0
@@ -39,7 +40,45 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 0
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.29, y: 0.28}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
+    sortingOrderOffset: 2
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 2
+    repeat: 1
+    repeatIntervalFrames: 6
+    repeatStartOffsetFrames: 4
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
+    sortingOrderOffset: 5
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
+  perBoxSeparateHits: 0
   cooldownFrames: 60
   cooldownOwner: {fileID: 11400000, guid: ceb7c46d469c6da4faa0bd5bac720976, type: 2}
   cylinderCost: 1
@@ -90,6 +129,21 @@ MonoBehaviour:
     length: 15
     startFrame: 0
     endFrame: 0
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: 0.14
+      y: 0
+      width: 0.48
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 3
+    startOffset: 0
+    length: 15
+    startFrame: 0
+    endFrame: 0
   holdMode: 0
   minHoldFrames: 0
   earlyReleaseCooldownScale: 1
@@ -102,3 +156,4 @@ MonoBehaviour:
   stage3Frames: 90
   stage2: {fileID: 0}
   stage3: {fileID: 0}
+  enhancedDamageScale: 1.5

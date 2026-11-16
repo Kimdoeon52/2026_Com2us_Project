@@ -57,22 +57,8 @@ MonoBehaviour:
     scaleXY: {x: 1, y: 0.75}
     playbackSpeed: 0.8
     sortingOrderOffset: 1
-  - prefab: {fileID: 0}
-    phase: 2
-    repeat: 0
-    repeatIntervalFrames: 0
-    repeatStartOffsetFrames: 0
-    endMode: 0
-    offset: {x: 0, y: 0.37}
-    rotation: -40.7
-    XYRotation: {x: 0, y: 0}
-    followOwner: 0
-    flipWithFacing: 1
-    flipByRotation: 0
-    scale: 0.1
-    scaleXY: {x: 1, y: 1}
-    playbackSpeed: 2
-    sortingOrderOffset: 1
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 0

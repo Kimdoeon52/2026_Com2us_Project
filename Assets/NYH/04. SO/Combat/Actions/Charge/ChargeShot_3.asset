@@ -26,8 +26,9 @@ MonoBehaviour:
   damage: 60
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: Straight
-  activeClipName: 
+  animationClipName: Player_Charge
+  activeClipName: Player_ChargeShot
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -39,7 +40,27 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 0
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.29, y: 0.28}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
+    sortingOrderOffset: 2
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0
   perBoxDamage: 0
+  perBoxSeparateHits: 0
   cooldownFrames: 60
   cooldownOwner: {fileID: 11400000, guid: ceb7c46d469c6da4faa0bd5bac720976, type: 2}
   cylinderCost: 0
@@ -80,8 +101,8 @@ MonoBehaviour:
     rect:
       serializedVersion: 2
       x: 0.14
-      y: 0.33
-      width: 0.25
+      y: 0.12
+      width: 0.48
       height: 0.5
     rotation: 0
     damageScale: 0
@@ -102,3 +123,4 @@ MonoBehaviour:
   stage3Frames: 90
   stage2: {fileID: 0}
   stage3: {fileID: 0}
+  enhancedDamageScale: 1.5

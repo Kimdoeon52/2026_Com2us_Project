@@ -28,6 +28,7 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Straight
   activeClipName: 
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -40,32 +41,150 @@ MonoBehaviour:
   projectileMuzzle: {x: 0.15, y: 0.27}
   flame: {fileID: 0}
   vfx:
-  - prefab: {fileID: 3676818643683357345, guid: 056d882eb6f11c5438205c72d1e9795a, type: 3}
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
     phase: 5
     repeat: 0
     repeatIntervalFrames: 10
     repeatStartOffsetFrames: 0
     endMode: 2
     offset: {x: 0.81, y: 0.29}
-    rotation: -140
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
-    scale: 0.5
-    playbackSpeed: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
     sortingOrderOffset: 20
-  - prefab: {fileID: 8369145054601909066, guid: 540a174685556db4897e6c5b5dc9cbe6, type: 3}
-    phase: 2
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 5
     repeat: 0
     repeatIntervalFrames: 10
     repeatStartOffsetFrames: 0
     endMode: 2
-    offset: {x: 0.81, y: 0.29}
-    rotation: 90
+    offset: {x: 0.81, y: 0.11}
+    rotation: 80
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
-    playbackSpeed: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 5
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.4}
+    rotation: 100
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 5
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.02}
+    rotation: 70
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
+    phase: 5
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.5}
+    rotation: 110
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 6
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0.81, y: 0.29}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
     sortingOrderOffset: 5
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 3
+    repeat: 0
+    repeatIntervalFrames: 0
+    repeatStartOffsetFrames: 10
+    endMode: 2
+    offset: {x: 0.9, y: 0.29}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 0.8
+    sortingOrderOffset: 5
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0
+  - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
+    phase: 3
+    repeat: 0
+    repeatIntervalFrames: 1
+    repeatStartOffsetFrames: 36
+    endMode: 2
+    offset: {x: 1, y: 0.29}
+    rotation: 90
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: 6
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0
   perBoxDamage: 1
   perBoxSeparateHits: 1
   cooldownFrames: 60

@@ -761,6 +761,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad8a534a368abc4082835de48579edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  style: {fileID: 0}
   spawnOffset: {x: 0, y: 0.75}
   lifetimeSeconds: 0.8
   riseDistance: 0.35
@@ -822,7 +823,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   basic: {fileID: 11400000, guid: 94c8d8d7a06232b4b96f73048748b386, type: 2}
-  leftArm: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}
+  leftArm: {fileID: 11400000, guid: ceb7c46d469c6da4faa0bd5bac720976, type: 2}
   rightArm: {fileID: 11400000, guid: a1eb701c456a7af4bb711b788c0bb1a1, type: 2}
   leftLeg: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
   rightLeg: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
@@ -905,6 +906,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad8a534a368abc4082835de48579edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  style: {fileID: 0}
   spawnOffset: {x: 0, y: 0.75}
   lifetimeSeconds: 0.8
   riseDistance: 0.35

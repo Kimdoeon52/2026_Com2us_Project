@@ -20,6 +20,12 @@ public class ActionVfxPlayer : MonoBehaviour
         public GameObject go;
         public ActionVfxEntry entry;
         public Vector3 followOffset;
+
+        // 차지 단계별 크기 — baseScale(생성 시 크기, 좌우 반전 부호 포함)에 chargeScale을 곱한다
+        public Vector3 baseScale;
+        public float chargeScale = 1f;
+        public float targetChargeScale = 1f;
+        public float chargeBlendSpeed;   // 초당 배율 변화량 — 단계가 바뀔 때 정해진다
     }
 
     // 반복 생성 항목 — 구간 시작 GlobalFrame부터 interval 틱마다 1개씩 더 만든다
@@ -55,6 +61,7 @@ public class ActionVfxPlayer : MonoBehaviour
         state.OnActionRecoveryStart += OnRecoveryStart;
         state.OnActionEnd += OnEnd;
         state.OnDead += OnDead;
+        state.OnChargeLevelChanged += OnChargeLevelChanged;
     }
 
     private void OnDestroy()
@@ -66,6 +73,7 @@ public class ActionVfxPlayer : MonoBehaviour
             state.OnActionRecoveryStart -= OnRecoveryStart;
             state.OnActionEnd -= OnEnd;
             state.OnDead -= OnDead;
+            state.OnChargeLevelChanged -= OnChargeLevelChanged;
         }
         EndAll(ActionVfxEndMode.Destroy);
     }
@@ -80,6 +88,27 @@ public class ActionVfxPlayer : MonoBehaviour
     private void OnRecoveryStart(ActionData action) => EnterPhase(action, 2);
     private void OnEnd(ActionData action) => EndAll(null);
     private void OnDead() => EndAll(null);
+
+    // 차지 단계가 바뀌었다: 단계별 크기가 설정된 살아 있는 이펙트의 목표 크기를 바꾼다 (실제 변화는 LateUpdate에서 부드럽게)
+    private void OnChargeLevelChanged(int level)
+    {
+        foreach (var l in live)
+        {
+            if (!l.entry.ScalesWithCharge) continue;
+            l.targetChargeScale = l.entry.ChargeScale(level);
+            float blend = l.entry.chargeScaleBlendTime;
+            if (blend <= 0f)
+            {
+                l.chargeScale = l.targetChargeScale;
+                if (l.go != null) l.go.transform.localScale = l.baseScale * l.chargeScale;
+            }
+            else
+            {
+                // 지금 크기에서 목표까지를 blendTime 동안 일정한 속도로 간다
+                l.chargeBlendSpeed = Mathf.Abs(l.targetChargeScale - l.chargeScale) / blend;
+            }
+        }
+    }
 
     // phaseIndex 구간에 들어섰다: 이 구간 전에 끝나는 이펙트를 정리하고, 이 구간에서 시작하는 이펙트를 만든다
     private void EnterPhase(ActionData action, int phaseIndex)
@@ -135,7 +164,17 @@ public class ActionVfxPlayer : MonoBehaviour
         GameObject go = SpawnVisual(entry.prefab, transform.position, entry.offset, entry.rotation, facingRight,
                                     entry.flipWithFacing, CombineScale(entry.scale, entry.scaleXY), entry.playbackSpeed,
                                     RobotView.FindRenderer(this), entry.sortingOrderOffset, entry.XYRotation, entry.flipByRotation);
-        live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
+
+        // 차지 도중에 생성되는 항목(반복 생성 등)은 지금 단계 크기로 바로 시작한다
+        float charge = entry.ChargeScale(state != null ? state.ChargeLevel : 0);
+        Vector3 baseScale = go.transform.localScale;
+        if (charge != 1f) go.transform.localScale = baseScale * charge;
+
+        live.Add(new Live
+        {
+            go = go, entry = entry, followOffset = go.transform.position - transform.position,
+            baseScale = baseScale, chargeScale = charge, targetChargeScale = charge,
+        });
     }
 
     /// <summary>
@@ -290,6 +329,13 @@ public class ActionVfxPlayer : MonoBehaviour
             var l = live[i];
             if (l.go == null) { live.RemoveAt(i); continue; }
             if (l.entry.followOwner) l.go.transform.position = transform.position + l.followOffset;
+
+            if (l.chargeScale != l.targetChargeScale)
+            {
+                // 연출이라 실제 시간으로 보간
+                l.chargeScale = Mathf.MoveTowards(l.chargeScale, l.targetChargeScale, l.chargeBlendSpeed * Time.deltaTime);
+                l.go.transform.localScale = l.baseScale * l.chargeScale;
+            }
         }
     }
 

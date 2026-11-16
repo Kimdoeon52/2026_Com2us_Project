@@ -270,8 +270,18 @@ namespace RealSteel.Dialogue.EditorTools
 
         private static GameObject FindTarget(Scene scene, string[] keywords, out string how)
         {
+            var candidates = scene.GetRootGameObjects()
+                .SelectMany(r => r.GetComponentsInChildren<Transform>(true))
+                .Where(t => keywords.Any(k => t.name.Contains(k)))
+                .ToList();
+
+            // 플레이어(또는 그 자식)를 골라 둔 채 누르면 플레이어가 NPC가 되어 버림 → 선택 무시
+            // 이름이 맞는 오브젝트가 씬에 있으면 이름과 상관없는 선택보다 그쪽을 우선
             GameObject selected = Selection.activeGameObject;
-            if (selected != null && selected.scene == scene)
+            GameObject player = JunkShopDialogueSetup.FindPlayer(scene);
+            bool selectedIsPlayer = selected != null && player != null && selected.transform.IsChildOf(player.transform);
+            bool selectedMatches = selected != null && keywords.Any(k => selected.name.Contains(k));
+            if (selected != null && selected.scene == scene && !selectedIsPlayer && (selectedMatches || candidates.Count == 0))
             {
                 // 임시 모형을 골랐어도 그 위의 SLOT_ 자리에 붙임 (진짜 모델로 바꿔도 기능이 남도록)
                 Transform slot = selected.transform.parent;
@@ -284,14 +294,12 @@ namespace RealSteel.Dialogue.EditorTools
                 return selected;
             }
 
-            var candidates = scene.GetRootGameObjects()
-                .SelectMany(r => r.GetComponentsInChildren<Transform>(true))
-                .Where(t => keywords.Any(k => t.name.Contains(k)))
-                .ToList();
             Transform best = candidates.FirstOrDefault(t => t.name.StartsWith(SlotPrefix))
                              ?? candidates.FirstOrDefault(t => !t.name.StartsWith(TempPrefix))
                              ?? candidates.FirstOrDefault();
             how = best != null && best.name.StartsWith(SlotPrefix) ? "이름으로 찾음 · 소품 자리" : "이름으로 찾음";
+            if (selectedIsPlayer) how += " (선택한 플레이어는 대상에서 제외)";
+            else if (selected != null && !selectedMatches && best != null) how += $" (선택한 '{selected.name}'은 이름이 달라 제외)";
             return best != null ? best.gameObject : null;
         }
 

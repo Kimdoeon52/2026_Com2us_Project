@@ -28,7 +28,7 @@ namespace RealSteel.Dialogue.EditorTools
         {
             new NpcArt { speakerId = "receptionist", source = "Assets/Sprites/imsinpc/소녀.png", height = 1.6f },
             new NpcArt { speakerId = "junkdealer", source = "Assets/Sprites/imsinpc/mobcha-C.png", height = 1.9f },
-            new NpcArt { speakerId = "auctioneer", source = "Assets/Sprites/NPC-PC.png", spriteName = "NPC-PC_1", height = 1.6f },
+            new NpcArt { speakerId = "auctioneer", source = "Assets/Sprites/NPC/NPC-PC.png", spriteName = "NPC-PC_1", height = 1.6f },
         };
 
         internal static void Setup()
@@ -78,12 +78,26 @@ namespace RealSteel.Dialogue.EditorTools
             }
         }
 
+        // 원본이 다른 폴더로 옮겨졌으면 같은 파일 이름으로 프로젝트에서 찾음 (예: Sprites/NPC-PC.png → Sprites/NPC/NPC-PC.png)
+        private static string ResolveSource(string path, StringBuilder log)
+        {
+            if (File.Exists(Path.GetFullPath(path))) return path;
+
+            string fileName = Path.GetFileName(path);
+            string found = AssetDatabase.FindAssets(Path.GetFileNameWithoutExtension(path))
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .FirstOrDefault(p => Path.GetFileName(p) == fileName);
+            if (found != null) log.AppendLine($"- 원본 위치가 바뀜: {path} → {found} (NpcSpriteSetup.cs의 경로도 고쳐 두세요)");
+            return found ?? path;
+        }
+
         private static Sprite ImportArt(NpcArt art, StringBuilder log)
         {
-            string sourceFull = Path.GetFullPath(art.source);
+            string sourcePath = ResolveSource(art.source, log);
+            string sourceFull = Path.GetFullPath(sourcePath);
             if (!File.Exists(sourceFull))
             {
-                log.AppendLine($"- 실패: 원본 없음 {art.source}");
+                log.AppendLine($"- 실패: 원본 없음 {sourcePath}");
                 return null;
             }
 
@@ -91,18 +105,18 @@ namespace RealSteel.Dialogue.EditorTools
             if (!source.LoadImage(File.ReadAllBytes(sourceFull)))
             {
                 Object.DestroyImmediate(source);
-                log.AppendLine($"- 실패: 그림을 읽지 못함 {art.source}");
+                log.AppendLine($"- 실패: 그림을 읽지 못함 {sourcePath}");
                 return null;
             }
 
             RectInt area = new RectInt(0, 0, source.width, source.height);
             if (!string.IsNullOrEmpty(art.spriteName))
             {
-                Sprite part = AssetDatabase.LoadAllAssetsAtPath(art.source).OfType<Sprite>().FirstOrDefault(sp => sp.name == art.spriteName);
+                Sprite part = AssetDatabase.LoadAllAssetsAtPath(sourcePath).OfType<Sprite>().FirstOrDefault(sp => sp.name == art.spriteName);
                 if (part == null)
                 {
                     Object.DestroyImmediate(source);
-                    log.AppendLine($"- 실패: {art.source}에 '{art.spriteName}' 스프라이트가 없음");
+                    log.AppendLine($"- 실패: {sourcePath}에 '{art.spriteName}' 스프라이트가 없음");
                     return null;
                 }
 
@@ -138,7 +152,7 @@ namespace RealSteel.Dialogue.EditorTools
             importer.SetTextureSettings(settings);
             importer.SaveAndReimport();
 
-            string from = string.IsNullOrEmpty(art.spriteName) ? art.source : $"{art.source} ({art.spriteName})";
+            string from = string.IsNullOrEmpty(art.spriteName) ? sourcePath : $"{sourcePath} ({art.spriteName})";
             log.AppendLine($"- {from} → {path} ({bounds.width}x{bounds.height}px로 여백 자름, 높이 {art.height}m)");
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);
         }
@@ -195,6 +209,14 @@ namespace RealSteel.Dialogue.EditorTools
             if (npc == null)
             {
                 log.AppendLine($"- 주의: Speaker Id '{art.speakerId}'인 NPC가 씬에 없음");
+                return;
+            }
+
+            // NPC 기능이 플레이어에 잘못 붙어 있으면 플레이어 그림('Sprite' 자식)을 덮어쓰게 됨 → 건너뜀
+            GameObject player = JunkShopDialogueSetup.FindPlayer(active);
+            if (player != null && npc.transform.IsChildOf(player.transform))
+            {
+                log.AppendLine($"- 건너뜀: '{art.speakerId}' NPC 기능이 플레이어({player.name})에 붙어 있음 → 'NPC 연결' 버튼으로 NPC 오브젝트에 다시 연결한 뒤 실행하세요");
                 return;
             }
 

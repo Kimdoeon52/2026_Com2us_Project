@@ -54,6 +54,8 @@ namespace RealSteel.Tutorial
         [SerializeField, Min(0f)] private float openInputDelay = 0.2f;
         [Tooltip("닫으면 (스킵 포함) 본 것으로 기록해 OpenOnce로 다시 열리지 않음")]
         [SerializeField] private bool rememberSeen = true;
+        [Tooltip("열려 있는 동안 게임 전체 정지 (Time.timeScale = 0). 창 애니메이션 · 영상은 실제 시간으로 계속 재생")]
+        [SerializeField] private bool pauseGame = true;
 
         private readonly List<Button> dots = new List<Button>();
         private TutorialGuide guide;
@@ -175,6 +177,7 @@ namespace RealSteel.Tutorial
             IsOpen = true;
             openedAt = Time.unscaledTime;
             UiStack.Push(this);
+            if (pauseGame) GamePause.Push(this);
 
             RefreshControls();
             ApplyStep();
@@ -225,6 +228,7 @@ namespace RealSteel.Tutorial
             IsOpen = false;
             closing = false;
             UiStack.Remove(this);
+            GamePause.Remove(this);
 
             Action callback = onClosed;
             onClosed = null;

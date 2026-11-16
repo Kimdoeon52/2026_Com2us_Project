@@ -97,6 +97,7 @@ namespace RealSteel.Tutorial
             IsOpen = true;
             openedAt = Time.unscaledTime;
             UiStack.Push(this);
+            GamePause.Push(this);
             if (EventSystem.current != null) EventSystem.current.SetSelectedGameObject(null);
             Refresh();
         }
@@ -107,6 +108,12 @@ namespace RealSteel.Tutorial
             IsOpen = false;
             gameObject.SetActive(false);
             UiStack.Remove(this);
+            GamePause.Remove(this);
+        }
+
+        private void OnDisable()
+        {
+            if (IsOpen) Close();
         }
 
         private void BuildRows(List<TutorialGuide> guides)

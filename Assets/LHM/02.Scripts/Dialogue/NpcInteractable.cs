@@ -10,6 +10,8 @@ namespace RealSteel.Dialogue
         JunkDealer,
         Workbench,
         Auction,
+        // 고철 매입 기계(압축기 등): 상점 열기 · 나가기만 (대화 없음)
+        Compressor,
     }
 
     public class NpcInteractable : MonoBehaviour

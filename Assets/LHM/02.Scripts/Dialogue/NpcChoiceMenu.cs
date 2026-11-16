@@ -31,6 +31,7 @@ namespace RealSteel.Dialogue
         private static readonly NpcAction[] ReceptionistActions = { NpcAction.HuntApply, NpcAction.RankingBoard, NpcAction.RewardClaim, NpcAction.Talk, NpcAction.Exit };
         private static readonly NpcAction[] JunkDealerActions = { NpcAction.Shop, NpcAction.Talk, NpcAction.Exit };
         private static readonly NpcAction[] OtherActions = { NpcAction.Talk, NpcAction.Exit };
+        private static readonly NpcAction[] CompressorActions = { NpcAction.Shop, NpcAction.Exit };
         private static readonly NpcAction[] WorkbenchActions = { NpcAction.Craft, NpcAction.Repair, NpcAction.Exit };
         // 등록직원: 1. 경매 (→ 1. 일반 경매 2. 주먹 경매 3. 뒤로) 2. 옵션 3. 대화하기 4. 나가기
         private static readonly NpcAction[] AuctionActions = { NpcAction.AuctionMenu, NpcAction.AuctionOption, NpcAction.Talk, NpcAction.Exit };
@@ -191,6 +192,7 @@ namespace RealSteel.Dialogue
                 case NpcRole.JunkDealer: return JunkDealerActions;
                 case NpcRole.Workbench: return WorkbenchActions;
                 case NpcRole.Auction: return AuctionActions;
+                case NpcRole.Compressor: return CompressorActions;
                 default: return OtherActions;
             }
         }

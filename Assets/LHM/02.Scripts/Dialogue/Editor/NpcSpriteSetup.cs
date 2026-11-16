@@ -64,6 +64,7 @@ namespace RealSteel.Dialogue.EditorTools
             Scene active = SceneManager.GetActiveScene();
             NpcInteractable[] targets = Object.FindObjectsByType<NpcInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .Where(npc => npc.gameObject.scene == active && Arts.Any(art => art.speakerId == npc.SpeakerId))
+                .Where(npc => npc.name.IndexOf("NPC", System.StringComparison.OrdinalIgnoreCase) >= 0 || npc.transform.Find(SpriteChildName) != null)
                 .ToArray();
             return targets.Length > 0 && targets.All(npc => npc.transform.Find(SpriteChildName) != null);
         }
@@ -209,6 +210,13 @@ namespace RealSteel.Dialogue.EditorTools
             if (npc == null)
             {
                 log.AppendLine($"- 주의: Speaker Id '{art.speakerId}'인 NPC가 씬에 없음");
+                return;
+            }
+
+            // 압축기처럼 소품에 NPC 기능만 붙인 경우는 그림을 씌우지 않음 (이름에 NPC가 있거나 이미 그림이 있는 오브젝트만)
+            if (npc.name.IndexOf("NPC", System.StringComparison.OrdinalIgnoreCase) < 0 && npc.transform.Find(SpriteChildName) == null)
+            {
+                log.AppendLine($"- 건너뜀: '{npc.name}'은 소품에 붙은 NPC 기능이라 그림을 씌우지 않음 (씌우려면 이름에 NPC를 넣거나 'Sprite' 자식을 만들어 두세요)");
                 return;
             }
 

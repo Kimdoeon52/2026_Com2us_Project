@@ -1,0 +1,13 @@
+{
+  "poolId": "compressor",
+  "dialogues": [
+    {
+      "id": "compressor_idle",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [
+        { "speaker": "compressor", "textKey": "compressor.idle.1" }
+      ]
+    }
+  ]
+}

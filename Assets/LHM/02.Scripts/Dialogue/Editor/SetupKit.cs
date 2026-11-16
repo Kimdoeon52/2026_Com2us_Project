@@ -18,13 +18,25 @@ namespace RealSteel.Dialogue.EditorTools
             return scene.path.StartsWith(LhmFolder, StringComparison.Ordinal);
         }
 
+        // 이전에는 LHM 씬에서만 실행했으나 이제 모든 씬에서 실행 가능
+        // LHM 밖(다른 팀) 씬이면 씬마다 처음 한 번만 확인을 받음 (에디터를 끄면 다시 물음)
+        private static readonly HashSet<string> confirmedOutsideScenes = new HashSet<string>();
+
         internal static bool RequireLhmScene(Scene scene, string title)
         {
             if (IsLhmScene(scene)) return true;
 
+            string key = string.IsNullOrEmpty(scene.path) ? $"(unsaved){scene.handle}" : scene.path;
+            if (confirmedOutsideScenes.Contains(key)) return true;
+
             string current = string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path;
-            Dialog(title, $"Assets/LHM 안의 씬에서만 실행할 수 있습니다.\n현재 씬: {current}", "확인");
-            return false;
+            bool ok = batchNotes != null || EditorUtility.DisplayDialog(title,
+                $"LHM 밖의 씬입니다: {current}\n" +
+                "다른 팀 씬이면 저장 전에 담당자와 확인하세요. (Ctrl+Z 또는 저장하지 않고 씬 다시 열기로 되돌릴 수 있음)\n\n" +
+                "이 씬에서 대화 툴 작업을 계속할까요? (이 씬은 다시 묻지 않음)",
+                "계속", "취소");
+            if (ok) confirmedOutsideScenes.Add(key);
+            return ok;
         }
 
         internal static bool Dialog(string title, string message, string ok)

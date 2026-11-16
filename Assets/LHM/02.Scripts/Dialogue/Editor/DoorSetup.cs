@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using System.Text;
+using RealSteel.Build;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -9,17 +10,36 @@ using UnityEngine.SceneManagement;
 
 namespace RealSteel.Dialogue.EditorTools
 {
-    // 집 문 앞에 "[E] 들어가기" 씬 이동 지점 만들기
-    // 대상: 선택한 오브젝트(문). 아무것도 안 골랐으면 SYS 도구가 만든 '집_바깥 문 · 창 (자동)/문'
-    // SYS 도구를 다시 누르면 '집_바깥 문 · 창 (자동)' 안이 새로 만들어지므로, 입구는 그 밖(컨테이너 바로 아래)에 따로 둠
+    // 집 문 ↔ 집 안 출입문 씬 이동 지점 만들기 (현재 씬 쪽만 만듦 → 반대쪽 씬을 열고 한 번 더 누르면 짝이 맞음)
+    //  - 바깥(고물상 맵): 선택한 문, 없으면 SYS 도구가 만든 '집_바깥 문 · 창 (자동)/문' → "[E] 들어가기" → 집 씬
+    //  - 집 안: 선택한 문, 없으면 'SLOT_Door…' / '…출입문' 소품 자리 → "[E] 나가기" → 고물상 맵
+    //  - 이동할 씬은 같은 폴더의 짝 씬(Home_Workshop ↔ Map_Test)을 먼저 찾음
+    //  - 서로 Door Id를 가리켜서, 넘어가면 상대 문 앞에 나타남
+    // SYS 도구를 다시 누르면 '집_바깥 문 · 창 (자동)' 안이 새로 만들어지므로, 바깥 입구는 그 밖(컨테이너 바로 아래)에 따로 둠
     internal static class DoorSetup
     {
-        private const string Title = "집 문 → 집 씬 이동";
-        private const string EntranceName = "집 입구 ([E] 들어가기)";
+        private const string Title = "집 문 ↔ 집 씬 이동";
         private const string FacadeHolderName = "집_바깥 문 · 창 (자동)";
         private const string DoorName = "문";
+        private const string InsideDoorPrefix = "SLOT_Door";
+        private const string InsideDoorKeyword = "출입문";
         internal const string DefaultScenePath = "Assets/SYS/Scenes/Home_Workshop.unity";
         private const string FontPath = "Assets/LHM/04.Fonts/NanumBarunGothicBold SDF.asset";
+
+        private const string OutsideId = "home_outside";
+        private const string InsideId = "home_inside";
+        private const string HomeSceneName = "Home_Workshop";
+        private const string FieldSceneName = "Map_Test";
+
+        private sealed class Side
+        {
+            public bool Inside;
+            public string EntranceName => Inside ? "집 출구 ([E] 나가기)" : "집 입구 ([E] 들어가기)";
+            public string Label => Inside ? "나가기" : "들어가기";
+            public string DoorId => Inside ? InsideId : OutsideId;
+            public string ArriveAt => Inside ? OutsideId : InsideId;
+            public string TargetName => Inside ? FieldSceneName : HomeSceneName;
+        }
 
         internal static bool Exists()
         {
@@ -36,23 +56,28 @@ namespace RealSteel.Dialogue.EditorTools
             {
                 SetupKit.Dialog(Title,
                     "문을 찾지 못했습니다.\n하이어라키에서 문 오브젝트를 선택한 뒤 다시 누르세요.\n" +
-                    $"(선택이 없으면 '{FacadeHolderName}' 아래의 '{DoorName}'을 찾습니다)", "확인");
+                    $"(선택이 없으면 '{FacadeHolderName}' 아래의 '{DoorName}', 또는 이름이 '{InsideDoorPrefix}…'이거나 '{InsideDoorKeyword}'가 든 오브젝트를 찾습니다)", "확인");
                 return;
             }
 
-            Transform parent = door.parent != null && door.parent.name == FacadeHolderName ? door.parent.parent : door.parent;
-            DoorInteractable existing = FindExisting(scene, parent);
-            bool hasScene = File.Exists(DefaultScenePath);
+            var side = new Side { Inside = IsInsideDoor(door) };
+            // 바깥 문은 SYS 컨테이너 밖에, 집 안 문은 SYS 소품 자리 밖(씬 맨 위)에 둠 → SYS 도구를 다시 눌러도 안 지워짐
+            Transform parent = side.Inside ? null
+                : door.parent != null && door.parent.name == FacadeHolderName ? door.parent.parent : door.parent;
+            DoorInteractable existing = FindExisting(scene, parent, side);
+            string targetScene = FindTargetScene(scene, side);
             string current = string.IsNullOrEmpty(scene.path) ? "(저장 안 된 씬)" : scene.path;
 
             if (!SetupKit.Dialog(Title,
                     $"'{PathOf(door)}' 앞에 씬 이동 지점을 {(existing != null ? "다시 맞춥니다" : "만듭니다")}.\n" +
                     (SetupKit.IsLhmScene(scene) ? "" : $"※ LHM 밖의 씬입니다: {current}\n  다른 팀 씬이면 저장 전에 담당자와 확인하세요.\n") +
-                    $"- 오브젝트: {(parent != null ? parent.name + "/" : "")}{EntranceName}\n" +
-                    "- 가까이 가면 \"[E] 들어가기\", 멀어지면 사라짐. E → 씬 이동\n" +
-                    $"- 이동할 씬: {(hasScene ? DefaultScenePath : "(없음 — 인스펙터에서 지정)")}\n" +
-                    (hasScene && SceneUtility.GetBuildIndexByScenePath(DefaultScenePath) < 0
+                    $"- 종류: {(side.Inside ? "집 안 출입문 → 고물상 맵" : "고물상 맵의 집 문 → 집 안")}\n" +
+                    $"- 오브젝트: {(parent != null ? parent.name + "/" : "")}{side.EntranceName}\n" +
+                    $"- 가까이 가면 \"[E] {side.Label}\", 멀어지면 사라짐. E → 씬 이동\n" +
+                    $"- 이동할 씬: {targetScene ?? "(못 찾음 — 인스펙터에서 지정)"}\n" +
+                    (targetScene != null && SceneUtility.GetBuildIndexByScenePath(targetScene) < 0
                         ? "  ※ Build Settings에 없어서 에디터 플레이에서만 넘어갑니다 (빌드 전에 추가 필요)\n" : "") +
+                    $"- 도착: 넘어가면 그 씬의 '{side.ArriveAt}' 문 앞에 나타남 (반대쪽 씬에서도 이 버튼을 눌러 두세요)\n" +
                     "\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)",
                     existing != null ? "다시 맞추기" : "만들기", "취소"))
             {
@@ -67,7 +92,7 @@ namespace RealSteel.Dialogue.EditorTools
             DoorInteractable entrance = existing;
             if (entrance == null)
             {
-                var go = new GameObject(EntranceName);
+                var go = new GameObject(side.EntranceName);
                 Undo.RegisterCreatedObjectUndo(go, Title);
                 if (parent != null) Undo.SetTransformParent(go.transform, parent, Title);
                 else SceneManager.MoveGameObjectToScene(go, scene);
@@ -79,47 +104,87 @@ namespace RealSteel.Dialogue.EditorTools
                 log.AppendLine($"- 기존 {PathOf(entrance.transform)} 위치 · 설정 다시 맞춤");
             }
 
-            Place(entrance, door, parent, log);
+            if (side.Inside) PlaceInside(entrance, door, log);
+            else PlaceOutside(entrance, door, parent, log);
 
             var so = new SerializedObject(entrance);
-            if (hasScene && string.IsNullOrEmpty(so.FindProperty("scenePath").stringValue))
+            SerializedProperty scenePath = so.FindProperty("scenePath");
+            if (targetScene != null && (string.IsNullOrEmpty(scenePath.stringValue) || !File.Exists(scenePath.stringValue) || IsSibling(scene, targetScene)))
             {
-                so.FindProperty("scenePath").stringValue = DefaultScenePath;
-                so.FindProperty("sceneName").stringValue = Path.GetFileNameWithoutExtension(DefaultScenePath);
+                scenePath.stringValue = targetScene;
+                so.FindProperty("sceneName").stringValue = Path.GetFileNameWithoutExtension(targetScene);
             }
+            so.FindProperty("label").stringValue = side.Label;
+            so.FindProperty("doorId").stringValue = side.DoorId;
+            so.FindProperty("arriveAtDoorId").stringValue = side.ArriveAt;
             if (so.FindProperty("font").objectReferenceValue == null)
             {
                 so.FindProperty("font").objectReferenceValue = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(FontPath);
             }
             so.ApplyModifiedProperties();
             log.AppendLine($"- 이동할 씬: {(string.IsNullOrEmpty(entrance.ScenePath) ? "(비어 있음 — 인스펙터에서 지정)" : entrance.ScenePath)}");
+            log.AppendLine($"- 문 이름표 '{side.DoorId}' / 넘어가면 '{side.ArriveAt}' 문 앞에 도착");
 
             Selection.activeGameObject = entrance.gameObject;
             Undo.CollapseUndoOperations(group);
             EditorSceneManager.MarkSceneDirty(scene);
-            log.AppendLine("완료. 위치가 어긋나면 오브젝트를 옮기세요 (초록 원 = 안내가 뜨는 범위). Ctrl+S로 저장");
+            log.AppendLine("완료. 위치가 어긋나면 오브젝트를 옮기세요 (초록 원 = 안내가 뜨는 범위, 하늘색 점 = 도착 자리). Ctrl+S로 저장");
             Debug.Log(log.ToString());
+        }
+
+        private static bool IsInsideDoor(Transform door)
+        {
+            if (door.parent != null && door.parent.name == FacadeHolderName) return false;
+            return door.name.StartsWith(InsideDoorPrefix) || door.name.Contains(InsideDoorKeyword) || door.GetComponent<RSPropSlot>() != null;
+        }
+
+        // 같은 폴더의 짝 씬 → 없으면 프로젝트에서 같은 이름 씬 → (바깥 쪽만) SYS 기본 집 씬
+        private static string FindTargetScene(Scene scene, Side side)
+        {
+            if (!string.IsNullOrEmpty(scene.path))
+            {
+                string sibling = $"{Path.GetDirectoryName(scene.path).Replace('\\', '/')}/{side.TargetName}.unity";
+                if (File.Exists(sibling)) return sibling;
+            }
+
+            string found = AssetDatabase.FindAssets($"{side.TargetName} t:Scene")
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .FirstOrDefault(p => Path.GetFileNameWithoutExtension(p) == side.TargetName);
+            if (found != null) return found;
+            return !side.Inside && File.Exists(DefaultScenePath) ? DefaultScenePath : null;
+        }
+
+        private static bool IsSibling(Scene scene, string path)
+        {
+            return !string.IsNullOrEmpty(scene.path) && Path.GetDirectoryName(scene.path) == Path.GetDirectoryName(path);
         }
 
         private static Transform FindDoor(Scene scene)
         {
             GameObject selected = Selection.activeGameObject;
-            if (selected != null && selected.scene == scene && selected.GetComponent<DoorInteractable>() == null) return selected.transform;
+            if (selected != null && selected.scene == scene && selected.GetComponent<DoorInteractable>() == null)
+            {
+                // 임시 모형을 골랐으면 그 위의 소품 자리
+                Transform slot = selected.transform.parent;
+                if (selected.name.StartsWith(RSPropSlot.TempPrefix) && slot != null && slot.GetComponent<RSPropSlot>() != null) return slot;
+                return selected.transform;
+            }
 
-            return scene.GetRootGameObjects()
-                .SelectMany(r => r.GetComponentsInChildren<Transform>(true))
-                .FirstOrDefault(t => t.name == DoorName && t.parent != null && t.parent.name == FacadeHolderName);
+            Transform[] all = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).ToArray();
+            return all.FirstOrDefault(t => t.name == DoorName && t.parent != null && t.parent.name == FacadeHolderName)
+                   ?? all.FirstOrDefault(t => t.name.StartsWith(InsideDoorPrefix))
+                   ?? all.FirstOrDefault(t => t.name.Contains(InsideDoorKeyword) && !t.name.StartsWith(RSPropSlot.TempPrefix));
         }
 
-        private static DoorInteractable FindExisting(Scene scene, Transform parent)
+        private static DoorInteractable FindExisting(Scene scene, Transform parent, Side side)
         {
             if (Selection.activeGameObject != null && Selection.activeGameObject.TryGetComponent(out DoorInteractable selected)) return selected;
             return Object.FindObjectsByType<DoorInteractable>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                .FirstOrDefault(d => d.gameObject.scene == scene && d.transform.parent == parent && d.name == EntranceName);
+                .FirstOrDefault(d => d.gameObject.scene == scene && d.transform.parent == parent && d.name == side.EntranceName);
         }
 
         // 문 아래(바닥) 바로 바깥쪽에 둠. 안내는 문 위
-        private static void Place(DoorInteractable entrance, Transform door, Transform container, StringBuilder log)
+        private static void PlaceOutside(DoorInteractable entrance, Transform door, Transform container, StringBuilder log)
         {
             Renderer doorRenderer = door.GetComponent<Renderer>();
             Bounds doorBounds = doorRenderer != null ? doorRenderer.bounds : new Bounds(door.position, Vector3.one);
@@ -133,14 +198,43 @@ namespace RealSteel.Dialogue.EditorTools
             outward.y = 0f;
             outward = outward.sqrMagnitude > 0.0001f ? outward.normalized : Vector3.zero;
 
+            SetPose(entrance, bottom + outward * 0.6f, outward, doorBounds.size.y + 0.3f);
+            log.AppendLine($"- 위치: 문 아래 바깥쪽 0.6m, 안내 높이 {doorBounds.size.y + 0.3f:0.0}m");
+        }
+
+        // 집 안 출입문: 소품 자리 기준점 = 바닥 가운데, 앞(-Z) = 방 안쪽 (RSPropSlot 규칙)
+        private static void PlaceInside(DoorInteractable entrance, Transform door, StringBuilder log)
+        {
+            float height = 2f;
+            Vector3 bottom = door.position;
+            if (door.TryGetComponent(out RSPropSlot slot))
+            {
+                height = Mathf.Max(0.5f, slot.size.y * Mathf.Abs(door.lossyScale.y));
+            }
+            else if (door.GetComponentsInChildren<Renderer>().Length > 0)
+            {
+                Bounds bounds = door.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((a, b) => { a.Encapsulate(b); return a; });
+                bottom = new Vector3(bounds.center.x, bounds.min.y, bounds.center.z);
+                height = bounds.size.y;
+            }
+
+            Vector3 inward = -door.forward;
+            inward.y = 0f;
+            inward = inward.sqrMagnitude > 0.0001f ? inward.normalized : Vector3.back;
+
+            SetPose(entrance, bottom + inward * 0.6f, inward, height + 0.3f);
+            log.AppendLine($"- 위치: 출입문 아래 방 안쪽 0.6m, 안내 높이 {height + 0.3f:0.0}m (방 반대쪽에 생기면 오브젝트를 180° 돌려 옮기세요)");
+        }
+
+        private static void SetPose(DoorInteractable entrance, Vector3 position, Vector3 forward, float promptHeight)
+        {
             Undo.RecordObject(entrance.transform, Title);
-            entrance.transform.position = bottom + outward * 0.6f;
-            entrance.transform.rotation = Quaternion.LookRotation(outward.sqrMagnitude > 0f ? outward : Vector3.forward, Vector3.up);
+            entrance.transform.position = position;
+            entrance.transform.rotation = Quaternion.LookRotation(forward.sqrMagnitude > 0f ? forward : Vector3.forward, Vector3.up);
 
             var so = new SerializedObject(entrance);
-            so.FindProperty("promptOffset").vector3Value = new Vector3(0f, doorBounds.size.y + 0.3f, 0f);
+            so.FindProperty("promptOffset").vector3Value = new Vector3(0f, promptHeight, 0f);
             so.ApplyModifiedProperties();
-            log.AppendLine($"- 위치: 문 아래 바깥쪽 0.6m, 안내 높이 {doorBounds.size.y + 0.3f:0.0}m");
         }
 
         private static string PathOf(Transform t)

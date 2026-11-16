@@ -21,6 +21,14 @@ namespace RealSteel.Dialogue
         [SerializeField] private string scenePath = "";
         [SerializeField] private string sceneName = "";
 
+        [Header("도착 위치 (문끼리 짝 맞추기)")]
+        [Tooltip("이 문의 이름표. 다른 씬의 문이 '도착할 문'으로 이 값을 적으면, 그 문으로 넘어왔을 때 이 문 앞에 나타남")]
+        [SerializeField] private string doorId = "";
+        [Tooltip("넘어간 씬에서 나타날 문의 이름표 (그 씬 문의 Door Id). 비우면 그 씬의 원래 시작 위치")]
+        [SerializeField] private string arriveAtDoorId = "";
+        [Tooltip("이 문으로 도착했을 때 서는 자리 (이 오브젝트 기준, 앞 = +Z)")]
+        [SerializeField] private Vector3 arrivalOffset = new Vector3(0f, 0f, 0.8f);
+
         [Header("안내")]
         [SerializeField] private string label = "들어가기";
         [SerializeField, Min(0.1f)] private float interactRadius = 1.6f;
@@ -37,9 +45,16 @@ namespace RealSteel.Dialogue
         private float nextPlayerSearch;
         private bool blocking;
         private bool leaving;
+        // 이 문으로 막 도착했으면 한 번 범위 밖으로 나갈 때까지 안내 · E를 받지 않음 (도착하자마자 되돌아가지 않게)
+        private bool waitForExit;
+
+        private static string pendingArrival;
 
         public string ScenePath => scenePath;
         public string SceneName => sceneName;
+        public string DoorId => doorId;
+        public string ArriveAtDoorId => arriveAtDoorId;
+        public Vector3 ArrivalPosition => transform.TransformPoint(arrivalOffset);
         public float InteractRadius => interactRadius;
         public Vector3 PromptPosition => transform.position + promptOffset;
 
@@ -65,7 +80,9 @@ namespace RealSteel.Dialogue
                 player = FindPlayer();
             }
 
-            bool inRange = player != null && Time.timeScale > 0f && !InteractorBusy() && IsNearestInRange();
+            if (waitForExit && player != null && HorizontalDistance(player.position) > interactRadius) waitForExit = false;
+
+            bool inRange = player != null && !waitForExit && Time.timeScale > 0f && !InteractorBusy() && IsNearestInRange();
             SetBlocking(inRange);
             if (!inRange)
             {
@@ -82,6 +99,7 @@ namespace RealSteel.Dialogue
             if (leaving) return;
 
             string target = ResolveScene();
+            pendingArrival = string.IsNullOrEmpty(arriveAtDoorId) ? null : arriveAtDoorId;
             if (target == null)
             {
 #if UNITY_EDITOR
@@ -94,6 +112,7 @@ namespace RealSteel.Dialogue
                     return;
                 }
 #endif
+                pendingArrival = null;
                 Debug.LogError($"[Door] 이동할 씬을 열 수 없습니다 (경로 '{scenePath}', 이름 '{sceneName}'). Build Settings에 추가했는지 확인하세요.", this);
                 return;
             }
@@ -107,6 +126,62 @@ namespace RealSteel.Dialogue
             MethodInfo load = loading != null ? loading.GetType().GetMethod("LoadScene", new[] { typeof(string) }) : null;
             if (load != null) load.Invoke(loading, new object[] { target });
             else SceneManager.LoadScene(target);
+        }
+
+        // ── 도착 ─────────────────────────────
+        // sceneLoaded는 새 씬의 Awake 뒤 · Start 전에 불림 → 플레이어(RSSimpleCharacter)가 Start에서 카메라 · 바닥을 새 위치 기준으로 맞춤
+        // 로딩 씬(LJS LoadingManager)을 거쳐도 짝이 되는 문이 있는 씬이 열릴 때까지 기다림
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            pendingArrival = null;
+            sharedPrompt = null;
+            promptOwner = null;
+            active.Clear();
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded;
+        }
+
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (string.IsNullOrEmpty(pendingArrival)) return;
+
+            DoorInteractable arrival = null;
+            foreach (DoorInteractable door in FindObjectsByType<DoorInteractable>(FindObjectsSortMode.None))
+            {
+                if (door.gameObject.scene == scene && door.doorId == pendingArrival) arrival = door;
+            }
+            if (arrival == null) return;
+
+            pendingArrival = null;
+            arrival.PlacePlayerHere();
+        }
+
+        private void PlacePlayerHere()
+        {
+            Transform target = FindPlayer();
+            if (target == null)
+            {
+                Debug.LogWarning($"[Door] '{doorId}' 문 앞에 세울 플레이어를 찾지 못해 원래 시작 위치에서 시작합니다.", this);
+                return;
+            }
+
+            Vector3 position = ArrivalPosition;
+            position.y = transform.position.y;
+            Vector3 facing = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+
+            // CharacterController가 켜져 있으면 위치를 바로 바꿔도 되돌아감 → 잠깐 끄고 옮김
+            var controller = target.GetComponent<CharacterController>();
+            bool wasEnabled = controller != null && controller.enabled;
+            if (wasEnabled) controller.enabled = false;
+            target.position = position;
+            if (facing.sqrMagnitude > 0.0001f) target.rotation = Quaternion.LookRotation(facing, Vector3.up);
+            if (wasEnabled) controller.enabled = true;
+
+            player = target;
+            waitForExit = true;
+            Debug.Log($"[Door] '{doorId}' 문 앞에 도착 ({target.name} → {position})", this);
         }
 
         private string ResolveScene()
@@ -258,6 +333,7 @@ namespace RealSteel.Dialogue
             Gizmos.DrawWireSphere(transform.position, interactRadius);
             Gizmos.color = Color.cyan;
             Gizmos.DrawLine(transform.position, PromptPosition);
+            if (!string.IsNullOrEmpty(doorId)) Gizmos.DrawSphere(ArrivalPosition, 0.15f);
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "poolId": "mono_compressor",
+  "dialogues": [
+    {
+      "id": "mono_compressor_fallback",
+      "band": "Fallback",
+      "conditions": [],
+      "lines": [ { "speaker": "compressor", "textKey": "mono.compressor.fallback.1" } ]
+    }
+  ]
+}

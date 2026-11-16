@@ -375,9 +375,21 @@ namespace RealSteel.Dialogue.EditorTools
                 .FirstOrDefault(g => g.name == ShopWindowName);
         }
 
-        private static bool BindShopWindow(Scene scene, StringBuilder log)
+        internal static bool BindShopWindow(Scene scene, StringBuilder log)
         {
             GameObject window = FindShopWindow(scene);
+
+            // 실행 시 Binder가 자기 칸 값으로 덮어쓰므로 Binder에도 넣음
+            if (window != null)
+            {
+                foreach (DialogueSceneBinder binder in FindInScene<DialogueSceneBinder>(scene))
+                {
+                    var binderSo = new SerializedObject(binder);
+                    Undo.RecordObject(binder, UndoName);
+                    binderSo.FindProperty("shopWindow").objectReferenceValue = window;
+                    binderSo.ApplyModifiedProperties();
+                }
+            }
             var menus = FindInScene<NpcChoiceMenu>(scene).ToList();
             if (window == null || menus.Count == 0)
             {

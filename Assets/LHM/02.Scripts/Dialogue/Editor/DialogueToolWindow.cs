@@ -88,7 +88,7 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("원신 스타일 대화창 (프리팹 수정)", GenshinDialogueStyleSetup.Setup, GenshinDialogueStyleSetup.IsApplied),
                 new ToolItem("원신 스타일 대화창 (현재 씬, 프리팹 아닌 대화창)", GenshinDialogueStyleSetup.SetupScene, GenshinDialogueStyleSetup.IsAppliedInScene),
                 new ToolItem("NPC 스프라이트", NpcSpriteSetup.Setup, NpcSpriteSetup.IsApplied),
-                new ToolItem("집 문 → 집 씬 이동 ([E] 들어가기, 문 선택 또는 자동)", DoorSetup.Setup, DoorSetup.Exists),
+                new ToolItem("집 문 ↔ 집 씬 이동 (바깥 문 [E] 들어가기 · 집 안 출입문 [E] 나가기)", DoorSetup.Setup, DoorSetup.Exists),
                 new ToolItem("단축키 정리 (Home 안내)", JunkShopDialogueSetup.ApplyShortcutsMenu, Has<ShortcutHelpOverlay>)),
             new ToolGroup("튜토리얼 화면",
                 new ToolItem("튜토리얼 화면 (영상 · 이전/다음, 프리팹 생성)", TutorialSetup.Setup, Has<TutorialPanel>),
@@ -101,7 +101,8 @@ namespace RealSteel.Dialogue.EditorTools
                 new ToolItem("오프닝 컷신 (프리팹 + 테스트 씬)", CutsceneSetup.Setup, CutsceneSetup.Exists)),
             new ToolGroup("씬 오브젝트에 NPC 기능 연결",
                 new ToolItem("길드 접수원 연결 (League_Lobby 1 등, 토벌 신청 포함)", WorkbenchSetup.LinkReceptionist, WorkbenchSetup.ReceptionistExists),
-                new ToolItem("경매장 NPC 연결 (Auction_Hall 1의 등록직원)", WorkbenchSetup.LinkAuction, WorkbenchSetup.AuctionExists)),
+                new ToolItem("경매장 NPC 연결 (Auction_Hall 1의 등록직원)", WorkbenchSetup.LinkAuction, WorkbenchSetup.AuctionExists),
+                new ToolItem("고물상 판매 기계 연결 (압축기 등, 상점 열기 · 나가기)", WorkbenchSetup.LinkCompressor, WorkbenchSetup.CompressorExists)),
             new ToolGroup("작업대",
                 new ToolItem("씬의 작업대 오브젝트에 연결 + 제작 · 수리 창 (Home_Workshop 1 등)", WorkbenchSetup.LinkExisting, WorkbenchSetup.Exists),
                 new ToolItem("작업대 새로 배치 (대화 → 제작 · 수리 · 나가기)", WorkbenchSetup.Setup, WorkbenchSetup.Exists),
@@ -217,7 +218,7 @@ namespace RealSteel.Dialogue.EditorTools
             }
             else if (!SetupKit.IsLhmScene(scene))
             {
-                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 프리팹, 토벌 출발, NPC 스프라이트, 길드 접수원 · 경매장 NPC 연결, 사운드 매니저, 단축키 정리, 컷신, 고물상 맵, 데이터 항목만 실행됩니다.", MessageType.Warning);
+                EditorGUILayout.HelpBox("LHM 밖의 씬입니다. 모든 항목을 실행할 수 있지만, 다른 팀 씬이면 저장 전에 담당자와 확인하세요.", MessageType.Warning);
             }
         }
 
@@ -236,7 +237,7 @@ namespace RealSteel.Dialogue.EditorTools
 
                 if (group.Items.Any(i => i.InBatch))
                 {
-                    bool canRun = SetupKit.IsLhmScene(scene) && group.Items.Any(i => i.InBatch && !StatusOf(i));
+                    bool canRun = group.Items.Any(i => i.InBatch && !StatusOf(i));
                     using (new EditorGUI.DisabledScope(!canRun))
                     {
                         if (GUILayout.Button("빠진 것 적용", GUILayout.Width(ButtonWidth))) Defer(() => RunMissing(group));
@@ -292,6 +293,7 @@ namespace RealSteel.Dialogue.EditorTools
             Scene scene = SceneManager.GetActiveScene();
             ToolItem[] missing = group.Items.Where(i => i.InBatch && !i.IsApplied()).ToArray();
             if (missing.Length == 0) return;
+            if (!SetupKit.RequireLhmScene(scene, WindowTitle)) return;
 
             string names = string.Join("\n", missing.Select(i => i.BatchWarning == null ? $"- {i.Label}" : $"- {i.Label}\n    {i.BatchWarning}"));
             if (!EditorUtility.DisplayDialog(WindowTitle,

@@ -30,6 +30,12 @@ namespace RealSteel.Dialogue.EditorTools
             public bool AllowOutsideLhm;
             // 이름에 이 키워드가 든 오브젝트(데스크 등) 쪽을 NPC의 정면으로 보고, 그쪽에 클로즈업 카메라 자리를 만듦. 비우면 만들지 않음
             public string[] FrontKeywords;
+            // true면 상점 창(ShopWindow)을 NpcChoiceMenu · Binder에 연결
+            public bool BindShop;
+            // 함께 등록할 대사 풀 (혼잣말 등)
+            public string[] ExtraPoolPaths;
+            // true면 필드 카메라가 보던 쪽에서, 오브젝트 크기에 맞춘 거리로 클로즈업 자리를 만듦 (큰 소품용)
+            public bool CloseUpFromCamera;
         }
 
         private static readonly SlotNpcSpec WorkbenchSpec = new SlotNpcSpec
@@ -84,6 +90,30 @@ namespace RealSteel.Dialogue.EditorTools
             AllowOutsideLhm = true,
             FrontKeywords = new[] { "등록데스크", "Reception" },
         };
+
+        // 고철 매입 기계 (압축기 등): E → '기계: ...' → 1. 상점 열기 2. 나가기. 근처를 지나가면 "헐값... 매입중.." 혼잣말
+        // 상점 창(YJW ShopWindow)이 없는 씬이면 제작 · 수리 창 묶음째 복사해 옴. 덩치가 커서 클로즈업은 멀리서 (필드 카메라 쪽)
+        private static readonly SlotNpcSpec CompressorSpec = new SlotNpcSpec
+        {
+            Title = "고물상 판매 기계 연결",
+            Label = "판매 기계 (압축기 등)",
+            Keywords = new[] { "압축기", "Compressor" },
+            Role = NpcRole.Compressor,
+            PoolId = "compressor",
+            PoolPath = "Assets/LHM/03.Data/Dialogue/compressor.json",
+            ExtraPoolPaths = new[] { "Assets/LHM/03.Data/Dialogue/mono_compressor.json" },
+            SpeakerId = "compressor",
+            GreetingPoolId = "compressor",
+            Flow = "E → '기계: ...' → 1. 상점 열기 (YJW 상점 창, 닫으면 종료)  2. 나가기\n" +
+                   "  근처를 지나가면 머리 위 혼잣말 \"헐값... 매입중..\"",
+            ImportCrafting = true,
+            AllowOutsideLhm = true,
+            BindShop = true,
+            CloseUpFromCamera = true,
+        };
+
+        internal static bool CompressorExists() => HasRole(NpcRole.Compressor);
+        internal static void LinkCompressor() => Link(CompressorSpec);
 
         internal static bool Exists() => HasRole(NpcRole.Workbench);
         internal static bool ReceptionistExists() => HasRole(NpcRole.GuildReceptionist);
@@ -236,7 +266,14 @@ namespace RealSteel.Dialogue.EditorTools
             Undo.SetCurrentGroupName(title);
             int group = Undo.GetCurrentGroup();
 
-            EnsureSystem(scene, manager, pool, hasEventSystem, log);
+            manager = EnsureSystem(scene, manager, pool, hasEventSystem, log);
+            foreach (string extraPath in spec.ExtraPoolPaths ?? new string[0])
+            {
+                var extra = AssetDatabase.LoadAssetAtPath<TextAsset>(extraPath);
+                if (extra != null) SetupKit.AddPool(manager, extra, log);
+                else log.AppendLine($"- 주의: 대사 풀 파일 없음 {extraPath}");
+            }
+            if (spec.BindShop) JunkShopDialogueSetup.BindShopWindow(scene, log);
 
             foreach (NpcInteractable duplicate in duplicates)
             {
@@ -249,7 +286,8 @@ namespace RealSteel.Dialogue.EditorTools
             if (!existed) npc = Undo.AddComponent<NpcInteractable>(target);
             else Undo.RecordObject(npc, title);
             Configure(npc, HeightOf(target), spec, log);
-            if (spec.FrontKeywords != null && spec.FrontKeywords.Length > 0) SetupCloseUpPoint(npc, scene, spec, HeightOf(target), log);
+            if (spec.CloseUpFromCamera) SetupWideCloseUpPoint(npc, scene, spec, player, log);
+            else if (spec.FrontKeywords != null && spec.FrontKeywords.Length > 0) SetupCloseUpPoint(npc, scene, spec, HeightOf(target), log);
             log.AppendLine($"- 대상: {PathOf(target.transform)} — NpcInteractable {(existed ? "설정 갱신" : "추가")}");
 
             Selection.activeGameObject = target;
@@ -343,6 +381,47 @@ namespace RealSteel.Dialogue.EditorTools
         private const float CloseUpLookHeightRatio = 0.85f;
 
         // NPC 정면(데스크 쪽)에 카메라 자리를 만들어 클로즈업이 등 뒤가 아니라 얼굴 쪽에서, 머리까지 보이게 함
+        // 큰 소품(압축기 등): 필드 카메라가 보던 방향에서, 전체가 화면에 들어오도록 크기에 맞춘 거리 · 살짝 위에서 내려다봄
+        private static void SetupWideCloseUpPoint(NpcInteractable npc, Scene scene, SlotNpcSpec spec, GameObject player, StringBuilder log)
+        {
+            Transform npcTransform = npc.transform;
+            Renderer[] renderers = npcTransform.GetComponentsInChildren<Renderer>();
+            Bounds bounds = renderers.Length > 0 ? renderers[0].bounds : new Bounds(npcTransform.position, Vector3.one * 2f);
+            foreach (Renderer r in renderers) bounds.Encapsulate(r.bounds);
+
+            Camera camera = JunkShopDialogueSetup.FindGameplayCamera(scene, player);
+            Vector3 toCamera = camera != null ? Vector3.ProjectOnPlane(-camera.transform.forward, Vector3.up) : Vector3.zero;
+            if (toCamera.sqrMagnitude < 0.0001f) toCamera = Vector3.ProjectOnPlane(-npcTransform.forward, Vector3.up);
+            if (toCamera.sqrMagnitude < 0.0001f) toCamera = Vector3.back;
+            toCamera.Normalize();
+
+            float size = Mathf.Max(bounds.size.x, bounds.size.y, bounds.size.z);
+            float distance = Mathf.Max(4f, size * 1.8f);
+            Vector3 lookAt = new Vector3(bounds.center.x, bounds.min.y + bounds.size.y * 0.45f, bounds.center.z);
+            Vector3 cameraPosition = lookAt + toCamera * distance + Vector3.up * Mathf.Max(1.5f, bounds.size.y * 0.6f);
+
+            Transform point = npcTransform.Find(CloseUpPointName);
+            if (point == null)
+            {
+                var go = new GameObject(CloseUpPointName);
+                Undo.RegisterCreatedObjectUndo(go, spec.Title);
+                Undo.SetTransformParent(go.transform, npcTransform, spec.Title);
+                point = go.transform;
+            }
+            else
+            {
+                Undo.RecordObject(point, spec.Title);
+            }
+            point.SetPositionAndRotation(cameraPosition, Quaternion.LookRotation(lookAt - cameraPosition, Vector3.up));
+
+            var so = new SerializedObject(npc);
+            so.FindProperty("closeUpPoint").objectReferenceValue = point;
+            so.FindProperty("closeUpFocusOffset").vector3Value = lookAt - npcTransform.position;
+            so.ApplyModifiedProperties();
+
+            log.AppendLine($"- 클로즈업 카메라: {(camera != null ? $"필드 카메라({camera.name})가 보던 쪽" : "오브젝트 앞쪽")}에서 {distance:0.0}m 떨어져 전체가 보이게 ({PathOf(point)}, 위치는 직접 옮겨도 됨)");
+        }
+
         private static void SetupCloseUpPoint(NpcInteractable npc, Scene scene, SlotNpcSpec spec, float height, StringBuilder log)
         {
             Transform npcTransform = npc.transform;

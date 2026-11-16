@@ -50,8 +50,9 @@ MonoBehaviour:
     offset: {x: 0.07, y: 0.23}
     rotation: 0
     XYRotation: {x: 0, y: 0}
-    followOwner: 0
+    followOwner: 1
     flipWithFacing: 0
+    flipByRotation: 0
     scale: 0.5
     scaleXY: {x: 0, y: 0}
     playbackSpeed: 1

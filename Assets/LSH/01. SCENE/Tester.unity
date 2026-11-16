@@ -11270,11 +11270,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentAuctionType: 0
   totalAuctionRounds: 3
-  nextSceneName: JunkShop_Map_Jin
+  exitScenePath: Assets/Scenes/Copys_1116/Map_Test.unity
   giveUpTimeScale: 3
   auctionName: {fileID: 1821644497}
   auctionCost: {fileID: 1905711425}
   auctionGrade: {fileID: 239847456}
+  gradeColorRare: {r: 0.07058823, g: 1, b: 0.3904994, a: 1}
+  gradeColorEpic: {r: 1, g: 0.61011803, b: 0, a: 1}
   chat: {fileID: 1709254863}
   errorMessage: {fileID: 511616656}
   myGold: {fileID: 389162651}
@@ -11351,6 +11353,7 @@ MonoBehaviour:
   modeSelectPanel: {fileID: 1414343295}
   normalModeButton: {fileID: 2094143964}
   fistModeButton: {fileID: 3303306}
+  showStartAuctionButton: 0
   startAuctionButton: {fileID: 0}
   startAuctionLabel: "\uACBD\uB9E4 \uC2DC\uC791"
   startButtonOffset: {x: 40, y: 0}
@@ -16791,6 +16794,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: DialogueSystem
       objectReference: {fileID: 0}
+    - target: {fileID: 1851890872122200637, guid: 919fe1bfa360aec419bd12951c6d9e83, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2155685392485865488, guid: 919fe1bfa360aec419bd12951c6d9e83, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -19362,7 +19369,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1001889687
 RectTransform:
   m_ObjectHideFlags: 0
@@ -27490,8 +27497,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 590, y: 81}
-  m_SizeDelta: {x: 400, y: 400}
+  m_AnchoredPosition: {x: -537, y: 81}
+  m_SizeDelta: {x: 200, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1487554013
 MonoBehaviour:
@@ -27513,7 +27520,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b6f82308a7f3ab5488295cdfecf3efb6, type: 3}
+  m_Sprite: {fileID: 2047028769, guid: e21ed7396f528a847b3557b3fe84592f, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

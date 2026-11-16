@@ -75,7 +75,8 @@ public class Auction : Singleton<Auction>
     [SerializeField] public TextMeshPro auctionName; //물건 이름
     [SerializeField] public TextMeshPro auctionCost; //물건 가격
     [SerializeField] public TextMeshPro auctionGrade;// 물건 등급
-
+    [SerializeField] private Color gradeColorRare; //레어등급 색상
+    [SerializeField] private Color gradeColorEpic; //에픽등급 색상
     [Header("대사 & 메시지 UI")]
     [SerializeField] public TextMeshProUGUI chat; //경매하는 사람 채팅 나올 곳
     [SerializeField] public TextMeshProUGUI errorMessage; //에러 메시지 나올 곳
@@ -563,7 +564,22 @@ public class Auction : Singleton<Auction>
         stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
         CurrentCost = stuff.Cost / 2; //원가의 절반
         stuffGrade = stuff.Grade; // 등급 넣기
-        if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
+        if (auctionGrade != null)
+        {
+            auctionGrade.text = stuffGrade.ToString(); // Text에 등급 보여주기
+            switch(stuffGrade)
+            {
+                case PartGrade.Rare:
+                    auctionGrade.color = gradeColorRare;
+                    break;
+                case PartGrade.Epic:
+                    auctionGrade.color = gradeColorEpic;
+                    break;
+                default:
+                    auctionGrade.color = Color.white;
+                    break;
+            }
+        }
         if (auctionName != null) auctionName.text = "";
         UpdateLotItemImage(); // 받침대 위 물건 이미지 교체 (커튼이 닫혀 있는 동안)
 
@@ -712,7 +728,7 @@ public class Auction : Singleton<Auction>
         }
         if (IsInfoHidden) { auctionCost.text = "???"; return; } // 연막탄: 가려진 동안은 계속 가림
         if (IsFakePriceActive) return; // 가짜 호가: 교란 루프가 가짜 숫자를 쓰는 중
-        auctionCost.text = CurrentCost.ToString();
+        auctionCost.text = CurrentCost.ToString() + " G";
     }
 
     //=========================보스 스킬 효과용 상태===================
@@ -796,7 +812,7 @@ public class Auction : Singleton<Auction>
         while (this != null && Time.time < end && fakePriceEnd == end)
         {
             if (auctionCost != null && !IsInfoHidden)
-                auctionCost.text = Mathf.Max(1, Mathf.RoundToInt(CurrentCost * Random.Range(0.6f, 1.6f))).ToString();
+                auctionCost.text = Mathf.Max(1, Mathf.RoundToInt(CurrentCost * Random.Range(0.6f, 1.6f))).ToString() +" G";
             await UniTask.Delay(250);
         }
         if (this != null && fakePriceEnd == end) UpdateAuctionCostUI();
@@ -807,7 +823,22 @@ public class Auction : Singleton<Auction>
     {
         if (IsInfoHidden) return;
         if (auctionName != null && stuff != null) auctionName.text = stuff.DisplayName;
-        if (auctionGrade != null) auctionGrade.text = stuffGrade.ToString();
+        if (auctionGrade != null)
+        {
+            auctionGrade.text = stuffGrade.ToString();
+            switch (stuffGrade)
+            {
+                case PartGrade.Rare:
+                    auctionGrade.color = gradeColorRare;
+                    break;
+                case PartGrade.Epic:
+                    auctionGrade.color = gradeColorEpic;
+                    break;
+                default:
+                    auctionGrade.color = Color.white;
+                    break;
+            }
+        }
         UpdateAuctionCostUI();
         UpdateLotItemImage();
     }

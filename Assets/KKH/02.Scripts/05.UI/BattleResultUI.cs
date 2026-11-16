@@ -45,7 +45,7 @@ namespace RealSteel.UI
 
         [Header("=== 인터랙션 버튼 ===")]
         [SerializeField] private Button btnReturnBase;
-        [SerializeField] private string lobbySceneName = "Lobby";
+        [SerializeField] private string lobbySceneName = "JunkShop_Map";
 
         [Header("=== 연출 타이밍 설정 ===")]
         [SerializeField] private float bannerPunchDuration = 0.4f;
@@ -61,12 +61,60 @@ namespace RealSteel.UI
             // 인스펙터 미할당 시 자동 탐색 보정
             if (resultPanelRoot == null) resultPanelRoot = gameObject;
             if (mainCanvasGroup == null) mainCanvasGroup = GetComponent<CanvasGroup>();
+            AutoBindUIRefs();
 
             // 버튼 리스너 바인딩
-            if (btnReturnBase != null) btnReturnBase.onClick.AddListener(OnClickReturnToBase);
+            if (btnReturnBase != null)
+            {
+                btnReturnBase.onClick.RemoveListener(OnClickReturnToBase);
+                btnReturnBase.onClick.AddListener(OnClickReturnToBase);
+            }
 
             // 시작 시 화면에서 숨김 (단, GameObject 본체를 끄면 OnDisable로 이벤트 수신이 끊기므로 CanvasGroup 또는 자식 패널로 숨김)
             HidePanel();
+        }
+
+        private void OnValidate()
+        {
+            AutoBindUIRefs();
+        }
+
+        private void AutoBindUIRefs()
+        {
+            if (titleText == null) titleText = FindChildComponent<TextMeshProUGUI>("TitleText");
+            if (subtitleText == null) subtitleText = FindChildComponent<TextMeshProUGUI>("SubtitleText");
+            if (bannerBackgroundImage == null) bannerBackgroundImage = FindChildComponent<Image>("BannerBackground");
+            if (goldValueText == null) goldValueText = FindChildComponent<TextMeshProUGUI>("GoldValueText");
+            if (expValueText == null) expValueText = FindChildComponent<TextMeshProUGUI>("ExpValueText");
+            if (coreExpSlider == null) coreExpSlider = FindChildComponent<Slider>("CoreExpSlider");
+            if (coreStatusText == null) coreStatusText = FindChildComponent<TextMeshProUGUI>("CoreStatusText");
+            if (partSlotContainer == null) partSlotContainer = FindChildTransform("PartSlotContainer");
+            if (destroyedWarningText == null) destroyedWarningText = FindChildComponent<TextMeshProUGUI>("DestroyedWarningText");
+            if (destroyedWarningPanel == null)
+            {
+                var t = FindChildTransform("WarningGroup");
+                if (t != null) destroyedWarningPanel = t.gameObject;
+            }
+            if (btnReturnBase == null) btnReturnBase = FindChildComponent<Button>("Btn_ReturnBase");
+        }
+
+        private Transform FindChildTransform(string childName)
+        {
+            var transforms = GetComponentsInChildren<Transform>(true);
+            for (int i = 0; i < transforms.Length; i++)
+            {
+                if (transforms[i] != null && transforms[i].name == childName)
+                {
+                    return transforms[i];
+                }
+            }
+            return null;
+        }
+
+        private T FindChildComponent<T>(string childName) where T : Component
+        {
+            var t = FindChildTransform(childName);
+            return t != null ? t.GetComponent<T>() : null;
         }
 
         /// <summary>
@@ -285,7 +333,7 @@ namespace RealSteel.UI
                 _animSequence.Kill();
             }
 
-            _animSequence = DOTween.Sequence();
+            _animSequence = DOTween.Sequence().SetUpdate(true);
 
             // 1. 캔버스 그룹 페이드인
             if (mainCanvasGroup != null)
@@ -362,16 +410,31 @@ namespace RealSteel.UI
         /// </summary>
         public void OnClickReturnToBase()
         {
-            Debug.Log($"<color=cyan>[BattleResultUI] 거점 복귀 클릭: '{lobbySceneName}' 씬으로 전환합니다.</color>");
-            if (Application.CanStreamedLevelBeLoaded(lobbySceneName))
+            const string fallbackLobbyScene = "JunkShop_Map";
+            string targetScene = lobbySceneName;
+
+            if (string.IsNullOrWhiteSpace(targetScene) || !Application.CanStreamedLevelBeLoaded(targetScene))
             {
-                SceneManager.LoadScene(lobbySceneName);
+                if (Application.CanStreamedLevelBeLoaded(fallbackLobbyScene))
+                {
+                    Debug.LogWarning($"[BattleResultUI] '{lobbySceneName}' 씬이 Build Settings에 없어 기본 거점 씬 '{fallbackLobbyScene}'으로 복귀합니다.");
+                    targetScene = fallbackLobbyScene;
+                }
+                else
+                {
+                    Debug.LogWarning($"[BattleResultUI] '{lobbySceneName}' 씬이 Build Settings에 등록되지 않아 현재 씬을 유지합니다.");
+                    if (resultPanelRoot != null) resultPanelRoot.SetActive(false);
+                    return;
+                }
             }
-            else
+
+            if (!Mathf.Approximately(Time.timeScale, 1f))
             {
-                Debug.LogWarning($"[BattleResultUI] '{lobbySceneName}' 씬이 Build Settings에 등록되지 않아 현재 씬을 유지합니다.");
-                if (resultPanelRoot != null) resultPanelRoot.SetActive(false);
+                Time.timeScale = 1f;
             }
+
+            Debug.Log($"<color=cyan>[BattleResultUI] 거점 복귀 클릭: '{targetScene}' 씬으로 전환합니다.</color>");
+            SceneManager.LoadScene(targetScene);
         }
 
         // ========================================================================

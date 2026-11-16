@@ -114,7 +114,7 @@ namespace RealSteel.BossRace
             }
 
             phase = Phase.Waiting;
-            Debug.Log("[SeasonCall] 시즌 종료 — 필드로 돌아오면 길드 전화가 울립니다");
+            Debug.Log("[SeasonCall] 시즌 시작 전 — 필드로 돌아오면 길드 전화가 울립니다 (지역 보스 선택)");
             return true;
         }
 
@@ -293,6 +293,7 @@ namespace RealSteel.BossRace
                 variables.Set("race.seasonFirst", "no");
                 variables.Set("season.day", 1);
                 variables.Set("season.endingSoon", "no");
+                variables.Set("season.started", "yes");
                 manager.Save();
             }
 

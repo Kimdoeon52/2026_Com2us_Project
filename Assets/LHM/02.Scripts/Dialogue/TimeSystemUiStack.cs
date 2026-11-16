@@ -101,6 +101,14 @@ namespace RealSteel.Dialogue
             clock.PassTime(0);
         }
 
+        public bool TryGetDate(out int month, out int day)
+        {
+            TimeSystemManager clock = Clock;
+            month = clock != null ? clock.month : 0;
+            day = clock != null ? clock.day : 0;
+            return clock != null;
+        }
+
         public bool TryGetCalendar(out int month, out string weekday)
         {
             TimeSystemManager clock = Clock;

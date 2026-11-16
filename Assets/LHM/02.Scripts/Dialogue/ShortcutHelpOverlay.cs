@@ -98,8 +98,7 @@ namespace RealSteel.Dialogue
                 list.Add(new Section { title = "이동 · 카메라" }
                     .Add("WASD / 방향키", "이동")
                     .Add("Shift (누름)", "달리기")
-                    .Add("Space", "점프")
-                    .Add("Q / E", "카메라 45° 회전")
+                    .Add("Q / E", "카메라 45° 회전 (NPC · 문 앞에서는 꺼짐)")
                     .Add("R / F (누름)", "카메라 기울이기")
                     .Add("+ / - · 휠", "줌")
                     .Add("우클릭 드래그", "카메라 돌리기")
@@ -108,6 +107,7 @@ namespace RealSteel.Dialogue
 
             var field = new Section { title = "필드 상호작용 · 메뉴" };
             if (Has(nameof(PlayerInteractor))) field.Add("E", "NPC와 상호작용");
+            if (Has(nameof(DoorInteractable))) field.Add("E", "문 들어가기 · 나가기 (문 앞)");
             MonoBehaviour scrap = Find("ScrapInteractor");
             if (scrap != null) field.Add(KeyName(ReadKey(scrap, "InteractKey", "_interactKey")), "고철 뒤지기");
             MonoBehaviour inventory = Find("InventoryToggle");
@@ -116,6 +116,9 @@ namespace RealSteel.Dialogue
             if (Has("SystemUiOnOffManager")) field.Add("M", "지도").Add("O", "달력").Add("Shift + R", "랭킹");
             if (Has("GlobalGold")) field.Add("Shift + S", "골드 수동 저장");
             if (Has("TimingBarMinigame")) field.Add("Space", "고철 미니게임 타이밍 맞추기");
+            MonoBehaviour skill = Find("SkillWindowView");
+            if (skill != null) field.Add(KeyName(ReadKey(skill, "ToggleKey", "_toggleKey")), "스킬창 (Esc 닫기)");
+            if (Has("TutorialDirector")) field.Add("F10", "도움말 · 튜토리얼 다시 보기");
             field.Add("Home", "단축키 안내 (Home · Esc 닫기)");
             list.Add(field);
 
@@ -126,9 +129,11 @@ namespace RealSteel.Dialogue
                     .Add("Esc", "스킵 (안 읽은 대사면 한 번 더)")
                     .Add("Ctrl (누름)", "읽은 대사 빨리감기")
                     .Add("Tab", "오토")
-                    .Add("L", "백로그 (↑↓ · PgUp/PgDn · 휠)"));
+                    .Add("L", "백로그 (↑↓ · PgUp/PgDn · 휠)")
+                    .Add("LOG · AUTO · SKIP 클릭", "대화창 오른쪽 버튼 (백로그 · 오토 · 스킵)"));
 
                 list.Add(new Section { title = "선택 화면" }
+                    .Add("1 ~ 9", "NPC 선택지 바로 고르기")
                     .Add("W/S · ↑↓", "NPC 선택지 · 난이도 이동")
                     .Add("A/D · ←→", "보스(지역) 이동")
                     .Add("E · Space · Enter", "결정")
@@ -168,6 +173,14 @@ namespace RealSteel.Dialogue
                     .Add("Shift + K · Shift + L", "관중 말풍선 · 대기 목록");
             }
             if (Has("TutorialTest")) test.Add("Insert · Shift + Insert", "튜토리얼 화면 (←→ · Space · Esc) · 본 기록 지우기");
+            if (Has("TutorialDirector")) test.Add("Ctrl + F10", "튜토리얼 본 기록 전부 지우기");
+            if (Has(nameof(Step14_BarkTest))) test.Add("6 / 7 / 8 / 9 · 0", "전투 바크: 파츠 파괴 / 자막 T10 / 부위 파괴 / 그로기 (Shift = 체력 20%) · 기록 초기화");
+            if (Has(nameof(Step18_TutorialTest))) test.Add("P / I", "가짜 지도 UI (T3) / 가짜 토벌 신청 UI (T9)");
+            if (Has(nameof(Step81_EffectTest))) test.Add("Z X C V B N M", "연출: 확대 · 흔들림 · 페이드 · 사운드 · 표정 (Shift = 반대)");
+            if (Has("WorkshopTestKit")) test.Add("F9", "제작 · 수리 테스트 재료 다시 지급");
+            if (Has("DebugPartGiver")) test.Add("F6", "파츠 지급 창 (KDU)");
+            if (Has("DebugCoreLevelKey")) test.Add("Shift + X", "코어 레벨업 (KDU)");
+            if (Has("UIPickerDebugger")) test.Add("F1", "마우스 아래 UI 보기 (LSH, 모든 빌드)");
             if (Has(nameof(Step10_InputTest))) test.Add("` (1 왼쪽)", "필드 ↔ 전투 입력 전환");
             if (Has("InventoryHost")) test.Add("Shift + Q", "디버그 부품 지급");
             if (Has("CorrectRecipe")) test.Add("T", "제작 슬롯 새로고침");

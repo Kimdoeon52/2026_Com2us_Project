@@ -32,6 +32,10 @@ namespace RealSteel.BossRace
         [SerializeField] private string fallbackBossId = "boss.wheel";
         [SerializeField] private string backLabel = "길드 접수처";
 
+        [Header("프리시즌 (첫 시즌 지역 선택 전)")]
+        [SerializeField] private bool blockBeforeSeason = true;
+        [SerializeField] private string preseasonDialogueId = "hunt_preseason";
+
         private string lastDifficulty = "normal";
         private string bossId;
         private string difficulty;
@@ -91,6 +95,15 @@ namespace RealSteel.BossRace
 
         public bool Open()
         {
+            // 첫 시즌 지역을 고르기 전(프리시즌)에는 토벌 신청을 받지 않음 → 접수원 "시즌 시작 전이에요"
+            DialogueDayProcessor days = FindAnyObjectByType<DialogueDayProcessor>();
+            if (blockBeforeSeason && days != null && days.IsPreseason)
+            {
+                Debug.Log("[Hunt] 토벌 신청 거절 — 시즌 시작 전 (첫 시즌 지역 선택 전)", this);
+                if (!manager.PlayDialogue(preseasonDialogueId)) Debug.LogWarning($"[Hunt] '{preseasonDialogueId}' 대사를 열지 못했습니다 (event_dialogues 풀 확인).", this);
+                return false;
+            }
+
             bossId = CurrentSeasonBoss();
             BossRaceEntry entry = FindEntry(bossId);
             if (entry == null)

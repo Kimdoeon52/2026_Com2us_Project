@@ -4,6 +4,7 @@
     { "name": "time.month", "type": "int", "defaultValue": "1" },
     { "name": "season.day", "type": "int", "defaultValue": "1" },
     { "name": "season.endingSoon", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
+    { "name": "season.started", "type": "enum", "defaultValue": "no", "allowed": ["no", "yes"] },
 
     { "name": "hunt.lastResult", "type": "enum", "defaultValue": "none", "allowed": ["none", "win", "lose"] },
     { "name": "hunt.lastBoss", "type": "string", "defaultValue": "" },

@@ -20,7 +20,8 @@ namespace RealSteel.Cutscene
         [Header("재생")]
         [SerializeField] private bool playOnStart = true;
         [SerializeField] private bool playOnlyOnce;
-        [SerializeField] private string nextSceneName = "";
+        [Tooltip("끝나면 이동할 씬. 이름 또는 경로(Assets/....unity). Build Settings에 없으면 에디터에서만 경로로 이동")]
+        [SerializeField] private string nextSceneName = "Assets/Scenes/Copys_1116/Map_Test.unity";
 
         [Header("화면")]
         [SerializeField] private GameObject root;
@@ -303,11 +304,21 @@ namespace RealSteel.Cutscene
             if (loadNext) LoadNextScene();
         }
 
+        // 다음 씬은 이름(Map_Test) 또는 경로(Assets/Scenes/Copys_1116/Map_Test.unity). 같은 이름이 여러 폴더에 있으면 경로로 적음
+        private bool IsScenePath => nextSceneName.EndsWith(".unity", StringComparison.OrdinalIgnoreCase);
+
+        private bool InBuildSettings()
+        {
+            return IsScenePath ? SceneUtility.GetBuildIndexByScenePath(nextSceneName) >= 0 : Application.CanStreamedLevelBeLoaded(nextSceneName);
+        }
+
         private bool CanLoadNextScene()
         {
             if (string.IsNullOrEmpty(nextSceneName)) return false;
-            if (Application.CanStreamedLevelBeLoaded(nextSceneName)) return true;
-
+            if (InBuildSettings()) return true;
+#if UNITY_EDITOR
+            if (IsScenePath && System.IO.File.Exists(nextSceneName)) return true;
+#endif
             Debug.LogError($"[Cutscene] 다음 씬 '{nextSceneName}'이 Build Settings에 없어 이동하지 않습니다.", this);
             return false;
         }
@@ -315,6 +326,15 @@ namespace RealSteel.Cutscene
         private void LoadNextScene()
         {
             if (!CanLoadNextScene()) return;
+#if UNITY_EDITOR
+            if (!InBuildSettings())
+            {
+                Debug.LogWarning($"[Cutscene] '{nextSceneName}'이 Build Settings에 없어 에디터에서만 경로로 엽니다. 빌드 전에 Build Settings에 추가하세요.", this);
+                UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(nextSceneName, new LoadSceneParameters(LoadSceneMode.Single));
+                return;
+            }
+#endif
+            Debug.Log($"[Cutscene] 다음 씬 → {nextSceneName}", this);
             SceneManager.LoadScene(nextSceneName);
         }
 

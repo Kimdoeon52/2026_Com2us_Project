@@ -28,6 +28,19 @@ public class KyodaiSfxData : ScriptableObject
     [Tooltip("소리 위치에 따라 좌우로 나누는 정도 (0 = 가운데, 1 = 화면 끝이면 한쪽 끝)")]
     [Range(0f, 1f)] public float stereoSpread = 0.5f;
 
+    [Header("배경음악 (2026-11-16 임시 — 플레이 중에 바꿔도 바로 반영)")]
+    [Tooltip("보스전 배경음악 (반복). 비우면 음악 없음")]
+    public AudioClip bgm;
+
+    [Tooltip("배경음악 크기 — 효과음 크기(masterVolume)와 따로")]
+    [Range(0f, 1f)] public float bgmVolume = 0.5f;
+
+    [Tooltip("보스전이 시작할 때 0에서 bgmVolume까지 커지는 시간(초)")]
+    [Min(0f)] public float bgmFadeInSeconds = 2.5f;
+
+    [Tooltip("보스를 잡았을 때 꺼지는 시간(초). 0 = 바로 뚝 끊김")]
+    [Min(0f)] public float bgmStopSeconds = 0.15f;
+
     [Header("손")]
     [Tooltip("주먹이 바닥을 찍는 순간")]
     public KyodaiSfxCue fistImpact = new KyodaiSfxCue();

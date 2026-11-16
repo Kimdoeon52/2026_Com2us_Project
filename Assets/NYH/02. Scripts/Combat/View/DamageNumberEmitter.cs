@@ -14,6 +14,11 @@ using UnityEngine;
 ///   · 색: 이 로봇이 플레이어면 "내가 맞음"(보라), 아니면 "내가 때림"(주황). 회피는 "MISS", 크리티컬은 크게.
 ///   · 숫자 값은 KKH CombatDataHub가 계산한 HitResolutionResult.DamageToHp 그대로 — 여기서 계산하지 않는다.
 ///
+/// ── 보스 공용 (2026-11-16) ─────────────────────────────────────────────────────────────
+///   보스(KKH BossControllerBase를 쓰는 보스 전부)·촉수 같은 대상은 ActionExecutor가 없어서, HitDetection이 플레이어 타격을
+///   처리할 때 맞은 대상에 이 컴포넌트를 붙이고(없으면 자동) ShowDealt(데미지, 크리, 맞은 자리)로 띄운다. 색은 dealtColor.
+///   글자·색·크기를 보스마다 바꾸려면 보스 프리팹 루트에 미리 붙여 두고 거기서 조절하면 그걸 쓴다.
+///
 /// ── 붙이는 곳 ───────────────────────────────────────────────────────────────────────
 ///   로봇 루트(ActionExecutor가 있는 오브젝트). 없으면 RobotView.EnsureEffectComponents가 자동으로 붙인다.
 ///   단 자동으로 붙은 건 플레이할 때마다 기본값으로 새로 생긴다 — 글자·색·위치를 바꿔서 유지하려면
@@ -27,6 +32,22 @@ using UnityEngine;
 /// </summary>
 public class DamageNumberEmitter : MonoBehaviour
 {
+    [Header("공용 스타일 (2026-11-16)")]
+    [Tooltip("비우면 공용 스타일(Resources/DamageNumberStyle)을 쓴다. 그것도 없으면 아래 '글자'·'모양' 칸의 자기 값. " +
+             "이 대상만 다르게 하려면 다른 스타일 에셋을 넣는다")]
+    [SerializeField] private DamageNumberStyle style;
+
+    // 지금 쓰는 스타일 — 글꼴·크기·색·형식·튀기는 스타일이 있으면 스타일 값, 없으면 아래 자기 값
+    private DamageNumberStyle Style => style != null ? style : DamageNumberStyle.Shared;
+    private float FontSize => Style != null ? Style.fontSize : fontSize;
+    private float CriticalScale => Style != null ? Style.criticalScale : criticalScale;
+    private Color TakenColor => Style != null ? Style.takenColor : takenColor;
+    private Color DealtColor => Style != null ? Style.dealtColor : dealtColor;
+    private Color MissColor => Style != null ? Style.missColor : missColor;
+    private string DamageFormat => Style != null ? Style.damageFormat : damageFormat;
+    private string MissText => Style != null ? Style.missText : missText;
+    private float PopScale => Style != null ? Style.popScale : popScale;
+
     [Header("위치·움직임 — 연출값")]
     [Tooltip("숫자가 처음 뜨는 위치(로봇 피벗 기준, 월드 단위). 보통 머리 위")]
     [SerializeField] private Vector2 spawnOffset = new Vector2(0f, 0.75f);
@@ -106,7 +127,8 @@ public class DamageNumberEmitter : MonoBehaviour
     private readonly Stack<TextMeshPro> pool = new Stack<TextMeshPro>();
     private int stackIndex;          // 지금 몇 번째로 쌓이는 중인지
     // 최. 추가 — 아직 안 띄운 숫자 대기열(메이플식 순차 표시)과 다음에 꺼낼 시각
-    private struct Pending { public string label; public Color color; public float size; }
+    // 2026-11-16: hasPosition이면 그 자리(맞은 곳)에 띄운다 — 보스처럼 몸이 커서 "머리 위 한 점"이 의미 없는 대상용
+    private struct Pending { public string label; public Color color; public float size; public bool hasPosition; public Vector3 position; }
     private readonly Queue<Pending> pending = new Queue<Pending>();
     private float nextReleaseTime;
     private float lastHitTime = -999f;
@@ -136,22 +158,39 @@ public class DamageNumberEmitter : MonoBehaviour
         bool isPlayer = executor != null && executor.FighterId == "Player";
         string label;
         Color color;
-        float size = fontSize;
+        float size = FontSize;
 
         if (result.IsEvaded)
         {
-            label = missText;
-            color = missColor;
+            label = MissText;
+            color = MissColor;
         }
         else
         {
             label = FormatDamage(result.DamageToHp);
-            color = isPlayer ? takenColor : dealtColor;
-            if (result.IsCritical) size *= criticalScale;
+            color = isPlayer ? TakenColor : DealtColor;
+            if (result.IsCritical) size *= CriticalScale;
         }
 
         pending.Enqueue(new Pending { label = label, color = color, size = size });
         ReleasePending(); // 대기 중인 게 없고 간격도 지났으면 이번 프레임에 바로 뜬다
+    }
+
+    /// <summary>
+    /// 플레이어가 때린 데미지를 worldPos(맞은 자리)에 띄운다 (2026-11-16 보스 공용 데미지 표시).
+    /// ActionExecutor가 없는 대상(보스·촉수)용 — 호출: HitDetection(보스·체력 따로 있는 대상 타격). 쌓기·순차 표시·튀기는 같다
+    /// </summary>
+    public void ShowDealt(int damage, bool critical, Vector3 worldPos)
+    {
+        pending.Enqueue(new Pending
+        {
+            label = FormatDamage(damage),
+            color = DealtColor,
+            size = critical ? FontSize * CriticalScale : FontSize,
+            hasPosition = true,
+            position = worldPos,
+        });
+        ReleasePending();
     }
 
     // 최. 추가 — 대기열에서 sequenceInterval 간격으로 하나씩 꺼내 띄운다
@@ -167,7 +206,9 @@ public class DamageNumberEmitter : MonoBehaviour
             lastHitTime = Time.time;
 
             float jitter = Random.Range(-spawnJitterX, spawnJitterX);
-            Vector3 start = transform.position + new Vector3(spawnOffset.x + jitter, spawnOffset.y + stackIndex * stackSpacing, 0f);
+            Vector3 start = p.hasPosition
+                ? p.position + new Vector3(jitter, stackIndex * stackSpacing, 0f)
+                : transform.position + new Vector3(spawnOffset.x + jitter, spawnOffset.y + stackIndex * stackSpacing, 0f);
             Spawn(p.label, p.color, p.size, start);
 
             nextReleaseTime = Time.time + sequenceInterval;
@@ -178,7 +219,7 @@ public class DamageNumberEmitter : MonoBehaviour
     // 형식 문자열을 잘못 넣어도(예: "{1}", 중괄호 짝 안 맞음) 게임이 멈추지 않게 숫자만 띄운다
     private string FormatDamage(int damage)
     {
-        try { return string.Format(damageFormat, damage); }
+        try { return string.Format(DamageFormat, damage); }
         catch (System.FormatException) { return damage.ToString(); }
     }
 
@@ -186,14 +227,26 @@ public class DamageNumberEmitter : MonoBehaviour
     {
         TextMeshPro text = pool.Count > 0 ? pool.Pop() : CreateText();
         text.gameObject.SetActive(true);
+        ApplyLook(text); // 글꼴·테두리 — 재사용하는 글자도 매번 지금 스타일로 (플레이 중 스타일을 바꿔도 반영)
         text.text = label;
         text.fontSize = size;
         text.color = color;
         text.transform.position = position;
-        text.transform.localScale = Vector3.one * popScale; // 최. 추가 — 크게 튀어나온 상태로 시작
+        text.transform.localScale = Vector3.one * PopScale; // 최. 추가 — 크게 튀어나온 상태로 시작
 
         active.Add(new Popup { text = text, start = position, age = 0f, color = color,
                                drift = Random.Range(-driftX, driftX) }); // 최. 추가: drift
+    }
+
+    // 글꼴·굵기·테두리. 스타일이 있으면 스타일, 없으면 이 컴포넌트의 font 칸 + 기본(굵게, 검은 테두리 0.25)
+    private void ApplyLook(TextMeshPro text)
+    {
+        DamageNumberStyle s = Style;
+        TMP_FontAsset wantFont = s != null ? s.font : font;
+        if (wantFont != null && text.font != wantFont) text.font = wantFont;
+        text.fontStyle = s != null ? s.fontStyle : FontStyles.Bold;
+        text.outlineWidth = s != null ? s.outlineWidth : 0.25f; // 배경 위에서도 읽히게 테두리
+        text.outlineColor = s != null ? (Color32)s.outlineColor : new Color32(0, 0, 0, 255);
     }
 
     private TextMeshPro CreateText()
@@ -201,11 +254,8 @@ public class DamageNumberEmitter : MonoBehaviour
         // 로봇의 자식으로 두지 않는다 — 자식이면 로봇이 밀려날 때 숫자도 같이 끌려가고, 좌우 반전 때 글자가 뒤집힌다
         var go = new GameObject($"DamageNumber_{name}");
         var text = go.AddComponent<TextMeshPro>();
-        if (font != null) text.font = font;
         text.alignment = TextAlignmentOptions.Center;
-        text.fontStyle = FontStyles.Bold;
-        text.outlineWidth = 0.25f;               // 배경 위에서도 읽히게 검은 테두리
-        text.outlineColor = new Color32(0, 0, 0, 255);
+        ApplyLook(text);
         text.textWrappingMode = TextWrappingModes.NoWrap;
         // 로봇·불·총알보다 항상 앞에 보이게. 같은 정렬 레이어에서 큰 값 = 앞
         text.sortingOrder = 100;
@@ -237,7 +287,7 @@ public class DamageNumberEmitter : MonoBehaviour
             // 최. 추가 — 튀기: popScale → 1로 빠르게 줄어든다(끝에서 감속)
             float pt = Mathf.Clamp01(p.age / popSeconds);
             float popEased = 1f - (1f - pt) * (1f - pt);
-            p.text.transform.localScale = Vector3.one * Mathf.Lerp(popScale, 1f, popEased);
+            p.text.transform.localScale = Vector3.one * Mathf.Lerp(PopScale, 1f, popEased);
 
             Color c = p.color;
             c.a = t < 0.5f ? 1f : 1f - (t - 0.5f) * 2f; // 앞 절반은 또렷하게, 뒤 절반에 걸쳐 사라짐

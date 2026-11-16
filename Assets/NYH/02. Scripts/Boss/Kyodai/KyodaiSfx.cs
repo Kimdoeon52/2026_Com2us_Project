@@ -59,6 +59,68 @@ public static class KyodaiSfx
         if (loop != null && data != null) loop.panStereo = Pan(pos);
     }
 
+    // ───────── 배경음악 (2026-11-16 임시) ─────────
+    // 보스전 시작에 페이드인, 보스를 잡으면 끊는다. 크기는 KyodaiSfxData.bgmVolume을 매 프레임 읽어서 플레이 중에 바꿔도 바로 반영.
+    // 페이드는 실제 시간(일시정지·히트스톱과 무관) — 컨트롤러 Update가 TickBgm을 부른다
+    private static AudioSource bgmSource;
+    private static float bgmLevel;      // 0 ~ 1 (페이드 진행)
+    private static float bgmTarget;     // 페이드 목표 (1 = 켜짐, 0 = 꺼짐)
+    private static float bgmSeconds;    // 지금 페이드에 걸리는 시간
+
+    /// <summary>배경음악 시작 — 0에서 bgmFadeInSeconds 동안 커진다. 이미 나오고 있으면 그대로</summary>
+    public static void StartBgm()
+    {
+        if (!Application.isPlaying || data == null || data.bgm == null) return;
+        EnsureHost();
+        if (bgmSource == null)
+        {
+            bgmSource = host.AddComponent<AudioSource>();
+            bgmSource.loop = true;
+            bgmSource.spatialBlend = 0f;
+            bgmSource.playOnAwake = false;
+        }
+        if (bgmSource.clip != data.bgm || !bgmSource.isPlaying)
+        {
+            bgmSource.clip = data.bgm;
+            bgmLevel = 0f;
+            bgmSource.volume = 0f;
+            bgmSource.Play();
+        }
+        bgmTarget = 1f;
+        bgmSeconds = data.bgmFadeInSeconds;
+    }
+
+    /// <summary>배경음악 끄기 — bgmStopSeconds 동안 줄어들고 멈춘다(0이면 바로)</summary>
+    public static void StopBgm()
+    {
+        if (bgmSource == null) return;
+        bgmTarget = 0f;
+        bgmSeconds = data != null ? data.bgmStopSeconds : 0f;
+        if (bgmSeconds <= 0f) Silence();
+    }
+
+    /// <summary>호출: KyodaiBossController.Update (실제 시간)</summary>
+    public static void TickBgm(float unscaledDt)
+    {
+        if (bgmSource == null || !bgmSource.isPlaying) return;
+        bgmLevel = bgmSeconds <= 0f ? bgmTarget : Mathf.MoveTowards(bgmLevel, bgmTarget, unscaledDt / bgmSeconds);
+        if (bgmTarget <= 0f && bgmLevel <= 0f)
+        {
+            Silence();
+            return;
+        }
+        float volume = data != null ? data.bgmVolume : 0f;
+        bgmSource.volume = volume * bgmLevel * bgmLevel; // 제곱 — 귀에는 직선보다 자연스럽게 커지고 줄어든다
+    }
+
+    private static void Silence()
+    {
+        bgmLevel = 0f;
+        if (bgmSource == null) return;
+        bgmSource.volume = 0f;
+        bgmSource.Stop();
+    }
+
     private static bool Ready(KyodaiSfxCue cue) => Application.isPlaying && data != null && cue != null && !cue.IsEmpty;
 
     private static void Setup(AudioSource s, KyodaiSfxCue cue, Vector3 pos, float pitch)

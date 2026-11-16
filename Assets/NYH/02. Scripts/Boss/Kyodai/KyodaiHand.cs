@@ -481,6 +481,18 @@ public class KyodaiHand : MonoBehaviour
         return faceLeft != artFlipped;
     }
 
+    // 주먹 그림 180° (2026-11-16 사용자: 기본 상태·주먹 내려찍기 때만 주먹이 반대쪽을 보게 — 밀기·협공처럼 방향이 정해진 동작은 그대로).
+    // 주먹 피벗이 주먹 덩어리 가운데라 돌려도 주먹은 제자리, 손목만 반대쪽으로 간다
+    private bool FistRotated
+    {
+        get
+        {
+            if (feel == null || !feel.fistRotate180 || pose != KyodaiHandPose.Fist) return false;
+            KyodaiHandKey key = CurrentKey;
+            return key == null || (!key.mirrorByDirection && key.facing != KyodaiHandFacing.Inward);
+        }
+    }
+
     private void SetPose(KyodaiHandPose next, bool pop)
     {
         bool changed = next != pose;
@@ -580,7 +592,7 @@ public class KyodaiHand : MonoBehaviour
         Vector2 shake = IsFrozen && landed ? UnityEngine.Random.insideUnitCircle * feel.frozenShake : Vector2.zero; // 누운 뒤 지직거림
         // Visual은 크기가 줄어든 루트 밑이라 로컬 1 = 월드 Size — 보간(월드)만 나눠서 넣고, 흔들림(보스 단위)은 그대로
         visual.localPosition = (Vector3)((basePos - pos) / size + bob + shake);
-        visual.localRotation = Quaternion.Euler(0f, 0f, rotation + lean + floatRot);
+        visual.localRotation = Quaternion.Euler(0f, 0f, rotation + lean + floatRot + (FistRotated ? 180f : 0f));
         width = Mathf.SmoothDamp(width, wantWidth, ref widthVel, feel.scaleSmoothTime, Mathf.Infinity, dt);
         visual.localScale = new Vector3(sx * scale * width * (flip ? -1f : 1f), sy * scale, 1f);
 

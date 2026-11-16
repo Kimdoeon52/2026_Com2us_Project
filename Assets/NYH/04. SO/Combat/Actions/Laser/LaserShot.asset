@@ -28,7 +28,8 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Jap
   activeClipName: Straight
-  keepClipSpeed: 1
+  activeClipFrames: 42
+  keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
   advanceDistance: -1
@@ -45,13 +46,16 @@ MonoBehaviour:
     repeat: 0
     repeatIntervalFrames: 0
     repeatStartOffsetFrames: 0
-    endMode: 0
+    endMode: 2
     offset: {x: 0, y: 0.35}
     rotation: -90
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 1
     scale: 0.1
-    playbackSpeed: 2
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
     sortingOrderOffset: 0
   perBoxDamage: 0
   perBoxSeparateHits: 0
@@ -63,7 +67,7 @@ MonoBehaviour:
   holdMode: 1
   minHoldFrames: 60
   earlyReleaseCooldownScale: 0.5
-  maxHoldFrames: 0
+  maxHoldFrames: 150
   enhancedVariant: {fileID: 11400000, guid: 49ce30f70bfdddd4ab431058a6f0fb5e, type: 2}
   enhanceSlot: 0
   enhanceMode: 0

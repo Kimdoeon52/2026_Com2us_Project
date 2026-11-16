@@ -134,7 +134,7 @@ public class ActionVfxPlayer : MonoBehaviour
         bool facingRight = mover == null || mover.FacingRight;
         GameObject go = SpawnVisual(entry.prefab, transform.position, entry.offset, entry.rotation, facingRight,
                                     entry.flipWithFacing, CombineScale(entry.scale, entry.scaleXY), entry.playbackSpeed,
-                                    RobotView.FindRenderer(this), entry.sortingOrderOffset);
+                                    RobotView.FindRenderer(this), entry.sortingOrderOffset, entry.XYRotation, entry.flipByRotation);
         live.Add(new Live { go = go, entry = entry, followOffset = go.transform.position - transform.position });
     }
 
@@ -156,14 +156,32 @@ public class ActionVfxPlayer : MonoBehaviour
     /// </summary>
     public static GameObject SpawnVisual(GameObject prefab, Vector3 origin, Vector2 offset, float rotation, bool facingRight,
                                          bool flipWithFacing, Vector2 scale, float playbackSpeed,
-                                         Renderer sortBase, int sortingOrderOffset)
+                                         Renderer sortBase, int sortingOrderOffset, Vector2 xyRotation = default,
+                                         bool flipByRotation = false)
     {
         Vector3 pos = BoxResolver.ToWorldPoint(origin, offset, facingRight);
 
-        // 좌우 반전(음수 스케일)과 같이 쓰면 각도도 반대로 돌려야 오른쪽 볼 때와 대칭이 된다
         bool flipped = flipWithFacing && !facingRight;
-        float angle = flipped ? -rotation : rotation;
-        Quaternion rot = prefab.transform.rotation * Quaternion.Euler(0f, 0f, angle);
+        bool scaleFlip = flipped && !flipByRotation;  // 음수 스케일로 반전 (2D 플립북 등)
+        bool rotateFlip = flipped && flipByRotation;  // Y축 180도 회전으로 반전 (3D 파티클)
+
+        Quaternion rot;
+        if (flipByRotation)
+        {
+            // 거울 반전 = (Y축 180도 회전) × (깊이 z 반전). 2D 정사영 카메라에서는 깊이 반전이 화면에 안 보이므로
+            // 회전만으로 좌우 반전이 된다. 음수 스케일이 없어 메시·스트레치·모양 모듈이 전부 같이 돌아간다.
+            // 회전값은 오른쪽 기준 그대로 쓰고 바깥에 180도를 곱한다
+            Quaternion baseRot = prefab.transform.rotation * Quaternion.Euler(xyRotation.x, xyRotation.y, rotation);
+            rot = rotateFlip ? Quaternion.Euler(0f, 180f, 0f) * baseRot : baseRot;
+        }
+        else
+        {
+            // 좌우 반전(음수 스케일)과 같이 쓰면 각도도 반대로 돌려야 오른쪽 볼 때와 대칭이 된다.
+            // X축 기준 거울 반전에서는 X 회전은 그대로, Y·Z 회전은 부호가 뒤집힌다
+            float angle = flipped ? -rotation : rotation;
+            float angleY = flipped ? -xyRotation.y : xyRotation.y;
+            rot = prefab.transform.rotation * Quaternion.Euler(xyRotation.x, angleY, angle);
+        }
 
         GameObject go = Instantiate(prefab, pos, rot);
         BossVfxHelper.ConfigureVisualOnly(go); // 콜라이더·리지드바디 끄고 Ignore Raycast로 격리 (판정 오염 방지)
@@ -173,7 +191,7 @@ public class ActionVfxPlayer : MonoBehaviour
         s.y *= scale.y;
         // z는 x, y 중 작은 쪽을 따라간다 — 2D라 보통 영향 없지만 3D 파티클 모양이 한쪽으로만 부풀지 않게
         s.z *= Mathf.Min(scale.x, scale.y);
-        if (flipped) s.x = -s.x;
+        if (scaleFlip) s.x = -s.x;
         go.transform.localScale = s;
 
         if (sortBase != null)
@@ -185,6 +203,9 @@ public class ActionVfxPlayer : MonoBehaviour
             }
         }
 
+        // X/Y 회전이 있으면 화면 평면을 벗어나 기울어진 이펙트 — 자식까지 전부 그 회전을 따라야 한다
+        bool tilted = xyRotation.x != 0f || xyRotation.y != 0f;
+
         // 음수 스케일(좌우 반전)이 자식 파티클까지 먹도록 Hierarchy 스케일로 맞춘다
         foreach (var ps in go.GetComponentsInChildren<ParticleSystem>(true))
         {
@@ -193,9 +214,14 @@ public class ActionVfxPlayer : MonoBehaviour
             if (playbackSpeed > 0f) main.simulationSpeed *= playbackSpeed; // 인스펙터 + 버튼으로 생긴 항목은 0일 수 있음
 
             // 카메라를 보는 빌보드(Alignment=View)는 Transform 회전을 무시하고 음수 스케일 반전과 섞이면 각도가 틀어진다.
-            // 2D 화면 평면(XY)에 놓인 빌보드는 Local 정렬로 바꿔 Transform 회전·반전을 그대로 따르게 한다
-            if (IsViewAlignedBillboard(ps) && Mathf.Abs(Vector3.Dot(ps.transform.forward, Vector3.forward)) > 0.99f)
+            // 2D 화면 평면(XY)에 놓인 빌보드는 Local 정렬로 바꿔 Transform 회전·반전을 그대로 따르게 한다.
+            // X/Y 회전(tilted)이 있으면 평면 여부와 상관없이 자식까지 전부 Local로 바꾼다 — 안 그러면 카메라만 보고 회전을 무시한다
+            // 회전 반전은 음수 스케일이 없어서 평면 빌보드를 Local로 바꿀 필요가 없다 (바꾸면 왼쪽에서 뒷면이 보인다)
+            bool planar = !flipByRotation && Mathf.Abs(Vector3.Dot(ps.transform.forward, Vector3.forward)) > 0.99f;
+            if (IsViewAlignedBillboard(ps) && (tilted || planar))
                 ps.GetComponent<ParticleSystemRenderer>().alignment = ParticleSystemRenderSpace.Local;
+
+            if (rotateFlip) MirrorWorldSpaceVectors(ps);
         }
 
         return go;
@@ -208,11 +234,52 @@ public class ActionVfxPlayer : MonoBehaviour
         Destroy(go, NaturalLifetime(go, go.GetComponentsInChildren<ParticleSystem>(true)));
     }
 
+    /// <summary>
+    /// 회전 반전(Y축 180도)일 때 월드 공간 힘·속도는 Transform을 따라 돌지 않으므로 같은 회전(x, z 부호 반전)을 직접 적용한다.
+    /// 월드 y(중력 등)는 그대로
+    /// </summary>
+    private static void MirrorWorldSpaceVectors(ParticleSystem ps)
+    {
+        var force = ps.forceOverLifetime;
+        if (force.enabled && force.space == ParticleSystemSimulationSpace.World)
+        {
+            force.x = Negate(force.x);
+            force.z = Negate(force.z);
+        }
+
+        var vel = ps.velocityOverLifetime;
+        if (vel.enabled && vel.space == ParticleSystemSimulationSpace.World)
+        {
+            vel.x = Negate(vel.x);
+            vel.z = Negate(vel.z);
+        }
+    }
+
+    private static ParticleSystem.MinMaxCurve Negate(ParticleSystem.MinMaxCurve c)
+    {
+        switch (c.mode)
+        {
+            case ParticleSystemCurveMode.Constant:
+                c.constant = -c.constant;
+                break;
+            case ParticleSystemCurveMode.TwoConstants:
+                float min = c.constantMin;
+                c.constantMin = -c.constantMax;
+                c.constantMax = -min;
+                break;
+            default: // Curve / TwoCurves — 배율 부호만 뒤집는다
+                c.curveMultiplier = -c.curveMultiplier;
+                break;
+        }
+        return c;
+    }
+
     private static bool IsViewAlignedBillboard(ParticleSystem ps)
     {
         var r = ps.GetComponent<ParticleSystemRenderer>();
+        // 메시 파티클도 View 정렬이면 카메라 기준으로 돌아서 Transform 회전을 무시한다
         return r != null
-            && r.renderMode == ParticleSystemRenderMode.Billboard
+            && (r.renderMode == ParticleSystemRenderMode.Billboard || r.renderMode == ParticleSystemRenderMode.Mesh)
             && r.alignment == ParticleSystemRenderSpace.View;
     }
 

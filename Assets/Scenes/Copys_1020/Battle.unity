@@ -502,6 +502,7 @@ MonoBehaviour:
   deathStateName: Enemy1_Hurt
   deathDurationFrames: 90
   deadStateName: Enemy1_Die
+  castGroundShadow: 1
   explosionController: {fileID: 9100000, guid: d15ce1e6840dc95459de765a2a80c401, type: 2}
   explosionStateName: Enemy_Explosion
   explosionIntervalFrames: 10
@@ -822,7 +823,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   basic: {fileID: 11400000, guid: 94c8d8d7a06232b4b96f73048748b386, type: 2}
   leftArm: {fileID: 11400000, guid: f3653f661f704ff408831ea5ea1b263a, type: 2}
-  rightArm: {fileID: 11400000, guid: 1e81d74a499624144bdb329523c526ee, type: 2}
+  rightArm: {fileID: 11400000, guid: a1eb701c456a7af4bb711b788c0bb1a1, type: 2}
   leftLeg: {fileID: 11400000, guid: 54f710e5813149d0b3c4753df463f264, type: 2}
   rightLeg: {fileID: 11400000, guid: 7f5247e01aa54751bcc8df56f0b412d7, type: 2}
   dodge: {fileID: 11400000, guid: 7082bb52b41adbd48a1cae793e5a85a4, type: 2}
@@ -957,6 +958,7 @@ MonoBehaviour:
   deathStateName: 
   deathDurationFrames: 90
   deadStateName: 
+  castGroundShadow: 1
   explosionController: {fileID: 0}
   explosionStateName: 
   explosionIntervalFrames: 10
@@ -1506,6 +1508,7 @@ MonoBehaviour:
     allowPhase2: 0
     allowPatternChain: 0
     passiveCount: 0
+    isInvincible: 0
     isGroggy: 0
     currentDamageMultiplier: 1
 --- !u!4 &776998634
@@ -2401,6 +2404,13 @@ MonoBehaviour:
   useArenaBounds: 0
   arenaMinX: -7.75
   arenaMaxX: 7.75
+  autoFrameFloor: 0
+  stageFloorY: 0.12
+  floorBottomViewportRatio: 0.16
+  topHudViewportReserve: 0.12
+  targetBHalfWidth: 0
+  minTargetTopOffsetFromFloor: 0
+  verticalSmoothTime: 0.12
 --- !u!1 &1580075003
 GameObject:
   m_ObjectHideFlags: 0

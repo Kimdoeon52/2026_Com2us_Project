@@ -28,6 +28,7 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Straight
   activeClipName: 
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -39,7 +40,24 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 4309570157106769708, guid: ae056f74556bc4041ab862674a9d61f9, type: 3}
+    phase: 1
+    repeat: 1
+    repeatIntervalFrames: 19
+    repeatStartOffsetFrames: 0
+    endMode: 0
+    offset: {x: 0.07, y: 0.23}
+    rotation: 0
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 0
+    scale: 0.5
+    scaleXY: {x: 0, y: 0}
+    playbackSpeed: 1
+    sortingOrderOffset: -1
   perBoxDamage: 0
+  perBoxSeparateHits: 0
   cooldownFrames: 60
   cooldownOwner: {fileID: 11400000}
   cylinderCost: 0
@@ -93,7 +111,7 @@ MonoBehaviour:
   holdMode: 0
   minHoldFrames: 0
   earlyReleaseCooldownScale: 0
-  maxHoldFrames: 150
+  maxHoldFrames: 1500
   enhancedVariant: {fileID: 11400000, guid: fdfc9feff4dcb404ea72bdb6f914edc2, type: 2}
   enhanceSlot: 0
   enhanceMode: 0
@@ -102,3 +120,4 @@ MonoBehaviour:
   stage3Frames: 90
   stage2: {fileID: 11400000, guid: e350b1f7b5d42f545b0ec4100f9e5832, type: 2}
   stage3: {fileID: 11400000, guid: 1b239367bee3c2144a1ff69a43807f0e, type: 2}
+  enhancedDamageScale: 1.5

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: D_1
   m_EditorClassIdentifier: 
   actionName: D_1
-  source: 0
+  source: 1
   requiredPart: 5
   startupFrames: 6
   activeFrames: 10
@@ -40,7 +40,23 @@ MonoBehaviour:
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
   flame: {fileID: 0}
-  vfx: []
+  vfx:
+  - prefab: {fileID: 2764420214936851722, guid: 7189109da7ae4676b1f021441f56a520, type: 3}
+    phase: 3
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 0
+    offset: {x: 0.07, y: 0.35}
+    rotation: 0
+    XYRotation: {x: 0, y: 90}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 1
+    scale: 0.1
+    scaleXY: {x: 0.72, y: 1}
+    playbackSpeed: 0.3
+    sortingOrderOffset: 20
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 0

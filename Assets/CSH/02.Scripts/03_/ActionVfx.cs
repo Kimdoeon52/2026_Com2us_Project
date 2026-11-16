@@ -64,12 +64,17 @@ public class ActionVfxEntry
     [Tooltip("Z축 회전 각도(도). 0이면 회전 없음. 오른쪽을 볼 때 기준 — 좌우 반전 시 부호가 자동으로 뒤집힌다")]
     public float rotation;
 
+    [Tooltip("X, Y축 회전 각도(도). Z축 회전(rotation)과 함께 적용된다. 오른쪽을 볼 때 기준 — 좌우 반전 시 Y 부호가 자동으로 뒤집힌다 (X는 그대로)")]
+    public Vector2 XYRotation;
 
     [Tooltip("켜면 로봇을 따라 움직인다 (꺼두면 생성 위치에 남음)")]
     public bool followOwner = true;
 
     [Tooltip("켜면 왼쪽을 볼 때 좌우를 뒤집는다")]
     public bool flipWithFacing = true;
+
+    [Tooltip("켜면 좌우 반전을 음수 스케일 대신 Y축 180도 회전으로 한다. 메시 파티클·늘어나는 빌보드·3D 모양을 쓰는 이펙트(Hovl 계열 등)가 반만 뒤집히거나 일부 자식만 뒤집힐 때 켠다. 각도는 오른쪽 기준 값을 그대로 넣으면 된다")]
+    public bool flipByRotation;
 
     [Tooltip("전체 크기 배율 (x, y 공통)")]
     [Min(0.01f)] public float scale = 1f;

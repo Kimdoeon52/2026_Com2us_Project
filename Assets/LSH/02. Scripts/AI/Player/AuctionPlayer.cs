@@ -43,6 +43,17 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         InitBubble();
     }
 
+    // 씬에 AuctionPlayer가 없을 때 Auction이 런타임에 만들면서 말풍선/초상화를 넣어줌
+    public void Setup(SpriteRenderer thinkImage, TextMeshPro thinkChat, Sprite seatPortrait, Vector3 bubbleScale)
+    {
+        playerThinkImage = thinkImage;
+        playerThinkChat = thinkChat;
+        playerImage = seatPortrait;
+        newScale = bubbleScale;
+        isBubbleReady = false;
+        InitBubble();
+    }
+
     private void InitBubble()
     {
         if (isBubbleReady || playerThinkImage == null) return;

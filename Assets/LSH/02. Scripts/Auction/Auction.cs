@@ -122,6 +122,8 @@ public class Auction : Singleton<Auction>
 
     //===================================경매 시작 버튼 / 착석===================
     [Header("경매 시작 (좌측 버튼 → 모드 선택 패널)")]
+    [Tooltip("화면 좌측 '경매 시작' 버튼 표시 여부. 끄면 NPC(등록직원) 메뉴로만 경매 시작")]
+    [SerializeField] private bool showStartAuctionButton = false;
     [SerializeField] private Button startAuctionButton; // 비우면 일반 경매 버튼을 복제해서 화면 좌측에 자동 생성
     [SerializeField] private string startAuctionLabel = "경매 시작";
     [SerializeField] private Vector2 startButtonOffset = new Vector2(40f, 0f); // 좌측 가운데 기준 위치
@@ -137,9 +139,25 @@ public class Auction : Singleton<Auction>
     [SerializeField] private Button shopButton; //모드 선택 화면의 상점 열기 버튼
     [SerializeField] private Button shopCloseButton; //상점 닫기 버튼
 
+    //===================================수리 (상점 안 수리 버튼)=============================
+    [Header("수리 UI (상점의 수리 버튼 → 수리 창)")]
+    [SerializeField] private Button repairButton; //상점 안의 수리 버튼 (RepairButton)
+    [SerializeField] private GameObject repairWindow; //수리 창 (FixWindow 프리팹)
+    [SerializeField] private Button repairCloseButton; //수리 창 닫기 버튼 (비워도 Esc로 닫힘)
+
+    //===================================플레이어 (좌석 모습/말풍선)=============================
+    [Header("플레이어 (씬에 AuctionPlayer가 없으면 자동 생성)")]
+    [Tooltip("좌석에 보일 플레이어 모습 (무대를 보는 뒷모습)")]
+    [SerializeField] private Sprite playerSeatSprite;
+    [Tooltip("플레이어 말풍선 이미지 (AI 말풍선도 이걸 따라감)")]
+    [SerializeField] private Sprite playerBubbleSprite;
+    [Tooltip("플레이어 말풍선 글꼴")]
+    [SerializeField] private TMP_FontAsset playerBubbleFont;
+
     private UniTaskCompletionSource<AuctionType> modeSelectTcs;
     private bool isSelectingMode = false; //모드 선택 대기 중인지 체크 (상점은 이때만 열 수 있음)
     private bool IsShopOpen => shopPanel != null && shopPanel.activeSelf;
+    private bool IsRepairOpen => repairWindow != null && repairWindow.activeSelf;
     //===============================ai 슬롯 위치====================
     [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 npcsPos 사용)")]
     [SerializeField] private List<Transform> aiSlots;
@@ -277,7 +295,12 @@ public class Auction : Singleton<Auction>
         BindButton(getOutAuction, OnGGAuction);
         BindButton(shopButton, OnOpenShop);
         BindButton(shopCloseButton, OnCloseShop);
-        if (startAuctionButton == null) startAuctionButton = CreateStartAuctionButton();
+        FindRepairUI();
+        BindButton(repairButton, OnOpenRepair);
+        BindButton(repairCloseButton, OnCloseRepair);
+        if (repairWindow != null) repairWindow.SetActive(false); // 수리 창은 닫힌 채로 시작
+        EnsureAuctionPlayer(); // 플레이어 좌석 모습 + 말풍선 (없으면 생성)
+        if (startAuctionButton == null && showStartAuctionButton) startAuctionButton = CreateStartAuctionButton();
         BindButton(startAuctionButton, OnStartAuctionButton);
         if (startAuctionButton != null) startAuctionButton.gameObject.SetActive(false);
         if (seatLock == null && !TryGetComponent(out seatLock)) seatLock = gameObject.AddComponent<AuctionSeatLock>();
@@ -358,11 +381,13 @@ public class Auction : Singleton<Auction>
     //=========================경매 시작 버튼 / 착석===================
     private async UniTask WaitStartAuctionButtonAsync()
     {
-        if (startAuctionButton == null) return; // 버튼을 못 만들면 바로 시작
+        // 버튼이 없어도 NPC 메뉴(AuctionBridge → OnStartAuctionButton)로 시작할 때까지 대기
         startAuctionTcs = new UniTaskCompletionSource();
-        startAuctionButton.gameObject.SetActive(true);
+        bool showButton = showStartAuctionButton && startAuctionButton != null;
+        if (showButton) startAuctionButton.gameObject.SetActive(true);
         await startAuctionTcs.Task;
-        startAuctionButton.gameObject.SetActive(false);
+        startAuctionTcs = null;
+        if (startAuctionButton != null) startAuctionButton.gameObject.SetActive(false);
     }
 
     public void OnStartAuctionButton()
@@ -376,8 +401,91 @@ public class Auction : Singleton<Auction>
         if (seatLock == null) return;
         Transform seat = playerImagePos != null ? (playerImagePos.parent != null ? playerImagePos.parent : playerImagePos) : null; // 좌석 바닥 = 초상화의 부모 슬롯
         Transform bubble = AuctionPlayer.Instance != null ? AuctionPlayer.Instance.BubbleTransform : null;
-        seatLock.Seat(seat, bubble);
+        bool hasPortrait = ShowPlayerPortrait(); // 좌석 초상화(뒷모습)를 바로 표시
+        seatLock.Seat(seat, bubble, hasPortrait); // 초상화가 없으면 걸어다니던 캐릭터를 그대로 보여줌
     }
+
+    // 좌석에 플레이어 초상화 표시. 보여줄 이미지가 있으면 true
+    private bool ShowPlayerPortrait()
+    {
+        if (playerImage == null) return false;
+        if (AuctionPlayer.Instance != null && AuctionPlayer.Instance.playerImage != null)
+            playerImage.sprite = AuctionPlayer.Instance.playerImage;
+        if (playerImage.sprite == null) return false;
+
+        playerImage.gameObject.SetActive(true);
+        SetImageAlpha(playerImage, 1f);
+        NormalizePortrait(playerImage);
+        return true;
+    }
+
+    // 씬에 AuctionPlayer가 없으면 (플레이어 캐릭터를 프리팹으로 교체하며 빠진 경우) 말풍선 + 대사 + 좌석 모습을 가진 AuctionPlayer를 생성
+    private void EnsureAuctionPlayer()
+    {
+#if UNITY_EDITOR
+        FillPlayerDefaults();
+#endif
+        if (AuctionPlayer.Instance != null || FindFirstObjectByType<AuctionPlayer>(FindObjectsInactive.Include) != null) return;
+        if (playerBubbleSprite == null) Debug.LogWarning("[Auction] 플레이어 말풍선 이미지(playerBubbleSprite)가 비어 있어 말풍선이 안 보일 수 있습니다.", this);
+
+        GameObject root = new GameObject("AuctionPlayer (자동 생성)");
+        root.transform.SetParent(transform, false);
+
+        // 말풍선 (예전 씬의 DiaBOX와 같은 구성)
+        GameObject bubbleGo = new GameObject("DiaBOX");
+        bubbleGo.transform.SetParent(root.transform, false);
+        bubbleGo.transform.localPosition = new Vector3(0f, 0.708f, 0f);
+        SpriteRenderer bubble = bubbleGo.AddComponent<SpriteRenderer>();
+        bubble.sprite = playerBubbleSprite;
+
+        // 대사 글자
+        GameObject chatGo = new GameObject("Chat", typeof(RectTransform));
+        chatGo.transform.SetParent(bubbleGo.transform, false);
+        ((RectTransform)chatGo.transform).sizeDelta = new Vector2(1.5f, 1f);
+        TextMeshPro text = chatGo.AddComponent<TextMeshPro>();
+        if (playerBubbleFont != null) text.font = playerBubbleFont;
+        text.fontSize = 2f;
+        text.enableAutoSizing = false;
+        text.alignment = TextAlignmentOptions.Center;
+        text.color = Color.white;
+        text.text = "";
+
+        AuctionPlayer player = root.AddComponent<AuctionPlayer>();
+        player.Setup(bubble, text, playerSeatSprite, Vector3.one * 0.3f);
+    }
+
+#if UNITY_EDITOR
+    // 비어 있으면 예전 경매장에서 쓰던 에셋으로 자동 채움 (인스펙터에서 바꾸면 그 값을 사용)
+    private void OnValidate() => FillPlayerDefaults();
+
+    private void FillPlayerDefaults()
+    {
+        // 좌석 모습 = Player_North (플레이어 뒷모습). 예전 기본값(Boxing_Backwalking_0)이 들어가 있으면 교체
+        if (playerSeatSprite == null || playerSeatSprite.name == "Boxing_Backwalking_0")
+        {
+            Sprite north = LoadEditorSprite("e46f3ab3320e8aa4eaa9bf6dfd2c8269", null);
+            if (north != null) playerSeatSprite = north;
+            else if (playerSeatSprite == null) Debug.LogWarning("[Auction] Player_North를 스프라이트로 불러오지 못했습니다. 임포트 설정의 Texture Type을 Sprite로 바꿔주세요.", this);
+        }
+        if (playerBubbleSprite == null) playerBubbleSprite = LoadEditorSprite("daaeeec1f63854b4b953e7fd345ff7bb", null);
+        if (playerBubbleFont == null)
+        {
+            string path = UnityEditor.AssetDatabase.GUIDToAssetPath("25a5fb9e590d9954a85baefdeef7c150");
+            if (!string.IsNullOrEmpty(path)) playerBubbleFont = UnityEditor.AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+        }
+    }
+
+    private static Sprite LoadEditorSprite(string guid, string spriteName)
+    {
+        string path = UnityEditor.AssetDatabase.GUIDToAssetPath(guid);
+        if (string.IsNullOrEmpty(path)) return null;
+        foreach (Object asset in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path))
+        {
+            if (asset is Sprite sprite && (spriteName == null || sprite.name == spriteName)) return sprite;
+        }
+        return null;
+    }
+#endif
 
     private void ReleasePlayer()
     {
@@ -960,14 +1068,14 @@ public class Auction : Singleton<Auction>
     public void OnSelectNormalMode()
     {
         PlaySound(clickSoundEffect);
-        if (IsShopOpen) return; // 상점이 열려 있으면 경매 시작 안 함
+        if (IsShopOpen || IsRepairOpen) return; // 상점/수리 창이 열려 있으면 경매 시작 안 함
         modeSelectTcs?.TrySetResult(AuctionType.Normal);
     }
 
     public void OnSelectFistMode()
     {
         PlaySound(clickSoundEffect);
-        if (IsShopOpen) return;
+        if (IsShopOpen || IsRepairOpen) return;
         modeSelectTcs?.TrySetResult(AuctionType.Fist);
     }
 
@@ -990,6 +1098,7 @@ public class Auction : Singleton<Auction>
         isSelectingMode = false;
         EnableModeSelectUI(false);
         if (shopPanel != null) shopPanel.SetActive(false); // 혹시 열려 있으면 같이 닫기
+        if (repairWindow != null) repairWindow.SetActive(false);
 
         return selectedType;
     }
@@ -1010,6 +1119,72 @@ public class Auction : Singleton<Auction>
         shopPanel.SetActive(false);
         UpdateGoldDisplay(); // 상점에서 판매한 골드 반영
         if (isSelectingMode) EnableModeSelectUI(true); // 다시 경매 모드를 고를 수 있게
+    }
+
+    //=========================수리 창 열기/닫기 (상점 안 수리 버튼)===================
+    public void OnOpenRepair()
+    {
+        PlaySound(clickSoundEffect);
+        if (repairWindow == null)
+        {
+            Debug.LogWarning("[Auction] 수리 창(repairWindow)이 연결되지 않았습니다. 인스펙터에 FixWindow를 넣어주세요.", this);
+            return;
+        }
+        if (IsRepairOpen) return;
+
+        FitRepairWindow(); // 씬에 틀어진 크기/위치 오버라이드가 있어도 부모를 꽉 채우게
+        if (RepairInsideShop) repairWindow.transform.SetAsLastSibling(); // 상점 안에 있으면 상점 위로 올려서 표시 (상점을 끄면 수리 창도 같이 꺼짐)
+        else if (shopPanel != null) shopPanel.SetActive(false); // 따로 있으면 상점에 가려지지 않게 상점은 잠시 숨김
+        repairWindow.SetActive(true);
+    }
+
+    public void OnCloseRepair()
+    {
+        if (!IsRepairOpen) return;
+        PlaySound(clickSoundEffect);
+
+        repairWindow.SetActive(false);
+        UpdateGoldDisplay(); // 수리비 반영
+        if (shopPanel != null && !shopPanel.activeSelf) shopPanel.SetActive(true); // 상점으로 돌아감
+    }
+
+    // FixWindow 프리팹 원본처럼 부모 전체를 채우도록 (Stretch, 여백 0). Shop 밑에 넣을 때 생긴 Size Delta(-1920,-1080) 오버라이드 보정
+    private void FitRepairWindow()
+    {
+        if (repairWindow == null || !(repairWindow.transform is RectTransform rt)) return;
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.offsetMin = Vector2.zero;
+        rt.offsetMax = Vector2.zero;
+        rt.localScale = Vector3.one;
+        rt.localRotation = Quaternion.identity;
+        Vector3 p = rt.localPosition;
+        rt.localPosition = new Vector3(p.x, p.y, 0f);
+    }
+
+    private bool RepairInsideShop => repairWindow != null && shopPanel != null && repairWindow.transform.IsChildOf(shopPanel.transform);
+
+    // 인스펙터에 연결 안 했으면 상점 안의 'RepairButton' / 씬의 수리 창(FixWindowManager)을 찾아 씀
+    private void FindRepairUI()
+    {
+        if (repairButton == null && shopPanel != null)
+        {
+            foreach (Button b in shopPanel.GetComponentsInChildren<Button>(true))
+            {
+                if (b.name == "RepairButton") { repairButton = b; break; }
+            }
+        }
+        if (repairWindow == null)
+        {
+            FixWindowManager fix = FindFirstObjectByType<FixWindowManager>(FindObjectsInactive.Include);
+            if (fix != null) repairWindow = fix.gameObject;
+        }
+    }
+
+    private void Update()
+    {
+        if (IsRepairOpen && Input.GetKeyDown(KeyCode.Escape)) OnCloseRepair(); // 수리 창은 Esc로도 닫힘
     }
 
     // --- 경매 마감 및 차감 로직 ---
@@ -1393,9 +1568,10 @@ public class Auction : Singleton<Auction>
     }
     private void NPCImageOff()
     {
+        bool keepPlayer = seatLock != null && seatLock.IsSeated; // 착석 중이면 플레이어 모습은 계속 보임
         for (int i = 0; i < npcs.Length; i++)
         {
-            playerImage.gameObject.SetActive(false);
+            if (!keepPlayer) playerImage.gameObject.SetActive(false);
             npcs[i].gameObject.SetActive(false);
         }
     }

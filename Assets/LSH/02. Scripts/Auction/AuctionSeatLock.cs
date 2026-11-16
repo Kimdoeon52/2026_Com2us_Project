@@ -35,24 +35,56 @@ public class AuctionSeatLock : MonoBehaviour
     private Quaternion savedCamRot;
     private float savedFov;
 
-    public void Seat(Transform seat, Transform keepVisible = null)
+    // 착석 중 유지할 상태 (다른 시스템이 이동/카메라를 다시 켜도 되돌림)
+    private Transform seatedPlayer;
+    private Vector3 seatPosition;
+    private RSSimpleCharacter lockedMover;
+    private RealSteel.Dialogue.PlayerInteractor lockedInteractor;
+    private Vector3 camTargetPos;
+    private Quaternion camTargetRot;
+    private bool camHolding; // 카메라 이동 연출이 끝난 뒤 매 프레임 고정
+
+    // 플레이어 찾기: 지정값 → 이동 캐릭터(RSSimpleCharacter)가 붙은 AuctionPlayer → 씬의 RSSimpleCharacter → AuctionPlayer
+    private Transform FindPlayer()
+    {
+        if (playerRoot != null) return playerRoot;
+        AuctionPlayer ap = AuctionPlayer.Instance;
+        if (ap != null && ap.GetComponentInParent<RSSimpleCharacter>() != null) return ap.GetComponentInParent<RSSimpleCharacter>().transform;
+        RSSimpleCharacter character = FindFirstObjectByType<RSSimpleCharacter>();
+        if (character != null) return character.transform;
+        return ap != null ? ap.transform : null;
+    }
+
+    // hideCharacter: 좌석 초상화가 있을 때만 걸어다니던 캐릭터를 숨김 (없으면 캐릭터를 그대로 보여줌)
+    public void Seat(Transform seat, Transform keepVisible = null, bool hideCharacter = true)
     {
         if (IsSeated || seat == null) return;
         IsSeated = true;
 
-        Transform player = playerRoot != null ? playerRoot : (AuctionPlayer.Instance != null ? AuctionPlayer.Instance.transform : null);
+        Transform player = FindPlayer();
         RSSimpleCharacter mover = player != null ? player.GetComponent<RSSimpleCharacter>() : null;
+        if (player == null) Debug.LogWarning("[AuctionSeatLock] 플레이어를 못 찾았습니다. 인스펙터의 playerRoot에 플레이어를 넣어주세요.", this);
 
-        // 1. 이동 잠금 (이동/카메라 추적 스크립트 + CharacterController 끄기)
+        // 1. 이동 잠금 (이동/카메라 추적 스크립트 + CharacterController + NPC 상호작용 끄기)
         if (player != null)
         {
-            if (mover != null) Disable(mover);
+            seatedPlayer = player;
+            lockedMover = mover;
+            if (mover != null)
+            {
+                mover.enabled = true; // 대화 브리지가 잠깐 꺼둔 상태여도 '원래 켜져 있던 것'으로 기록 → 해제 시 다시 켜짐
+                Disable(mover);
+            }
             if (player.TryGetComponent(out CharacterController cc)) Disable(cc);
+            lockedInteractor = player.GetComponentInChildren<RealSteel.Dialogue.PlayerInteractor>();
+            if (lockedInteractor == null) lockedInteractor = FindFirstObjectByType<RealSteel.Dialogue.PlayerInteractor>();
+            if (lockedInteractor != null) Disable(lockedInteractor); // 경매 중 E키로 NPC 메뉴가 열리지 않게
 
             // 2. 좌석으로 순간이동 (좌석 바닥 = 초상화의 부모 슬롯)
             player.position = seat.position;
+            seatPosition = seat.position;
 
-            if (hidePlayerSprites)
+            if (hidePlayerSprites && hideCharacter)
             {
                 foreach (SpriteRenderer sr in player.GetComponentsInChildren<SpriteRenderer>(true))
                 {
@@ -89,18 +121,53 @@ public class AuctionSeatLock : MonoBehaviour
             targetRot = Quaternion.LookRotation(focus - targetPos, Vector3.up);
         }
 
+        camTargetPos = targetPos;
+        camTargetRot = targetRot;
+        camHolding = false;
+
         camT.DOKill();
         usedCamera.DOKill();
-        camT.DOMove(targetPos, cameraMoveTime).SetEase(Ease.InOutSine).SetLink(usedCamera.gameObject);
+        camT.DOMove(targetPos, cameraMoveTime).SetEase(Ease.InOutSine).SetLink(usedCamera.gameObject)
+            .OnComplete(() => camHolding = IsSeated);
         camT.DORotateQuaternion(targetRot, cameraMoveTime).SetEase(Ease.InOutSine).SetLink(usedCamera.gameObject);
         if (!usedCamera.orthographic)
             DOTween.To(() => usedCamera.fieldOfView, v => usedCamera.fieldOfView = v, fieldOfView, cameraMoveTime).SetLink(usedCamera.gameObject);
+    }
+
+    // 착석 중에는 다른 시스템(대화 입력 브리지 등)이 이동/카메라를 다시 켜도 즉시 되돌림
+    private void LateUpdate()
+    {
+        if (!IsSeated) return;
+
+        if (lockedMover != null && lockedMover.enabled)
+        {
+            lockedMover.enabled = false;
+            if (!disabledBehaviours.Contains(lockedMover)) disabledBehaviours.Add(lockedMover);
+        }
+        if (lockedInteractor != null && lockedInteractor.enabled)
+        {
+            lockedInteractor.enabled = false;
+            if (!disabledBehaviours.Contains(lockedInteractor)) disabledBehaviours.Add(lockedInteractor);
+        }
+        if (seatedPlayer != null && (seatedPlayer.position - seatPosition).sqrMagnitude > 0.0001f)
+            seatedPlayer.position = seatPosition;
+
+        if (camHolding && usedCamera != null)
+        {
+            Transform camT = usedCamera.transform;
+            camT.SetPositionAndRotation(camTargetPos, camTargetRot);
+            if (!usedCamera.orthographic) usedCamera.fieldOfView = fieldOfView;
+        }
     }
 
     public void Release()
     {
         if (!IsSeated) return;
         IsSeated = false;
+        camHolding = false;
+        seatedPlayer = null;
+        lockedMover = null;
+        lockedInteractor = null;
 
         foreach (Renderer r in hiddenRenderers) if (r != null) r.enabled = true;
         hiddenRenderers.Clear();

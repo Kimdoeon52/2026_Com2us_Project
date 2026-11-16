@@ -14,6 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   masterVolume: 0.8
   stereoSpread: 0.5
+  bgm: {fileID: 8300000, guid: d9a0dd5f572a27843a62e4cb9a710dfc, type: 3}
+  bgmVolume: 0.189
+  bgmFadeInSeconds: 2.5
+  bgmStopSeconds: 0.15
   fistImpact:
     clips:
     - {fileID: 8300000, guid: 45428559a56f1724e3c0a69a5ab61d68, type: 3}

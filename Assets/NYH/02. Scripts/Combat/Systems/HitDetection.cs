@@ -389,6 +389,7 @@ public class HitDetection : MonoBehaviour
         targetBuffer.Clear();
         boxWeightBuffer.Clear(); // 최. 추가
         Vector2 hitPoint = attacker.transform.position;
+        Vector2 bossPoint = attacker.transform.position; // 보스를 맞힌 첫 Hit박스 가운데 — 데미지 숫자 자리 (2026-11-16)
 
         foreach (var hitBox in attacker.State.GetActiveBoxes())
         {
@@ -398,6 +399,7 @@ public class HitDetection : MonoBehaviour
             BossControllerBase boss = FindBoss(worldHit, out BossHurtZone zone);
             if (boss == null || (target != null && boss != target)) continue;
 
+            if (target == null) bossPoint = worldHit.Center;
             target = boss;
             if (targetZone == null) targetZone = zone; // 여러 부위에 걸치면 처음 찾은 부위 배율
             weight += hitBox.DamageScaleOrOne;
@@ -405,7 +407,7 @@ public class HitDetection : MonoBehaviour
             if (!action.PerBoxDamage) break; // 일반 행동은 박스 하나만 맞아도 1히트 — 로봇전과 같은 규칙
         }
 
-        if (target != null) ResolveBossHit(attacker, target, targetZone, action, weight,
+        if (target != null) ResolveBossHit(attacker, target, targetZone, action, weight, bossPoint,
                                            action.PerBoxDamage && action.PerBoxSeparateHits ? boxWeightBuffer : null); // 최. 추가
         if (targetBuffer.Count > 0) ResolveTargetHits(attacker, action, targetBuffer, hitPoint, bossAlsoHit: target != null);
     }
@@ -430,7 +432,11 @@ public class HitDetection : MonoBehaviour
     private void ResolveTargetHits(ActionExecutor attacker, ActionData action, List<IPlayerHitTarget> targets, Vector2 point, bool bossAlsoHit)
     {
         float damage = action.Damage > 0f ? action.Damage : 10f; // ResolveHit과 같은 규칙
-        foreach (var t in targets) t.TakePlayerHit(damage, point);
+        foreach (var t in targets)
+        {
+            t.TakePlayerHit(damage, point);
+            ShowDamage(t as Component, Mathf.RoundToInt(damage), false, point, attacker.transform.position.z); // 촉수 등에도 숫자 (2026-11-16)
+        }
         if (bossAlsoHit) return;
 
         bool isRepeatHit = attacker.State.HasHitThisAction;
@@ -460,16 +466,21 @@ public class HitDetection : MonoBehaviour
 
     // weight: 맞힌 Hit박스 계수의 합. 박스당 피해 행동이면 데미지에도 곱하고, 아니면 히트스톱에만 쓴다
     // separateWeights: null이 아니면 맞은 박스마다 ProcessHit을 따로 부른다 (최. 추가)
+    // point: 맞은 자리(데미지 숫자를 띄울 곳)
     private void ResolveBossHit(ActionExecutor attacker, BossControllerBase boss, BossHurtZone zone, ActionData action, float weight,
-                                List<float> separateWeights = null)
+                                Vector2 point, List<float> separateWeights = null)
     {
         var hub = CombatDataHub.Instance;
         string bossId = boss.Snapshot.bossID;
         float zoneScale = zone != null ? zone.DamageScale : 1f;
+        float z = attacker.transform.position.z;
 
         // HP는 허브가 깎는다(보스 모드: 그로기 배율, D 적중 시 탄 +1 포함). NotifyDamageFromHub는 부르지 않는다 —
         // 허브와 보스 컨트롤러가 같은 BossSnapshot을 들고 있어서 또 깎인다(이중 차감)
         HitResolutionResult result;
+        bossHitInProgress = true; // 허브의 OnBossDamaged가 같은 타격을 또 띄우지 않게 — 숫자는 여기서 맞은 자리에 (2026-11-16)
+        try
+        {
         if (action.PerBoxDamage || !Mathf.Approximately(zoneScale, 1f))
         {
             // 수치 직접 전달형 — 박스 수·부위 배율을 데미지에 곱한다. D 판정은 ActionData 오버로드와 같은 규칙
@@ -486,6 +497,7 @@ public class HitDetection : MonoBehaviour
                                             isBasicAttackD: IsBasicAttackD(action));
                     totalDamage += result.DamageToHp;
                     anyCritical |= result.IsCritical;
+                    ShowDamage(boss, result.DamageToHp, result.IsCritical, point, z); // 박스마다 따로 맞으면 숫자도 따로(메이플식 여러 줄)
                 }
                 result.DamageToHp = totalDamage;
                 result.IsCritical = anyCritical;
@@ -495,12 +507,16 @@ public class HitDetection : MonoBehaviour
             float boxes = action.PerBoxDamage ? weight : 1f;
             result = hub.ProcessHit(attacker.FighterId, bossId, baseDamage * boxes * zoneScale,
                                     isBasicAttackD: IsBasicAttackD(action));
+            ShowDamage(boss, result.DamageToHp, result.IsCritical, point, z);
             }
         }
         else
         {
             result = hub.ProcessHit(attacker.FighterId, bossId, action, false, false);
+            ShowDamage(boss, result.DamageToHp, result.IsCritical, point, z);
         }
+        }
+        finally { bossHitInProgress = false; }
         if (zone != null) zone.NotifyHit(result.DamageToHp);
 
         bool isRepeatHit = attacker.State.HasHitThisAction;
@@ -545,16 +561,23 @@ public class HitDetection : MonoBehaviour
         string bossId = boss.Snapshot.bossID;
         ActionData action = projectile.SourceAction;
         HitResolutionResult result;
-        if (zone != null && !Mathf.Approximately(zone.DamageScale, 1f))
+        bossHitInProgress = true; // 허브 이벤트로 또 안 띄우게 (2026-11-16)
+        try
         {
-            float baseDamage = action.Damage > 0f ? action.Damage : 10f;
-            result = CombatDataHub.Instance.ProcessHit(projectile.Owner.FighterId, bossId, baseDamage * zone.DamageScale,
-                                                       isBasicAttackD: IsBasicAttackD(action));
+            if (zone != null && !Mathf.Approximately(zone.DamageScale, 1f))
+            {
+                float baseDamage = action.Damage > 0f ? action.Damage : 10f;
+                result = CombatDataHub.Instance.ProcessHit(projectile.Owner.FighterId, bossId, baseDamage * zone.DamageScale,
+                                                           isBasicAttackD: IsBasicAttackD(action));
+            }
+            else
+            {
+                result = CombatDataHub.Instance.ProcessHit(projectile.Owner.FighterId, bossId, action, false, false);
+            }
         }
-        else
-        {
-            result = CombatDataHub.Instance.ProcessHit(projectile.Owner.FighterId, bossId, action, false, false);
-        }
+        finally { bossHitInProgress = false; }
+        var shotBox = new WorldBox(projectile.GetWorldHitBox(), 0f);
+        ShowDamage(boss, result.DamageToHp, result.IsCritical, shotBox.Center, projectile.transform.position.z); // 총알이 맞은 자리
         if (zone != null) zone.NotifyHit(result.DamageToHp);
 
         projectile.Explode();
@@ -567,10 +590,49 @@ public class HitDetection : MonoBehaviour
     private void SubscribeHub(CombatDataHub hub)
     {
         if (hub == subscribedHub) return;
-        if (subscribedHub != null) subscribedHub.OnPlayerHpChanged -= OnPlayerHpChanged;
+        if (subscribedHub != null)
+        {
+            subscribedHub.OnPlayerHpChanged -= OnPlayerHpChanged;
+            subscribedHub.OnBossDamaged -= OnBossDamaged;
+        }
         subscribedHub = hub;
         lastPlayerHp = (hub != null && hub.PlayerSnapshot != null) ? hub.PlayerSnapshot.currentHp : -1;
-        if (hub != null) hub.OnPlayerHpChanged += OnPlayerHpChanged;
+        if (hub != null)
+        {
+            hub.OnPlayerHpChanged += OnPlayerHpChanged;
+            hub.OnBossDamaged += OnBossDamaged;
+        }
+    }
+
+    // ───────── 보스 공용 데미지 숫자 (2026-11-16 사용자: 보스 1·2·3 모두 플레이어가 때리면 메이플식 데미지 표시) ─────────
+    // 플레이어 → 보스 타격은 전부 여기(HitDetection → 허브 ProcessHit)를 지나므로, KKH 보스 베이스를 고치지 않아도
+    // BossControllerBase를 쓰는 모든 보스에 똑같이 뜬다. 숫자는 맞은 대상에 붙은 DamageNumberEmitter가 그린다(없으면 자동으로 붙임 —
+    // 글자·색·크기를 바꾸려면 보스 프리팹에 미리 붙여 두고 거기서 조절)
+    private bool bossHitInProgress;
+    private BossControllerBase cachedBoss;
+
+    private static void ShowDamage(Component target, int damage, bool critical, Vector2 at, float z)
+    {
+        if (target == null || damage <= 0) return;
+        var emitter = target.GetComponent<DamageNumberEmitter>();
+        if (emitter == null) emitter = target.gameObject.AddComponent<DamageNumberEmitter>();
+        emitter.ShowDealt(damage, critical, new Vector3(at.x, at.y, z));
+    }
+
+    // 호출: CombatDataHub.OnBossDamaged. HitDetection을 안 거치고 허브로 바로 보스를 때리는 경로(CSH 폭발 범위 등)용 —
+    // 맞은 자리를 몰라서 보스 몸(콜라이더) 가운데에 띄운다. HitDetection이 직접 처리 중인 타격은 위에서 이미 띄웠으니 건너뛴다
+    private void OnBossDamaged(int damage)
+    {
+        if (bossHitInProgress) return;
+        if (Instance != null && Instance != this) return;
+        if (cachedBoss == null) cachedBoss = FindAnyObjectByType<BossControllerBase>();
+        if (cachedBoss == null) return;
+
+        Vector3 at = cachedBoss.transform.position;
+        var col = cachedBoss.GetComponentInChildren<Collider2D>();
+        if (col != null) at = col.bounds.center;
+        ActionExecutor player = fighters.Find(f => f != null && f.FighterId == "Player");
+        ShowDamage(cachedBoss, damage, false, at, player != null ? player.transform.position.z : at.z);
     }
 
     // 호출: CombatDataHub.OnPlayerHpChanged. 보스전에서 플레이어 HP가 줄면 = KKH 보스 공격(ApplyCoreDamage/ApplyPartHit)에 맞은 것.

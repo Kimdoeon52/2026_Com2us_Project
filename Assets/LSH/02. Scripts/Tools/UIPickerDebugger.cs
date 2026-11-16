@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 // 마우스 아래 UI를 화면 왼쪽 위에 보여주는 디버그 툴. F1로 켜고 끈다
-// 씬에 배치할 필요 없이 에디터와 Development Build에서만 자동 생성된다
+// 씬에 배치할 필요 없이 에디터와 모든 빌드에서 자동 생성된다
 public class UIPickerDebugger : MonoBehaviour
 {
     private const KeyCode ToggleKey = KeyCode.F1;
@@ -25,8 +25,6 @@ public class UIPickerDebugger : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void Bootstrap()
     {
-        if (!Debug.isDebugBuild) return; // 일반 빌드에는 안 들어감 (에디터는 항상 true)
-
         GameObject go = new GameObject(nameof(UIPickerDebugger));
         DontDestroyOnLoad(go);
         go.AddComponent<UIPickerDebugger>();

@@ -8,6 +8,11 @@ using UnityEngine;
 [CreateAssetMenu(menuName = "NYH/Boss/Kyodai Hand Feel", fileName = "KyodaiHandFeel")]
 public class KyodaiHandFeel : ScriptableObject
 {
+    [Header("주먹 방향")]
+    [Tooltip("켜면 주먹 그림을 180° 돌려서 쓴다 — 기본(대기) 상태와 주먹 내려찍기처럼 방향이 안 정해진 동작에서만. " +
+             "밀기·협공처럼 방향이 정해진 동작과 손바닥은 그대로 (2026-11-16 사용자)")]
+    public bool fistRotate180 = true;
+
     [Header("떠다니기 (상시)")]
     [Tooltip("흔들림 크기(월드) — x 좌우, y 위아래")]
     public Vector2 floatAmplitude = new Vector2(0.18f, 0.32f);

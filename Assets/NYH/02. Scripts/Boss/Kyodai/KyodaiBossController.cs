@@ -372,6 +372,7 @@ public class KyodaiBossController : BossControllerBase
         defeated = false;
         groggyStep = 0;
         KyodaiSfx.Bind(sfx);
+        KyodaiSfx.StartBgm(); // 보스전 시작 — 배경음악 페이드인 (2026-11-16)
 
         hands = GetComponentsInChildren<KyodaiHand>(true);
         foreach (var hand in hands) hand.Init(this);
@@ -511,6 +512,7 @@ public class KyodaiBossController : BossControllerBase
     protected override void Update()
     {
         base.Update();
+        KyodaiSfx.TickBgm(Time.unscaledDeltaTime); // 배경음악 페이드 (실제 시간)
         if (body == null || !hasBodyBase) return;
         float y = bodyFloatAmplitude * Mathf.Sin(Time.time * Mathf.PI * 2f / bodyFloatPeriod);
         Vector3 offset = new Vector3(0f, defeated ? -bodyFloatAmplitude * 2f : y, 0f);
@@ -644,6 +646,7 @@ public class KyodaiBossController : BossControllerBase
         Debug.Log("[Kyodai] 쿄다이 격파");
         defeated = true;
         StopConcurrent();
+        KyodaiSfx.StopBgm(); // 보스를 잡으면 배경음악을 끊는다 (2026-11-16)
         KyodaiSfx.Play(KyodaiSfx.D?.defeat, transform.position);
         foreach (var hand in hands) if (hand != null) hand.Kill();
         foreach (var laser in lasers) if (laser != null) laser.Stop();

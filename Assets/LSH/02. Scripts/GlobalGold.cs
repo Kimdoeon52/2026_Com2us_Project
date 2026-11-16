@@ -174,14 +174,20 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
             }
         }
     }
-    //==========================================스테이지 진행==========================================================
-    public void AdvanceStage(int maxStage) //다음 스테이지로 이동. 마지막 스테이지면 유지
+    //==========================================스테이지(지역)==========================================================
+    // 2026-11-16: 경매 세션이 끝나면 자동으로 다음 스테이지로 넘기던 AdvanceStage는 없앴다 — 지역 이동은 나중에 다른 곳이 담당한다.
+    // 지역을 바꾸는 쪽은 SetStage를 부르면 된다(파일에 저장). 경매장은 들어올 때 ReloadStage로 지금 지역을 다시 읽는다.
+
+    /// <summary>지역(스테이지)을 정하고 저장한다 (1부터). 지역 이동을 담당하는 쪽이 부른다</summary>
+    public void SetStage(int stage)
     {
-        if (CurrentStage >= maxStage) return;
-        CurrentStage++;
+        CurrentStage = Mathf.Max(1, stage);
         File.WriteAllText(stageSavePath, JsonUtility.ToJson(new StageProgress { currentStage = CurrentStage }));
-        Debug.Log($"[스테이지 이동] 현재 스테이지: {CurrentStage}");
+        Debug.Log($"[스테이지] 현재 스테이지: {CurrentStage}");
     }
+
+    /// <summary>저장된 지역을 다시 읽는다 — GlobalGold는 씬을 넘어 살아 있어서, 다른 곳이 바꾼 값을 쓰려면 다시 읽어야 한다</summary>
+    public void ReloadStage() => LoadStage();
 
     private void LoadStage()
     {
@@ -190,6 +196,7 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
             StageProgress progress = JsonUtility.FromJson<StageProgress>(File.ReadAllText(stageSavePath));
             CurrentStage = Mathf.Max(1, progress.currentStage);
         }
+        else CurrentStage = 1; // 저장 파일이 없으면 1지역
     }
     //================================================SAVE&LOAD 기능=====================================================
     // JSON 파일로 저장

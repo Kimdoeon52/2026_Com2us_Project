@@ -355,6 +355,9 @@ public class Auction : Singleton<Auction>
             PlayerName = "Player"; // 플레이어 이름 비우면 그냥 플레이어
             PlayerID = 0;
         }
+        // 2026-11-16: 경매장에 들어올 때마다 지금 지역을 다시 읽는다 — 다른 곳에서 지역이 바뀌었으면 그 지역 보스 명단으로 나온다
+        GlobalGold.Instance.ReloadStage();
+        Debug.Log($"[경매] 현재 지역(스테이지) {GlobalGold.Instance.CurrentStage} 명단으로 진행");
         RunAuctionSessionAsync().Forget(); // 경매 연속 진행 시작
     }
 
@@ -376,7 +379,8 @@ public class Auction : Singleton<Auction>
         }
 
         // 경매가 모두 끝나도 씬 이동 전까지는 착석(이동 잠금) 유지
-        GlobalGold.Instance.AdvanceStage(stageData.StageCount); // 세션이 끝나면 다음 스테이지로
+        await CloseSessionChatting(); // 진행자 마무리 인사
+        // 2026-11-16: 세션이 끝나도 지역은 안 바꾼다 (지역 이동은 다른 곳 담당 — GlobalGold.SetStage)
         MoveToNextScene(1000).Forget();
     }
 
@@ -679,6 +683,7 @@ public class Auction : Singleton<Auction>
             NormalAuctionButtonReady(true);
             EnableFistAuctionUI(false);
             PlayBGM(currentAuctionType);
+            AnnounceBriefAsync(ChatList.Instance.GetLines("입찰시작")[0], 1.5f).Forget(); // 입찰 시작 신호 후 자동 퇴장
         }
         else if (currentAuctionType == AuctionType.Fist)
         {
@@ -1232,14 +1237,28 @@ public class Auction : Singleton<Auction>
         }
     }
 
+    private bool IsLastRound => currentRound >= totalAuctionRounds;
+
+    // 커튼 열기 전: 첫 회차 = 개장 인사 / 중간 = "다음 경매 물품입니다!" / 마지막 = 마지막 물품 안내
     private async UniTask StartAuctionChatting()
     {
-        await SpeakAsync(ChatList.Instance.GetChat("경매시작", stuff.DisplayName)); // 경매 시작 대사
+        List<string> lines;
+        if (currentRound <= 1) lines = ChatList.Instance.GetLines("개장", totalAuctionRounds);
+        else if (IsLastRound) lines = ChatList.Instance.GetLines("마지막경매", currentRound, totalAuctionRounds);
+        else lines = ChatList.Instance.GetLines("다음경매", currentRound, totalAuctionRounds);
+        await SpeakAsync(lines);
     }
 
+    // 커튼 열린 뒤: 물품 이름 · 등급 · 시작가 소개
     private async UniTask IntroAuction()
     {
-        await SpeakAsync(ChatList.Instance.GetChat("물건소개", stuff.DisplayName)); // 물건 소개 대사
+        await SpeakAsync(ChatList.Instance.GetLines("물건소개", stuff.DisplayName, ChatList.GradeName(stuffGrade), CurrentCost.ToString("N0")));
+    }
+
+    // 모든 회차가 끝난 뒤 마무리 인사
+    private async UniTask CloseSessionChatting()
+    {
+        await SpeakAsync(ChatList.Instance.GetLines("폐장"));
     }
 
     private async UniTask ActionFinish()
@@ -1250,16 +1269,24 @@ public class Auction : Singleton<Auction>
             return;
         }
         int finalWinner = IfPlayerWin ? GlobalGold.Instance.mainCharacterdata[0].mainCharacterID : WinnerID;
+        bool isFist = currentAuctionType == AuctionType.Fist; // 주먹 경매는 결과 발표를 이미 했으니 축하/정리만
 
         if (finalWinner == -1)
         {
-            await SpeakAsync(new List<string> { "낙찰자가 없습니다." });
-            return;
+            await SpeakAsync(ChatList.Instance.GetLines(isFist ? "유찰_주먹" : "유찰"));
         }
-        string winnerName = IfPlayerWin ? PlayerName : auctionAiList.Find(ai => ai.NPCID == finalWinner)?.NPCName ?? "알 수 없음";
-        await SpeakAsync(ChatList.Instance.GetChat("경매완료", winnerName)); // 낙찰자 발표 후 퇴장
+        else
+        {
+            string winnerName = IfPlayerWin ? PlayerName : auctionAiList.Find(ai => ai.NPCID == finalWinner)?.NPCName ?? "알 수 없음";
+            List<string> lines = isFist
+                ? ChatList.Instance.GetLines("낙찰_주먹", winnerName)
+                : ChatList.Instance.GetLines("낙찰", winnerName, CurrentCost.ToString("N0"));
+            await SpeakAsync(lines); // 낙찰자 발표 후 퇴장
+        }
+
         curtainMove.CloseCurtain(); //커튼 닫기
         StopMusic();
+        if (!IsLastRound) AnnounceBriefAsync(ChatList.Instance.GetLines("회차마무리")[0], 1.2f).Forget(); // 다음 물품 예고
         await UniTask.Delay(1000); //1초 대기
     }
 

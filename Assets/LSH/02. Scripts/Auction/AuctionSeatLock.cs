@@ -79,7 +79,14 @@ public class AuctionSeatLock : MonoBehaviour
             lockedInteractor = player.GetComponentInChildren<RealSteel.Dialogue.PlayerInteractor>();
             if (lockedInteractor == null) lockedInteractor = FindFirstObjectByType<RealSteel.Dialogue.PlayerInteractor>();
             if (lockedInteractor != null) Disable(lockedInteractor); // 경매 중 E키로 NPC 메뉴가 열리지 않게
+        }
 
+        // 카메라와 캐릭터 사이 오브젝트를 투명하게 뚫어 보이는 효과(RSSeeThrough) 끄기 → 무대 쪽 좌석이 구멍 나 보이지 않게. 해제 시 다시 켜짐
+        foreach (RSSeeThrough seeThrough in FindObjectsByType<RSSeeThrough>(FindObjectsSortMode.None))
+            Disable(seeThrough);
+
+        if (player != null)
+        {
             // 2. 좌석으로 순간이동 (좌석 바닥 = 초상화의 부모 슬롯)
             player.position = seat.position;
             seatPosition = seat.position;

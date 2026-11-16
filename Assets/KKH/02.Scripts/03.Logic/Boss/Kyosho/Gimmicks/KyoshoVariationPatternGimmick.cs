@@ -32,7 +32,7 @@ namespace RealSteel.Boss.Kyosho
         private bool _isInputWindowActive;
         private bool _puzzleCompleted;
         private bool _puzzleFailed;
-        private int _lastProcessedHitFrame = -1;
+        private float _lastProcessedHitTime = -10f;
         private bool _isSecondVariation;
 
         public void Configure(RSNanoLimb morphLimb, KyoshoRhythmTableSO table)
@@ -70,9 +70,17 @@ namespace RealSteel.Boss.Kyosho
             bool allowRetryOnce = diff <= BossDifficulty.Normal;
 
             Kyosho.IsInvincible = true;
+            Kyosho.SetPatternPositionControl(true);
+            Kyosho.TargetCombatCamera?.SetExternalFraming(true, 7.6f, 4.4f);
             Kyosho.SetPhaseState(_isSecondVariation ? KyoshoPhaseState.Variation2 : KyoshoPhaseState.Variation1);
             Kyosho.ScorePreviewHUD?.ShowVariationStatus(_isSecondVariation ? "변주곡 ② — 상단 카드의 3개 순서를 기억하세요!" : "변주곡 ① — 상단 3개 순서를 기억하세요!");
             Kyosho.ScorePreviewHUD?.ResetVariationSlots(3);
+            Kyosho.ScorePreviewHUD?.ShowPatternHint(
+                _isSecondVariation ? "변주곡 ② — 문양 암기!" : "변주곡 ① — 문양 암기!",
+                "보스가 변신하는 3개 문양의 순서를 기억하세요!",
+                KyoshoConstants.ConductP3CompoundColor,
+                0f,
+                "중앙 집결");
 
             Kyosho.GetArenaBounds(out float minX, out float maxX);
             float centerX = (minX + maxX) * 0.5f;
@@ -87,6 +95,7 @@ namespace RealSteel.Boss.Kyosho
                 token.ThrowIfCancellationRequested();
                 float t = Mathf.Clamp01((float)((Clock.TotalBeats - moveStart) / 4.0));
                 Swarm.Blob.center = Vector3.Lerp(startBlobCenter, targetCenter, t * t * (3f - 2f * t));
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(t * 0.25f, "준비 중");
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
             Swarm.Blob.center = targetCenter;
@@ -103,9 +112,18 @@ namespace RealSteel.Boss.Kyosho
                 token.ThrowIfCancellationRequested();
                 int symIdx = _targetSequence[step];
                 ApplyBossMorphSprite(symIdx, targetCenter);
+                KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                    targetCenter + new Vector3(0f, 0.1f, -0.25f),
+                    0.35f, 2.25f, KyoshoConstants.SymbolBorderColors[symIdx], 0.34f);
                 KyoshoSfx.PlaySolfegeNote(symIdx, targetCenter, 1f, step);
                 Kyosho.ScorePreviewHUD?.RevealVariationSlot(step, symIdx);
                 Kyosho.ScorePreviewHUD?.ShowVariationStatus($"변주곡 출제 ({step + 1}/3) : {KyoshoConstants.SymbolGlyphs[symIdx]} ({KyoshoConstants.SolfegeNames[symIdx]} · {KyoshoConstants.SymbolNames[symIdx]})");
+                Kyosho.ScorePreviewHUD?.ShowPatternHint(
+                    $"변주곡 출제 ({step + 1}/3) — {KyoshoConstants.SymbolGlyphs[symIdx]} {KyoshoConstants.SolfegeNames[symIdx]}",
+                    $"{KyoshoConstants.SymbolNames[symIdx]} 문양 순서를 기억하세요!",
+                    KyoshoConstants.SymbolBorderColors[symIdx],
+                    (step + 1f) / _targetSequence.Count,
+                    $"출제 {step + 1}/3");
 
                 await Clock.WaitBeatsAsync(morphBeats, token);
             }
@@ -119,10 +137,16 @@ namespace RealSteel.Boss.Kyosho
             _puzzleFailed = false;
             _isInputWindowActive = true;
             _frameHitCandidates.Clear();
-            _lastProcessedHitFrame = -1;
+            _lastProcessedHitTime = -10f;
 
             Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(0);
             Kyosho.ScorePreviewHUD?.ShowVariationStatus($"순서대로 타격하세요! (0 / 3)  {(allowRetryOnce ? "[1회 오답 재도전 가능]" : "[즉시 판정]")}");
+            Kyosho.ScorePreviewHUD?.ShowPatternHint(
+                _isSecondVariation ? "변주곡 ② 입력!" : "변주곡 ① 입력!",
+                $"기억한 순서대로 문양을 타격하세요! (0 / 3){(allowRetryOnce ? " · 1회 오답 재도전 가능" : "")}",
+                KyoshoConstants.ConductP3CompoundColor,
+                0f,
+                "16박");
 
             double inputStart = Clock.TotalBeats;
             double nextHellStaccatoBeat = inputStart + 1.0;
@@ -131,6 +155,11 @@ namespace RealSteel.Boss.Kyosho
             while (Clock.TotalBeats < inputStart + 16.0 && !_puzzleCompleted && !_puzzleFailed)
             {
                 token.ThrowIfCancellationRequested();
+
+                double elapsedBeats = Clock.TotalBeats - inputStart;
+                float p = Mathf.Clamp01((float)(elapsedBeats / 16.0));
+                float remainSec = Mathf.Max(0f, (float)((16.0 - elapsedBeats) * Clock.BeatSec));
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(p, $"{remainSec:0.0}s");
 
                 if (fireHellStaccato && staccato != null)
                 {
@@ -147,8 +176,11 @@ namespace RealSteel.Boss.Kyosho
 
             _isInputWindowActive = false;
             ClearSpawnedSymbols();
+            Kyosho.ScorePreviewHUD?.HidePatternHint();
             Kyosho.ScorePreviewHUD?.ShowVariationStatus(null);
             Kyosho.ScorePreviewHUD?.HideVariationSequenceSlots();
+            Kyosho.SetPatternPositionControl(false);
+            Kyosho.TargetCombatCamera?.SetExternalFraming(false);
             Kyosho.IsInvincible = false;
 
             // 5. 결과 처리
@@ -206,12 +238,12 @@ namespace RealSteel.Boss.Kyosho
         {
             if (!_isInputWindowActive || _frameHitCandidates.Count == 0) return;
 
-            if (_lastProcessedHitFrame == Time.frameCount)
+            if (Time.unscaledTime - _lastProcessedHitTime < 0.16f)
             {
                 _frameHitCandidates.Clear();
                 return;
             }
-            _lastProcessedHitFrame = Time.frameCount;
+            _lastProcessedHitTime = Time.unscaledTime;
 
             KyoshoVariationSymbolObject closest = null;
             float bestDistSq = float.MaxValue;
@@ -242,7 +274,9 @@ namespace RealSteel.Boss.Kyosho
             if (hitSym.SymbolIndex == expected)
             {
                 KyoshoSfx.PlaySolfegeNote(hitSym.SymbolIndex, hitSym.transform.position, 1.05f, _currentStep);
-                var bark = FindAnyObjectByType<BattleBarkPlayer>();
+                KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                    hitSym.transform.position, 0.24f, 1.45f, KyoshoConstants.SymbolBorderColors[hitSym.SymbolIndex], 0.26f);
+                var bark = Kyosho != null ? Kyosho.GetBarkPlayer() : FindAnyObjectByType<BattleBarkPlayer>();
                 bark?.NotifyBossPartBroken(KyoshoConstants.BarkVariationSymbol);
 
                 // 헬 난이도에서 뒤쪽 단계에 같은 문양이 한 번 더 출제되었다면 즉시 소멸하지 않고 재무장
@@ -258,6 +292,9 @@ namespace RealSteel.Boss.Kyosho
                 _currentStep++;
                 Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(_currentStep);
                 Kyosho.ScorePreviewHUD?.ShowVariationStatus($"순서대로 타격하세요! ({_currentStep} / 3)");
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(
+                    detail: $"정답! 다음 순서를 타격하세요 ({_currentStep} / 3)",
+                    progress01: _currentStep / 3f);
 
                 if (_currentStep >= _targetSequence.Count)
                 {
@@ -266,6 +303,8 @@ namespace RealSteel.Boss.Kyosho
             }
             else
             {
+                KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                    hitSym.transform.position, 0.24f, 1.60f, new Color(1.00f, 0.24f, 0.28f), 0.28f);
                 _mistakesCount++;
                 bool allowRetryOnce = Kyosho.SelectedDifficulty <= BossDifficulty.Normal;
                 if (allowRetryOnce && _mistakesCount == 1)
@@ -276,6 +315,9 @@ namespace RealSteel.Boss.Kyosho
                     foreach (var s in _spawnedSymbols) s?.RearmForDuplicateStep();
                     Kyosho.ScorePreviewHUD?.UpdateVariationInputProgress(0);
                     Kyosho.ScorePreviewHUD?.ShowVariationStatus("오답! 리셋되었습니다 — 처음부터 다시 타격하세요! (0 / 3)");
+                    Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(
+                        detail: "오답! 순서가 초기화되었습니다 — 다시 0 / 3부터 타격!",
+                        progress01: 0f);
                 }
                 else
                 {
@@ -338,11 +380,17 @@ namespace RealSteel.Boss.Kyosho
             var def = rhythmTable.GetSymbolDef(symbolIndex);
             var shape = def.spriteShape != null ? def.spriteShape : GetOrCreateFallbackSymbolShape(symbolIndex);
 
-            _morphSpriteLimb.transform.position = centerPos;
+            if (Swarm != null)
+            {
+                Swarm.Blob.tint = new Color32(45, 50, 72, 255);
+                Swarm.Blob.glow = 0f;
+            }
+
+            _morphSpriteLimb.transform.position = centerPos + new Vector3(0f, 0.15f, -0.35f);
             _morphSpriteLimb.picture = shape;
             _morphSpriteLimb.artColor = true;
             _morphSpriteLimb.tint = def.borderColor;
-            _morphSpriteLimb.glow = 1.8f;
+            _morphSpriteLimb.glow = 2.4f;
             _morphSpriteLimb.amount = 1f;
             Swarm.Blob.bulge = 0f;
         }
@@ -353,6 +401,12 @@ namespace RealSteel.Boss.Kyosho
             {
                 _morphSpriteLimb.amount = 0f;
                 _morphSpriteLimb.glow = 0f;
+            }
+            if (Swarm != null)
+            {
+                Swarm.Blob.tint = new Color32(255, 255, 255, 255);
+                Swarm.Blob.glow = 0.2f;
+                Swarm.ResetBotLooks();
             }
         }
 
@@ -408,6 +462,9 @@ namespace RealSteel.Boss.Kyosho
             _isInputWindowActive = false;
             ClearBossMorphSprite();
             ClearSpawnedSymbols();
+            Kyosho?.SetPatternPositionControl(false);
+            Kyosho?.TargetCombatCamera?.SetExternalFraming(false);
+            Kyosho?.ScorePreviewHUD?.HidePatternHint();
             Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             Kyosho?.ScorePreviewHUD?.HideVariationSequenceSlots();
             if (Kyosho != null) Kyosho.IsInvincible = false;

@@ -26,6 +26,7 @@ namespace RealSteel.Boss.Kyosho
         private readonly List<KyoshoTrackedBullet> _bullets = new List<KyoshoTrackedBullet>();
         private readonly List<GameObject> _telegraphLines = new List<GameObject>();
         private GameObject _brassBeamVisual;
+        private GameObject _brassBeamTelegraph;
 
         private void Awake()
         {
@@ -44,6 +45,16 @@ namespace RealSteel.Boss.Kyosho
             int baseCount = KyoshoConstants.GetFermataBaseBulletCount(Kyosho.SelectedDifficulty) + (isPhase3 ? 3 : 0);
             int extraCount = hasBrass ? 4 : 0;
             int totalCount = baseCount + extraCount;
+
+            Kyosho.TargetCombatCamera?.SetExternalFraming(true, 7.6f, deployHeight + 1.0f);
+            Kyosho.ScorePreviewHUD?.ShowPatternHint(
+                "2페이즈 페르마타 (⌒) — 낙하 틈새 대피!",
+                hasBrass
+                    ? "녹색 SAFE 틈새로 이동! · 낙하 후 금관 수평 빔 점프 주의"
+                    : "녹색 SAFE 틈새로 이동해 수직 음표 낙하를 피하세요!",
+                hasBrass ? KyoshoConstants.BrassMagentaColor : KyoshoConstants.OriginalPatternColor,
+                0f,
+                "배치 중");
 
             Kyosho.GetArenaBounds(out float minX, out float maxX);
             float floorY = Kyosho.ArenaFloorY;
@@ -68,8 +79,10 @@ namespace RealSteel.Boss.Kyosho
             KyoshoSfx.PlayFermataSpawnHarmony(totalCount, ring.center);
 
             float holdDuration = Clock.BeatsToSeconds(2.9f);
-            List<float> xPositions = BuildSpreadPositionsX(totalCount, safeMinX, safeMaxX);
+            List<float> safeXs;
+            List<float> xPositions = BuildSpreadPositionsX(totalCount, safeMinX, safeMaxX, out safeXs);
 
+            ClearTelegraphLines();
             for (int i = 0; i < totalCount; i++)
             {
                 bool isBrassBonus = i >= baseCount;
@@ -98,16 +111,35 @@ namespace RealSteel.Boss.Kyosho
                 _bullets.Add(b);
                 SpawnDropTelegraph(xPositions[i], floorY, airY, col);
             }
+            for (int i = 0; i < safeXs.Count; i++)
+            {
+                SpawnSafeGapTelegraph(safeXs[i], floorY);
+            }
 
-            await Clock.WaitBeatsAsync(1f, token);
+            double phaseStartBeat = Clock.TotalBeats;
+            while (Clock.TotalBeats < phaseStartBeat + 1.0)
+            {
+                token.ThrowIfCancellationRequested();
+                float p = Mathf.Clamp01((float)((Clock.TotalBeats - phaseStartBeat) / 3.0));
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(p, "배치");
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
 
             // 2~3박: 페르마타(⌒) 정지 및 예고선 유지
             Kyosho.ScorePreviewHUD?.ShowFermataHold(true);
             KyoshoSfx.PlayFermataHoldHarmony(ring.center);
 
-            await Clock.WaitBeatsAsync(2f, token);
+            while (Clock.TotalBeats < phaseStartBeat + 3.0)
+            {
+                token.ThrowIfCancellationRequested();
+                float p = Mathf.Clamp01((float)((Clock.TotalBeats - phaseStartBeat) / 3.0));
+                float remainSec = Mathf.Max(0f, (float)((phaseStartBeat + 3.0 - Clock.TotalBeats) * Clock.BeatSec));
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(p, $"{remainSec:0.0}s");
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
 
             Kyosho.ScorePreviewHUD?.ShowFermataHold(false);
+            Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(1f, "낙하!");
             ClearTelegraphLines();
 
             // 4박: 일제 수직 낙하 (Drop)
@@ -175,41 +207,80 @@ namespace RealSteel.Boss.Kyosho
             brass.SetWorldPosition(lowPos);
 
             float width = (maxX - minX);
+            Color col = KyoshoConstants.BrassMagentaColor;
+            if (_brassBeamTelegraph != null) { Destroy(_brassBeamTelegraph); _brassBeamTelegraph = null; }
+            _brassBeamTelegraph = KyoshoNanobotAttackHelper.SpawnBorderedZoneHint(
+                "KyoshoBrassBeamTelegraph",
+                new Vector3((minX + maxX) * 0.5f, floorY + 0.36f, -0.06f),
+                width,
+                0.68f,
+                col,
+                0.15f,
+                0.85f,
+                0.04f,
+                "금관 수평 빔! 점프 회피 ▲",
+                0f,
+                3.0f,
+                22);
+
+            Kyosho?.ScorePreviewHUD?.ShowPatternHint(
+                "금관 섹션 — 하단 수평 빔 예고!",
+                "지금 점프(W / ↑)로 지면 수평 빔을 뛰어넘으세요!",
+                col,
+                0f,
+                "발사 임박");
+            Kyosho?.ScorePreviewHUD?.ShowVariationStatus("금관 하단 빔 예고 — 점프로 회피!");
+
+            double warnStart = Clock.TotalBeats;
+            while (Clock.TotalBeats < warnStart + 0.85)
+            {
+                token.ThrowIfCancellationRequested();
+                float p = Mathf.Clamp01((float)((Clock.TotalBeats - warnStart) / 0.85));
+                Kyosho?.ScorePreviewHUD?.UpdatePatternHintProgress(p, "점프 ▲");
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
+
+            if (_brassBeamTelegraph != null) { Destroy(_brassBeamTelegraph); _brassBeamTelegraph = null; }
+
             _brassBeamVisual = new GameObject("KyoshoBrassHorizontalBeam");
             _brassBeamVisual.transform.position = new Vector3((minX + maxX) * 0.5f, floorY + 0.52f, -0.1f);
-            _brassBeamVisual.transform.localScale = new Vector3(width, 0.30f, 1f);
+            _brassBeamVisual.transform.localScale = new Vector3(width, 0.48f, 1f);
             var sr = _brassBeamVisual.AddComponent<SpriteRenderer>();
             sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            Color col = KyoshoConstants.BrassMagentaColor;
-            sr.color = new Color(col.r, col.g, col.b, 0.32f);
+            sr.color = col;
             sr.sortingOrder = 24;
 
-            Kyosho?.ScorePreviewHUD?.ShowVariationStatus("금관 하단 빔 예고 — 점프로 회피!");
-            await Clock.WaitBeatsAsync(0.85f, token);
-
+            KyoshoNanobotAttackHelper.SpawnPulseRingEffect(lowPos, 0.3f, 2.2f, col, 0.28f);
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.brassBeam, "brass_beam", lowPos);
-            if (_brassBeamVisual != null)
+            Kyosho?.ScorePreviewHUD?.UpdatePatternHintProgress(1f, "빔 발사!");
+
+            bool hitDealt = false;
+            double beamEndBeat = Clock.TotalBeats + 0.40;
+            while (Clock.TotalBeats < beamEndBeat)
             {
-                _brassBeamVisual.transform.localScale = new Vector3(width, 0.46f, 1f);
-                sr.color = col;
+                token.ThrowIfCancellationRequested();
+                if (!hitDealt)
+                {
+                    var player = FindPlayerObject();
+                    if (player != null && player.transform.position.y <= floorY + 0.68f)
+                    {
+                        hitDealt = true;
+                        // 금관 수평 빔은 코어 HP만 차감 (점프 회피)
+                        ApplyCoreOnlyHit(player, brassBeamCoreDamage);
+                    }
+                }
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
-            var player = FindPlayerObject();
-            if (player != null && player.transform.position.y <= floorY + 0.68f)
-            {
-                // 금관 수평 빔은 코어 HP만 차감 (점프 회피)
-                ApplyCoreOnlyHit(player, brassBeamCoreDamage);
-            }
-
-            await Clock.WaitBeatsAsync(0.4f, token);
             Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             if (_brassBeamVisual != null) { Destroy(_brassBeamVisual); _brassBeamVisual = null; }
             brass.ResetToBasePosition();
         }
 
-        private List<float> BuildSpreadPositionsX(int count, float minX, float maxX)
+        private List<float> BuildSpreadPositionsX(int count, float minX, float maxX, out List<float> safeXs)
         {
             var list = new List<float>(count);
+            safeXs = new List<float>(2);
             if (count <= 0) return list;
 
             // 최소 2개의 안전한 빈 슬롯을 보장해 플레이어가 확실한 회피 틈새를 읽을 수 있게 배치
@@ -219,10 +290,15 @@ namespace RealSteel.Boss.Kyosho
             if (safeSlotB == safeSlotA)
                 safeSlotB = (safeSlotA + 2) % totalSlots;
 
-            for (int slot = 0; slot < totalSlots && list.Count < count; slot++)
+            for (int slot = 0; slot < totalSlots; slot++)
             {
-                if (slot == safeSlotA || slot == safeSlotB) continue;
                 float t = totalSlots > 1 ? slot / (float)(totalSlots - 1) : 0.5f;
+                if (slot == safeSlotA || slot == safeSlotB)
+                {
+                    safeXs.Add(Mathf.Clamp(Mathf.Lerp(minX, maxX, t), minX, maxX));
+                    continue;
+                }
+                if (list.Count >= count) continue;
                 float jitter = UnityEngine.Random.Range(-0.14f, 0.14f);
                 list.Add(Mathf.Clamp(Mathf.Lerp(minX, maxX, t) + jitter, minX, maxX));
             }
@@ -231,13 +307,38 @@ namespace RealSteel.Boss.Kyosho
 
         private void SpawnDropTelegraph(float x, float floorY, float airY, Color color)
         {
-            var go = new GameObject("FermataDropLine");
-            go.transform.position = new Vector3(x, (floorY + airY) * 0.5f, 0.05f);
-            go.transform.localScale = new Vector3(0.56f, Mathf.Max(0.5f, airY - floorY), 1f);
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            sr.color = new Color(color.r, color.g, color.b, 0.24f);
-            sr.sortingOrder = 10;
+            float height = Mathf.Max(0.5f, airY - floorY);
+            var go = KyoshoNanobotAttackHelper.SpawnBorderedZoneHint(
+                "FermataDropLine",
+                new Vector3(x, (floorY + airY) * 0.5f, 0.05f),
+                0.56f,
+                height,
+                color,
+                0.15f,
+                0.58f,
+                0.025f,
+                "▼",
+                -(height * 0.5f - 0.35f),
+                2.8f,
+                10);
+            _telegraphLines.Add(go);
+        }
+
+        private void SpawnSafeGapTelegraph(float x, float floorY)
+        {
+            var go = KyoshoNanobotAttackHelper.SpawnBorderedZoneHint(
+                "FermataSafeZone",
+                new Vector3(x, floorY + 1.15f, 0.04f),
+                0.88f,
+                2.20f,
+                new Color(0.25f, 0.95f, 0.58f),
+                0.14f,
+                0.82f,
+                0.045f,
+                "SAFE 틈새",
+                -0.65f,
+                2.6f,
+                12);
             _telegraphLines.Add(go);
         }
 
@@ -268,10 +369,13 @@ namespace RealSteel.Boss.Kyosho
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
+            Kyosho?.TargetCombatCamera?.SetExternalFraming(false);
+            Kyosho?.ScorePreviewHUD?.HidePatternHint();
             Kyosho?.ScorePreviewHUD?.ShowFermataHold(false);
             Kyosho?.ScorePreviewHUD?.ShowVariationStatus(null);
             ClearTelegraphLines();
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_bullets, Swarm);
+            if (_brassBeamTelegraph != null) { Destroy(_brassBeamTelegraph); _brassBeamTelegraph = null; }
             if (_brassBeamVisual != null) { Destroy(_brassBeamVisual); _brassBeamVisual = null; }
             Kyosho?.SectionManager?.BrassSection?.ResetToBasePosition();
         }

@@ -28,6 +28,7 @@ namespace RealSteel.Boss.Kyosho
         private readonly List<ActiveShockwave> _shockwaves = new List<ActiveShockwave>();
         private readonly List<KyoshoTrackedBullet> _fanBullets = new List<KyoshoTrackedBullet>();
         private GameObject _strikeTelegraphGo;
+        private GameObject _shockwaveTelegraphGo;
 
         private class ActiveShockwave
         {
@@ -72,13 +73,23 @@ namespace RealSteel.Boss.Kyosho
             {
                 if (isPhase3)
                 {
-                    return Swarm.Knight.HandWorld + new Vector3(face * 0.25f, 0.1f, -0.15f);
+                    return Swarm.Knight.ChestWorld + new Vector3(face * 0.85f, 0.32f, -0.15f);
                 }
                 var b = Swarm.Blob;
                 return b.center + new Vector3(face * b.radius.x * 0.55f, b.radius.y * 0.25f, -0.15f);
             }
 
             if (isPhase3) Kyosho.SetMaestroPose(KnightMove.Guard1, 0);
+
+            string hintTitle = isPhase3
+                ? (isCompound68 ? "3페이즈 변박 지휘 (6/8)" : "3페이즈 고속 지휘 (3/4)")
+                : (isPhase2 ? "2페이즈 강박 지휘 (2/4)" : "1페이즈 기본 지휘 (4/4)");
+            string hintDetail = isPhase3
+                ? "궤적선을 보고 연속 회피 · 충격파(점프) + 막타 탄막 주의!"
+                : (isPhase2
+                    ? (hasPercussion ? "강박 지휘봉 회피 · 1/3박 착지 충격파 점프 회피!" : "지휘봉 궤적을 보고 타이밍 회피!")
+                    : "지휘봉 예고 궤적선을 보고 Space 무적 회피!");
+            Kyosho.ScorePreviewHUD?.ShowPatternHint(hintTitle, hintDetail, tipColor, 0f, "예비");
 
             double startBeat = Clock.TotalBeats;
             float initAngle = 90f;
@@ -94,6 +105,10 @@ namespace RealSteel.Boss.Kyosho
             float curLength = 0.5f;
 
             SpawnStrikeTelegraph(Root(), firstStrikeAngle, batonLength, tipColor);
+            if (isPhase3 || hasPercussion)
+            {
+                SpawnShockwaveTelegraph(Root(), firstStrikeAngle, batonLength);
+            }
 
             while (Clock.TotalBeats < startBeat + 1.0 - leadBeats)
             {
@@ -103,12 +118,15 @@ namespace RealSteel.Boss.Kyosho
                 curAngle = Mathf.LerpAngle(initAngle, cockAngle, Smooth(t));
                 tube.glow = Mathf.Lerp(0.4f, 1.8f, t);
                 UpdateStrikeTelegraph(Root(), firstStrikeAngle, batonLength);
+                UpdateShockwaveTelegraph(Root(), firstStrikeAngle, batonLength);
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(t * 0.25f, "타격 임박");
                 StepBaton(tube, Root(), curAngle, curLength, Time.deltaTime);
                 StepShockwaves(Time.deltaTime);
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
             ClearStrikeTelegraph();
+            ClearShockwaveTelegraph();
 
             // 2) 박자별 연속 타격 (1페 4/4: ↓←→↑, 2페 2/4: ↓↑↓↑, 3페 3/4: ↓→↑, 3페 6/8: ↓←←→→↑)
             float Ang(float rightDeg, float leftDeg) => face >= 0f ? rightDeg : leftDeg;
@@ -168,6 +186,16 @@ namespace RealSteel.Boss.Kyosho
 
                 if (isPhase3 && maestroPoses != null) Kyosho.SetMaestroPose(maestroPoses[step], 0);
                 KyoshoSfx.PlayCue(KyoshoSfx.Data?.conductWhoosh, "conduct_whoosh", Root());
+                SpawnStrikeTelegraph(Root(), targetAng, batonLength, tipColor);
+                if (spawnsShockwave[step] && (isPhase3 || hasPercussion))
+                {
+                    SpawnShockwaveTelegraph(Root(), targetAng, batonLength);
+                }
+                else
+                {
+                    ClearShockwaveTelegraph();
+                }
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress((float)step / stepCount, $"{step + 1}/{stepCount}타");
 
                 while (Clock.TotalBeats < nextStepWaitEnd)
                 {
@@ -176,6 +204,12 @@ namespace RealSteel.Boss.Kyosho
                     float swingFrac = Mathf.Clamp01((float)((nowBeat - swingStart) / Math.Max(0.05, swingEnd - swingStart)));
                     curAngle = Mathf.LerpAngle(startAng, targetAng, EaseOutQuad(swingFrac));
                     StepBaton(tube, Root(), curAngle, batonLength, Time.deltaTime);
+
+                    if (!shockwaveSpawnedThisBeat)
+                    {
+                        UpdateStrikeTelegraph(Root(), targetAng, batonLength);
+                        UpdateShockwaveTelegraph(Root(), targetAng, batonLength);
+                    }
 
                     // 정박 판정 창
                     if (!hitDealtThisBeat && nowBeat >= beatTarget - 0.08 && nowBeat <= beatTarget + 0.25)
@@ -192,6 +226,12 @@ namespace RealSteel.Boss.Kyosho
                     if (!shockwaveSpawnedThisBeat && nowBeat >= beatTarget)
                     {
                         shockwaveSpawnedThisBeat = true;
+                        ClearStrikeTelegraph();
+                        ClearShockwaveTelegraph();
+                        KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                            new Vector3(tube.Tip.x, Mathf.Max(Kyosho.ArenaFloorY + 0.14f, tube.Tip.y), 0f),
+                            0.25f, 1.35f, tipColor, 0.24f);
+                        Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress((step + 1f) / stepCount, $"{step + 1}/{stepCount}타");
                         KyoshoSfx.PlayConductBeatHarmony(step, stepCount, isPhase2, isPhase3, isCompound68, tube.Tip);
 
                         if (spawnsShockwave[step] && (isPhase3 || hasPercussion))
@@ -210,6 +250,8 @@ namespace RealSteel.Boss.Kyosho
                 }
             }
 
+            ClearStrikeTelegraph();
+            ClearShockwaveTelegraph();
             tube.danger = false;
             tube.glow = 0.2f;
 
@@ -221,6 +263,13 @@ namespace RealSteel.Boss.Kyosho
             {
                 var upcoming = Kyosho.PeekNextPhase2PatternType();
                 telegraphAngle = upcoming == typeof(KyoshoStaccatoPatternGimmick) ? 180f : 90f;
+                string nextName = upcoming == typeof(KyoshoStaccatoPatternGimmick) ? "현악 스타카토 (좌측 지시)" : "금관 페르마타 (상단 지시)";
+                Color nextCol = upcoming == typeof(KyoshoStaccatoPatternGimmick) ? KyoshoConstants.StringsMintColor : KyoshoConstants.BrassMagentaColor;
+                Kyosho.ScorePreviewHUD?.ShowPatternHint("다음 악장 예고", nextName, nextCol, 0f, "예고");
+            }
+            else
+            {
+                Kyosho.ScorePreviewHUD?.HidePatternHint();
             }
             if (isPhase3) Kyosho.SetMaestroPose(KnightMove.Guard2, 0);
 
@@ -235,6 +284,7 @@ namespace RealSteel.Boss.Kyosho
                     tube.tint = Color.Lerp(tipColor,
                         telegraphAngle > 135f ? KyoshoConstants.StringsMintColor : KyoshoConstants.BrassMagentaColor,
                         0.65f);
+                    Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(k, "전환");
                 }
                 else
                 {
@@ -246,6 +296,7 @@ namespace RealSteel.Boss.Kyosho
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
+            Kyosho.ScorePreviewHUD?.HidePatternHint();
             ReleaseBatonBots();
         }
 
@@ -399,6 +450,8 @@ namespace RealSteel.Boss.Kyosho
         {
             base.CleanupEffects();
             ClearStrikeTelegraph();
+            ClearShockwaveTelegraph();
+            Kyosho?.ScorePreviewHUD?.HidePatternHint();
             ReleaseBatonBots();
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_fanBullets, Swarm);
             foreach (var sw in _shockwaves)
@@ -411,22 +464,14 @@ namespace RealSteel.Boss.Kyosho
         private void SpawnStrikeTelegraph(Vector3 rootPos, float angleDeg, float length, Color color)
         {
             ClearStrikeTelegraph();
-            _strikeTelegraphGo = new GameObject("KyoshoConductStrikeTelegraph");
-            var sr = _strikeTelegraphGo.AddComponent<SpriteRenderer>();
-            sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            sr.color = new Color(color.r, color.g, color.b, 0.28f);
-            sr.sortingOrder = 16;
+            _strikeTelegraphGo = KyoshoNanobotAttackHelper.SpawnGlowingRayHint(
+                "KyoshoConductStrikeTelegraph", color, 0.36f, 0.10f, 16);
             UpdateStrikeTelegraph(rootPos, angleDeg, length);
         }
 
         private void UpdateStrikeTelegraph(Vector3 rootPos, float angleDeg, float length)
         {
-            if (_strikeTelegraphGo == null) return;
-            float rad = angleDeg * Mathf.Deg2Rad;
-            Vector3 dir = new Vector3(Mathf.Cos(rad), Mathf.Sin(rad), 0f);
-            _strikeTelegraphGo.transform.position = rootPos + dir * (length * 0.5f);
-            _strikeTelegraphGo.transform.rotation = Quaternion.Euler(0f, 0f, angleDeg);
-            _strikeTelegraphGo.transform.localScale = new Vector3(length, 0.28f, 1f);
+            KyoshoNanobotAttackHelper.UpdateGlowingRayHint(_strikeTelegraphGo, rootPos, angleDeg, length);
         }
 
         private void ClearStrikeTelegraph()
@@ -435,6 +480,42 @@ namespace RealSteel.Boss.Kyosho
             {
                 Destroy(_strikeTelegraphGo);
                 _strikeTelegraphGo = null;
+            }
+        }
+
+        private void SpawnShockwaveTelegraph(Vector3 rootPos, float angleDeg, float length)
+        {
+            ClearShockwaveTelegraph();
+            float rad = angleDeg * Mathf.Deg2Rad;
+            Vector3 impactPos = new Vector3(rootPos.x + Mathf.Cos(rad) * length * 0.85f, Kyosho.ArenaFloorY + 0.08f, 0f);
+            _shockwaveTelegraphGo = KyoshoNanobotAttackHelper.SpawnRingHint(
+                "KyoshoConductShockwaveHint",
+                impactPos,
+                0.72f,
+                KyoshoConstants.PercussionAmberColor,
+                0.16f,
+                0.90f,
+                16,
+                "SHOCK ▲",
+                2.6f);
+        }
+
+        private void UpdateShockwaveTelegraph(Vector3 rootPos, float angleDeg, float length)
+        {
+            if (_shockwaveTelegraphGo == null) return;
+            float rad = angleDeg * Mathf.Deg2Rad;
+            _shockwaveTelegraphGo.transform.position = new Vector3(
+                rootPos.x + Mathf.Cos(rad) * length * 0.85f,
+                Kyosho.ArenaFloorY + 0.08f,
+                0f);
+        }
+
+        private void ClearShockwaveTelegraph()
+        {
+            if (_shockwaveTelegraphGo != null)
+            {
+                Destroy(_shockwaveTelegraphGo);
+                _shockwaveTelegraphGo = null;
             }
         }
 

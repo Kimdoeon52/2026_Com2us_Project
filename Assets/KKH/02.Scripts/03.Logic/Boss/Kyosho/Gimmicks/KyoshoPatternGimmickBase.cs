@@ -21,14 +21,11 @@ namespace RealSteel.Boss.Kyosho
         public RSNanoSwarm Swarm => Kyosho != null ? Kyosho.Swarm : null;
         public float PostDelayBeats => postDelayBeats;
 
+        protected override bool UseExternalTellPhase => patternData == null || !patternData.hasDpsCheck;
+
         protected override void OnPreExecute()
         {
             base.OnPreExecute();
-            // 쿄쇼의 모든 전조는 ExecuteActionAsync 내부에서 BeatClock 정박에 맞춰 수행하므로 BossPatternData의 초 단위 전조 루프는 0으로 유지
-            if (patternData != null && patternData.tellDuration > 0f && !patternData.hasDpsCheck)
-            {
-                patternData.tellDuration = 0f;
-            }
         }
 
         /// <summary>

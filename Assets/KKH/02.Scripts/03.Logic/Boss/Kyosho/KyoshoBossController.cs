@@ -78,6 +78,8 @@ namespace RealSteel.Boss.Kyosho
         private bool _isEncoreRunning;
         private bool _isCurtainCallDefeatRunning;
         private bool _phase3CurtainCallDone;
+        private bool _isInvincible;
+        private bool _isPatternControllingPosition;
         private CancellationTokenSource _gateTransitionCts;
         private RealSteel.Dialogue.BattleBarkPlayer _barkPlayer;
         private RealSteel.Dialogue.CrowdBubbles _crowdBubbles;
@@ -95,10 +97,31 @@ namespace RealSteel.Boss.Kyosho
         public float ArenaMinX { get { GetArenaBounds(out float minX, out _); return minX; } }
         public float ArenaMaxX { get { GetArenaBounds(out _, out float maxX); return maxX; } }
 
-        public bool IsInvincible { get; set; }
+        public bool IsInvincible
+        {
+            get => _isInvincible;
+            set
+            {
+                _isInvincible = value;
+                if (Snapshot != null) Snapshot.isInvincible = value;
+                if (_hurtCollider != null) _hurtCollider.enabled = !value && Snapshot != null && Snapshot.IsAlive;
+            }
+        }
         public bool IsWaitingFinalBlow { get; set; }
+        public bool IsPatternControllingPosition => _isPatternControllingPosition;
         public bool HasCompletedFirstPhase2Fermata { get; private set; }
         public float TestDamageScale => Mathf.Clamp(testDamageScale, 0.05f, 2f);
+
+        public void SetPatternPositionControl(bool controlled)
+        {
+            _isPatternControllingPosition = controlled;
+        }
+
+        public RealSteel.Dialogue.BattleBarkPlayer GetBarkPlayer()
+        {
+            if (_barkPlayer == null) _barkPlayer = FindAnyObjectByType<RealSteel.Dialogue.BattleBarkPlayer>();
+            return _barkPlayer;
+        }
 
         public override void AutoBindInspectorReferences()
         {
@@ -219,12 +242,34 @@ namespace RealSteel.Boss.Kyosho
         protected override void AutoWireSceneSystems()
         {
             base.AutoWireSceneSystems();
+            var bm = BattleManager.Instance;
+            if (bm != null && PlayerTransform != null)
+            {
+                var playerField = typeof(BattleManager).GetField("playerRobotObject", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (playerField != null && playerField.GetValue(bm) == null)
+                {
+                    playerField.SetValue(bm, PlayerTransform.gameObject);
+                }
+            }
+            TargetCombatCamera?.SetTargetBBaseFraming(2.35f, 4.35f);
+            TargetCombatCamera?.SetExternalFraming(false);
+
             var dialogueRig = KyoshoCombatDialogueRig.EnsureInScene(this, _hasFloorY ? _arenaFloorY : transform.position.y);
             if (dialogueRig != null)
             {
                 _barkPlayer = dialogueRig.BarkPlayer;
                 _crowdBubbles = dialogueRig.CrowdBubbles;
             }
+        }
+
+        public override float GetBossVisualHalfWidth()
+        {
+            if (_phase3Entered)
+            {
+                return 1.15f + cameraEdgePadding;
+            }
+            float visualW = swarm != null ? Mathf.Clamp(swarm.Blob.radius.x * 0.68f, 1.40f, 2.50f) : 2.10f;
+            return visualW + cameraEdgePadding;
         }
 
         protected override void SetupAnimationController()
@@ -382,6 +427,7 @@ namespace RealSteel.Boss.Kyosho
             _isEncoreRunning = false;
             _isCurtainCallDefeatRunning = false;
             _phase3CurtainCallDone = false;
+            _isPatternControllingPosition = false;
             IsInvincible = false;
             IsWaitingFinalBlow = false;
             HasCompletedFirstPhase2Fermata = false;
@@ -464,9 +510,13 @@ namespace RealSteel.Boss.Kyosho
             base.SetDifficulty(difficulty);
             if (_beatClock != null)
             {
-                float bpm = KyoshoConstants.GetBpmForDifficulty(difficulty);
+                float bpm = _phase3Entered ? KyoshoConstants.Phase3Bpm : KyoshoConstants.GetBpmForDifficulty(difficulty);
                 _beatClock.SetBpm(bpm);
                 _beatIndicatorHud?.Bind(_beatClock, difficulty);
+                if (Snapshot != null && Snapshot.currentPhase == 2 && !_phase3Entered)
+                {
+                    KyoshoSfx.PlayPhase2Bgm(0.35f, bpm, _beatClock.TotalBeats);
+                }
             }
             if (Snapshot != null)
             {
@@ -521,6 +571,11 @@ namespace RealSteel.Boss.Kyosho
 
                 IsInvincible = false;
                 _phaseState = KyoshoPhaseState.Phase1;
+                if (BattleManager.Instance != null && !BattleManager.Instance.IsBattleActive()
+                    && BattleManager.Instance.CurrentState != BattleState.BattleEnd)
+                {
+                    BattleManager.Instance.StartBattle();
+                }
                 StateMachine.Initialize(new KyoshoBeatIdleState(this, token, 0.5f));
                 Debug.Log($"<color=cyan>[KyoshoBossController] 쿄쇼 1페이즈 전투 개시! (난이도: {SelectedDifficulty}, BPM: {_beatClock.Bpm})</color>");
             }
@@ -532,6 +587,7 @@ namespace RealSteel.Boss.Kyosho
         protected override void Update()
         {
             base.Update();
+            KyoshoSfx.SyncBgmWithBeatClock(_beatClock);
             if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive || swarm == null) return;
 
             UpdateBlobBodyAndCollider(Time.deltaTime);
@@ -539,18 +595,22 @@ namespace RealSteel.Boss.Kyosho
 
         protected override void LateUpdate()
         {
-            base.LateUpdate();
-            if (swarm != null && !IsCombatStopped)
+            if (_phase3Entered)
             {
-                if (_phase3Entered)
+                if (swarm != null && !IsCombatStopped && clampToCameraBounds)
                 {
-                    swarm.Knight.origin.x = transform.position.x;
+                    swarm.Knight.origin.x = ClampToStageWallX(swarm.Knight.origin.x, 1.25f);
+                    swarm.Knight.UpdatePose();
+                    transform.position = swarm.Knight.ChestWorld;
                 }
-                else
-                {
-                    // BossControllerBase.LateUpdate의 X클램프를 Blob.center에도 동기화
-                    swarm.Blob.center.x = transform.position.x;
-                }
+                return;
+            }
+
+            base.LateUpdate();
+            if (swarm != null && !IsCombatStopped && !_isPatternControllingPosition)
+            {
+                // BossControllerBase.LateUpdate의 X클램프를 Blob.center에도 동기화
+                swarm.Blob.center.x = transform.position.x;
             }
         }
 
@@ -576,16 +636,25 @@ namespace RealSteel.Boss.Kyosho
                 float halfH = Mathf.Max(1.2f, (blob.shape.maxY - blob.shape.minY + 1) * 0.5f * pxScale);
                 _blobBaseSize = new Vector3(halfW, halfH, 0.9f);
                 blob.radius = _blobBaseSize;
-                blob.center.y = _arenaFloorY + 0.14f - blob.shape.minY * pxScale;
+                if (!_isPatternControllingPosition)
+                {
+                    blob.center.y = _arenaFloorY + 0.14f - blob.shape.minY * pxScale;
+                }
             }
             else
             {
                 Vector3 size = swarm.BlobSize(Mathf.Max(60, swarm.guideCount[RSNanoSwarm.G_Blob]), blobShapeRatio);
                 _blobBaseSize = Vector3.Lerp(_blobBaseSize, size, 1f - Mathf.Exp(-6f * dt));
                 blob.radius = _blobBaseSize;
-                blob.center.y = _arenaFloorY + blob.radius.y * 0.78f;
+                if (!_isPatternControllingPosition)
+                {
+                    blob.center.y = _arenaFloorY + blob.radius.y * 0.78f;
+                }
             }
-            blob.center.z = Mathf.MoveTowards(blob.center.z, 0f, dt * 6f);
+            if (!_isPatternControllingPosition)
+            {
+                blob.center.z = Mathf.MoveTowards(blob.center.z, 0f, dt * 6f);
+            }
             blob.bulge = Mathf.MoveTowards(blob.bulge, 0f, dt * 1.5f);
 
             if (_beatPulseAmount > 0f)
@@ -598,10 +667,10 @@ namespace RealSteel.Boss.Kyosho
                 blob.glow = Mathf.MoveTowards(blob.glow, 0f, dt * 4f);
             }
 
-            if (_driftEnabled && !IsInvincible && Snapshot.isGroggy == false)
+            if (!_isPatternControllingPosition && _driftEnabled && !IsInvincible && Snapshot.isGroggy == false)
             {
                 GetArenaBounds(out float minX, out float maxX);
-                float halfW = blob.radius.x * 0.65f + 0.3f;
+                float halfW = GetBossVisualHalfWidth();
                 float playerX = PlayerTransform != null ? PlayerTransform.position.x : 0f;
                 float side = blob.center.x >= playerX ? 1f : -1f;
                 float wantX = Mathf.Clamp(playerX + side * preferredDistance, minX + halfW, maxX - halfW);
@@ -619,8 +688,8 @@ namespace RealSteel.Boss.Kyosho
             if (_hurtCollider != null)
             {
                 bool allBroken = _sectionManager != null && _sectionManager.AreAllActiveSectionsBroken;
-                float baseRadius = Mathf.Max(1.25f, Mathf.Max(blob.radius.x, blob.radius.y) * 0.85f);
-                _hurtCollider.radius = allBroken ? baseRadius * 1.30f : baseRadius;
+                float baseRadius = Mathf.Clamp(Mathf.Min(blob.radius.x * 0.58f, blob.radius.y * 0.90f), 1.35f, 2.05f);
+                _hurtCollider.radius = allBroken ? baseRadius * 1.22f : baseRadius;
                 _hurtCollider.enabled = !IsInvincible && Snapshot.IsAlive;
             }
         }
@@ -632,10 +701,10 @@ namespace RealSteel.Boss.Kyosho
             k.lookAt = GetPlayerAimCenter();
             k.origin.y = _arenaFloorY;
 
-            if (_driftEnabled && !IsInvincible && Snapshot.isGroggy == false)
+            if (!_isPatternControllingPosition && _driftEnabled && !IsInvincible && Snapshot.isGroggy == false)
             {
                 GetArenaBounds(out float minX, out float maxX);
-                float margin = 1.6f;
+                float margin = 1.5f;
                 float playerX = PlayerTransform != null ? PlayerTransform.position.x : 0f;
                 float side = k.origin.x >= playerX ? 1f : -1f;
                 float wantX = Mathf.Clamp(playerX + side * (preferredDistance * 0.9f), minX + margin, maxX - margin);
@@ -644,7 +713,10 @@ namespace RealSteel.Boss.Kyosho
             }
 
             k.UpdatePose();
-            swarm.Halo.center = k.ChestWorld + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
+            if (!_isPatternControllingPosition)
+            {
+                swarm.Halo.center = k.ChestWorld + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
+            }
             swarm.Halo.spin += dt * 95f;
 
             if (_beatPulseAmount > 0f)
@@ -661,7 +733,7 @@ namespace RealSteel.Boss.Kyosho
 
             if (_hurtCollider != null)
             {
-                _hurtCollider.radius = 1.65f;
+                _hurtCollider.radius = 1.55f;
                 _hurtCollider.enabled = !IsInvincible && Snapshot.IsAlive;
             }
         }
@@ -856,7 +928,8 @@ namespace RealSteel.Boss.Kyosho
                 _finaleRetryRemainingPatterns--;
                 if (_finaleRetryRemainingPatterns == 0)
                 {
-                    // 2페이즈 1순환 완료 후 다시 피날레 발동
+                    // 1순환 완료 후 다시 피날레 1회 발동
+                    _cycleStepIndex = 0;
                     return finalePattern;
                 }
             }
@@ -963,7 +1036,9 @@ namespace RealSteel.Boss.Kyosho
 
             _sectionManager?.ActivatePhase2InitialSections();
 
-            KyoshoSfx.PlayPhase2Bgm(0.6f);
+            float curBpm = _beatClock != null ? _beatClock.Bpm : KyoshoConstants.GetBpmForDifficulty(SelectedDifficulty);
+            double curBeats = _beatClock != null ? _beatClock.TotalBeats : 0.0;
+            KyoshoSfx.PlayPhase2Bgm(0.6f, curBpm, curBeats);
 
             Debug.Log("<color=yellow>[KyoshoBossController] ▶ 2페이즈 개막! 현악(좌)·타악(우) 악기 섹션 분리 배치 완료!</color>");
         }
@@ -1014,7 +1089,7 @@ namespace RealSteel.Boss.Kyosho
         {
             _phaseState = _phase3Entered ? KyoshoPhaseState.Phase3 : KyoshoPhaseState.Phase2;
             _cycleStepIndex = 0;
-            _finaleRetryRemainingPatterns = 5; // 1순환(4패턴) 후 5번째에 피날레
+            _finaleRetryRemainingPatterns = _phase3Entered ? 4 : 5;
         }
 
         private void ExecuteFinalBlowVictory()
@@ -1219,12 +1294,13 @@ namespace RealSteel.Boss.Kyosho
                 // 3) 픽셀 마에스트로 각성 + BGM 전환 + HP 45% 회복
                 _scorePreviewHud?.ShowVariationStatus("헬 3페이즈 각성 — 픽셀 마에스트로 (Pixel Maestro)");
                 KyoshoSfx.PlayCue(sfxData?.encoreAwaken, "encore_awaken", transform.position);
-                KyoshoSfx.PlayPhase3Bgm(0.35f);
+                KyoshoSfx.PlayPhase3Bgm(0.35f, KyoshoConstants.Phase3Bpm, _beatClock != null ? _beatClock.TotalBeats : 0.0);
 
                 await AssemblePixelMaestroSwarmAsync(token);
                 if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
 
                 _phase3Entered = true;
+                TargetCombatCamera?.SetTargetBBaseFraming(1.25f, 4.5f);
                 _phase3ConductSubIndex = 0;
                 _cycleStepIndex = 0;
                 _finaleTriggered = false;
@@ -1513,6 +1589,8 @@ namespace RealSteel.Boss.Kyosho
 
         private void InterruptActivePatterns()
         {
+            _isPatternControllingPosition = false;
+            TargetCombatCamera?.SetExternalFraming(false);
             foreach (var p in activePatternPool)
             {
                 p?.InterruptPattern(InterruptReason.PhaseTransition);

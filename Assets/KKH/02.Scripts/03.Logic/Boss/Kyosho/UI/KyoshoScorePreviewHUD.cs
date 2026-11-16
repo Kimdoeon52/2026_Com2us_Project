@@ -31,11 +31,12 @@ namespace RealSteel.Boss.Kyosho
             public TextMeshProUGUI NameText;
         }
 
-        private const float PanelWidth = 720f;
-        private const float PanelHeight = 166f;
-        private const float TrackWidth = 620f;
-        private const float HighLaneY = 23f;
-        private const float LowLaneY = -23f;
+        private const float PanelWidth = 760f;
+        private const float PanelHeight = 176f;
+        private const float TrackWidth = 560f;
+        private const float TrackOffsetX = 48f;
+        private const float HighLaneY = 24f;
+        private const float LowLaneY = -24f;
 
         private KyoshoBossController _kyosho;
         private Canvas _canvas;
@@ -51,6 +52,17 @@ namespace RealSteel.Boss.Kyosho
         // Fermata UI
         private RectTransform _fermataBanner;
         private TextMeshProUGUI _fermataText;
+
+        // Pattern Hint Banner (공용 상단 패턴 가이드 & 카운트다운 게이지)
+        private RectTransform _hintBanner;
+        private Image _hintBg;
+        private Image _hintAccentBar;
+        private Image _hintTopBorder;
+        private TextMeshProUGUI _hintTitle;
+        private TextMeshProUGUI _hintTimerLabel;
+        private TextMeshProUGUI _hintDetail;
+        private GameObject _hintGaugeRoot;
+        private Image _hintGaugeFill;
 
         // Variation UI
         private RectTransform _variationBanner;
@@ -72,7 +84,60 @@ namespace RealSteel.Boss.Kyosho
             HideStaccatoScore();
             ShowFermataHold(false);
             ShowVariationStatus(null);
+            HidePatternHint();
             HideVariationSequenceSlots();
+        }
+
+        public void ShowPatternHint(string title, string detail, Color accentColor, float progress01 = -1f, string timerLabel = null)
+        {
+            EnsureUI();
+            if (_hintBanner == null) return;
+
+            _hintBanner.gameObject.SetActive(true);
+            if (_hintAccentBar != null) _hintAccentBar.color = accentColor;
+            if (_hintTopBorder != null) _hintTopBorder.color = new Color(accentColor.r, accentColor.g, accentColor.b, 0.85f);
+            if (_hintTitle != null)
+            {
+                _hintTitle.text = title ?? string.Empty;
+                _hintTitle.color = Color.Lerp(accentColor, Color.white, 0.35f);
+            }
+            if (_hintDetail != null) _hintDetail.text = detail ?? string.Empty;
+
+            UpdatePatternHintProgress(progress01, timerLabel);
+        }
+
+        public void UpdatePatternHintProgress(float progress01, string timerLabel = null, string detail = null)
+        {
+            if (_hintBanner == null || !_hintBanner.gameObject.activeSelf) return;
+
+            if (detail != null && _hintDetail != null)
+            {
+                _hintDetail.text = detail;
+            }
+            if (_hintTimerLabel != null)
+            {
+                bool hasTimer = !string.IsNullOrEmpty(timerLabel);
+                _hintTimerLabel.gameObject.SetActive(hasTimer);
+                if (hasTimer) _hintTimerLabel.text = timerLabel;
+            }
+            if (_hintGaugeRoot != null)
+            {
+                bool showGauge = progress01 >= 0f;
+                _hintGaugeRoot.SetActive(showGauge);
+                if (showGauge && _hintGaugeFill != null)
+                {
+                    _hintGaugeFill.fillAmount = Mathf.Clamp01(progress01);
+                    if (_hintAccentBar != null) _hintGaugeFill.color = _hintAccentBar.color;
+                }
+            }
+        }
+
+        public void HidePatternHint()
+        {
+            if (_hintBanner != null)
+            {
+                _hintBanner.gameObject.SetActive(false);
+            }
         }
 
         public void ShowStaccatoScore(KyoshoRhythmBar bar, bool hasStringsBonus)
@@ -139,19 +204,19 @@ namespace RealSteel.Boss.Kyosho
             if (isFiringPhase)
             {
                 _staffCaption.text = hasStringsBonus
-                    ? "▶ 탄막 발사 중! 노란 바가 닿을 때 발사  [현악 16분 상단 사선 추가]"
-                    : "▶ 탄막 발사 중! 하단(점프 회피) · 상단(서서 대기/점프 금지)";
+                    ? "▶ 탄막 발사 중!  [하단: 점프 회피]  [상단: 서기]  [★민트: 현악 16분 추가탄]"
+                    : "▶ 탄막 발사 중!  [하단: 점프 회피]  [상단: 서서 대기 / 점프 금지]";
                 _staffCaption.color = new Color(1.00f, 0.84f, 0.25f, 1f);
-                _staffBg.color = new Color(0.11f, 0.08f, 0.05f, 0.90f);
+                _staffBg.color = new Color(0.11f, 0.08f, 0.05f, 0.92f);
                 _playheadImage.color = new Color(1.00f, 0.35f, 0.28f, 0.95f);
             }
             else
             {
                 _staffCaption.text = hasStringsBonus
-                    ? "♪ 패턴 예고 — 4박 후 발사!  [+현악 16분 보너스]"
-                    : "♪ 패턴 예고 — 하단(점프) / 상단(서서 대기)으로 회피";
+                    ? "♪ 스타카토 예고 — 4박 후 발사!  [하단: 점프]  [상단: 서기]  [+★현악 16분]"
+                    : "♪ 스타카토 예고 — 하단(점프 회피) / 상단(서서 대기 · 점프 금지)";
                 _staffCaption.color = new Color(0.84f, 0.94f, 1.00f, 1f);
-                _staffBg.color = new Color(0.06f, 0.08f, 0.14f, 0.88f);
+                _staffBg.color = new Color(0.06f, 0.08f, 0.14f, 0.90f);
                 _playheadImage.color = new Color(1.00f, 0.86f, 0.20f, 0.92f);
             }
         }
@@ -166,15 +231,18 @@ namespace RealSteel.Boss.Kyosho
             {
                 if (entry?.Rect == null) continue;
                 float dt = barBeatProgress0To4 - entry.BeatOffset;
-                bool activeNow = _staccatoFiringPhase && dt >= -0.10f && dt <= 0.24f;
+                bool activeNow = _staccatoFiringPhase && dt >= -0.14f && dt <= 0.24f;
+                bool approaching = dt >= -0.45f && dt < -0.14f;
                 bool alreadyPassed = _staccatoFiringPhase && dt > 0.24f;
 
-                entry.Rect.localScale = activeNow ? Vector3.one * 1.20f : Vector3.one;
+                entry.Rect.localScale = activeNow ? Vector3.one * 1.24f : (approaching ? Vector3.one * 1.10f : Vector3.one);
                 if (entry.Bg != null)
                 {
                     Color c = entry.BaseBgColor;
                     if (activeNow)
-                        c = Color.Lerp(c, Color.white, 0.45f);
+                        c = Color.Lerp(c, Color.white, 0.52f);
+                    else if (approaching)
+                        c = Color.Lerp(c, Color.white, 0.25f);
                     else if (alreadyPassed)
                         c = new Color(c.r * 0.45f, c.g * 0.45f, c.b * 0.45f, 0.55f);
                     entry.Bg.color = c;
@@ -394,6 +462,7 @@ namespace RealSteel.Boss.Kyosho
             scaler.matchWidthOrHeight = 0.5f;
 
             BuildStaccatoPanel(canvasGo.transform);
+            BuildPatternHintBanner(canvasGo.transform);
             BuildFermataBanner(canvasGo.transform);
             BuildVariationPanel(canvasGo.transform);
         }
@@ -410,10 +479,10 @@ namespace RealSteel.Boss.Kyosho
             _staffRoot.sizeDelta = new Vector2(PanelWidth, PanelHeight);
 
             _staffBg = staffGo.GetComponent<Image>();
-            _staffBg.color = new Color(0.06f, 0.08f, 0.14f, 0.88f);
+            _staffBg.color = new Color(0.06f, 0.08f, 0.14f, 0.90f);
 
             // 상단 캡션
-            _staffCaption = CreateLabel(staffGo.transform, "Caption", new Vector2(0f, -18f), new Vector2(PanelWidth - 24f, 28f), 19, TextAlignmentOptions.Center, FontStyles.Bold);
+            _staffCaption = CreateLabel(staffGo.transform, "Caption", new Vector2(0f, -18f), new Vector2(PanelWidth - 24f, 28f), 18, TextAlignmentOptions.Center, FontStyles.Bold);
             ((RectTransform)_staffCaption.transform).anchorMin = new Vector2(0.5f, 1f);
             ((RectTransform)_staffCaption.transform).anchorMax = new Vector2(0.5f, 1f);
 
@@ -423,20 +492,20 @@ namespace RealSteel.Boss.Kyosho
             var trackRt = trackGo.GetComponent<RectTransform>();
             trackRt.anchorMin = new Vector2(0.5f, 0.5f);
             trackRt.anchorMax = new Vector2(0.5f, 0.5f);
-            trackRt.anchoredPosition = new Vector2(14f, -14f);
+            trackRt.anchoredPosition = new Vector2(TrackOffsetX, -14f);
             trackRt.sizeDelta = new Vector2(TrackWidth, 108f);
 
-            // 상단 / 하단 레인 가이드선 및 좌측 라벨
-            CreateGuideLine(trackGo.transform, "HighLane", HighLaneY, TrackWidth, 2f, new Color(0.45f, 0.82f, 1.00f, 0.28f));
-            CreateGuideLine(trackGo.transform, "LowLane", LowLaneY, TrackWidth, 2f, new Color(1.00f, 0.78f, 0.35f, 0.32f));
+            // 상단 / 하단 레인 가이드선 및 좌측 행동 뱃지
+            CreateGuideLine(trackGo.transform, "HighLane", HighLaneY, TrackWidth, 2.5f, new Color(0.45f, 0.82f, 1.00f, 0.34f));
+            CreateGuideLine(trackGo.transform, "LowLane", LowLaneY, TrackWidth, 2.5f, new Color(1.00f, 0.78f, 0.35f, 0.38f));
 
-            var highTag = CreateLabel(staffGo.transform, "HighTag", new Vector2(-PanelWidth * 0.5f + 34f, HighLaneY - 14f), new Vector2(56f, 24f), 13, TextAlignmentOptions.Center, FontStyles.Bold);
-            highTag.text = "상단";
-            highTag.color = new Color(0.65f, 0.88f, 1.00f, 0.90f);
+            var highTag = CreateLabel(staffGo.transform, "HighTag", new Vector2(-PanelWidth * 0.5f + 72f, HighLaneY - 14f), new Vector2(126f, 36f), 13, TextAlignmentOptions.Center, FontStyles.Bold);
+            highTag.text = "상단\n(서서 대기)";
+            highTag.color = new Color(0.65f, 0.88f, 1.00f, 0.95f);
 
-            var lowTag = CreateLabel(staffGo.transform, "LowTag", new Vector2(-PanelWidth * 0.5f + 34f, LowLaneY - 14f), new Vector2(56f, 24f), 13, TextAlignmentOptions.Center, FontStyles.Bold);
-            lowTag.text = "하단";
-            lowTag.color = new Color(1.00f, 0.82f, 0.42f, 0.95f);
+            var lowTag = CreateLabel(staffGo.transform, "LowTag", new Vector2(-PanelWidth * 0.5f + 72f, LowLaneY - 14f), new Vector2(126f, 36f), 13, TextAlignmentOptions.Center, FontStyles.Bold);
+            lowTag.text = "하단\n(점프 회피)";
+            lowTag.color = new Color(1.00f, 0.82f, 0.42f, 0.98f);
 
             // 4박 세로 격자선 + 박자 번호
             for (int beat = 0; beat <= 4; beat++)
@@ -467,6 +536,70 @@ namespace RealSteel.Boss.Kyosho
             _playheadImage.color = new Color(1f, 0.86f, 0.2f, 0.92f);
         }
 
+        private void BuildPatternHintBanner(Transform parent)
+        {
+            var go = new GameObject("PatternHintBanner", typeof(RectTransform), typeof(Image));
+            go.transform.SetParent(parent, false);
+            _hintBanner = go.GetComponent<RectTransform>();
+            _hintBanner.anchorMin = new Vector2(0.5f, 1f);
+            _hintBanner.anchorMax = new Vector2(0.5f, 1f);
+            _hintBanner.pivot = new Vector2(0.5f, 1f);
+            _hintBanner.anchoredPosition = new Vector2(0f, -104f);
+            _hintBanner.sizeDelta = new Vector2(740f, 70f);
+            _hintBg = go.GetComponent<Image>();
+            _hintBg.color = new Color(0.05f, 0.08f, 0.14f, 0.92f);
+
+            var accentGo = new GameObject("AccentBar", typeof(RectTransform), typeof(Image));
+            accentGo.transform.SetParent(go.transform, false);
+            var art = accentGo.GetComponent<RectTransform>();
+            art.anchorMin = new Vector2(0f, 0f);
+            art.anchorMax = new Vector2(0f, 1f);
+            art.pivot = new Vector2(0f, 0.5f);
+            art.anchoredPosition = Vector2.zero;
+            art.sizeDelta = new Vector2(7f, 0f);
+            _hintAccentBar = accentGo.GetComponent<Image>();
+
+            var topBorderGo = new GameObject("TopBorder", typeof(RectTransform), typeof(Image));
+            topBorderGo.transform.SetParent(go.transform, false);
+            var tbrt = topBorderGo.GetComponent<RectTransform>();
+            tbrt.anchorMin = new Vector2(0f, 1f);
+            tbrt.anchorMax = new Vector2(1f, 1f);
+            tbrt.pivot = new Vector2(0.5f, 1f);
+            tbrt.anchoredPosition = Vector2.zero;
+            tbrt.sizeDelta = new Vector2(0f, 2.5f);
+            _hintTopBorder = topBorderGo.GetComponent<Image>();
+
+            _hintTitle = CreateLabel(go.transform, "Title", new Vector2(-95f, 16f), new Vector2(510f, 26f), 20, TextAlignmentOptions.Left, FontStyles.Bold);
+            _hintTimerLabel = CreateLabel(go.transform, "TimerLabel", new Vector2(248f, 16f), new Vector2(210f, 26f), 17, TextAlignmentOptions.Right, FontStyles.Bold);
+            _hintTimerLabel.color = new Color(1f, 0.88f, 0.35f, 1f);
+            _hintDetail = CreateLabel(go.transform, "Detail", new Vector2(6f, -11f), new Vector2(704f, 24f), 16, TextAlignmentOptions.Left, FontStyles.Normal);
+
+            _hintGaugeRoot = new GameObject("GaugeBg", typeof(RectTransform), typeof(Image));
+            _hintGaugeRoot.transform.SetParent(go.transform, false);
+            var grt = _hintGaugeRoot.GetComponent<RectTransform>();
+            grt.anchorMin = new Vector2(0f, 0f);
+            grt.anchorMax = new Vector2(1f, 0f);
+            grt.pivot = new Vector2(0.5f, 0f);
+            grt.anchoredPosition = Vector2.zero;
+            grt.sizeDelta = new Vector2(0f, 6f);
+            var gbg = _hintGaugeRoot.GetComponent<Image>();
+            gbg.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+            gbg.color = new Color(0.14f, 0.17f, 0.24f, 0.95f);
+
+            var fillGo = new GameObject("Fill", typeof(RectTransform), typeof(Image));
+            fillGo.transform.SetParent(_hintGaugeRoot.transform, false);
+            var frt = fillGo.GetComponent<RectTransform>();
+            frt.anchorMin = Vector2.zero;
+            frt.anchorMax = Vector2.one;
+            frt.offsetMin = Vector2.zero;
+            frt.offsetMax = Vector2.zero;
+            _hintGaugeFill = fillGo.GetComponent<Image>();
+            _hintGaugeFill.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+            _hintGaugeFill.type = Image.Type.Filled;
+            _hintGaugeFill.fillMethod = Image.FillMethod.Horizontal;
+            go.SetActive(false);
+        }
+
         private void BuildFermataBanner(Transform parent)
         {
             var fGo = new GameObject("FermataBanner", typeof(RectTransform), typeof(Image));
@@ -476,17 +609,17 @@ namespace RealSteel.Boss.Kyosho
             _fermataBanner.anchorMax = new Vector2(0.5f, 1f);
             _fermataBanner.pivot = new Vector2(0.5f, 1f);
             _fermataBanner.anchoredPosition = new Vector2(0f, -104f);
-            _fermataBanner.sizeDelta = new Vector2(440f, 84f);
+            _fermataBanner.sizeDelta = new Vector2(540f, 76f);
             fGo.GetComponent<Image>().color = new Color(0.18f, 0.11f, 0.04f, 0.92f);
 
-            _fermataText = CreateLabel(fGo.transform, "FermataText", Vector2.zero, Vector2.zero, 24, TextAlignmentOptions.Center, FontStyles.Bold);
+            _fermataText = CreateLabel(fGo.transform, "FermataText", Vector2.zero, Vector2.zero, 22, TextAlignmentOptions.Center, FontStyles.Bold);
             var rt = (RectTransform)_fermataText.transform;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
             _fermataText.color = new Color(1.00f, 0.88f, 0.30f, 1f);
-            _fermataText.text = "⌒ FERMATA\n빛나는 빈 틈새로 대피하세요!";
+            _fermataText.text = "⌒ FERMATA\n초록 'SAFE 틈새' 안으로 대피하세요!";
         }
 
         private void BuildVariationPanel(Transform parent)
@@ -498,10 +631,10 @@ namespace RealSteel.Boss.Kyosho
             _variationBanner.anchorMax = new Vector2(0.5f, 1f);
             _variationBanner.pivot = new Vector2(0.5f, 1f);
             _variationBanner.anchoredPosition = new Vector2(0f, -104f);
-            _variationBanner.sizeDelta = new Vector2(680f, 52f);
+            _variationBanner.sizeDelta = new Vector2(720f, 52f);
             vGo.GetComponent<Image>().color = new Color(0.06f, 0.10f, 0.18f, 0.92f);
 
-            _variationText = CreateLabel(vGo.transform, "VariationText", Vector2.zero, Vector2.zero, 22, TextAlignmentOptions.Center, FontStyles.Bold);
+            _variationText = CreateLabel(vGo.transform, "VariationText", Vector2.zero, Vector2.zero, 21, TextAlignmentOptions.Center, FontStyles.Bold);
             var vrt = (RectTransform)_variationText.transform;
             vrt.anchorMin = Vector2.zero;
             vrt.anchorMax = Vector2.one;
@@ -516,7 +649,7 @@ namespace RealSteel.Boss.Kyosho
             _variationSlotsRoot.anchorMin = new Vector2(0.5f, 1f);
             _variationSlotsRoot.anchorMax = new Vector2(0.5f, 1f);
             _variationSlotsRoot.pivot = new Vector2(0.5f, 1f);
-            _variationSlotsRoot.anchoredPosition = new Vector2(0f, -162f);
+            _variationSlotsRoot.anchoredPosition = new Vector2(0f, -182f);
             _variationSlotsRoot.sizeDelta = new Vector2(620f, 96f);
 
             _variationSlots.Clear();

@@ -18,7 +18,9 @@ namespace RealSteel.Boss.Kyosho
     {
         private readonly List<KyoshoBloomStemFieldGimmick> _stemPool = new List<KyoshoBloomStemFieldGimmick>(6);
         private readonly List<KyoshoTrackedBullet> _activeBullets = new List<KyoshoTrackedBullet>();
+        private readonly List<KyoshoTrackedBullet> _seedBullets = new List<KyoshoTrackedBullet>();
         private readonly List<GameObject> _transientVfx = new List<GameObject>();
+        private readonly List<GameObject> _hellWhipTelegraphs = new List<GameObject>();
 
         private void Awake()
         {
@@ -36,7 +38,7 @@ namespace RealSteel.Boss.Kyosho
                 var go = new GameObject($"KyoshoBloomStem_{i}");
                 go.transform.SetParent(poolParent, false);
                 var stem = go.AddComponent<KyoshoBloomStemFieldGimmick>();
-                stem.BindPoolLimb(poolLimbs[i], swarm);
+                stem.BindPoolLimb(poolLimbs[i], swarm, Kyosho);
                 _stemPool.Add(stem);
             }
         }
@@ -49,7 +51,20 @@ namespace RealSteel.Boss.Kyosho
             List<float> spawnXs = PickValidStemPositionsX(count);
             float floorY = Kyosho.ArenaFloorY;
 
+            bool isHell = Kyosho.SelectedDifficulty == BossDifficulty.Hell;
+            bool isHardOrHell = Kyosho.SelectedDifficulty >= BossDifficulty.Hard;
+            Kyosho.ScorePreviewHUD?.ShowPatternHint(
+                "1페이즈 개화 — 씨앗 줄기 절단!",
+                isHell
+                    ? "만개 전 줄기를 공격해 절단! (후반 줄기 근처 채찍 경보 주의)"
+                    : "만개 전 줄기를 공격(D 2타 / 스킬 1타)해 절단하세요!",
+                KyoshoConstants.StringsMintColor,
+                0f,
+                "살포");
+
             // 1박: 파편 살포 (모양으로 개화 종류 예고 + 펜타토닉 하프 아르페지오)
+            KyoshoNanobotAttackHelper.ClearTrackedBullets(_seedBullets, Swarm);
+            ClearHellWhipTelegraphs();
             var activeStems = new List<KyoshoBloomStemFieldGimmick>(count);
             for (int i = 0; i < spawnXs.Count; i++)
             {
@@ -58,11 +73,11 @@ namespace RealSteel.Boss.Kyosho
 
                 Vector3 landing = new Vector3(spawnXs[i], floorY, 0f);
                 var stem = _stemPool[i];
-                stem.ActivateSeedPreview(landing, bType);
+                stem.ActivateSeedPreview(landing, bType, Kyosho);
                 activeStems.Add(stem);
                 KyoshoSfx.PlayBloomSeedHarmony(i, landing);
 
-                // 씨앗 투척 궤적 나노봇
+                // 씨앗 투척 궤적 나노봇 (목적지 도달 후 회수해 클럼프 누수 방지)
                 Vector3 vel = (landing - Swarm.Blob.center) / Mathf.Max(0.2f, Clock.BeatSec * 0.7f);
                 var seedPacket = KyoshoNanobotAttackHelper.FireTrackedClump(
                     Swarm,
@@ -79,32 +94,47 @@ namespace RealSteel.Boss.Kyosho
                     BodyPart.Core,
                     0,
                     snapToHold: true);
-                // 씨앗 자체는 피해를 주지 않음
-                seedPacket.HitResolved = false;
+                seedPacket.HitResolved = true;
+                _seedBullets.Add(seedPacket);
             }
 
-            await Clock.WaitBeatsAsync(1f, token);
+            double seedStart = Clock.TotalBeats;
+            while (Clock.TotalBeats < seedStart + 1.0)
+            {
+                token.ThrowIfCancellationRequested();
+                KyoshoNanobotAttackHelper.StepTrackedBullets(_seedBullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, null);
+                await UniTask.Yield(PlayerLoopTiming.Update, token);
+            }
+            KyoshoNanobotAttackHelper.ClearTrackedBullets(_seedBullets, Swarm);
 
             // 2~4박: 줄기 성장 (절단 가능 구간 — 3박으로 여유 확보)
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomStemGrow, "bloom_grow", Swarm.Blob.center);
             double growStart = Clock.TotalBeats;
-            bool isHell = Kyosho.SelectedDifficulty == BossDifficulty.Hell;
-            bool isHardOrHell = Kyosho.SelectedDifficulty >= BossDifficulty.Hard;
+            bool hellWhipWarned = false;
 
             while (Clock.TotalBeats < growStart + 3.0)
             {
                 token.ThrowIfCancellationRequested();
                 float p = Mathf.Clamp01((float)((Clock.TotalBeats - growStart) / 3.0));
                 float sway = isHell && p > 0.75f ? Mathf.Sin((p - 0.75f) * 28f) * 0.65f : Mathf.Sin(Time.time * 4f) * 0.08f;
+                Vector3? playerPos = Kyosho.PlayerTransform != null ? (Vector3?)Kyosho.PlayerTransform.position : null;
 
                 for (int i = 0; i < activeStems.Count; i++)
                 {
                     if (activeStems[i].IsAliveAndUncut)
                     {
-                        activeStems[i].SetGrowthProgress(p, sway * (i % 2 == 0 ? 1f : -1f));
+                        activeStems[i].SetGrowthProgress(p, sway * (i % 2 == 0 ? 1f : -1f), playerPos);
                     }
                 }
 
+                if (isHell && !hellWhipWarned && p >= 0.72f)
+                {
+                    hellWhipWarned = true;
+                    SpawnHellWhipTelegraphs(activeStems);
+                }
+
+                float remainSec = Mathf.Max(0f, (1f - p) * 3f * Clock.BeatSec);
+                Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(p, $"{remainSec:0.0}s");
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
@@ -118,6 +148,7 @@ namespace RealSteel.Boss.Kyosho
             int maxSimultaneous = isHardOrHell ? 2 : 1;
             int firedCount = 0;
 
+            ClearHellWhipTelegraphs();
             if (isHell && surviving.Count > 0)
             {
                 var player = FindPlayerObject();
@@ -125,6 +156,8 @@ namespace RealSteel.Boss.Kyosho
                 {
                     foreach (var s in surviving)
                     {
+                        KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                            s.transform.position + Vector3.up * 0.35f, 0.25f, 1.30f, new Color(1f, 0.25f, 0.35f), 0.24f);
                         if (Mathf.Abs(player.transform.position.x - s.transform.position.x) <= 1.25f)
                         {
                             ApplyOriginalPatternHit(player, 180, BodyPart.LeftLeg, 25);
@@ -134,6 +167,8 @@ namespace RealSteel.Boss.Kyosho
                 }
             }
 
+            Kyosho.ScorePreviewHUD?.UpdatePatternHintProgress(1f, surviving.Count > 0 ? "만개!" : "절단 완료!");
+
             foreach (var stem in surviving)
             {
                 if (firedCount >= maxSimultaneous)
@@ -142,7 +177,7 @@ namespace RealSteel.Boss.Kyosho
                     continue;
                 }
 
-                TriggerBloomAttack(stem, firedCount);
+                await TriggerBloomAttackAsync(stem, firedCount, token);
                 firedCount++;
 
                 if (firedCount < maxSimultaneous && firedCount < surviving.Count)
@@ -165,22 +200,24 @@ namespace RealSteel.Boss.Kyosho
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
             }
 
+            Kyosho.ScorePreviewHUD?.HidePatternHint();
             foreach (var stem in _stemPool) stem.DeactivateStem();
         }
 
-        private void TriggerBloomAttack(KyoshoBloomStemFieldGimmick stem, int openIndex)
+        private async UniTask TriggerBloomAttackAsync(KyoshoBloomStemFieldGimmick stem, int openIndex, CancellationToken token)
         {
             if (stem == null || !stem.IsAliveAndUncut) return;
 
             Vector3 tip = stem.TipPosition;
             Vector3 playerCenter = Kyosho.GetPlayerAimCenter();
-            var player = FindPlayerObject();
+            KyoshoBloomType bloomType = stem.BloomType;
 
-            switch (stem.BloomType)
+            switch (bloomType)
             {
                 case KyoshoBloomType.Note:
                 {
                     KyoshoSfx.PlayBloomOpenHarmony(KyoshoBloomType.Note, openIndex, tip);
+                    KyoshoNanobotAttackHelper.SpawnPulseRingEffect(tip, 0.18f, 0.90f, new Color(0.55f, 0.90f, 1.00f), 0.24f);
                     Vector3 baseDir = (playerCenter - tip);
                     baseDir.z = 0f;
                     if (baseDir.sqrMagnitude < 0.01f) baseDir = Vector3.left;
@@ -195,6 +232,7 @@ namespace RealSteel.Boss.Kyosho
                             180, BodyPart.LeftLeg, 25, snapToHold: true);
                         _activeBullets.Add(b);
                     }
+                    stem.DeactivateStem();
                     break;
                 }
                 case KyoshoBloomType.Trumpet:
@@ -203,11 +241,26 @@ namespace RealSteel.Boss.Kyosho
                     float dirX = playerCenter.x >= tip.x ? 1f : -1f;
                     Vector3 beamStart = new Vector3(tip.x, Kyosho.ArenaFloorY + 0.85f, -0.08f);
                     Vector3 beamEnd = beamStart + Vector3.right * (dirX * 3.2f);
-                    SpawnTransientBeamVisual((beamStart + beamEnd) * 0.5f, 3.2f, 0.42f, new Color(1f, 0.72f, 0.25f, 0.88f));
+                    SpawnTransientBeamVisual((beamStart + beamEnd) * 0.5f, 3.2f, 0.44f, new Color(1f, 0.72f, 0.25f, 0.90f));
+                    stem.DeactivateStem();
 
-                    if (player != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(beamStart, beamEnd, player.transform, 0.30f))
+                    float elapsed = 0f;
+                    bool hitDealt = false;
+                    while (elapsed < 0.28f)
                     {
-                        ApplyOriginalPatternHit(player, 180, BodyPart.LeftLeg, 25);
+                        token.ThrowIfCancellationRequested();
+                        if (!hitDealt)
+                        {
+                            var pObj = FindPlayerObject();
+                            if (pObj != null && KyoshoNanobotAttackHelper.CheckSegmentHitsPlayer(beamStart, beamEnd, pObj.transform, 0.30f))
+                            {
+                                hitDealt = true;
+                                ApplyOriginalPatternHit(pObj, 180, BodyPart.LeftLeg, 25);
+                            }
+                        }
+                        KyoshoNanobotAttackHelper.StepTrackedBullets(_activeBullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHit);
+                        elapsed += Time.deltaTime;
+                        await UniTask.Yield(PlayerLoopTiming.Update, token);
                     }
                     break;
                 }
@@ -215,17 +268,31 @@ namespace RealSteel.Boss.Kyosho
                 {
                     KyoshoSfx.PlayBloomOpenHarmony(KyoshoBloomType.Cymbal, openIndex, stem.transform.position);
                     Vector3 center = stem.transform.position + Vector3.up * 0.9f;
-                    SpawnTransientRingVisual(center, 1.55f, new Color(1f, 0.42f, 0.75f, 0.78f));
+                    SpawnTransientRingVisual(center, 1.55f, new Color(1f, 0.42f, 0.75f, 0.80f));
+                    KyoshoNanobotAttackHelper.SpawnPulseRingEffect(center, 0.30f, 1.65f, new Color(1f, 0.42f, 0.75f), 0.30f);
+                    stem.DeactivateStem();
 
-                    if (player != null && Vector2.Distance(playerCenter, center) <= 1.55f)
+                    float elapsed = 0f;
+                    bool hitDealt = false;
+                    while (elapsed < 0.28f)
                     {
-                        ApplyOriginalPatternHit(player, 180, BodyPart.LeftLeg, 25);
+                        token.ThrowIfCancellationRequested();
+                        if (!hitDealt)
+                        {
+                            var pObj = FindPlayerObject();
+                            if (pObj != null && Vector2.Distance(Kyosho.GetPlayerAimCenter(), center) <= 1.55f)
+                            {
+                                hitDealt = true;
+                                ApplyOriginalPatternHit(pObj, 180, BodyPart.LeftLeg, 25);
+                            }
+                        }
+                        KyoshoNanobotAttackHelper.StepTrackedBullets(_activeBullets, Swarm, Kyosho.PlayerTransform, Time.deltaTime, HandleBulletHit);
+                        elapsed += Time.deltaTime;
+                        await UniTask.Yield(PlayerLoopTiming.Update, token);
                     }
                     break;
                 }
             }
-
-            stem.DeactivateStem();
         }
 
         private List<float> PickValidStemPositionsX(int count)
@@ -312,10 +379,43 @@ namespace RealSteel.Boss.Kyosho
             Destroy(go, 0.32f);
         }
 
+        private void SpawnHellWhipTelegraphs(List<KyoshoBloomStemFieldGimmick> stems)
+        {
+            ClearHellWhipTelegraphs();
+            for (int i = 0; i < stems.Count; i++)
+            {
+                var s = stems[i];
+                if (s == null || !s.IsAliveAndUncut) continue;
+                var warn = KyoshoNanobotAttackHelper.SpawnRingHint(
+                    "KyoshoHellWhipWarn",
+                    s.transform.position + Vector3.up * 0.35f,
+                    1.25f,
+                    new Color(1f, 0.25f, 0.35f),
+                    0.14f,
+                    0.92f,
+                    15,
+                    "! WHIP !",
+                    2.6f);
+                _hellWhipTelegraphs.Add(warn);
+            }
+        }
+
+        private void ClearHellWhipTelegraphs()
+        {
+            for (int i = _hellWhipTelegraphs.Count - 1; i >= 0; i--)
+            {
+                if (_hellWhipTelegraphs[i] != null) Destroy(_hellWhipTelegraphs[i]);
+            }
+            _hellWhipTelegraphs.Clear();
+        }
+
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
+            Kyosho?.ScorePreviewHUD?.HidePatternHint();
+            ClearHellWhipTelegraphs();
             foreach (var stem in _stemPool) stem?.DeactivateStem();
+            KyoshoNanobotAttackHelper.ClearTrackedBullets(_seedBullets, Swarm);
             KyoshoNanobotAttackHelper.ClearTrackedBullets(_activeBullets, Swarm);
             foreach (var v in _transientVfx)
             {

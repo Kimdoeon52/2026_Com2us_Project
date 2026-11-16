@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using RealSteel.NanoBoss;
 
@@ -31,6 +33,7 @@ namespace RealSteel.Boss.Kyosho
         private static readonly List<int> _collectTmp = new List<int>(128);
         private static Sprite _whiteCircleSprite;
         private static Sprite _whiteSquareSprite;
+        private static Sprite _hollowRingSprite;
         private static RSNanoSpriteShape _orchestraEnsembleShape;
         private static readonly RSNanoSpriteShape[] _sectionEnsembleShapes = new RSNanoSpriteShape[3];
 
@@ -1490,6 +1493,220 @@ namespace RealSteel.Boss.Kyosho
             }
 
             return p;
+        }
+
+        // ========================================================================
+        // 공용 월드 힌트/전조 시각 빌더 (경계 박스, 발광 광선, 중공 링, 펄스 이펙트)
+        // ========================================================================
+
+        public static Sprite GetHollowRingSprite()
+        {
+            if (_hollowRingSprite != null) return _hollowRingSprite;
+            const int size = 64;
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false) { filterMode = FilterMode.Bilinear };
+            float half = (size - 1) * 0.5f;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float d = Vector2.Distance(new Vector2(x, y), new Vector2(half, half)) / half;
+                    float ring = Mathf.Clamp01(1f - Mathf.Abs(d - 0.88f) / 0.10f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, ring));
+                }
+            }
+            tex.Apply();
+            _hollowRingSprite = Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), size);
+            return _hollowRingSprite;
+        }
+
+        public static GameObject SpawnBorderedZoneHint(
+            string name,
+            Vector3 center,
+            float width,
+            float height,
+            Color color,
+            float fillAlpha,
+            float borderAlpha,
+            float borderThickness = 0.06f,
+            string badgeText = null,
+            float badgeLocalY = 0f,
+            float badgeFontSize = 3.2f,
+            int sortingOrder = 14)
+        {
+            var root = new GameObject(name);
+            root.transform.position = center;
+
+            var sq = GetSquareSprite();
+            var fillGo = new GameObject("Fill");
+            fillGo.transform.SetParent(root.transform, false);
+            fillGo.transform.localScale = new Vector3(width, height, 1f);
+            var fillSr = fillGo.AddComponent<SpriteRenderer>();
+            fillSr.sprite = sq;
+            fillSr.color = new Color(color.r, color.g, color.b, fillAlpha);
+            fillSr.sortingOrder = sortingOrder;
+
+            float halfW = width * 0.5f;
+            float halfH = height * 0.5f;
+            CreateZoneEdge(root.transform, "EdgeTop", sq, new Vector3(0f, halfH, -0.01f), new Vector3(width, borderThickness, 1f), color, borderAlpha, sortingOrder + 1);
+            CreateZoneEdge(root.transform, "EdgeBot", sq, new Vector3(0f, -halfH, -0.01f), new Vector3(width, borderThickness, 1f), color, borderAlpha, sortingOrder + 1);
+            CreateZoneEdge(root.transform, "EdgeLeft", sq, new Vector3(-halfW, 0f, -0.01f), new Vector3(borderThickness, height, 1f), color, borderAlpha, sortingOrder + 1);
+            CreateZoneEdge(root.transform, "EdgeRight", sq, new Vector3(halfW, 0f, -0.01f), new Vector3(borderThickness, height, 1f), color, borderAlpha, sortingOrder + 1);
+
+            if (!string.IsNullOrEmpty(badgeText))
+            {
+                var txtGo = new GameObject("Badge");
+                txtGo.transform.SetParent(root.transform, false);
+                txtGo.transform.localPosition = new Vector3(0f, badgeLocalY, -0.03f);
+                var tmp = txtGo.AddComponent<TextMeshPro>();
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.fontSize = badgeFontSize;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.color = Color.Lerp(color, Color.white, 0.35f);
+                tmp.sortingOrder = sortingOrder + 2;
+                tmp.text = badgeText;
+            }
+
+            return root;
+        }
+
+        private static void CreateZoneEdge(Transform parent, string name, Sprite sq, Vector3 localPos, Vector3 scale, Color color, float alpha, int sortingOrder)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = localPos;
+            go.transform.localScale = scale;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = sq;
+            sr.color = new Color(color.r, color.g, color.b, alpha);
+            sr.sortingOrder = sortingOrder;
+        }
+
+        public static GameObject SpawnRingHint(
+            string name,
+            Vector3 center,
+            float radius,
+            Color color,
+            float fillAlpha = 0.14f,
+            float ringAlpha = 0.88f,
+            int sortingOrder = 16,
+            string label = null,
+            float labelFontSize = 2.8f)
+        {
+            var root = new GameObject(name);
+            root.transform.position = center;
+
+            float diameter = Mathf.Max(0.1f, radius * 2f);
+            if (fillAlpha > 0.001f)
+            {
+                var fillGo = new GameObject("InnerFill");
+                fillGo.transform.SetParent(root.transform, false);
+                fillGo.transform.localScale = new Vector3(diameter, diameter, 1f);
+                var fillSr = fillGo.AddComponent<SpriteRenderer>();
+                fillSr.sprite = GetCircleSprite();
+                fillSr.color = new Color(color.r, color.g, color.b, fillAlpha);
+                fillSr.sortingOrder = sortingOrder;
+            }
+
+            var rimGo = new GameObject("OuterRing");
+            rimGo.transform.SetParent(root.transform, false);
+            rimGo.transform.localPosition = new Vector3(0f, 0f, -0.01f);
+            rimGo.transform.localScale = new Vector3(diameter, diameter, 1f);
+            var rimSr = rimGo.AddComponent<SpriteRenderer>();
+            rimSr.sprite = GetHollowRingSprite();
+            rimSr.color = new Color(color.r, color.g, color.b, ringAlpha);
+            rimSr.sortingOrder = sortingOrder + 1;
+
+            if (!string.IsNullOrEmpty(label))
+            {
+                var txtGo = new GameObject("RingLabel");
+                txtGo.transform.SetParent(root.transform, false);
+                txtGo.transform.localPosition = new Vector3(0f, radius * 0.35f, -0.02f);
+                var tmp = txtGo.AddComponent<TextMeshPro>();
+                tmp.alignment = TextAlignmentOptions.Center;
+                tmp.fontSize = labelFontSize;
+                tmp.fontStyle = FontStyles.Bold;
+                tmp.color = Color.Lerp(color, Color.white, 0.4f);
+                tmp.sortingOrder = sortingOrder + 2;
+                tmp.text = label;
+            }
+
+            return root;
+        }
+
+        public static GameObject SpawnGlowingRayHint(string name, Color color, float outerThickness = 0.34f, float coreThickness = 0.09f, int sortingOrder = 16)
+        {
+            var root = new GameObject(name);
+            var sq = GetSquareSprite();
+
+            var outer = new GameObject("OuterBeam");
+            outer.transform.SetParent(root.transform, false);
+            outer.transform.localPosition = new Vector3(0.5f, 0f, 0f);
+            outer.transform.localScale = new Vector3(1f, outerThickness, 1f);
+            var outerSr = outer.AddComponent<SpriteRenderer>();
+            outerSr.sprite = sq;
+            outerSr.color = new Color(color.r, color.g, color.b, 0.24f);
+            outerSr.sortingOrder = sortingOrder;
+
+            var core = new GameObject("CoreBeam");
+            core.transform.SetParent(root.transform, false);
+            core.transform.localPosition = new Vector3(0.5f, 0f, -0.01f);
+            core.transform.localScale = new Vector3(1f, coreThickness, 1f);
+            var coreSr = core.AddComponent<SpriteRenderer>();
+            coreSr.sprite = sq;
+            coreSr.color = new Color(Mathf.Lerp(color.r, 1f, 0.55f), Mathf.Lerp(color.g, 1f, 0.55f), Mathf.Lerp(color.b, 1f, 0.55f), 0.90f);
+            coreSr.sortingOrder = sortingOrder + 1;
+
+            var tip = new GameObject("TipMarker");
+            tip.transform.SetParent(root.transform, false);
+            tip.transform.localPosition = new Vector3(1f, 0f, -0.02f);
+            tip.transform.localScale = Vector3.one * (outerThickness * 1.45f);
+            var tipSr = tip.AddComponent<SpriteRenderer>();
+            tipSr.sprite = GetHollowRingSprite();
+            tipSr.color = new Color(color.r, color.g, color.b, 0.95f);
+            tipSr.sortingOrder = sortingOrder + 2;
+
+            return root;
+        }
+
+        public static void UpdateGlowingRayHint(GameObject rayGo, Vector3 origin, float angleDeg, float length)
+        {
+            if (rayGo == null) return;
+            rayGo.transform.position = origin;
+            rayGo.transform.rotation = Quaternion.Euler(0f, 0f, angleDeg);
+            rayGo.transform.localScale = new Vector3(Mathf.Max(0.1f, length), 1f, 1f);
+            var tip = rayGo.transform.Find("TipMarker");
+            if (tip != null)
+            {
+                float invX = 1f / Mathf.Max(0.1f, length);
+                tip.localScale = new Vector3(0.45f * invX, 0.45f, 1f);
+            }
+        }
+
+        public static void SpawnPulseRingEffect(Vector3 center, float startRadius, float endRadius, Color color, float duration = 0.30f, int sortingOrder = 22)
+        {
+            var go = new GameObject("KyoshoPulseRingVfx");
+            go.transform.position = center;
+            var sr = go.AddComponent<SpriteRenderer>();
+            sr.sprite = GetHollowRingSprite();
+            sr.color = color;
+            sr.sortingOrder = sortingOrder;
+            AnimatePulseRingAsync(go, sr, startRadius, endRadius, color, duration).Forget();
+        }
+
+        private static async UniTaskVoid AnimatePulseRingAsync(GameObject go, SpriteRenderer sr, float startRadius, float endRadius, Color baseColor, float duration)
+        {
+            float elapsed = 0f;
+            float dur = Mathf.Max(0.05f, duration);
+            while (go != null && sr != null && elapsed < dur)
+            {
+                float t = Mathf.Clamp01(elapsed / dur);
+                float r = Mathf.Lerp(startRadius, endRadius, 1f - (1f - t) * (1f - t));
+                go.transform.localScale = Vector3.one * (r * 2f);
+                sr.color = new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * (1f - t));
+                elapsed += Time.deltaTime;
+                await UniTask.Yield(PlayerLoopTiming.Update);
+            }
+            if (go != null) UnityEngine.Object.Destroy(go);
         }
     }
 }

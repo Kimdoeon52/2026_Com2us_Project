@@ -18,6 +18,7 @@ namespace RealSteel.Boss.Kyosho
         private readonly float _damageMultiplier;
         private readonly bool _isFinalBlowWindow;
         private readonly Action _onGroggyExpired;
+        private GameObject _finalBlowMarker;
 
         public override string StateName => _isFinalBlowWindow
             ? $"KyoshoFinalGroggy ({_beats:F0}박 최후의 일격 대기)"
@@ -49,6 +50,25 @@ namespace RealSteel.Boss.Kyosho
             _kyosho.SetGroggyView(true, durationSec);
             _kyosho.SetBlobGroggyVisual(true);
 
+            if (_isFinalBlowWindow)
+            {
+                _kyosho.ScorePreviewHUD?.ShowPatternHint(
+                    "⚡ FINAL BLOW — 최후의 일격 기회!",
+                    "보스가 완전히 무력화되었습니다! 아무 공격 1회 적중 시 즉시 토벌!",
+                    KyoshoConstants.SafeZoneGoldColor,
+                    1f,
+                    $"{_beats:F0}박 남음");
+                _finalBlowMarker = KyoshoNanobotAttackHelper.SpawnRingHint(
+                    "KyoshoFinalBlowMarker",
+                    _kyosho.transform.position + Vector3.up * 0.4f,
+                    1.35f,
+                    KyoshoConstants.SafeZoneGoldColor,
+                    0.18f,
+                    0.95f,
+                    24,
+                    "⚡ 일격 마무리!");
+            }
+
             WaitBeatsAndExitAsync().Forget();
         }
 
@@ -58,7 +78,21 @@ namespace RealSteel.Boss.Kyosho
             {
                 if (_kyosho.BeatClock != null && _kyosho.BeatClock.IsRunning)
                 {
-                    await _kyosho.BeatClock.WaitBeatsAsync(_beats, cancellationToken);
+                    double startBeat = _kyosho.BeatClock.TotalBeats;
+                    while (_kyosho.BeatClock.IsRunning && _kyosho.BeatClock.TotalBeats < startBeat + _beats)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (_isFinalBlowWindow)
+                        {
+                            double rem = Math.Max(0.0, (startBeat + _beats) - _kyosho.BeatClock.TotalBeats);
+                            _kyosho.ScorePreviewHUD?.UpdatePatternHintProgress((float)(rem / _beats), $"{rem:F1}박 남음");
+                            if (_finalBlowMarker != null)
+                            {
+                                _finalBlowMarker.transform.position = _kyosho.transform.position + Vector3.up * 0.4f;
+                            }
+                        }
+                        await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                    }
                 }
                 else
                 {
@@ -83,6 +117,15 @@ namespace RealSteel.Boss.Kyosho
 
         public override void Exit()
         {
+            if (_finalBlowMarker != null)
+            {
+                UnityEngine.Object.Destroy(_finalBlowMarker);
+                _finalBlowMarker = null;
+            }
+            if (_isFinalBlowWindow)
+            {
+                _kyosho.ScorePreviewHUD?.HidePatternHint();
+            }
             if (_kyosho.Snapshot != null)
             {
                 _kyosho.Snapshot.isGroggy = false;

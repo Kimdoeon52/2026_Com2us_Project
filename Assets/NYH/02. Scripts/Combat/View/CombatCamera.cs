@@ -60,6 +60,18 @@ public class CombatCamera : MonoBehaviour
     [SerializeField] private float arenaMinX = -7.75f;
     [SerializeField] private float arenaMaxX = 7.75f;
 
+    [Header("대형 보스 / 수직 프레이밍 보정 (선택)")]
+    [Tooltip("체크 시 바닥 높이를 화면 하단 비율에 맞춰 카메라 Y 높이를 줌 거리에 따라 자동 보정함")]
+    [SerializeField] private bool autoFrameFloor = false;
+    [SerializeField] private float stageFloorY = 0.12f;
+    [Range(0.05f, 0.35f)] [SerializeField] private float floorBottomViewportRatio = 0.16f;
+    [Range(0f, 0.25f)] [SerializeField] private float topHudViewportReserve = 0.12f;
+    [Tooltip("두 번째 추적 대상(보스)의 시각적 좌우 반폭 (0이면 기존 점 기준 추적)")]
+    [Min(0f)] [SerializeField] private float targetBHalfWidth = 0f;
+    [Tooltip("바닥 기준 최소 확보 상단 높이(m). 보스 키 및 상공 패턴 포함용")]
+    [Min(0f)] [SerializeField] private float minTargetTopOffsetFromFloor = 0f;
+    [Min(0.01f)] [SerializeField] private float verticalSmoothTime = 0.12f;
+
     public bool UseArenaBounds => useArenaBounds;
     public float ArenaMinX => arenaMinX;
     public float ArenaMaxX => arenaMaxX;
@@ -73,10 +85,17 @@ public class CombatCamera : MonoBehaviour
     // 결과값 자체보다는 SmoothDamp 내부 계산용으로 매 프레임 갱신되는 상태값이다(ref로 넘겨줌)
     private Vector3 positionVelocity;
     private float zoomVelocity;
+    private float verticalVelocity;
 
     // ---- 확장 지점 — 나중에 다른 시스템이 호출 ----
     private bool isFrozen;      // 히트스톱 등으로 카메라를 잠깐 멈추고 싶을 때 켜는 플래그
     private float extraZoomOffset; // 필살기 연출 등에서 "기본 계산된 줌 값에 추가로 더 당기고 싶을 때" 쓰는 보정치
+    private float runtimeHalfWidthB = -1f;
+    private float runtimeMinTopOffset = -1f;
+    private bool hasExternalFraming;
+    private float externalMinHalfWidth;
+    private float externalMinTopOffset;
+    private bool verticalInitialized;
 
     private void Awake()
     {  
@@ -93,17 +112,45 @@ public class CombatCamera : MonoBehaviour
     {
         if (cam == null || playerA == null || playerB == null || isFrozen) return;
 
+        float effHalfWidthB = runtimeHalfWidthB >= 0f ? runtimeHalfWidthB : targetBHalfWidth;
+        float posB = playerB.position.x;
+        float leftBound = Mathf.Min(playerA.position.x, posB - effHalfWidthB);
+        float rightBound = Mathf.Max(playerA.position.x, posB + effHalfWidthB);
+        float targetMidX = (leftBound + rightBound) * 0.5f;
+        if (hasExternalFraming && useArenaBounds)
+        {
+            targetMidX = Mathf.Lerp(targetMidX, (arenaMinX + arenaMaxX) * 0.5f, 0.7f);
+        }
+
         // 카메라가 봐야 할 x축 중심은 두 파이터의 정중앙. Clamp로 minX~maxX(맵 경계) 밖으로는 못 나가게 막는다
-        float desiredX = Mathf.Clamp((playerA.position.x + playerB.position.x) / 2f, minX, maxX);
-        Vector3 desiredPosXY = new Vector3(desiredX, fixedY, transform.position.z);
-        // SmoothDamp로 목표 위치를 향해 부드럽게 따라가게 한다 — positionSmoothTime이 짧을수록 즉각 반응
-        Vector3 smoothedXY = Vector3.SmoothDamp(transform.position, desiredPosXY, ref positionVelocity, positionSmoothTime);
+        float desiredX = Mathf.Clamp(targetMidX, minX, maxX);
+        desiredX = ClampCenterToArenaCoverage(desiredX, CurrentVisibleHalfWidth());
+        float curX = Mathf.SmoothDamp(transform.position.x, desiredX, ref positionVelocity.x, positionSmoothTime);
 
         // 두 파이터가 실제 카메라 중심(minX~maxX 클램프 및 SmoothDamp 지연 포함)에서 얼마나 떨어져 있는지 구해,
         // 구석에 몰리거나 고속 이동 시에도 두 파이터 + 여백(framingPadding)을 화면에 다 담을 수 있도록 필요한 "반쪽 너비"를 산출
-        float distFromCenterA = Mathf.Abs(playerA.position.x - smoothedXY.x);
-        float distFromCenterB = Mathf.Abs(playerB.position.x - smoothedXY.x);
+        float distFromCenterA = Mathf.Abs(playerA.position.x - curX);
+        float distFromCenterB = effHalfWidthB > 0f
+            ? Mathf.Max(Mathf.Abs((posB - effHalfWidthB) - curX), Mathf.Abs((posB + effHalfWidthB) - curX))
+            : Mathf.Abs(posB - curX);
         float requiredHalfWidth = Mathf.Max(distFromCenterA, distFromCenterB) + framingPadding;
+        if (hasExternalFraming)
+        {
+            requiredHalfWidth = Mathf.Max(requiredHalfWidth, externalMinHalfWidth);
+        }
+
+        float effTopOffset = runtimeMinTopOffset >= 0f ? runtimeMinTopOffset : minTargetTopOffsetFromFloor;
+        if (hasExternalFraming)
+        {
+            effTopOffset = Mathf.Max(effTopOffset, externalMinTopOffset);
+        }
+        if (autoFrameFloor && effTopOffset > 0f)
+        {
+            effTopOffset = Mathf.Max(effTopOffset, (playerA.position.y - stageFloorY) + 1.4f);
+            float usableVert = Mathf.Max(0.25f, 1f - floorBottomViewportRatio - topHudViewportReserve);
+            float neededHalfHeight = effTopOffset / (2f * usableVert);
+            requiredHalfWidth = Mathf.Max(requiredHalfWidth, neededHalfHeight * cam.aspect);
+        }
 
         // 카메라 설정이 Orthographic(평행 투영)인지 Perspective(원근 투영)인지에 따라 "줌"의 의미가
         // 다르다 — Ortho는 orthographicSize(보이는 세로 절반 높이)를, Perspective는 카메라와 피사체
@@ -114,23 +161,67 @@ public class CombatCamera : MonoBehaviour
             float targetSize = Mathf.Clamp(requiredHalfWidth / cam.aspect, minOrthoSize, maxOrthoSize) + extraZoomOffset;
             bool isZoomOut = targetSize > cam.orthographicSize; // 목표 크기가 지금보다 크면 = 더 넓게 보여야 함 = 줌아웃
 
-            cam.orthographicSize = FollowZoom(cam.orthographicSize, targetSize, isZoomOut);
-            transform.position = smoothedXY;
+            float zoomedSize = FollowZoom(cam.orthographicSize, targetSize, isZoomOut);
+            cam.orthographicSize = zoomedSize;
+
+            float finalX = ClampCenterToArenaCoverage(curX, zoomedSize * cam.aspect);
+            float desiredY = ComputeDesiredY(Mathf.Abs(transform.position.z - playerA.position.z), zoomedSize);
+            float finalY = ApplyVerticalFraming(desiredY, isZoomOut);
+            transform.position = new Vector3(finalX, finalY, transform.position.z);
         }
         else
         {
             // Perspective 카메라에서 "카메라로부터 거리 d만큼 떨어진 곳에서 화면에 보이는 절반 너비"를
             // 구하는 공식: tan(수직 FOV의 절반) * 거리 * 화면비. 여기서는 역으로 "원하는 절반 너비를
             // 보여주려면 거리가 얼마나 필요한가"를 구하기 위해 이 비율(halfWidthPerUnit, 거리 1당 보이는 절반 너비)을 먼저 구한다
-            float halfWidthPerUnit = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect;
+            float halfHeightPerUnit = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float halfWidthPerUnit = halfHeightPerUnit * cam.aspect;
             float requiredDistance = requiredHalfWidth / halfWidthPerUnit; // 필요한 절반 너비를, 단위 거리당 너비로 나누면 필요한 실제 거리가 나옴
             // 카메라는 Z축 음의 방향으로 멀어질수록 캐릭터에서 멀어진다고 가정 — 그래서 playerA.position.z에서 requiredDistance만큼 뺀 값을 목표 Z로 삼는다
             float targetZ = Mathf.Clamp(playerA.position.z - requiredDistance, farZ, closeZ) + extraZoomOffset;
             bool isZoomOut = targetZ < transform.position.z; // Z가 더 작아진다(더 음수 방향) = 카메라가 더 멀어진다 = 줌아웃
 
             float zoomedZ = FollowZoom(transform.position.z, targetZ, isZoomOut);
-            transform.position = new Vector3(smoothedXY.x, smoothedXY.y, zoomedZ);
+            float dist = Mathf.Abs(zoomedZ - playerA.position.z);
+            float finalX = ClampCenterToArenaCoverage(curX, halfWidthPerUnit * dist);
+            float desiredY = ComputeDesiredY(dist, halfHeightPerUnit * dist);
+            float finalY = ApplyVerticalFraming(desiredY, isZoomOut);
+            transform.position = new Vector3(finalX, finalY, zoomedZ);
         }
+    }
+
+    private float ClampCenterToArenaCoverage(float centerX, float visibleHalfWidth)
+    {
+        if (!useArenaBounds || !autoFrameFloor) return centerX;
+        float arenaMid = (arenaMinX + arenaMaxX) * 0.5f;
+        float arenaHalf = (arenaMaxX - arenaMinX) * 0.5f;
+        float safeOffset = Mathf.Max(0f, arenaHalf - visibleHalfWidth);
+        return Mathf.Clamp(centerX, arenaMid - safeOffset, arenaMid + safeOffset);
+    }
+
+    private float ComputeDesiredY(float distanceToPlayPlane, float halfVertHeight)
+    {
+        if (!autoFrameFloor) return fixedY;
+
+        float usableBottom = Mathf.Clamp(floorBottomViewportRatio, 0.05f, 0.40f);
+        float centerWorldY = stageFloorY + halfVertHeight * (1f - 2f * usableBottom);
+        float pitchDeg = transform.eulerAngles.x;
+        if (pitchDeg > 180f) pitchDeg -= 360f;
+        pitchDeg = Mathf.Clamp(pitchDeg, -45f, 45f);
+        return centerWorldY + distanceToPlayPlane * Mathf.Tan(pitchDeg * Mathf.Deg2Rad);
+    }
+
+    private float ApplyVerticalFraming(float desiredY, bool isZoomOut)
+    {
+        if (!autoFrameFloor) return desiredY;
+        if (!verticalInitialized)
+        {
+            verticalInitialized = true;
+            verticalVelocity = 0f;
+            return desiredY;
+        }
+        float smooth = isZoomOut ? Mathf.Min(verticalSmoothTime, 0.06f) : verticalSmoothTime;
+        return Mathf.SmoothDamp(transform.position.y, desiredY, ref verticalVelocity, smooth);
     }
 
     /// <summary>줌아웃은 즉시 따라가고(파이터가 화면에 막히지 않게), 줌인만 부드럽게 따라간다</summary>
@@ -155,6 +246,21 @@ public class CombatCamera : MonoBehaviour
     /// <summary>추가 줌 보정 — Orthographic이면 Size에, Perspective면 Z에 더해진다.
     /// 나중에 콤보/필살기 연출 등에서 호출해 확장 가능.</summary>
     public void SetZoomOffset(float offset) => extraZoomOffset = offset;
+
+    /// <summary>대형 보스의 기본 반폭과 바닥 기준 확보 높이를 런타임 갱신 (페이즈 전환 등).</summary>
+    public void SetTargetBBaseFraming(float halfWidthB, float minTopOffsetFromFloor)
+    {
+        runtimeHalfWidthB = Mathf.Max(0f, halfWidthB);
+        runtimeMinTopOffset = Mathf.Max(0f, minTopOffsetFromFloor);
+    }
+
+    /// <summary>특정 광역/고공 패턴 중 카메라 최소 반폭 및 상단 높이를 일시 확장함.</summary>
+    public void SetExternalFraming(bool active, float minRequiredHalfWidth = 0f, float minRequiredTopOffsetFromFloor = 0f)
+    {
+        hasExternalFraming = active;
+        externalMinHalfWidth = Mathf.Max(0f, minRequiredHalfWidth);
+        externalMinTopOffset = Mathf.Max(0f, minRequiredTopOffsetFromFloor);
+    }
 
     // ---- 캐릭터 이동 제한 — 카메라에 지금 보이는 화면의 좌우 끝선이 그대로 투명 벽이다 ----
 

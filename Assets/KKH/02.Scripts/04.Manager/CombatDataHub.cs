@@ -401,21 +401,23 @@ public class CombatDataHub : MonoBehaviour
             bool isAttackerPlayer = attackerId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
             if (isAttackerPlayer && PlayerSnapshot != null && BossSnapshot != null)
             {
-                // 플레이어 -> 보스 타격
-                bool isD = attackAction != null && (attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed);
-                float dmg = attackAction != null ? attackAction.Damage : 10f;
-                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD, modifiers: modifiers);
-                
-                float kb = attackAction != null ? attackAction.KnockbackDistance : 0f;
-                if (modifiers != null) kb = modifiers.Apply(SkillParamId.KnockbackDistance, kb);
-                result.KnockbackDistance = kb;
+                if (BossSnapshot.isInvincible)
+                {
+                    result = new HitResolutionResult();
+                }
+                else
+                {
+                    // 플레이어 -> 보스 타격
+                    bool isD = attackAction != null && (attackAction.ActionName == "D" || attackAction.Source == ActionSource.CoreFixed);
+                    float dmg = attackAction != null ? attackAction.Damage : 10f;
+                    result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, dmg, isD, modifiers: modifiers);
 
-                SyncBossToEnemyProxy();
-                OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
-                OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
-                OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
-                OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
-                if (result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
+                    float kb = attackAction != null ? attackAction.KnockbackDistance : 0f;
+                    if (modifiers != null) kb = modifiers.Apply(SkillParamId.KnockbackDistance, kb);
+                    result.KnockbackDistance = kb;
+
+                    BroadcastBossHitResult(result);
+                }
             }
             else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
             {
@@ -474,13 +476,15 @@ public class CombatDataHub : MonoBehaviour
             bool isAttackerPlayer = attackerId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
             if (isAttackerPlayer && PlayerSnapshot != null && BossSnapshot != null)
             {
-                result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, rawDamage, isBasicAttackD, tag, targetGimmickId);
-                SyncBossToEnemyProxy();
-                OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
-                OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
-                OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
-                OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
-                if (result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
+                if (BossSnapshot.isInvincible)
+                {
+                    result = new HitResolutionResult();
+                }
+                else
+                {
+                    result = CombatCalculator.EvaluatePlayerAttackOnBoss(PlayerSnapshot, BossSnapshot, rawDamage, isBasicAttackD, tag, targetGimmickId);
+                    BroadcastBossHitResult(result);
+                }
             }
             else if (!isAttackerPlayer && BossSnapshot != null && PlayerSnapshot != null)
             {
@@ -501,6 +505,16 @@ public class CombatDataHub : MonoBehaviour
         OnHitResolved?.Invoke(result);
         CheckAndNotifyDeath();
         return result;
+    }
+
+    private void BroadcastBossHitResult(HitResolutionResult result)
+    {
+        SyncBossToEnemyProxy();
+        OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
+        OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
+        OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
+        OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
+        if (result != null && result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
     }
 
     private void NotifyHpAndCylinder(CombatantSnapshot attacker, CombatantSnapshot defender)

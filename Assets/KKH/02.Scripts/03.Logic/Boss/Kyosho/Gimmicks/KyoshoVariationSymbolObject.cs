@@ -16,6 +16,7 @@ namespace RealSteel.Boss.Kyosho
         private BoxCollider2D _collider;
         private SpriteRenderer _frameRenderer;
         private SpriteRenderer _fillRenderer;
+        private SpriteRenderer _auraRenderer;
         private TextMeshPro _glyphText;
         private TextMeshPro _subText;
 
@@ -54,7 +55,8 @@ namespace RealSteel.Boss.Kyosho
 
             Color borderCol = KyoshoConstants.SymbolBorderColors[SymbolIndex];
             if (_frameRenderer != null) _frameRenderer.color = borderCol;
-            if (_fillRenderer != null) _fillRenderer.color = new Color(0.08f, 0.10f, 0.16f, 0.88f);
+            if (_auraRenderer != null) _auraRenderer.color = new Color(borderCol.r, borderCol.g, borderCol.b, 0.24f);
+            if (_fillRenderer != null) _fillRenderer.color = new Color(0.08f, 0.10f, 0.16f, 0.90f);
             if (_glyphText != null)
             {
                 _glyphText.text = KyoshoConstants.SymbolGlyphs[SymbolIndex];
@@ -126,6 +128,17 @@ namespace RealSteel.Boss.Kyosho
             _collider.isTrigger = true;
             _collider.size = new Vector2(1.30f, 1.35f);
             _collider.offset = Vector2.zero;
+
+            if (_auraRenderer == null)
+            {
+                var auraGo = new GameObject("OuterAura");
+                auraGo.transform.SetParent(transform, false);
+                auraGo.transform.localPosition = new Vector3(0f, 0f, 0.02f);
+                auraGo.transform.localScale = new Vector3(1.62f, 1.62f, 1f);
+                _auraRenderer = auraGo.AddComponent<SpriteRenderer>();
+                _auraRenderer.sprite = KyoshoNanobotAttackHelper.GetCircleSprite();
+                _auraRenderer.sortingOrder = 17;
+            }
 
             if (_frameRenderer == null)
             {

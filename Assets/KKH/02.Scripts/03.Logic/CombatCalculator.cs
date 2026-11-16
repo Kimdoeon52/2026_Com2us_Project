@@ -215,7 +215,7 @@ public static class CombatCalculator
     {
         var result = new HitResolutionResult();
 
-        if (player == null || boss == null)
+        if (player == null || boss == null || boss.isInvincible)
             return result;
 
         // 1) D 기본기 적중 시 실린더 탄환 +1 장전

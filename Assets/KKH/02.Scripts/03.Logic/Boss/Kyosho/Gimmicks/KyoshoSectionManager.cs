@@ -61,7 +61,7 @@ namespace RealSteel.Boss.Kyosho
             PercussionSection = CreateOrGetSection("Section_Percussion", KyoshoSectionType.Percussion, percussionLimb, swarm, sectionMaxHp,
                 new Vector3(maxX - 2.5f, floorY + 0.95f, 0f));
             BrassSection = CreateOrGetSection("Section_Brass", KyoshoSectionType.Brass, brassLimb, swarm, sectionMaxHp,
-                new Vector3(centerX, floorY + 2.85f, 0f));
+                new Vector3(centerX, floorY + 2.55f, 0f));
 
             _sections.Add(StringsSection);
             _sections.Add(PercussionSection);
@@ -112,7 +112,7 @@ namespace RealSteel.Boss.Kyosho
             float centerX = (minX + maxX) * 0.5f;
             float floorY = _kyosho.ArenaFloorY;
 
-            BrassSection.SpawnSection(hp, new Vector3(centerX, floorY + 2.85f, 0f));
+            BrassSection.SpawnSection(hp, new Vector3(centerX, floorY + 2.55f, 0f));
             RefreshHud();
             Debug.Log("<color=magenta>[KyoshoSectionManager] 첫 페르마타 종료 ➔ 금관 섹션(SECTION_BRASS) 조립 완료!</color>");
         }

@@ -69,6 +69,7 @@ public class BossSnapshot
     // ========================================================================
     // 3. 상태 이상 및 피해 배율 플래그
     // ========================================================================
+    public bool isInvincible = false;      // 무적 상태 여부 (연출/기믹 페이즈 전환 중 피격/실린더 획득 차단)
     public bool isGroggy = false;          // 기믹 파훼 시 4초 무력화 (받는 피해 1.5배)
     public float currentDamageMultiplier = 1.0f;
 

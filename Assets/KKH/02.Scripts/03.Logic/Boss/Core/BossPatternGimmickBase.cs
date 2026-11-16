@@ -67,6 +67,12 @@ namespace RealSteel.Boss.Core
 
         private async UniTask<bool> ExecuteTellPhaseAsync(CancellationToken token)
         {
+            if (UseExternalTellPhase)
+            {
+                _isTellPhase = false;
+                return true;
+            }
+
             _isTellPhase = true;
             _accumulatedTellDamage = 0;   
             OnTellStarted();
@@ -130,6 +136,7 @@ namespace RealSteel.Boss.Core
         //===============================================================================================
         // 하위 클래스 확장용 훅 메서드
 
+        protected virtual bool UseExternalTellPhase => false;
         protected virtual void OnPreExecute() { }
         public virtual void OnTellStarted() { }
         public virtual void OnTellEnded() { }

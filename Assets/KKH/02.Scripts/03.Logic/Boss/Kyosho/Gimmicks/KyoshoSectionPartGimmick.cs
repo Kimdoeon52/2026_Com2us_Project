@@ -225,7 +225,7 @@ namespace RealSteel.Boss.Kyosho
                 KyoshoSectionType.Brass => KyoshoConstants.BarkBrassBroken,
                 _ => GimmickID
             };
-            var bark = FindAnyObjectByType<BattleBarkPlayer>();
+            var bark = _kyosho != null ? _kyosho.GetBarkPlayer() : FindAnyObjectByType<BattleBarkPlayer>();
             bark?.NotifyBossPartBroken(barkId);
 
             _onBrokenCallback?.Invoke(this);
@@ -258,9 +258,9 @@ namespace RealSteel.Boss.Kyosho
             _collider.isTrigger = true;
             if (sectionType == KyoshoSectionType.Brass)
             {
-                // 금관 섹션은 중앙 상단(floorY+3.2) 시각 위치를 유지하되 점프 근접 타격이 닿도록 하방 판정 포함
+                // 금관 섹션은 중앙 상단(floorY+2.55) 시각 위치를 유지하되 점프 근접 타격이 확실히 닿도록 하방 판정 확장
                 _collider.size = new Vector2(1.7f, 2.4f);
-                _collider.offset = new Vector2(0f, -0.55f);
+                _collider.offset = new Vector2(0f, -0.60f);
             }
             else
             {
@@ -306,12 +306,18 @@ namespace RealSteel.Boss.Kyosho
 
                 var lblGo = new GameObject("Label");
                 lblGo.transform.SetParent(transform, false);
-                lblGo.transform.localPosition = new Vector3(0f, 1.42f, -0.1f);
+                lblGo.transform.localPosition = new Vector3(0f, 1.50f, -0.1f);
                 _labelText = lblGo.AddComponent<TextMeshPro>();
                 _labelText.alignment = TextAlignmentOptions.Center;
-                _labelText.fontSize = 2.6f;
+                _labelText.fontSize = 2.45f;
                 _labelText.color = GetThemeColor();
-                _labelText.text = gimmickName;
+                _labelText.text = sectionType switch
+                {
+                    KyoshoSectionType.Strings => "현악 섹션\n[스타카토 강화 · 파괴 가능]",
+                    KyoshoSectionType.Percussion => "타악 섹션\n[충격파 강화 · 파괴 가능]",
+                    KyoshoSectionType.Brass => "금관 섹션\n[페르마타 강화 · 점프 파괴]",
+                    _ => gimmickName
+                };
             }
         }
 

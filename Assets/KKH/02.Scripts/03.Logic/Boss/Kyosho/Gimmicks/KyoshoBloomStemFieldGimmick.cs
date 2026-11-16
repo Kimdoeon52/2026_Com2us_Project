@@ -16,14 +16,20 @@ namespace RealSteel.Boss.Kyosho
     {
         public override string FieldGimmickID => "GIMMICK_KYOSHO_BLOOM_STEM";
 
-        [SerializeField] private int maxHp = 10;
+        [SerializeField] private int maxHp = 15;
 
         private RSNanoLimb _limb;
         private Transform _tipJoint;
         private RSNanoSwarm _swarm;
+        private KyoshoBossController _kyosho;
         private BoxCollider2D _collider;
         private TextMeshPro _iconText;
         private SpriteRenderer _seedMarker;
+        private GameObject _progressBgGo;
+        private Transform _progressFillTransform;
+        private SpriteRenderer _progressFillSr;
+        private GameObject _attackPreviewGo;
+        private KyoshoBloomType _previewBuiltForType = (KyoshoBloomType)(-1);
 
         private int _currentHp;
         private bool _isActiveStem;
@@ -36,10 +42,11 @@ namespace RealSteel.Boss.Kyosho
         public Vector3 TipPosition => _tipJoint != null ? _tipJoint.position : transform.position + Vector3.up * 2f;
         public bool IsHittable => IsAliveAndUncut && IsInteractable;
 
-        public void BindPoolLimb(RSNanoLimb limb, RSNanoSwarm swarm)
+        public void BindPoolLimb(RSNanoLimb limb, RSNanoSwarm swarm, KyoshoBossController kyosho = null)
         {
             _limb = limb;
             _swarm = swarm;
+            if (kyosho != null) _kyosho = kyosho;
             if (_limb != null)
             {
                 _limb.type = LimbType.Chain;
@@ -63,8 +70,9 @@ namespace RealSteel.Boss.Kyosho
             DeactivateStem();
         }
 
-        public void ActivateSeedPreview(Vector3 floorPos, KyoshoBloomType bloomType)
+        public void ActivateSeedPreview(Vector3 floorPos, KyoshoBloomType bloomType, KyoshoBossController kyosho = null)
         {
+            if (kyosho != null) _kyosho = kyosho;
             EnsureVisuals();
             _floorY = floorPos.y;
             _bloomType = bloomType;
@@ -93,22 +101,30 @@ namespace RealSteel.Boss.Kyosho
                 _seedMarker.enabled = true;
                 _seedMarker.color = GetTypeColor(bloomType);
             }
+            if (_progressBgGo != null)
+            {
+                _progressBgGo.SetActive(true);
+                SetGrowthBarVisual(0f, GetTypeColor(bloomType));
+            }
+            RebuildAttackPreviewForType(bloomType);
+            if (_attackPreviewGo != null) _attackPreviewGo.SetActive(false);
+
             if (_iconText != null)
             {
                 _iconText.gameObject.SetActive(true);
                 _iconText.color = GetTypeColor(bloomType);
                 _iconText.text = bloomType switch
                 {
-                    KyoshoBloomType.Note => "♪\n음표",
-                    KyoshoBloomType.Trumpet => "▶\n나팔",
-                    KyoshoBloomType.Cymbal => "◎\n심벌",
-                    _ => "♪"
+                    KyoshoBloomType.Note => "♪ 음표\n[CUT!]",
+                    KyoshoBloomType.Trumpet => "▶ 나팔\n[CUT!]",
+                    KyoshoBloomType.Cymbal => "◎ 심벌\n[CUT!]",
+                    _ => "♪\n[CUT!]"
                 };
-                _iconText.transform.localPosition = new Vector3(0f, 0.55f, -0.1f);
+                _iconText.transform.localPosition = new Vector3(0f, 0.72f, -0.1f);
             }
         }
 
-        public void SetGrowthProgress(float progress01, float swayX = 0f)
+        public void SetGrowthProgress(float progress01, float swayX = 0f, Vector3? playerPos = null)
         {
             if (!_isActiveStem || _isCut) return;
             float p = Mathf.Clamp01(progress01);
@@ -130,7 +146,19 @@ namespace RealSteel.Boss.Kyosho
             }
             if (_iconText != null)
             {
-                _iconText.transform.localPosition = new Vector3(swayX, Mathf.Lerp(0.6f, 2.55f, p), -0.1f);
+                _iconText.transform.localPosition = new Vector3(swayX, Mathf.Lerp(0.72f, 2.65f, p), -0.1f);
+            }
+            SetGrowthBarVisual(p, GetTypeColor(_bloomType));
+
+            if (_attackPreviewGo != null)
+            {
+                bool showPreview = p >= 0.45f;
+                if (_attackPreviewGo.activeSelf != showPreview) _attackPreviewGo.SetActive(showPreview);
+                if (showPreview && _bloomType == KyoshoBloomType.Trumpet)
+                {
+                    float dirX = (playerPos.HasValue && playerPos.Value.x < transform.position.x) ? -1f : 1f;
+                    _attackPreviewGo.transform.position = new Vector3(transform.position.x + dirX * 1.6f, _floorY + 0.85f, -0.04f);
+                }
             }
         }
 
@@ -145,13 +173,21 @@ namespace RealSteel.Boss.Kyosho
                 _limb.amount = 0f;
             }
             if (_seedMarker != null) _seedMarker.enabled = false;
+            if (_progressBgGo != null) _progressBgGo.SetActive(false);
+            if (_attackPreviewGo != null) _attackPreviewGo.SetActive(false);
             if (_iconText != null) _iconText.gameObject.SetActive(false);
         }
 
         public void TakePlayerHit(float damage, Vector2 point)
         {
             if (!IsHittable) return;
-            int dmg = Mathf.Max(1, Mathf.RoundToInt(damage));
+            float atkScale = 1f;
+            var hub = CombatDataHub.Instance;
+            if (hub != null && hub.PlayerSnapshot != null && hub.PlayerSnapshot.totalAttackPower > 0)
+            {
+                atkScale = Mathf.Clamp(hub.PlayerSnapshot.totalAttackPower / 220f, 1f, 1.35f);
+            }
+            int dmg = Mathf.Max(1, Mathf.RoundToInt(damage * atkScale));
             _currentHp -= dmg;
             if (_limb != null) _limb.glow = 2.8f;
 
@@ -181,11 +217,15 @@ namespace RealSteel.Boss.Kyosho
                 _limb.amount = 0f;
             }
             if (_seedMarker != null) _seedMarker.enabled = false;
+            if (_progressBgGo != null) _progressBgGo.SetActive(false);
+            if (_attackPreviewGo != null) _attackPreviewGo.SetActive(false);
             if (_iconText != null) _iconText.gameObject.SetActive(false);
 
+            KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                transform.position + Vector3.up * 0.85f, 0.20f, 1.15f, GetTypeColor(_bloomType), 0.22f);
             KyoshoSfx.PlayCue(KyoshoSfx.Data?.bloomStemCut, "bloom_cut", transform.position);
 
-            var bark = FindAnyObjectByType<BattleBarkPlayer>();
+            var bark = _kyosho != null ? _kyosho.GetBarkPlayer() : FindAnyObjectByType<BattleBarkPlayer>();
             bark?.NotifyBossPartBroken(KyoshoConstants.BarkBloomStem);
 
             Debug.Log($"<color=green>[KyoshoBloomStem] 개화 줄기({ _bloomType }) 절단 성공!</color>");
@@ -216,8 +256,102 @@ namespace RealSteel.Boss.Kyosho
                 txtGo.transform.SetParent(transform, false);
                 _iconText = txtGo.AddComponent<TextMeshPro>();
                 _iconText.alignment = TextAlignmentOptions.Center;
-                _iconText.fontSize = 4.2f;
+                _iconText.fontSize = 3.8f;
                 _iconText.gameObject.SetActive(false);
+            }
+
+            if (_progressBgGo == null)
+            {
+                _progressBgGo = new GameObject("GrowthBarBg");
+                _progressBgGo.transform.SetParent(transform, false);
+                _progressBgGo.transform.localPosition = new Vector3(0f, 0.36f, -0.08f);
+
+                var bg = new GameObject("Bg");
+                bg.transform.SetParent(_progressBgGo.transform, false);
+                bg.transform.localScale = new Vector3(0.95f, 0.13f, 1f);
+                var bgSr = bg.AddComponent<SpriteRenderer>();
+                bgSr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+                bgSr.color = new Color(0.06f, 0.08f, 0.12f, 0.85f);
+                bgSr.sortingOrder = 16;
+
+                var fill = new GameObject("Fill");
+                fill.transform.SetParent(_progressBgGo.transform, false);
+                fill.transform.localPosition = new Vector3(-0.45f, 0f, -0.01f);
+                fill.transform.localScale = new Vector3(0.01f, 0.08f, 1f);
+                _progressFillTransform = fill.transform;
+                _progressFillSr = fill.AddComponent<SpriteRenderer>();
+                _progressFillSr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
+                _progressFillSr.color = Color.white;
+                _progressFillSr.sortingOrder = 17;
+
+                _progressBgGo.SetActive(false);
+            }
+        }
+
+        private void SetGrowthBarVisual(float progress01, Color baseCol)
+        {
+            if (_progressFillTransform == null) return;
+            float w = Mathf.Lerp(0.02f, 0.90f, progress01);
+            _progressFillTransform.localScale = new Vector3(w, 0.08f, 1f);
+            _progressFillTransform.localPosition = new Vector3(-0.45f + w * 0.5f, 0f, -0.01f);
+            if (_progressFillSr != null)
+            {
+                float urgent = Mathf.Clamp01((progress01 - 0.55f) / 0.45f);
+                _progressFillSr.color = Color.Lerp(baseCol, new Color(1.00f, 0.24f, 0.24f, 1f), urgent);
+            }
+        }
+
+        private void RebuildAttackPreviewForType(KyoshoBloomType bloomType)
+        {
+            if (_attackPreviewGo != null && _previewBuiltForType == bloomType) return;
+            if (_attackPreviewGo != null) Destroy(_attackPreviewGo);
+
+            _previewBuiltForType = bloomType;
+            Color col = GetTypeColor(bloomType);
+            if (bloomType == KyoshoBloomType.Trumpet)
+            {
+                _attackPreviewGo = KyoshoNanobotAttackHelper.SpawnBorderedZoneHint(
+                    "TrumpetBeamPreview",
+                    transform.position + new Vector3(1.6f, 0.85f, -0.04f),
+                    3.2f,
+                    0.70f,
+                    col,
+                    0.10f,
+                    0.65f,
+                    0.04f,
+                    "나팔 빔 위험!",
+                    0f,
+                    2.6f,
+                    14);
+                _attackPreviewGo.transform.SetParent(transform, true);
+            }
+            else if (bloomType == KyoshoBloomType.Cymbal)
+            {
+                _attackPreviewGo = KyoshoNanobotAttackHelper.SpawnRingHint(
+                    "CymbalRingPreview",
+                    transform.position + Vector3.up * 0.9f,
+                    1.55f,
+                    col,
+                    0.10f,
+                    0.68f,
+                    14,
+                    "충격파 범위",
+                    2.6f);
+                _attackPreviewGo.transform.SetParent(transform, true);
+            }
+            else
+            {
+                _attackPreviewGo = KyoshoNanobotAttackHelper.SpawnRingHint(
+                    "NoteBurstPreview",
+                    transform.position + Vector3.up * 1.4f,
+                    0.55f,
+                    col,
+                    0.14f,
+                    0.72f,
+                    14,
+                    "3연사 예고",
+                    2.5f);
+                _attackPreviewGo.transform.SetParent(transform, true);
             }
         }
 

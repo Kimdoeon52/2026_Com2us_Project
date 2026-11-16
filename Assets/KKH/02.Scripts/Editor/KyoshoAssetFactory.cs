@@ -326,15 +326,42 @@ namespace RealSteel.Boss.Editor
             var ctrl = bossGo.GetComponent<KyoshoBossController>();
             ctrl?.AutoBindInspectorReferences();
 
+            var mover = UnityEngine.Object.FindFirstObjectByType<RobotMover>();
+            if (mover != null)
+            {
+                var moverSo = new SerializedObject(mover);
+                moverSo.FindProperty("opponent").objectReferenceValue = bossGo.transform;
+                var speedProp = moverSo.FindProperty("moveSpeed");
+                if (speedProp != null && speedProp.floatValue < 3f) speedProp.floatValue = 3f;
+                moverSo.ApplyModifiedPropertiesWithoutUndo();
+
+                if (!addTester && mover.GetComponent("TEMP_LegSkillTester") is Behaviour legTester)
+                {
+                    legTester.enabled = false;
+                }
+            }
+
             var cam = UnityEngine.Object.FindFirstObjectByType<CombatCamera>();
             if (cam != null)
             {
                 var camSo = new SerializedObject(cam);
                 camSo.FindProperty("playerB").objectReferenceValue = bossGo.transform;
+                camSo.FindProperty("minX").floatValue = -2.25f;
+                camSo.FindProperty("maxX").floatValue = 2.25f;
+                camSo.FindProperty("framingPadding").floatValue = 1.8f;
+                camSo.FindProperty("closeZ").floatValue = -15f;
+                camSo.FindProperty("farZ").floatValue = -24f;
+                camSo.FindProperty("fixedY").floatValue = 2.6f;
                 camSo.FindProperty("useArenaBounds").boolValue = true;
                 camSo.FindProperty("arenaMinX").floatValue = -7.75f;
                 camSo.FindProperty("arenaMaxX").floatValue = 7.75f;
-                camSo.FindProperty("farZ").floatValue = -23f;
+                camSo.FindProperty("autoFrameFloor").boolValue = true;
+                camSo.FindProperty("stageFloorY").floatValue = 0.12f;
+                camSo.FindProperty("floorBottomViewportRatio").floatValue = 0.16f;
+                camSo.FindProperty("topHudViewportReserve").floatValue = 0.12f;
+                camSo.FindProperty("targetBHalfWidth").floatValue = 2.35f;
+                camSo.FindProperty("minTargetTopOffsetFromFloor").floatValue = 4.3f;
+                camSo.FindProperty("verticalSmoothTime").floatValue = 0.12f;
                 camSo.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -342,7 +369,9 @@ namespace RealSteel.Boss.Editor
             if (bm != null)
             {
                 var bmSo = new SerializedObject(bm);
+                if (mover != null) bmSo.FindProperty("playerRobotObject").objectReferenceValue = mover.gameObject;
                 bmSo.FindProperty("enemyRobotObject").objectReferenceValue = bossGo;
+                if (!addTester) bmSo.FindProperty("timeLimit").floatValue = 0f;
                 bmSo.ApplyModifiedPropertiesWithoutUndo();
             }
 
@@ -354,10 +383,37 @@ namespace RealSteel.Boss.Editor
                 EditorUtility.SetDirty(hub);
             }
 
-            if (addTester && UnityEngine.Object.FindFirstObjectByType<RealSteel.Boss.Test.KyoshoGimmickTester>() == null)
+            if (!addTester && UnityEngine.Object.FindFirstObjectByType<RealSteel.UI.BattleResultUI>(FindObjectsInactive.Include) == null)
+            {
+                var resultPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/KKH/04.Prefab/BattleResultCanvas.prefab");
+                if (resultPrefab != null)
+                {
+                    var resultGo = (GameObject)PrefabUtility.InstantiatePrefab(resultPrefab, scene);
+                    resultGo.SetActive(true);
+                    var resultUi = resultGo.GetComponent<RealSteel.UI.BattleResultUI>();
+                    if (resultUi != null)
+                    {
+                        var uiSo = new SerializedObject(resultUi);
+                        var lobbyProp = uiSo.FindProperty("lobbySceneName");
+                        if (lobbyProp != null) lobbyProp.stringValue = "JunkShop_Map";
+                        uiSo.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                }
+            }
+
+            var existingTester = UnityEngine.Object.FindFirstObjectByType<RealSteel.Boss.Test.KyoshoGimmickTester>(FindObjectsInactive.Include);
+            if (addTester && existingTester == null)
             {
                 var testerGo = new GameObject("KyoshoGimmickTester");
                 testerGo.AddComponent<RealSteel.Boss.Test.KyoshoGimmickTester>();
+            }
+            else if (!addTester && existingTester != null)
+            {
+                existingTester.enabled = false;
+                var tSo = new SerializedObject(existingTester);
+                var overlayProp = tSo.FindProperty("showOverlay");
+                if (overlayProp != null) overlayProp.boolValue = false;
+                tSo.ApplyModifiedPropertiesWithoutUndo();
             }
 
             EditorSceneManager.SaveScene(scene);

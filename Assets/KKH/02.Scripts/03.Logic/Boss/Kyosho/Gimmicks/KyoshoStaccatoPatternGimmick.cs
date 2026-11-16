@@ -56,6 +56,51 @@ namespace RealSteel.Boss.Kyosho
             var scoreHud = Kyosho.ScorePreviewHUD;
             scoreHud?.ShowStaccatoScore(bar, allowStringsBonus);
 
+            // HUD 카드 배치와 정확히 일치하도록 8분/3연음표 교차 레인 및 16분 보너스(Quarter/Eighth +0.5박) 선계산
+            bool[] rapidUseHighLane = new bool[bar.notes.Count];
+            bool[] enableBonusForIndex = new bool[bar.notes.Count];
+            int rapidIndex = 0;
+            for (int i = 0; i < bar.notes.Count; i++)
+            {
+                var n = bar.notes[i];
+                if (n.noteType == KyoshoNoteType.Rest) continue;
+
+                if (n.noteType == KyoshoNoteType.Eighth || n.noteType == KyoshoNoteType.Triplet)
+                {
+                    rapidUseHighLane[i] = (rapidIndex % 2) == 1;
+                    rapidIndex++;
+                }
+
+                enableBonusForIndex[i] = allowStringsBonus
+                    && (n.noteType == KyoshoNoteType.Quarter || n.noteType == KyoshoNoteType.Eighth)
+                    && (n.beatOffset + 0.5f < 3.95f);
+            }
+
+            float floorY = Kyosho.ArenaFloorY;
+            float lowLaneY = floorY + 0.56f;
+            float highLaneY = floorY + 1.72f;
+            Kyosho.GetArenaBounds(out float arenaMinX, out float arenaMaxX);
+
+            var stringsSec = Kyosho.SectionManager?.StringsSection;
+            Vector3 stringsOrigin = stringsSec != null
+                ? new Vector3(stringsSec.AnchorWorldPosition.x + 0.4f, Mathf.Max(stringsSec.AnchorWorldPosition.y + 0.5f, floorY + 1.55f), 0f)
+                : new Vector3(arenaMinX + 2.5f, floorY + 1.55f, 0f);
+            float stringsDirX = (Kyosho.PlayerTransform != null && Kyosho.PlayerTransform.position.x < stringsOrigin.x) ? -1f : 1f;
+
+            // 1마디(4박) 콜 구간에도 예상 사선(상/하단) 및 현악 포구 미리보기 표시
+            float previewDirX = Kyosho.GetFacingToPlayerSign();
+            float previewOriginX = Swarm.Blob.center.x + previewDirX * 1.1f;
+            float previewEndX = previewDirX > 0f ? arenaMaxX + 0.5f : arenaMinX - 0.5f;
+            ClearTelegraphs();
+            SpawnLaneTelegraph(previewOriginX, previewEndX, lowLaneY, new Color(1.00f, 0.78f, 0.28f), 0.08f, 0.45f, "JUMP ▲", 0.30f);
+            SpawnLaneTelegraph(previewOriginX, previewEndX, highLaneY, new Color(0.35f, 0.85f, 1.00f), 0.06f, 0.38f, "STAND ─", 0.28f);
+            if (allowStringsBonus)
+            {
+                float stringsEndX = stringsDirX > 0f ? arenaMaxX + 0.5f : arenaMinX - 0.5f;
+                SpawnLaneTelegraph(stringsOrigin.x, stringsEndX, stringsOrigin.y, KyoshoConstants.StringsMintColor, 0.06f, 0.35f, "STR ♪", 0.24f);
+                SpawnStringsMuzzleHint(stringsOrigin);
+            }
+
             // 1마디(4박): 콜 (악보 예고)
             double callStartBeat = Clock.TotalBeats;
             bool[] called = new bool[bar.notes.Count];
@@ -78,6 +123,11 @@ namespace RealSteel.Boss.Kyosho
                             KyoshoSfx.PlayStaccatoCall(ev.pitchIndex, Kyosho.transform.position, i, ev.noteType);
                             Swarm.Blob.bulgeDir = Vector3.up;
                             Swarm.Blob.bulge = 0.45f;
+                            float callLaneY = rapidUseHighLane[i] ? highLaneY : lowLaneY;
+                            Color callCol = rapidUseHighLane[i] ? new Color(0.35f, 0.85f, 1.00f) : new Color(1.00f, 0.78f, 0.28f);
+                            KyoshoNanobotAttackHelper.SpawnPulseRingEffect(
+                                new Vector3(Swarm.Blob.center.x + previewDirX * 1.1f, callLaneY, 0f),
+                                0.18f, 0.75f, callCol, 0.22f);
                         }
                     }
                 }
@@ -88,48 +138,25 @@ namespace RealSteel.Boss.Kyosho
 
             scoreHud?.SetStaccatoPhase(true, allowStringsBonus);
 
-            // 2마디(4박): 발사 방향 고정 (패턴 도중 재조준/유도 방지) + 상/하 고정 레인 예고선 표시
+            // 2마디(4박): 발사 방향 고정 (패턴 도중 재조준/유도 방지) + 상/하 고정 레인 선명 테두리 예고선 표시
             float lockedDirX = Kyosho.GetFacingToPlayerSign();
-            float floorY = Kyosho.ArenaFloorY;
-            float lowLaneY = floorY + 0.56f;
-            float highLaneY = floorY + 1.72f;
             float originX = Swarm.Blob.center.x + lockedDirX * 1.1f;
-            Kyosho.GetArenaBounds(out float arenaMinX, out float arenaMaxX);
             float endX = lockedDirX > 0f ? arenaMaxX + 0.5f : arenaMinX - 0.5f;
 
             ClearTelegraphs();
-            SpawnLaneTelegraph(originX, endX, lowLaneY, new Color(1.00f, 0.78f, 0.28f, 0.22f));
-            SpawnLaneTelegraph(originX, endX, highLaneY, new Color(0.35f, 0.85f, 1.00f, 0.16f));
-
-            var stringsSec = Kyosho.SectionManager?.StringsSection;
-            Vector3 stringsOrigin = stringsSec != null
-                ? new Vector3(stringsSec.AnchorWorldPosition.x + 0.4f, Mathf.Max(stringsSec.AnchorWorldPosition.y + 0.5f, floorY + 1.55f), 0f)
-                : new Vector3(arenaMinX + 2.5f, floorY + 1.55f, 0f);
-            float stringsDirX = (Kyosho.PlayerTransform != null && Kyosho.PlayerTransform.position.x < stringsOrigin.x) ? -1f : 1f;
+            SpawnLaneTelegraph(originX, endX, lowLaneY, new Color(1.00f, 0.78f, 0.28f), 0.16f, 0.78f, "JUMP ▲", 0.34f);
+            SpawnLaneTelegraph(originX, endX, highLaneY, new Color(0.35f, 0.85f, 1.00f), 0.11f, 0.65f, "STAND ─", 0.32f);
+            if (allowStringsBonus)
+            {
+                stringsDirX = (Kyosho.PlayerTransform != null && Kyosho.PlayerTransform.position.x < stringsOrigin.x) ? -1f : 1f;
+                float stringsEndX = stringsDirX > 0f ? arenaMaxX + 0.5f : arenaMinX - 0.5f;
+                SpawnLaneTelegraph(stringsOrigin.x, stringsEndX, stringsOrigin.y, KyoshoConstants.StringsMintColor, 0.11f, 0.62f, "STR 16♪", 0.28f);
+                SpawnStringsMuzzleHint(stringsOrigin);
+            }
 
             double fireStartBeat = Clock.TotalBeats;
             bool[] firedMain = new bool[bar.notes.Count];
             bool[] firedBonus = new bool[bar.notes.Count];
-            bool[] rapidUseHighLane = new bool[bar.notes.Count];
-            bool[] enableBonusForIndex = new bool[bar.notes.Count];
-
-            // HUD 카드 배치와 정확히 일치하도록 8분/3연음표 교차 레인 및 16분 보너스(Quarter/Eighth +0.5박) 계산
-            int rapidIndex = 0;
-            for (int i = 0; i < bar.notes.Count; i++)
-            {
-                var n = bar.notes[i];
-                if (n.noteType == KyoshoNoteType.Rest) continue;
-
-                if (n.noteType == KyoshoNoteType.Eighth || n.noteType == KyoshoNoteType.Triplet)
-                {
-                    rapidUseHighLane[i] = (rapidIndex % 2) == 1;
-                    rapidIndex++;
-                }
-
-                enableBonusForIndex[i] = allowStringsBonus
-                    && (n.noteType == KyoshoNoteType.Quarter || n.noteType == KyoshoNoteType.Eighth)
-                    && (n.beatOffset + 0.5f < 3.95f);
-            }
 
             while (Clock.TotalBeats < fireStartBeat + 4.0)
             {
@@ -228,6 +255,7 @@ namespace RealSteel.Boss.Kyosho
                 snapToHold: true);
 
             _bullets.Add(b);
+            KyoshoNanobotAttackHelper.SpawnPulseRingEffect(origin, 0.16f, 0.65f, KyoshoConstants.OriginalPatternColor, 0.18f);
             KyoshoSfx.PlayStaccatoFireMelody(pitchIndex, noteType, noteOrderInBar, origin);
         }
 
@@ -259,22 +287,45 @@ namespace RealSteel.Boss.Kyosho
                 snapToHold: true);
 
             _bullets.Add(b);
+            KyoshoNanobotAttackHelper.SpawnPulseRingEffect(origin, 0.14f, 0.58f, KyoshoConstants.StringsMintColor, 0.18f);
             KyoshoSfx.PlayStringsCounterMelody(basePitchIndex, bonusOrderInBar, origin);
         }
 
-        private void SpawnLaneTelegraph(float startX, float endX, float y, Color color)
+        private void SpawnLaneTelegraph(float startX, float endX, float y, Color color, float fillAlpha, float borderAlpha, string badge, float height)
         {
             float length = Mathf.Abs(endX - startX);
             if (length < 0.25f) return;
 
-            var go = new GameObject("KyoshoStaccatoLaneTelegraph");
-            go.transform.position = new Vector3((startX + endX) * 0.5f, y, 0.05f);
-            go.transform.localScale = new Vector3(length, 0.22f, 1f);
-            var sr = go.AddComponent<SpriteRenderer>();
-            sr.sprite = KyoshoNanobotAttackHelper.GetSquareSprite();
-            sr.color = color;
-            sr.sortingOrder = 14;
+            Vector3 center = new Vector3((startX + endX) * 0.5f, y, 0.05f);
+            var go = KyoshoNanobotAttackHelper.SpawnBorderedZoneHint(
+                "KyoshoStaccatoLaneTelegraph",
+                center,
+                length,
+                height,
+                color,
+                fillAlpha,
+                borderAlpha,
+                0.035f,
+                badge,
+                0f,
+                2.5f,
+                14);
             _telegraphVisuals.Add(go);
+        }
+
+        private void SpawnStringsMuzzleHint(Vector3 origin)
+        {
+            var ring = KyoshoNanobotAttackHelper.SpawnRingHint(
+                "KyoshoStaccatoStringsMuzzle",
+                origin,
+                0.44f,
+                KyoshoConstants.StringsMintColor,
+                0.18f,
+                0.90f,
+                16,
+                "STR",
+                2.4f);
+            _telegraphVisuals.Add(ring);
         }
 
         private void ClearTelegraphs()

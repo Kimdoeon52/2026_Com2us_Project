@@ -68,6 +68,8 @@ namespace RealSteel.Boss.Kyosho
         private static int _nextVoiceIndex;
         private static CancellationTokenSource _duckCts;
         private static CancellationTokenSource _fadeCts;
+        private static bool _bgmIsBeatSynced;
+        private static float _bgmSyncedLoopBeats = 32f;
 
         public static KyoshoSfxData Data => _data;
 
@@ -79,6 +81,7 @@ namespace RealSteel.Boss.Kyosho
 
         public static void Unbind()
         {
+            _bgmIsBeatSynced = false;
             StopBgmImmediate();
             _data = null;
         }
@@ -457,36 +460,36 @@ namespace RealSteel.Boss.Kyosho
         // BGM & 덕킹
         // ====================================================================
 
-        public static void PlayPhase2Bgm(float fadeIn = 0.6f)
+        public static void PlayPhase2Bgm(float fadeIn = 0.6f, float targetBpm = 132f, double currentTotalBeats = 0.0)
         {
             AudioClip clip = null;
-            if (_data != null && _data.bgmPhase2 != null && _data.bgmPhase2 != _data.bgmMain)
+            if (Mathf.Abs(targetBpm - 132f) <= 1f && _data != null && _data.bgmPhase2 != null && _data.bgmPhase2 != _data.bgmMain)
             {
                 clip = _data.bgmPhase2;
             }
             if (clip == null)
             {
-                clip = GetOrCreateFallbackCue("bgm_phase2");
+                clip = GetOrCreateSyncedBgmClip(2, targetBpm);
             }
-            if (clip != null) PlayBgm(clip, fadeIn);
+            if (clip != null) PlayBgm(clip, fadeIn, beatSynced: true, currentTotalBeats: currentTotalBeats, loopBeats: 32f);
         }
 
-        public static void PlayPhase3Bgm(float fadeIn = 0.25f)
+        public static void PlayPhase3Bgm(float fadeIn = 0.25f, float targetBpm = 160f, double currentTotalBeats = 0.0)
         {
             AudioClip clip = null;
-            if (_data != null && _data.bgmPhase3 != null
+            if (Mathf.Abs(targetBpm - 160f) <= 1f && _data != null && _data.bgmPhase3 != null
                 && _data.bgmPhase3 != _data.bgmMain && _data.bgmPhase3 != _data.bgmPhase2)
             {
                 clip = _data.bgmPhase3;
             }
             if (clip == null)
             {
-                clip = GetOrCreateFallbackCue("bgm_phase3");
+                clip = GetOrCreateSyncedBgmClip(3, targetBpm);
             }
-            if (clip != null) PlayBgm(clip, fadeIn);
+            if (clip != null) PlayBgm(clip, fadeIn, beatSynced: true, currentTotalBeats: currentTotalBeats, loopBeats: 32f);
         }
 
-        public static void PlayBgm(AudioClip clip, float fadeIn = 0.4f)
+        public static void PlayBgm(AudioClip clip, float fadeIn = 0.4f, bool beatSynced = false, double currentTotalBeats = 0.0, float loopBeats = 32f)
         {
             if (!Application.isPlaying || clip == null) return;
             EnsureHost();
@@ -498,6 +501,21 @@ namespace RealSteel.Boss.Kyosho
             _bgmSource.loop = true;
             _bgmSource.panStereo = 0f;
             _bgmSource.spatialBlend = 0f;
+            _bgmSource.pitch = Time.timeScale > 0f ? Time.timeScale : 0f;
+            _bgmIsBeatSynced = beatSynced;
+            _bgmSyncedLoopBeats = Mathf.Max(4f, loopBeats);
+
+            if (beatSynced && clip.samples > 0)
+            {
+                double wrapped = ((currentTotalBeats % _bgmSyncedLoopBeats) + _bgmSyncedLoopBeats) % _bgmSyncedLoopBeats;
+                int startSample = Mathf.Clamp((int)((wrapped / _bgmSyncedLoopBeats) * clip.samples), 0, Mathf.Max(0, clip.samples - 1));
+                _bgmSource.timeSamples = startSample;
+            }
+            else
+            {
+                _bgmSource.timeSamples = 0;
+            }
+
             float targetVol = _data != null ? _data.bgmVolume : 0.4f;
 
             if (fadeIn <= 0.01f)
@@ -510,6 +528,47 @@ namespace RealSteel.Boss.Kyosho
                 _fadeCts = new CancellationTokenSource();
                 FadeBgmAsync(0f, targetVol, fadeIn, true, _fadeCts.Token).Forget();
             }
+        }
+
+        public static void SyncBgmWithBeatClock(KyoshoBeatClock clock)
+        {
+            if (_bgmSource == null || _bgmSource.clip == null) return;
+            float targetPitch = Time.timeScale > 0f ? Time.timeScale : 0f;
+            if (!Mathf.Approximately(_bgmSource.pitch, targetPitch))
+            {
+                _bgmSource.pitch = targetPitch;
+            }
+
+            if (!_bgmIsBeatSynced || clock == null || !clock.IsRunning || !_bgmSource.isPlaying) return;
+            int totalSamples = _bgmSource.clip.samples;
+            int sampleRate = _bgmSource.clip.frequency;
+            if (totalSamples <= 0 || sampleRate <= 0) return;
+
+            double wrapped = ((clock.TotalBeats % _bgmSyncedLoopBeats) + _bgmSyncedLoopBeats) % _bgmSyncedLoopBeats;
+            int expectedSample = Mathf.Clamp((int)((wrapped / _bgmSyncedLoopBeats) * totalSamples), 0, totalSamples - 1);
+            int curSample = _bgmSource.timeSamples;
+            int diff = Mathf.Abs(expectedSample - curSample);
+            if (diff > totalSamples / 2) diff = totalSamples - diff;
+
+            if (diff > Mathf.RoundToInt(0.045f * sampleRate))
+            {
+                _bgmSource.timeSamples = expectedSample;
+            }
+        }
+
+        private static AudioClip GetOrCreateSyncedBgmClip(int phase, float bpm)
+        {
+            float clampedBpm = Mathf.Clamp(bpm, 40f, 220f);
+            string key = $"bgm_phase{phase}_bpm{Mathf.RoundToInt(clampedBpm)}";
+            if (_synthCache.TryGetValue(key, out var cached) && cached != null) return cached;
+
+            float[] samples = SynthesizeBgmLoopSamplesForBpm(phase, clampedBpm, out int sr);
+            if (samples == null || samples.Length == 0) return null;
+
+            var clip = AudioClip.Create($"Synth_{key}", samples.Length, 1, sr, false);
+            clip.SetData(samples, 0);
+            _synthCache[key] = clip;
+            return clip;
         }
 
         public static void StopBgm(float fadeOut = 0.5f)
@@ -536,6 +595,7 @@ namespace RealSteel.Boss.Kyosho
         {
             CancelFade();
             CancelDuck();
+            _bgmIsBeatSynced = false;
             if (_bgmSource != null) _bgmSource.Stop();
         }
 
@@ -556,7 +616,11 @@ namespace RealSteel.Boss.Kyosho
                 if (_bgmSource != null)
                 {
                     _bgmSource.volume = to;
-                    if (to <= 0.001f && !startPlay) _bgmSource.Stop();
+                    if (to <= 0.001f && !startPlay)
+                    {
+                        _bgmSource.Stop();
+                        _bgmIsBeatSynced = false;
+                    }
                 }
             }
             catch (System.OperationCanceledException) { }
@@ -1012,13 +1076,19 @@ namespace RealSteel.Boss.Kyosho
         }
 
         /// <summary>
-        /// Phase 2(132 BPM D단조 긴장감 있는 오케스트라) 및 Phase 3(160 BPM 프레스토 헬 앙코르 투티) 루프 BGM 생성기.
+        /// Phase 2(132 BPM 기본 D단조 긴장감 있는 오케스트라) 및 Phase 3(160 BPM 프레스토 헬 앙코르 투티) 루프 BGM 생성기.
         /// </summary>
         public static float[] SynthesizeBgmLoopSamples(int phase, out int sampleRate)
         {
+            float defaultBpm = phase >= 3 ? 160f : 132f;
+            return SynthesizeBgmLoopSamplesForBpm(phase, defaultBpm, out sampleRate);
+        }
+
+        public static float[] SynthesizeBgmLoopSamplesForBpm(int phase, float bpm, out int sampleRate)
+        {
             sampleRate = SampleRate;
             bool isPresto = phase >= 3;
-            float bpm = isPresto ? 160f : 132f;
+            bpm = Mathf.Clamp(bpm, 40f, 220f);
             const int totalBars = 8;
             const int beatsPerBar = 4;
             float beatDur = 60f / bpm;

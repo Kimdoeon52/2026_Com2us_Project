@@ -15,6 +15,7 @@ namespace RealSteel.Dialogue
 
         private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         private const float ModeSelectTimeout = 180f;
+        private const float FieldReadyTimeout = 5f;
 
         public enum Mode
         {
@@ -57,9 +58,37 @@ namespace RealSteel.Dialogue
                 return false;
             }
 
+            runner.StartCoroutine(StartWhenFieldReady(auction, start, mode));
+            return true;
+        }
+
+        // 대화 연출(클로즈업 카메라 복귀)과 입력 잠금이 다 풀린 뒤에 경매 시작
+        //  - 대화 중에는 FieldInputBridge가 캐릭터 이동(RSSimpleCharacter)을 꺼 둠 → 그때 착석하면 AuctionSeatLock이
+        //    '이미 꺼져 있음'으로 보고 기록하지 않고, 대화가 끝나면 브리지가 다시 켜서 카메라가 캐릭터를 따라가 버림
+        private static IEnumerator StartWhenFieldReady(MonoBehaviour auction, MethodInfo start, Mode mode)
+        {
+            float waited = 0f;
+            while (auction != null && waited < FieldReadyTimeout && !IsFieldReady())
+            {
+                waited += Time.unscaledDeltaTime;
+                yield return null;
+            }
+
+            if (auction == null) yield break;
+            if (waited >= FieldReadyTimeout) Debug.LogWarning("[경매 연결] 대화 화면이 다 닫히지 않았지만 경매를 시작합니다. 카메라 고정이 풀릴 수 있습니다.", auction);
+
             start.Invoke(auction, null);
-            runner.StartCoroutine(PickModeWhenAsked(auction, mode));
             Debug.Log($"[경매 연결] 경매 시작 → 모드 선택 창이 뜨면 '{(mode == Mode.Normal ? "일반 경매" : "주먹 경매")}'를 고름");
+            yield return PickModeWhenAsked(auction, mode);
+        }
+
+        private static bool IsFieldReady()
+        {
+            if (UiStack.Current != null && UiStack.Current.Count > 0) return false;
+            foreach (FieldInputBridge bridge in Object.FindObjectsByType<FieldInputBridge>(FindObjectsSortMode.None))
+            {
+                if (bridge.isActiveAndEnabled && bridge.IsBlocking) return false;
+            }
             return true;
         }
 

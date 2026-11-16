@@ -94,6 +94,13 @@ namespace RealSteel.Dialogue.EditorTools
                 return;
             }
 
+            if (mask.TryGetComponent(out UnityEngine.UI.Graphic maskGraphic) && maskGraphic.raycastTarget)
+            {
+                Undo.RecordObject(maskGraphic, UndoName);
+                maskGraphic.raycastTarget = false;
+                log.AppendLine($"- '{MaskPath}' Raycast Target 끔 (대화창이 닫혀도 아래 UI 클릭을 막지 않게)");
+            }
+
             foreach (Transform child in root.GetComponentsInChildren<Transform>(true))
             {
                 if (!child.name.StartsWith("Text ")) continue;

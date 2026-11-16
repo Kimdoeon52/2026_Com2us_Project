@@ -30,6 +30,9 @@ namespace RealSteel.Dialogue
         private bool waitingRelease;
         private bool interactorDisabledByUs;
 
+        // 대화 · UI 때문에 플레이어 이동을 꺼 둔 상태 (풀리면 꺼 둔 이동 컴포넌트를 다시 켬)
+        public bool IsBlocking => blocked;
+
         public void BindScene(PlayerInteractor newInteractor, Behaviour[] newMovement, Behaviour[] newInteractions, GameObject[] newHiddenPrompts, Behaviour[] newUiHotkeys)
         {
             interactor = newInteractor;

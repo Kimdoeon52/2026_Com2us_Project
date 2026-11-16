@@ -125,8 +125,23 @@ namespace RealSteel.Dialogue
             typewriter.CharacterRevealed += OnCharacterRevealed;
 
             box.SetActive(false);
+            StopParentRaycasts();
             HideSkipConfirm();
             RefreshStatus(false);
+        }
+
+        // 대화창을 감싼 틀(MTP-2 모션의 마스크 등)은 대화창이 닫혀도 켜져 있음 → 투명해도 클릭을 막지 않게
+        private void StopParentRaycasts()
+        {
+            for (Transform parent = box.transform.parent; parent != null && parent != transform; parent = parent.parent)
+            {
+                if (parent.TryGetComponent(out Canvas _)) break;
+                if (parent.TryGetComponent(out UnityEngine.UI.Graphic graphic) && graphic.raycastTarget)
+                {
+                    graphic.raycastTarget = false;
+                    Debug.Log($"[DialogueBox] '{parent.name}'가 닫힌 대화창 자리의 클릭을 막지 않도록 Raycast Target 끔");
+                }
+            }
         }
 
         private void OnDestroy()

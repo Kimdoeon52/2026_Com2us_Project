@@ -1016,6 +1016,112 @@ MonoBehaviour:
   motion: {fileID: 11400000, guid: 3176d7be150c49e4eb5af1e362d4fde2, type: 2}
   handChoice: 3
   telegraph: {fileID: 926417079}
+--- !u!1 &498621584
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 498621585}
+  - component: {fileID: 498621587}
+  - component: {fileID: 498621586}
+  m_Layer: 0
+  m_Name: PlayerShadow
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &498621585
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 498621584}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1270632114}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &498621586
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 498621584}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 64457b8f68d1dc844ab8af60440251bc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  size: {x: 0.9, y: 0.22}
+  minScale: 0.5
+  fadeHeight: 2
+  maxAlpha: 0.45
+  minAlpha: 0.15
+  lift: 0.02
+--- !u!212 &498621587
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 498621584}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &510918361
 GameObject:
   m_ObjectHideFlags: 0
@@ -1249,6 +1355,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 0, g: 0, b: 0, a: 0.45}
   thickness: 0.5
+  edgeSoftness: 0.35
   pulseRate: 3
 --- !u!212 &621490210
 SpriteRenderer:
@@ -1567,6 +1674,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 0, g: 0, b: 0, a: 0.45}
   thickness: 0.5
+  edgeSoftness: 0.35
   pulseRate: 3
 --- !u!212 &710817848
 SpriteRenderer:
@@ -2347,6 +2455,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   color: {r: 0, g: 0, b: 0, a: 0.45}
   thickness: 0.5
+  edgeSoftness: 0.35
   pulseRate: 3
 --- !u!212 &926417080
 SpriteRenderer:
@@ -3549,7 +3658,8 @@ Transform:
   m_LocalPosition: {x: 0.115, y: -0.5209993, z: -0.277}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 498621585}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!61 &1270632115
@@ -3696,6 +3806,7 @@ MonoBehaviour:
   deathStateName: 
   deathDurationFrames: 90
   deadStateName: 
+  castGroundShadow: 1
   explosionController: {fileID: 0}
   explosionStateName: 
   explosionIntervalFrames: 10
@@ -4104,8 +4215,8 @@ Transform:
   m_GameObject: {fileID: 1328636925}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.06, y: -2.1134, z: 0.0162}
-  m_LocalScale: {x: 9.066198, y: 3.242279, z: 4.0370526}
+  m_LocalPosition: {x: 1.1428, y: -2.1134, z: 0.0162}
+  m_LocalScale: {x: 16.652908, y: 3.242279, z: 4.0370526}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -5346,6 +5457,7 @@ MonoBehaviour:
   currentHpView: 0
   isGroggyView: 0
   clampToCameraBounds: 1
+  customVisualHalfWidth: 0.85
   cameraEdgePadding: 0.5
   targetCamera: {fileID: 1831109083}
   animationController: {fileID: 0}

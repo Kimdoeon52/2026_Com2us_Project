@@ -596,18 +596,22 @@ public class KyodaiHand : MonoBehaviour
         UpdateShadow(basePos + bob * size);
     }
 
-    // 높이 뜰수록 그림자가 작고 옅어진다 — 떠 있다는 느낌의 대부분이 여기서 나온다
+    // 높이 뜰수록 그림자가 작고 옅어진다 — 떠 있다는 느낌의 대부분이 여기서 나온다.
+    // 2026-11-16: 그리기는 공용 그림자 시스템(GroundShadow — 디더링으로 가장자리가 흐린 타원)으로. 값은 그대로 KyodaiHandFeel
+    private GroundShadow groundShadow;
+
     private void UpdateShadow(Vector2 shown)
     {
         if (shadow == null) return;
-        float height = Mathf.Max(0f, shown.y - owner.GroundY);
-        float k = Mathf.Clamp01(height / (feel.shadowFadeHeight * S)); // 높이는 월드, 기준은 보스 단위
-        // 크기: 그림자는 크기가 줄어든 루트 밑이라 로컬 값 그대로 쓰면 월드에선 보스 크기만큼 작아진다
-        float m = Mathf.Lerp(1f, feel.shadowMinScale, k) * scale;
-        shadow.transform.position = new Vector3(shown.x, owner.GroundY + 0.02f, shadow.transform.position.z);
-        shadow.transform.localScale = new Vector3(feel.shadowSize.x * m, feel.shadowSize.y * m, 1f);
-        shadow.transform.rotation = Quaternion.identity;
-        shadow.color = new Color(0f, 0f, 0f, Mathf.Lerp(feel.shadowMaxAlpha, feel.shadowMinAlpha, k) * alpha);
+        if (groundShadow == null)
+        {
+            groundShadow = shadow.GetComponent<GroundShadow>();
+            if (groundShadow == null) groundShadow = shadow.gameObject.AddComponent<GroundShadow>();
+        }
+        // feel 값은 보스 단위 — 월드로 바꿔 넣는다 (매번 넣어서 플레이 중 feel을 고쳐도 바로 반영)
+        float s = S;
+        groundShadow.Configure(feel.shadowSize * s, feel.shadowMinScale, feel.shadowFadeHeight * s, feel.shadowMaxAlpha, feel.shadowMinAlpha);
+        groundShadow.Place(shown.x, owner.GroundY, shown.y - owner.GroundY, scale, alpha, width);
     }
 
 #if UNITY_EDITOR

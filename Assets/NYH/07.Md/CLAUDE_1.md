@@ -77,6 +77,7 @@ Assets/NYH/02. Scripts/Combat/
     Input/ 추가 (2026-10-11): IActionAdjustmentSource.cs(입력원이 이번 실행분 프레임 보정을 줄 때 — AI 패턴 속도)
     Systems/ 추가 (2026-10-28): HurtboxColliderSync.cs(플레이어 콜라이더 = Hurt박스, KKH 보스가 찾는 용)
     View/ 추가 (2026-11-09): CameraBounds.cs(static, 카메라에 보이는 경기장 평면의 좌우 끝 — 플레이어 이동 제한·쿄다이 경기장 공용)
+    View/ 추가 (2026-11-16): ShadowSprites.cs(static, 코드로 그리는 디더링 그림자 — 타원·띠)  GroundShadow.cs(바닥 그림자 하나 — 높이 뜰수록 작고 옅게)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
@@ -733,6 +734,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 65. 🔶 (2026-11-12) 내려찍기 소리가 너무 경쾌(사용자: 둔탁·묵직하게) — 주먹 충격 녹음이 고음(1kHz 위) 49%. `fistImpact_1·2`·`crusherSlam_1·2`를 녹음 여러 겹 + 로우패스 + 음높이 0.55~0.85배 + 합성 저음 쿵으로 다시 만듦(`Tools~/natural-sfx/mix-heavy.mjs`). 저음만 키우면 작은 스피커에서 사라져서 대역 비율로 맞춤: 주먹 저/중/고 ≈ 40/40/20%, 기물 ≈ 66~80% 저음. 같은 파일 이름·guid로 덮어써 에셋 연결 그대로, 바로 전 버전은 `09. Sound/Kyodai/이전/`. ⬜ 들어보고 조절
 66. ✅ (2026-11-12) NYH 정리(사용자: 안 쓰거나 합칠 수 있는 것만, 구조는 그대로) — 프로젝트 전체 텍스트 파일에서 guid·클래스 이름 참조를 조사해 **참조 0인 것만** 삭제: `PlayerData/Walk.asset`(빈 ActionData), `06.Material/SPRo 1·3.mat`, `08-999.OldPlayerAnim`의 안 쓰는 클립 9개 + `AnimatorControlle.controller`(PlayerAc.controller·CSH 프리팹이 쓰는 것은 남김). 합침: `IKyodaiHazard`(빈 표시 인터페이스) → `IKyodaiPatternUse.cs`. 내용이 완전히 같은 SO·안 쓰는 런타임 스크립트는 없었음. 남긴 것: `Kyodai2D_Master`(빌더 기본값 — 지우면 다시 만듦), `_Legacy3D` 일체(Battle2 씬이 사용 — 사용자 결정 대기)
 67. ✅ (2026-11-12) 안 쓰는 스크립트 분리(사용자) — 지금 게임(Battle3·빌드 씬)에서 안 쓰고 옛 Battle2 씬·레거시 코드에서만 쓰는 스크립트는 `Boss/Kyodai/_Legacy3D` 일체뿐 → `02. Scripts/99. 안쓰는 스크립트/Kyodai_Legacy3D/`로 .meta째 이동(guid 유지 — Battle2·RedLaserLine 프리팹·3D 모션 SO 연결 그대로, Editor 하위 폴더도 유지). 폴더 안 `README.md`에 아직 쓰는 곳 표. 이 문서의 예전 항목에 적힌 `_Legacy3D/` 경로는 이 폴더로 읽을 것
+68. 🔶 (2026-11-16) **그림자 시스템**(사용자: 그림자가 너무 반듯해 부자연스러움, 점프하면 커지고 작아지게, 플레이어·쿄다이 팔·내려찍기에). `ShadowSprites`(static): 그림 파일 없이 코드로 그림 — 투명도 4단계 + 4×4 디더링으로 가장자리가 흐린 픽셀 그림자. `Blob`(타원), `Band`(띠, 9분할용 — 양 끝 칸만 흐림, 가운데 칸은 디더링 없이 단계만: 늘어나도 줄무늬 안 생김). `GroundShadow`(바닥 그림자 하나): 주인이 `Place(x, 바닥, 높이, 크기 배율, 투명도 배율, 가로 배율)`로 알려주면 높이 뜰수록 `minScale`·`minAlpha`까지 작고 옅게, 부모 크기로 나눠 월드 크기 유지. 적용: ① `RobotView`(플레이어·일반 적) — `castGroundShadow`(기본 켬), 자식 `바닥 그림자`(씬에 미리 만들면 그 값), 높이 = y − `RobotMover.GroundY`(새로 공개), 그림이 꺼지면 숨김. 값(0.9×0.22, 높이 2에서 0.5배·투명도 0.45 → 0.15)은 임시. ② `KyodaiHand` — 그리기만 `GroundShadow`로 옮기고 값은 그대로 `KyodaiHandFeel`(보스 단위 → 월드로 바꿔 넣음), 가로로 늘린 손바닥은 그림자도 가로로만. 빌더의 `임시_그림자.png`는 연결은 남아 있지만 실행 때 코드 그림으로 바뀜. ③ `GroundTelegraph`(내려찍기·손바닥 압착·프레스 예고) — 흰 직사각형 → `Band`를 9분할로, 양 끝 `edgeSoftness`(0.35 월드, 임시)만 흐림. 미리보기 창은 끝날 때 손 그림자의 그림·표시 여부도 되돌림. ⬜ 플레이 검증 아직
 
 ---
 

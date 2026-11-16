@@ -102,6 +102,9 @@ public class CombatCamera : MonoBehaviour
         cam = GetComponent<Camera>();
         if (cam == null) // 예외처리
             Debug.LogWarning("[CombatCamera] 같은 오브젝트에 Camera 컴포넌트가 없음 — 줌/이동 제한 불가");
+
+        TryEnsureValidTransform(ref playerA, "Player");
+        TryEnsureValidTransform(ref playerB);
     }
 
     // 호출: Unity(모든 Update 이후). 이동이 끝난 파이터 위치로 카메라 이동/줌을 정한다
@@ -110,7 +113,7 @@ public class CombatCamera : MonoBehaviour
     // 이동하지 않은 "한 프레임 전" 캐릭터 위치를 쫓아가게 되어 살짝 밀리는 느낌이 생긴다
     private void LateUpdate()
     {
-        if (cam == null || playerA == null || playerB == null || isFrozen) return;
+        if (cam == null || !TryEnsureValidTransform(ref playerA, "Player") || !TryEnsureValidTransform(ref playerB) || isFrozen) return;
 
         if (!autoFrameFloor)
         {
@@ -322,7 +325,8 @@ public class CombatCamera : MonoBehaviour
         if (cam.orthographic) return cam.orthographicSize * cam.aspect;
 
         // 카메라와 캐릭터가 있는 평면(Z) 사이의 실제 거리를 구해서, 그 거리에서 보이는 절반 너비를 계산
-        float distance = Mathf.Abs(transform.position.z - playerA.position.z);
+        float planeZ = TryEnsureValidTransform(ref playerA, "Player") ? playerA.position.z : 0f;
+        float distance = Mathf.Abs(transform.position.z - planeZ);
         return Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * distance * cam.aspect;
     }
 
@@ -330,7 +334,7 @@ public class CombatCamera : MonoBehaviour
     // 호출: RobotMover.Tick. 받음: 가고 싶은 x. 반환: 현재 화면 좌우 끝선 안으로 보정된 x
     public float ClampFighterX(float desiredX)
     {
-        if (cam == null || playerA == null) return desiredX; // 카메라가 없으면 제한할 방법이 없으니 원하는 값 그대로 통과
+        if (cam == null || !TryEnsureValidTransform(ref playerA, "Player")) return desiredX; // 카메라가 없으면 제한할 방법이 없으니 원하는 값 그대로 통과
 
         float halfWidth = CurrentVisibleHalfWidth();
         float centerX = transform.position.x;
@@ -342,5 +346,34 @@ public class CombatCamera : MonoBehaviour
             clampedX = Mathf.Clamp(clampedX, arenaMinX + fighterEdgeInset, arenaMaxX - fighterEdgeInset);
         }
         return clampedX;
+    }
+
+    /// <summary>씬 직렬화 참조가 파괴됐거나 잘못된 컴포넌트 타입을 가리킬 때 MissingReferenceException으로 CombatClock.Tick이 중단되는 것을 방지한다</summary>
+    private static bool TryEnsureValidTransform(ref Transform target, string fallbackTag = null)
+    {
+        if (target != null)
+        {
+            try
+            {
+                _ = target.position;
+                return true;
+            }
+            catch (MissingReferenceException)
+            {
+                target = null;
+            }
+        }
+
+        if (!string.IsNullOrEmpty(fallbackTag))
+        {
+            var fallback = GameObject.FindWithTag(fallbackTag);
+            if (fallback != null)
+            {
+                target = fallback.transform;
+                return target != null;
+            }
+        }
+
+        return false;
     }
 }

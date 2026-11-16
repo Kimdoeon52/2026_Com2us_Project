@@ -15,7 +15,7 @@ namespace RealSteel.Boss.Kyosho
     /// 1페이즈 ~ 2페이즈 피날레 격파까지의 박자 동기화 전투 시퀀스를 총괄함.
     /// </summary>
     [RequireComponent(typeof(RSNanoSwarm))]
-    [RequireComponent(typeof(CircleCollider2D))]
+    [RequireComponent(typeof(BoxCollider2D))]
     public class KyoshoBossController : BossControllerBase
     {
         private enum PendingGateType { None, Variation1, Variation2, Finale }
@@ -64,7 +64,7 @@ namespace RealSteel.Boss.Kyosho
         private KyoshoStageBeatPulse _stageBeatPulse;
 
         private RSNanoRig _masterRig;
-        private CircleCollider2D _hurtCollider;
+        private BoxCollider2D _hurtCollider;
         private GameObject _rigHostGo;
 
         private KyoshoPhaseState _phaseState = KyoshoPhaseState.Intro;
@@ -120,7 +120,11 @@ namespace RealSteel.Boss.Kyosho
             {
                 _isInvincible = value;
                 if (Snapshot != null) Snapshot.isInvincible = value;
-                if (_hurtCollider != null) _hurtCollider.enabled = !value && Snapshot != null && Snapshot.IsAlive;
+                if (_hurtCollider != null)
+                {
+                    _hurtCollider.enabled = !value && Snapshot != null && Snapshot.IsAlive;
+                    Physics2D.SyncTransforms();
+                }
             }
         }
         public bool IsWaitingFinalBlow { get; set; }
@@ -177,9 +181,7 @@ namespace RealSteel.Boss.Kyosho
         {
             swarm = GetComponent<RSNanoSwarm>() ?? gameObject.AddComponent<RSNanoSwarm>();
             ConfigureDefaultSwarmSettings();
-            _hurtCollider = GetComponent<CircleCollider2D>() ?? gameObject.AddComponent<CircleCollider2D>();
-            _hurtCollider.isTrigger = true;
-            _hurtCollider.radius = 2.0f;
+            EnsureHurtBoxCollider();
 
             conductPattern = GetOrAddComponent<KyoshoConductPatternGimmick>();
             staccatoPattern = GetOrAddComponent<KyoshoStaccatoPatternGimmick>();
@@ -278,8 +280,8 @@ namespace RealSteel.Boss.Kyosho
             data.regionIndex = 3;
             data.regionBasePrice = 1300;
             data.regionLevelCap = 30;
-            data.maxHp = 10000;
-            data.baseDefense = 80;
+            data.maxHp = 200;
+            data.baseDefense = 40;
             data.patternPostDelay = 0.54f;
             data.rewardGold = 650;
             data.rewardCoreExp = 312;
@@ -290,9 +292,9 @@ namespace RealSteel.Boss.Kyosho
                 layer.maxAllowedPatterns = 6;
                 data.difficultyLayers.Add(layer);
             }
-            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionStringsID, gimmickName = "현악 섹션", isPhysicalBossPart = false, maxDurability = 800 });
-            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionPercussionID, gimmickName = "타악 섹션", isPhysicalBossPart = false, maxDurability = 800 });
-            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionBrassID, gimmickName = "금관 섹션", isPhysicalBossPart = false, maxDurability = 800 });
+            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionStringsID, gimmickName = "현악 섹션", isPhysicalBossPart = false, maxDurability = 80 });
+            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionPercussionID, gimmickName = "타악 섹션", isPhysicalBossPart = false, maxDurability = 80 });
+            data.gimmickParts.Add(new BossGimmickPartData { gimmickID = KyoshoConstants.SectionBrassID, gimmickName = "금관 섹션", isPhysicalBossPart = false, maxDurability = 80 });
             return data;
         }
 
@@ -364,8 +366,7 @@ namespace RealSteel.Boss.Kyosho
                 if (swarm.shader == null) swarm.shader = Shader.Find(RSNanoSwarm.ShaderName);
             }
 
-            _hurtCollider = GetComponent<CircleCollider2D>() ?? gameObject.AddComponent<CircleCollider2D>();
-            _hurtCollider.isTrigger = true;
+            EnsureHurtBoxCollider();
 
             conductPattern = GetOrAddComponent<KyoshoConductPatternGimmick>();
             staccatoPattern = GetOrAddComponent<KyoshoStaccatoPatternGimmick>();
@@ -481,7 +482,7 @@ namespace RealSteel.Boss.Kyosho
         {
             base.OnBossInitialized();
 
-            _lastAuthoritativeHp = Snapshot != null ? Snapshot.maxHp : 10000;
+            _lastAuthoritativeHp = Snapshot != null ? Snapshot.maxHp : 200;
             _variation1Triggered = false;
             _variation1Completed = false;
             _variation2Triggered = false;
@@ -566,6 +567,7 @@ namespace RealSteel.Boss.Kyosho
                 _sandScanCursor = 0;
                 transform.position = center;
                 GroundY = center.y;
+                SyncBlobHurtCollider();
             }
 
             if (_masterRig != null && !_masterRig.Active)
@@ -797,6 +799,7 @@ namespace RealSteel.Boss.Kyosho
                     swarm.Knight.origin.x = ClampToStageWallX(swarm.Knight.origin.x, 1.25f);
                     swarm.Knight.UpdatePose();
                     transform.position = swarm.Knight.ChestWorld;
+                    SyncMaestroHurtCollider();
                 }
                 return;
             }
@@ -806,6 +809,7 @@ namespace RealSteel.Boss.Kyosho
             {
                 // BossControllerBase.LateUpdate의 X클램프를 Blob.center에도 동기화
                 swarm.Blob.center.x = transform.position.x;
+                SyncBlobHurtCollider();
             }
         }
 
@@ -895,14 +899,7 @@ namespace RealSteel.Boss.Kyosho
             }
 
             transform.position = blob.center;
-
-            if (_hurtCollider != null)
-            {
-                bool allBroken = _sectionManager != null && _sectionManager.AreAllActiveSectionsBroken;
-                float baseRadius = Mathf.Clamp(Mathf.Min(blob.radius.x * 0.58f, blob.radius.y * 0.90f), 1.35f, 2.05f);
-                _hurtCollider.radius = allBroken ? baseRadius * 1.22f : baseRadius;
-                _hurtCollider.enabled = !IsInvincible && Snapshot.IsAlive;
-            }
+            SyncBlobHurtCollider();
         }
 
         private void UpdateMaestroBodyAndCollider(float dt)
@@ -941,12 +938,90 @@ namespace RealSteel.Boss.Kyosho
             }
 
             transform.position = k.ChestWorld;
+            SyncMaestroHurtCollider();
+        }
 
-            if (_hurtCollider != null)
+        /// <summary>
+        /// 본체 BoxCollider2D를 확보하고 구형 CircleCollider2D 잔재를 정리함.
+        /// </summary>
+        private void EnsureHurtBoxCollider()
+        {
+            foreach (var legacyCircle in GetComponents<CircleCollider2D>())
             {
-                _hurtCollider.radius = 1.55f;
-                _hurtCollider.enabled = !IsInvincible && Snapshot.IsAlive;
+                if (legacyCircle == null) continue;
+                legacyCircle.enabled = false;
+#if UNITY_EDITOR
+                if (!Application.isPlaying) UnityEngine.Object.DestroyImmediate(legacyCircle, true);
+                else Destroy(legacyCircle);
+#else
+                Destroy(legacyCircle);
+#endif
             }
+
+            _hurtCollider = GetComponent<BoxCollider2D>() ?? gameObject.AddComponent<BoxCollider2D>();
+            _hurtCollider.isTrigger = true;
+            _hurtCollider.offset = new Vector2(0f, -0.25f);
+            _hurtCollider.size = new Vector2(6.8f, 4.1f);
+        }
+
+        /// <summary>
+        /// 1·2페이즈 오케스트라 실루엣 폭·높이에 맞춰 피격 박스를 바닥까지 밀착 동기화함.
+        /// </summary>
+        private void SyncBlobHurtCollider()
+        {
+            if (_hurtCollider == null || swarm == null) return;
+
+            var blob = swarm.Blob;
+            bool allBroken = _sectionManager != null && _sectionManager.AreAllActiveSectionsBroken;
+            bool hasShape = blob.shape != null && blob.shape.Ready;
+
+            float halfW = hasShape ? Mathf.Max(1.8f, blob.radius.x * 0.94f) : Mathf.Clamp(blob.radius.x * 0.90f, 1.45f, 3.2f);
+            if (allBroken) halfW *= 1.10f;
+
+            float visualBottomY = blob.center.y - blob.radius.y;
+            float visualTopY = blob.center.y + (hasShape ? blob.radius.y * 0.95f : blob.radius.y * 0.90f);
+            float bottomY = (!_isPatternControllingPosition || visualBottomY <= _arenaFloorY + 0.55f)
+                ? Mathf.Min(visualBottomY, _arenaFloorY - 0.18f)
+                : visualBottomY;
+            float topY = Mathf.Max(bottomY + 1.2f, visualTopY);
+
+            ApplyWorldHurtBox(blob.center.x, bottomY, halfW, topY);
+        }
+
+        /// <summary>
+        /// 3페이즈 픽셀 마에스트로 전신(지면~머리)에 맞춰 피격 박스를 동기화함.
+        /// </summary>
+        private void SyncMaestroHurtCollider()
+        {
+            if (_hurtCollider == null || swarm == null) return;
+
+            var k = swarm.Knight;
+            float centerX = (k.origin.x + k.ChestWorld.x) * 0.5f;
+            float bottomY = Mathf.Min(k.origin.y - 0.18f, k.ChestWorld.y - 1.55f);
+            float topY = Mathf.Max(k.HeadWorld.y + 0.55f, k.ChestWorld.y + 1.55f);
+
+            ApplyWorldHurtBox(centerX, bottomY, 1.45f, topY);
+        }
+
+        private void ApplyWorldHurtBox(float worldCenterX, float worldBottomY, float halfW, float worldTopY)
+        {
+            if (_hurtCollider == null) return;
+
+            Vector3 lossy = transform.lossyScale;
+            float signedScaleX = Mathf.Abs(lossy.x) > 0.0001f ? lossy.x : 1f;
+            float signedScaleY = Mathf.Abs(lossy.y) > 0.0001f ? lossy.y : 1f;
+
+            float worldCenterY = (worldBottomY + worldTopY) * 0.5f;
+            float height = Mathf.Max(0.5f, worldTopY - worldBottomY);
+
+            _hurtCollider.offset = new Vector2(
+                (worldCenterX - transform.position.x) / signedScaleX,
+                (worldCenterY - transform.position.y) / signedScaleY);
+            _hurtCollider.size = new Vector2(
+                (halfW * 2f) / Mathf.Abs(signedScaleX),
+                height / Mathf.Abs(signedScaleY));
+            _hurtCollider.enabled = !IsInvincible && Snapshot != null && Snapshot.IsAlive;
+            Physics2D.SyncTransforms();
         }
 
         private void HandleBeatVisualPulse(int beatInBar, int totalBeat)

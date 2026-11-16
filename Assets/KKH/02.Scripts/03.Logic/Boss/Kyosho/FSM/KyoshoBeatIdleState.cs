@@ -126,13 +126,18 @@ namespace RealSteel.Boss.Kyosho
                 result = RealSteel.Boss.Core.PatternExecutionResult.Cancelled;
             }
 
+            if (_kyosho == null || _kyosho.IsCombatStopped || _kyosho.Snapshot == null || !_kyosho.Snapshot.IsAlive)
+            {
+                return;
+            }
+
             if (result == RealSteel.Boss.Core.PatternExecutionResult.Completed)
             {
                 ReturnToBeatIdle();
                 return;
             }
 
-            if (_kyosho.StateMachine.CurrentState == this && _kyosho.Snapshot != null && _kyosho.Snapshot.IsAlive && !_kyosho.IsCombatStopped)
+            if (_kyosho.StateMachine.CurrentState == this)
             {
                 ReturnToBeatIdle();
             }
@@ -140,6 +145,8 @@ namespace RealSteel.Boss.Kyosho
 
         private void ReturnToBeatIdle()
         {
+            if (_kyosho == null || _kyosho.IsCombatStopped) return;
+
             float beats = (_gimmick is KyoshoPatternGimmickBase kp) ? kp.PostDelayBeats : 1f;
             var token = _kyosho.RenewStateCancellationToken();
             _kyosho.StateMachine.ChangeState(new KyoshoBeatIdleState(_kyosho, token, beats));

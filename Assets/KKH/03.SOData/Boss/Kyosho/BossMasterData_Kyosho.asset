@@ -17,8 +17,8 @@ MonoBehaviour:
   regionIndex: 3
   regionBasePrice: 1300
   regionLevelCap: 30
-  maxHp: 2000
-  baseDefense: 80
+  maxHp: 200
+  baseDefense: 40
   patternPostDelay: 0.54
   difficultyLayers:
   - difficulty: 0
@@ -100,7 +100,7 @@ MonoBehaviour:
   - gimmickID: SECTION_STRINGS
     gimmickName: "\uD604\uC545 \uC139\uC158"
     isPhysicalBossPart: 0
-    maxDurability: 800
+    maxDurability: 80
     requiredGimmickTag: 0
     targetSkillIDToSeal: 
     groggyDuration: 4
@@ -108,7 +108,7 @@ MonoBehaviour:
   - gimmickID: SECTION_PERCUSSION
     gimmickName: "\uD0C0\uC545 \uC139\uC158"
     isPhysicalBossPart: 0
-    maxDurability: 800
+    maxDurability: 80
     requiredGimmickTag: 0
     targetSkillIDToSeal: 
     groggyDuration: 4
@@ -116,7 +116,7 @@ MonoBehaviour:
   - gimmickID: SECTION_BRASS
     gimmickName: "\uAE08\uAD00 \uC139\uC158"
     isPhysicalBossPart: 0
-    maxDurability: 800
+    maxDurability: 80
     requiredGimmickTag: 0
     targetSkillIDToSeal: 
     groggyDuration: 4

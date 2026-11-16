@@ -133,8 +133,8 @@ namespace RealSteel.Boss.Editor
             master.regionIndex = 3;
             master.regionBasePrice = 1300;
             master.regionLevelCap = 30;
-            master.maxHp = 10000;
-            master.baseDefense = 80;
+            master.maxHp = 200;
+            master.baseDefense = 40;
             master.patternPostDelay = 0.54f;
             master.rewardGold = 650;
             master.rewardCoreExp = 312;
@@ -155,21 +155,21 @@ namespace RealSteel.Boss.Editor
                 gimmickID = KyoshoConstants.SectionStringsID,
                 gimmickName = "현악 섹션",
                 isPhysicalBossPart = false,
-                maxDurability = 800
+                maxDurability = 80
             });
             master.gimmickParts.Add(new BossGimmickPartData
             {
                 gimmickID = KyoshoConstants.SectionPercussionID,
                 gimmickName = "타악 섹션",
                 isPhysicalBossPart = false,
-                maxDurability = 800
+                maxDurability = 80
             });
             master.gimmickParts.Add(new BossGimmickPartData
             {
                 gimmickID = KyoshoConstants.SectionBrassID,
                 gimmickName = "금관 섹션",
                 isPhysicalBossPart = false,
-                maxDurability = 800
+                maxDurability = 80
             });
 
             master.patterns.Clear();

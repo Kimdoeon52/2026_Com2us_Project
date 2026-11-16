@@ -110,8 +110,8 @@ MonoBehaviour:
     serializedVersion: 2
     rgba: 4294967295
   knightRefillPerFrame: 3000
---- !u!58 &1513324330291625765
-CircleCollider2D:
+--- !u!61 &1513324330291625765
+BoxCollider2D:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -144,8 +144,18 @@ CircleCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0}
-  m_Radius: 2
+  m_Offset: {x: 0, y: -0.25}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  m_Size: {x: 6.8, y: 4.1}
+  m_EdgeRadius: 0
 --- !u!114 &7296471864078433265
 MonoBehaviour:
   m_ObjectHideFlags: 0

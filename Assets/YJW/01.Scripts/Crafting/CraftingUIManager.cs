@@ -11,16 +11,6 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
     [SerializeField] private GameObject shopWindow;
     [SerializeField] private GameObject fixWindow;
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.C))
-            OpenCraftingWindow();
-        if (Input.GetKeyDown(KeyCode.K))
-            OpenShopWindow();
-        if (Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftShift))
-            OpenFixWindow();
-    }
-
     private void OpenCraftingWindow()
     {
         // 제작창만 열어도 재료를 끌어올 수 있게 그리드를 왼쪽 공간에 같이 켠다

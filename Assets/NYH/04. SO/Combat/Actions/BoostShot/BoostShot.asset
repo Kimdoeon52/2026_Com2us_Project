@@ -28,6 +28,7 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: Straight
   activeClipName: 
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -48,9 +49,12 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: 90
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 20
   - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
@@ -61,9 +65,12 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.11}
     rotation: 80
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 20
   - prefab: {fileID: 3168625228598809628, guid: 80209080148b5064295b4167f5fd6b22, type: 3}
@@ -74,9 +81,12 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.4}
     rotation: 100
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 20
   - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
@@ -87,9 +97,12 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: 90
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 5
   - prefab: {fileID: 681866824960476139, guid: c1a451028984dd555e7afc03b2c6db08, type: 3}
@@ -100,9 +113,12 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: 90
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.3
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 5
   perBoxDamage: 1

@@ -28,6 +28,7 @@ MonoBehaviour:
   hitStopScale: 1
   animationClipName: 
   activeClipName: Straight
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -48,10 +49,12 @@ MonoBehaviour:
     endMode: 0
     offset: {x: 0, y: 0.35}
     rotation: -90
-    followOwner: 0
+    XYRotation: {x: 0, y: 0}
+    followOwner: 1
     flipWithFacing: 1
     flipByRotation: 1
     scale: 0.1
+    scaleXY: {x: 1, y: 1}
     playbackSpeed: 2
     sortingOrderOffset: 0
   perBoxDamage: 0

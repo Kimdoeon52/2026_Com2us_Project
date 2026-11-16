@@ -9188,7 +9188,7 @@ PrefabInstance:
       objectReference: {fileID: 411684200}
     - target: {fileID: 7805140482852692383, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -0.0009858875
+      value: -0.0009699992
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -40522,7 +40522,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 2.5962944, y: 15.789392}
+  m_LightCookieOffset: {x: 27.047485, y: 1.2466888}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -77773,6 +77773,10 @@ PrefabInstance:
       propertyPath: _view
       value: 
       objectReference: {fileID: 891873471}
+    - target: {fileID: 9146149663359202958, guid: e570290dcf1d67a44a59ffbb8893b138, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

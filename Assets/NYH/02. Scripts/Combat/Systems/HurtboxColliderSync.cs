@@ -9,7 +9,8 @@ using UnityEngine;
 ///
 /// 규칙:
 ///   · Hurt박스가 여러 개면 전부 감싸는 사각형 하나로 (BoxCollider2D 하나라서)
-///   · Hurt박스가 없거나 회피 무적(HitDetection.IsInvincibleNow) 중이면 콜라이더를 끈다 — 보스 공격이 그냥 지나간다
+///   · Hurt박스가 없거나 사망이면 콜라이더를 끈다. (2026-11-16부터 회피 무적 중엔 켜 둔다 — 보스 공격이 닿아야 회피 성공 연출이 나온다,
+///     피해는 보스 쪽 무적 검사가 막는다)
 ///   · 죽으면 끈다
 /// Player 오브젝트에만 붙인다(적 로봇엔 필요 없음).
 /// </summary>
@@ -38,7 +39,9 @@ public class HurtboxColliderSync : MonoBehaviour
     private void LateUpdate()
     {
         ActionState state = executor.State;
-        if (state == null || state.IsDead || HitDetection.IsInvincibleNow(executor))
+        // 2026-11-16: 회피 무적 중에도 콜라이더를 켜 둔다 — 보스 공격이 플레이어를 찾아야 "무적이라 안 맞음"(= 회피 성공 연출)이 된다.
+        // 피해는 안 들어간다: KKH 보스 공격·쿄다이 공격은 전부 데미지 전에 무적을 직접 검사한다(IsPlayerInvincible / IsInvincibleDuringActive)
+        if (state == null || state.IsDead)
         {
             target.enabled = false;
             return;

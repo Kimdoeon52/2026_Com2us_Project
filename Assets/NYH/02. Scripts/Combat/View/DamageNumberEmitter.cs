@@ -162,6 +162,8 @@ public class DamageNumberEmitter : MonoBehaviour
 
         if (result.IsEvaded)
         {
+            // 2026-11-16: 플레이어의 MISS는 회피 성공 연출(DodgeSuccessDirector.Trigger → ShowMiss)이 띄운다 — 여기서도 띄우면 두 번 뜬다
+            if (isPlayer) return;
             label = MissText;
             color = MissColor;
         }
@@ -174,6 +176,13 @@ public class DamageNumberEmitter : MonoBehaviour
 
         pending.Enqueue(new Pending { label = label, color = color, size = size });
         ReleasePending(); // 대기 중인 게 없고 간격도 지났으면 이번 프레임에 바로 뜬다
+    }
+
+    /// <summary>회피 성공 — 이 대상 머리 위(spawnOffset)에 MISS (2026-11-16, 호출: DodgeSuccessDirector)</summary>
+    public void ShowMiss()
+    {
+        pending.Enqueue(new Pending { label = MissText, color = MissColor, size = FontSize });
+        ReleasePending();
     }
 
     /// <summary>

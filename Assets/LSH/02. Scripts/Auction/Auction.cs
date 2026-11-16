@@ -65,7 +65,9 @@ public class Auction : Singleton<Auction>
 
     [Header("연속 경매 설정")]
     [SerializeField] private int totalAuctionRounds = 3; //연속으로 진행할 경매 횟수
-    [SerializeField] private string nextSceneName = ""; //경매 전부 끝난 뒤 이동할 씬 (비워두면 이동 안 함)
+    [Tooltip("경매가 모두 끝나거나 '나가기'를 누르면 이동할 씬 (경로 또는 이름). Build Settings에 등록돼 있어야 함")]
+    [SerializeField] private string exitScenePath = "Assets/Scenes/Copys_1116/Map_Test.unity";
+    private AuctionType? sessionAuctionType; // 첫 회차에 고른 경매 방식 (이후 회차는 이걸로 자동 진행)
     private int currentRound = 0; //현재 진행 중인 회차
     [SerializeField] [Min(1f)] private float giveUpTimeScale = 3f; //플레이어가 포기하면 경매를 n배속으로 진행 (빠른 종료 유도)
 
@@ -373,7 +375,7 @@ public class Auction : Singleton<Auction>
             await StartAuction();
         }
 
-        ReleasePlayer(); // 경매가 모두 끝나면 다시 움직일 수 있음
+        // 경매가 모두 끝나도 씬 이동 전까지는 착석(이동 잠금) 유지
         GlobalGold.Instance.AdvanceStage(stageData.StageCount); // 세션이 끝나면 다음 스테이지로
         MoveToNextScene(1000).Forget();
     }
@@ -575,20 +577,22 @@ public class Auction : Singleton<Auction>
         return true;
     }
 
-    // 모든 경매가 끝난 뒤 씬 이동. nextSceneName이 비어 있으면 이동하지 않음
+    // 모든 경매가 끝난 뒤(또는 나가기) 씬 이동. exitScenePath가 비어 있으면 이동하지 않음
     private async UniTask MoveToNextScene(int waitDelay)
     {
-        await UniTask.Delay(waitDelay);
-        if (string.IsNullOrWhiteSpace(nextSceneName))
+        await UniTask.Delay(waitDelay, ignoreTimeScale: true);
+        ResetGameSpeed();
+        if (string.IsNullOrWhiteSpace(exitScenePath))
         {
             Debug.Log("[Auction] 모든 경매 종료. 이동할 씬이 지정되지 않아 이동하지 않음.");
+            ReleasePlayer();
             return;
         }
 
         if (GameSceneManager.Instance != null)
-            GameSceneManager.Instance.LoadScene(nextSceneName);
+            GameSceneManager.Instance.LoadScene(exitScenePath);
         else
-            UnityEngine.SceneManagement.SceneManager.LoadScene(nextSceneName);
+            UnityEngine.SceneManagement.SceneManager.LoadScene(exitScenePath);
     }
     //private void Update()
     //{
@@ -636,8 +640,9 @@ public class Auction : Singleton<Auction>
     private async UniTask StartAuction()
     {
         IsAuctioningFin = false; // 아직 경매 안끝남
-        // 시작하자마자 유저 모드 선택부터 대기(스페이스바 입력 영향 안 받음)
-        currentAuctionType = await WaitPlayerSelectModeAsync();
+        // 첫 회차에서만 경매 방식을 고르고, 이후 회차는 같은 방식으로 자동 진행
+        if (sessionAuctionType == null) sessionAuctionType = await WaitPlayerSelectModeAsync();
+        currentAuctionType = sessionAuctionType.Value;
         AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
         //==========Npc UI 활성화 ==========
         NPCImageOn();
@@ -1358,8 +1363,7 @@ public class Auction : Singleton<Auction>
     public void OnGGAuction() //경매 자체 포기
     {
         ShowErrorMessage("경매를 나갑니다.").Forget();
-        ReleasePlayer();
-        MoveToNextScene(2000).Forget();
+        MoveToNextScene(2000).Forget(); // 경매 종료 시와 같은 곳(exitScenePath)으로 이동
     }
     //================================Canvas에 AI 설치 =======================
     private void SpawnAndPositionAi()

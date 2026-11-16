@@ -79,6 +79,8 @@ Assets/NYH/02. Scripts/Combat/
     View/ 추가 (2026-11-09): CameraBounds.cs(static, 카메라에 보이는 경기장 평면의 좌우 끝 — 플레이어 이동 제한·쿄다이 경기장 공용)
     View/ 추가 (2026-11-16): ShadowSprites.cs(static, 코드로 그리는 디더링 그림자 — 타원·띠)  GroundShadow.cs(바닥 그림자 하나 — 높이 뜰수록 작고 옅게)
     Data/ 추가 (2026-11-16): DamageNumberStyle.cs(데미지 숫자 공용 모양 SO — 에셋은 04. SO/Combat/Resources/DamageNumberStyle)
+                             DodgeSuccessSettings.cs(회피 성공 연출 값 SO — 에셋은 04. SO/Combat/Resources/DodgeSuccessSettings)
+    View/ 추가 (2026-11-16): CameraFx.cs(static, 그리는 순간에만 카메라 흔들림·줌 — KyodaiCameraShake도 이리로)  DodgeSuccessDirector.cs(static, 회피 성공 MISS·슬로우·줌, DOTween)
     Runtime/    RuntimeRobot.cs  RuntimePart.cs  RuntimeCore.cs  ActionState.cs ✅
     Systems/    ActionExecutor.cs ✅  HitDetection.cs  DurabilitySystem.cs
                 KnockbackSystem.cs  RobotAssembler.cs  (StunSystem.cs는 2026-09-29 경직 삭제로 미생성, §7)
@@ -740,6 +742,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 70. 🔶 (2026-11-16) 쿄다이 **임시 배경음악**(사용자: 크기는 프로젝트에서 조절, 보스전 시작에 페이드인, 보스를 잡으면 끊김) — `KyodaiSfx.StartBgm/StopBgm/TickBgm`(효과음 재생기에 붙임 — 새 MonoBehaviour 없음), 값은 `KyodaiSfxData`(`Kyodai2D_효과음`) `bgm`·`bgmVolume`(0.5, 효과음 크기와 따로)·`bgmFadeInSeconds`(2.5)·`bgmStopSeconds`(0.15, 0 = 바로). 크기는 매 프레임 읽어 플레이 중 수정도 바로 반영, 페이드는 실제 시간·제곱 곡선. 시작 = `OnBossInitialized`, 끊김 = `OnBossDefeated`. 곡은 임시로 1보스 2페이즈 곡(KKH `The_Hangman_s_Breakdown.mp3`, 참조만) — 쿄다이 곡이 나오면 칸만 바꿈. LHM `SoundManager`의 게임 음량 옵션은 아직 안 따름(Battle3에 SoundManager 없음). ⬜ 플레이 검증 아직
 71. 🔶 (2026-11-16) **보스 공용 데미지 숫자**(사용자: 보스 1·2·3 모두 플레이어가 때리면 메이플식 데미지 표시) — KKH 보스 베이스는 안 고침. 플레이어 → 보스 타격이 전부 `HitDetection` → 허브 `ProcessHit`을 지나므로 거기서 띄운다: 근접(`ResolveBossHit` — 보스를 맞힌 첫 Hit박스 가운데, 박스마다 따로 맞는 행동은 숫자도 따로)·투사체(`TryProjectileHitBoss` — 총알 자리)·촉수 등(`ResolveTargetHits`). HitDetection을 안 거치는 경로(CSH `ProjectileExplosion` 폭발 범위 등)는 허브 `OnBossDamaged`로 받아 보스 콜라이더 가운데에(크리 정보 없음). 같은 타격이 두 번 안 뜨게 HitDetection이 처리하는 동안(`bossHitInProgress`)은 허브 이벤트 무시. 그리기는 기존 `DamageNumberEmitter`에 `ShowDealt(데미지, 크리, 자리)` 추가(쌓기·순차·튀기 공용, 색 dealtColor) — 맞은 대상에 없으면 자동 부착, 보스 프리팹에 미리 붙이면 그 값. ⬜ 플레이 검증 아직(보스 1·2·3)
 72. 🔶 (2026-11-16) **데미지 숫자 공용 스타일**(사용자: 글꼴을 한 곳에서) — `DamageNumberStyle`(Combat/Data, SO: 글꼴·크기·크리 배율·굵기·테두리·맞음/때림/MISS 색·표시 형식·튀기). 에셋 `04. SO/Combat/Resources/DamageNumberStyle`을 `Resources.Load`로 모든 `DamageNumberEmitter`가 자동으로 씀(자동 부착된 보스·적 숫자 포함, 연결 불필요). 대상별로 다르게 = 그 emitter의 `style` 칸. 스타일이 없으면 emitter 자기 값. 재사용 글자도 뜰 때마다 스타일을 다시 입혀 플레이 중 수정 반영. 움직임 값(떠오름·쌓기·순차)은 여전히 emitter별
+73. 🔶 (2026-11-16) **회피 성공 연출**(사용자: 회피 성공 시 MISS + DOTween 줌인 + 잠깐 슬로우) — 감지: `HitDetection.IsInvincibleNow`가 플레이어를 무적으로 판정하는 순간 = 공격이 회피 무적에 닿음(KKH `IsPlayerInvincible` → 쿄다이·KKH 보스 공격, 로봇 공격, CSH 폭발). 그래서 **`HurtboxColliderSync`는 회피 무적 중에도 콜라이더를 켜 둠**(사망만 끔) — KKH·쿄다이 공격은 전부 데미지 전에 무적을 직접 검사해 피해는 안 들어감(확인함). 상태만 볼 땐 `IsDodging`(연출 없음). 연출: `DodgeSuccessDirector` — MISS(`DamageNumberEmitter.ShowMiss`, 플레이어 evaded 결과의 MISS는 중복이라 안 띄움), `Time.timeScale` 트윈(실제 시간, 끝나거나 끊기면 원래 배율로 복구, 일시정지 0은 안 덮음), 줌은 `CameraFx`(그리는 순간에만 시야각·위치 — 경기장 계산·판정 무관, 흔들림과 한 곳에서 합쳐 복원 충돌 방지). 값: `DodgeSuccessSettings`(Resources). 쿨다운 0.8초(레이저처럼 매 틱 닿아도 1번). 한계: KKH 일부 기물(돌진·폭발 상자·불길·못판·충격파)은 무적 플래그를 직접 봐서 연출이 안 남. CSH 폭발은 범위 확인 전에 무적을 물어 적 폭발이 멀리서 터져도 연출이 날 수 있음. ⬜ 플레이 검증 아직
 
 ---
 

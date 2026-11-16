@@ -194,9 +194,22 @@ public class HitDetection : MonoBehaviour
         return reacted;
     }
 
-    // 회피(구 위닝) 무적 — 기술 이름이 아니라 플래그로 판정한다 (§13). HurtboxColliderSync도 이걸 본다
-    public static bool IsInvincibleNow(ActionExecutor defender) =>
-        defender.State.CurrentAction != null
+    // 회피(구 위닝) 무적 — 기술 이름이 아니라 플래그로 판정한다 (§13).
+    // 2026-11-16: "공격이 닿아서 무적인지 묻는 곳" 전용 — 플레이어가 무적이면 그게 곧 회피 성공이라 연출(DodgeSuccessDirector)을 띄운다.
+    // 부르는 곳: 로봇 공격(아래 ResolveHit·투사체), KKH 보스 공격(BossPatternGimmickBase.IsPlayerInvincible — 쿄다이 공격 포함),
+    // CSH 폭발 범위(ProjectileExplosion — 범위 확인 전에 물어서, 적 폭발이 멀리서 터져도 연출이 날 수 있음).
+    // 공격과 무관하게 상태만 보려면 IsDodging (연출 없음)
+    public static bool IsInvincibleNow(ActionExecutor defender)
+    {
+        bool invincible = IsDodging(defender);
+        if (invincible && defender.FighterId == "Player") DodgeSuccessDirector.Trigger(defender);
+        return invincible;
+    }
+
+    /// <summary>회피 무적 중인지만 본다 (연출 없음)</summary>
+    public static bool IsDodging(ActionExecutor defender) =>
+        defender != null && defender.State != null
+        && defender.State.CurrentAction != null
         && defender.State.CurrentAction.IsInvincibleDuringActive
         && defender.State.Phase == ActionPhase.Active;
 

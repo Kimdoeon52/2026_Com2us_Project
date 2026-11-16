@@ -71,7 +71,7 @@ public class KyodaiBossController : BossControllerBase
     [Min(0)] [SerializeField] private int armDisableFrames = 480;
 
     [Tooltip("임시 체력 표시(KyodaiHpDebugView)를 시작할 때 붙인다 — 정식 UI가 생기면 끈다")]
-    [SerializeField] private bool showDebugHp = true;
+    [SerializeField] private bool showDebugHp = false;
 
     [Header("난이도별 차이 (2026-11-12)")]
     [Tooltip("난이도마다 나오는 패턴·동시 패턴 수·기물 빈도·촉수 최대 수. 비우면 예전 방식(KKH 패턴 수 제한으로 무작위 고르기, 동시 패턴 없음)")]

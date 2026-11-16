@@ -121,6 +121,8 @@ namespace RealSteel.NanoBoss
         [Range(0f, 30f)] public float viscosity = 8f;
         [Tooltip("모래가 비탈을 미끄러지는 확률 (프레임마다). 낮을수록 가파르게 쌓인다")]
         [Range(0f, 1f)] public float slide = 0.6f;
+        [Tooltip("덩어리/실루엣 표면에서 모래가 아래로 흘러내리는 세기 (0 = 없음)")]
+        [Range(0f, 1f)] public float sandDrip = 0f;
 
         [Header("바닥")]
         [Tooltip("시작할 때 이 오브젝트 높이를 바닥으로 쓴다")]
@@ -134,6 +136,10 @@ namespace RealSteel.NanoBoss
         [Tooltip("검게 될 때 남는 밝기")]
         [Range(0f, 0.3f)] public float darkTint = 0.05f;
         [ColorUsage(false, true)] public Color rimColor = new Color(1.6f, 1.6f, 1.7f);
+        [Tooltip("보스 봇 전체 흑백(모노크롬) 변환 비율 (0 = 원본 색 / 1 = 완전 흑백)")]
+        [Range(0f, 1f)] public float monochrome;
+        [Tooltip("흑백 모드 명암 대비 강화 (1 = 기본 휘도, 높을수록 짙은 흑색과 순백 대비 강조)")]
+        [Range(1f, 5f)] public float monochromeContrast = 1f;
 
         [Header("그리기")]
         public Shader shader;
@@ -236,6 +242,8 @@ namespace RealSteel.NanoBoss
             public static readonly int Dark = Shader.PropertyToID("_Dark");
             public static readonly int DarkTint = Shader.PropertyToID("_DarkTint");
             public static readonly int RimColor = Shader.PropertyToID("_RimColor");
+            public static readonly int Monochrome = Shader.PropertyToID("_Monochrome");
+            public static readonly int MonochromeContrast = Shader.PropertyToID("_MonochromeContrast");
         }
 
         // ─────────────────────────────────────────────────────────────
@@ -472,7 +480,7 @@ namespace RealSteel.NanoBoss
                     frame = ++simFrame,
                     dt = dt, time = time, clock = rigOn ? rig.Clock : 0f, floorY = floorY,
                     gravity = gravity, flashDecay = flashDecay,
-                    viscosity = viscosity, dark = dark, spacing = spacing, cell = Cell,
+                    viscosity = viscosity, dark = dark, sandDrip = sandDrip, spacing = spacing, cell = Cell,
                     frontZ = FrontZ, backZ = BackZ,
                     blobSlotColor = (uint*)pins.Pin(blobColors),
                     limbSlotColor = (uint*)pins.Pin(lcolors),
@@ -1095,6 +1103,8 @@ namespace RealSteel.NanoBoss
             mpb.SetFloat(Ids.Dark, dark);
             mpb.SetFloat(Ids.DarkTint, darkTint);
             mpb.SetColor(Ids.RimColor, rimColor);
+            mpb.SetFloat(Ids.Monochrome, monochrome);
+            mpb.SetFloat(Ids.MonochromeContrast, monochromeContrast);
 
             var rp = new RenderParams(mat)
             {

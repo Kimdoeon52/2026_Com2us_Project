@@ -21,6 +21,8 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
         [Header(Color)]
         [Space(4)]
         _Color      ("색조", Color) = (1, 1, 1, 1)
+        _Monochrome ("흑백 변환", Range(0, 1)) = 0
+        _MonochromeContrast ("흑백 대비", Range(1, 5)) = 1
 
         [Header(Lighting)]
         [Space(4)]
@@ -53,6 +55,8 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
 
         CBUFFER_START(UnityPerMaterial)
             half4  _Color;
+            float  _Monochrome;
+            float  _MonochromeContrast;
             float  _LightStrength;
             float  _EdgeTilt;
             float  _TopLight;
@@ -220,6 +224,31 @@ Shader "RE_AL STEEL/NanoBot Pixel Lit"
 
                 // 번쩍임 (피격)
                 col = lerp(col, _BossFlashColor.rgb, saturate(IN.fx.x) * _FlashStrength);
+
+                // 흑백 변환 및 명암 대비 (옵트인)
+                if (_Monochrome > 0.001)
+                {
+                    half luma = dot(col, half3(0.299, 0.587, 0.114));
+                    half finalLuma = luma;
+                    if (_MonochromeContrast > 1.001)
+                    {
+                        half k = saturate((_MonochromeContrast - 1.0) / 3.0);
+                        half baseL = saturate(luma);
+                        half hdr = max(luma - 1.0, 0.0);
+                        half p = baseL > 0.0001 ? pow(baseL, 0.4545) : 0.0;
+                        // 1·2페 실루엣 외곽 상단/측면은 얇은 은빛 윤곽, 하단은 깊은 먹색 그림자로 분리
+                        half edgeRelief = (saturate(IN.normalWS.y * 0.65 + abs(IN.normalWS.x) * 0.35) * 0.24 - saturate(-IN.normalWS.y) * 0.10) * k * (1.0 - _Dark);
+                        p = saturate(p + edgeRelief);
+                        p = saturate((p - 0.38 * k) / max(1.0 - 0.46 * k, 0.22));
+                        half s = p * p * (3.0 - 2.0 * p);
+                        half s2 = s * s * (3.0 - 2.0 * s);
+                        p = lerp(p, lerp(s, s2, 0.65), saturate(k * 1.15));
+                        p = p > 0.0001 ? pow(p, lerp(1.0, 1.35, k)) : 0.0;
+                        half contrasted = p > 0.0001 ? pow(saturate(p), 2.2) : 0.0;
+                        finalLuma = contrasted + hdr * lerp(1.0, 1.35, k);
+                    }
+                    col = lerp(col, finalLuma.xxx, _Monochrome);
+                }
 
                 col = MixFog(col, IN.fogCoord);
                 return half4(col, 1.0);

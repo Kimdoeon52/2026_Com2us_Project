@@ -46,6 +46,16 @@ namespace RealSteel.Boss.Kyosho
         [Tooltip("테스트용 전체 공격력/파츠 피해 배율 (기획 Lv.21~30 기준 원복 시 1.0으로 설정)")]
         [SerializeField, Range(0.05f, 2f)] private float testDamageScale = 1.0f;
 
+        [Header("흑백 색감 및 모래 흘러내림 물리 설정")]
+        [SerializeField] private bool monochromeBoss = true;
+        [SerializeField, Range(1f, 5f)] private float monochromeContrast = 3.55f;
+        [SerializeField, Range(0.1f, 1f)] private float sandFlowBindPhase1 = 0.62f;
+        [SerializeField, Range(0.1f, 1f)] private float sandFlowBindPhase2 = 0.50f;
+        [SerializeField, Range(0f, 1f)] private float sandDripStrength = 0.72f;
+        [SerializeField, Range(0, 1200)] private int maxAmbientSandParticles = 420;
+        [SerializeField, Range(0f, 600f)] private float ambientSandShedRate = 180f;
+        [SerializeField, Range(0f, 600f)] private float ambientSandReabsorbRate = 180f;
+
         private KyoshoBeatClock _beatClock;
         private KyoshoSectionManager _sectionManager;
         private KyoshoBeatIndicatorHUD _beatIndicatorHud;
@@ -63,6 +73,12 @@ namespace RealSteel.Boss.Kyosho
         private bool _hasFloorY;
         private bool _driftEnabled;
         private float _beatPulseAmount;
+        private float _sandShedAcc;
+        private float _sandReabsorbAcc;
+        private int _sandScanCursor;
+        private float _prevBlobCenterX;
+        private float _smoothedVelX;
+        private bool _hasPrevBlobX;
 
         private int _lastAuthoritativeHp;
         private bool _variation1Triggered;
@@ -191,6 +207,58 @@ namespace RealSteel.Boss.Kyosho
             {
                 swarm.shader = Shader.Find(RSNanoSwarm.ShaderName);
             }
+
+            ApplyMonochromeSwarmTheme();
+            ApplySandFlowSwarmSettings();
+        }
+
+        private void ApplyMonochromeSwarmTheme()
+        {
+            if (swarm == null || !monochromeBoss) return;
+
+            swarm.monochrome = 1f;
+            swarm.monochromeContrast = monochromeContrast;
+            swarm.darkTint = 0.02f;
+            if (swarm.glitchAura != null)
+            {
+                swarm.glitchAura.color = GlitchAuraColor.Monochrome;
+            }
+
+            if (swarm.botColors == null)
+            {
+                swarm.botColors = new List<NanoBotColor>();
+            }
+            else
+            {
+                swarm.botColors.Clear();
+            }
+
+            swarm.botColors.Add(new NanoBotColor { color = new Color32(4, 4, 5, 255), ratio = 0.38f });
+            swarm.botColors.Add(new NanoBotColor { color = new Color32(24, 24, 28, 255), ratio = 0.26f });
+            swarm.botColors.Add(new NanoBotColor { color = new Color32(128, 128, 136, 255), ratio = 0.18f });
+            swarm.botColors.Add(new NanoBotColor { color = new Color32(245, 245, 252, 255), ratio = 0.18f });
+
+            swarm.sparkleRatio = Mathf.Max(swarm.sparkleRatio, 0.07f);
+            swarm.sparkleTint = new Color32(255, 255, 255, 255);
+            swarm.rimColor = new Color(2.4f, 2.4f, 2.4f, 1f);
+            swarm.grainNoise = Mathf.Max(swarm.grainNoise, 0.16f);
+
+            bool hasSpriteBodyColor = swarm.Blob.shapeArtColor && swarm.Blob.shape != null && swarm.Blob.shape.Ready;
+            if (swarm.Count > 0 && !hasSpriteBodyColor)
+            {
+                swarm.RecolorAll();
+            }
+        }
+
+        private void ApplySandFlowSwarmSettings()
+        {
+            if (swarm == null) return;
+
+            swarm.viscosity = 12f;
+            swarm.slide = 0.82f;
+            swarm.refillDelay = 0.22f;
+            swarm.gravity = 24f;
+            swarm.sandDrip = sandDripStrength;
         }
 
         protected override void SetupSnapshot()
@@ -359,7 +427,7 @@ namespace RealSteel.Boss.Kyosho
                 limb.radius = 0.24f;
                 limb.amount = 0f;
                 limb.grow = 0f;
-                limb.bind = 0.9f;
+                limb.bind = 0.65f;
                 bloomLimbs.Add(limb);
             }
             bloomPattern?.InitializeStemPool(bloomLimbs, swarm, _rigHostGo.transform);
@@ -371,7 +439,7 @@ namespace RealSteel.Boss.Kyosho
             var morphLimb = morphGo.AddComponent<RSNanoLimb>();
             morphLimb.type = LimbType.Sprite;
             morphLimb.amount = 0f;
-            morphLimb.bind = 1f;
+            morphLimb.bind = 0.78f;
             morphLimb.artColor = true;
             variationPattern?.Configure(morphLimb, rhythmTable);
 
@@ -394,7 +462,7 @@ namespace RealSteel.Boss.Kyosho
             var limb = go.AddComponent<RSNanoLimb>();
             limb.type = LimbType.Sprite;
             limb.amount = 0f;
-            limb.bind = 1f;
+            limb.bind = 0.78f;
             limb.artColor = true;
             limb.picture = rhythmTable != null ? rhythmTable.GetSectionShape(type) : null;
             if (limb.picture == null || !limb.picture.Ready)
@@ -436,6 +504,8 @@ namespace RealSteel.Boss.Kyosho
             if (swarm != null)
             {
                 swarm.dark = 0f;
+                ApplyMonochromeSwarmTheme();
+                ApplySandFlowSwarmSettings();
                 swarm.Knight.moves = null;
                 swarm.Knight.reinforce = false;
                 swarm.Knight.scaleOverride = 0;
@@ -457,13 +527,13 @@ namespace RealSteel.Boss.Kyosho
                 Vector3 center;
                 if (bodyShape != null && bodyShape.Ready)
                 {
-                    swarm.Blob.wobble = 0.015f;
-                    swarm.Blob.flow = 0.04f;
-                    swarm.Blob.bind = 0.94f;
-                    swarm.Blob.stiffness = 78f;
-                    swarm.Blob.damping = 14f;
+                    swarm.Blob.wobble = 0.055f;
+                    swarm.Blob.flow = 0.22f;
+                    swarm.Blob.bind = sandFlowBindPhase1;
+                    swarm.Blob.stiffness = 52f;
+                    swarm.Blob.damping = 11f;
                     swarm.Blob.maxSpeed = 34f;
-                    swarm.Blob.noise = 0.015f;
+                    swarm.Blob.noise = 0.055f;
                     float pxScale = swarm.Cell * Mathf.Max(0.1f, orchestraSilhouetteScale);
                     float halfW = Mathf.Max(1.6f, (bodyShape.maxX - bodyShape.minX + 1) * 0.5f * pxScale);
                     float halfH = Mathf.Max(1.2f, (bodyShape.maxY - bodyShape.minY + 1) * 0.5f * pxScale);
@@ -479,8 +549,21 @@ namespace RealSteel.Boss.Kyosho
                     center = new Vector3(centerX, _arenaFloorY + _blobBaseSize.y * 0.78f, 0f);
                 }
                 swarm.Blob.center = center;
+                ApplyMonochromeSwarmTheme();
                 swarm.Build(center);
                 swarm.ResetBotLooks();
+                if (monochromeBoss)
+                {
+                    swarm.monochrome = 1f;
+                    swarm.monochromeContrast = monochromeContrast;
+                }
+                ApplySandFlowSwarmSettings();
+                _prevBlobCenterX = center.x;
+                _hasPrevBlobX = true;
+                _smoothedVelX = 0f;
+                _sandShedAcc = 0f;
+                _sandReabsorbAcc = 0f;
+                _sandScanCursor = 0;
                 transform.position = center;
                 GroundY = center.y;
             }
@@ -590,7 +673,119 @@ namespace RealSteel.Boss.Kyosho
             KyoshoSfx.SyncBgmWithBeatClock(_beatClock);
             if (IsCombatStopped || Snapshot == null || !Snapshot.IsAlive || swarm == null) return;
 
+            if (monochromeBoss)
+            {
+                swarm.monochrome = 1f;
+                swarm.monochromeContrast = monochromeContrast;
+            }
             UpdateBlobBodyAndCollider(Time.deltaTime);
+            StepAmbientSandCycle(Time.deltaTime);
+        }
+
+        private void StepAmbientSandCycle(float dt)
+        {
+            if (swarm == null || dt <= 0f || _isEncoreRunning || _isCurtainCallDefeatRunning) return;
+            if (_phaseState == KyoshoPhaseState.EncoreAwakening) return;
+
+            var bots = swarm.Bots;
+            if (bots == null || bots.Length == 0) return;
+
+            bool groggy = Snapshot.isGroggy;
+            float targetDrip = groggy
+                ? Mathf.Clamp01(sandDripStrength * 1.35f)
+                : (_phase3Entered ? Mathf.Clamp01(sandDripStrength * 0.78f) : sandDripStrength);
+            swarm.sandDrip = targetDrip;
+
+            if (maxAmbientSandParticles <= 0) return;
+
+            int n = bots.Length;
+            int maxDebris = groggy
+                ? Mathf.RoundToInt(maxAmbientSandParticles * 1.5f)
+                : (_phase3Entered ? Mathf.RoundToInt(maxAmbientSandParticles * 0.65f) : maxAmbientSandParticles);
+
+            int debrisCount = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (bots[i].mode == BotMode.Debris)
+                {
+                    debrisCount++;
+                }
+            }
+
+            Vector3 center = _phase3Entered ? swarm.Knight.ChestWorld : swarm.Blob.center;
+            float rx = Mathf.Max(0.5f, swarm.Blob.radius.x);
+
+            float shedRate = ambientSandShedRate * (groggy ? 1.5f : (_phase3Entered ? 0.65f : 1f));
+            _sandShedAcc += shedRate * dt;
+            int toShed = Mathf.Min(16, (int)_sandShedAcc);
+            if (toShed > 0 && debrisCount < maxDebris)
+            {
+                _sandShedAcc -= toShed;
+                int shedBudget = Mathf.Min(toShed, maxDebris - debrisCount);
+                int shedGuide = _phase3Entered ? RSNanoSwarm.G_Halo : RSNanoSwarm.G_Blob;
+                int attempts = Mathf.Min(n, shedBudget * 28);
+
+                for (int a = 0; a < attempts && shedBudget > 0; a++)
+                {
+                    int idx = _sandScanCursor;
+                    _sandScanCursor = (_sandScanCursor + 1) % n;
+
+                    ref NanoBot b = ref bots[idx];
+                    if (b.mode != BotMode.Bound || b.guide != shedGuide || b.seg == -1) continue;
+
+                    if (!_phase3Entered)
+                    {
+                        bool onEdgeOrLower = b.pos.y <= center.y + 0.15f
+                            || Mathf.Abs(b.pos.x - center.x) >= rx * 0.45f;
+                        if (!onEdgeOrLower) continue;
+                    }
+
+                    float signX = b.pos.x >= center.x ? 1f : -1f;
+                    float vx = signX * (0.25f + (b.hash % 100) * 0.005f) - _smoothedVelX * 0.18f;
+                    float vy = -1.2f - (b.hash2 % 100) * 0.015f;
+                    swarm.Drop(idx, new Vector3(vx, vy, 0f));
+                    b.flash = 0f;
+                    b.liquid = 1;
+                    debrisCount++;
+                    shedBudget--;
+                }
+            }
+            else if (debrisCount >= maxDebris)
+            {
+                _sandShedAcc = Mathf.Min(_sandShedAcc, 1f);
+            }
+
+            float reabsorbRate = ambientSandReabsorbRate * (groggy ? 0.55f : 1f);
+            _sandReabsorbAcc += reabsorbRate * dt;
+            int toReabsorb = Mathf.Min(16, (int)_sandReabsorbAcc);
+            if (toReabsorb > 0 && debrisCount > 0)
+            {
+                _sandReabsorbAcc -= toReabsorb;
+                int reabsorbGuide = _phase3Entered ? RSNanoSwarm.G_Halo : RSNanoSwarm.G_Blob;
+                int reabsorbBudget = toReabsorb;
+                int attempts = Mathf.Min(n, reabsorbBudget * 40);
+                int cursor = (_sandScanCursor + (n >> 1)) % n;
+
+                for (int a = 0; a < attempts && reabsorbBudget > 0; a++)
+                {
+                    int idx = (cursor + a) % n;
+                    ref NanoBot b = ref bots[idx];
+                    if (b.mode != BotMode.Debris || b.seg == -1) continue;
+                    if (!_phase3Entered && b.home != RSNanoSwarm.G_Blob) continue;
+                    if (b.sand < 0 && b.pos.y >= center.y - 0.8f) continue;
+
+                    b.liquid = 0;
+                    b.sand = -1;
+                    b.vel = new Vector3(
+                        (center.x - b.pos.x) * 0.45f,
+                        2.2f + (b.hash % 100) * 0.012f,
+                        0f);
+                    swarm.Bind(idx, reabsorbGuide);
+                    reabsorbBudget--;
+                }
+            }
+
+            _sandScanCursor = (_sandScanCursor + 97) % n;
         }
 
         protected override void LateUpdate()
@@ -681,6 +876,22 @@ namespace RealSteel.Boss.Kyosho
                     blob.bulgeDir = new Vector3(Mathf.Sign(v), 0f, 0f);
                     blob.bulge = Mathf.Max(blob.bulge, Mathf.Abs(v) * 0.14f);
                 }
+            }
+
+            float safeDt = Mathf.Max(dt, 0.0001f);
+            float instantVelX = _hasPrevBlobX ? (blob.center.x - _prevBlobCenterX) / safeDt : 0f;
+            _prevBlobCenterX = blob.center.x;
+            _hasPrevBlobX = true;
+            _smoothedVelX = Mathf.Lerp(_smoothedVelX, instantVelX, 1f - Mathf.Exp(-10f * Mathf.Max(0f, dt)));
+            if (Mathf.Abs(_smoothedVelX) > 0.45f && blob.bulge < 0.25f)
+            {
+                blob.bulgeDir = new Vector3(-Mathf.Sign(_smoothedVelX), -0.35f, 0f).normalized;
+                blob.bulge = Mathf.Max(blob.bulge, Mathf.Clamp(Mathf.Abs(_smoothedVelX) * 0.085f, 0f, 0.65f));
+            }
+            else if (blob.bulge < 0.18f && sandDripStrength > 0.01f)
+            {
+                blob.bulgeDir = new Vector3(0f, -1f, 0f);
+                blob.bulge = Mathf.Max(blob.bulge, 0.14f * Mathf.Clamp01(sandDripStrength));
             }
 
             transform.position = blob.center;
@@ -1020,18 +1231,21 @@ namespace RealSteel.Boss.Kyosho
             {
                 if (swarm.Blob.shape != null && swarm.Blob.shape.Ready)
                 {
-                    // 2페 오케스트라 실루엣 선명도 유지 + 약한 생동감만 보강
-                    swarm.Blob.wobble = 0.02f;
-                    swarm.Blob.flow = 0.06f;
-                    swarm.Blob.bind = 0.92f;
+                    // 2페 오케스트라 실루엣 유지 + 모래/나노봇 유동감 강화
+                    swarm.Blob.wobble = 0.075f;
+                    swarm.Blob.flow = 0.28f;
+                    swarm.Blob.bind = sandFlowBindPhase2;
+                    swarm.Blob.noise = 0.07f;
                 }
                 else
                 {
                     // 2페 나노봇 유동감 강화
-                    swarm.Blob.wobble = 0.14f;
-                    swarm.Blob.flow = 0.32f;
-                    swarm.Blob.bind = 0.78f;
+                    swarm.Blob.wobble = 0.16f;
+                    swarm.Blob.flow = 0.38f;
+                    swarm.Blob.bind = Mathf.Min(sandFlowBindPhase2, 0.48f);
                 }
+
+                swarm.sandDrip = sandDripStrength;
             }
 
             _sectionManager?.ActivatePhase2InitialSections();
@@ -1411,9 +1625,10 @@ namespace RealSteel.Boss.Kyosho
             int knightN = Mathf.Min(desiredKnight, Mathf.RoundToInt(rest.Count * 0.72f));
 
             swarm.Halo.center = chest + new Vector3(-k.facing * 0.25f, 0.35f, 0.35f);
-            swarm.Halo.radius = 2.6f;
-            swarm.Halo.bind = 0.90f;
-            swarm.Halo.glow = 0.45f;
+            swarm.Halo.radius = 2.85f;
+            swarm.Halo.bind = 0.38f;
+            swarm.Halo.glow = 0.35f;
+            swarm.sandDrip = Mathf.Clamp01(sandDripStrength * 0.78f);
 
             float targetStiff = useSprite ? maestroMoves.bodySnap : 900f;
             float targetDamp = useSprite ? 1.8f * Mathf.Sqrt(maestroMoves.bodySnap) : 55f;
@@ -1471,8 +1686,8 @@ namespace RealSteel.Boss.Kyosho
             ref NanoBot b = ref swarm.Bots[botIdx];
             b.seg = -1;
             b.segV = new Vector2(eyeOrdinal - 1, 0f);
-            b.tint = new Color32(255, 40, 36, 255);
-            b.glow = 7f;
+            b.tint = monochromeBoss ? new Color32(255, 255, 255, 255) : new Color32(255, 40, 36, 255);
+            b.glow = monochromeBoss ? 8.5f : 7f;
             b.rim = 0f;
             swarm.Bind(botIdx, RSNanoSwarm.G_Knight);
         }
@@ -1528,14 +1743,18 @@ namespace RealSteel.Boss.Kyosho
             if (swarm.Blob.shape != null && swarm.Blob.shape.Ready)
             {
                 swarm.Blob.shapeScale = orchestraSilhouetteScale;
-                swarm.Blob.bind = groggy ? 0.55f : (_variation1Completed ? 0.92f : 0.94f);
-                swarm.Blob.wobble = groggy ? 0.05f : (_variation1Completed ? 0.02f : 0.015f);
-                swarm.Blob.flow = groggy ? 0.18f : (_variation1Completed ? 0.06f : 0.04f);
+                float normalBind = _variation1Completed ? sandFlowBindPhase2 : sandFlowBindPhase1;
+                swarm.Blob.bind = groggy ? 0.34f : normalBind;
+                swarm.Blob.wobble = groggy ? 0.14f : (_variation1Completed ? 0.075f : 0.055f);
+                swarm.Blob.flow = groggy ? 0.42f : (_variation1Completed ? 0.28f : 0.22f);
+                swarm.Blob.noise = groggy ? 0.12f : (_variation1Completed ? 0.07f : 0.055f);
                 swarm.Blob.glow = groggy ? 0.9f : 0f;
+                swarm.sandDrip = groggy ? Mathf.Clamp01(sandDripStrength * 1.35f) : sandDripStrength;
                 return;
             }
-            swarm.Blob.bind = groggy ? 0.35f : (_variation1Completed ? 0.78f : 1f);
+            swarm.Blob.bind = groggy ? 0.28f : (_variation1Completed ? sandFlowBindPhase2 : sandFlowBindPhase1);
             swarm.Blob.glow = groggy ? 0.9f : 0f;
+            swarm.sandDrip = groggy ? Mathf.Clamp01(sandDripStrength * 1.35f) : sandDripStrength;
         }
 
         public void SetDriftEnabled(bool enabled) => _driftEnabled = enabled;

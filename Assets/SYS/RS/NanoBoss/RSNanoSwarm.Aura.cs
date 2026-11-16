@@ -21,6 +21,7 @@ namespace RealSteel.NanoBoss
         [InspectorName("① 은랑 — 시안 + 마젠타")] Wolf = 0,
         [InspectorName("② 기사 — 크림슨 + 금색")] Crimson = 1,
         [InspectorName("③ 보라 + 시안")] Violet = 2,
+        [InspectorName("④ 흑백 — 모노크롬")] Monochrome = 3,
     }
 
     [Serializable]
@@ -54,6 +55,7 @@ namespace RealSteel.NanoBoss
             new[] { C(80, 235, 255), C(255, 70, 210), C(240, 250, 255) },
             new[] { C(255, 60, 80), C(255, 200, 120), C(255, 240, 235) },
             new[] { C(170, 110, 255), C(90, 230, 255), C(245, 240, 255) },
+            new[] { C(235, 235, 240), C(22, 22, 26), C(255, 255, 255) },
         };
         static Color C(int r, int g, int b) => new Color(r / 255f, g / 255f, b / 255f, 1f);
     }
@@ -317,14 +319,26 @@ namespace RealSteel.NanoBoss
                 {
                     int x = k % aW, y = k / aW;
                     float cx = auraOx + fc * (x + aX0 + 0.5f) * cs, cy = auraOy + (y + aY0 + 0.5f) * cs;
-                    var c = pal[aCol[k]]; c.a = aAl[k] * aAmount;
+                    var c = pal[aCol[k]];
+                    if (monochrome > 0.001f)
+                    {
+                        float yLum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
+                        c = Color.Lerp(c, new Color(yLum, yLum, yLum, 1f), monochrome);
+                    }
+                    c.a = aAl[k] * aAmount;
                     AQuad(cx, cy, z, gh, c, 1f);
                 }
             foreach (int k in aTouched)
             {
                 int x = k % aW, y = k / aW;
                 float cx = auraOx + fc * (x + aX0 + 0.5f) * cs, cy = auraOy + (y + aY0 + 0.5f) * cs;
-                var c = pal[aCol[k]]; c.a = aAl[k] * aAmount;
+                var c = pal[aCol[k]];
+                if (monochrome > 0.001f)
+                {
+                    float yLum = c.r * 0.299f + c.g * 0.587f + c.b * 0.114f;
+                    c = Color.Lerp(c, new Color(yLum, yLum, yLum, 1f), monochrome);
+                }
+                c.a = aAl[k] * aAmount;
                 AQuad(cx, cy, z, h, c, 0f);
             }
             if (!aMesh)

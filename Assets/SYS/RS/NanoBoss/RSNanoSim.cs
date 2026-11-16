@@ -236,7 +236,7 @@ namespace RealSteel.NanoBoss
         public KnightSim knight;
         public HaloSim halo;
         public int limbCount, blobSlotCount, frame;
-        public float dt, time, clock, floorY, gravity, flashDecay, viscosity, dark, spacing, cell, frontZ, backZ;
+        public float dt, time, clock, floorY, gravity, flashDecay, viscosity, dark, sandDrip, spacing, cell, frontZ, backZ;
 
         struct Feel
         {
@@ -322,6 +322,18 @@ namespace RealSteel.NanoBoss
 
             // 흐름 — 유체일수록 덩어리째 일렁인다 (격자 자리 위에 얹는 이어진 물결)
             if (f.lattice && f.flow > 0f && fluid > 0.01f) tgt += Flow(tgt, time) * (f.flow * fluid);
+
+            // 중력 모래 흘러내림 — 실루엣 가장자리/표면 알갱이들이 위에서 아래로 흘러내리는 대류 변위 (옵트인)
+            if (sandDrip > 0.001f && f.lattice && (g == 0 || (g == 4 && b->seg >= 0) || g == 6))
+            {
+                float edgeMask = 0.22f + 0.78f * b->edge;
+                float dripCycle = math.frac(time * (0.45f + 0.40f * b->hash2) + b->hash * 7.13f);
+                float dripT = math.saturate(dripCycle / 0.78f);
+                float fall = dripT * dripT;
+                float amp = sandDrip * edgeMask * (0.16f + 0.28f * b->hash3);
+                tgt.y -= fall * amp;
+                tgt.x += math.sin(time * 2.4f + b->hash * 19f) * amp * 0.26f * dripT;
+            }
 
             // 떨림 — 격자 봇은 유체일 때 표면만 살짝, 격자가 없는 봇(포신 · 후광 · 눈)은 그대로
             if (f.noise > 0f)

@@ -8,6 +8,9 @@ using UnityEngine.UI;
 
 public class RecipeSlot : MonoBehaviour, IPointerClickHandler
 {
+    private const float LegIconSize = 150f;
+    private const float IconSize = 100f;
+
     public RecipeData data;
     [SerializeField] private Image image;
 
@@ -48,12 +51,30 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
         image.sprite = icon;
         image.preserveAspect = true;
 
+        PartsDefinition part = FindPart(recipe);
+
+        // 다리 파츠 그림은 크게, 팔·머리는 작게 맞춘다
+        bool isLeg = part != null && (part.Slot == Slot.LeftLeg || part.Slot == Slot.RightLeg);
+        float size = isLeg ? LegIconSize : IconSize;
+        image.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size);
+        image.rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);
+
+        PartOutline.Apply(image, part);
+
         // 프리팹에서 빈 칸 아이콘은 알파 0이므로 데이터가 들어오면 보이게 한다
         Color c = image.color;
         c.a = recipe != null ? 1f : 0f;
         image.color = c;
 
         RefreshColor();
+    }
+
+    private static PartsDefinition FindPart(RecipeData recipe)
+    {
+        if (recipe == null || CraftingManager.Instance == null || CraftingManager.Instance.catalog == null)
+            return null;
+
+        return CraftingManager.Instance.catalog.Find(recipe.PartID);
     }
 
     public void OnPointerClick(PointerEventData eventData)

@@ -153,8 +153,14 @@ public class InventoryView : MonoBehaviour
     {
         RectTransform rect = Prepare(_partsLayer, _partsPrefab, poolIndex, entry);
 
+        Sprite sprite = entry.Definition != null ? entry.Definition.Sprite : null;
+
         if (rect.TryGetComponent(out ShapeRenderer shape))
-            shape.Draw(entry.Shape, entry.Definition != null ? entry.Definition.Sprite : null, _cellSize, _partsColor);
+            shape.Draw(entry.Shape, sprite, _cellSize, _partsColor);
+
+        // 그림이 있을 때만 등급 외곽선. 블록으로 그리면 지운다
+        if (rect.TryGetComponent(out Image image))
+            PartOutline.Apply(image, sprite != null ? entry.Definition : null);
 
         return rect;
     }

@@ -34,6 +34,7 @@ public class ShopSlot : MonoBehaviour
         _name.text = name;
         _grade.text = grade.ToString();
         _icon.sprite = icon;
+        PartOutline.Apply(_icon, part);
 
         // 판매가는 SO의 고철 수입가. 0인 파츠(기본·전설·프로토타입)는 0G로 팔리지 않게 판매 불가로 표시한다
         Gold = part != null ? part.ScrapPrice : 0;

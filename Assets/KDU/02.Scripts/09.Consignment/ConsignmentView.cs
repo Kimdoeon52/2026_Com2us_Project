@@ -238,6 +238,7 @@ public class ConsignmentView : MonoBehaviour
             // 이미지가 없는 파츠는 기본 아이콘을 둔다
             _partImage.sprite = def != null && def.Sprite != null ? def.Sprite : _placeholder;
             _partImage.preserveAspect = true;
+            PartOutline.Apply(_partImage, def != null && def.Sprite != null ? def : null);
         }
 
         SetText(_gradeLabel, def != null ? PartGrades.ToLabel(def.Grade) : "-");

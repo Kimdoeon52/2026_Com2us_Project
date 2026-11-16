@@ -55,6 +55,7 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
 
         Sprite sprite;
         bool filled;
+        PartsDefinition parts = null;
 
         if (_slot == Slot.Core)
         {
@@ -64,7 +65,7 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         }
         else
         {
-            PartsDefinition parts = host != null ? host.GetEquipped(_slot) : null;
+            parts = host != null ? host.GetEquipped(_slot) : null;
             filled = parts != null;
             sprite = filled ? parts.Sprite : null;
         }
@@ -72,6 +73,9 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         // 이미지가 아직 없으면 빈 칸 이미지를 흰색으로 그려 찬 칸임을 보인다
         _icon.sprite = sprite != null ? sprite : _emptySprite;
         _icon.color = filled ? Color.white : _emptyColor;
+
+        // 파츠 그림일 때만 등급 외곽선
+        PartOutline.Apply(_icon, sprite != null ? parts : null);
     }
 
     public void OnPointerClick(PointerEventData eventData)

@@ -1,0 +1,134 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc6e6d2e8ef13984485580561597e2ff, type: 3}
+  m_Name: Stomp
+  m_EditorClassIdentifier: 
+  actionName: Stomp
+  source: 1
+  requiredPart: 3
+  startupFrames: 0
+  activeFrames: 12
+  recoveryFrames: 12
+  isInvincibleDuringActive: 1
+  isGuardable: 0
+  causesKnockdown: 0
+  staggerValue: 0
+  knockbackDistance: 0
+  damage: 30
+  hitIntervalFrames: 0
+  hitStopScale: 1
+  animationClipName: Leg_Stomp_Landing
+  activeClipName: 
+  activeClipFrames: 0
+  keepClipSpeed: 0
+  leapVelocity: {x: 0, y: 0}
+  launchVelocity: 0
+  advanceDistance: 0
+  advanceDuringActiveOnly: 0
+  trailAfterImageInterval: 0
+  groundOnly: 0
+  projectile: {fileID: 0}
+  projectileIntervalFrames: 15
+  projectileMuzzle: {x: 0, y: 0}
+  flame: {fileID: 0}
+  vfx:
+  - prefab: {fileID: 5716823169876094026, guid: 00fc38747b9949108e3b772e8671f60f, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.3
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: -20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 2249098658059758238, guid: 38881bccc5aa44a784c51f9cf6407cb9, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: -20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  - prefab: {fileID: 5051787410455962075, guid: b686c335f3d44051bfcad4804a4b5da0, type: 3}
+    phase: 2
+    repeat: 0
+    repeatIntervalFrames: 10
+    repeatStartOffsetFrames: 0
+    endMode: 2
+    offset: {x: 0, y: 0}
+    rotation: 0
+    XYRotation: {x: 0, y: 0}
+    followOwner: 0
+    flipWithFacing: 1
+    flipByRotation: 0
+    scale: 0.5
+    scaleXY: {x: 1, y: 1}
+    playbackSpeed: 1
+    sortingOrderOffset: -20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
+  perBoxDamage: 0
+  perBoxSeparateHits: 0
+  cooldownFrames: 0
+  cooldownOwner: {fileID: 0}
+  cylinderCost: 0
+  fallbackAction: {fileID: 0}
+  frameBoxes:
+  - type: 1
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -0.16
+      y: 0
+      width: 0.25
+      height: 0.5
+    rotation: 0
+    damageScale: 0
+    anchor: 1
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0
+  - type: 0
+    bodyPart: 5
+    rect:
+      serializedVersion: 2
+      x: -3
+      y: -0.2
+      width: 6
+      height: 0.3
+    rotation: 0
+    damageScale: 0
+    anchor: 3
+    startOffset: 0
+    length: 0
+    startFrame: 0
+    endFrame: 0

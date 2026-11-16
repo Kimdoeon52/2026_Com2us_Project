@@ -26,7 +26,7 @@ MonoBehaviour:
   damage: 60
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: Straight
+  animationClipName: Straight1
   activeClipName: 
   activeClipFrames: 0
   keepClipSpeed: 0
@@ -57,6 +57,8 @@ MonoBehaviour:
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 1
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 0

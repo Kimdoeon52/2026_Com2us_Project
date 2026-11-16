@@ -57,6 +57,8 @@ MonoBehaviour:
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 2
     sortingOrderOffset: 0
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 60

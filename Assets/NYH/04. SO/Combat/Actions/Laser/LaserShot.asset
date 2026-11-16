@@ -27,8 +27,8 @@ MonoBehaviour:
   hitIntervalFrames: 0
   hitStopScale: 1
   animationClipName: Jap
-  activeClipName: Straight
-  activeClipFrames: 42
+  activeClipName: Straight1
+  activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
   launchVelocity: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
     repeat: 0
     repeatIntervalFrames: 0
     repeatStartOffsetFrames: 0
-    endMode: 2
+    endMode: 0
     offset: {x: 0, y: 0.35}
     rotation: -90
     XYRotation: {x: 0, y: 0}
@@ -57,6 +57,8 @@ MonoBehaviour:
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 0
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
   perBoxSeparateHits: 0
   cooldownFrames: 60

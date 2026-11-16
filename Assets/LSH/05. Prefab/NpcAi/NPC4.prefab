@@ -227,7 +227,7 @@ GameObject:
   - component: {fileID: 4520887827624190518}
   - component: {fileID: 8638926951765830528}
   m_Layer: 5
-  m_Name: Npc4
+  m_Name: NPC4
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -303,13 +303,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5ec38611024556458d3169033153aa5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thinkImage: {fileID: 8703547411300228660}
-  npcThinkChat: {fileID: 551133288262341704}
-  npcImage: {fileID: -1669109268, guid: 7ca4ba4405eeba745b1bdd20aae68bef, type: 3}
+  isGiveUp: 0
+  dialogueBoxOB: {fileID: 0}
+  npcThinkChat: {fileID: 0}
+  npcImage: {fileID: 21300000, guid: 75bb830f5eb3ad641a528b153e915871, type: 3}
   thinkCanvasGroup: {fileID: 0}
   thinkChatList:
   - thinkChat: ...
   - thinkChat: "\uB044\uC751..."
+  newScale: {x: 0.35, y: 0.35, z: 0.35}
+  bubbleTextColor: {r: 1, g: 1, b: 1, a: 1}
+  matchPlayerBubbleSize: 1
+  bubbleSizeMultiplier: 1
+  thinkImage: {fileID: 8703547411300228660}
   data: {fileID: 11400000, guid: f7f4ae6c2c4efc44396026a6303a58e6, type: 2}
   actionRate: 0.8
 --- !u!212 &8638926951765830528

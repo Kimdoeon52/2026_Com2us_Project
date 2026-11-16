@@ -303,17 +303,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isGiveUp: 0
-  thinkImage: {fileID: 8703547411300228660}
-  npcThinkChat: {fileID: 551133288262341704}
-  npcImage: {fileID: 1081134675, guid: 52e52cb3ca161e44299c90c69e0cc97d, type: 3}
+  dialogueBoxOB: {fileID: 0}
+  npcThinkChat: {fileID: 0}
+  npcImage: {fileID: 21300000, guid: 9533974065940e846866feb352db1e86, type: 3}
   thinkCanvasGroup: {fileID: 0}
   thinkChatList:
   - thinkChat: "\uB124?"
   - thinkChat: "\uC5C4..."
+  newScale: {x: 0.35, y: 0.35, z: 0.35}
+  bubbleTextColor: {r: 1, g: 1, b: 1, a: 1}
+  matchPlayerBubbleSize: 1
+  bubbleSizeMultiplier: 1
+  thinkImage: {fileID: 8703547411300228660}
   data: {fileID: 11400000, guid: 0af2ee6d113102766e67ee4f05d2a6bc, type: 2}
   cutsceneBannerSprite: {fileID: 21300000, guid: aa55d59496ea2394fbf22c096f3c8387, type: 3}
   cutsceneBGcolor: {r: 0, g: 0.6698113, b: 0.10346717, a: 0.92941177}
   cutsceneCharacter: {fileID: 21300000, guid: 31f6b5221c810c84d8fb3fd7106f8386, type: 3}
-  bigRaiseGold: 1000
-  bigRaisetimes: 2
-  actionRate: 0.7

@@ -302,11 +302,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad7525b72e7cd8041a9e7edb9c664a02, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  thinkImage: {fileID: 8703547411300228660}
-  npcThinkChat: {fileID: 551133288262341704}
-  npcImage: {fileID: 1391362269, guid: b2068e585f7bef7419683c2b6360dccc, type: 3}
+  isGiveUp: 0
+  dialogueBoxOB: {fileID: 0}
+  npcThinkChat: {fileID: 0}
+  npcImage: {fileID: 21300000, guid: 75bb830f5eb3ad641a528b153e915871, type: 3}
   thinkCanvasGroup: {fileID: 0}
   thinkChatList:
   - thinkChat: "\uD5E4\uC5D0..."
   - thinkChat: "\uD558\uC544...."
+  newScale: {x: 0.35, y: 0.35, z: 0.35}
+  bubbleTextColor: {r: 1, g: 1, b: 1, a: 1}
+  matchPlayerBubbleSize: 1
+  bubbleSizeMultiplier: 1
+  thinkImage: {fileID: 8703547411300228660}
   data: {fileID: 11400000, guid: c4afca72de2a058448752ac094956360, type: 2}

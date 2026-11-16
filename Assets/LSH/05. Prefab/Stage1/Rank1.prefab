@@ -48,17 +48,20 @@ MonoBehaviour:
   isGiveUp: 0
   dialogueBoxOB: {fileID: 5662300597557807660}
   npcThinkChat: {fileID: 953164321995215334}
-  npcImage: {fileID: 1391362269, guid: 24114ee863fc23d45b125228a030538c, type: 3}
+  npcImage: {fileID: 21300000, guid: 9533974065940e846866feb352db1e86, type: 3}
   thinkCanvasGroup: {fileID: 0}
   thinkChatList:
   - thinkChat: "\uD6C4\uD6C4..."
   - thinkChat: "\uAC74\uBC29\uC9C0\uAD70..."
+  newScale: {x: 0.35, y: 0.35, z: 0.35}
+  bubbleTextColor: {r: 1, g: 1, b: 1, a: 1}
+  matchPlayerBubbleSize: 1
+  bubbleSizeMultiplier: 1
+  thinkImage: {fileID: 0}
   data: {fileID: 11400000, guid: d168d23fec062db4d959b7046bd81663, type: 2}
   cutsceneBannerSprite: {fileID: 21300000, guid: c16ec75692fdb2d448d7f6e019e957d7, type: 3}
   cutsceneBGcolor: {r: 0.5283019, g: 0, b: 0.44455233, a: 0.8509804}
   cutsceneCharacter: {fileID: 1147284395, guid: 1e23b8991afbd9447ab64341607ebd39, type: 3}
-  actionRate: 0.7
-  bigRaiseGold: 100
 --- !u!1 &4555412651054373200
 GameObject:
   m_ObjectHideFlags: 0

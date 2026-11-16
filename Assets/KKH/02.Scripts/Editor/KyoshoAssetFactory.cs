@@ -401,21 +401,6 @@ namespace RealSteel.Boss.Editor
                 }
             }
 
-            var existingTester = UnityEngine.Object.FindFirstObjectByType<RealSteel.Boss.Test.KyoshoGimmickTester>(FindObjectsInactive.Include);
-            if (addTester && existingTester == null)
-            {
-                var testerGo = new GameObject("KyoshoGimmickTester");
-                testerGo.AddComponent<RealSteel.Boss.Test.KyoshoGimmickTester>();
-            }
-            else if (!addTester && existingTester != null)
-            {
-                existingTester.enabled = false;
-                var tSo = new SerializedObject(existingTester);
-                var overlayProp = tSo.FindProperty("showOverlay");
-                if (overlayProp != null) overlayProp.boolValue = false;
-                tSo.ApplyModifiedPropertiesWithoutUndo();
-            }
-
             EditorSceneManager.SaveScene(scene);
         }
 

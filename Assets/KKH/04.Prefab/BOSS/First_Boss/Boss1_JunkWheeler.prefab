@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: 512307155976557277}
   - component: {fileID: 8211426203969925326}
   - component: {fileID: 371741583458075138}
-  - component: {fileID: 8152764038469079320}
   - component: {fileID: 7090729570231879717}
   - component: {fileID: 8812345678901234501}
   - component: {fileID: 8812345678901234502}
@@ -314,21 +313,6 @@ MonoBehaviour:
   groundImpactVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   jumpDustVfxPrefab: {fileID: 4902690910006454326, guid: d7a95e2fc077aa04ead72539df117c86, type: 3}
   nailPunctureVfxPrefab: {fileID: 4190246949986612809, guid: 141de425b875475f98c35e49d1b2e24e, type: 3}
---- !u!114 &8152764038469079320
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3268763706634737369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8f80bb599749b0e4c9ac2bc9b87820b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  targetBoss: {fileID: 1718334131696809367}
-  showOnScreenGui: 1
-  toggleGuiKey: 96
 --- !u!50 &7090729570231879717
 Rigidbody2D:
   serializedVersion: 5

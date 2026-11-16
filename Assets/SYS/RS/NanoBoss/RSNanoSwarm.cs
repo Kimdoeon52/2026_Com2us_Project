@@ -359,7 +359,9 @@ namespace RealSteel.NanoBoss
                     seg = 0,
                     cell = -1,
                     scale = 1f,
-                    hash = R(), hash2 = R(), hash3 = R(),
+                    hash = R(),
+                    hash2 = R(),
+                    hash3 = R(),
                     space = spacing,
                     sand = -1,
                 };
@@ -432,12 +434,20 @@ namespace RealSteel.NanoBoss
                 for (int li = 0; rigOn && li < rig.SimLimbCount && !fluidAny; li++) if (lsim[li].bind < 0.99f) fluidAny = true;
                 if (!fluidAny || viscosity <= 0f) gridInfo[0] = default;
                 else
-                new NanoGridJob
-                {
-                    bots = pBots, cellStart = pCellStart, cellCount = pCellCount, cellFill = pCellFill,
-                    sorted = pSorted, sortedPos = pSortedPos, cellVel = pCellVel, info = pGrid,
-                    count = bots.Length, maxCells = MaxCells, baseCell = Mathf.Max(0.12f, Cell * 3f),
-                }.Run();
+                    new NanoGridJob
+                    {
+                        bots = pBots,
+                        cellStart = pCellStart,
+                        cellCount = pCellCount,
+                        cellFill = pCellFill,
+                        sorted = pSorted,
+                        sortedPos = pSortedPos,
+                        cellVel = pCellVel,
+                        info = pGrid,
+                        count = bots.Length,
+                        maxCells = MaxCells,
+                        baseCell = Mathf.Max(0.12f, Cell * 3f),
+                    }.Run();
 
                 var job = new NanoSimJob
                 {
@@ -451,13 +461,24 @@ namespace RealSteel.NanoBoss
                     limbSlots = (float4*)pins.Pin(lslots),
                     spine = (float4*)pins.Pin(lspine),
                     spineTime = (float*)pins.Pin(lspineT),
-                    cellStart = pCellStart, cellCount = pCellCount, sorted = pSorted, sortedPos = pSortedPos, cellVel = pCellVel,
+                    cellStart = pCellStart,
+                    cellCount = pCellCount,
+                    sorted = pSorted,
+                    sortedPos = pSortedPos,
+                    cellVel = pCellVel,
                     grid = gridInfo[0],
                     blob = new BlobSim
                     {
-                        center = Blob.center, radius = Blob.radius, bulgeDir = Blob.bulgeDir,
-                        wobble = Blob.wobble, wobbleSpeed = Blob.wobbleSpeed, flow = Blob.flow, flowSpeed = Blob.flowSpeed,
-                        bulge = Blob.bulge, floorY = Blob.floorY, ext = blobExt,
+                        center = Blob.center,
+                        radius = Blob.radius,
+                        bulgeDir = Blob.bulgeDir,
+                        wobble = Blob.wobble,
+                        wobbleSpeed = Blob.wobbleSpeed,
+                        flow = Blob.flow,
+                        flowSpeed = Blob.flowSpeed,
+                        bulge = Blob.bulge,
+                        floorY = Blob.floorY,
+                        ext = blobExt,
                         sprite = (Blob.shape != null && Blob.shape.Ready) ? 1 : 0,
                         artColor = Blob.shapeArtColor ? 1 : 0,
                     },
@@ -466,10 +487,15 @@ namespace RealSteel.NanoBoss
                     ring = new RingSim { center = Ring.center, axis = Ring.axis, radius = Ring.radius, length = Ring.length, angle = Ring.angle },
                     knight = new KnightSim
                     {
-                        origin = Knight.origin, lookAt = Knight.lookAt, head = Knight.HeadWorld, facing = Knight.facing,
-                        sprite = knightSprite ? 1 : 0, slotCount = knightHigh + 1,
+                        origin = Knight.origin,
+                        lookAt = Knight.lookAt,
+                        head = Knight.HeadWorld,
+                        facing = Knight.facing,
+                        sprite = knightSprite ? 1 : 0,
+                        slotCount = knightHigh + 1,
                         art = knightSprite && !Knight.moves.darkSilhouette ? 1 : 0,
-                        bladeGlow = knightSprite ? Knight.moves.bladeGlow : 0f, fxGlow = knightSprite ? Knight.moves.fxGlow : 0f,
+                        bladeGlow = knightSprite ? Knight.moves.bladeGlow : 0f,
+                        fxGlow = knightSprite ? Knight.moves.fxGlow : 0f,
                         eyeSpread = knightSprite ? Cell * Knight.Scale * 1.2f : 0f,
                     },
                     knightSlots = (float4*)pins.Pin(kSlots),
@@ -478,10 +504,19 @@ namespace RealSteel.NanoBoss
                     limbCount = rigOn ? rig.SimLimbCount : 0,
                     blobSlotCount = blobTable.Length,
                     frame = ++simFrame,
-                    dt = dt, time = time, clock = rigOn ? rig.Clock : 0f, floorY = floorY,
-                    gravity = gravity, flashDecay = flashDecay,
-                    viscosity = viscosity, dark = dark, sandDrip = sandDrip, spacing = spacing, cell = Cell,
-                    frontZ = FrontZ, backZ = BackZ,
+                    dt = dt,
+                    time = time,
+                    clock = rigOn ? rig.Clock : 0f,
+                    floorY = floorY,
+                    gravity = gravity,
+                    flashDecay = flashDecay,
+                    viscosity = viscosity,
+                    dark = dark,
+                    sandDrip = sandDrip,
+                    spacing = spacing,
+                    cell = Cell,
+                    frontZ = FrontZ,
+                    backZ = BackZ,
                     blobSlotColor = (uint*)pins.Pin(blobColors),
                     limbSlotColor = (uint*)pins.Pin(lcolors),
                 };
@@ -492,9 +527,16 @@ namespace RealSteel.NanoBoss
                     bots = pBots,
                     occ = (byte*)pins.Pin(sandOcc),
                     count = bots.Length,
-                    w = fieldW, h = fieldH, minX = fieldMinX, minY = fieldMinY, cell = Cell,
-                    frontZ = FrontZ, backZ = BackZ,
-                    dt = dt, frame = simFrame, slide = slide,
+                    w = fieldW,
+                    h = fieldH,
+                    minX = fieldMinX,
+                    minY = fieldMinY,
+                    cell = Cell,
+                    frontZ = FrontZ,
+                    backZ = BackZ,
+                    dt = dt,
+                    frame = simFrame,
+                    slide = slide,
                 }.Run();
             }
             finally { pins.Release(); }
@@ -817,8 +859,15 @@ namespace RealSteel.NanoBoss
                 NanoSpring.FromStiffness(gd.stiffness, gd.damping, out float om, out float ze);
                 feel[g] = new GuideFeel
                 {
-                    omega = om, zeta = ze, maxSpeed = gd.maxSpeed, noise = gd.noise, noiseSpeed = gd.noiseSpeed,
-                    bind = Mathf.Clamp01(gd.bind), space = spacing, glow = gd.glow, tint = Pack(gd.tint),
+                    omega = om,
+                    zeta = ze,
+                    maxSpeed = gd.maxSpeed,
+                    noise = gd.noise,
+                    noiseSpeed = gd.noiseSpeed,
+                    bind = Mathf.Clamp01(gd.bind),
+                    space = spacing,
+                    glow = gd.glow,
+                    tint = Pack(gd.tint),
                     flow = g == G_Blob ? Blob.flow * Mathf.Min(Blob.radius.x, Blob.radius.y) * 0.5f : 0f,
                     gather = g == G_Blob ? om * 3f : 0f,   // 덩어리: 멀리 있는 봇(돌아오는 봇 · 다지기)은 빨리 자리로
                     danger = gd.danger ? 1 : 0,
@@ -1150,8 +1199,15 @@ namespace RealSteel.NanoBoss
                     freeGlow = freeGlow,
                     freeTint = Pack(freeTint),
                     occ = (uint*)pins.Pin(occBits),
-                    w = fieldW, h = fieldH, minX = fieldMinX, minY = fieldMinY, cell = Cell,
-                    frontZ = FrontZ, backZ = BackZ, backDim = backDim, freeSize = freeSize,
+                    w = fieldW,
+                    h = fieldH,
+                    minX = fieldMinX,
+                    minY = fieldMinY,
+                    cell = Cell,
+                    frontZ = FrontZ,
+                    backZ = BackZ,
+                    backDim = backDim,
+                    freeSize = freeSize,
                     eyeSize = Knight.SpriteMode ? Knight.Scale : 1,
                 }.Run();
             }

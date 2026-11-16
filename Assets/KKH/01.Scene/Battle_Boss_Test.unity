@@ -3473,6 +3473,11 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 3268763706634737369, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
   m_PrefabInstance: {fileID: 974597018}
   m_PrefabAsset: {fileID: 0}
+--- !u!4 &1048134571 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+  m_PrefabInstance: {fileID: 974597018}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1058980574
 GameObject:
   m_ObjectHideFlags: 0
@@ -4203,7 +4208,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14f0cde09418f0245b28ba6f0d3f39f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerRobotObject: {fileID: 0}
+  playerRobotObject: {fileID: 1607610009}
   enemyRobotObject: {fileID: 1048134557}
   currentState: 0
   betGold: 100
@@ -5173,8 +5178,8 @@ MonoBehaviour:
   jumpVelocity: 7
   gravity: -20
   spriteFacesRight: 1
-  opponent: {fileID: 0}
-  combatCamera: {fileID: 0}
+  opponent: {fileID: 1048134571}
+  combatCamera: {fileID: 1831109084}
   clampToCameraView: 1
   cameraViewPadding: 0.3
 --- !u!114 &1607610021
@@ -6209,8 +6214,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26454fb84fe9ab04282f0a27d6900aca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerA: {fileID: 0}
-  playerB: {fileID: 0}
+  playerA: {fileID: 1607610024}
+  playerB: {fileID: 1048134571}
   minX: -3
   maxX: 3
   framingPadding: 1.5

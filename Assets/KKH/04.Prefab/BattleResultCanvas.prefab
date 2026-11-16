@@ -2226,6 +2226,7 @@ MonoBehaviour:
   defeatColor: {r: 1, g: 0.25, b: 0.25, a: 1}
   goldValueText: {fileID: 4228575152641696066}
   expValueText: {fileID: 8023530356233651172}
+  rankingScoreValueText: {fileID: 0}
   coreExpSlider: {fileID: 3359385582385116359}
   coreStatusText: {fileID: 5577548559258126324}
   partSlotContainer: {fileID: 2486697612787596105}
@@ -2233,7 +2234,7 @@ MonoBehaviour:
   destroyedWarningText: {fileID: 8468937669322975674}
   destroyedWarningPanel: {fileID: 2519553569284880891}
   btnReturnBase: {fileID: 4374583589933245563}
-  lobbySceneName: JunkShop_Map
+  lobbySceneName: Map_Test
   bannerPunchDuration: 0.4
   numberRollDuration: 0.8
 --- !u!1 &8549789538674752592

@@ -60,7 +60,7 @@ public class CombatCamera : MonoBehaviour
     [SerializeField] private float arenaMinX = -7.75f;
     [SerializeField] private float arenaMaxX = 7.75f;
 
-    [Header("대형 보스 / 수직 프레이밍 보정 (선택)")]
+    [Header("보스 3(쿄쇼) 전용 프레이밍 (기본 꺼짐 — 1/2보스·일반 전투 미적용)")]
     [Tooltip("체크 시 바닥 높이를 화면 하단 비율에 맞춰 카메라 Y 높이를 줌 거리에 따라 자동 보정함")]
     [SerializeField] private bool autoFrameFloor = false;
     [SerializeField] private float stageFloorY = 0.12f;
@@ -112,6 +112,49 @@ public class CombatCamera : MonoBehaviour
     {
         if (cam == null || playerA == null || playerB == null || isFrozen) return;
 
+        if (!autoFrameFloor)
+        {
+            UpdateStandardFraming();
+            return;
+        }
+
+        UpdateBoss3Framing();
+    }
+
+    /// <summary>1/2보스 및 일반 전투용 원본 카메라 프레이밍 (두 파이터 정중앙 X/Y SmoothDamp + 거리 기반 줌)</summary>
+    private void UpdateStandardFraming()
+    {
+        float desiredX = Mathf.Clamp((playerA.position.x + playerB.position.x) / 2f, minX, maxX);
+        Vector3 desiredPosXY = new Vector3(desiredX, fixedY, transform.position.z);
+        Vector3 smoothedXY = Vector3.SmoothDamp(transform.position, desiredPosXY, ref positionVelocity, positionSmoothTime);
+
+        float distFromCenterA = Mathf.Abs(playerA.position.x - smoothedXY.x);
+        float distFromCenterB = Mathf.Abs(playerB.position.x - smoothedXY.x);
+        float requiredHalfWidth = Mathf.Max(distFromCenterA, distFromCenterB) + framingPadding;
+
+        if (cam.orthographic)
+        {
+            float targetSize = Mathf.Clamp(requiredHalfWidth / cam.aspect, minOrthoSize, maxOrthoSize) + extraZoomOffset;
+            bool isZoomOut = targetSize > cam.orthographicSize;
+
+            cam.orthographicSize = FollowZoom(cam.orthographicSize, targetSize, isZoomOut);
+            transform.position = smoothedXY;
+        }
+        else
+        {
+            float halfWidthPerUnit = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad) * cam.aspect;
+            float requiredDistance = requiredHalfWidth / halfWidthPerUnit;
+            float targetZ = Mathf.Clamp(playerA.position.z - requiredDistance, farZ, closeZ) + extraZoomOffset;
+            bool isZoomOut = targetZ < transform.position.z;
+
+            float zoomedZ = FollowZoom(transform.position.z, targetZ, isZoomOut);
+            transform.position = new Vector3(smoothedXY.x, smoothedXY.y, zoomedZ);
+        }
+    }
+
+    /// <summary>보스 3(쿄쇼) 전용 대형 보스·고공 패턴 대응 수직/아레나 프레이밍</summary>
+    private void UpdateBoss3Framing()
+    {
         float effHalfWidthB = runtimeHalfWidthB >= 0f ? runtimeHalfWidthB : targetBHalfWidth;
         float posB = playerB.position.x;
         float leftBound = Mathf.Min(playerA.position.x, posB - effHalfWidthB);
@@ -247,16 +290,22 @@ public class CombatCamera : MonoBehaviour
     /// 나중에 콤보/필살기 연출 등에서 호출해 확장 가능.</summary>
     public void SetZoomOffset(float offset) => extraZoomOffset = offset;
 
-    /// <summary>대형 보스의 기본 반폭과 바닥 기준 확보 높이를 런타임 갱신 (페이즈 전환 등).</summary>
+    /// <summary>대형 보스의 기본 반폭과 바닥 기준 확보 높이를 런타임 갱신 (보스 3 전용).</summary>
     public void SetTargetBBaseFraming(float halfWidthB, float minTopOffsetFromFloor)
     {
+        if (!autoFrameFloor) return;
         runtimeHalfWidthB = Mathf.Max(0f, halfWidthB);
         runtimeMinTopOffset = Mathf.Max(0f, minTopOffsetFromFloor);
     }
 
-    /// <summary>특정 광역/고공 패턴 중 카메라 최소 반폭 및 상단 높이를 일시 확장함.</summary>
+    /// <summary>특정 광역/고공 패턴 중 카메라 최소 반폭 및 상단 높이를 일시 확장함 (보스 3 전용).</summary>
     public void SetExternalFraming(bool active, float minRequiredHalfWidth = 0f, float minRequiredTopOffsetFromFloor = 0f)
     {
+        if (!autoFrameFloor)
+        {
+            hasExternalFraming = false;
+            return;
+        }
         hasExternalFraming = active;
         externalMinHalfWidth = Mathf.Max(0f, minRequiredHalfWidth);
         externalMinTopOffset = Mathf.Max(0f, minRequiredTopOffsetFromFloor);

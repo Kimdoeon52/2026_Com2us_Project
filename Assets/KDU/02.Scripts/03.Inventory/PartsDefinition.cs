@@ -209,10 +209,10 @@ public class PartsDefinition : ScriptableObject
     {
         Color color = _grade switch
         {
-            PartGrade.Rare => Color.yellow,
-            PartGrade.Epic => Color.blue,
-            PartGrade.Legendary => Color.magenta,
-            PartGrade.Prototype => Color.cyan,
+            PartGrade.Rare => Color.blue,
+            PartGrade.Epic => Color.magenta,
+            PartGrade.Legendary => Color.yellow,
+            PartGrade.Prototype => Color.red,
             _ => Color.white
         };
 

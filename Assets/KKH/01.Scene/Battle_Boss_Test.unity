@@ -962,6 +962,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
+--- !u!114 &433020887 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4374583589933245563, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+  m_PrefabInstance: {fileID: 1122708224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!4 &436854807 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7347677701256762536, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
@@ -1504,6 +1515,7 @@ MonoBehaviour:
     allowPhase2: 0
     allowPatternChain: 0
     passiveCount: 0
+    isInvincible: 0
     isGroggy: 0
     currentDamageMultiplier: 1
 --- !u!4 &776998634
@@ -2114,6 +2126,10 @@ PrefabInstance:
     - target: {fileID: 3268763706634737369, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: m_Name
       value: Boss1_JunkWheeler
+      objectReference: {fileID: 0}
+    - target: {fileID: 3268763706634737369, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3468832547808010039, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
       propertyPath: flatTireParticle
@@ -4177,6 +4193,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 956896132647966117, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1169853654525288426, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1169853654525288426, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1169853654525288426, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1169853654525288426, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 1545931811633628261, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
@@ -4210,6 +4242,30 @@ PrefabInstance:
     - target: {fileID: 1836470228138955881, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -25
+      objectReference: {fileID: 0}
+    - target: {fileID: 2414892747159977114, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: btnReturnBase
+      value: 
+      objectReference: {fileID: 433020887}
+    - target: {fileID: 2414892747159977114, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: lobbySceneName
+      value: JunkShop_Map
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910581296845752217, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910581296845752217, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910581296845752217, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2910581296845752217, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3400157782043943084, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_AnchorMax.y
@@ -4323,6 +4379,38 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -25
       objectReference: {fileID: 0}
+    - target: {fileID: 6076320410262006820, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6076320410262006820, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6076320410262006820, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6076320410262006820, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110609006911557308, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110609006911557308, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110609006911557308, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6110609006911557308, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7849727193966002087, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -4338,6 +4426,26 @@ PrefabInstance:
     - target: {fileID: 7849727193966002087, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -32.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819081388324534303, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819081388324534303, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819081388324534303, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8819081388324534303, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8988489952252451489, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -4725,7 +4833,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 33.213623, y: 2.1326904}
+  m_LightCookieOffset: {x: 7.277954, y: 35.70462}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -5904,6 +6012,13 @@ MonoBehaviour:
   useArenaBounds: 0
   arenaMinX: -7.75
   arenaMaxX: 7.75
+  autoFrameFloor: 0
+  stageFloorY: 0.12
+  floorBottomViewportRatio: 0.16
+  topHudViewportReserve: 0.12
+  targetBHalfWidth: 0
+  minTargetTopOffsetFromFloor: 0
+  verticalSmoothTime: 0.12
 --- !u!4 &1843611676 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7347677701256762536, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
@@ -6023,6 +6138,7 @@ MonoBehaviour:
   outerWidth: 14.7
   outerCell: 1
   outerFlat: 3
+  outerFrontFlat: 0
   outerRise: 9
   outerRiseCurve: 1.8
   outerSkylineVar: 0.45
@@ -6032,6 +6148,7 @@ MonoBehaviour:
   outerJunk: 0.35
   outerCollider: 1
   data: {fileID: 11400000, guid: 9e8fc1dfde2e0954bbaa31854f0e4e6b, type: 2}
+  proceduralCache: {fileID: 4900000, guid: da16105a8a22fb44996e04923c447e19, type: 3}
   autoRebuild: 1
   rebuildWhileDragging: 0
 --- !u!4 &1854844738

@@ -173,7 +173,13 @@ namespace RealSteel.Dialogue
                     .Add("Shift + K · Shift + L", "관중 말풍선 · 대기 목록");
             }
             if (Has("TutorialTest")) test.Add("Insert · Shift + Insert", "튜토리얼 화면 (←→ · Space · Esc) · 본 기록 지우기");
-            if (Has("TutorialDirector")) test.Add("Ctrl + F10", "튜토리얼 본 기록 전부 지우기");
+            if (Has("TutorialDirector")) test.Add("Ctrl + F10", "튜토리얼 초기화 (본 기록 전부 지우기)");
+            SeasonResetHotkey seasonReset = FindFirstObjectByType<SeasonResetHotkey>(FindObjectsInactive.Include);
+            if (seasonReset != null)
+            {
+                test.Add("Ctrl + " + seasonReset.ResetKey, "시즌 초기화 (프리시즌으로 · 시작일 지났으면 전화 다시)")
+                    .Add("Ctrl + " + seasonReset.NextBossKey, "다음 보스 (지금 지역 시즌 1위 처리 → 다음 지역 시즌)");
+            }
             if (Has(nameof(Step14_BarkTest))) test.Add("6 / 7 / 8 / 9 · 0", "전투 바크: 파츠 파괴 / 자막 T10 / 부위 파괴 / 그로기 (Shift = 체력 20%) · 기록 초기화");
             if (Has(nameof(Step18_TutorialTest))) test.Add("P / I", "가짜 지도 UI (T3) / 가짜 토벌 신청 UI (T9)");
             if (Has(nameof(Step81_EffectTest))) test.Add("Z X C V B N M", "연출: 확대 · 흔들림 · 페이드 · 사운드 · 표정 (Shift = 반대)");

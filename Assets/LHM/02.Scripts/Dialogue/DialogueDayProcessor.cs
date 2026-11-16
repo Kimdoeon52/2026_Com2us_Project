@@ -77,6 +77,12 @@ namespace RealSteel.Dialogue
             return month > firstSeasonMonth || (month == firstSeasonMonth && day >= firstSeasonDay);
         }
 
+        // 시즌 초기화 직후 다시 확인: 오늘이 시작일 이후면 길드 전화가 바로 울림
+        public bool RecheckFirstSeason()
+        {
+            return manager != null && manager.IsReady && !manager.IsFallback && TryStartFirstSeason();
+        }
+
         // 첫 시즌: 시작일이 되면 길드 전화 → 지역 보스 선택 (SeasonRaceCall이 끝나면 season.started = yes)
         private bool TryStartFirstSeason()
         {

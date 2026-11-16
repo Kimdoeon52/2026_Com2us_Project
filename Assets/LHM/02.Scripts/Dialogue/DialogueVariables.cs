@@ -24,6 +24,14 @@ namespace RealSteel.Dialogue
             }
         }
 
+        // 변수 하나만 variables.json 기본값으로 되돌림 (정의 없는 이름이면 false)
+        public bool ResetToDefault(string name)
+        {
+            if (!definitions.TryGetValue(name, out VariableDef def)) return false;
+            values[name] = def.defaultValue ?? "";
+            return true;
+        }
+
         public string Get(string name)
         {
             return values.TryGetValue(name, out string value) ? value : null;

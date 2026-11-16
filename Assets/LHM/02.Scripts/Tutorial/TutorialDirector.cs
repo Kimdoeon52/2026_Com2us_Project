@@ -330,13 +330,12 @@ namespace RealSteel.Tutorial
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null || catalog.helpKey == Key.None || !keyboard[catalog.helpKey].wasPressedThisFrame) return;
 
-#if UNITY_EDITOR || DEVELOPMENT_BUILD
+            // Ctrl + 도움말 키 = 튜토리얼 초기화 (시연 빌드에서도 쓰도록 모든 빌드에서 동작)
             if (keyboard.ctrlKey.isPressed)
             {
                 ResetAll();
                 return;
             }
-#endif
             ToggleHelp();
         }
 

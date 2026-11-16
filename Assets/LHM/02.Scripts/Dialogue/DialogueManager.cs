@@ -28,6 +28,7 @@ namespace RealSteel.Dialogue
             { "menu.hunt_apply", "토벌 신청" },
             { "menu.ranking_board", "랭킹 보드" },
             { "menu.reward_claim", "포상 수령" },
+            { "menu.reward_none", "아직 받을 포상이 없습니다." },
             { "menu.talk", "대화" },
             { "menu.talk_more", "대화하기" },
             { "menu.shop", "상점 열기" },
@@ -157,6 +158,11 @@ namespace RealSteel.Dialogue
         public string GetSpeakerName(string speakerId)
         {
             return IsFallback ? "" : database.GetSpeakerName(speakerId);
+        }
+
+        public string GetSpeakerTitle(string speakerId)
+        {
+            return IsFallback ? "" : database.GetSpeakerTitle(speakerId);
         }
 
         public string GetText(string key)

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
 using TMPro;
@@ -61,6 +62,10 @@ namespace RealSteel.Dialogue
         [Tooltip("craftingWindow · fixWindow를 가진 창 관리자. 그 스크립트의 열기 · 닫기 함수를 그대로 불러 인벤토리 배치 등도 같이 처리됨")]
         [SerializeField] private MonoBehaviour craftingUi;
 
+        [Header("랭킹 보드 (씬에 LJS 랭킹 창이 없으면 이 프리팹을 한 번 만들어 씀)")]
+        [Tooltip("LJS CoreSystemRoot — 랭킹 · 지도 · 달력 · 시간 시스템 묶음. 만들어지면 씬이 바뀌어도 남음 (LJS DontDestroyOnLoad)")]
+        [SerializeField] private GameObject rankingSystemPrefab;
+
         [Header("표시")]
         [SerializeField] private Color normalColor = Color.white;
         [SerializeField] private Color selectedColor = new Color(1f, 0.85f, 0.3f);
@@ -80,9 +85,15 @@ namespace RealSteel.Dialogue
         private GameObject openWindow;
         private MonoBehaviour openWindowOwner;
         private string openWindowClose;
+        private bool windowPending;
 
         // YJW 제작 · 수리 창 이름 — 그쪽 코드를 직접 참조하지 않고 이름으로 찾음 (바뀌면 콘솔에 안내)
         private const string CraftingUiTypeName = "CraftingUIManager";
+        // LJS 랭킹 창 — 이름으로 찾음
+        private const string RankingUiTypeName = "RankingUiManager";
+        private const string RankingToggleMethod = "ToggleRankingUI";
+        private const string RankingDataTypeName = "RankingSystemManager";
+        private const float RankingReadyTimeout = 2f;
         private const BindingFlags AnyInstance = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
 
         public bool IsBusy => state != State.Closed;
@@ -367,6 +378,16 @@ namespace RealSteel.Dialogue
                     if (!OpenAuctionOption()) End();
                     break;
 
+                case NpcAction.RankingBoard:
+                    if (!OpenRankingBoard()) End();
+                    break;
+
+                // 포상 시스템이 아직 없어 접수원 안내 한 줄로 임시 대체 (기록 · 세이브 안 함)
+                case NpcAction.RewardClaim:
+                    ChangeState(State.Talking);
+                    if (!SayLine(npc, "menu.reward_none")) End();
+                    break;
+
                 case NpcAction.Exit:
                     End();
                     break;
@@ -472,6 +493,103 @@ namespace RealSteel.Dialogue
             return true;
         }
 
+        // 대사 풀을 거치지 않고 NPC 이름으로 문장 한 줄을 대화창에 띄움
+        private bool SayLine(NpcInteractable speaker, string textKey)
+        {
+            DialogueBox box = manager.Box;
+            if (box == null || manager.IsTalking) return false;
+
+            var line = new DialogueLine(speaker.SpeakerId, manager.GetSpeakerName(speaker.SpeakerId), manager.GetText(textKey))
+            {
+                speakerTitle = manager.GetSpeakerTitle(speaker.SpeakerId),
+            };
+            box.Open(new[] { line });
+            return true;
+        }
+
+        // 랭킹 보드: LJS RankingUiManager의 랭킹 창(Shift+R과 같은 창)을 열고, 닫히면 상호작용 종료
+        //  - 보통은 CoreSystemRoot(LJS)가 Map_Test 등에서 넘어와 있음 (DontDestroyOnLoad)
+        //  - 없으면(로비 씬만 Play 등) rankingSystemPrefab을 만들고, 랭킹 데이터가 채워질 때까지 기다렸다가 엶
+        //  - 이름으로 찾아 그쪽 코드는 수정하지 않음
+        private bool OpenRankingBoard()
+        {
+            MonoBehaviour owner = FindByTypeName(RankingUiTypeName);
+            if (owner != null) return ShowRankingWindow(owner);
+
+            if (rankingSystemPrefab == null)
+            {
+                Debug.LogWarning($"[NPC] 랭킹 창 관리자({RankingUiTypeName})가 없고 Ranking System Prefab 칸도 비어 있어 랭킹 보드를 열 수 없습니다.", this);
+                return false;
+            }
+
+            GameObject created = Instantiate(rankingSystemPrefab);
+            created.name = rankingSystemPrefab.name;
+            Debug.Log($"[NPC] 씬에 랭킹 창이 없어 '{created.name}'를 만들었습니다 (씬이 바뀌어도 남음).", created);
+
+            ChangeState(State.Window);
+            windowPending = true;
+            StartCoroutine(OpenRankingWhenReady());
+            return true;
+        }
+
+        // 막 만든 LJS 시스템은 다음 프레임 Start에서 랭킹 목록을 채움 → 채워진 뒤 열어야 빈 창이 안 나옴
+        private IEnumerator OpenRankingWhenReady()
+        {
+            float waited = 0f;
+            MonoBehaviour owner = null;
+            while (waited < RankingReadyTimeout)
+            {
+                yield return null;
+                waited += Time.unscaledDeltaTime;
+                if (state != State.Window || !windowPending) yield break;
+
+                owner = FindByTypeName(RankingUiTypeName);
+                MonoBehaviour data = FindByTypeName(RankingDataTypeName);
+                var list = data != null ? data.GetType().GetField("npcList", AnyInstance)?.GetValue(data) as System.Collections.IList : null;
+                if (owner != null && list != null && list.Count > 0) break;
+            }
+
+            windowPending = false;
+            if (owner == null)
+            {
+                Debug.LogWarning($"[NPC] '{rankingSystemPrefab.name}'를 만들었지만 {RankingUiTypeName}를 찾지 못했습니다.", this);
+                End();
+                yield break;
+            }
+            if (!ShowRankingWindow(owner)) End();
+        }
+
+        private bool ShowRankingWindow(MonoBehaviour owner)
+        {
+            System.Type type = owner.GetType();
+            var window = type.GetField("rankingCanvas", AnyInstance)?.GetValue(owner) as GameObject;
+            MethodInfo toggle = type.GetMethod(RankingToggleMethod, AnyInstance, null, System.Type.EmptyTypes, null);
+            if (window == null || toggle == null)
+            {
+                Debug.LogWarning($"[NPC] {type.Name}의 'rankingCanvas' 칸 또는 '{RankingToggleMethod}' 함수가 없어 랭킹 보드를 열 수 없습니다.", owner);
+                return false;
+            }
+
+            if (!window.activeSelf) toggle.Invoke(owner, null);
+
+            openWindow = window;
+            openWindowOwner = owner;
+            openWindowClose = RankingToggleMethod;
+            ChangeState(State.Window);
+            Debug.Log($"[NPC] 랭킹 보드 열림 ({window.name}) — Esc 또는 Shift+R로 닫으면 상호작용 종료");
+            if (!window.activeInHierarchy) Debug.LogWarning($"[NPC] '{window.name}'의 부모가 꺼져 있어 화면에 보이지 않습니다.", window);
+            return true;
+        }
+
+        private static MonoBehaviour FindByTypeName(string typeName)
+        {
+            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (behaviour != null && behaviour.GetType().Name == typeName) return behaviour;
+            }
+            return null;
+        }
+
         private MonoBehaviour FindCraftingUi()
         {
             foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
@@ -483,6 +601,7 @@ namespace RealSteel.Dialogue
 
         private void HandleWindowInput()
         {
+            if (windowPending) return;
             if (openWindow == null)
             {
                 End();
@@ -532,6 +651,7 @@ namespace RealSteel.Dialogue
             if (state == State.Window && openWindow != null && openWindow.activeSelf) CloseOpenWindow();
             openWindow = null;
             openWindowOwner = null;
+            windowPending = false;
 
             Debug.Log($"[NPC] 상호작용 종료 ({(npc != null ? npc.name : "-")})");
             npc = null;

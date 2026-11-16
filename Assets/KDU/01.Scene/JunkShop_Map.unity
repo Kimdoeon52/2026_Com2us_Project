@@ -7365,6 +7365,14 @@ MonoBehaviour:
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
   iconNormal: {r: 0.6039216, g: 0.61960787, b: 0.6431373, a: 1}
+  accentColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
+  tagActive: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  tagInactive: {r: 0.18039216, g: 0.19215687, b: 0.20784314, a: 1}
+  tagSpriteActive: {fileID: 0}
+  tagSpriteInactive: {fileID: 0}
   lockedAlpha: 0.45
   shakeSeconds: 0.3
   shakeDistance: 8
@@ -10345,6 +10353,14 @@ MonoBehaviour:
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
   iconNormal: {r: 0.6039216, g: 0.61960787, b: 0.6431373, a: 1}
+  accentColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
+  tagActive: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  tagInactive: {r: 0.18039216, g: 0.19215687, b: 0.20784314, a: 1}
+  tagSpriteActive: {fileID: 0}
+  tagSpriteInactive: {fileID: 0}
   lockedAlpha: 0.45
   shakeSeconds: 0.3
   shakeDistance: 8
@@ -11445,6 +11461,10 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
+  cacheMesh: {fileID: 4300000, guid: 566ab3ac8dbe562428179e7274ac3fc8, type: 2}
+  cacheHash: 5af0e1402499e177
+  cacheSurfaces: []
+  cacheKinds: 
 --- !u!4 &388797326
 Transform:
   m_ObjectHideFlags: 0
@@ -15085,6 +15105,8 @@ MonoBehaviour:
   motion: {fileID: 0}
   speakerPlate: {fileID: 0}
   speakerTitleText: {fileID: 0}
+  directionText: {fileID: 0}
+  directionFormat: '[ {0} ]'
   charactersPerSecond: 30
   skipConfirm: {fileID: 0}
   statusText: {fileID: 0}
@@ -15094,6 +15116,7 @@ MonoBehaviour:
   autoBaseSeconds: 1
   autoSecondsPerChar: 0.05
   backlog: {fileID: 0}
+  controls: {fileID: 0}
 --- !u!222 &499519305
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15199,6 +15222,10 @@ MonoBehaviour:
     \uB808\uC774\uC2A4 \uAC1C\uBC29"
   lockHintSeconds: 1.8
   openInputDelay: 0.2
+  confirmOn: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  confirmOff: {r: 0.22745098, g: 0.23921569, b: 0.25882354, a: 1}
+  confirmSpriteOn: {fileID: 0}
+  confirmSpriteOff: {fileID: 0}
 --- !u!224 &505050787
 RectTransform:
   m_ObjectHideFlags: 0
@@ -19133,6 +19160,7 @@ MonoBehaviour:
   role: 2
   poolId: junk_npc
   speakerId: junkdealer
+  greetingPoolId: 
   interactRadius: 2
   promptOffset: {x: 0, y: 1.2, z: 0}
   closeUpFocusOffset: {x: 0, y: 0.615, z: 0}
@@ -22261,6 +22289,9 @@ MonoBehaviour:
   backgroundNormal: {r: 0.105882354, g: 0.11764706, b: 0.13333334, a: 1}
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
   selectedShift: 8
   stripeNormal: 4
   stripeSelected: 10
@@ -23537,6 +23568,8 @@ MonoBehaviour:
   motion: {fileID: 127447579}
   speakerPlate: {fileID: 1158699208}
   speakerTitleText: {fileID: 610378735}
+  directionText: {fileID: 0}
+  directionFormat: '[ {0} ]'
   charactersPerSecond: 30
   skipConfirm: {fileID: 1277675738}
   statusText: {fileID: 111146562}
@@ -23546,6 +23579,7 @@ MonoBehaviour:
   autoBaseSeconds: 1
   autoSecondsPerChar: 0.05
   backlog: {fileID: 701281124}
+  controls: {fileID: 0}
 --- !u!1 &754079809
 GameObject:
   m_ObjectHideFlags: 0
@@ -24348,7 +24382,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 1.8350525, y: 18.750687}
+  m_LightCookieOffset: {x: 0.11000001, y: 0.044999998}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -26440,9 +26474,11 @@ MonoBehaviour:
   acceleration: 40
   turnSpeed: 900
   cameraRelative: 1
-  jumpHeight: 1.1
+  stickDistance: 0.6
   gravity: -25
   snapToRSTerrain: 1
+  keepOnWalkable: 1
+  maxSlideSpeed: 6
   cam: {fileID: 13136966}
   keepCurrentAngle: 1
   pitch: 35
@@ -26463,8 +26499,11 @@ MonoBehaviour:
   angleSharpness: 10
   placeholderIfEmpty: 1
   flipSprites: 1
+  sideBias: 0.6
+  walkAnimSpeed: 0.75
   autoSeeThrough: 1
   autoFoliagePush: 1
+  autoBlobShadow: 1
 --- !u!143 &871041233
 CharacterController:
   m_ObjectHideFlags: 0
@@ -28202,6 +28241,7 @@ MonoBehaviour:
   role: 1
   poolId: guild_npc
   speakerId: receptionist
+  greetingPoolId: 
   interactRadius: 2
   promptOffset: {x: 0, y: 0.90000004, z: 0}
   closeUpFocusOffset: {x: 0, y: 0.36000004, z: 0}
@@ -32129,9 +32169,11 @@ MonoBehaviour:
   optionTemplate: {fileID: 1953291844}
   shopPanel: {fileID: 624395756}
   shopWindow: {fileID: 69856452}
+  craftingUi: {fileID: 0}
   normalColor: {r: 1, g: 1, b: 1, a: 1}
   selectedColor: {r: 1, g: 0.85, b: 0.3, a: 1}
   selectedMark: "\u25B6 "
+  numbered: 1
 --- !u!1 &1071328307
 GameObject:
   m_ObjectHideFlags: 0
@@ -33045,6 +33087,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -320
       objectReference: {fileID: 0}
+    - target: {fileID: 2221191157141867143, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: tmp
+      value: 
+      objectReference: {fileID: 521559055}
+    - target: {fileID: 2221191157141867143, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: toolTipBox
+      value: 
+      objectReference: {fileID: 521559056}
     - target: {fileID: 2247888521464014642, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
       propertyPath: _view
       value: 
@@ -33073,6 +33123,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -340
       objectReference: {fileID: 0}
+    - target: {fileID: 2272326340625903841, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: tmp
+      value: 
+      objectReference: {fileID: 521559055}
+    - target: {fileID: 2272326340625903841, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: toolTipBox
+      value: 
+      objectReference: {fileID: 521559056}
     - target: {fileID: 2308984172832918633, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -33213,6 +33271,14 @@ PrefabInstance:
       propertyPath: toolTipBox
       value: 
       objectReference: {fileID: 521559056}
+    - target: {fileID: 3922795871150418154, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: tmp
+      value: 
+      objectReference: {fileID: 521559055}
+    - target: {fileID: 3922795871150418154, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: toolTipBox
+      value: 
+      objectReference: {fileID: 521559056}
     - target: {fileID: 3936673411044593000, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -33237,6 +33303,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -455
       objectReference: {fileID: 0}
+    - target: {fileID: 4137031079732286298, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: tmp
+      value: 
+      objectReference: {fileID: 521559055}
+    - target: {fileID: 4137031079732286298, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: toolTipBox
+      value: 
+      objectReference: {fileID: 521559056}
     - target: {fileID: 4168362083093727823, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
       propertyPath: tmp
       value: 
@@ -33349,6 +33423,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -455
       objectReference: {fileID: 0}
+    - target: {fileID: 4595431596107250472, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: tmp
+      value: 
+      objectReference: {fileID: 521559055}
+    - target: {fileID: 4595431596107250472, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
+      propertyPath: toolTipBox
+      value: 
+      objectReference: {fileID: 521559056}
     - target: {fileID: 4741199187041654534, guid: c46ad2af3de4fb24b808cc62f06be7d1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -34576,6 +34658,9 @@ MonoBehaviour:
   backgroundNormal: {r: 0.105882354, g: 0.11764706, b: 0.13333334, a: 1}
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
   selectedShift: 8
   stripeNormal: 4
   stripeSelected: 10
@@ -39357,6 +39442,14 @@ MonoBehaviour:
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
   iconNormal: {r: 0.6039216, g: 0.61960787, b: 0.6431373, a: 1}
+  accentColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
+  tagActive: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  tagInactive: {r: 0.18039216, g: 0.19215687, b: 0.20784314, a: 1}
+  tagSpriteActive: {fileID: 0}
+  tagSpriteInactive: {fileID: 0}
   lockedAlpha: 0.45
   shakeSeconds: 0.3
   shakeDistance: 8
@@ -40564,6 +40657,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89e5430817c43184fa04cdafbc54da83, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  accentColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  partGood: {r: 0.49803922, g: 0.827451, b: 0.627451, a: 1}
+  partLow: {r: 0.9490196, g: 0.5411765, b: 0.23529412, a: 1}
+  partBroken: {r: 0.8784314, g: 0.30588236, b: 0.30588236, a: 1}
   difficulties:
   - id: veryEasy
     label: "\uC544\uC8FC \uC26C\uC6C0"
@@ -42065,6 +42162,7 @@ MonoBehaviour:
   _debugComponentIds:
   - ITEM_10_1_001
   - ITEM_10_1_002
+  _debugPartIds: []
   _debugAmount: 3
 --- !u!1 &1428029755
 GameObject:
@@ -42367,6 +42465,9 @@ MonoBehaviour:
   backgroundNormal: {r: 0.105882354, g: 0.11764706, b: 0.13333334, a: 1}
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
   selectedShift: 8
   stripeNormal: 4
   stripeSelected: 10
@@ -47170,6 +47271,9 @@ MonoBehaviour:
   backgroundNormal: {r: 0.105882354, g: 0.11764706, b: 0.13333334, a: 1}
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
   selectedShift: 8
   stripeNormal: 4
   stripeSelected: 10
@@ -47226,6 +47330,7 @@ MonoBehaviour:
   outerWidth: 20
   outerCell: 2
   outerFlat: 1
+  outerFrontFlat: 0
   outerRise: 9
   outerRiseCurve: 1.8
   outerSkylineVar: 0.45
@@ -47235,6 +47340,7 @@ MonoBehaviour:
   outerJunk: 0.35
   outerCollider: 1
   data: {fileID: 11400000, guid: cbe91b8d79befb14bbf5467823885bbe, type: 2}
+  proceduralCache: {fileID: 0}
   autoRebuild: 1
   rebuildWhileDragging: 0
 --- !u!4 &1618061102
@@ -54043,6 +54149,14 @@ MonoBehaviour:
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
   iconNormal: {r: 0.6039216, g: 0.61960787, b: 0.6431373, a: 1}
+  accentColor: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
+  tagActive: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  tagInactive: {r: 0.18039216, g: 0.19215687, b: 0.20784314, a: 1}
+  tagSpriteActive: {fileID: 0}
+  tagSpriteInactive: {fileID: 0}
   lockedAlpha: 0.45
   shakeSeconds: 0.3
   shakeDistance: 8
@@ -58570,6 +58684,9 @@ MonoBehaviour:
   backgroundNormal: {r: 0.105882354, g: 0.11764706, b: 0.13333334, a: 1}
   backgroundSelected: {r: 0.13333334, g: 0.14509805, b: 0.16470589, a: 1}
   frameNormal: {r: 0.2, g: 0.21176471, b: 0.23137255, a: 1}
+  frameSelected: {r: 0.9490196, g: 0.6627451, b: 0, a: 1}
+  frameScaleNormal: 2
+  frameScaleSelected: 1
   selectedShift: 8
   stripeNormal: 4
   stripeSelected: 10
@@ -60222,6 +60339,11 @@ MonoBehaviour:
     shaftsFollowTime: 1
     moonShafts: 0.6
   ownLook: 0
+  fixedLight: 0
+  fixedLightFrom: {fileID: 0}
+  fixedLightEuler: {x: 25, y: 205, z: 0}
+  fixedLightColor: {r: 1, g: 0.92, b: 0.78, a: 1}
+  fixedLightIntensity: 1
   steps: 16
   stepLength: 1.5
   maxDistance: 40

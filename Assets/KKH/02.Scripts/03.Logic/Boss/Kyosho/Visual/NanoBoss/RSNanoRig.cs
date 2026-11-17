@@ -617,8 +617,7 @@ namespace RealSteel.NanoBoss
             if (!swarm) swarm = FindAnyObjectByType<RSNanoSwarm>();
             if (!swarm) return;
             swarm.ResetRandom(1234);
-            var brain = swarm.GetComponent<RSNanoBossBrain>();
-            Vector3 shape = brain ? brain.blobRadius : new Vector3(3.4f, 2.7f, 0.9f);
+            Vector3 shape = new Vector3(3.4f, 2.7f, 0.9f);
             swarm.Blob.aspect = shape.x / Mathf.Max(0.01f, shape.y);
             if (swarm.floorFromTransform) swarm.floorY = swarm.transform.position.y;
             swarm.Blob.radius = swarm.BlobSize(swarm.botCount, shape);
@@ -644,7 +643,8 @@ namespace RealSteel.NanoBoss
             var bots = swarm.Bots;
             var rng = new System.Random(99);
             float R() => (float)rng.NextDouble();
-            int knightN = RSNanoBossBrain.KnightBotCount(swarm);
+            int rawKnightN = Mathf.RoundToInt(KnightGuide.BodyArea / Mathf.Max(0.0001f, swarm.spacing * swarm.spacing));
+            int knightN = Mathf.Clamp(rawKnightN, 200, Mathf.Max(200, Mathf.RoundToInt(swarm.Count * 0.7f)));
             for (int i = 0; i < bots.Length; i++)
             {
                 if (i < knightN)

@@ -354,7 +354,7 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return placed;
     }
 
-    [ContextMenu("파츠 지급")]
+    // 카탈로그에서 무작위 파츠 하나를 빈자리에 배치
     public bool GiveRandomPart()
     {
         if (_catalog == null || _catalog.Parts == null || _catalog.Parts.Length == 0)

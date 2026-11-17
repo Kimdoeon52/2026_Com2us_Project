@@ -1,55 +1,10 @@
-using System;
 using UnityEngine;
 using UnitySceneManager = UnityEngine.SceneManagement.SceneManager;
 
-/// <summary>
-/// 단축키(F1~F5)로 테스트 씬을 전환하는 전역 씬 매니저.
-/// 씬 목록은 인스펙터에서 수정할 수 있음.
-/// </summary>
+// 씬 전환을 맡는 전역 매니저
 public class GameSceneManager : PersistentSingleton<GameSceneManager>
 {
-    [Serializable]
-    public struct SceneShortcut
-    {
-        public KeyCode Key;
-        public string SceneName;
-
-        public SceneShortcut(KeyCode key, string sceneName)
-        {
-            Key = key;
-            SceneName = sceneName;
-        }
-    }
-
-    [SerializeField]
-    private SceneShortcut[] _shortcuts =
-    {
-        new SceneShortcut(KeyCode.F1, "Copys_1020/Map_Test"),
-        new SceneShortcut(KeyCode.F2, "Copys_1020/Tester"),
-        new SceneShortcut(KeyCode.F3, "Copys_1020/Battle"),
-        new SceneShortcut(KeyCode.F4, "Copys_1020/BattingTest"),
-        new SceneShortcut(KeyCode.F5, "Copys_1020/JunkShop_22"),
-    };
-
-    [SerializeField]
-    private bool _shortcutEnabled = true;
-
-    private void Update()
-    {
-        if (!_shortcutEnabled || _shortcuts == null)
-            return;
-
-        for (int i = 0; i < _shortcuts.Length; i++)
-        {
-            if (Input.GetKeyDown(_shortcuts[i].Key))
-            {
-                LoadScene(_shortcuts[i].SceneName);
-                return;
-            }
-        }
-    }
-
-    /// <summary>씬 이름으로 씬을 로드함. 빌드 설정에 없는 씬이면 에러 로그만 남기고 무시함.</summary>
+    // 빌드 설정에 없는 씬이면 에러 로그만 남긴다
     public void LoadScene(string sceneName)
     {
         if (string.IsNullOrWhiteSpace(sceneName))

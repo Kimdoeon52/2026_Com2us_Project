@@ -40,11 +40,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 750792687156729324}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 1.5
+  m_Intensity: 0
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -315,11 +315,16 @@ MonoBehaviour:
   snapToRSTerrain: 1
   keepOnWalkable: 1
   maxSlideSpeed: 6
+  cameraMode: 0
+  fixedPitch: 12
+  fixedYaw: 0
+  fixedDistanceRange: {x: 4, y: 15}
+  fixedStartDistance: 9
   cam: {fileID: 0}
   keepCurrentAngle: 1
   pitch: 35
   yaw: 0
-  distance: 12
+  distance: 15
   fieldOfView: 0
   lookHeight: 1.2
   followSmooth: 0.18
@@ -352,14 +357,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f98564b3450b8674f83e99c18d3db4cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: NaN, g: 0, b: 0, a: 0}
-  nightIntensity: NaN
-  dayIntensity: NaN
-  range: NaN
-  height: NaN
-  towardCamera: NaN
-  flicker: NaN
-  flickerSpeed: NaN
   glowLight: {fileID: 6223992456781111420}
   timeOfDay: {fileID: 0}
   look:

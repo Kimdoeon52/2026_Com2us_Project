@@ -44,6 +44,9 @@ namespace RealSteel.Build
         [RSGroup("게임")]
         [Tooltip("메시 콜라이더를 붙인다 (밟고 부딪혀야 할 때)")]
         public bool colliders = true;
+        [Tooltip("계단 부품에 보이지 않는 경사로 콜라이더를 덧댄다 (디딤판 코를 잇는 면) — 캐릭터가 계단을 경사로처럼 매끄럽게 오르내린다. " +
+                 "현업 방식: 턱 높이는 낮게 두고 계단만 경사로로 → 계단이 아닌 단(단상 · 받침)은 못 올라간다")]
+        public bool stairRamps = true;
         [Tooltip("그림자를 드리운다")]
         public bool castShadows = true;
 
@@ -53,7 +56,7 @@ namespace RealSteel.Build
         // 부품 데이터는 그대로 두고, 만든 메시만 에셋으로 저장해 둔다. 켤 때 부품 내용 해시가 같으면 다시 만들지 않고 그것을 쓴다.
         // 부품을 고치면 해시가 달라져 원래대로 다시 만들고, 다음 저장 때 새 캐시를 굽는다 (내용 기준 파일 이름 → 복제본끼리 같이 써도 안전)
         /// <summary>메시 만드는 방식(RSMeshBuilder · RSShapes)을 바꾸면 올린다 → 예전 캐시는 모두 무시된다</summary>
-        public const int CacheVersion = 1;
+        public const int CacheVersion = 2;   // 2: Z-파이팅 방지 밀기 (RSMeshBuilder.ZBiasStep)
         [SerializeField, HideInInspector] Mesh cacheMesh;
         [SerializeField, HideInInspector] string cacheHash = "";
         [SerializeField, HideInInspector] RSSurface[] cacheSurfaces;   // 서브메시마다 재질
@@ -233,6 +236,64 @@ namespace RealSteel.Build
             }
             else if (mc != null) Kill(mc);
             meshGo.layer = gameObject.layer;
+            UpdateStairRamps();
+        }
+
+        // ── 계단 경사로 콜라이더 ──
+        const string RampName = "계단 경사로";
+
+        void UpdateStairRamps()
+        {
+            if (meshGo == null) return;
+            var ramps = new List<Transform>();
+            for (int i = 0; i < meshGo.transform.childCount; i++)
+            {
+                var c = meshGo.transform.GetChild(i);
+                if (c.name == RampName) ramps.Add(c);
+            }
+            int used = 0;
+            if (colliders && stairRamps)
+            {
+                Vector3 ms = meshGo.transform.lossyScale;
+                foreach (var p in parts)
+                {
+                    if (p == null || p.shape != RSPartShape.계단) continue;
+                    Vector3 s = p.size;
+                    if (s.y <= 0.001f || s.z <= 0.001f || s.x <= 0.001f) continue;
+                    int n = Mathf.Max(1, p.steps);
+                    float sd = s.z / n;
+                    // 디딤판 앞 모서리(코)를 잇는 면: 바닥에서 한 칸 앞(z0 - sd)에서 시작해 맨 윗단 앞 모서리(z1 - sd)에서 끝난다 (부품 로컬, +Z 로 올라감)
+                    Vector3 a = new Vector3(0f, 0f, -s.z * 0.5f - sd);
+                    Vector3 b = new Vector3(0f, s.y, s.z * 0.5f - sd);
+                    float len = (b - a).magnitude;
+                    float ang = Mathf.Atan2(s.y, s.z) * Mathf.Rad2Deg;
+                    const float t = 0.1f;                                  // 경사로 두께 (면 아래로)
+                    Quaternion q = Quaternion.Euler(-ang, 0f, 0f);         // +Z 쪽이 올라가게
+                    Vector3 center = (a + b) * 0.5f - (q * Vector3.up) * (t * 0.5f);
+
+                    Transform rt;
+                    if (used < ramps.Count) rt = ramps[used];
+                    else
+                    {
+                        var go = new GameObject(RampName);
+                        go.hideFlags = HideFlags.DontSave | HideFlags.NotEditable;
+                        go.transform.SetParent(meshGo.transform, false);
+                        rt = go.transform;
+                    }
+                    used++;
+                    rt.gameObject.layer = gameObject.layer;
+                    rt.position = p.transform.TransformPoint(center);
+                    rt.rotation = p.transform.rotation * q;
+                    rt.localScale = Vector3.one;
+                    var bc = rt.GetComponent<BoxCollider>();
+                    if (bc == null) bc = rt.gameObject.AddComponent<BoxCollider>();
+                    Vector3 ls = p.transform.lossyScale;
+                    bc.center = Vector3.zero;
+                    bc.size = new Vector3(s.x * Mathf.Abs(ls.x / ms.x), t * Mathf.Abs(ls.y / ms.y), len * Mathf.Abs(ls.z / ms.z));
+                    bc.enabled = true;
+                }
+            }
+            for (int i = used; i < ramps.Count; i++) Kill(ramps[i].gameObject);
         }
 
         void FixDuplicateIds()
@@ -406,6 +467,7 @@ namespace RealSteel.Build
             }
             else if (mc != null) Kill(mc);
             meshGo.layer = gameObject.layer;
+            UpdateStairRamps();
             foreach (var p in parts) p.transform.hasChanged = false;
             builtParts.Clear(); pickTris.Clear(); outlines.Clear();
             Kill(mesh); mesh = null;

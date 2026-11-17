@@ -4,6 +4,10 @@
 //  · 반복   : 조립품 축으로 투영 (옆 부품과 무늬가 이어짐). 기둥 옆면은 둘레로 펼침
 //  · 도안 칸: 면 좌표(부품 축)를 칸 크기에 꼭 맞게 → 도안 텍스처 픽셀 1:1
 //  · 늘리기 : 사각 면을 3×3 으로 쪼개 테두리 픽셀은 그대로, 가운데는 반복
+//
+// Z-파이팅 방지: 부품마다 면을 법선 방향으로 아주 조금(0.6 ~ 4.8 mm, 부품 번호 + 조립품 이름으로 정함) 밀어낸다.
+//  같은 평면에 같은 방향으로 겹친 두 부품 면(벽 + 덧댄 판, 겹친 타일 등)이 서로 다른 거리만큼 밀려 깜빡이지 않는다.
+//  1 픽셀 = 31 mm 라 눈에 보이지 않고, UV 는 밀기 전 좌표로 계산해 무늬도 그대로다.
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -24,7 +28,23 @@ namespace RealSteel.Build
         public readonly List<Material> Materials = new List<Material>();
         readonly List<RSFace> faces = new List<RSFace>();
 
-        public RSMeshBuilder(RSAssembly a) { asm = a; }
+        public RSMeshBuilder(RSAssembly a) { asm = a; asmSalt = Salt(a != null ? a.name : ""); }
+
+        /// <summary>Z-파이팅 방지 밀기 한 칸 (m)</summary>
+        public const float ZBiasStep = 0.0006f;
+        const int ZBiasLevels = 8;
+        readonly int asmSalt;
+        float curBias;
+
+        static int Salt(string s)
+        {
+            unchecked
+            {
+                uint h = 2166136261;
+                foreach (char c in s) { h ^= c; h *= 16777619; }
+                return (int)(h % ZBiasLevels);
+            }
+        }
 
         // 면 하나의 조립품 좌표 정보
         struct FaceW
@@ -65,6 +85,8 @@ namespace RealSteel.Build
                     RSShapes.Frame(w.n, up, right, out Vector3 u, out Vector3 v);
                     for (int i = 0; i < w.p.Length; i++) w.own[i] = new Vector2(Vector3.Dot(w.p[i], u), Vector3.Dot(w.p[i], v));
                 }
+                // Z-파이팅 방지: 면 좌표(UV)를 잡은 뒤 위치만 법선 방향으로 조금 민다
+                if (curBias > 0f) for (int i = 0; i < w.p.Length; i++) w.p[i] += w.n * curBias;
                 fw.Add(w);
                 if (f.own == null)
                 {
@@ -118,7 +140,9 @@ namespace RealSteel.Build
 
         public void AddPart(RSPart part, int partIndex, List<RSAssembly.PickTri> picks, List<RSAssembly.FaceOutline> outlines)
         {
+            curBias = ZBiasStep * (((partIndex + asmSalt) % ZBiasLevels) + 1);
             Prepare(part);
+            curBias = 0f;
             Color vc = Color.white;
             if (part.brightJitter > 0f)
             {

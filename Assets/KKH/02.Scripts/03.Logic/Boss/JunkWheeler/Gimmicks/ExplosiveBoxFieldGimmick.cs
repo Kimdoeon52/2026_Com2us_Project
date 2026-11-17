@@ -59,13 +59,11 @@ namespace RealSteel.Boss.JunkWheeler
             if (isBoss)
             {
                 // 보스 돌진 직격: 즉시 자폭
-                Debug.Log("<color=red>[ExplosiveBoxFieldGimmick] ▶ 보스 돌진 직격! 폭발 상자 즉시 자폭!</color>");
                 TriggerExplosion();
             }
             else
             {
                 // 플레이어 타격: 1.5초 퓨즈 후 자폭
-                Debug.Log("<color=yellow>[ExplosiveBoxFieldGimmick] 플레이어 타격 감지! 1.5초 후 자폭 시퀀스 개시!</color>");
                 StartFuseCountdownAsync().Forget();
             }
         }
@@ -122,7 +120,6 @@ namespace RealSteel.Boss.JunkWheeler
                     if (boss != null)
                     {
                         hasDamagedBoss = true;
-                        Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 폭발로 보스에게 {bossDamage} 피해 및 {bossStunDuration}초 스턴 부여!</color>");
                         boss.TakeDamage(bossDamage);
                         boss.InterruptToStun(bossStunDuration);
                         continue;
@@ -140,21 +137,15 @@ namespace RealSteel.Boss.JunkWheeler
                         isInvincible = executor.State.CurrentAction.IsInvincibleDuringActive;
                     }
 
-                    if (isInvincible)
-                    {
-                        Debug.Log("<color=cyan>[ExplosiveBoxFieldGimmick] 플레이어가 Space 무적으로 상자 폭발을 회피함!</color>");
-                    }
-                    else
+                    if (!isInvincible)
                     {
                         var hub = CombatDataHub.Instance;
                         if (hub != null && hub.CurrentBattleMode == BattleMode.RobotVsBoss && hub.BossSnapshot != null && hub.PlayerSnapshot != null)
                         {
-                            var res = hub.ProcessHit("ExplosiveBox", "Player", playerDamage);
-                            Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 플레이어가 상자 폭발에 피격당함! (원시 피해: {playerDamage} ➔ 방어력 적용 피해: {res.DamageToHp})</color>");
+                            hub.ProcessHit("ExplosiveBox", "Player", playerDamage);
                         }
                         else
                         {
-                            Debug.Log($"<color=red>[ExplosiveBoxFieldGimmick] 플레이어가 상자 폭발에 피격당함! (피해량: {playerDamage})</color>");
                             hub?.ApplyCoreDamage("Player", playerDamage);
                         }
                     }

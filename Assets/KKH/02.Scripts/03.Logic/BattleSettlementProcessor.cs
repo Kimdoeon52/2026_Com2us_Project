@@ -97,7 +97,6 @@ public static class BattleSettlementProcessor
         }
         if (player.coreLevel >= CoreMasterData.MaxLevel)
         {
-            Debug.Log("[정산기] 코어 경험치 처리: 이미 최대 레벨 도달함");
             return;
         }
 
@@ -111,8 +110,6 @@ public static class BattleSettlementProcessor
             player.maxHp = coreMaster.GetMaxHp(player.coreLevel);
             player.baseDefense = coreMaster.GetDefense(player.coreLevel);
             player.currentHp = player.maxHp; // 레벨업 시 체력 회복 처리함
-            Debug.Log($"[정산기] 코어 레벨업! 현재 레벨: {player.coreLevel}, 남은 EXP: {player.currentCoreExp}");
-            CombatDataHub.Instance?.BroadcastCoreLevelUp(player.coreLevel, player.maxHp, player.baseDefense);
             if (player.coreLevel < CoreMasterData.MaxLevel)
             {
                 reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
@@ -203,7 +200,6 @@ public static class BattleSettlementProcessor
                         if (partState.isBroken)
                         {
                             partState.Repair(1);
-                            Debug.Log($"[정산기] 승리 응급복구 완료: {kvp.Key} (ID: {partState.partID}) 내구도 1로 복구됨");
                         }
                         result.FinalPartDurabilities[partState.partID] = partState.currentDurability;
                     }
@@ -236,7 +232,6 @@ public static class BattleSettlementProcessor
                         var partState = kvp.Value;
                         if (partState.partID.StartsWith("DEFAULT_", StringComparison.OrdinalIgnoreCase))
                         {
-                            Debug.Log($"[정산기] 기본 장착 부품은 영구 파괴 대상에서 제외됨: {kvp.Key} (ID: {partState.partID})");
                             continue;
                         }
 
@@ -246,7 +241,6 @@ public static class BattleSettlementProcessor
                         // 기획서 §6.10.5: 아주 쉬움은 파괴 판정 없음!
                         if (layer.destructionMultiplier <= 0f)
                         {
-                            Debug.Log($"[정산기] [아주 쉬움 난이도] 부품 파괴 면제: {kvp.Key} (내구도 0만 적용)");
                             continue;
                         }
 
@@ -270,11 +264,6 @@ public static class BattleSettlementProcessor
                         if (roll < finalChance)
                         {
                             result.DestroyedPartIDs.Add(partState.partID);
-                            Debug.Log($"[정산기] 부품 영구 파괴됨: {kvp.Key} (ID: {partState.partID}, 등급: {grade}, 확률: {finalChance:P0}, 롤: {roll:F2})");
-                        }
-                        else
-                        {
-                            Debug.Log($"[정산기] 부품 파괴 면제(보존됨): {kvp.Key} (ID: {partState.partID}, 등급: {grade})");
                         }
                     }
                 }
@@ -385,8 +374,6 @@ public static class BattleSettlementProcessor
 
                 if (fieldLevel != null) fieldLevel.SetValue(coreSave, player.coreLevel);
                 if (fieldExp != null) fieldExp.SetValue(coreSave, player.currentCoreExp);
-
-                Debug.Log($"<color=cyan>[정산기] KDU 인벤토리 코어 세이브 데이터 동기화 완료: Lv.{player.coreLevel}, Exp.{player.currentCoreExp}</color>");
             }
         }
 
@@ -412,7 +399,6 @@ public static class BattleSettlementProcessor
 
             // 변경된 골드 디스크 즉시 저장 호출
             GlobalGold.Instance.SaveGame();
-            Debug.Log($"<color=yellow>[정산기] LSH GlobalGold 골드 변동({result.GoldDelta:+#;-#;0}G) 적용 및 SaveGame() 디스크 저장 완료 (현재 잔고: {GlobalGold.Instance.PlayerGold}G)</color>");
         }
         else if (GlobalGold.Instance == null && result.GoldDelta != 0)
         {
@@ -435,7 +421,6 @@ public static class BattleSettlementProcessor
                     _ => bossMaster.bossID
                 };
                 progressStore.RecordHunt(resultStr, bossId, diffStr);
-                Debug.Log($"<color=cyan>[정산기] LHM BossProgressStore 토벌 기록 동기화 완료: {bossId} / {diffStr} / {resultStr}</color>");
             }
         }
 

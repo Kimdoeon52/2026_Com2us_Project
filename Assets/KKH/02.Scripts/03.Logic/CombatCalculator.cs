@@ -271,7 +271,6 @@ public static class CombatCalculator
         // 2. 파츠 스킬: 해당 부위 파손 여부 검사 (부위 파괴 시 스킬 봉인)
         if (actor.IsPartBroken(action.RequiredPart))
         {
-            Debug.Log($"[CombatCalculator] '{action.ActionName}' 시전 불가: 요구 부위({action.RequiredPart}) 파손 상태임 (스킬 봉인)");
             return false;
         }
 

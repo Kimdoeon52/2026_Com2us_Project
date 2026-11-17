@@ -100,22 +100,11 @@ namespace RealSteel.Boss.Core
             return true; // 저지 실패 => 공격 계속 진행
         }
 
-        private async UniTask ExecutePostDelayPhaseAsync(CancellationToken token)
-        {
-            float postDelay = patternData != null ? patternData.postDelay : 1.0f;
-            if (postDelay > 0f)
-            {
-                await UniTask.Delay(TimeSpan.FromSeconds(postDelay), cancellationToken: token);
-            }
-        }
-
         protected override void OnDamageTaken(int damage)
         {
             if (_isTellPhase && patternData != null && patternData.hasDpsCheck)
             {
                 _accumulatedTellDamage += damage;
-                OnDPSCheckProgress(_accumulatedTellDamage, patternData.requiredDamageToInterrupt);
-                OwnerBoss?.NotifyDPSCheckProgress(_accumulatedTellDamage, patternData.requiredDamageToInterrupt);
             }
         }
 
@@ -140,7 +129,6 @@ namespace RealSteel.Boss.Core
         protected virtual void OnPreExecute() { }
         public virtual void OnTellStarted() { }
         public virtual void OnTellEnded() { }
-        protected virtual void OnDPSCheckProgress(int currentDamage, int requiredDamage) { }
         protected abstract UniTask ExecuteActionAsync(CancellationToken token);
         protected virtual void OnInterrupted(InterruptReason reason) { }
         protected virtual void CleanupEffects() { }
@@ -185,7 +173,6 @@ namespace RealSteel.Boss.Core
             // Space 무적 회피 중인지 검사
             if (IsPlayerInvincible(playerObj))
             {
-                Debug.Log($"<color=cyan>[{GimmickName}] 플레이어가 Space 무적 회피로 공격을 회피했습니다!</color>");
                 return false;
             }
 
@@ -215,15 +202,7 @@ namespace RealSteel.Boss.Core
             // 보스전 모드가 활성화되어 있으면 ProcessHit을 경유하여 플레이어 방어력(baseDefense) 감쇄 연산 적용
             if (hub.CurrentBattleMode == BattleMode.RobotVsBoss && hub.BossSnapshot != null && hub.PlayerSnapshot != null)
             {
-                var result = hub.ProcessHit(attackerId, "Player", baseDmg, targetPart, partDmg);
-                if (targetPart != BodyPart.Core && partDmg > 0)
-                {
-                    Debug.Log($"<color=red>[{GimmickName}] 플레이어 {targetPart} 부위 타격! (원시 피해: {baseDmg} ➔ 방어력 적용 피해: {result.DamageToHp}, 파츠 피해: {partDmg})</color>");
-                }
-                else
-                {
-                    Debug.Log($"<color=red>[{GimmickName}] 플레이어 코어 타격! (원시 피해: {baseDmg} ➔ 방어력 적용 피해: {result.DamageToHp})</color>");
-                }
+                hub.ProcessHit(attackerId, "Player", baseDmg, targetPart, partDmg);
                 return;
             }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -36,8 +36,6 @@ namespace RealSteel.Boss.FSM
                 boss.Animation.PlayStun();
             }
 
-            Debug.Log($"<color=cyan>[BossStunState] 보스 {_duration}초간 스턴 상태 진입!</color>");
-
             ExecuteStunTimerAsync().Forget();
         }
 
@@ -49,7 +47,6 @@ namespace RealSteel.Boss.FSM
 
                 if (!boss.Snapshot.IsAlive) return;
 
-                Debug.Log("[BossStunState] 스턴 시간 만료 ➔ 확정 딜타임(IdleState) 복귀");
                 var token = boss.RenewStateCancellationToken();
                 boss.StateMachine.ChangeState(new BossIdleState(boss, token, boss.MasterData != null ? boss.MasterData.patternPostDelay : 1.0f));
             }
@@ -63,7 +60,6 @@ namespace RealSteel.Boss.FSM
         {
             boss.SetStunView(false, 0f);
             boss.FacePlayer();
-            Debug.Log("[BossStunState] 스턴 상태 해제 완료.");
         }
     }
 }

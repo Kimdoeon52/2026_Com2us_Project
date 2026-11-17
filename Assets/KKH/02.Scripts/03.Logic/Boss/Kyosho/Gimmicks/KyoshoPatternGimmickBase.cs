@@ -13,7 +13,6 @@ namespace RealSteel.Boss.Kyosho
     public abstract class KyoshoPatternGimmickBase : BossPatternGimmickBase
     {
         [Header("박자 기반 타이밍 설정 (박 단위)")]
-        [SerializeField] protected float tellBeats = 1f;
         [SerializeField] protected float postDelayBeats = 1f;
 
         public KyoshoBossController Kyosho => OwnerBoss as KyoshoBossController;
@@ -23,11 +22,6 @@ namespace RealSteel.Boss.Kyosho
 
         protected override bool UseExternalTellPhase => patternData == null || !patternData.hasDpsCheck;
 
-        protected override void OnPreExecute()
-        {
-            base.OnPreExecute();
-        }
-
         /// <summary>
         /// 원본 패턴 피격 처리 (파츠 내구도 차감 포함, 난이도 attackMultiplier 적용).
         /// </summary>
@@ -36,7 +30,6 @@ namespace RealSteel.Boss.Kyosho
             if (playerObj == null) return false;
             if (IsPlayerInvincible(playerObj))
             {
-                Debug.Log($"<color=cyan>[{GimmickName}] 플레이어가 Space 무적 회피로 원본 공격을 회피했습니다!</color>");
                 return false;
             }
 
@@ -62,7 +55,6 @@ namespace RealSteel.Boss.Kyosho
             if (playerObj == null) return false;
             if (respectSpaceDodge && IsPlayerInvincible(playerObj))
             {
-                Debug.Log($"<color=cyan>[{GimmickName}] 플레이어가 Space 무적 회피로 추가 공격을 회피했습니다!</color>");
                 return false;
             }
 

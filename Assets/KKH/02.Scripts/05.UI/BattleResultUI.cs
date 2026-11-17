@@ -156,7 +156,6 @@ namespace RealSteel.UI
         /// </summary>
         private void HandleBattleFinished(bool playerWon, string winnerId, BattleSettlementResult settlement)
         {
-            Debug.Log($"<color=cyan><b>[BattleResultUI] HandleBattleFinished 수신 성공! (승자: {winnerId}, 승리여부: {playerWon})</b></color>");
             ShowResult(settlement, playerWon);
         }
 
@@ -167,7 +166,6 @@ namespace RealSteel.UI
         {
             if (_currentSettlement == null && settlement != null)
             {
-                Debug.Log($"<color=cyan>[BattleResultUI] OnSettlementCompleted 수신 성공!</color>");
                 ShowResult(settlement, settlement.PlayerWon);
             }
         }
@@ -177,8 +175,6 @@ namespace RealSteel.UI
         /// </summary>
         public void ShowResult(BattleSettlementResult settlement, bool playerWon)
         {
-            Debug.Log($"<color=green><b>[BattleResultUI] ShowResult 시작! (PlayerWon: {playerWon}, Root: {resultPanelRoot?.name})</b></color>");
-
             // 0. GameObject 및 루트 패널 강제 활성화
             gameObject.SetActive(true);
             if (resultPanelRoot != null)
@@ -433,7 +429,6 @@ namespace RealSteel.UI
                 Time.timeScale = 1f;
             }
 
-            Debug.Log($"<color=cyan>[BattleResultUI] 거점 복귀 클릭: '{targetScene}' 씬으로 전환합니다.</color>");
             SceneManager.LoadScene(targetScene);
         }
 

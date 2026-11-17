@@ -309,8 +309,6 @@ namespace RealSteel.Boss.JunkWheeler
             IsInteractable = false;
             if (_collider != null) _collider.enabled = false;
 
-            Debug.Log($"<color=magenta>[NailBoardFieldGimmick] ▶ [기믹 파훼 성공 - 일회용 소모] '{gameObject.name}' 보스 펑크 발생 및 4초 그로기 유발!</color>");
-
             // 2. 스파이크가 아직 다 솟지 않았다면 즉시 최대 돌출 프레임(Frame 3)으로 강제 고정
             SetFrame(Mathf.Min(3, spikeFrames.Length - 1));
             if (JunkWheelerSfx.Data != null)
@@ -452,7 +450,6 @@ namespace RealSteel.Boss.JunkWheeler
                         }
 
                         CombatDataHub.Instance?.ApplyCoreDamage("Player", playerStepDamage);
-                        Debug.Log($"<color=orange>[NailBoardFieldGimmick] 플레이어가 솟아오른 못판(Spike)을 밟아 피해 {playerStepDamage}를 입었습니다!</color>");
 
                         if (consumeOnPlayerStep)
                         {

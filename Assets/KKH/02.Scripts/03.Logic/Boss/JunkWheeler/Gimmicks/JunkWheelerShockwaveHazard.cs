@@ -291,15 +291,7 @@ namespace RealSteel.Boss.JunkWheeler
                     }
                 }
 
-                if (isInvincible)
-                {
-                    Debug.Log($"<color=cyan>[드리블 충격파] 플레이어가 Space 무적 대시로 {_roundIndex}회차 충격파(X폭: {currentHitWidth * 2f:F2}m)를 회피했습니다!</color>");
-                }
-                else if (isAirborne)
-                {
-                    Debug.Log($"<color=green><b>[드리블 충격파] ★ 점프 회피 성공! 플레이어가 점프로 {_roundIndex}회차 광폭 충격파(X폭: {currentHitWidth * 2f:F2}m, 사거리: {_maxDistance:F1}m)를 뛰어넘었습니다!</b></color>");
-                }
-                else
+                if (!isInvincible && !isAirborne)
                 {
                     // 지면 피격! 플레이어 다리 부위(LeftLeg) 및 코어 타격
                     ApplyHitToPlayer(_playerTransform.gameObject);
@@ -335,8 +327,6 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 hub.ProcessHit(attackerId, "Player", finalCoreDmg, BodyPart.LeftLeg, finalLegDmg);
             }
-
-            Debug.Log($"<color=red><b>[드리블 충격파] 💥 지면 충격파 적중! 플레이어 LeftLeg 다리 부위 타격! (X폭: {currentHitWidth * 2f:F2}m, 코어 피해: {finalCoreDmg}, 다리 내구도 피해: {finalLegDmg})</b></color>");
 
             // 피격 지점 스파크/충격 VFX 스폰
             if (_hitVfxPrefab != null)

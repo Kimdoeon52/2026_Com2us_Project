@@ -83,16 +83,6 @@ namespace RealSteel.Boss.FSM
                     return;
                 }
 
-                // 2. 레거시 호환용 폴백
-                var legacyBoss = boss as BossController;
-                var nextPattern = legacyBoss?.GetNextPattern();
-                if (nextPattern != null && legacyBoss != null)
-                {
-                    var token = boss.RenewStateCancellationToken();
-                    boss.StateMachine.ChangeState(new BossPatternTellState(legacyBoss, token, nextPattern));
-                    return;
-                }
-
                 Debug.LogWarning("[BossIdleState] 사용 가능한 보스 공격 패턴이 없습니다. 1초 재대기합니다.");
                 var retryToken = boss.RenewStateCancellationToken();
                 boss.StateMachine.ChangeState(new BossIdleState(boss, retryToken, 1.0f));

@@ -61,7 +61,6 @@ namespace RealSteel.Boss.JunkWheeler
         public void ApplyTireBrokenDebuff(bool debuffed)
         {
             _isTireBrokenDebuffed = debuffed;
-            Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 타이어 파괴 디버프 적용 상태: {_isTireBrokenDebuffed} (도약 높이: {(debuffed ? launchHeight * 0.7f : launchHeight):F2}m)</color>");
         }
 
         protected override void OnPreExecute()
@@ -90,8 +89,6 @@ namespace RealSteel.Boss.JunkWheeler
             OwnerBoss.SnapToGroundY();
             Vector3 apexPos = CalculateMidpointApex();
 
-            Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 보스 본체 공중 도약 개시 ➔ {apexPos}</color>");
-
             // [도약 텐션]: 바닥 웅크림 (0.06s, Y 0.75) 후 도약 상승
             if (OwnerBoss.Animation != null)
             {
@@ -118,7 +115,6 @@ namespace RealSteel.Boss.JunkWheeler
                 token.ThrowIfCancellationRequested();
 
                 // [순방향 스윕]: 0번부터 maxIndex까지 순차 발사 (180도 -> 360도)
-                Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 바이킹 탄막 정방향 스윕 (0번 ➔ {maxIndex}번)</color>");
                 for (int i = 0; i <= maxIndex; i++)
                 {
                     token.ThrowIfCancellationRequested();
@@ -138,7 +134,6 @@ namespace RealSteel.Boss.JunkWheeler
                 await UniTask.Delay(TimeSpan.FromSeconds(turnaroundDelay), cancellationToken: token);
 
                 // [역방향 스윕]: maxIndex부터 0번으로 거꾸로 발사
-                Debug.Log($"<color=yellow>[JunkWheelerBarragePattern] 바이킹 탄막 역방향 스윕 ({maxIndex}번 ➔ 0번)</color>");
                 for (int i = maxIndex; i >= 0; i--)
                 {
                     token.ThrowIfCancellationRequested();
@@ -171,7 +166,6 @@ namespace RealSteel.Boss.JunkWheeler
                 OwnerBoss.Animation.PlaySlamFall();
             }
 
-            Debug.Log($"<color=cyan>[JunkWheelerBarragePattern] 탄막 종료, 지면 착지 급강하 ➔ {landPos}</color>");
             _bossMoveTween = OwnerBoss.transform.DOMove(landPos, landDuration).SetEase(Ease.InQuad);
             await _bossMoveTween.ToUniTask(cancellationToken: token);
 
@@ -278,7 +272,6 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             Destroy(bullet, 4.0f);
-            Debug.DrawRay(originPos, dir * 2.0f, Color.yellow, 0.5f);
         }
 
         private static Sprite _fallbackSprite;

@@ -187,7 +187,6 @@ namespace RealSteel.Boss.Kyosho
             if (_puzzleCompleted)
             {
                 KyoshoSfx.PlayCue(KyoshoSfx.Data?.variationCorrect, "variation_ok", targetCenter);
-                Debug.Log($"<color=green>[KyoshoVariation] 변주곡 {(_isSecondVariation ? "②" : "①")} 파훼 성공! 4박 그로기 진입!</color>");
 
                 // 1페 -> 2페 전환이 필요한 경우 그로기 종료 시점에 2페 개막 (또는 즉시 페이즈 상태 갱신)
                 if (!_isSecondVariation)
@@ -219,8 +218,6 @@ namespace RealSteel.Boss.Kyosho
                 {
                     Kyosho.PreparePhase2AfterVariation1();
                 }
-
-                Debug.Log($"<color=red>[KyoshoVariation] 변주곡 {(_isSecondVariation ? "②" : "①")} 실패 ➔ 불협화음 광역 폭발!</color>");
             }
         }
 

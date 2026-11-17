@@ -31,7 +31,7 @@ namespace RealSteel.NanoBoss
             [Tooltip("예고 시간 배율 (클수록 여유)")] public float telegraph;
             [Tooltip("공격 뒤 쉬는 시간 배율")] public float recover;
             [Tooltip("공격 속도 배율")] public float speed;
-            [Tooltip("공격 직후 바로 다음 공격을 이을 확률")] [Range(0, 1)] public float chain;
+            [Tooltip("공격 직후 바로 다음 공격을 이을 확률")][Range(0, 1)] public float chain;
             [Tooltip("떨어진 봇을 다시 빨아들인다")] public bool absorb;
             [Tooltip("바닥 가시 · 화면 뒤 가시")] public bool depthAttacks;
             [Tooltip("빔")] public bool beam;
@@ -54,8 +54,8 @@ namespace RealSteel.NanoBoss
             [Tooltip("보스 아래의 나노봇 리그")] public RSNanoRig rig;
             [Tooltip("그 리그에 만든 애니메이션 클립")] public AnimationClip clip;
             [Tooltip("이 페이즈에서 쓴다")] public bool phase1 = true, phase2 = true, phase3;
-            [Tooltip("이 난이도부터 나온다")] [Range(1, 5)] public int fromDifficulty = 1;
-            [Tooltip("뽑힐 비중")] [Min(0f)] public float weight = 1f;
+            [Tooltip("이 난이도부터 나온다")][Range(1, 5)] public int fromDifficulty = 1;
+            [Tooltip("뽑힐 비중")][Min(0f)] public float weight = 1f;
             public string Name => clip ? clip.name : "(클립 없음)";
         }
 
@@ -800,17 +800,17 @@ namespace RealSteel.NanoBoss
                 const int Width = 7;
                 perp = new Vector3(-dir.y, dir.x, 0f);
                 for (int r = 0; r < rows && ids.Count > 0; r++)
-                for (int wv = 0; wv < Width; wv++)
-                {
-                    for (int tries = 0; tries < ids.Count; tries++)
+                    for (int wv = 0; wv < Width; wv++)
                     {
-                        int i = ids[rr++ % ids.Count];
-                        if (sw.Bots[i].mode != BotMode.Bound || sw.Bots[i].guide != RSNanoSwarm.G_Ring) continue;
-                        Vector3 at = ring.center - dir * (r * cs) + perp * ((wv - (Width - 1) * 0.5f) * cs);
-                        sw.Fire(i, at, 0f, dir * speed, 0.32f, RSNanoSwarm.G_Ring, default, 0f, true, 1);
-                        break;
+                        for (int tries = 0; tries < ids.Count; tries++)
+                        {
+                            int i = ids[rr++ % ids.Count];
+                            if (sw.Bots[i].mode != BotMode.Bound || sw.Bots[i].guide != RSNanoSwarm.G_Ring) continue;
+                            Vector3 at = ring.center - dir * (r * cs) + perp * ((wv - (Width - 1) * 0.5f) * cs);
+                            sw.Fire(i, at, 0f, dir * speed, 0.32f, RSNanoSwarm.G_Ring, default, 0f, true, 1);
+                            break;
+                        }
                     }
-                }
                 yield return null;
             }
             ring.glow = 0f;

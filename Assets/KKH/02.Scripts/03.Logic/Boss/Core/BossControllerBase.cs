@@ -108,11 +108,8 @@ namespace RealSteel.Boss.Core
 
         // 대외 브로드캐스팅 이벤트
         public event Action<string> OnStateChanged;
-        public event Action<int, int> OnHpChanged;
         public event Action<bool, float> OnGroggyChanged;
         public event Action<bool, float> OnStunChanged;
-        public event Action<int, int> OnDpsCheckProgressChanged;
-        public event Action<BossPatternData> OnPatternStarted;
 
         protected virtual void Reset()
         {
@@ -293,16 +290,6 @@ namespace RealSteel.Boss.Core
             return desiredX;
         }
 
-        public float ClampToCameraX(float desiredX, float padding = -1f)
-        {
-            float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
-            if (TryGetCameraBoundsX(out float minX, out float maxX, pad))
-            {
-                return Mathf.Clamp(desiredX, minX, maxX);
-            }
-            return desiredX;
-        }
-
         protected Transform _cachedPlayerTransform;
 
         public Transform PlayerTransform
@@ -453,10 +440,8 @@ namespace RealSteel.Boss.Core
                     Snapshot.passiveCount = layer.passiveCount;
                 }
 
-                OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
                 ApplyDifficultyToGimmicks();
                 BuildPhasePatternPool(Snapshot.currentPhase);
-                Debug.Log($"<color=cyan>[BossControllerBase] 보스 난이도 전환 완료: {difficulty} (HP: {Snapshot.maxHp}, 공격배율: {layer.attackMultiplier}x, 패턴수: {layer.maxAllowedPatterns}, 2페이즈: {layer.allowPhase2}, 패시브수: {layer.passiveCount})</color>");
             }
         }
 
@@ -605,8 +590,6 @@ namespace RealSteel.Boss.Core
         {
             if (Snapshot == null) return;
 
-            OnHpChanged?.Invoke(Snapshot.currentHp, Snapshot.maxHp);
-
             StateMachine?.OnDamageTaken(finalDamage);
             NotifyGimmicksDamageTaken(finalDamage);
 
@@ -635,14 +618,6 @@ namespace RealSteel.Boss.Core
                     pattern.InterruptPattern(InterruptReason.PhaseTransition);
                 }
             }
-        }
-
-        /// <summary>
-        /// CombatDataHub.ProcessHit 등 외부에서 이미 방어력/배율 연산이 완료된 대미지를 수신할 때 사용함 (이중 차감 방지)
-        /// </summary>
-        public void NotifyDamageFromHub(int finalDamage)
-        {
-            TakeDamage(finalDamage, isAlreadyCalculated: true);
         }
 
         // ========================================================================
@@ -707,11 +682,6 @@ namespace RealSteel.Boss.Core
             StateMachine.ChangeState(new BossStunState(this, token, duration));
         }
 
-        public virtual void NotifyDPSCheckProgress(int currentDamage, int requiredDamage)
-        {
-            NotifyDpsCheckProgress(currentDamage, requiredDamage);
-        }
-
         public CancellationToken RenewStateCancellationToken()
         {
             CancelCurrentStateToken();
@@ -769,8 +739,6 @@ namespace RealSteel.Boss.Core
         protected virtual void OnBossDefeated() { }
 
         // 대외 통보 헬퍼
-        public void NotifyDpsCheckProgress(int cur, int req) => OnDpsCheckProgressChanged?.Invoke(cur, req);
-        public void NotifyPatternStarted(BossPatternData p) => OnPatternStarted?.Invoke(p);
         public void SetGroggyView(bool groggy, float dur) { Snapshot.isGroggy = groggy; OnGroggyChanged?.Invoke(groggy, dur); }
         public void SetStunView(bool stun, float dur) => OnStunChanged?.Invoke(stun, dur);
     }

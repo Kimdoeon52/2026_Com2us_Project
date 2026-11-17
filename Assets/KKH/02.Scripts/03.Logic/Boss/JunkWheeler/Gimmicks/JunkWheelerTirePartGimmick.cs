@@ -18,8 +18,6 @@ namespace RealSteel.Boss.JunkWheeler
         [Header("타이어 기믹 설정")]
         [SerializeField] private ParticleSystem flatTireParticle; // 펑크 시 연기/스파크 파티클 (선택)
 
-        public event Action<int> OnTirePunctured;
-
         public bool IsPermanentlyBroken => BreakCount >= 2;
 
         private void Awake()
@@ -30,16 +28,9 @@ namespace RealSteel.Boss.JunkWheeler
             targetSkillIDToSeal = ""; // 공백 유지: 스킬 영구 봉인 대신 스펙 약화 적용
         }
 
-        protected override void OnAttached()
-        {
-            base.OnAttached();
-            Debug.Log($"<color=cyan>[JunkWheelerTirePartGimmick] 폐타이어 부위 기믹 부착 완료 (내구도: {CurrentDurability}/{MaxDurability})</color>");
-        }
-
         protected override void OnPartDamaged(int amount)
         {
             base.OnPartDamaged(amount);
-            Debug.Log($"<color=yellow>[JunkWheelerTirePartGimmick] 타이어 부위 피격! (잔여 내구도: {CurrentDurability}/{MaxDurability})</color>");
             if (JunkWheelerSfx.Data != null && OwnerBoss != null)
             {
                 JunkWheelerSfx.Play(JunkWheelerSfx.Data.hitRubber, OwnerBoss.transform.position);
@@ -48,9 +39,6 @@ namespace RealSteel.Boss.JunkWheeler
 
         protected override void OnPartBroken()
         {
-            Debug.Log($"<color=orange>[JunkWheelerTirePartGimmick] 펑크 발생! (누적 펑크 횟수: {BreakCount}/2)</color>");
-            OnTirePunctured?.Invoke(BreakCount);
-
             if (flatTireParticle != null)
             {
                 flatTireParticle.Play();
@@ -64,7 +52,6 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (IsPermanentlyBroken)
             {
-                Debug.Log("<color=red>[JunkWheelerTirePartGimmick] ▶ [타이어 완전 파괴!] 펑크 2회 누적으로 돌진 50% 감속 및 탄막 사출 높이 30% 감축 영구 적용!</color>");
                 ApplyDegradation();
             }
         }

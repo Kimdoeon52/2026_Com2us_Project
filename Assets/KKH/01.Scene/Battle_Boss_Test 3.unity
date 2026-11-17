@@ -1264,6 +1264,8 @@ MonoBehaviour:
   jumpVelocity: 7
   gravity: -20
   spriteFacesRight: 1
+  opponent: {fileID: 0}
+  combatCamera: {fileID: 0}
   opponent: {fileID: 1175820275}
   combatCamera: {fileID: 1831109084}
   clampToCameraView: 1
@@ -4319,6 +4321,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14f0cde09418f0245b28ba6f0d3f39f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerRobotObject: {fileID: 0}
   playerRobotObject: {fileID: 479391479}
   enemyRobotObject: {fileID: 1175820274}
   currentState: 0
@@ -5649,7 +5652,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 26454fb84fe9ab04282f0a27d6900aca, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerA: {fileID: 479391494}
+  playerA: {fileID: 0}
+  playerA: {fileID: 479391492}
   playerB: {fileID: 1175820275}
   minX: -2.25
   maxX: 2.25

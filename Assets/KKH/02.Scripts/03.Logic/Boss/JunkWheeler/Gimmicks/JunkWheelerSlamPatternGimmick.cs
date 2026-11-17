@@ -91,8 +91,6 @@ namespace RealSteel.Boss.JunkWheeler
                     token.ThrowIfCancellationRequested();
                     CurrentSlamRound = round;
 
-                    Debug.Log($"<color=yellow>[JunkWheelerSlamPattern] ▶ 내려찍기 {round}/{slamRounds}회차 개시!</color>");
-
                     // [텐션 1단계]: 도약 직전 바닥 웅크림 (Squash Anticipation)
                     if (OwnerBoss.Animation != null)
                     {
@@ -152,7 +150,6 @@ namespace RealSteel.Boss.JunkWheeler
                         var targetNailBoard = FindNailBoardNear(OwnerBoss.transform.position.x);
                         if (targetNailBoard != null)
                         {
-                            Debug.Log("<color=cyan>[JunkWheelerSlamPattern] 못판 위치 급강하 감지! 못판 나오는 애니메이션 선제 가동!</color>");
                             targetNailBoard.TriggerEmerge();
                         }
                     }
@@ -170,7 +167,6 @@ namespace RealSteel.Boss.JunkWheeler
                     // [지면 충돌 즉시 판정 (Frame 0)]: 최초 1회차는 못판 판정 무시, 2회차부터 못판 상호작용 판정!
                     if (CanTriggerNailBoard && CheckNailBoardInteraction())
                     {
-                        Debug.Log("<color=red>[JunkWheelerSlamPattern] ▶ 고철 못판 착지 감지! 패턴 즉시 중단 및 4초 그로기 전이!</color>");
                         SpawnVfx(nailPunctureVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
                         if (OwnerBoss.Animation != null)
                         {
@@ -192,7 +188,6 @@ namespace RealSteel.Boss.JunkWheeler
                         await OwnerBoss.Animation.PlayImpactSquashAndStretchAsync(
                             OwnerBoss.transform, slamSquashScale, squashFastInDuration, restoreElasticDuration, token);
                     }
-                    Debug.Log($"<color=orange>[JunkWheelerSlamPattern] 내려찍기 {round}회차 착지 완료! (쾅! 비대칭 펀치 적용)</color>");
 
                     // 다음 회차 전 짧은 딜레이
                     if (round < slamRounds)

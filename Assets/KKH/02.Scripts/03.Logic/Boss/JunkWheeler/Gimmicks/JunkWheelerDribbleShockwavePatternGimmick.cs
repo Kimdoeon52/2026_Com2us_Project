@@ -240,8 +240,6 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 2. 보스 차징 예열 미세 진동
             OwnerBoss.transform.DOShakePosition(tellCrackDuration * 0.9f, new Vector3(0.04f, 0f, 0f), 25, 90f, false, true);
-
-            Debug.Log($"<color=yellow>[JunkWheelerDribbleShockwave] ⚡ 전조 개시! 바닥 균열 X축 확장 예고 (0.6초)</color>");
         }
 
         public override void OnTellEnded()
@@ -259,15 +257,12 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss == null) return;
 
             int totalRounds = roundConfigs != null ? roundConfigs.Length : 4;
-            Debug.Log($"<color=orange>[JunkWheelerDribbleShockwave] ▶ 드리블 충격파 액션 개시! (총 {totalRounds}회 X축 확장 바운스)</color>");
 
             for (int r = 0; r < totalRounds; r++)
             {
                 token.ThrowIfCancellationRequested();
                 int roundIndex = r + 1;
                 var config = roundConfigs[r];
-
-                Debug.Log($"<color=cyan>[JunkWheelerDribbleShockwave] ── 드리블 {roundIndex}/{totalRounds}회차! (X사거리: {config.shockwaveMaxDistance}m, X판정폭: {config.shockwaveHitWidth * 2f:F2}m, X스케일: {config.shockwaveScaleX}x) ──</color>");
 
                 // 1단계: 도약 직전 바닥 압착 웅크림 (Squash)
                 if (OwnerBoss.Animation != null)
@@ -328,8 +323,6 @@ namespace RealSteel.Boss.JunkWheeler
                 SpawnShockwaveHazard(roundIndex, -1f, config, !hasGroundRing, syncedVisualOuterRadius, landingCenter);
                 SpawnShockwaveHazard(roundIndex, +1f, config, !hasGroundRing, syncedVisualOuterRadius, landingCenter);
 
-                Debug.Log($"<color=yellow>[JunkWheelerDribbleShockwave] 💥 {roundIndex}회차 착지 완료! 좌/우 충격파 전파 (시각/판정 반경: {(syncedVisualOuterRadius > 0f ? syncedVisualOuterRadius : config.shockwaveMaxDistance):F2}m)</color>");
-
                 // 다음 회차 도약 전 짧은 리듬 딜레이
                 if (r < totalRounds - 1)
                 {
@@ -345,7 +338,6 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             // 기획서 §1408: 4번째 착지 후 0.8초간 지면 정지 확정 딜타임 (무방비 상태)
-            Debug.Log($"<color=green><b>[JunkWheelerDribbleShockwave] 🛡️ 4회 드리블 완료! {postLandVulnerableDelay:F1}초간 지면 정지 확정 딜타임(무방비) 진입!</b></color>");
             OwnerBoss.Animation?.PlayIdle();
             if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.dribbleSteamExhaust, JunkWheelerSfx.Data.tireBlowout, OwnerBoss.transform.position, 1f, 0.88f, 0.75f);
             await UniTask.Delay(TimeSpan.FromSeconds(postLandVulnerableDelay), cancellationToken: token);

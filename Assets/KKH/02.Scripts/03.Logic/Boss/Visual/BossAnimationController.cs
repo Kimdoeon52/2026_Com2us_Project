@@ -155,15 +155,6 @@ namespace RealSteel.Boss.Visual
         public void PlayStun() => Play(StateStun);
 
         /// <summary>
-        /// 좌우 반전(음수 scale.x) 상태에서도 Squash/Stretch 방향이 뒤집히지 않도록 펀치 벡터의 X 부호를 보정함.
-        /// </summary>
-        public static Vector3 FacingSafePunch(Transform target, Vector3 punch)
-        {
-            punch.x *= Mathf.Sign(target.localScale.x);
-            return punch;
-        }
-
-        /// <summary>
         /// 비대칭 비선형 펀치감 연출 (Fast-In 초고속 압착 -> Elastic-Out 탄성 복원)
         /// 좌우 반전 상태(scale.x < 0)에서도 대칭적인 Squash & Stretch를 보장함.
         /// </summary>

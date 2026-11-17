@@ -114,7 +114,6 @@ namespace RealSteel.Boss.Kyosho
 
             BrassSection.SpawnSection(hp, new Vector3(centerX, floorY + 2.55f, 0f));
             RefreshHud();
-            Debug.Log("<color=magenta>[KyoshoSectionManager] 첫 페르마타 종료 ➔ 금관 섹션(SECTION_BRASS) 조립 완료!</color>");
         }
 
         public void RestoreAllSections()
@@ -127,7 +126,6 @@ namespace RealSteel.Boss.Kyosho
                 BrassSection?.RestoreSection(hp);
             }
             RefreshHud();
-            Debug.Log("<color=orange>[KyoshoSectionManager] 변주곡 ② 실패 페널티 ➔ 악기 섹션 전원 100% 복구!</color>");
         }
 
         public void SetTemporarilyGatheredForFinale(bool gathered)
@@ -146,10 +144,6 @@ namespace RealSteel.Boss.Kyosho
 
         private void OnSectionBroken(KyoshoSectionPartGimmick broken)
         {
-            if (AreAllActiveSectionsBroken)
-            {
-                Debug.Log("<color=yellow>[KyoshoSectionManager] ▶ 모든 악기 섹션 파괴 완료! 본체 피격 반경 +30% & 패턴 간격 +1박 보너스 활성화!</color>");
-            }
             RefreshHud();
         }
 

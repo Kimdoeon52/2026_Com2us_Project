@@ -19,16 +19,11 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private int tickDamage = 15;
         [SerializeField] private float damageRadius = 0.45f;
 
-        [Header("시각 효과 (선택적)")]
-        [SerializeField] private ParticleSystem fireParticle;
-
-        private float _spawnTime;
         private float _lastTickTime;
         private Transform _cachedPlayerTransform;
 
         private void Awake()
         {
-            _spawnTime = Time.time;
             _lastTickTime = Time.time;
 
             // 시각적 효과를 위해 스프라이트 렌더러가 있으면 주황/빨간 불꽃색 설정
@@ -87,7 +82,6 @@ namespace RealSteel.Boss.JunkWheeler
                 }
 
                 hub.ApplyCoreDamage("Player", tickDamage);
-                Debug.Log($"<color=orange>[배기 잔화] 플레이어가 화염 장판에 접촉하여 도트 피해 {tickDamage}를 입었습니다!</color>");
             }
         }
 

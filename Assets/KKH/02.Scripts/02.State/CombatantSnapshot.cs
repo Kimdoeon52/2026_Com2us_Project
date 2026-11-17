@@ -254,11 +254,5 @@ public class CombatantSnapshot
     {
         currentCylinder = Mathf.Min(MaxCylinder, currentCylinder + count);
     }
-
-    // ========================================================================
-    // 레거시 호환 헬퍼 (기존 테스터 및 구버전 메서드)
-    // ========================================================================
-    public bool IsBothLegsBroken() => IsPartBroken(BodyPart.LeftLeg) && IsPartBroken(BodyPart.RightLeg);
-    public bool IsOneLegBroken() => IsPartBroken(BodyPart.LeftLeg) ^ IsPartBroken(BodyPart.RightLeg);
     #endregion
 }

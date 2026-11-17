@@ -30,7 +30,6 @@ namespace RealSteel.Boss.Kyosho
 
         private void Awake()
         {
-            tellBeats = 3f;
             postDelayBeats = 1.5f;
         }
 

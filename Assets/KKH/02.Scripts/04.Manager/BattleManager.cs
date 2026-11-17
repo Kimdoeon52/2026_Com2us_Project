@@ -68,7 +68,6 @@ public class BattleManager : MonoBehaviour
     {
         s_hasPreBattleDifficulty = true;
         s_preBattleDifficulty = difficulty;
-        Debug.Log($"<color=yellow>[BattleManager] 전투 진입 전 보스 난이도 설정됨: {difficulty}</color>");
 
         if (instance != null)
         {
@@ -99,23 +98,9 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// UI Button OnClick(int) 또는 TMP_Dropdown OnValueChanged(int)에 인스펙터에서 직접 연결할 수 있는 인스턴스 메서드.
-    /// </summary>
-    public void SetBossDifficultyByIndex(int difficultyIndex)
-    {
-        SetBossDifficulty((BossDifficulty)Mathf.Clamp(difficultyIndex, 0, 4));
-    }
-
     // ========================================================================
     // 남윤호(NYH) 및 UI 파트 구독용 이벤트
     // ========================================================================
-    /// <summary>전투 상태 변경 이벤트임</summary>
-    public event Action<BattleState> OnBattleStateChanged;
-
-    /// <summary>전투 시작 이벤트임</summary>
-    public event Action OnBattleStarted;
-
     /// <summary>전투 종료 이벤트임: (bool playerWon, string winnerId, BattleSettlementResult result)</summary>
     public static event Action<bool, string, BattleSettlementResult> OnBattleFinished;
 
@@ -171,11 +156,10 @@ public class BattleManager : MonoBehaviour
         // 1. DataHub에 스냅샷 등록함
         if (CombatDataHub.Instance != null)
         {
-            CombatDataHub.Instance.RegisterCombatants(playerSnapshot, enemySnapshot);
+            CombatDataHub.Instance.InitializeRobotBattle(playerSnapshot, enemySnapshot);
         }
 
         SetState(BattleState.Ready);
-        Debug.Log("[BattleManager] 전투 초기화 및 스탯 세팅 완료됨. Ready 상태 진입함.");
     }
 
     /// <summary>
@@ -185,8 +169,6 @@ public class BattleManager : MonoBehaviour
     public void StartBattle()
     {
         SetState(BattleState.Fighting);
-        OnBattleStarted?.Invoke();
-        Debug.Log("[BattleManager] 전투 개시함! (FIGHT!)");
     }
 
     /// <summary>
@@ -199,8 +181,6 @@ public class BattleManager : MonoBehaviour
         bool isPlayerDefeated = defeatedFighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0;
         bool playerWon = !isPlayerDefeated;
         string winnerId = playerWon ? "Player" : "Enemy";
-
-        Debug.Log($"[BattleManager] KO 발생함! 패배자: {defeatedFighterId}, 승리자: {winnerId}");
 
         // 남윤호의 사망한 로봇 조작 비활성화 처리함
         GameObject defeatedObj = isPlayerDefeated ? playerRobotObject : enemyRobotObject;
@@ -236,7 +216,6 @@ public class BattleManager : MonoBehaviour
         bool playerWon = playerRatio >= enemyRatio;
         string winnerId = playerWon ? "Player" : "Enemy";
 
-        Debug.Log($"[BattleManager] 타임아웃 판정함! Player HP: {playerHp}/{playerMax} ({playerRatio:P1}) vs Enemy HP: {enemyHp}/{enemyMax} ({enemyRatio:P1}) -> 승자: {winnerId}");
         EndBattle(playerWon, winnerId);
     }
 
@@ -274,7 +253,6 @@ public class BattleManager : MonoBehaviour
             difficulty: activeDifficulty);
 
         OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
-        Debug.Log($"[BattleManager] 전투 종료 완료됨: 승자={winnerId}, {settlement.SummaryMessage}");
 
         // 씬 내에 비활성화된 채 배치된 BattleResultUI가 있다면 강제 활성화 및 팝업 보장 (작업자가 인스펙터에서 Canvas를 꺼둔 경우 대응)
         if (RealSteel.UI.BattleResultUI.Instance == null || !RealSteel.UI.BattleResultUI.Instance.gameObject.activeInHierarchy)
@@ -289,7 +267,6 @@ public class BattleManager : MonoBehaviour
                 }
                 resultUI.gameObject.SetActive(true);
                 resultUI.ShowResult(settlement, playerWon);
-                Debug.Log("<color=green>[BattleManager] 비활성화 상태의 BattleResultUI 및 Canvas를 감지하여 강제 활성화 및 결과창 팝업 완료!</color>");
             }
         }
     }
@@ -297,18 +274,10 @@ public class BattleManager : MonoBehaviour
     private void SetState(BattleState newState)
     {
         currentState = newState;
-        OnBattleStateChanged?.Invoke(newState);
     }
 
     // ========================================================================
     // 남윤호(NYH) 파트 편의 조회 헬퍼임
     // ========================================================================
-    /// <summary>남윤호 파트에서 참조할 수 있는 파이터 이동속도 반환함</summary>
-    public float GetMoveSpeed(string fighterId)
-    {
-        return CombatDataHub.Instance != null ? CombatDataHub.Instance.GetFinalMoveSpeed(fighterId) : 3f;
-    }
-
-    public float GetRemainingTime() => currentTimer;
     public bool IsBattleActive() => currentState == BattleState.Fighting;
 }

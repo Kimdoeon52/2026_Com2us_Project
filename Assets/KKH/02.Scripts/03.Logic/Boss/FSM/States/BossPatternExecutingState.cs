@@ -30,7 +30,6 @@ namespace RealSteel.Boss.FSM
                 return;
             }
 
-            boss.NotifyPatternStarted(_gimmick.PatternData);
             ExecuteAsync().Forget();
         }
 

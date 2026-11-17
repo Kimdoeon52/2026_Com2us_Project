@@ -46,9 +46,6 @@ namespace RealSteel.Boss.Kyosho
         /// <summary>매 마디 첫 박(강박) 이벤트: (barIndex)</summary>
         public event Action<int> OnDownbeat;
 
-        /// <summary>매 프레임 현재 박 진행도 브로드캐스트 (0..1)</summary>
-        public event Action<float> OnBeatProgress;
-
         private double _lastDspTime;
         private int _lastProcessedBeat = -1;
 
@@ -116,8 +113,6 @@ namespace RealSteel.Boss.Kyosho
                     ProcessBeatTransition(b);
                 }
             }
-
-            OnBeatProgress?.Invoke(BeatProgress01);
         }
 
         private void ProcessBeatTransition(int beatIndex)

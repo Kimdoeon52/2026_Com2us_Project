@@ -8,11 +8,11 @@ namespace RealSteel.Boss.JunkWheeler
     /// <summary>
     /// [지역 1 보스 "정크 휠러" 구체 컨트롤러 (JunkWheelerBossController)]
     /// 기획서 §6.18, §6.10.4 및 §3.2 (1), §5.1:
-    /// 1. BossController를 상속하여 기존 도구(BossFSMTester, BattleManager) 및 씬 직렬화 100% 호환 보장.
+    /// 1. BossControllerBase를 상속하여 BattleManager 및 씬 직렬화 호환 보장.
     /// 2. 폐타이어 부위 기믹, 돌진 기믹, 탄막 기믹, 3단 내려찍기 기믹, 회전 톱날 당구 돌진 기믹을 컴포지션(Composition)으로 조립/제어.
     /// 3. 난이도 레이어 시스템에 따른 필드 기믹(못판/Spike, 폭발상자) 수 활성화 제어 및 2페이즈 엔진 과열 불꽃 연출 담당.
     /// </summary>
-    public class JunkWheelerBossController : BossController
+    public class JunkWheelerBossController : BossControllerBase
     {
         [Header("정크 휠러 전용 연출 및 컴포넌트")]
         [SerializeField] private ParticleSystem phase2FireVFX; // 2페이즈 엔진 불꽃 파티클
@@ -79,11 +79,6 @@ namespace RealSteel.Boss.JunkWheeler
 #endif
         }
 
-        protected override void AutoWireSceneSystems()
-        {
-            base.AutoWireSceneSystems();
-        }
-
         protected override void RegisterGimmicks()
         {
             // 1. 타이어 부위 기믹 탐색 및 부착
@@ -131,7 +126,6 @@ namespace RealSteel.Boss.JunkWheeler
                     bool enable = i < maxGimmicks;
                     sceneGimmicks[i].gameObject.SetActive(enable);
                 }
-                Debug.Log($"<color=cyan>[JunkWheelerBossController] 필드 기믹 수 조정: {Mathf.Min(sceneGimmicks.Length, maxGimmicks)} / {sceneGimmicks.Length}개 활성화 (난이도: {Snapshot.difficulty})</color>");
             }
         }
 
@@ -185,22 +179,9 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
-        [ContextMenu("[돌진] 전조 점멸 시작 (OnTellStarted)")]
-        public void TestChargeTellStart()
-        {
-            ChargePatternGimmick?.OnTellStarted();
-        }
-
-        [ContextMenu("[돌진] 전조 점멸 종료 (OnTellEnded)")]
-        public void TestChargeTellEnd()
-        {
-            ChargePatternGimmick?.OnTellEnded();
-        }
-
         protected override void OnBossInitialized()
         {
             base.OnBossInitialized();
-            Debug.Log("<color=green>[JunkWheelerBossController] 정크 휠러 초기화 완료! 엔진 가동 시작!</color>");
 
             if (sfxData != null)
             {
@@ -247,7 +228,6 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void OnPhaseChanged(int prevPhase, int newPhase)
         {
             base.OnPhaseChanged(prevPhase, newPhase);
-            Debug.Log($"<color=red>[JunkWheelerBossController] ▶ [페이즈 전환!] Phase {prevPhase} ➔ Phase {newPhase}</color>");
 
             if (newPhase >= 2)
             {
@@ -281,7 +261,6 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void OnBossDefeated()
         {
             base.OnBossDefeated();
-            Debug.Log("<color=red>[JunkWheelerBossController] ▶ 정크 휠러 코어 체력 소진! 보스 토벌 완료!</color>");
 
             if (phase2FireVFX != null)
             {

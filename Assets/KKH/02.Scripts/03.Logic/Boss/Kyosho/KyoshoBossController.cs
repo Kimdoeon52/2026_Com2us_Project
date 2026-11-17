@@ -396,7 +396,7 @@ namespace RealSteel.Boss.Kyosho
             _sectionStatusHud = GetOrAddComponent<KyoshoSectionStatusHUD>();
             _stageBeatPulse = GetOrAddComponent<KyoshoStageBeatPulse>();
 
-            _scorePreviewHud.Initialize(this);
+            _scorePreviewHud.Initialize();
         }
 
         private void SetupMasterRigAndSections()
@@ -662,7 +662,6 @@ namespace RealSteel.Boss.Kyosho
                     BattleManager.Instance.StartBattle();
                 }
                 StateMachine.Initialize(new KyoshoBeatIdleState(this, token, 0.5f));
-                Debug.Log($"<color=cyan>[KyoshoBossController] 쿄쇼 1페이즈 전투 개시! (난이도: {SelectedDifficulty}, BPM: {_beatClock.Bpm})</color>");
             }
             catch (OperationCanceledException)
             {
@@ -1328,8 +1327,6 @@ namespace RealSteel.Boss.Kyosho
             float curBpm = _beatClock != null ? _beatClock.Bpm : KyoshoConstants.GetBpmForDifficulty(SelectedDifficulty);
             double curBeats = _beatClock != null ? _beatClock.TotalBeats : 0.0;
             KyoshoSfx.PlayPhase2Bgm(0.6f, curBpm, curBeats);
-
-            Debug.Log("<color=yellow>[KyoshoBossController] ▶ 2페이즈 개막! 현악(좌)·타악(우) 악기 섹션 분리 배치 완료!</color>");
         }
 
         public void MarkFirstPhase2FermataCompleted()
@@ -1412,7 +1409,6 @@ namespace RealSteel.Boss.Kyosho
             Snapshot.currentHp = 0;
             SyncHpToHubAndViews();
 
-            Debug.Log("<color=green>[KyoshoBossController] ▶ 최후의 일격 적중! 쿄쇼 2페이즈 토벌 완료!</color>");
             ProcessPostDamageReactions(Snapshot.maxHp);
         }
 
@@ -1477,7 +1473,6 @@ namespace RealSteel.Boss.Kyosho
                 {
                     Snapshot.currentHp = 0;
                     SyncHpToHubAndViews();
-                    Debug.Log("<color=green>[KyoshoBossController] ▶ 최후의 일격 & 커튼콜 인사 완료! 쿄쇼 헬 3페이즈 토벌!</color>");
                     ProcessPostDamageReactions(Snapshot.maxHp);
                 }
             }
@@ -1616,7 +1611,6 @@ namespace RealSteel.Boss.Kyosho
                 _phaseState = KyoshoPhaseState.Phase3;
                 if (_hurtCollider != null) _hurtCollider.enabled = true;
 
-                Debug.Log("<color=red>[KyoshoBossController] ▶ 헬 3페이즈 [픽셀 마에스트로] 각성 완료! (160 BPM Presto, HP 45% 재기동)</color>");
                 var p3Token = RenewStateCancellationToken();
                 StateMachine.ChangeState(new KyoshoBeatIdleState(this, p3Token, 0.5f));
             }
@@ -1850,19 +1844,6 @@ namespace RealSteel.Boss.Kyosho
             }
             minX = fallbackArenaMinX;
             maxX = fallbackArenaMaxX;
-        }
-
-        public Vector3 GetHeadAnchorWorldPosition()
-        {
-            if (swarm != null)
-            {
-                if (_phase3Entered)
-                {
-                    return swarm.Knight.HeadWorld + Vector3.up * 0.55f;
-                }
-                return swarm.Blob.center + new Vector3(0f, swarm.Blob.radius.y + 1.0f, 0f);
-            }
-            return transform.position + Vector3.up * 2.6f;
         }
 
         public Vector3 GetPlayerAimCenter()

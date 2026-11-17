@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -40,8 +40,6 @@ namespace RealSteel.Boss.FSM
                 boss.Animation.PlayGroggy();
             }
 
-            Debug.Log($"<color=magenta>[BossGroggyState] ▶ [기믹 파훼 성공!] 보스 {_duration}초간 그로기 상태 진입! (받는 피해 {_damageMultiplier}배 증폭)</color>");
-
             ExecuteGroggyTimerAsync().Forget();
         }
 
@@ -53,7 +51,6 @@ namespace RealSteel.Boss.FSM
 
                 if (!boss.Snapshot.IsAlive) return;
 
-                Debug.Log("[BossGroggyState] 그로기 시간 만료 ➔ 확정 딜타임(IdleState) 복귀");
                 var token = boss.RenewStateCancellationToken();
                 boss.StateMachine.ChangeState(new BossIdleState(boss, token, boss.MasterData != null ? boss.MasterData.patternPostDelay : 1.0f));
             }
@@ -69,7 +66,6 @@ namespace RealSteel.Boss.FSM
             boss.Snapshot.currentDamageMultiplier = 1.0f;
             boss.SetGroggyView(false, 0f);
             boss.FacePlayer();
-            Debug.Log("[BossGroggyState] 그로기 상태 해제 완료.");
         }
     }
 }

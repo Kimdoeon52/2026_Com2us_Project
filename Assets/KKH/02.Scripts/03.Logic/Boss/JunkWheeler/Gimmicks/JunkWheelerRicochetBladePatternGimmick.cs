@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -86,8 +86,6 @@ namespace RealSteel.Boss.JunkWheeler
         private int _spinFrameIndex = 0;
         private AudioSource _bladeSpinLoop;
 
-        private static readonly int AnimHashDeploy = Animator.StringToHash("Boss_Blades_Deploy");
-        private static readonly int AnimHashSpin = Animator.StringToHash("Boss_Blades_Spin");
         private static readonly int AnimHashRetract = Animator.StringToHash("Boss_Blades_Retract");
 
         private void Awake()
@@ -354,8 +352,6 @@ namespace RealSteel.Boss.JunkWheeler
                 // 2단계: 카메라 및 전장 바운더리 산출
                 GetArenaBounds(out float minX, out float maxX, out float minY, out float maxY);
 
-                Debug.Log($"<color=cyan>[JunkWheelerRicochet] 회전 톱날 당구 돌진 개시! 속도: {rushSpeed}m/s, 경계: X[{minX:F1}~{maxX:F1}], Y[{minY:F1}~{maxY:F1}]</color>");
-
                 // 3단계: 당구 3쿠션 바운스 루프 (최대 5회 안전 클램프)
                 int bounceLimit = Mathf.Clamp(maxBounceCount, 1, 5);
                 int bounceCount = 0;
@@ -418,7 +414,6 @@ namespace RealSteel.Boss.JunkWheeler
                     {
                         bounceCount++;
                         hasHitInCurrentSegment = false; // 벽에 튕겨 새로운 궤적이 시작될 때만 재피격 허용
-                        Debug.Log($"<color=yellow>[JunkWheelerRicochet] 당구 바운스 #{bounceCount}/{bounceLimit}! 법선: {impactNormal}</color>");
 
                         // [VFX 1] 벽/천장/바닥 바운스 임팩트 스폰 (모서리 코너 동시 충돌 시 중복 스폰 방지 쿨타임 적용)
                         if (bounceVfxCooldown <= 0f)
@@ -451,7 +446,6 @@ namespace RealSteel.Boss.JunkWheeler
 
                 // 4단계: 3차 바운스 후 지면 착지 하강 (바운스 스쿼시 DOKill에 끊기지 않도록 프레임 루프로 확실히 지면까지 강하)
                 _groundY = OwnerBoss != null ? OwnerBoss.GroundY : _groundY;
-                Debug.Log($"<color=cyan>[JunkWheelerRicochet] 3쿠션 완료! 원지면({_groundY:F2})으로 착지 하강</color>");
                 OwnerBoss.Animation?.PlaySlamFall();
 
                 Vector3 fallStartPos = OwnerBoss.transform.position;
@@ -632,7 +626,6 @@ namespace RealSteel.Boss.JunkWheeler
                 // 3. 실제 데미지 적용에 성공한 경우에만 피격 로그 및 피격 파티클 스폰
                 if (ApplyDamageToPlayer(targetPlayerObj))
                 {
-                    Debug.Log("<color=red>[JunkWheelerRicochet] 회전 톱날 돌진 ➔ 플레이어 피격 충돌 및 피해 적용!</color>");
                     // [VFX 2] 플레이어 피격 참격 이펙트 스폰
                     Vector3 hitPos = (OwnerBoss.transform.position + player.position) * 0.5f;
                     SpawnVfx(bladeHitVfxPrefab, hitPos);

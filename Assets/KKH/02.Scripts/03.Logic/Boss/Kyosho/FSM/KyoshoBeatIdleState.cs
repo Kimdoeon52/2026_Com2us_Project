@@ -109,7 +109,6 @@ namespace RealSteel.Boss.Kyosho
                 return;
             }
 
-            _kyosho.NotifyPatternStarted(_gimmick.PatternData);
             ExecuteAsync().Forget();
         }
 

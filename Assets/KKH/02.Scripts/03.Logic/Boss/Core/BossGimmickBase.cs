@@ -21,12 +21,6 @@ namespace RealSteel.Boss.Core
             IsActive = true;
             OnAttached();  
         }
-        public void Detach()
-        {
-            OnDetached();
-            IsActive = false;
-            OwnerBoss = null;
-        }
         public void NotifyDamageTaken(int damage)
         {
             if(!IsActive)
@@ -39,8 +33,6 @@ namespace RealSteel.Boss.Core
         protected virtual void OnDamageTaken(int damage)
         { }
 
-        protected virtual void OnDetached()
-        { }
         protected virtual void OnAttached()
         { }
         public virtual void ResetGimmick()

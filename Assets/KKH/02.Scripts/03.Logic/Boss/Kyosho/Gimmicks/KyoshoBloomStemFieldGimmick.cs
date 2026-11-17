@@ -227,8 +227,6 @@ namespace RealSteel.Boss.Kyosho
 
             var bark = _kyosho != null ? _kyosho.GetBarkPlayer() : FindAnyObjectByType<BattleBarkPlayer>();
             bark?.NotifyBossPartBroken(KyoshoConstants.BarkBloomStem);
-
-            Debug.Log($"<color=green>[KyoshoBloomStem] 개화 줄기({ _bloomType }) 절단 성공!</color>");
         }
 
         private void EnsureVisuals()

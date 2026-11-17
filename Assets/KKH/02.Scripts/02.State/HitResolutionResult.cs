@@ -62,10 +62,4 @@ public class HitResolutionResult
     public bool isPartDestroyed { get => IsPartDestroyed; set => IsPartDestroyed = value; }
     public bool cylinderGained { get => CylinderGained; set => CylinderGained = value; }
     public bool isGimmickTriggered { get => IsGimmickTriggered; set => IsGimmickTriggered = value; }
-
-    // 구버전 복싱 레거시 필드 (테스터 호환)
-    public int StaggerAdded;
-    public int LeftArmDurabilityDamage;
-    public int RightArmDurabilityDamage;
-    public bool CausesKnockdown;
 }

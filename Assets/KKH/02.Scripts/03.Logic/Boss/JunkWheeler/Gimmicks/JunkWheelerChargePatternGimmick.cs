@@ -76,22 +76,9 @@ namespace RealSteel.Boss.JunkWheeler
         public UnityEngine.Events.UnityEvent OnTellEndedEvent => onTellEndedEvent;
 
         public Color FlashColor { get => flashColor; set => flashColor = value; }
-        public float FlashInterval { get => flashStartInterval; set => flashStartInterval = value; }
         public float MinShakeStrength { get => minShakeStrength; set => minShakeStrength = value; }
         public float MaxShakeStrength { get => maxShakeStrength; set => maxShakeStrength = value; }
         public float ShakeCurveExponent { get => shakeCurveExponent; set => shakeCurveExponent = value; }
-
-        public void SetFlashParameters(Color newColor, float newInterval)
-        {
-            flashColor = newColor;
-            flashStartInterval = newInterval;
-        }
-
-        public void SetShakeParameters(Vector3 newStrength, int newVibrato)
-        {
-            maxShakeStrength = Mathf.Max(newStrength.x, newStrength.y);
-            maxShakeVibrato = newVibrato;
-        }
 
         [Header("시각 효과(VFX) 프리팹 (인스펙터 할당)")]
         [Tooltip("돌진 발사/질주 궤적 VFX (예: FX_Flipbook_SlashGround)")]
@@ -124,7 +111,6 @@ namespace RealSteel.Boss.JunkWheeler
         public void ApplyTireBrokenDebuff(bool debuffed)
         {
             _isTireBrokenDebuffed = debuffed;
-            Debug.Log($"<color=yellow>[JunkWheelerChargePattern] 타이어 파괴 디버프 적용 상태: {_isTireBrokenDebuffed} (속도: {(debuffed ? brokenTireSpeed : chargeSpeed)}m/s)</color>");
         }
 
         protected override void OnPreExecute()
@@ -138,9 +124,8 @@ namespace RealSteel.Boss.JunkWheeler
         }
 
         /// <summary>
-        /// 전조(Tell) 연출 시작: 바퀴 공회전 모션, 비선형 로그/지수 점멸 및 본체 가속 진동 가동 (인스펙터 및 외부 호출 가능)
+        /// 전조(Tell) 연출 시작: 바퀴 공회전 모션, 비선형 로그/지수 점멸 및 본체 가속 진동 가동
         /// </summary>
-        [ContextMenu("[전조] 점멸 시작 (OnTellStarted)")]
         public override void OnTellStarted()
         {
             if (OwnerBoss != null && OwnerBoss.Animation != null)
@@ -278,9 +263,8 @@ namespace RealSteel.Boss.JunkWheeler
         }
 
         /// <summary>
-        /// 전조(Tell) 연출 종료: 점멸 및 진동 정지 (인스펙터 및 외부 호출 가능)
+        /// 전조(Tell) 연출 종료: 점멸 및 진동 정지
         /// </summary>
-        [ContextMenu("[전조] 점멸 종료 (OnTellEnded)")]
         public override void OnTellEnded()
         {
             StopTellVisuals();
@@ -325,8 +309,6 @@ namespace RealSteel.Boss.JunkWheeler
 
             // 3단계: 반대편 카메라 벽 경계까지 실시간 추적 돌진 주행
             // (CombatCamera가 이동/줌아웃에 따라 카메라 화면 경계를 실시간 확장하므로 매 프레임 화면 끝을 추적함)
-            float initialTargetX = CalculateTargetWallX(OwnerBoss.transform.position.x, _chargeDirection);
-            Debug.Log($"<color=red>[JunkWheelerChargePattern] ▶ 맵 횡단 돌진 개시! (방향: {_chargeDirection}, 속도: {finalSpeed:F1}m/s, 가속배율: {speedMult}x, 목표 벽 X: {initialTargetX:F2})</color>");
 
             // [VFX 1] 돌진 발사 궤적 이펙트 스폰
             Quaternion launchRot = Quaternion.Euler(0f, 0f, _chargeDirection > 0f ? 0f : 180f);
@@ -403,7 +385,6 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             // 4단계: 반대편 벽 충돌 임팩트 및 탄성 반동(Elastic Rebound)
-            Debug.Log("<color=orange>[JunkWheelerChargePattern] 반대편 벽 충돌 접촉! (콰앙!)</color>");
 
             if (sfx != null)
             {
@@ -519,7 +500,6 @@ namespace RealSteel.Boss.JunkWheeler
                 var explosive = hit.GetComponent<ExplosiveBoxFieldGimmick>() ?? hit.GetComponentInParent<ExplosiveBoxFieldGimmick>();
                 if (explosive != null || hit.CompareTag("ExplosiveBox") || hit.name.IndexOf("Explosive", StringComparison.OrdinalIgnoreCase) >= 0)
                 {
-                    Debug.Log("<color=red>[JunkWheelerChargePattern] ▶ 폭발 화물 상자 충돌! 2초 스턴 인터럽트 발생!</color>");
                     KillCurrentTween();
 
                     if (OwnerBoss.Animation != null)
@@ -633,19 +613,6 @@ namespace RealSteel.Boss.JunkWheeler
                 if (hit.CompareTag("Player")) return true;
             }
             return false;
-        }
-
-        private void TryFlipAfterCollision()
-        {
-            if (_playerTransform == null || OwnerBoss == null) return;
-
-            float diffX = (OwnerBoss.transform.position.x - _playerTransform.position.x) * _chargeDirection;
-            if (diffX > 0.05f)
-            {
-                float toPlayerDirection = _playerTransform.position.x >= OwnerBoss.transform.position.x ? 1.0f : -1.0f;
-                FaceDirection(toPlayerDirection);
-                Debug.Log("<color=cyan>[JunkWheelerChargePattern] 돌진 후 플레이어를 향해 스프라이트 반전 완료!</color>");
-            }
         }
 
         protected override void OnInterrupted(InterruptReason reason)

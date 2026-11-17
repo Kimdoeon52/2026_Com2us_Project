@@ -40,7 +40,6 @@ namespace RealSteel.Boss.Kyosho
 
         private void Awake()
         {
-            tellBeats = 12f;
             postDelayBeats = 1f;
         }
 
@@ -180,14 +179,12 @@ namespace RealSteel.Boss.Kyosho
             {
                 if (isPhase3 && !Kyosho.IsAtFinaleHpGate)
                 {
-                    Debug.Log("<color=yellow>[KyoshoFinale] 3페이즈 중간 피날레 생존! HP 10% 이하로 낮춰 최종 피날레를 발동하세요!</color>");
                     Kyosho.SetPhaseState(KyoshoPhaseState.Phase3);
                     Kyosho.EnterBeatGroggy(4f, 1.8f);
                 }
                 else
                 {
                     // 버팀 성공 ➔ 마지막 4박 그로기(최후의 일격 대기)
-                    Debug.Log("<color=green>[KyoshoFinale] 안전지대 생존 성공! 4박 마지막 그로기 ➔ 최후의 일격 대기!</color>");
                     Kyosho.EnterFinalBlowGroggy();
                 }
             }
@@ -203,7 +200,6 @@ namespace RealSteel.Boss.Kyosho
                 if (!isPhase3 || Kyosho.IsAtFinaleHpGate)
                 {
                     Kyosho.ScheduleFinaleRetryAfterOneCycle();
-                    Debug.Log($"<color=red>[KyoshoFinale] 피날레 피격! {(isPhase3 ? "3페이즈" : "2페이즈")} 1순환 후 피날레 재발동 예정!</color>");
                 }
                 else
                 {

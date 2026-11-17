@@ -73,14 +73,7 @@ public class CombatDataHub : MonoBehaviour
     // [보스전 전용 이벤트]
     public event Action<int, int, int> OnBossHpChanged; // curHp, maxHp, phase
     public event Action<int> OnBossDamaged;             // finalDamage (BossControllerBase FSM/기믹/페이즈 반응용)
-    public event Action<string, bool> OnBossGimmickTriggered; // gimmickId, isGroggy
     public event Action<string> OnBossGimmickBroken;          // gimmickId
-    public event Action<int, int, int> OnCoreLevelUp;         // newLv, newHp, newDef
-
-    // [레거시 호환 이벤트]
-    public event Action<string, int, int> OnHpChanged;
-    public event Action<string, BodyPart, int, int> OnPartDurabilityChanged;
-    public event Action<HitResolutionResult> OnHitResolved;
 
     private void Awake()
     {
@@ -144,7 +137,6 @@ public class CombatDataHub : MonoBehaviour
         CacheSnapshotPartMasters(player);
         CacheSnapshotPartMasters(enemyRobot);
 
-        Debug.Log($"[CombatDataHub] 1:1 로봇 대전 초기화 완료 - Player({player?.fighterID}) vs Enemy({enemyRobot?.fighterID})");
         BroadcastFullState();
     }
 
@@ -159,7 +151,6 @@ public class CombatDataHub : MonoBehaviour
 
         CacheSnapshotPartMasters(player);
 
-        Debug.Log($"[CombatDataHub] 1:1 보스 토벌전 초기화 완료 - Player({player?.fighterID}) vs Boss({boss?.bossName})");
         BroadcastFullState();
     }
 
@@ -181,12 +172,6 @@ public class CombatDataHub : MonoBehaviour
         EnemySnapshot.maxHp = BossSnapshot.maxHp;
         EnemySnapshot.currentHp = BossSnapshot.currentHp;
         EnemySnapshot.baseDefense = BossSnapshot.baseDefense;
-    }
-
-    /// <summary>기존 레거시 등록 함수 호환</summary>
-    public void RegisterCombatants(CombatantSnapshot player, CombatantSnapshot enemy)
-    {
-        InitializeRobotBattle(player, enemy);
     }
 
     public void RegisterCombatant(CombatantSnapshot combatant)
@@ -350,7 +335,6 @@ public class CombatDataHub : MonoBehaviour
                 if ((int)slot >= 0)
                 {
                     loadout.SetSlot(slot, part.activeSkillAction);
-                    Debug.Log($"[CombatDataHub] {executor.FighterId} {slot} 슬롯에 스킬 '{part.activeSkillAction.ActionName}' 자동 장착 완료!");
                 }
             }
         }
@@ -427,19 +411,15 @@ public class CombatDataHub : MonoBehaviour
                 result.KnockbackDistance = attackAction != null ? attackAction.KnockbackDistance : 0f;
 
                 OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
-                OnHpChanged?.Invoke(PlayerSnapshot.fighterID, PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
                 if (hitPart != BodyPart.Core && PlayerSnapshot.partStates.TryGetValue(hitPart, out var pState))
                 {
                     OnPlayerPartDurabilityChanged?.Invoke(hitPart, pState.currentDurability, pState.maxDurability);
-                    OnPartDurabilityChanged?.Invoke(PlayerSnapshot.fighterID, hitPart, pState.currentDurability, pState.maxDurability);
                 }
             }
         }
 
         if (result == null)
             result = new HitResolutionResult();
-
-        OnHitResolved?.Invoke(result);
 
         // 사망 판정 통보
         CheckAndNotifyDeath();
@@ -490,11 +470,9 @@ public class CombatDataHub : MonoBehaviour
             {
                 result = CombatCalculator.EvaluateBossAttack(BossSnapshot, PlayerSnapshot, rawDamage, targetPart, partDamage, false);
                 OnPlayerHpChanged?.Invoke(PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
-                OnHpChanged?.Invoke(PlayerSnapshot.fighterID, PlayerSnapshot.currentHp, PlayerSnapshot.maxHp);
                 if (targetPart != BodyPart.Core && partDamage > 0 && PlayerSnapshot.partStates.TryGetValue(targetPart, out var pState))
                 {
                     OnPlayerPartDurabilityChanged?.Invoke(targetPart, pState.currentDurability, pState.maxDurability);
-                    OnPartDurabilityChanged?.Invoke(PlayerSnapshot.fighterID, targetPart, pState.currentDurability, pState.maxDurability);
                 }
             }
         }
@@ -502,7 +480,6 @@ public class CombatDataHub : MonoBehaviour
         if (result == null)
             result = new HitResolutionResult();
 
-        OnHitResolved?.Invoke(result);
         CheckAndNotifyDeath();
         return result;
     }
@@ -513,7 +490,6 @@ public class CombatDataHub : MonoBehaviour
         OnPlayerCylinderChanged?.Invoke(PlayerSnapshot.currentCylinder, CombatantSnapshot.MaxCylinder);
         OnBossHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp, BossSnapshot.currentPhase);
         OnEnemyHpChanged?.Invoke(BossSnapshot.currentHp, BossSnapshot.maxHp);
-        OnHpChanged?.Invoke(BossSnapshot.bossID, BossSnapshot.currentHp, BossSnapshot.maxHp);
         if (result != null && result.DamageToHp > 0) OnBossDamaged?.Invoke(result.DamageToHp);
     }
 
@@ -527,12 +503,10 @@ public class CombatDataHub : MonoBehaviour
         if (defender.isPlayer)
         {
             OnPlayerHpChanged?.Invoke(defender.currentHp, defender.maxHp);
-            OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
         }
         else
         {
             OnEnemyHpChanged?.Invoke(defender.currentHp, defender.maxHp);
-            OnHpChanged?.Invoke(defender.fighterID, defender.currentHp, defender.maxHp);
         }
     }
 
@@ -608,13 +582,6 @@ public class CombatDataHub : MonoBehaviour
             OnPlayerPartBroken?.Invoke(brokenPart);
         else
             OnEnemyPartBroken?.Invoke(brokenPart);
-
-        Debug.Log($"<color=red>[CombatDataHub] {fighterId} {brokenPart} 파손 및 스킬 봉인 브로드캐스팅!</color>");
-    }
-
-    public void BroadcastCoreLevelUp(int newLv, int newHp, int newDef)
-    {
-        OnCoreLevelUp?.Invoke(newLv, newHp, newDef);
     }
 
     public void BroadcastFullState()
@@ -723,7 +690,6 @@ public class CombatDataHub : MonoBehaviour
         if (s != null)
         {
             s.currentHp = Mathf.Max(0, s.currentHp - damage);
-            OnHpChanged?.Invoke(s.fighterID, s.currentHp, s.maxHp);
             if (s.isPlayer) OnPlayerHpChanged?.Invoke(s.currentHp, s.maxHp);
             else OnEnemyHpChanged?.Invoke(s.currentHp, s.maxHp);
 
@@ -748,7 +714,6 @@ public class CombatDataHub : MonoBehaviour
             var state = s.GetPartRuntimeState(part);
             if (state != null)
             {
-                OnPartDurabilityChanged?.Invoke(s.fighterID, part, state.currentDurability, state.maxDurability);
                 if (s.isPlayer) OnPlayerPartDurabilityChanged?.Invoke(part, state.currentDurability, state.maxDurability);
                 else OnEnemyPartDurabilityChanged?.Invoke(part, state.currentDurability, state.maxDurability);
             }
@@ -758,33 +723,6 @@ public class CombatDataHub : MonoBehaviour
         if (coreDamage > 0)
         {
             ApplyCoreDamage(fighterId, coreDamage);
-        }
-    }
-
-    public void ResetFighter(string fighterId)
-    {
-        var s = GetSnapshot(fighterId);
-        if (s == null) return;
-
-        s.currentHp = s.maxHp;
-        s.currentCylinder = 1;
-        if (s.isPlayer)
-        {
-            OnPlayerHpChanged?.Invoke(s.currentHp, s.maxHp);
-            OnPlayerCylinderChanged?.Invoke(s.currentCylinder, CombatantSnapshot.MaxCylinder);
-        }
-        else
-        {
-            OnEnemyHpChanged?.Invoke(s.currentHp, s.maxHp);
-        }
-
-        foreach (var kvp in s.partStates)
-        {
-            kvp.Value.currentDurability = kvp.Value.maxDurability;
-            if (s.isPlayer)
-                OnPlayerPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
-            else
-                OnEnemyPartDurabilityChanged?.Invoke(kvp.Key, kvp.Value.currentDurability, kvp.Value.maxDurability);
         }
     }
 }

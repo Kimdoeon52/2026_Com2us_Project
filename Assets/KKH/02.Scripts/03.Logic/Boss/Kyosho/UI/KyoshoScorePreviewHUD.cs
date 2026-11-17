@@ -38,7 +38,6 @@ namespace RealSteel.Boss.Kyosho
         private const float HighLaneY = 24f;
         private const float LowLaneY = -24f;
 
-        private KyoshoBossController _kyosho;
         private Canvas _canvas;
 
         // Staccato UI
@@ -72,9 +71,8 @@ namespace RealSteel.Boss.Kyosho
 
         private bool _staccatoFiringPhase;
 
-        public void Initialize(KyoshoBossController kyosho)
+        public void Initialize()
         {
-            _kyosho = kyosho;
             EnsureUI();
             HideAll();
         }

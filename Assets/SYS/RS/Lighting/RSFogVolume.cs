@@ -316,7 +316,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             if (shader == null) shader = Shader.Find(ShaderName);
@@ -372,7 +372,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
             size = new Vector3(Mathf.Max(0.5f, size.x), Mathf.Max(0.5f, size.y), Mathf.Max(0.5f, size.z));
             if (shader == null) shader = Shader.Find(ShaderName);
         }

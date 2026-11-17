@@ -222,7 +222,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             RSLightingClock.Register(this);
@@ -266,7 +266,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
 #if UNITY_EDITOR
             // OnValidate 안에서 다른 오브젝트를 바꾸면 경고가 뜨므로 한 박자 뒤에
             UnityEditor.EditorApplication.delayCall += () => { if (this != null) { appliedTime = -1f; Apply(); } };

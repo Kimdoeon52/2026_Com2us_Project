@@ -161,7 +161,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             Active = this;
@@ -212,7 +212,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
             geometryDirty = true;
             nextGeometryTry = 0f;
         }

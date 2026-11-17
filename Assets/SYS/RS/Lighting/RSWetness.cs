@@ -167,7 +167,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             if (shader == null) shader = Shader.Find(ShaderName);
@@ -209,7 +209,7 @@ namespace RealSteel.Lighting
             if (runtimeMat != null) { if (Application.isPlaying) Destroy(runtimeMat); else DestroyImmediate(runtimeMat); }
         }
 
-        void OnValidate() { MigrateLegacy(); if (isActiveAndEnabled) Apply(); }
+        void OnValidate() { if (isActiveAndEnabled) Apply(); }
 
         void Update() { Apply(); }
 

@@ -72,7 +72,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             if (timeOfDay == null) timeOfDay = FindAnyObjectByType<RSTimeOfDay>();

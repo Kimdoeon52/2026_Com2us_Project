@@ -113,7 +113,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             if (lutBlendShader == null) lutBlendShader = Shader.Find(LutShaderName);
@@ -166,7 +166,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
             L.shadowsEnd = Mathf.Max(L.shadowsStart, L.shadowsEnd);
             L.highlightsEnd = Mathf.Max(L.highlightsStart, L.highlightsEnd);
             appliedHour = -1f;

@@ -158,7 +158,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             RSLightingClock.Register(this);
@@ -202,7 +202,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
             L.count = Mathf.Max(0, L.count);
             L.fadeTime = Mathf.Max(0.05f, L.fadeTime);
             L.lifetime.x = Mathf.Max(L.fadeTime * 2f + 0.1f, L.lifetime.x);

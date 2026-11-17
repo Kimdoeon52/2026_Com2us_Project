@@ -97,7 +97,7 @@ namespace RealSteel.Lighting
         void OnEnable()
         {
 
-            MigrateLegacy();
+            
 
             RSStageLook.Changed += OnStageLookChanged;
             lt = GetComponent<Light>();
@@ -141,7 +141,7 @@ namespace RealSteel.Lighting
         void OnValidate()
         {
 
-            MigrateLegacy();
+            
             L.cloudSize = Mathf.Max(1f, L.cloudSize);
             builtKey = 0;
         }

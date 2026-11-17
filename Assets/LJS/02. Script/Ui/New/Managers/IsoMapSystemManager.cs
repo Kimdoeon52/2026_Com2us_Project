@@ -137,11 +137,6 @@ public class IsoMapSystemManager : MonoBehaviour
             LoadingManager.Instance.LoadScene(selectedElement.targetSceneName); // 씬 이동
             TimeSystemManager.Instance.PassTime(selectedElement.useHours); // 
             ToggleMapUI();
-            /*mapCanvas.SetActive(false);
-            isMapOpen = false;
-            confirmButton.SetActive(false);
-            isConfirmOpen = false;
-            selectedElement = null;*/
         }
     }
 

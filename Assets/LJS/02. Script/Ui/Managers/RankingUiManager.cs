@@ -1,7 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
-
+/// <summary>
+/// 랭킹 UI를 관리해주는 매니저. 랭킹 따라 이동 이벤트 나오는 것도 여기 있음.
+/// </summary>
 public class RankingUiManager : MonoBehaviour
 {
     public static RankingUiManager Instance;

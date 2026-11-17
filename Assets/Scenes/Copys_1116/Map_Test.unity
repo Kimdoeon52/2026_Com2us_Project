@@ -9188,7 +9188,7 @@ PrefabInstance:
       objectReference: {fileID: 411684200}
     - target: {fileID: 7805140482852692383, guid: 290f5afd2585dde4c8f5e6d59763568e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -0.0004845609
+      value: -0.00017278455
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -38425,11 +38425,6 @@ MonoBehaviour:
   _coreCatalog: {fileID: 11400000, guid: 6f0b49ae8093fe784b4eb88d44b88d6c, type: 2}
   _seed: 1
   _startingParts: 0
-  _debugComponentIds:
-  - ITEM_10_1_001
-  - ITEM_10_1_002
-  _debugPartIds: []
-  _debugAmount: 3
 --- !u!1 &755413865
 GameObject:
   m_ObjectHideFlags: 0
@@ -40522,7 +40517,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 0.9518701, y: 0.38940138}
+  m_LightCookieOffset: {x: 1.612831, y: 0.6597945}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -47808,18 +47803,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11240baa579337e4f82dd56ef46ba752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _shortcuts:
-  - Key: 282
-    SceneName: Map_Test
-  - Key: 283
-    SceneName: UiTest
-  - Key: 284
-    SceneName: Tester
-  - Key: 285
-    SceneName: JunkShop_11
-  - Key: 286
-    SceneName: Battle
-  _shortcutEnabled: 0
 --- !u!4 &922658061
 Transform:
   m_ObjectHideFlags: 0

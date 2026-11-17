@@ -4631,7 +4631,7 @@ MonoBehaviour:
   month: 3
   day: 28
   hour: 16
-  timeToGame: 1
+  timeToGame: 7.5
   timeText: {fileID: 7071807938243311437}
   timeCanvasGroup: {fileID: 8870836192591965988}
 --- !u!1 &2214756069706990153
@@ -4824,7 +4824,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.0009699992}
+  m_AnchoredPosition: {x: 0, y: -0.0004845609}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!1 &2224455996601703726
@@ -13553,18 +13553,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 11240baa579337e4f82dd56ef46ba752, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _shortcuts:
-  - Key: 282
-    SceneName: Map_Test
-  - Key: 283
-    SceneName: Battle
-  - Key: 284
-    SceneName: Tester
-  - Key: 285
-    SceneName: BattingTest
-  - Key: 286
-    SceneName: JunkShop_22
-  _shortcutEnabled: 0
 --- !u!1 &9031319682856456568
 GameObject:
   m_ObjectHideFlags: 0

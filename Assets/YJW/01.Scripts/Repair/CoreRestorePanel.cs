@@ -51,8 +51,8 @@ public class CoreRestorePanel : MonoBehaviour
         _icon.color = stateColor;
         _iconInner.color = stateColor;
 
-        _levelCostLabel.text = $"+ 코어 레벨 {level} × 50G";
-        _levelCost.text = $"{level * 50}G";
+        _levelCostLabel.text = $"+ 코어 레벨 {level} × {RepairRules.CoreRestoreLevelCost}G";
+        _levelCost.text = $"{level * RepairRules.CoreRestoreLevelCost}G";
         _totalCost.text = $"{cost}G";
         _time.text = unstable ? $"{RepairRules.RestoreHours}시간 · 완료 {manager.FinishTimeText(RepairRules.RestoreHours)}" : "-";
         _balance.text = unstable ? $"{balance:N0}G" : "-";

@@ -6,8 +6,6 @@ public class TooltipController : MonoBehaviour, IPointerEnterHandler, IPointerEx
 {
     [SerializeField] private GameObject toolTipBox;
     [SerializeField] private TextMeshProUGUI tmp;
-    private PartsDefinition part;
-    private ComponentDefinition component;
 
     private ResultSlot r_slot;
     private CombinationSlot c_slot;
@@ -24,10 +22,7 @@ public class TooltipController : MonoBehaviour, IPointerEnterHandler, IPointerEx
     private string GetTooltipText()
     {
         if (r_slot != null)
-        {
-            if (r_slot._part == null) return null;
-            return r_slot._part?.GetTooltip();
-        }
+            return r_slot._part != null ? r_slot._part.GetTooltip() : null;
 
         if (c_slot != null)
         {

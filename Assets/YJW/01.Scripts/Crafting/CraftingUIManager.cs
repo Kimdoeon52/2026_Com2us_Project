@@ -33,11 +33,6 @@ public class CraftingUIManager : Singleton<CraftingUIManager>
             inventoryRoot.gameObject.SetActive(false);
     }
 
-    private void OpenShopWindow()
-    {
-        shopWindow.SetActive(true);
-    }
-
     public void CloseShopWindow()
     {
         shopWindow.SetActive(false);

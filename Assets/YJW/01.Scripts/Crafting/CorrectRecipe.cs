@@ -16,8 +16,7 @@ public class CorrectRecipe : MonoBehaviour
     // RefreshMissingComponents 안의 ConsumeComponent가 다시 Changed를 부르므로 재진입 방지용
     private bool _refreshing;
 
-    // 같은 연결 오류를 매번 찍지 않도록
-    private bool _warnedSlots;
+    // 같은 레시피 오류를 매번 찍지 않도록
     private readonly System.Collections.Generic.HashSet<string> _warnedRecipes = new System.Collections.Generic.HashSet<string>();
 
     private void Awake()
@@ -67,28 +66,15 @@ public class CorrectRecipe : MonoBehaviour
             PushPartData();   // 빨간 칸이 줄었으니 결과 슬롯 다시 판정
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.T))
-            PushPartData();
-    }
-
     public void GetSlotDatas()
     {
         slots = GetComponentsInChildren<CombinationSlot>();
-        Debug.Log($"슬롯갯수{slots.Length}");
     }
 
-    // 조합 칸이 9개 모두 연결돼 있어야 판정한다. 잘못된 연결은 한 번만 알린다
+    // 조합 칸이 9개 모두 연결돼 있어야 판정한다
     private bool HasValidSlots()
     {
-        bool valid = slots != null && slots.Length == GridSize && System.Array.TrueForAll(slots, s => s != null);
-        if (!valid && !_warnedSlots)
-        {
-            _warnedSlots = true;
-            Debug.LogError($"[CorrectRecipe] 조합 칸이 {(slots != null ? slots.Length : 0)}개 연결돼 있습니다. {GridSize}칸이 모두 있어야 제작할 수 있어 제작을 중단합니다.", this);
-        }
-        return valid;
+        return slots != null && slots.Length == GridSize && System.Array.TrueForAll(slots, s => s != null);
     }
 
     // 비었거나 9칸이 아닌 레시피는 판정에서 빼고 한 번만 알린다
@@ -100,12 +86,6 @@ public class CorrectRecipe : MonoBehaviour
         if (_warnedRecipes.Add(recipe != null ? recipe.name : "(비어 있음)"))
             Debug.LogWarning($"[CorrectRecipe] 레시피 '{(recipe != null ? recipe.name : "비어 있음")}'의 조합법이 {GridSize}칸이 아니어서 건너뜁니다.", this);
         return false;
-    }
-
-    public string FindRecipe()
-    {
-        RecipeData recipe = FindMatchedRecipe();
-        return recipe != null ? recipe.PartID : null;
     }
 
     private RecipeData FindMatchedRecipe()
@@ -132,8 +112,6 @@ public class CorrectRecipe : MonoBehaviour
         return null;
     }
 
-    public bool isCorrect() => FindRecipe() != null;
-
     private bool IsSameID(string a, string b)
     {
         if (string.IsNullOrEmpty(a)) a = null;
@@ -151,8 +129,9 @@ public class CorrectRecipe : MonoBehaviour
         }
 
         RecipeData recipe = FindMatchedRecipe();
-        if (recipe != null && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
-            resultPart = resultSlot.FindPart(recipe.PartID);
+        PartsCatalog catalog = CraftingManager.Instance != null ? CraftingManager.Instance.catalog : null;
+        if (recipe != null && catalog != null && HasAllComponents())   // 빨간 칸이 하나라도 있으면 제작 불가
+            resultPart = catalog.Find(recipe.PartID);
         else
             resultPart = null;
 

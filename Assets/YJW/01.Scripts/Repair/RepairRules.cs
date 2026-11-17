@@ -9,11 +9,14 @@ public enum RepairPartState
     Broken
 }
 
-// 기획서의 수리/복구 공식 (수치는 임시)
+// 수리/복구 공식. 파츠 비용은 SO(PartsDefinition), 시간과 코어 복구비는 여기서 정한다
 public static class RepairRules
 {
     public const int RepairHours = 1;
     public const int RestoreHours = 4;
+
+    public const int CoreRestoreBaseCost = 100;
+    public const int CoreRestoreLevelCost = 50;
 
     public static RepairPartState GetState(PartsDefinition part, int current)
     {
@@ -87,7 +90,7 @@ public static class RepairRules
         return component != null ? component.DisplayName : part.RestoreComponentId;
     }
 
-    public static int CoreRestoreCost(int level) => 100 + level * 50;
+    public static int CoreRestoreCost(int level) => CoreRestoreBaseCost + level * CoreRestoreLevelCost;
 
     public static string GradeName(PartGrade grade)
     {

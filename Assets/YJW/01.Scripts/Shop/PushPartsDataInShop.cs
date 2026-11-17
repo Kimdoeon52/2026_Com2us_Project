@@ -7,12 +7,6 @@ public class PushPartsDataInShop : MonoBehaviour
 
     private List<ShopSlot> _slotList = new List<ShopSlot>();
 
-    private bool SortPartGrade(PartsDefinition part, PartGrade grade)
-    {
-        if (part.Grade == grade) return true;
-        return false;
-    }
-
     public void ClickGradeButton(int n)
     {
         PushPartDatas(n);
@@ -27,16 +21,15 @@ public class PushPartsDataInShop : MonoBehaviour
 
         PartsCatalog catalog = CraftingManager.Instance.catalog;
         int count = 0;
-        foreach(var part in catalog.Parts)
+        foreach (var part in catalog.Parts)
         {
-            if (SortPartGrade(part, _grade) == true)
-            {
-                ShopSlot slot = GetSlot(count);
-                slot.gameObject.SetActive(true);
-                slot.SetData(part.DisplayName, part.Grade, part.Sprite, part.Cost, part);
-                count++;
-            }
-            else continue;
+            if (part.Grade != _grade)
+                continue;
+
+            ShopSlot slot = GetSlot(count);
+            slot.gameObject.SetActive(true);
+            slot.SetData(part.DisplayName, part.Grade, part.Sprite, part);
+            count++;
         }
 
         // 이전 등급에서 쓰고 남은 칸은 숨긴다

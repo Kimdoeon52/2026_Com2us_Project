@@ -248,41 +248,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         Changed?.Invoke();
     }
 
-    // 특정 등급 부품의 총 보유 수
-    public int CountComponents(PartGrade grade)
-    {
-        if (_componentCatalog == null || _componentCatalog.Components == null)
-            return 0;
-
-        int count = 0;
-        foreach (ComponentDefinition component in _componentCatalog.Components)
-        {
-            if (component != null && component.Grade == grade)
-                count += _save.Components.Get(component.Id);
-        }
-        return count;
-    }
-
-    // 특정 등급 부품을 보유한 것부터 소모한다
-    public bool ConsumeComponents(PartGrade grade, int amount)
-    {
-        if (CountComponents(grade) < amount)
-            return false;
-
-        foreach (ComponentDefinition component in _componentCatalog.Components)
-        {
-            if (amount <= 0)
-                break;
-            if (component == null || component.Grade != grade)
-                continue;
-
-            int use = Mathf.Min(amount, _save.Components.Get(component.Id));
-            if (use > 0 && ConsumeComponent(component.Id, use))
-                amount -= use;
-        }
-        return amount <= 0;
-    }
-
     // 부위를 비운 내구도 그대로 그리드에 놓는다
     private bool PlaceWithLost(PartsDefinition definition, Vector2Int? origin, int lost)
     {

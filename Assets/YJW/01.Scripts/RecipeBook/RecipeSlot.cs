@@ -1,7 +1,4 @@
-using Cysharp.Threading.Tasks.Triggers;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -80,16 +77,6 @@ public class RecipeSlot : MonoBehaviour, IPointerClickHandler
     public void OnPointerClick(PointerEventData eventData)
     {
         Pushcomponents();
-    }
-
-    private void _HasComponent()
-    {
-        var Slots = CraftingManager.Instance.slots;
-        for (int i = 0; i < Slots.Length; i++)
-        {
-            var slot = Slots[i].GetComponent<CombinationSlot>();
-            
-        }
     }
 
     private void Pushcomponents()

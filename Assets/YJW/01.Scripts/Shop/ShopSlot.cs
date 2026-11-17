@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class ShopSlot : MonoBehaviour
 {
+    private const int PlayerId = 0;
+
     [SerializeField] private TextMeshProUGUI _name;
     [SerializeField] private TextMeshProUGUI _grade;
     [SerializeField] private Image _icon;
@@ -29,10 +31,10 @@ public class ShopSlot : MonoBehaviour
             InventoryHost.Instance.Changed -= CanSell;
     }
 
-    public void SetData(string name, PartGrade grade, Sprite icon, int cost, PartsDefinition part)
+    public void SetData(string name, PartGrade grade, Sprite icon, PartsDefinition part)
     {
         _name.text = name;
-        _grade.text = grade.ToString();
+        _grade.text = PartGrades.ToLabel(grade);
         _icon.sprite = icon;
         PartOutline.Apply(_icon, part);
 
@@ -72,7 +74,7 @@ public class ShopSlot : MonoBehaviour
         if (!InventoryHost.Instance.RemovePart(_part))
             return;
 
-        GlobalGold.Instance.GetGold(0, Gold);
+        GlobalGold.Instance.GetGold(PlayerId, Gold);
         GlobalGold.Instance.SaveGame();
     }
 }

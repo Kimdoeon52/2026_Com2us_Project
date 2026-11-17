@@ -55,6 +55,6 @@ public class RepairDetailPanel : MonoBehaviour
 
         _time.text = FixWindowManager.Instance.NeedRepair(slot) ? $"{RepairRules.RepairHours}시간" : "-";
         _zeroDurability.text = slot == Slot.Head ? "패시브 스킬 해제" : "액티브 스킬 봉인";
-        _breakChance.text = part != null ? $"{BattleSettlementProcessor.GetDestructionProbability(part.Grade):P0} (등급 기준)" : "-";
+        _breakChance.text = part != null ? $"{part.DestructionResistance:P0}" : "-";
     }
 }

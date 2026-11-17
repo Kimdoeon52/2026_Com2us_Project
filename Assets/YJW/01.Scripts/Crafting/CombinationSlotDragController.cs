@@ -119,15 +119,20 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
     // 고스트는 슬롯당 한 번만 만들어서 재사용한다 (드래그 시작마다 Instantiate/Destroy 안 함)
     private void EnsureGhost()
     {
-        if (_ghost != null || _ghostPrefab == null)
+        if (_ghostPrefab == null)
             return;
 
-        _ghost = (RectTransform)Instantiate(_ghostPrefab, _ghostLayer).transform;
-        _ghostImage = _ghost.GetComponent<Image>();
+        if (_ghost == null)
+        {
+            _ghost = (RectTransform)Instantiate(_ghostPrefab, _ghostLayer).transform;
+            _ghostImage = _ghost.GetComponent<Image>();
+            if (_ghostImage != null)
+                _ghostImage.raycastTarget = false;   // 고스트가 드롭 대상 레이캐스트를 가리면 안 됨
+        }
 
+        // 고스트는 재사용하므로 드래그할 때마다 지금 부품 그림으로 바꾼다
         if (_ghostImage != null)
         {
-            _ghostImage.raycastTarget = false;   // 고스트가 드롭 대상 레이캐스트를 가리면 안 됨
             _ghostImage.sprite = _dragged.Sprite;
             _ghostImage.enabled = true;
         }
@@ -178,10 +183,7 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
         {
             // 인벤토리가 꽉 차서 못 돌려주면 슬롯에 그대로 둔다 (비우면 부품이 사라짐)
             if (!Host.CanGiveComponent(component, 1))
-            {
-                Debug.Log("인벤토리에 빈자리가 없어 부품을 돌려줄 수 없음");
                 return;
-            }
             Host.GiveComponent(component, 1);  // 인벤토리로 수량 돌려줌
         }
         _slot.SetComponent(null);           // 슬롯 비움

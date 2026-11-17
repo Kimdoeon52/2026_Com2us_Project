@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using static ComponentStock;
 
 // 크래프팅 결과 슬롯(ResultSlot)에 뜬 완성 파츠를 인벤토리로 드래그해서 넣는다.
 // 인벤토리 위에 실제로 배치가 성공했을 때만 재료(부품)를 소모(ConfirmCraft)한다 -
@@ -102,15 +101,20 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
 
     private void EnsureGhost()
     {
-        if (_ghost != null || _ghostPrefab == null)
+        if (_ghostPrefab == null)
             return;
 
-        _ghost = (RectTransform)Instantiate(_ghostPrefab, _ghostLayer).transform;
-        _ghostImage = _ghost.GetComponent<Image>();
+        if (_ghost == null)
+        {
+            _ghost = (RectTransform)Instantiate(_ghostPrefab, _ghostLayer).transform;
+            _ghostImage = _ghost.GetComponent<Image>();
+            if (_ghostImage != null)
+                _ghostImage.raycastTarget = false;   // 고스트가 드롭 판정용 레이캐스트를 가리면 안 됨
+        }
 
+        // 고스트는 재사용하므로 드래그할 때마다 지금 파츠 그림으로 바꾼다
         if (_ghostImage != null)
         {
-            _ghostImage.raycastTarget = false;   // 고스트가 드롭 판정용 레이캐스트를 가리면 안 됨
             _ghostImage.sprite = _dragged.Sprite;
             _ghostImage.enabled = true;
         }
@@ -159,10 +163,7 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
 
         // 인벤토리가 꽉 차서 못 넣으면 재료도 소모하지 않고 결과 슬롯에 그대로 둔다
         if (!Host.GivePart(part))
-        {
-            Debug.Log("인벤토리에 빈자리가 없어 파츠를 넣을 수 없음");
             return;
-        }
 
         _recipe.ConfirmCraft();
         _resultSlot.SetPart(null);

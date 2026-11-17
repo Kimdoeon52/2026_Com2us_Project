@@ -269,7 +269,7 @@ namespace RealSteel.Lighting
             
 #if UNITY_EDITOR
             // OnValidate 안에서 다른 오브젝트를 바꾸면 경고가 뜨므로 한 박자 뒤에
-            UnityEditor.EditorApplication.delayCall += () => { if (this != null) { appliedTime = -1f; Apply(); } };
+            UnityEditor.EditorApplication.delayCall += () => { if (this != null && gameObject.scene.IsValid()) { appliedTime = -1f; Apply(); } };
 #endif
         }
 
@@ -307,6 +307,8 @@ namespace RealSteel.Lighting
 
         public void Apply()
         {
+            // 프리팹 에셋(씬 밖)에서는 아무것도 하지 않는다 — 숨은 자식 생성 · RenderSettings 변경 방지
+            if (!gameObject.scene.IsValid()) return;
             appliedTime = time;
             float h = Hour;
             float t01 = h / 24f;
@@ -401,6 +403,7 @@ namespace RealSteel.Lighting
 
         void EnsurePost()
         {
+            if (!gameObject.scene.IsValid()) return;
             if (postVolume != null && postProfile != null && postColor != null && postVig != null) return;
 
             // 도메인 리로드 뒤 남은 자식 재사용

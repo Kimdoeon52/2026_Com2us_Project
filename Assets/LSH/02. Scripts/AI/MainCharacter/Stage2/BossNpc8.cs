@@ -49,6 +49,6 @@ public class BossNpc8 : BossAiBase
             rivals[Random.Range(0, rivals.Count)].IsGiveUp = true;
             scared = 1;
         }
-        m.AppendConsoleLog($"겁먹은 {scared}명이 경매를 포기했습니다!");
+        //m.AppendConsoleLog($"겁먹은 {scared}명이 경매를 포기했습니다!");
     }
 }

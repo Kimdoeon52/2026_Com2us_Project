@@ -3851,7 +3851,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &191710165
 Transform:
   m_ObjectHideFlags: 0
@@ -8939,8 +8939,8 @@ MonoBehaviour:
   colliders: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: f2bba9c50d93ef54ba6510d82f74df55, type: 2}
-  cacheHash: d1006649268d3a4f
+  cacheMesh: {fileID: 4300000, guid: 614ed67a2411b394192b3b0922449e40, type: 2}
+  cacheHash: eefb2ab5c09ad57e
   cacheSurfaces:
   - {fileID: 11400000, guid: a94ae0b42995a7042b862b7ab9793c39, type: 2}
   - {fileID: 11400000, guid: e9d147a7d3fadeb47ab8ecf93d7c5e04, type: 2}
@@ -11482,7 +11482,6 @@ MonoBehaviour:
   cutsceneManager: {fileID: 286680225}
   timeBar: {fileID: 1191147751}
   timerRoot: {fileID: 0}
-  console: {fileID: 413660742}
   modeSelectPanel: {fileID: 1414343295}
   normalModeButton: {fileID: 2094143964}
   fistModeButton: {fileID: 3303306}
@@ -16679,7 +16678,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &883888671
 Transform:
   m_ObjectHideFlags: 0
@@ -18229,11 +18228,6 @@ MonoBehaviour:
   _coreCatalog: {fileID: 11400000, guid: 6f0b49ae8093fe784b4eb88d44b88d6c, type: 2}
   _seed: 1
   _startingParts: 0
-  _debugComponentIds:
-  - ITEM_10_1_001
-  - ITEM_10_1_002
-  _debugPartIds: []
-  _debugAmount: 3
 --- !u!4 &953668986
 Transform:
   m_ObjectHideFlags: 0
@@ -27235,7 +27229,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ee9b8f60301dcec469c1aeff8544a5e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  girlImage: {fileID: 0}
   textBox: {fileID: 143222809}
   chatText: {fileID: 1709254863}
   fitChatToTextBox: 0
@@ -29554,7 +29547,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.88, y: 0.88, z: 0.88}
+  m_LocalScale: {x: 0.83, y: 0.83, z: 0.83}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 817358412}

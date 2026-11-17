@@ -46,6 +46,6 @@ public class BossNpc15 : BossAiBase
         SkillFx.PunchZoom(-10f, 0.8f);
         SkillFx.PulseText(m.auctionCost, SkillColor, 0.7f);
         SkillFx.Stamp("절대 권력", SkillColor, 1f, 0f).Forget();
-        m.AppendConsoleLog("다른 AI들이 모두 물러났습니다!");
+        //m.AppendConsoleLog("다른 AI들이 모두 물러났습니다!");
     }
 }

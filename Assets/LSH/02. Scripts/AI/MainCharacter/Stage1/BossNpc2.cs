@@ -41,6 +41,6 @@ public class BossNpc2 : BossAiBase
         await SkillFx.KickOut(pt);
 
         target.IsGiveUp = true;
-        m.AppendConsoleLog($"{target.NPCName}님이 강제로 퇴장당했습니다!");
+        //m.AppendConsoleLog($"{target.NPCName}님이 강제로 퇴장당했습니다!");
     }
 }

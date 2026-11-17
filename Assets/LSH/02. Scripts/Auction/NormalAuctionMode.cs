@@ -63,7 +63,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             int thinkDelay = ai.ThinkDelay; //각 ai 생각 시간 삽입
             if (!isLeading)
             {
-                manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
+                //manager.AppendConsoleLog($"{ai.NPCName}님이 {thinkDelay / 1000}초 동안 고민중.\n"); //콘솔 출력
                 if (wasLeading && boss != null) ai.ShowThinkChatWithText(boss.GetOutbidLine()); // 역전당함 → 보스 개성 반응
                 else ai.ShowThinkChat(); // ai 고민 말풍선 띄우기
             }
@@ -103,12 +103,12 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             }
             else if (ai.IsGiveUp) // 진짜 포기한 경우만 (후반형처럼 관망하며 false를 돌려준 건 포기 아님)
             {
-                manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
+                //manager.AppendConsoleLog($"{ai.NPCName}판단 끝! 결과 포기.\n");
                 manager.PlaySound(manager.giveUpEffect); // 진행자 대사 없이 효과음 + 반투명 처리로만 표현
             }
             else
             {
-                manager.AppendConsoleLog($"{ai.NPCName}님은 이번엔 지켜봅니다.\n");
+                //manager.AppendConsoleLog($"{ai.NPCName}님은 이번엔 지켜봅니다.\n");
             }
 
             if (CheckEndCountdown(manager)) break; // 이 AI 루틴은 종료, 타이머가 자연스럽게 5초 후 경매 마감
@@ -118,7 +118,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
     private bool CheckEndCountdown(Auction manager) //모두가 포기하면 낙찰 카운트다운 돌입
     {
         if (!manager.CheckAllGiveUp()) return false;
-        manager.AppendConsoleLog("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
+        //manager.AppendConsoleLog("더 이상 입찰자가 없습니다! 낙찰까지 5초!");
         if (manager.RemainingTime > 5f)
             manager.RemainingTime = 5f; // 타이머를 5초로 고정 (즉시 종료 X)
         return true;
@@ -132,7 +132,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 
         boss.ShowThinkChatWithText(boss.SkillLine);
         manager.PlaySound(manager.useSkillEffect);
-        manager.AppendConsoleLog($"[스킬] {boss.NPCName}의 <{boss.SkillName}>!");
+        //manager.AppendConsoleLog($"[스킬] {boss.NPCName}의 <{boss.SkillName}>!");
         await boss.TriggerCutscene(boss.NPCName, boss.SkillName);
         if (!manager.IsTimeRunning || manager.IsAuctioningFin) return;
 
@@ -148,7 +148,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
     {
         manager.WinnerID = ai.NPCID;
         manager.IfPlayerWin = false;
-        manager.AppendConsoleLog($"{ai.NPCName}님이 {manager.CurrentCost}G로 레이즈!"); // 레이즈는 말풍선/가격표로만 보여줌
+        //manager.AppendConsoleLog($"{ai.NPCName}님이 {manager.CurrentCost}G로 레이즈!"); // 레이즈는 말풍선/가격표로만 보여줌
         if (refreshTimer) manager.RefreshTimerOnBid();
     }
 }

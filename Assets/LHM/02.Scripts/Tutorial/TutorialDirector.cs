@@ -367,7 +367,7 @@ namespace RealSteel.Tutorial
         }
 
         // 개발용: Ctrl + 도움말 키 = 모든 튜토리얼 본 기록 초기화 후 현재 씬 다시 확인
-        private void ResetAll()
+        public void ResetAll()
         {
             foreach (TutorialGuide guide in catalog.guides)
             {

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
-using UnityEngine.UI;
 
 // 인벤토리 데이터 보유. 씬 전환에도 유지되며 UI는 Instance로 Grid/Save를 읽어간다
 public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSource
@@ -32,7 +31,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     private Rng _rng;
     private InventoryGrid _grid;
     private InventorySaveData _save;
-    private string _snapshot;
     private bool _saveDirty;
 
     private static string SavePath => Path.Combine(Application.persistentDataPath, "inventory.json");
@@ -53,8 +51,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
 
     // 데이터가 바뀌면 UI가 전체 리빌드한다
     public event Action Changed;
-
-    GridLayoutGroup __grid;
 
     // 첫 씬에 배치된 게 없으면 Resources 프리팹으로 만든다
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -120,14 +116,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     {
         BattleSettlementProcessor.OnSettlementCompleted -= ApplySettlement;
         base.OnDestroy();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Q) && (Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)))
-            GiveDebugComponents();
-        if (Input.GetKeyDown(KeyCode.W) && (Input.GetKey(KeyCode.LeftShift)))
-            GiveDebugParts();
     }
 
     // 한 프레임에 여러 번 바뀌어도 파일은 한 번만 쓴다
@@ -309,27 +297,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             entry.Parts.LostDurability = lost;
 
         return placed;
-    }
-
-    [ContextMenu("테스트: 장착 파츠 손상")]
-    private void DebugDamageEquipped()
-    {
-        for (int i = 0; i < EquipmentSaveData.SlotCount; i++)
-        {
-            PartsDefinition equipped = GetEquipped((Slot)i);
-            if (equipped != null)
-                SetDurability((Slot)i, Mathf.Max(1, equipped.Durability * (i + 1) / (EquipmentSaveData.SlotCount + 1)));
-        }
-        Changed?.Invoke();
-    }
-
-    [ContextMenu("테스트: 패배 (첫 장착 파츠 잔해, 코어 불안정)")]
-    private void DebugLose()
-    {
-        _save.Core.IsUnstable = true;
-        IReadOnlyList<string> ids = GetEquippedPartIds();
-        RemoveDestroyed(ids.Count > 0 ? new[] { ids[0] } : new string[0]);
-        Changed?.Invoke();
     }
 
     // 지정 파츠를 빈자리에 배치
@@ -537,29 +504,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
             Changed?.Invoke();
     }
 
-    [ContextMenu("장착 ID 출력")]
-    public void LogEquipped()
-    {
-        Debug.Log($"장착: [{string.Join(", ", GetEquippedPartIds())}]");
-    }
-
-    [ContextMenu("부품 지급")]
-    public void GiveSampleComponents()
-    {
-        if (_componentCatalog == null)
-            return;
-
-        GiveRandomComponent(PartGrade.Common, 10);
-        GiveRandomComponent(PartGrade.Rare, 3);
-        GiveRandomComponent(PartGrade.Epic, 1);
-    }
-
-    public void GiveRandomComponent(PartGrade grade, int amount)
-    {
-        if (_componentCatalog != null && _componentCatalog.TryPick(grade, _rng, out ComponentDefinition component))
-            GiveComponent(component, amount);
-    }
-
     // 수량이 0이 되면 칸도 사라진다
     public bool ConsumeComponent(string id, int amount)
     {
@@ -618,20 +562,6 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return false;
     }
 
-    [ContextMenu("첫 부품 1개 소모")]
-    public void ConsumeSampleComponent()
-    {
-        var slots = _save.Components.Slots;
-        for (int i = 0; i < slots.Count; i++)
-        {
-            if (slots[i].Count <= 0)
-                continue;
-
-            ConsumeComponent(slots[i].Id, 1);
-            return;
-        }
-    }
-
     [ContextMenu("전체 비우기")]
     public void ClearAll()
     {
@@ -642,92 +572,5 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         EnsureCore();
         _grid.Clear();
         Changed?.Invoke();
-    }
-
-    // 직렬화 왕복 테스트. 저장 → 비우기 → 복원 후 배치가 같아야 한다
-    [ContextMenu("세이브 캡처")]
-    public void CaptureSnapshot()
-    {
-        _save.CaptureFrom(_grid);
-        _snapshot = JsonUtility.ToJson(_save, true);
-        Debug.Log(_snapshot);
-    }
-
-    [ContextMenu("세이브 복원")]
-    public void RestoreSnapshot()
-    {
-        if (string.IsNullOrEmpty(_snapshot))
-        {
-            Debug.LogWarning("캡처된 세이브가 없다.");
-            return;
-        }
-
-        _save = JsonUtility.FromJson<InventorySaveData>(_snapshot);
-        _grid = new InventoryGrid(_inventoryDefinition, _save.Components, _componentCatalog);
-        _save.RestoreTo(_grid, _catalog);
-        EnsureCore();
-        Changed?.Invoke();
-    }
-
-    // 현재 점유 상태를 문자 그리드로 출력
-    [ContextMenu("그리드 출력")]
-    public void LogGrid()
-    {
-        var text = new System.Text.StringBuilder();
-        for (int y = _grid.Height - 1; y >= 0; y--)
-        {
-            for (int x = 0; x < _grid.Width; x++)
-            {
-                int index = _grid.GetIndexAt(new Vector2Int(x, y));
-                text.Append(index < 0 ? ". " : $"{index % 10} ");
-            }
-
-            text.AppendLine();
-        }
-
-        Debug.Log(text.ToString());
-    }
-
-    ///////////////////////////
-    /// 크래프팅 디버그용
-    ///////////////////////////
-    [Header("디버그 지급")]
-    [Tooltip("지급할 부품 ID 목록")]
-    [SerializeField] private string[] _debugComponentIds;
-
-    [Tooltip("지급할 파츠 ID 목록")]
-    [SerializeField] private string[] _debugPartIds;
-
-    [Tooltip("각 부품당 지급 수량")]
-    [SerializeField] private int _debugAmount = 1;
-
-    [ContextMenu("지정 부품 지급")]
-    public void GiveDebugComponents()
-    {
-        if (_componentCatalog == null || _debugComponentIds == null)
-            return;
-
-        for (int i = 0; i < _debugComponentIds.Length; i++)
-        {
-            ComponentDefinition component = _componentCatalog.Find(_debugComponentIds[i]);
-            if (component == null)
-            {
-                Debug.LogWarning($"'{_debugComponentIds[i]}' 부품을 찾을 수 없다.");
-                continue;
-            }
-
-            GiveComponent(component, _debugAmount);
-
-        }
-    }
-
-    public void GiveDebugParts()
-    {
-        for (int i = 0; i < _debugPartIds.Length; i++)
-        {
-            PartsDefinition part = Catalog.Find(_debugPartIds[i]);
-            GivePart(part);
-
-        }
     }
 }

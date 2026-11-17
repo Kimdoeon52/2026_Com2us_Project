@@ -200,9 +200,6 @@ public class PartsDefinition : ScriptableObject
 
         float sprite = _sprite.rect.width / _sprite.rect.height;
         float shape = (float)_shape.Size.x / _shape.Size.y;
-
-        if (Mathf.Abs(sprite - shape) > 0.01f)
-            Debug.LogWarning($"{name}: 이미지 비율이 {_shape.Size.x}x{_shape.Size.y}와 다르다.", this);
     }
 
     public string GetTooltip(bool destroyed = false)

@@ -44,15 +44,6 @@ public class ScrapyardState
         Remaining -= consumed;
         return consumed;
     }
-
-    // 잔량 시각 표현용. 숫자 UI로 쓰지 않는다
-    public float RemainingRatio(int monthlyTotal)
-    {
-        if (monthlyTotal <= 0)
-            return 1f;
-
-        return Mathf.Clamp01((float)Remaining / monthlyTotal);
-    }
 }
 
 // 지역별 상태 묶음. 세이브 루트가 이걸 들고 있는다

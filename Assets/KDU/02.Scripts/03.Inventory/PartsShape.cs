@@ -33,20 +33,6 @@ public class PartsShape
         return _cells[y * _size.x + x];
     }
 
-    public int CellCount()
-    {
-        EnsureSize();
-
-        int count = 0;
-        for (int i = 0; i < _cells.Length; i++)
-        {
-            if (_cells[i])
-                count++;
-        }
-
-        return count;
-    }
-
     // 전부 비면 배치할 수 없으므로 한 칸은 남긴다
     public void Validate()
     {

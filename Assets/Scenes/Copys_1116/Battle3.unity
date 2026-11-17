@@ -3810,9 +3810,9 @@ GameObject:
   - component: {fileID: 1270632124}
   - component: {fileID: 1270632125}
   - component: {fileID: 1270632127}
+  - component: {fileID: 1270632130}
   - component: {fileID: 1270632126}
   - component: {fileID: 1270632128}
-  - component: {fileID: 1270632130}
   - component: {fileID: 1270632129}
   m_Layer: 0
   m_Name: Player
@@ -4066,9 +4066,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectTable: {fileID: 0}
-  playerParts: []
-  enemyParts: []
 --- !u!114 &1270632124
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4232,7 +4229,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _catalog: {fileID: 11400000, guid: ae347b64cdc141deab392542d19d0c03, type: 2}
-  _fallback: {fileID: 0}
+  _fallback: {fileID: 1270632126}
 --- !u!1 &1283462758
 GameObject:
   m_ObjectHideFlags: 0

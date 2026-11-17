@@ -633,28 +633,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c521db44c9643543b3a565f4b18348b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  count: -2147483648
-  length: {x: NaN, y: 0}
-  width: {x: NaN, y: 0}
-  minSteepness: NaN
-  intensity: NaN
-  intensityVariation: NaN
-  tint: {r: NaN, g: 0, b: 0, a: 0}
-  edgeSoftness: NaN
-  topFade: NaN
-  bottomFade: NaN
-  noiseAmount: NaN
-  noiseScale: NaN
-  noiseSpeed: NaN
-  nearFade: NaN
-  steps: -2147483648
-  motesPerShaft: -2147483648
-  moteSize: {x: NaN, y: 0}
-  moteBrightness: NaN
-  moteDrift: NaN
-  lifetime: {x: NaN, y: 0}
-  fadeTime: NaN
-  drift: NaN
   sun: {fileID: 1311525516}
   material: {fileID: 2100000, guid: 04265a16b70c9f7449db1493cb6571d9, type: 2}
   look:
@@ -881,9 +859,9 @@ GameObject:
   - component: {fileID: 479391484}
   - component: {fileID: 479391483}
   - component: {fileID: 479391482}
+  - component: {fileID: 479391496}
   - component: {fileID: 479391481}
   - component: {fileID: 479391480}
-  - component: {fileID: 479391496}
   - component: {fileID: 479391495}
   m_Layer: 0
   m_Name: Player
@@ -1034,9 +1012,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f2336d3d058c24742885a4771a43f260, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  effectTable: {fileID: 0}
-  playerParts: []
-  enemyParts: []
 --- !u!114 &479391486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1303,7 +1278,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _catalog: {fileID: 11400000, guid: ae347b64cdc141deab392542d19d0c03, type: 2}
-  _fallback: {fileID: 0}
+  _fallback: {fileID: 479391481}
 --- !u!4 &503150588 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7347677701256762536, guid: be76f4ac88c124544a3d689956d6683c, type: 3}
@@ -2133,35 +2108,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 527d7b143f0df4b43baca4180cf9b4cb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rain: NaN
-  darken: NaN
-  reflection: NaN
-  reflectionMin: NaN
-  reflectionTint: {r: NaN, g: 0, b: 0, a: 0}
-  highlight: NaN
-  highlightSharpness: NaN
-  roughness: NaN
-  reflectionStretch: NaN
-  surfaceBump: NaN
-  puddleInCracks: NaN
-  environment: NaN
-  puddlePatches: NaN
-  puddleScale: NaN
-  reflectionContrast: NaN
-  reflectionCover: NaN
-  edgeBreakup: NaN
-  edgeScale: NaN
-  followSlope: NaN
-  lightReflection: NaN
-  lightStreak: NaN
-  lightStreakSharpness: NaN
-  ripple: NaN
-  rippleScale: NaN
-  rippleSpeed: NaN
-  steps: -2147483648
-  maxDistance: NaN
-  thickness: NaN
-  pixelsPerUnit: NaN
   look:
     rain: 0
     darken: 0.35
@@ -2206,20 +2152,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 70d9fa383c4ed584085370c235c6dab7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  occlusion: NaN
-  occlusionReach: NaN
-  underCover: NaN
-  bounce: NaN
-  bounceReach: NaN
-  bounceHeight: NaN
-  saturation: NaN
-  terrain: NaN
-  buildings: NaN
-  characters: NaN
-  foliage: NaN
-  includeSources: 1
-  includeLights: 1
-  lightSpill: NaN
   fitToTerrain: 1
   center: {x: 0, y: 0, z: 0}
   size: {x: 40, y: 40}
@@ -2257,12 +2189,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6dd4de90d44d99745b6011c2ad769135, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  profile: {fileID: 0}
-  strength: NaN
-  shadowsStart: NaN
-  shadowsEnd: NaN
-  highlightsStart: NaN
-  highlightsEnd: NaN
   look:
     profile: {fileID: 11400000, guid: b24d26dfbb14bdc448e0457aeb122e18, type: 2}
     strength: 1
@@ -2287,294 +2213,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 35aec9f7435caa344a43b5dbfc154036, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  azimuth: NaN
-  swing: NaN
-  maxElevation: NaN
-  minElevation: NaN
-  sunriseHour: NaN
-  sunsetHour: NaN
-  sunColor:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  sunIntensity:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  dayShadowStrength: NaN
-  moonColor: {r: NaN, g: 0, b: 0, a: 0}
-  moonIntensity: NaN
-  moonElevation: NaN
-  nightShadowStrength: NaN
-  driveAmbient: 1
-  ambientIntensity: NaN
-  ambientSky:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  ambientEquator:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  ambientGround:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  driveFog: 1
-  fogColor:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  shaftIntensity:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  shaftColor:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  drivePost: 1
-  postPriority: NaN
-  postTint:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  postExposure:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  postSaturation:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  postVignette:
-    serializedVersion: 2
-    m_Curve: []
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  vignetteColor:
-    serializedVersion: 2
-    key0: {r: 1, g: 1, b: 1, a: 1}
-    key1: {r: 1, g: 1, b: 1, a: 1}
-    key2: {r: 0, g: 0, b: 0, a: 0}
-    key3: {r: 0, g: 0, b: 0, a: 0}
-    key4: {r: 0, g: 0, b: 0, a: 0}
-    key5: {r: 0, g: 0, b: 0, a: 0}
-    key6: {r: 0, g: 0, b: 0, a: 0}
-    key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 0
-    ctime1: 65535
-    ctime2: 0
-    ctime3: 0
-    ctime4: 0
-    ctime5: 0
-    ctime6: 0
-    ctime7: 0
-    atime0: 0
-    atime1: 65535
-    atime2: 0
-    atime3: 0
-    atime4: 0
-    atime5: 0
-    atime6: 0
-    atime7: 0
-    m_Mode: 0
-    m_ColorSpace: -1
-    m_NumColorKeys: 2
-    m_NumAlphaKeys: 2
-  fillDay: NaN
-  fillNight: NaN
   time: 9.5
   dayLengthMinutes: 0
   flowInEditMode: 0
@@ -4019,22 +3657,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3721f6124c1d8e24ca5115643601be01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  strength: NaN
-  coverage: NaN
-  softness: NaN
-  bands: -2147483648
-  detail: -2147483648
-  blobs: -2147483648
-  seed: -2147483648
-  dappleStrength: NaN
-  dappleCoverage: NaN
-  dappleSoftness: NaN
-  dappleSize: -2147483648
-  dappleDetail: -2147483648
-  cloudSize: NaN
-  wind: {x: NaN, y: 0}
-  pixelSize: NaN
-  pixelated: 1
   look:
     strength: 0.6
     coverage: 0.35
@@ -4074,7 +3696,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 28.428223, y: 11.629726}
+  m_LightCookieOffset: {x: 13.370022, y: 5.469554}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -4571,19 +4193,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348384654b930164c85a378d4f1fd405, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  color: {r: NaN, g: 0, b: 0, a: 0}
-  followTimeOfDay: 1
-  density: NaN
-  heightFalloff: NaN
-  noiseScale: NaN
-  noiseStrength: NaN
-  wind: {x: NaN, y: 0, z: 0}
-  sunStrength: NaN
-  shadowStrength: NaN
-  anisotropy: NaN
-  ambientStrength: NaN
-  pointLights: 1
-  pointStrength: NaN
   size: {x: 40, y: 8, z: 40}
   edgeFade: 10
   look:

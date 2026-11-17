@@ -4,7 +4,7 @@
 // ActionData를 상속하는 이유
 //   ActionData를 직접 읽는 곳이 많다: HitDetection(박스·무적), KKH CombatCalculator(Damage/IsGuardable/StaggerValue),
 //   CombatDataHub.CanExecuteAction(부위), 쿨타임 키(CooldownKey), 실린더(CylinderCost/FallbackAction),
-//   장비 효과(ActionReplaceEffect), RobotView(클립 이름).
+//   RobotView(클립 이름).
 //   SkillData가 ActionData이면 이 계약을 전부 그대로 쓰므로 다른 팀원 코드가 하나도 안 바뀐다.
 //
 // ActionData와 다른 점은 딱 두 가지다
@@ -26,7 +26,6 @@ public abstract class SkillData : ActionData
     /// 돌려주는 행동은 보통 this이고, 강화판정처럼 다른 에셋(변형)일 수도 있다.
     ///
     /// 호출: SkillDriver, 매 틱 (행동 중이어도 불린다 — 결과는 입력 버퍼에 들어갔다가 Idle이 되면 시작된다).
-    /// 장비 효과(ActionReplaceEffect)로 슬롯 행동이 바뀌었으면 바뀐 쪽의 이 함수가 불린다.
     /// 기본: 누른 순간 바로 시작.
     /// </summary>
     public virtual ActionData EvaluateTrigger(in SlotState slot) => slot.Pressed ? this : null;

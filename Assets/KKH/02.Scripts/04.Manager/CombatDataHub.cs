@@ -302,19 +302,14 @@ public class CombatDataHub : MonoBehaviour
     }
 
     /// <summary>
-    /// 로봇(ActionExecutor)에게 장착된 파츠 목록의 스킬 및 효과를 자동 등록함.
-    /// 1. CSH EquipmentEffectTable을 통해 EquipmentEffectApplier.Apply 호출
-    /// 2. PartMasterData.activeSkillAction이 존재할 경우 PlayerSkillLoadout 슬롯(Q/W/E/R) 자동 바인딩
+    /// 로봇(ActionExecutor)에게 장착된 파츠 목록의 스킬을 자동 등록함.
+    /// PartMasterData.activeSkillAction이 존재할 경우 PlayerSkillLoadout 슬롯(Q/W/E/R) 자동 바인딩
     /// </summary>
-    public void ApplyEquipmentEffects(ActionExecutor executor, EquipmentEffectTable table = null)
+    public void ApplyEquipmentEffects(ActionExecutor executor)
     {
         if (executor == null) return;
 
         var parts = GetEquippedParts(executor.FighterId);
-        if (table != null)
-        {
-            EquipmentEffectApplier.Apply(executor, parts, table);
-        }
 
         // 파츠에 지정된 activeSkillAction이 있으면 PlayerSkillLoadout에 자동 장착
         var loadout = executor.GetComponent<PlayerSkillLoadout>();

@@ -278,8 +278,6 @@ public class ActionExecutor : MonoBehaviour
     // 호출: ExecuteTick(새 행동을 받아들이는 자리). 부위가 파괴된 상태에서 그 부위 소속 기술을 내면
     // CombatDataHub.CanExecuteAction이 false를 돌려준다 — 여기서 걸러서 null로 바꾸면 ExecuteTick
     // 입장에서는 "이번 틱엔 아무 입력도 없었다"와 똑같이 취급되어 그냥 Idle을 유지한다.
-    // ResolveReplacement는 "대체된 행동"에 한해서만 같은 체크를 이미 하고 있었는데(CSH 삽입 코드),
-    // 대체되지 않은 일반적인 경우(대부분의 입력)는 이 체크를 한 번도 안 거쳤었다 — 그 구멍을 여기서 막는다.
     // CombatDataHub가 아직 씬에 없으면(테스트 초기 등) 막을 근거가 없으니 그냥 통과시킨다
     private ActionData GateByPartBroken(ActionData action)
     {
@@ -302,58 +300,15 @@ public class ActionExecutor : MonoBehaviour
     }
 
     #region 최.추가
-    private EquipmentEffectSet effects;
-
-    public void SetEffects(EquipmentEffectSet set)
-    {
-        if (state == null)
-        {
-            Debug.LogWarning("[ActionExecutor] SetEffects 호출 시점에 state가 아직 없음 - Init(PlayerRobotBootstrap.Awake) 이후에 호출해야 함");
-            return;
-        }
-
-        effects?.Unequip();
-
-        effects = set;
-        state.SetModifierResolver(set != null ? (Action<ActionData, ResolvedModifiers>)ResolveModifiers : null);
-
-        effects?.Equip();
-    }
-
     private void OnDestroy()
     {
-        effects?.Unequip();
-        effects = null;
         Robot?.Dispose(); // RuntimeRobot의 부위 파손 이벤트 구독 해제 (NYH 추가)
-    }
-
-    private void ResolveModifiers(ActionData action, ResolvedModifiers into)
-    {
-        effects?.Resolve(action, IsPartBroken, into);
-    }
-    private ActionData ResolveReplacement(ActionData requested)
-    {
-        if (effects == null) return requested;
-
-        ActionData replaced = effects.ResolveReplacement(requested, IsPartBroken);
-        if (replaced == requested) return requested;
-
-        var hub = CombatDataHub.Instance;
-        if (hub != null && !hub.CanExecuteAction(FighterId, replaced)) return requested;
-
-        return replaced;
-    }
-
-    private bool IsPartBroken(BodyPart part)
-    {
-        var hub = CombatDataHub.Instance;
-        return hub != null && hub.GetSnapshot(FighterId) != null && hub.IsPartBroken(FighterId, part);
     }
 
     // ---- 행동 시작 공통 (기존 ExecuteTick 블록을 그대로 옮김) ----
 
     /// <summary>
-    /// 장비 대체 → 부위 파손 → 실린더(부족하면 폴백) → 쿨타임 게이트를 거쳐 Begin하고, 쿨타임·탄을 확정한다.
+    /// 부위 파손 → 실린더(부족하면 폴백) → 쿨타임 게이트를 거쳐 Begin하고, 쿨타임·탄을 확정한다.
     /// 적/보스(GetDesiredAction 경로)와 플레이어의 일반 ActionData(SkillDriver 경로)가 같이 쓴다.
     /// 시작했으면 true
     /// </summary>
@@ -361,7 +316,6 @@ public class ActionExecutor : MonoBehaviour
     {
         if (requested == null || !state.CanAcceptNewAction) return false;
 
-        requested = ResolveReplacement(requested); // 최. 추가
         requested = GateByPartBroken(requested); // 부위 파손 시 기술 시전 차단 (§11-4, §14)
         requested = GateByGround(requested); // 지상 전용 행동(회피 등)을 공중에서 누르면 무시. 쿨타임·탄보다 먼저 — 막히면 아무것도 소모하지 않는다
         // 탄이 모자라면 일반판정(fallbackAction)으로 바꾼다. 쿨타임 검사보다 먼저여야 한다 —
@@ -392,9 +346,6 @@ public class ActionExecutor : MonoBehaviour
 
     /// <summary>플레이어 스킬 드라이버. 적/보스는 null. UI가 CurrentRunner(차지 게이지 등)를 읽는다</summary>
     public SkillDriver SkillDriver => skillDriver;
-
-    /// <summary>슬롯 행동에 장비 대체(ActionReplaceEffect)를 적용한다. 시작 판정 전에 부른다</summary>
-    internal ActionData SkillResolveSlotAction(ActionData bound) => ResolveReplacement(bound);
 
     /// <summary>스킬 시작 게이트: 부위 파손 → 지상 전용 → 쿨타임. 실린더는 러너가 비용 확정할 때 따로 본다</summary>
     internal ActionData SkillGateStart(ActionData action) => GateByCooldown(GateByGround(GateByPartBroken(action)));
@@ -527,7 +478,7 @@ public class ActionExecutor : MonoBehaviour
 
     // ---- 실린더 ----
     // 호출: ExecuteTick. 강화판정은 탄이 있어야 나가고, 탄이 없으면 폴백(일반판정)으로 대체한다 (기획서 "실린더 시스템").
-    // 순서: 대체(ResolveReplacement) → 부위 파손 게이트 → 여기. 대체된 행동의 비용을 봐야 하고,
+    // 순서: 부위 파손 게이트 → 여기.
     // 팔이 파손됐다면 폴백(같은 팔 스킬)도 어차피 막히므로 부위 게이트가 먼저 와야 한다.
     // 폴백도 부위 게이트를 다시 거치고 비용을 확인한다. 폴백의 폴백은 따라가지 않는다.
     // CombatDataHub가 없으면 막을 근거가 없으니 그대로 통과 (GateByPartBroken과 같은 정책)
@@ -563,18 +514,11 @@ public class ActionExecutor : MonoBehaviour
         return fallback;
     }
 
-    // 장비 보정(SkillParamId.CylinderCost)이 반영된 비용. 기본 비용이 0인 행동은 보정으로 비용이 생기지 않게 0으로 고정한다.
-    // 게이트 시점에는 아직 state.Begin 전이라 state.Resolved를 쓸 수 없어서 별도 scratch에 한 번 계산한다
-    // (Contribute를 한 번 더 부르게 되므로 EffectInstance.Contribute는 상태를 안 바꾸는 순수 계산이어야 한다)
-    private readonly ResolvedModifiers costScratch = new ResolvedModifiers();
-
+    // 행동의 실린더 비용. 0 이하는 0으로 본다
     private int ResolveCylinderCost(ActionData action)
     {
         if (action == null || action.CylinderCost <= 0) return 0;
-
-        costScratch.Reset();
-        effects?.Resolve(action, IsPartBroken, costScratch);
-        return Mathf.Max(0, Mathf.RoundToInt(costScratch.Apply(SkillParamId.CylinderCost, action.CylinderCost)));
+        return action.CylinderCost;
     }
 
     // 행동 시작 직후 탄을 깎는다. 게이트에서 이미 충분한지 확인했으므로 실패는 정상 상황에선 나오지 않는다

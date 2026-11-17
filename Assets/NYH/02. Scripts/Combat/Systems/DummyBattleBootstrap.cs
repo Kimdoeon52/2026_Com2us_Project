@@ -44,8 +44,6 @@ public class DummyBattleBootstrap : MonoBehaviour
             Debug.Log($"[DummyBattleBootstrap] 보스 씬 — Player vs {boss.Snapshot.bossName} 보스 모드로 등록");
         }
 
-        ApplyEquipmentEffects(); // 최. 추가
-
         // 라이프사이클상 Ready 다음 단계로 넘겨서 "지금 전투 중"인 정상 상태로 맞춰둔다.
         // (지금 HitDetection 자체는 이 상태를 검사하지 않지만, BattleManager를 참조하는 다른 코드가
         //  Ready 상태에서 이상하게 동작하는 걸 막기 위해 정석대로 호출해둔다)
@@ -53,22 +51,4 @@ public class DummyBattleBootstrap : MonoBehaviour
 
         Debug.Log("[DummyBattleBootstrap] 더미 스탯으로 Player/Enemy 등록 완료 — HitDetection 테스트 준비됨");
     }
-    #region 최. 추가
-    [Header("장비 효과 테스트 (선택)")]
-    [SerializeField] private EquipmentEffectTable effectTable;
-    [SerializeField] private List<PartMasterData> playerParts = new List<PartMasterData>();
-    [SerializeField] private List<PartMasterData> enemyParts = new List<PartMasterData>();
-
-    private void ApplyEquipmentEffects()
-    {
-        if (effectTable == null) return;
-
-        foreach (var executor in FindObjectsByType<ActionExecutor>(FindObjectsSortMode.None))
-        {
-            var parts = executor.FighterId == "Enemy" ? enemyParts : playerParts;
-            EquipmentEffectApplier.Apply(executor, parts, effectTable);
-        }
-    }
-
-    #endregion
 }

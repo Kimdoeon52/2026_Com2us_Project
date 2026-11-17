@@ -90,9 +90,6 @@ public class PartMasterData : ScriptableObject
 
     [Tooltip("기획서 부위별 고유 패시브 스킬 ID 목록 (머리 자동 장전 장치 등)")]
     public List<int> passiveSkillIds = new List<int>();
-
-    [Tooltip("파츠 자체에 할당된 추가 장비 효과 목록 (미지정 시 EffectTable 매핑 사용)")]
-    public EquipmentEffect[] customEffects;
 }
 
 /// <summary>

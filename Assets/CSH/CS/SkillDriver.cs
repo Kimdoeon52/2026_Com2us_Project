@@ -130,9 +130,6 @@ public sealed class SkillDriver : IExternalActionDriver
             ActionData bound = loadout.GetSlotAction(slot);
             if (bound == null) continue;
 
-            // 장비 효과로 슬롯 행동이 바뀌었으면(ActionReplaceEffect) 바뀐 행동의 트리거 규칙을 따른다
-            bound = executor.SkillResolveSlotAction(bound);
-
             ActionData startAs = bound is SkillData skill
                 ? skill.EvaluateTrigger(s)
                 : (s.Pressed ? bound : null); // 일반 ActionData는 기존처럼 누른 순간

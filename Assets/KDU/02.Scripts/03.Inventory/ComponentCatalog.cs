@@ -12,6 +12,7 @@ public class ComponentCatalog : ScriptableObject
 
     public ComponentDefinition[] Components => _components;
 
+
     public ComponentDefinition Find(string id)
     {
         if (_components == null || string.IsNullOrEmpty(id))

@@ -24,12 +24,15 @@ public class ComponentDefinition
     [Min(0)]
     [SerializeField] private int _maxCount;
 
+    [SerializeField] private int _price;
+
     public string Id => _id;
     public string DisplayName => _displayName;
     public Sprite Sprite => _sprite;
     public string Description => _description;
     public PartGrade Grade => _grade;
     public int MaxCount => _maxCount;
+    public int Price => _price;
 
     // 현재 수량에서 더 받을 수 있는 양
     public int RemainingCapacity(int current)

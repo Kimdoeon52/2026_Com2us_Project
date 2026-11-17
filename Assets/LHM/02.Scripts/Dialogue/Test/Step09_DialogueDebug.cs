@@ -5,6 +5,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: F키 대화 디버그 (토벌 난이도 · 승패 기록 · 저장/읽기 · 기록 초기화)
+    // 위치: 테스트 씬 (JunkShop_Map) · DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step09_DialogueDebug : MonoBehaviour, RealSteel.BossRace.IBossRaceProgress, RealSteel.BossRace.IRobotPartStatus
     {
         private static readonly string[] Difficulties = { "veryEasy", "easy", "normal", "hard", "hell" };

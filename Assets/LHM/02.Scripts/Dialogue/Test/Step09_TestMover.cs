@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: 테스트 씬용 임시 플레이어 이동
+    // 위치: Step09_SceneSetup이 테스트 플레이어에 붙임
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public enum TestMovePlane
     {
         XZ,

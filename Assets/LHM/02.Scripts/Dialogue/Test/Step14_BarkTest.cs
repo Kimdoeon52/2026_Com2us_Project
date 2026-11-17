@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: 6 ~ 0 = 전투 바크 (파츠 파괴 · 자막 · 그로기) 시험
+    // 위치: DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step14_BarkTest : MonoBehaviour
     {
         [Header("연결")]

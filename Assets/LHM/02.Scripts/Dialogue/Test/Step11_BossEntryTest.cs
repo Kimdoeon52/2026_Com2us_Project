@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: B = 테스트 보스 진입 (전투 중 N 패배 · M 승리)
+    // 위치: 테스트 씬 (JunkShop_Map) · DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step11_BossEntryTest : MonoBehaviour
     {
         [Header("연결")]

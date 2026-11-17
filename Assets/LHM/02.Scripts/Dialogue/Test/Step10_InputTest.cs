@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: ` 키 = 필드 ↔ 전투 입력 전환 시험
+    // 위치: 테스트 씬 (JunkShop_Map) · DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step10_InputTest : MonoBehaviour
     {
         private static readonly string[] BattleButtons = { "Jump", "Dodge", "Basic", "PartQ", "PartW", "PartE", "PartR" };

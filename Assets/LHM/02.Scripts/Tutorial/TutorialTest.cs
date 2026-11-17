@@ -4,6 +4,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Tutorial
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: Insert = 튜토리얼 화면 시험 · Shift+Insert 본 기록 지우기
+    // 위치: TutorialSetup이 필요할 때 씬에 배치
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class TutorialTest : MonoBehaviour
     {
         [Header("연결")]

@@ -65,7 +65,6 @@ namespace RealSteel.Dialogue.EditorTools
 
             TMP_FontAsset font = FindFont(log);
 
-            DisableStep06(log);
             DialogueManager manager = SetupManager(box, log);
             NpcChoiceMenu menu = SetupMenu(canvas, manager, font, log);
             TMP_Text prompt = SetupPrompt(canvas, font, log);
@@ -86,17 +85,6 @@ namespace RealSteel.Dialogue.EditorTools
 
         private static DialogueBox FindDialogueBox(StringBuilder log)
         {
-            var step06 = Object.FindFirstObjectByType<Step06_DialogueTest>(FindObjectsInactive.Include);
-            if (step06 != null)
-            {
-                var so = new SerializedObject(step06);
-                if (so.FindProperty("dialogueBox").objectReferenceValue is DialogueBox fromStep06)
-                {
-                    log.AppendLine($"- DialogueBox: Step06이 쓰던 '{fromStep06.name}' 사용");
-                    return fromStep06;
-                }
-            }
-
             DialogueBox[] boxes = Object.FindObjectsByType<DialogueBox>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             if (boxes.Length > 1) log.AppendLine($"- 주의: DialogueBox가 {boxes.Length}개 있습니다 ({string.Join(", ", boxes.Select(b => b.name))}). '{boxes[0].name}' 사용");
             return boxes.FirstOrDefault();
@@ -117,16 +105,6 @@ namespace RealSteel.Dialogue.EditorTools
             return source.font;
         }
 
-        private static void DisableStep06(StringBuilder log)
-        {
-            foreach (var step06 in Object.FindObjectsByType<Step06_DialogueTest>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                if (!step06.enabled) continue;
-                Undo.RecordObject(step06, UndoName);
-                step06.enabled = false;
-                log.AppendLine($"- Step06_DialogueTest ('{step06.name}') 비활성화 (삭제 안 함, F키·세이브 중복 방지)");
-            }
-        }
 
         private static DialogueManager SetupManager(DialogueBox box, StringBuilder log)
         {

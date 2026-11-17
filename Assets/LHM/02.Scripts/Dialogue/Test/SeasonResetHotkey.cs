@@ -4,6 +4,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: Ctrl+F11 시즌 초기화 · Ctrl+PgDn 다음 보스
+    // 위치: ⚠ DialogueSystem.prefab에 붙어 있어 빌드에 포함됨 (출시 전 제거 · 비활성화 필요)
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     // 테스트용: Ctrl + 키 = 시즌 기록 초기화 (프리시즌으로 되돌림). 시작일이 지났으면 길드 전화가 바로 다시 옴
     public class SeasonResetHotkey : MonoBehaviour
     {

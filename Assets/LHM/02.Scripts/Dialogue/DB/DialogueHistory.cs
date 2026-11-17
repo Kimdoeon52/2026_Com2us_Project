@@ -173,7 +173,7 @@ namespace RealSteel.Dialogue
             }
         }
 
-        // 특정 대화의 본 기록만 지움 (튜토리얼 다시 보기 테스트용). 지웠으면 true
+        // [TEST ONLY] 특정 대화의 본 기록만 지움 (튜토리얼 다시 보기 테스트용). 지웠으면 true
         public bool Forget(string id)
         {
             if (string.IsNullOrEmpty(id)) return false;

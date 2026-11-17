@@ -19,9 +19,8 @@ namespace RealSteel.Dialogue.EditorTools
 
             var existingBridge = Object.FindFirstObjectByType<TimeSystemUiStack>(FindObjectsInactive.Include);
             var timeSystem = Object.FindFirstObjectByType<TimeSystemManager>(FindObjectsInactive.Include);
-            DummyUiStack[] dummies = Object.FindObjectsByType<DummyUiStack>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 
-            if (existingBridge != null && timeSystem != null && dummies.Length == 0)
+            if (existingBridge != null && timeSystem != null)
             {
                 SetupKit.Dialog(UndoName, $"이미 연결되어 있습니다. ({existingBridge.name} → {timeSystem.name})\n배치를 건너뜁니다.", "확인");
                 return;
@@ -35,12 +34,11 @@ namespace RealSteel.Dialogue.EditorTools
             }
 
             if (!SetupKit.Dialog(UndoName,
-                    $"'{scene.name}' 씬의 임시 시계를 LJS 시간 시스템으로 교체합니다.\n" +
+                    $"'{scene.name}' 씬에 LJS 시간 시스템을 연결합니다.\n" +
                     (timeSystem == null ? $"- LJS CoreSystemRoot 프리팹 배치 (시간·달력·랭킹·지도·뉴스)\n  프리팹 원본은 수정하지 않음\n" : $"- 씬의 TimeSystemManager 사용 ({timeSystem.name})\n") +
                     "- GameSceneManager의 F1~F5 씬 전환 단축키를 이 씬에서만 끔 (대화 테스트 키와 겹침)\n" +
-                    $"- DummyUiStack {dummies.Length}개와 그 시계 글자(ClockText) 삭제\n" +
                     $"- {(existingBridge != null ? existingBridge.name + " 재사용" : "TimeSystemUiStack 생성")}, 00시 테스트(Step112) 연결\n" +
-                    "씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "교체", "취소"))
+                    "씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)", "연결", "취소"))
             {
                 return;
             }
@@ -75,31 +73,10 @@ namespace RealSteel.Dialogue.EditorTools
             }
 
             GameObject host = existingBridge != null ? existingBridge.gameObject : null;
-            foreach (DummyUiStack dummy in dummies)
-            {
-                if (host == null) host = dummy.gameObject;
-
-                var clockText = new SerializedObject(dummy).FindProperty("clockText").objectReferenceValue as Component;
-                if (clockText != null && clockText.gameObject.name == "ClockText")
-                {
-                    Undo.DestroyObjectImmediate(clockText.gameObject);
-                    log.AppendLine("- ClockText 삭제 (시간 표시는 LJS UI)");
-                }
-
-                string dummyName = dummy.gameObject.name;
-                Undo.DestroyObjectImmediate(dummy);
-                log.AppendLine($"- {dummyName}: DummyUiStack 삭제");
-            }
-
             if (host == null)
             {
                 host = new GameObject(StackName);
                 Undo.RegisterCreatedObjectUndo(host, UndoName);
-            }
-            else if (host.name == "[Step10] UiStack")
-            {
-                Undo.RecordObject(host, UndoName);
-                host.name = StackName;
             }
 
             TimeSystemUiStack bridge = existingBridge != null ? existingBridge : Undo.AddComponent<TimeSystemUiStack>(host);

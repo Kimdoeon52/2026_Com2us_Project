@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: P / I = 가짜 지도 UI · 가짜 토벌 신청 UI
+    // 위치: DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step18_TutorialTest : MonoBehaviour
     {
         [Header("연결")]

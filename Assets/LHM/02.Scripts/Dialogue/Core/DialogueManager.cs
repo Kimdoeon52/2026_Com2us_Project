@@ -18,6 +18,7 @@ namespace RealSteel.Dialogue
         [Header("빌드 패킹")]
         [SerializeField] private TextAsset packedData;
         [SerializeField] private bool usePackInEditor;
+        [Tooltip("[TEST ONLY] 켜면 데이터 로드를 건너뛰고 폴백 동작 확인 (개발 빌드 전용)")]
         [SerializeField] private bool debugForceFallback;
 
         [Header("세이브")]

@@ -3,6 +3,11 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // ======================== [TEST ONLY] 테스트 전용 ========================
+    // 용도: Shift+T 00시 처리 · 시계/시즌 날짜 조작
+    // 위치: 테스트 씬 (JunkShop_Map) · DialogueSystem_Test.prefab
+    // 실제 게임 로직이 아님. 출시 빌드 씬/프리팹에 넣지 말 것
+    // ==========================================================================
     public class Step112_MidnightTest : MonoBehaviour
     {
         [Header("연결")]

@@ -142,6 +142,9 @@ namespace RealSteel.Dialogue
                     .Add("Z", "시즌 시작 전화 받기"));
             }
 
+            // ======================== [TEST ONLY] 테스트 키 도움말 ========================
+            // 아래는 전부 테스트 · 디버그 컴포넌트 안내 (해당 컴포넌트가 씬에 있을 때만 표시)
+            // ==============================================================================
             if (!showTestKeys) return list;
 
             var test = new Section { title = "테스트 키" };
@@ -182,7 +185,6 @@ namespace RealSteel.Dialogue
             }
             if (Has(nameof(Step14_BarkTest))) test.Add("6 / 7 / 8 / 9 · 0", "전투 바크: 파츠 파괴 / 자막 T10 / 부위 파괴 / 그로기 (Shift = 체력 20%) · 기록 초기화");
             if (Has(nameof(Step18_TutorialTest))) test.Add("P / I", "가짜 지도 UI (T3) / 가짜 토벌 신청 UI (T9)");
-            if (Has(nameof(Step81_EffectTest))) test.Add("Z X C V B N M", "연출: 확대 · 흔들림 · 페이드 · 사운드 · 표정 (Shift = 반대)");
             if (Has("WorkshopTestKit")) test.Add("F9", "제작 · 수리 테스트 재료 다시 지급");
             if (Has("DebugPartGiver")) test.Add("F6", "파츠 지급 창 (KDU)");
             if (Has("DebugCoreLevelKey")) test.Add("Shift + X", "코어 레벨업 (KDU)");

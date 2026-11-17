@@ -52,7 +52,6 @@ public class KyodaiLaserPattern : BossPatternGimmickBase, IKyodaiPatternUse
     private readonly List<KyodaiLaser> firing = new List<KyodaiLaser>(2);
     private int sharedHitFrame = -1;
 
-    public KyodaiLaserData LaserData => laserData;
     public KyodaiHandMotion CompanionMotion => companionMotion;
     public KyodaiLaserChoice Emitter => emitter;
     public bool UsesHands => companionMotion != null;

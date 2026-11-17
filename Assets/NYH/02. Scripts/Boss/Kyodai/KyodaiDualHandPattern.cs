@@ -34,8 +34,6 @@ public class KyodaiDualHandPattern : BossPatternGimmickBase, IKyodaiPatternUse
     private KyodaiHand left, right;
     private bool sharedHitDone;
 
-    public KyodaiHandMotion LeftMotion => leftMotion;
-    public KyodaiHandMotion RightMotion => rightMotion;
     public bool UsesHands => true;
     public int HandsNeeded => (leftMotion != null ? 1 : 0) + (rightMotion != null ? 1 : 0);
     public int LasersNeeded => 0;

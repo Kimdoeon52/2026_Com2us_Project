@@ -86,14 +86,10 @@ public class RobotMover : MonoBehaviour, ISpeedBuffTarget
     /// <summary>지속형 이동속도 배율을 뺀다</summary>
     public void ClearSpeedModifier(string key) => SetSpeedModifier(key, 1f);
 
-    /// <summary>지금 걸린 지속형 이동속도 배율의 곱 (표시용)</summary>
-    public float SpeedModifier => speedModifierProduct;
 
     /// <summary>현재 바라보는 방향. BoxDrawer/HitDetection이 좌우 반전 판정의 단일 기준으로 참조한다</summary>
     public bool FacingRight => facingRight;
 
-    /// <summary>원본 그림이 오른쪽을 보는지. 같은 시트에서 나온 이펙트(총알 등)도 이 규칙으로 뒤집는다</summary>
-    public bool SpriteFacesRight => spriteFacesRight;
 
     /// <summary>
     /// facingRight 쪽을 보게 하려면 localScale.x에 곱할 부호. 원본 그림 방향이 같으면 +1, 반대면 -1.

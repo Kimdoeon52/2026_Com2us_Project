@@ -56,8 +56,6 @@ public class ActionExecutor : MonoBehaviour
     /// <summary>경직 규칙. HitReactionSystem이 읽는다 (null이면 경직 없음)</summary>
     public HitReactionData HitReaction => hitReaction;
 
-    /// <summary>착지 순간 자동으로 실행되는 행동. AI가 "이건 패턴을 끊는 끼어들기가 아니다"를 구분할 때 본다</summary>
-    public ActionData LandAction => landAction;
 
     /// <summary>
     /// 히트스톱 남은 프레임 (2026-10-28). 0보다 크면 이 로봇은 그 프레임 동안 행동 진행·이동·발사가 전부 멈춘다.

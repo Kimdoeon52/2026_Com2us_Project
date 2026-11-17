@@ -166,7 +166,6 @@ public class KyodaiLaser : MonoBehaviour
         float dPlane = PlaneZ - cam.transform.position.z;
         return Mathf.Abs(dPlane) < 0.0001f ? 1f : (LensWorld.z - cam.transform.position.z) / dPlane;
     }
-    public Vector2 BeamEnd => end;
 
     /// <summary>손 하나가 레이저에 맞아 정지할 때 (소리·이펙트용)</summary>
     public event Action<KyodaiHand> OnHandFrozen;

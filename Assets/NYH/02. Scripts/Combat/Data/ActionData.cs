@@ -170,14 +170,8 @@ public class ActionData : ScriptableObject
     [Tooltip("TODO: 임시값. 활성 구간 진입 프레임에 1발, 그 뒤 이 간격(프레임)마다 1발")]
     [Min(1)] [SerializeField] private int projectileIntervalFrames = 15;
 
-    [Tooltip("총구 위치(투사체·화염 공통). 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
+    [Tooltip("총구 위치(투사체). 캐릭터 피벗 기준 로컬 좌표(오른쪽을 볼 때 기준) — 좌우 반전은 BoxResolver가 처리")]
     [SerializeField] private Vector2 projectileMuzzle;
-
-    // ── 화염 — 비우면 없음 ── (인스펙터 묶음은 Editor/ActionDataInspector가 정한다)
-    // 2026-10-11 추가: 활성 구간 동안 총구(projectileMuzzle)에서 불줄기를 그린다(FlameEmitter). 순수 연출 —
-    // 데미지는 이 행동의 Hit박스 + hitIntervalFrames로 따로 들어간다(§4 판정은 박스가 진실)
-    [Tooltip("활성 구간 동안 총구에서 뿜을 불. 로봇에 FlameEmitter가 있어야 보인다")]
-    [SerializeField] private FlameData flame;
 
     // 최. 추가 — 구간별 이펙트 프리팹 (선딜 / 선딜~활성 / 활성 / 활성~후딜 / 후딜 / 전체). ActionVfxPlayer가 재생. 순수 연출
     [Tooltip("구간별로 생성할 이펙트 프리팹 목록. 로봇의 ActionVfxPlayer(자동 부착)가 재생한다")]
@@ -282,7 +276,6 @@ public class ActionData : ScriptableObject
     public virtual bool PerBoxDamage => perBoxDamage;
     public virtual bool PerBoxSeparateHits => perBoxSeparateHits; // 최. 추가
     public ActionData FallbackAction => fallbackAction;
-    public FlameData Flame => flame;
     public IReadOnlyList<ActionVfxEntry> Vfx => vfx; // 최. 추가
 
     public virtual FrameBox[] FrameBoxes => frameBoxes;

@@ -394,12 +394,11 @@ public class ActionDataEditor : Editor
         }
     }
 
-    // 2026-10-11 추가: 총구(projectileMuzzle — 투사체·화염 공통)를 박스처럼 Scene 뷰에서 끌어서 맞춘다.
-    // 투사체나 화염이 달린 행동에서만 보인다. 화염이면 FlameData.length만큼 점선을 그어서 Hit박스(빨강)와 길이를 눈으로 대조한다 —
-    // 불 모양은 연출, 판정은 Hit박스라서(§4) 둘이 크게 어긋나지 않게 맞추는 용도
+    // 2026-10-11 추가: 총구(projectileMuzzle)를 박스처럼 Scene 뷰에서 끌어서 맞춘다. 투사체가 달린 행동에서만 보인다
+    // (2026-11-17 적 불뿜기 시스템 제거 — 화염 길이 점선 삭제)
     private void DrawMuzzleHandle(Vector3 pivot, ActionData action)
     {
-        if (action.Projectile == null && action.Flame == null) return;
+        if (action.Projectile == null) return;
 
         SerializedProperty muzzleProp = serializedObject.FindProperty("projectileMuzzle");
         Vector2 local = muzzleProp.vector2Value;
@@ -410,9 +409,7 @@ public class ActionDataEditor : Editor
         Handles.color = orange;
         float size = HandleUtility.GetHandleSize(world) * 0.08f;
 
-        if (action.Flame != null)
-            Handles.DrawDottedLine(world, world + Vector3.right * action.Flame.Length, 4f);
-        Handles.Label(world + Vector3.up * size * 2f, action.Flame != null ? "총구 (화염 평균 길이 점선)" : "총구");
+        Handles.Label(world + Vector3.up * size * 2f, "총구");
 
         EditorGUI.BeginChangeCheck();
         Vector3 moved = Handles.FreeMoveHandle(world, size, Vector3.zero, Handles.CircleHandleCap);

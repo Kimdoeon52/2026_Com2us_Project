@@ -232,28 +232,20 @@ public class RobotView : MonoBehaviour
         }
     }
 
-    // 2026-10-11 추가: 불·꼬리 잔상은 "행동 데이터에 넣으면 나온다"가 약속인데, 그리는 컴포넌트(FlameEmitter/AfterImageEmitter)를
-    // 로봇에 안 붙여두면 에러 없이 조용히 안 보인다 — 실제로 화염 기술이 불 없이 나가는 일이 있었다(FlameEmitter 미부착).
-    // 이 로봇이 가진 행동 중 하나라도 필요로 하면 여기서 자동으로 붙인다. 이미 붙어 있으면(값을 조절해둔 경우) 건드리지 않는다.
-    // 패턴 끝 자세 잔상은 AI 프로필 쪽 설정이라 여기서 알 수 없다 — 그건 AfterImageEmitter를 직접 붙여야 한다
+    // 2026-10-11 추가: 꼬리 잔상은 "행동 데이터에 넣으면 나온다"가 약속인데, 그리는 컴포넌트(AfterImageEmitter)를
+    // 로봇에 안 붙여두면 에러 없이 조용히 안 보인다. 이 로봇이 가진 행동 중 하나라도 필요로 하면 여기서 자동으로 붙인다.
+    // 이미 붙어 있으면(값을 조절해둔 경우) 건드리지 않는다. (2026-11-17 적 불뿜기 시스템 제거 — FlameEmitter 자동 부착 삭제)
     private void EnsureEffectComponents(ActionExecutor executor)
     {
         if (executor == null || executor.Robot == null) return;
 
-        bool needsFlame = false;
         bool needsTrail = false;
         foreach (var action in executor.Robot.AvailableActions)
         {
             if (action == null) continue;
-            needsFlame |= action.Flame != null;
             needsTrail |= action.TrailAfterImageInterval > 0;
         }
 
-        if (needsFlame && GetComponent<FlameEmitter>() == null)
-        {
-            gameObject.AddComponent<FlameEmitter>();
-            Debug.Log($"[RobotView] {name}: 화염 행동이 있어서 FlameEmitter를 자동으로 붙임 (값을 조절하려면 인스펙터에서 직접 붙여둘 것)");
-        }
         if (needsTrail && GetComponent<AfterImageEmitter>() == null)
         {
             gameObject.AddComponent<AfterImageEmitter>();

@@ -49,7 +49,6 @@ public class KyodaiCrusher : BossPatternGimmickBase, IKyodaiHazard
     public event System.Action<Vector2> OnImpact;
 
     public bool IsRunning => running;
-    public bool IsOutOfSight => phase == Phase.Waiting;
 
     private float S => kyodai != null ? kyodai.Size : 1f;
 

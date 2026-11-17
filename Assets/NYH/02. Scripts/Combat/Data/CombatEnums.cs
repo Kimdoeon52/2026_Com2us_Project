@@ -64,16 +64,6 @@ public enum BoxType
 }
 
 /// <summary>
-/// AI가 기술을 고를 때 "상대가 어디 있을 때만 쓸지" 제한 (EnemyAIProfile.SkillEntry).
-/// </summary>
-public enum AITargetCondition
-{
-    Any,      // 상대 상태와 무관
-    Grounded, // 상대가 땅에 있을 때만
-    Airborne  // 상대가 공중에 있을 때만
-}
-
-/// <summary>
 /// FrameBox가 "어느 구간에 붙는 박스인가"를 가리키는 기준 (CLAUDE.md §3 3구간).
 /// 절대 프레임 숫자 대신 이 값을 쓰면, 선딜·활성·후딜 프레임이 바뀌어도 박스가 알아서 따라온다 —
 /// 프레임 값과 박스 창이 따로 놀다 조용히 어긋나는 문제를 구조적으로 막기 위한 것이다.

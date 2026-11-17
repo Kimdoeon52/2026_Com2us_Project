@@ -44,7 +44,6 @@ public static class ActionDataInspector
         new Group("도약", false, "leapVelocity"),
         new Group("띄우기 (맞은 상대)", false, "launchVelocity"),
         new Group("투사체", false, "projectile", "projectileIntervalFrames", "projectileMuzzle"),
-        new Group("화염", false, "flame"),
         new Group("구간별 이펙트", false, "vfx"), // 최. 추가
         new Group("박스당 피해", false, "perBoxDamage", "perBoxSeparateHits"), // 최. 추가: perBoxSeparateHits
         new Group("쿨타임", false, "cooldownFrames", "cooldownOwner"),
@@ -159,7 +158,7 @@ public static class ActionDataInspector
                     if (!Mathf.Approximately(property.floatValue, 0f)) return true;
                     break;
                 case SerializedPropertyType.Vector2:
-                    // 총구 위치는 투사체·화염과 같이 쓰는 칸이라, 그 자체로는 사용 여부를 정하지 않는다
+                    // 총구 위치는 투사체와 같이 쓰는 칸이라, 그 자체로는 사용 여부를 정하지 않는다
                     if (property.name != "projectileMuzzle" && property.vector2Value != Vector2.zero) return true;
                     break;
                 case SerializedPropertyType.ObjectReference:
@@ -176,14 +175,10 @@ public static class ActionDataInspector
         if (action == null) return;
 
         bool hasProjectile = action.Projectile != null;
-        bool hasFlame = action.Flame != null;
         bool hasLeap = action.LeapVelocity != Vector2.zero;
 
-        if (hasProjectile && hasFlame)
-            EditorGUILayout.HelpBox("투사체와 화염이 둘 다 켜져 있습니다. 둘 다 같은 총구(Projectile Muzzle)에서 나옵니다.", MessageType.Warning);
-
-        if ((hasProjectile || hasFlame) && action.ActiveFrames == 0)
-            EditorGUILayout.HelpBox("활성 프레임이 0이라 투사체·화염이 한 번도 안 나갑니다. 둘 다 활성 구간에만 나옵니다.", MessageType.Error);
+        if (hasProjectile && action.ActiveFrames == 0)
+            EditorGUILayout.HelpBox("활성 프레임이 0이라 투사체가 한 번도 안 나갑니다. 투사체는 활성 구간에만 나옵니다.", MessageType.Error);
 
         if (hasProjectile && action.ActiveFrames > 0 && action.ProjectileIntervalFrames >= action.ActiveFrames)
             EditorGUILayout.HelpBox($"발사 간격({action.ProjectileIntervalFrames}f)이 활성 구간({action.ActiveFrames}f) 이상이라 1발만 나갑니다.", MessageType.Info);

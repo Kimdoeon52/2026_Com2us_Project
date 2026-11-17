@@ -4,7 +4,7 @@
 // ActionData를 상속하는 이유
 //   ActionData를 직접 읽는 곳이 많다: HitDetection(박스·무적), KKH CombatCalculator(Damage/IsGuardable/StaggerValue),
 //   CombatDataHub.CanExecuteAction(부위), 쿨타임 키(CooldownKey), 실린더(CylinderCost/FallbackAction),
-//   장비 효과(ActionReplaceEffect/ActionModifierData), RobotView(클립 이름).
+//   장비 효과(ActionReplaceEffect), RobotView(클립 이름).
 //   SkillData가 ActionData이면 이 계약을 전부 그대로 쓰므로 다른 팀원 코드가 하나도 안 바뀐다.
 //
 // ActionData와 다른 점은 딱 두 가지다

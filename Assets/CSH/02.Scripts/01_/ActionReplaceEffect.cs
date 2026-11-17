@@ -17,7 +17,7 @@ public class ActionReplaceEffect : EquipmentEffect
     [Tooltip("같은 슬롯을 여러 효과가 바꾸려 할 때 높은 값이 이긴다")]
     [SerializeField] private int replacePriority;
 
-    public override EffectInstance CreateInstance(EffectContext ctx) => new Instance(this);
+    public override EffectInstance CreateInstance() => new Instance(this);
 
     // 상태가 없는 효과라서 데이터 참조만 들고 있는다
     private sealed class Instance : EffectInstance

@@ -15,7 +15,6 @@ public class EquipmentEffectSet
     }
 
     private readonly List<Entry> entries = new List<Entry>();
-    private bool equipped;
 
     public int Count => entries.Count;
 
@@ -26,21 +25,9 @@ public class EquipmentEffectSet
         entries.Add(new Entry { Instance = instance, SourcePart = sourcePart });
     }
 
-    /// <summary>모든 인스턴스의 OnEquip 호출. 두 번 불려도 한 번만 실행된다</summary>
-    public void Equip()
-    {
-        if (equipped) return;
-        equipped = true;
-        foreach (var e in entries) e.Instance.OnEquip();
-    }
-
-    /// <summary>모든 인스턴스의 OnUnequip 호출. Equip 전이거나 이미 해제했으면 아무것도 안 한다</summary>
-    public void Unequip()
-    {
-        if (!equipped) return;
-        equipped = false;
-        foreach (var e in entries) e.Instance.OnUnequip();
-    }
+    // ActionExecutor.SetEffects가 호출하는 장착/해제 시점. 현재 장착·해제 시 처리할 효과가 없어 비워둔다
+    public void Equip() { }
+    public void Unequip() { }
 
     /// <summary>
     /// action에 해당하는 보정을 into에 기록한다. into의 Reset은 호출하는 쪽(ActionState.Begin) 책임이다.

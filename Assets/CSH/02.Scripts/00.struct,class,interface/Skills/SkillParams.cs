@@ -12,13 +12,3 @@ public enum SkillParamId
     PartDamage = 9,
     // 새 스킬이 새 종류의 값이 필요하면 추가
 }
-
-public enum ParamOption { Add = 0, Multiply = 1, Set = 2}
-
-[System.Serializable]
-public struct SkillParamEntry
-{
-    public SkillParamId id;
-    public ParamOption op;
-    public float value;
-}

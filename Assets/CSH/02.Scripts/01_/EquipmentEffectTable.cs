@@ -16,7 +16,7 @@ public class EquipmentEffectTable : ScriptableObject
         [Tooltip("구분용 이름 (조회에는 쓰이지 않는다). 효과는 각 에셋의 skillId로 찾는다 — PartMasterData.activeSkillId / passiveSkillIds와 맞출 것")]
         public string partID;
 
-        [Tooltip("이 파츠를 장착했을 때 등록될 효과들 (ActionModifierData, ActionReplaceEffect 등 EquipmentEffect 하위 에셋)")]
+        [Tooltip("이 파츠를 장착했을 때 등록될 효과들 (ActionReplaceEffect 등 EquipmentEffect 하위 에셋)")]
         public EquipmentEffect[] effects;
     }
 

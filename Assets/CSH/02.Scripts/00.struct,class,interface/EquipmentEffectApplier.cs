@@ -38,14 +38,12 @@ public static class EquipmentEffectApplier
                     var skill = table.Get(skillid);
                     if (skill == null) continue;
 
-                    var ctx = new EffectContext(executor, part.slotType);
-
-                    set.Add(skill.CreateInstance(ctx), part.slotType);
+                    set.Add(skill.CreateInstance(), part.slotType);
                 }
             }
         }
 
-        // SetEffects 안에서 이전 효과 해제(OnUnequip) -> 교체 -> 새 효과 OnEquip 순서로 처리된다
+        // SetEffects 안에서 이전 효과 해제 -> 교체 -> 새 효과 장착 순서로 처리된다
         executor.SetEffects(set);
         Debug.Log($"[EquipmentEffectApplier] {executor.FighterId}: 장비 효과 {set.Count}개 등록");
     }

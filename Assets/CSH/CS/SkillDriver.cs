@@ -57,8 +57,6 @@ public sealed class SkillDriver : IExternalActionDriver
 
     /// <summary>
     /// 마지막으로 시작한 행동의 슬롯. 시작한 적이 없으면 null.
-    /// 장비 보정(ActionModifierData)이 "이 행동이 어느 슬롯에서 나왔는지"를 알기 위해 읽는다 —
-    /// 보정은 Begin·비용 확정 시점에만 계산되므로, 그 시점에는 항상 지금 행동의 슬롯이 들어 있다
     /// </summary>
     public ActionSlot? ActiveSlot { get; private set; }
 

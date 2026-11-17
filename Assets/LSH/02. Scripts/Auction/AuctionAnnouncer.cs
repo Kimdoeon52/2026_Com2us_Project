@@ -15,7 +15,7 @@ using UnityEngine;
 public class AuctionAnnouncer : MonoBehaviour
 {
     [Header("구성 요소 (비워두면 자식에서 자동 탐색)")]
-    [SerializeField] private Transform girlImage; // AuctionGrilImage
+    //[SerializeField] private Transform girlImage; // AuctionGrilImage
     [SerializeField] private RectTransform textBox;   // TextBOx
     [SerializeField] private TextMeshProUGUI chatText; // Chat
 
@@ -70,7 +70,7 @@ public class AuctionAnnouncer : MonoBehaviour
         if (isInitialized) return;
         isInitialized = true;
 
-        if (girlImage == null) girlImage = transform.Find("AuctionGrilImage") as RectTransform;
+        //if (girlImage == null) girlImage = transform.Find("AuctionGrilImage") as RectTransform;
         if (textBox == null) textBox = transform.Find("TextBOx") as RectTransform;
         if (chatText == null) chatText = GetComponentInChildren<TextMeshProUGUI>(true);
 
@@ -79,11 +79,11 @@ public class AuctionAnnouncer : MonoBehaviour
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false; // 진행자가 레이즈/포기 버튼 클릭을 막지 않게
 
-        if (girlImage != null)
-        {
-            girlBasePos = girlImage.localPosition;
-            girlBaseScale = girlImage.localScale;
-        }
+        //if (girlImage != null)
+        //{
+        //    girlBasePos = girlImage.localPosition;
+        //    girlBaseScale = girlImage.localScale;
+        //}
         if (textBox != null) textBoxBaseScale = textBox.localScale;
         FitChatToTextBox();
     }
@@ -163,8 +163,8 @@ public class AuctionAnnouncer : MonoBehaviour
 
         Sequence seq = DOTween.Sequence().SetUpdate(true).SetLink(gameObject);
         seq.Join(canvasGroup.DOFade(1f, showDuration * 0.6f).SetEase(Ease.OutQuad));
-        if (girlImage != null)
-            seq.Join(girlImage.DOLocalMove(girlBasePos, showDuration).SetEase(Ease.OutCubic));
+        //if (girlImage != null)
+        //    seq.Join(girlImage.DOLocalMove(girlBasePos, showDuration).SetEase(Ease.OutCubic));
         if (textBox != null)
             seq.Insert(showDuration * 0.2f, textBox.DOScale(textBoxBaseScale, showDuration * 0.8f).SetEase(Ease.OutBack));
         visibilitySeq = seq;
@@ -210,11 +210,11 @@ public class AuctionAnnouncer : MonoBehaviour
     private void ResetPose()
     {
         hopTween?.Kill();
-        if (girlImage != null)
-        {
-            girlImage.localPosition = girlBasePos;
-            girlImage.localScale = girlBaseScale;
-        }
+        //if (girlImage != null)
+        //{
+        //    girlImage.localPosition = girlBasePos;
+        //    girlImage.localScale = girlBaseScale;
+        //}
         if (textBox != null) textBox.localScale = textBoxBaseScale;
     }
 
@@ -230,7 +230,7 @@ public class AuctionAnnouncer : MonoBehaviour
         chatText.maxVisibleCharacters = 0;
         chatText.ForceMeshUpdate();
         int total = chatText.textInfo.characterCount;
-        Hop();
+        //Hop();
 
         IsTyping = true;
         float visible = 0f;
@@ -272,21 +272,21 @@ public class AuctionAnnouncer : MonoBehaviour
         IsTyping = false;
         chatText.text = line;
         chatText.maxVisibleCharacters = ShowAllCharacters;
-        Hop();
+        //Hop();
     }
 
     // 지금 대사 버전 (자동 퇴장 시 그 사이에 다른 대사가 나왔는지 확인용)
     public int LineVersion => lineVersion;
 
-    private void Hop() // 대사 바뀔 때 캐릭터가 살짝 들썩
-    {
-        if (girlImage == null) return;
-        hopTween?.Kill();
-        girlImage.localScale = girlBaseScale;
-        hopTween = girlImage.DOPunchScale(new Vector3(0.03f, 0.06f, 0f), 0.3f, 5, 0.6f)
-                            .SetUpdate(true)
-                            .SetLink(gameObject);
-    }
+    //private void Hop() // 대사 바뀔 때 캐릭터가 살짝 들썩
+    //{
+    //    if (girlImage == null) return;
+    //    hopTween?.Kill();
+    //    girlImage.localScale = girlBaseScale;
+    //    hopTween = girlImage.DOPunchScale(new Vector3(0.03f, 0.06f, 0f), 0.3f, 5, 0.6f)
+    //                        .SetUpdate(true)
+    //                        .SetLink(gameObject);
+    //}
 
     private static bool IsPauseChar(char c)
     {

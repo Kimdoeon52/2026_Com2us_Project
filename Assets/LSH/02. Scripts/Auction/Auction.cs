@@ -114,8 +114,8 @@ public class Auction : Singleton<Auction>
     public float RemainingTime { get; set; } = 0f; //현재 시간
     public bool IsTimeRunning { get; set; } = false; // 시간이 끝났는가? 체크
 
-    [Header("임시 콘솔창")]
-    public TextMeshProUGUI console; //임시로 쓰는 거
+    //[Header("임시 콘솔창")]
+    //public TextMeshProUGUI console; //임시로 쓰는 거
 
     //=================================모드 선택=========================
     [Header("모드 선택 UI")]
@@ -375,7 +375,7 @@ public class Auction : Singleton<Auction>
         {
             if (!PrepareRound()) { ReleasePlayer(); return; } // 물품이 없으면 중단
 
-            AppendConsoleLog($"===== {currentRound}/{totalAuctionRounds} 번째 경매 =====");
+            //AppendConsoleLog($"===== {currentRound}/{totalAuctionRounds} 번째 경매 =====");
             await StartAuction();
         }
 
@@ -533,7 +533,7 @@ public class Auction : Singleton<Auction>
     {
         foreach (ConsignedPart part in ConsignmentSettlement.Settle())
         {
-            AppendConsoleLog($"[위탁 판매] {ConsignmentSettlement.NameOf(part)} 낙찰 +{part.Price}G");
+            //AppendConsoleLog($"[위탁 판매] {ConsignmentSettlement.NameOf(part)} 낙찰 +{part.Price}G");
         }
     }
 
@@ -663,7 +663,7 @@ public class Auction : Singleton<Auction>
         // 첫 회차에서만 경매 방식을 고르고, 이후 회차는 같은 방식으로 자동 진행
         if (sessionAuctionType == null) sessionAuctionType = await WaitPlayerSelectModeAsync();
         currentAuctionType = sessionAuctionType.Value;
-        AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
+        //AppendConsoleLog($"선택된 경매 모드: {currentAuctionType}");
         //==========Npc UI 활성화 ==========
         NPCImageOn();
         SpawnAndPositionAi();
@@ -672,7 +672,7 @@ public class Auction : Singleton<Auction>
         {
             if (ai != null)
             {
-                AppendConsoleLog($"{ai.NPCName}님이 참가 했습니다."); // Console에 참가 보여주기
+                //AppendConsoleLog($"{ai.NPCName}님이 참가 했습니다."); // Console에 참가 보여주기
                 ai.ReadyForAction(); // ai들 준비완료
             }
         }
@@ -893,7 +893,7 @@ public class Auction : Singleton<Auction>
         stuffGrade = next.Grade;
         CurrentCost = Mathf.Max(CurrentCost, next.Cost / 2);
         RefreshAuctionInfoUI();
-        AppendConsoleLog($"경매 물품이 [{next.DisplayName}]({next.Grade})(으)로 바뀌었습니다!");
+        //AppendConsoleLog($"경매 물품이 [{next.DisplayName}]({next.Grade})(으)로 바뀌었습니다!");
         return next;
     }
 
@@ -967,10 +967,10 @@ public class Auction : Singleton<Auction>
         if (announcer != null && announcer.IsVisible && announcer.LineVersion == version) await HideChatAsync();
     }
 
-    public void AppendConsoleLog(string log) // 콘솔 로그 채팅
-    {
-        if (console != null) console.text += log + "\n";
-    }
+    //public void AppendConsoleLog(string log) // 콘솔 로그 채팅
+    //{
+    //    if (console != null) console.text += log + "\n";
+    //}
 
     public bool CheckAllGiveUp() // 전부 항복했는지 체크
     {
@@ -1408,7 +1408,7 @@ public class Auction : Singleton<Auction>
             UpdateAuctionCostUI();
             WinnerID = GlobalGold.Instance.mainCharacterdata[0].mainCharacterID;
             IfPlayerWin = true;
-            AppendConsoleLog($"{PlayerName}님이 {CurrentCost}G로 레이즈!"); // 진행자 대사 대신 콘솔에만 기록
+            //AppendConsoleLog($"{PlayerName}님이 {CurrentCost}G로 레이즈!"); // 진행자 대사 대신 콘솔에만 기록
             RefreshTimerOnBid();
             if (AuctionPlayer.Instance != null)
                 AuctionPlayer.Instance.ShowThinkChatWithText($"{needGold}G 레이즈!");

@@ -50,7 +50,7 @@ public class FistAuctionMode : IAuctionMode
             bidders.Add(bidder);
         }
 
-        manager.AppendConsoleLog("--- 주먹 경매 진행 중 ---");
+        //manager.AppendConsoleLog("--- 주먹 경매 진행 중 ---");
         manager.AnnounceBriefAsync($"주먹 경매를 시작합니다! {bidTime:0}초 안에 입찰가를 적어 주세요. (0G = 포기)", 2.5f).Forget(); // 안내 후 자동 퇴장
         manager.EnableFistAuctionUI(true);
 
@@ -62,7 +62,7 @@ public class FistAuctionMode : IAuctionMode
 
         if (bidders.Any(b => !b.IsSubmitted))
         {
-            manager.AppendConsoleLog("다른 참가자들이 아직 입찰서를 쓰고 있습니다...");
+            //manager.AppendConsoleLog("다른 참가자들이 아직 입찰서를 쓰고 있습니다...");
             await UniTask.WhenAll(aiTasks);
         }
 
@@ -85,11 +85,11 @@ public class FistAuctionMode : IAuctionMode
 
         // ===== 4. 판정 =====
         List<Bidder> ranking = bidders.OrderByDescending(b => b.Bid).ThenBy(b => b.SubmitOrder).ToList();
-        manager.AppendConsoleLog("--- 주먹 경매 결과 ---");
-        for (int i = 0; i < ranking.Count; i++)
-        {
-            manager.AppendConsoleLog($"{i + 1}위 {ranking[i].Name}: {(ranking[i].Bid > 0 ? $"{ranking[i].Bid:N0}G" : "포기")}");
-        }
+        //manager.AppendConsoleLog("--- 주먹 경매 결과 ---");
+        //for (int i = 0; i < ranking.Count; i++)
+        //{
+        //    manager.AppendConsoleLog($"{i + 1}위 {ranking[i].Name}: {(ranking[i].Bid > 0 ? $"{ranking[i].Bid:N0}G" : "포기")}");
+        //}
 
         Bidder winner = ranking[0];
         if (winner.Bid <= 0)
@@ -169,7 +169,7 @@ public class FistAuctionMode : IAuctionMode
 
         player.Bid = playerBid;
         Submit(player);
-        manager.AppendConsoleLog($"{player.Name}님이 입찰서를 제출했습니다.");
+        //manager.AppendConsoleLog($"{player.Name}님이 입찰서를 제출했습니다.");
     }
 
     private async UniTask AiWriteBidAsync(Auction manager, Bidder bidder, PartsDefinition stuff, float bidTime)
@@ -184,7 +184,7 @@ public class FistAuctionMode : IAuctionMode
         bidder.Bid = ai.CalculateFistBid(stuff.Cost, stuff.Grade); // 필요 없으면 0G, 필요하면 원가 x 2~4배
         Submit(bidder);
         ai.ShowThinkChatWithText("결정했다.");
-        manager.AppendConsoleLog($"{ai.NPCName}님이 입찰서를 제출했습니다.");
+        //manager.AppendConsoleLog($"{ai.NPCName}님이 입찰서를 제출했습니다.");
     }
 
     private void Submit(Bidder bidder)

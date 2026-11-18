@@ -26,7 +26,7 @@ MonoBehaviour:
   damage: 4
   hitIntervalFrames: 6
   hitStopScale: 1
-  animationClipName: 
+  animationClipName: Jap
   activeClipName: Jap
   activeClipFrames: 6
   keepClipSpeed: 0
@@ -39,7 +39,6 @@ MonoBehaviour:
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
-  flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 3676818643683357345, guid: 056d882eb6f11c5438205c72d1e9795a, type: 3}
     phase: 2
@@ -49,12 +48,16 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.29}
     rotation: -140
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.5
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 1
     sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   - prefab: {fileID: 3676818643683357345, guid: 056d882eb6f11c5438205c72d1e9795a, type: 3}
     phase: 2
     repeat: 1
@@ -63,12 +66,16 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.84, y: 0.23}
     rotation: -144
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.5
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 1.2
     sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   - prefab: {fileID: 3676818643683357345, guid: 056d882eb6f11c5438205c72d1e9795a, type: 3}
     phase: 2
     repeat: 1
@@ -77,12 +84,16 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.78, y: 0.32}
     rotation: -136
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.5
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   - prefab: {fileID: 3676818643683357345, guid: 056d882eb6f11c5438205c72d1e9795a, type: 3}
     phase: 2
     repeat: 1
@@ -91,12 +102,16 @@ MonoBehaviour:
     endMode: 2
     offset: {x: 0.81, y: 0.23}
     rotation: -140
+    XYRotation: {x: 0, y: 0}
     followOwner: 0
     flipWithFacing: 1
+    flipByRotation: 0
     scale: 0.5
     scaleXY: {x: 1, y: 1}
     playbackSpeed: 0.8
     sortingOrderOffset: 20
+    chargeLevelScales: []
+    chargeScaleBlendTime: 0.15
   perBoxDamage: 0
   perBoxSeparateHits: 1
   cooldownFrames: 60
@@ -109,7 +124,7 @@ MonoBehaviour:
     rect:
       serializedVersion: 2
       x: 0
-      y: 0.3
+      y: 0
       width: 1.3
       height: 0.5
     rotation: 0

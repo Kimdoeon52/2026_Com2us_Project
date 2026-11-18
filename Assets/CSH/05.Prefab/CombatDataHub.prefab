@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1672008569356338341
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5523380026951079637}
+  - component: {fileID: 7475198394542001387}
+  m_Layer: 0
+  m_Name: CombatDataHub
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5523380026951079637
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672008569356338341}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7475198394542001387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1672008569356338341}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdea861e1db0c94c9bfe4b57ab3ab85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentBattleMode: 0
+  PlayerSnapshot:
+    fighterID: Player
+    isPlayer: 1
+    currentHp: 1000
+    maxHp: 1000
+    baseDefense: 10
+    coreLevel: 1
+    currentCoreExp: 0
+    currentCylinder: 1
+    totalAttackPower: 40
+    finalMoveSpeed: 3
+  EnemySnapshot:
+    fighterID: Enemy
+    isPlayer: 0
+    currentHp: 1000
+    maxHp: 200
+    baseDefense: 10
+    coreLevel: 1
+    currentCoreExp: 0
+    currentCylinder: 1
+    totalAttackPower: 40
+    finalMoveSpeed: 3
+  BossSnapshot:
+    bossID: BOSS_REGION_01
+    bossName: "\uC815\uD06C \uD720\uB7EC"
+    currentHp: 0
+    maxHp: 0
+    baseDefense: 0
+    currentPhase: 1
+    difficulty: 2
+    attackMultiplier: 1
+    tellDurationMultiplier: 1
+    maxAllowedPatterns: 4
+    maxActiveGimmicks: 2
+    allowPhase2: 0
+    allowPatternChain: 0
+    passiveCount: 0
+    isInvincible: 0
+    isGroggy: 0
+    currentDamageMultiplier: 1

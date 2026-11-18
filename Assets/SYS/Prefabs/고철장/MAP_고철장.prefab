@@ -5873,7 +5873,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 16.510712, y: 6.754382}
+  m_LightCookieOffset: {x: 4.4696193, y: 1.8284805}
   m_SoftShadowQuality: 0
 --- !u!114 &212703812442456214
 MonoBehaviour:
@@ -12554,6 +12554,59 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: b39e0523b6ce
+--- !u!1 &1173668987522809292
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7679312974746279348}
+  - component: {fileID: 7454956196590881814}
+  m_Layer: 0
+  m_Name: "\uC218\uB3D9 (9)"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7679312974746279348
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1173668987522809292}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 14.734, y: -0.88, z: -8.78}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5148013197697340686}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &7454956196590881814
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1173668987522809292}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2.23, y: 5.037353, z: 0.3499999}
+  m_Center: {x: -32.997597, y: 2.018676, z: -1.8597174}
 --- !u!1 &1207262319275005683
 GameObject:
   m_ObjectHideFlags: 0
@@ -28529,7 +28582,7 @@ MonoBehaviour:
   outerJunk: 0.35
   outerCollider: 1
   data: {fileID: 11400000, guid: cbe91b8d79befb14bbf5467823885bbe, type: 2}
-  proceduralCache: {fileID: 4900000, guid: 7d94dc93f02a81744b497e4840f888f1, type: 3}
+  proceduralCache: {fileID: 4900000, guid: c220076bc8208a14d91bb28231b853bd, type: 3}
   autoRebuild: 1
   rebuildWhileDragging: 0
 --- !u!1 &2901549461838296215
@@ -65966,6 +66019,7 @@ Transform:
   - {fileID: 1519653583829017460}
   - {fileID: 3102152105577080620}
   - {fileID: 8953484804278786484}
+  - {fileID: 7679312974746279348}
   m_Father: {fileID: 3080826404944502604}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &6195820309134601952

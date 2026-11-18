@@ -549,7 +549,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: 3681a2165830dc24d954c9f703942b04, type: 2}
   cacheHash: 169ac7616e110692
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -823,7 +823,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: f04eeb28218e9f94badcfd7b16d21427, type: 2}
   cacheHash: 28776a1891cf3f79
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -2711,7 +2711,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: f04eeb28218e9f94badcfd7b16d21427, type: 2}
   cacheHash: 28776a1891cf3f79
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -4014,7 +4014,7 @@ Transform:
   m_GameObject: {fileID: 2711089396734274079}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.5, y: 0, z: -1.4}
+  m_LocalPosition: {x: 0.563, y: 0, z: -1.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4172,7 +4172,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: 3681a2165830dc24d954c9f703942b04, type: 2}
   cacheHash: 169ac7616e110692
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -4780,8 +4780,8 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 97d1e4419627de3488b1cfecbd979c0e, type: 2}
-  cacheHash: e49558fc67a2a879
+  cacheMesh: {fileID: 4300000, guid: ccd3063567145bc4aa6c3594cc665b6c, type: 2}
+  cacheHash: a2ad2894ea9cf585
   cacheSurfaces:
   - {fileID: 11400000, guid: 3e82aa6ebd4248e4b9d985ce48ff9732, type: 2}
   - {fileID: 11400000, guid: dc3b689fab9d8ae4fbb1a880139f37eb, type: 2}
@@ -8923,7 +8923,7 @@ Transform:
   m_GameObject: {fileID: 5600817450110362207}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.59375, z: -1.4}
+  m_LocalPosition: {x: -0.477, y: 0.59375, z: -1.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8942,7 +8942,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 5
-  size: {x: 3, y: 0.09375, z: 0.03125}
+  size: {x: 1.99, y: 0.09375, z: 0.03125}
   sides: 8
   topScale: 1
   steps: 4
@@ -9314,7 +9314,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: f04eeb28218e9f94badcfd7b16d21427, type: 2}
   cacheHash: 28776a1891cf3f79
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -9505,7 +9505,7 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 0}
+  cacheMesh: {fileID: 4300000, guid: f04eeb28218e9f94badcfd7b16d21427, type: 2}
   cacheHash: 28776a1891cf3f79
   cacheSurfaces:
   - {fileID: 11400000, guid: b6ed28a1025fe554e8515c14505d5f95, type: 2}
@@ -13666,14 +13666,14 @@ MonoBehaviour:
     noiseStrength: 0.45
     occlusion: 0.2
     wind: {x: 0.15, y: 0.02, z: 0.05}
-    sunStrength: 0.32
+    sunStrength: 0.22
     shadowStrength: 1
     anisotropy: 0.3
     ambientStrength: 0.15
     pointLights: 1
     pointStrength: 0.6
     pointCore: 0.5
-    shaftBoost: 2.2
+    shaftBoost: 0.5
     shaftContrast: 0.6
     shaftPattern: 0.55
     shaftPatternScale: 0.9

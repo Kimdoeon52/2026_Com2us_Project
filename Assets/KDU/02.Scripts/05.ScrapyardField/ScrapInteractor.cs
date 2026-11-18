@@ -67,7 +67,7 @@ public class ScrapInteractor : MonoBehaviour
 
         if (_minigame == null)
         {
-            Settle(pile, node, definition, table, true);
+            Settle(pile, node, definition, table, ScrapMinigameResult.Win(1f));
             return;
         }
 
@@ -76,16 +76,16 @@ public class ScrapInteractor : MonoBehaviour
         _minigame.Begin(result =>
         {
             _busy = false;
-            Settle(pile, node, definition, table, result.Success);
+            Settle(pile, node, definition, table, result);
         });
     }
 
     // 재도전이 없으므로 성패와 무관하게 노드를 소모하고 보상을 정산한다
-    private void Settle(ScrapPile pile, ScrapNode node, ScrapyardDefinition definition, MinigameRewardTable table, bool success)
+    private void Settle(ScrapPile pile, ScrapNode node, ScrapyardDefinition definition, MinigameRewardTable table, ScrapMinigameResult result)
     {
-        if (_host.ResolveMinigame(definition, table, success, out CollectOutcome reward))
-            ShowReward(reward, success);
-        else if (!success)
+        if (_host.ResolveMinigame(definition, table, result, out CollectOutcome reward))
+            ShowReward(reward, result.Success);
+        else if (!result.Success)
             ShowWarning("실패 · 아무것도 건지지 못했다");
 
         pile.ConsumeNode(node);

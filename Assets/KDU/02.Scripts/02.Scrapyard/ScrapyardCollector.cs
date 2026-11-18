@@ -43,26 +43,28 @@ public class ScrapyardCollector
         return true;
     }
 
-    // 미니게임 성공 보상
-    public bool TryResolveMinigameSuccess(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, out CollectOutcome outcome)
+    // 미니게임 성공 보상. 미니게임이 정한 부품이 있으면 등급을 뽑지 않고 그 부품을 준다
+    public bool TryResolveMinigameSuccess(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, string rewardId, out CollectOutcome outcome)
     {
-        return TryResolveMinigame(definition, table, state, table != null ? table.SuccessWeights : null, table != null ? table.SuccessAmount : default, out outcome);
+        return TryResolveMinigame(definition, table, state, table != null ? table.SuccessWeights : null, table != null ? table.SuccessAmount : default, rewardId, out outcome);
     }
 
     // 미니게임 실패 보상. 빈손으로 돌려보내지 않고 낮은 등급을 준다
     public bool TryResolveMinigameFailure(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, out CollectOutcome outcome)
     {
-        return TryResolveMinigame(definition, table, state, table != null ? table.FailureWeights : null, table != null ? table.FailureAmount : default, out outcome);
+        return TryResolveMinigame(definition, table, state, table != null ? table.FailureWeights : null, table != null ? table.FailureAmount : default, null, out outcome);
     }
 
-    private bool TryResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, GradeWeight[] weights, Vector2Int amountRange, out CollectOutcome outcome)
+    private bool TryResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, ScrapyardState state, GradeWeight[] weights, Vector2Int amountRange, string rewardId, out CollectOutcome outcome)
     {
         outcome = default;
 
         if (definition == null || table == null || state == null || _rng == null || _catalog == null)
             return false;
 
-        if (!TryRollComponent(weights, out ComponentDefinition component))
+        // 정해진 부품이 카탈로그에 없으면 테이블로 뽑는다
+        ComponentDefinition component = string.IsNullOrEmpty(rewardId) ? null : _catalog.Find(rewardId);
+        if (component == null && !TryRollComponent(weights, out component))
             return false;
 
         int amount = RollAmount(amountRange);

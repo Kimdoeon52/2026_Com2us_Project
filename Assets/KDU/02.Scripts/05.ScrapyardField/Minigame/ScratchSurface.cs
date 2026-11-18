@@ -60,6 +60,19 @@ public class ScratchSurface : MonoBehaviour, IPointerDownHandler, IDragHandler
 
     public void SetInputEnabled(bool enabled) => _inputEnabled = enabled;
 
+    // 남은 덮개를 한 번에 걷어낸다
+    public void RevealAll()
+    {
+        if (_pixels == null)
+            return;
+
+        for (int i = 0; i < _pixels.Length; i++)
+            _pixels[i].a = 0;
+
+        _clearedCount = _pixels.Length;
+        _dirty = true;
+    }
+
     public void OnPointerDown(PointerEventData eventData) => ScratchAt(eventData);
 
     public void OnDrag(PointerEventData eventData) => ScratchAt(eventData);

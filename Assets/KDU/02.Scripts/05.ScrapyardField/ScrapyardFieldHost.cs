@@ -55,7 +55,7 @@ public class ScrapyardFieldHost : MonoBehaviour
     }
 
     // 미니게임 결과 보상. 실패해도 낮은 등급이 나오므로 성패를 받아 분기한다
-    public bool ResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, bool success, out CollectOutcome outcome)
+    public bool ResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, ScrapMinigameResult result, out CollectOutcome outcome)
     {
         outcome = default;
 
@@ -64,8 +64,8 @@ public class ScrapyardFieldHost : MonoBehaviour
 
         ScrapyardState state = _states.GetOrCreate(definition.RegionIndex);
 
-        bool resolved = success
-            ? _collector.TryResolveMinigameSuccess(definition, table, state, out outcome)
+        bool resolved = result.Success
+            ? _collector.TryResolveMinigameSuccess(definition, table, state, result.RewardId, out outcome)
             : _collector.TryResolveMinigameFailure(definition, table, state, out outcome);
 
         if (!resolved)

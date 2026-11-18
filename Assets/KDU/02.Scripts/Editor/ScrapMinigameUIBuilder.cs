@@ -103,6 +103,7 @@ public static class ScrapMinigameUIBuilder
         so.FindProperty("_timerLabel").objectReferenceValue = timer;
         so.FindProperty("_surface").objectReferenceValue = scratch;
         so.FindProperty("_rewardImage").objectReferenceValue = rewardImage;
+        so.FindProperty("_catalog").objectReferenceValue = AssetDatabase.LoadAssetAtPath<ComponentCatalog>("Assets/KDU/03.SOData/02.Inventory/ComponentCatalog.asset");
         so.ApplyModifiedPropertiesWithoutUndo();
 
         Save(root, "MinigameScratchCard");

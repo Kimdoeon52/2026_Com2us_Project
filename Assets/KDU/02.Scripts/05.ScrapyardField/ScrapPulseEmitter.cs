@@ -1,11 +1,14 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 발밑 파동 연출. 플레이어 자식으로 붙이되 플레이어 스크립트는 참조하지 않는다
+// 발밑 파동 연출. 탐지기의 추적 대상 위치를 따라간다
 public class ScrapPulseEmitter : MonoBehaviour
 {
     [Tooltip("강도 공급원")]
     [SerializeField] private ScrapNodeDetector _detector;
+
+    [Tooltip("추적 대상 기준 오프셋")]
+    [SerializeField] private Vector3 _offset = new Vector3(0f, 0.05f, 0f);
 
     [Tooltip("파동 프리팹. 바닥에 눕힌 회전을 프리팹에 넣어둔다")]
     [SerializeField] private ScrapPulseInstance _pulsePrefab;
@@ -32,6 +35,9 @@ public class ScrapPulseEmitter : MonoBehaviour
     private readonly List<ScrapPulseInstance> _instances = new List<ScrapPulseInstance>();
     private float _timer;
 
+    // 추적 대상이 없으면 자기 위치
+    private Vector3 Origin => _detector != null && _detector.TrackedTarget != null ? _detector.TrackedTarget.position + _offset : transform.position;
+
     private void Update()
     {
         float intensity = _detector != null ? _detector.State.Intensity01 : 0f;
@@ -56,10 +62,11 @@ public class ScrapPulseEmitter : MonoBehaviour
         if (!_followEmitter)
             return;
 
+        Vector3 origin = Origin;
         for (int i = 0; i < _instances.Count; i++)
         {
             if (_instances[i].Playing)
-                _instances[i].transform.position = transform.position;
+                _instances[i].transform.position = origin;
         }
     }
 
@@ -69,7 +76,7 @@ public class ScrapPulseEmitter : MonoBehaviour
             return;
 
         ScrapPulseInstance instance = Rent();
-        instance.transform.SetPositionAndRotation(transform.position, _pulsePrefab.transform.rotation);
+        instance.transform.SetPositionAndRotation(Origin, _pulsePrefab.transform.rotation);
         instance.Play(alpha);
     }
 

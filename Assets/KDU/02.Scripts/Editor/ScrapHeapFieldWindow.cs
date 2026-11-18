@@ -137,10 +137,11 @@ public class ScrapHeapFieldWindow : EditorWindow
         if (_trackedTarget != null)
             SetField(detector, "_trackedTarget", _trackedTarget);
 
-        if (!_buildPulseEmitter || _trackedTarget == null)
+        if (!_buildPulseEmitter)
             return;
 
-        Transform emitterRoot = GetOrCreateChild(_trackedTarget, PulseEmitterName);
+        // 탐지기 자식으로 두고 위치는 추적 대상을 따라간다
+        Transform emitterRoot = GetOrCreateChild(detector.transform, PulseEmitterName);
         ScrapPulseEmitter emitter = GetOrAddComponent<ScrapPulseEmitter>(emitterRoot.gameObject);
 
         SetField(emitter, "_detector", detector);

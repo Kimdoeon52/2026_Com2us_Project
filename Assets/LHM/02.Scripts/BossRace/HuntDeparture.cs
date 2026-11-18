@@ -212,6 +212,7 @@ namespace RealSteel.BossRace
             }
 
             BattleManager.SetPreBattleDifficulty(battleDifficulty);
+            if (progressSource is BossProgressStore store) store.AddAttempt(bossId);   // 도전 횟수 (boss_progress.json에 저장)
             manager.Save();
             Debug.Log($"[Hunt] 전투 출발 — {bossId} / {battleDifficulty} → 씬 '{scene}'");
             Departing?.Invoke(bossId, difficulty, scene);

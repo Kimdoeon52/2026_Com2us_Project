@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using RealSteel.BossRace;
 using RealSteel.Cutscene;
 using RealSteel.Dialogue;
 using RealSteel.Tutorial;
@@ -26,9 +27,10 @@ namespace RealSteel.MainMenu
         public static void ResetForNewGame()
         {
             new DialogueSaveSystem(DialogueSavePath).DeleteAll();
+            BossProgressStore.DeleteSave();
             ResetSeenFlags();
             ResetInventory();
-            Debug.Log("[NewGame] 진행 데이터 초기화 완료 (대화 세이브 · 컷신/튜토리얼 본 기록 · 인벤토리). 골드는 LSH 초기화 함수 연결 전이라 유지됨");
+            Debug.Log("[NewGame] 진행 데이터 초기화 완료 (대화 세이브 · 보스 기록 · 컷신/튜토리얼 본 기록 · 인벤토리). 골드는 LSH 초기화 함수 연결 전이라 유지됨");
         }
 
         private static void ResetSeenFlags()

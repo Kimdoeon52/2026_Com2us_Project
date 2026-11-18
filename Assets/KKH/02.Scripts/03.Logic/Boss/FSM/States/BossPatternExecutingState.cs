@@ -23,6 +23,8 @@ namespace RealSteel.Boss.FSM
 
         public override void Enter()
         {
+            if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive) return;
+
             if (_gimmick == null)
             {
                 Debug.LogWarning("[BossPatternExecutingState] 실행할 패턴 기믹이 null입니다! Idle 상태로 복귀합니다.");
@@ -47,6 +49,11 @@ namespace RealSteel.Boss.FSM
                 result = PatternExecutionResult.Cancelled;
             }
 
+            if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive || boss.StateMachine.CurrentState != this)
+            {
+                return;
+            }
+
             // 정상 완료된 경우 1.0초 확정 딜타임(BossIdleState)으로 복귀
             if (result == PatternExecutionResult.Completed)
             {
@@ -55,16 +62,14 @@ namespace RealSteel.Boss.FSM
             }
 
             // 인터럽트/취소로 끝났는데 스턴·그로기 등 다른 상태로 전이되지 않고 여전히 이 상태에 머물러 있다면
-            // (예: 이미 퓨즈가 켜진 폭발 상자에 돌진 충돌 → 스턴 미발생) 루프가 멈추므로 Idle로 강제 복구
-            if (boss.StateMachine.CurrentState == this && boss.Snapshot.IsAlive && !boss.IsCombatStopped)
-            {
-                Debug.LogWarning($"[BossPatternExecutingState] {_gimmick.GimmickName} 패턴이 {result}로 종료되었으나 후속 상태 전이가 없어 Idle로 복구합니다.");
-                ReturnToIdle();
-            }
+            // 루프가 멈추지 않도록 Idle로 복구
+            Debug.LogWarning($"[BossPatternExecutingState] {_gimmick.GimmickName} 패턴이 {result}로 종료되었으나 후속 상태 전이가 없어 Idle로 복구합니다.");
+            ReturnToIdle();
         }
 
         private void ReturnToIdle()
         {
+            if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive || boss.StateMachine.CurrentState != this) return;
             var token = boss.RenewStateCancellationToken();
             float postDelay = (_gimmick != null && _gimmick.PatternData != null && _gimmick.PatternData.postDelay > 0f)
                 ? _gimmick.PatternData.postDelay

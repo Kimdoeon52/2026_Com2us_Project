@@ -822,7 +822,7 @@ namespace RealSteel.Boss.JunkWheeler
                 _bladeVfxObj.transform.Rotate(0f, 0f, deployRotSpeed * Time.deltaTime);
 
                 elapsed += Time.deltaTime;
-                await UniTask.Yield(PlayerLoopTiming.Update);
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
             }
 
             if (token.IsCancellationRequested || _bladeVfxObj == null) return;

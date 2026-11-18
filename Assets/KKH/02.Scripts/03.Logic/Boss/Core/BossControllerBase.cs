@@ -556,7 +556,7 @@ namespace RealSteel.Boss.Core
         // ========================================================================
         public virtual void TakeDamage(int rawDamage, bool isAlreadyCalculated = false)
         {
-            if (Snapshot == null || !Snapshot.IsAlive) return;
+            if (_isDefeatedHandled || IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
 
             int adjustedDamage = OnPreTakeDamage(rawDamage);
             int finalDamage;
@@ -582,26 +582,27 @@ namespace RealSteel.Boss.Core
         /// </summary>
         protected virtual void HandleHubBossDamaged(int finalDamage)
         {
-            if (Snapshot == null) return;
+            if (_isDefeatedHandled || IsCombatStopped || Snapshot == null) return;
             ProcessPostDamageReactions(finalDamage);
         }
 
         protected virtual void ProcessPostDamageReactions(int finalDamage)
         {
-            if (Snapshot == null) return;
+            if (_isDefeatedHandled || IsCombatStopped || Snapshot == null) return;
 
-            StateMachine?.OnDamageTaken(finalDamage);
-            NotifyGimmicksDamageTaken(finalDamage);
-
-            CheckPhaseTransition();
-
-            if (Snapshot.currentHp <= 0 && !_isDefeatedHandled)
+            if (Snapshot.currentHp <= 0)
             {
                 _isDefeatedHandled = true;
                 StopBossCombat();
                 OnBossDefeated();
                 BattleManager.Instance?.OnFighterKilled(Snapshot.bossID);
+                return;
             }
+
+            StateMachine?.OnDamageTaken(finalDamage);
+            NotifyGimmicksDamageTaken(finalDamage);
+
+            CheckPhaseTransition();
         }
 
         /// <summary>
@@ -672,12 +673,14 @@ namespace RealSteel.Boss.Core
 
         public virtual void InterruptToGroggy(float duration = 4.0f, float damageMultiplier = 1.5f)
         {
+            if (_isDefeatedHandled || IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
             var token = RenewStateCancellationToken();
             StateMachine.ChangeState(new BossGroggyState(this, token, duration, damageMultiplier));
         }
 
         public virtual void InterruptToStun(float duration = 3.0f)
         {
+            if (_isDefeatedHandled || IsCombatStopped || Snapshot == null || !Snapshot.IsAlive) return;
             var token = RenewStateCancellationToken();
             StateMachine.ChangeState(new BossStunState(this, token, duration));
         }

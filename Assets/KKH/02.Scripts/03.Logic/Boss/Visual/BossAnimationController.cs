@@ -201,7 +201,7 @@ namespace RealSteel.Boss.Visual
             {
                 // 1단계: 초고속 압착 (Fast In)
                 _scaleTween = target.DOScale(squashedScale, inDuration).SetEase(Ease.InQuad);
-                await _scaleTween.ToUniTask(cancellationToken: token);
+                await _scaleTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
                 if (_squashVersion != currentVersion || target == null) return;
 
@@ -212,7 +212,7 @@ namespace RealSteel.Boss.Visual
 
                 // 2단계: 탄성 로그 감쇠 복원 (Elastic Out)
                 _scaleTween = target.DOScale(originalScale, outDuration).SetEase(Ease.OutElastic);
-                await _scaleTween.ToUniTask(cancellationToken: token);
+                await _scaleTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
             }
             catch (OperationCanceledException)
             {

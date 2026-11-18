@@ -22,12 +22,14 @@ namespace RealSteel.Boss.Core
         protected int _accumulatedTellDamage = 0;
         protected bool _isTellPhase = false;
         protected CancellationTokenSource _patternCTS;
+        private bool _isInterrupted = false;
 
         /// <summary>
         /// [공격 패턴 전체 실행 시퀀스 골격]
         /// </summary>
         public async UniTask<PatternExecutionResult> ExecutePatternSequenceAsync(CancellationToken token)
         {
+            _isInterrupted = false;
             _patternCTS = CancellationTokenSource.CreateLinkedTokenSource(token);
             var linkedToken = _patternCTS.Token;
 
@@ -35,23 +37,53 @@ namespace RealSteel.Boss.Core
             {
                 // step1 : 사전 준비 (방향정렬, 웅크림 등등)
                 OnPreExecute();
+                if (token.IsCancellationRequested || OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                {
+                    return PatternExecutionResult.Cancelled;
+                }
+                if (_isInterrupted)
+                {
+                    return PatternExecutionResult.Interrupted;
+                }
 
                 // step2 : 전조 & DPS 체크 실행 (아주 쉬움 난이도는 tellDurationMultiplier 1.5배 적용)
                 bool tellSuccess = await ExecuteTellPhaseAsync(linkedToken);
+                if (token.IsCancellationRequested || OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                {
+                    return PatternExecutionResult.Cancelled;
+                }
                 if (!tellSuccess)
                 {
                     // 300 누적 저지 성공 -> 3초 스턴 인터럽트
                     InterruptPattern(InterruptReason.DpsCheckStun);
                     return PatternExecutionResult.Interrupted;
                 }
+                if (_isInterrupted)
+                {
+                    return PatternExecutionResult.Interrupted;
+                }
+
                 // step3 : 본 공격 액션 시전 (완료 후 확정 딜타임 후딜은 BossIdleState가 전담)
                 await ExecuteActionAsync(linkedToken);
+
+                if (token.IsCancellationRequested || OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                {
+                    return PatternExecutionResult.Cancelled;
+                }
+                if (_isInterrupted)
+                {
+                    return PatternExecutionResult.Interrupted;
+                }
 
                 return PatternExecutionResult.Completed;
             }
             catch (OperationCanceledException)
             {
-                return PatternExecutionResult.Cancelled;
+                if (token.IsCancellationRequested || OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                {
+                    return PatternExecutionResult.Cancelled;
+                }
+                return _isInterrupted ? PatternExecutionResult.Interrupted : PatternExecutionResult.Cancelled;
             }
             finally
             {
@@ -110,15 +142,16 @@ namespace RealSteel.Boss.Core
 
         public virtual void InterruptPattern(InterruptReason reason)
         {
+            _isInterrupted = true;
             if (_patternCTS != null && !_patternCTS.IsCancellationRequested)
             {
                 _patternCTS.Cancel();
             }
             OnInterrupted(reason);
-            if (reason == InterruptReason.DpsCheckStun)
+            if (reason == InterruptReason.DpsCheckStun && OwnerBoss != null && !OwnerBoss.IsCombatStopped && OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.IsAlive)
             {
                 float stunDur = patternData != null ? patternData.interruptStunDuration : 3.0f;
-                OwnerBoss?.InterruptToStun(stunDur);
+                OwnerBoss.InterruptToStun(stunDur);
             }
         }
 

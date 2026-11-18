@@ -109,7 +109,7 @@ namespace RealSteel.Boss.JunkWheeler
                     }
 
                     _currentTween = OwnerBoss.transform.DOMoveY(_groundY + jumpHeight, jumpDuration).SetEase(Ease.OutQuad);
-                    await _currentTween.ToUniTask(cancellationToken: token);
+                    await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
                     // 상승 완료 후 공중 추적 구간: 정지 화면 대신 공중 회전 루프
                     OwnerBoss.Animation?.PlayRollBarrage();
@@ -159,7 +159,7 @@ namespace RealSteel.Boss.JunkWheeler
                     if (JunkWheelerSfx.Data != null) JunkWheelerSfx.PlayOrFallback(JunkWheelerSfx.Data.slamDrop, JunkWheelerSfx.Data.slamHover, OwnerBoss.transform.position, 1f, 1.32f, 0.9f);
                     OwnerBoss.Animation?.PlaySlamFall();
                     _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
-                    await _currentTween.ToUniTask(cancellationToken: token);
+                    await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
                     // [착지 VFX]: 충돌 프레임 0에 지면 충격파 이펙트 스폰!
                     SpawnVfx(groundImpactVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));

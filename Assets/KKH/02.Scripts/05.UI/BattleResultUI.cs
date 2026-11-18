@@ -53,6 +53,7 @@ namespace RealSteel.UI
 
         private BattleSettlementResult _currentSettlement;
         private Sequence _animSequence;
+        private bool _isResultShown = false;
 
         private void Awake()
         {
@@ -122,8 +123,17 @@ namespace RealSteel.UI
         /// </summary>
         public void HidePanel()
         {
+            _isResultShown = false;
+            _currentSettlement = null;
+
+            if (_animSequence != null && _animSequence.IsActive())
+            {
+                _animSequence.Kill();
+            }
+
             if (mainCanvasGroup != null)
             {
+                mainCanvasGroup.DOKill();
                 mainCanvasGroup.alpha = 0f;
                 mainCanvasGroup.interactable = false;
                 mainCanvasGroup.blocksRaycasts = false;
@@ -175,6 +185,9 @@ namespace RealSteel.UI
         /// </summary>
         public void ShowResult(BattleSettlementResult settlement, bool playerWon)
         {
+            if (_isResultShown) return;
+            _isResultShown = true;
+
             // 0. GameObject 및 루트 패널 강제 활성화
             gameObject.SetActive(true);
             if (resultPanelRoot != null)
@@ -184,9 +197,15 @@ namespace RealSteel.UI
 
             if (mainCanvasGroup != null)
             {
+                mainCanvasGroup.DOKill();
                 mainCanvasGroup.alpha = 1f;
                 mainCanvasGroup.interactable = true;
                 mainCanvasGroup.blocksRaycasts = true;
+            }
+
+            if (btnReturnBase != null)
+            {
+                btnReturnBase.interactable = true;
             }
 
             if (settlement == null)
@@ -334,8 +353,13 @@ namespace RealSteel.UI
             // 1. 캔버스 그룹 페이드인
             if (mainCanvasGroup != null)
             {
+                mainCanvasGroup.DOKill();
                 mainCanvasGroup.alpha = 0f;
-                _animSequence.Append(mainCanvasGroup.DOFade(1f, 0.3f));
+                _animSequence.Append(mainCanvasGroup.DOFade(1f, 0.3f)
+                    .OnComplete(() =>
+                    {
+                        if (mainCanvasGroup != null) mainCanvasGroup.alpha = 1f;
+                    }));
             }
 
             // 2. 타이틀 배너 펀치 스케일
@@ -396,6 +420,11 @@ namespace RealSteel.UI
                 coreExpSlider.value = 0f;
                 _animSequence.Join(coreExpSlider.DOValue(0.75f, numberRollDuration).SetEase(Ease.OutQuad));
             }
+
+            _animSequence.OnComplete(() =>
+            {
+                if (mainCanvasGroup != null) mainCanvasGroup.alpha = 1f;
+            });
 
             // 5. 버튼 인터랙션 활성화
             if (btnReturnBase != null) btnReturnBase.interactable = true;

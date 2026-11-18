@@ -104,7 +104,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             _bossMoveTween = OwnerBoss.transform.DOMove(apexPos, launchDuration).SetEase(Ease.OutQuad);
-            await _bossMoveTween.ToUniTask(cancellationToken: token);
+            await _bossMoveTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
             // 3단계: 바이킹 진자 순차 탄막 발사 (보스 본체 중심에서 투사)
             int maxIndex = Mathf.Max(1, bulletCountPerSweep - 1);
@@ -167,7 +167,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             _bossMoveTween = OwnerBoss.transform.DOMove(landPos, landDuration).SetEase(Ease.InQuad);
-            await _bossMoveTween.ToUniTask(cancellationToken: token);
+            await _bossMoveTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
             // [VFX 3] 지면 착지 충격파 스폰
             SpawnVfx(landImpactVfxPrefab, landPos);

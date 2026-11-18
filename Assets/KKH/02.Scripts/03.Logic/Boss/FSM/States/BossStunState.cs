@@ -45,7 +45,7 @@ namespace RealSteel.Boss.FSM
             {
                 await UniTask.Delay(TimeSpan.FromSeconds(_duration), cancellationToken: cancellationToken);
 
-                if (!boss.Snapshot.IsAlive) return;
+                if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive || boss.StateMachine.CurrentState != this) return;
 
                 var token = boss.RenewStateCancellationToken();
                 boss.StateMachine.ChangeState(new BossIdleState(boss, token, boss.MasterData != null ? boss.MasterData.patternPostDelay : 1.0f));

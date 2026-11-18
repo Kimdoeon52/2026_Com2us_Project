@@ -17,7 +17,6 @@ namespace RealSteel.Boss.Core
     {
         DpsCheckStun,       // 2초 전조 중 300dps 저지 성공(3초 스턴)
         GimmickGroggy,      // 못판 착지 등 기믹 파훼(4초 그로기)
-        ExplosiveStun,      // 폭발 스턴(2초 스턴)
         PhaseTransition,    // 페이즈 전환 컷신
         Manual              // 디버그 강제 중단
     }

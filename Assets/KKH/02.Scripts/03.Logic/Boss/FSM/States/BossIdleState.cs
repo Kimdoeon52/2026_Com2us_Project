@@ -63,6 +63,7 @@ namespace RealSteel.Boss.FSM
                 while (elapsed < _delaySeconds)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
+                    if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive || boss.StateMachine.CurrentState != this) return;
                     boss.FacePlayer();
 
                     float step = Mathf.Min(interval, _delaySeconds - elapsed);
@@ -70,7 +71,7 @@ namespace RealSteel.Boss.FSM
                     elapsed += step;
                 }
 
-                if (!boss.Snapshot.IsAlive) return;
+                if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive || boss.StateMachine.CurrentState != this) return;
 
                 boss.FacePlayer();
 

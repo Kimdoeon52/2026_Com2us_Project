@@ -145,12 +145,10 @@ namespace RealSteel.Boss.JunkWheeler
                 float multiplier = OwnerBoss.Snapshot != null ? OwnerBoss.Snapshot.tellDurationMultiplier : 1.0f;
                 float tellDur = baseDur * multiplier;
 
-                // 전조 시작 직후 차지 루프로 부드럽게 전이
-                TransitToChargeLoopAsync(tellDur).Forget();
-
-                // 비선형 전조(지수 가속 진동 & 스트로보 점멸) 비동기 루프 가동
+                // 비선형 전조(지수 가속 진동 & 스트로보 점멸) 비동기 루프 및 차지 루프 전이 가동
                 StopTellVisuals();
                 _tellVisualCts = new CancellationTokenSource();
+                TransitToChargeLoopAsync(_tellVisualCts.Token).Forget();
                 RunNonlinearTellVisualsAsync(tellDur, _tellVisualCts.Token).Forget();
             }
 
@@ -168,12 +166,16 @@ namespace RealSteel.Boss.JunkWheeler
             OnTellStarted();
         }
 
-        private async UniTaskVoid TransitToChargeLoopAsync(float delay)
+        private async UniTaskVoid TransitToChargeLoopAsync(CancellationToken tellToken)
         {
             // Boss_Charge_Start 클립 길이(4프레임 @12fps = 0.333초)만큼 대기 후 전이 (마지막 프레임 잘림 방지)
-            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.34f), cancellationToken: this.GetCancellationTokenOnDestroy()).SuppressCancellationThrow();
+            var destroyToken = this.GetCancellationTokenOnDestroy();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(tellToken, destroyToken);
+            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.34f), cancellationToken: linkedCts.Token).SuppressCancellationThrow();
             if (canceled) return;
-            if (OwnerBoss != null && OwnerBoss.Animation != null
+            if (_isTellPhase && OwnerBoss != null && !OwnerBoss.IsCombatStopped
+                && OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.IsAlive
+                && OwnerBoss.Animation != null
                 && OwnerBoss.Animation.CurrentStateHash == BossAnimationController.StateChargeStart)
             {
                 OwnerBoss.Animation.PlayChargeLoop();
@@ -273,7 +275,16 @@ namespace RealSteel.Boss.JunkWheeler
 
         protected override async UniTask ExecuteActionAsync(CancellationToken token)
         {
-            if (OwnerBoss == null) return;
+            if (OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive) return;
+
+            // 전조 종료 시점 기준으로 플레이어 방향 재확인 및 벽면 최소 주행 거리 확보 (벽면 직전 0m 즉시 종료 방지)
+            if (_playerTransform == null)
+            {
+                _playerTransform = OwnerBoss.PlayerTransform ?? GameObject.FindWithTag("Player")?.transform;
+            }
+            DetermineChargeDirection();
+            EnsureChargeDirectionHasClearance();
+            FaceDirection(_chargeDirection);
 
             Vector3 startPosition = OwnerBoss.transform.position;
 
@@ -289,7 +300,7 @@ namespace RealSteel.Boss.JunkWheeler
                 pullBackPosition.x = OwnerBoss.ClampToStageWallX(pullBackPosition.x);
             }
             _currentTween = OwnerBoss.transform.DOMoveX(pullBackPosition.x, anticipatedDuration).SetEase(Ease.OutQuad);
-            await _currentTween.ToUniTask(cancellationToken: token);
+            await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
             // 2단계: 타이어 파괴 상태 확인 -> 돌진 속도 결정
             bool isTireBroken = _isTireBrokenDebuffed;
@@ -326,10 +337,9 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss.Animation != null)
             {
                 OwnerBoss.Animation.PlayChargeRelease();
-                TransitToChargeRunAsync().Forget();
+                TransitToChargeRunAsync(token).Forget();
             }
 
-            bool hitExplosive = false;
             float maxChargeTime = 3.0f;
             float chargeElapsed = 0f;
             float fireTrailTimer = 0f;
@@ -337,12 +347,12 @@ namespace RealSteel.Boss.JunkWheeler
             while (chargeElapsed < maxChargeTime)
             {
                 token.ThrowIfCancellationRequested();
-
-                if (CheckCollisionsDuringCharge())
+                if (OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
                 {
-                    hitExplosive = true;
                     break;
                 }
+
+                CheckCollisionsDuringCharge();
 
                 float dt = Time.deltaTime;
                 chargeElapsed += dt;
@@ -379,7 +389,7 @@ namespace RealSteel.Boss.JunkWheeler
 
             JunkWheelerSfx.Stop(ref _chargeRushLoop);
 
-            if (hitExplosive)
+            if (token.IsCancellationRequested || OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
             {
                 return;
             }
@@ -423,7 +433,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             _currentTween = OwnerBoss.transform.DOMoveX(reboundTargetX, reboundDuration).SetEase(Ease.OutQuad);
-            await _currentTween.ToUniTask(cancellationToken: token);
+            await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
             // 스쿼시 트윈 완료 대기
             await squashTask;
@@ -471,22 +481,26 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
-        private async UniTaskVoid TransitToChargeRunAsync()
+        private async UniTaskVoid TransitToChargeRunAsync(CancellationToken patternToken)
         {
             // Boss_Charge_Release 클립 길이(3프레임 @15fps = 0.2초) 이후 주행 루프로 전이
-            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: this.GetCancellationTokenOnDestroy()).SuppressCancellationThrow();
+            var destroyToken = this.GetCancellationTokenOnDestroy();
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(patternToken, destroyToken);
+            bool canceled = await UniTask.Delay(TimeSpan.FromSeconds(0.2f), cancellationToken: linkedCts.Token).SuppressCancellationThrow();
             if (canceled) return;
-            // 그사이 스턴/충돌 등으로 다른 모션이 재생됐다면 덮어쓰지 않음
-            if (OwnerBoss != null && OwnerBoss.Animation != null
+            // 그사이 스턴/충돌/사망 등으로 다른 모션이 재생됐다면 덮어쓰지 않음
+            if (OwnerBoss != null && !OwnerBoss.IsCombatStopped
+                && OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.IsAlive
+                && OwnerBoss.Animation != null
                 && OwnerBoss.Animation.CurrentStateHash == BossAnimationController.StateChargeRelease)
             {
                 OwnerBoss.Animation.PlayChargeRun();
             }
         }
 
-        private bool CheckCollisionsDuringCharge()
+        private void CheckCollisionsDuringCharge()
         {
-            if (OwnerBoss == null) return false;
+            if (OwnerBoss == null) return;
 
             // [판정 분리]: VFX 크기와 무관하게 원본 고정 반경(chargeCollisionRadius)만 검사
             Vector2 center = OwnerBoss.transform.position;
@@ -496,32 +510,7 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 if (hit.gameObject == OwnerBoss.gameObject) continue;
 
-                // 1. 폭발 화물 상자 충돌 검사
-                var explosive = hit.GetComponent<ExplosiveBoxFieldGimmick>() ?? hit.GetComponentInParent<ExplosiveBoxFieldGimmick>();
-                if (explosive != null || hit.CompareTag("ExplosiveBox") || hit.name.IndexOf("Explosive", StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    KillCurrentTween();
-
-                    if (OwnerBoss.Animation != null)
-                    {
-                        OwnerBoss.Animation.PlayStun();
-                    }
-
-                    if (explosive != null)
-                    {
-                        explosive.TriggerInteraction(OwnerBoss.gameObject);
-                    }
-                    else
-                    {
-                        Destroy(hit.gameObject);
-                        OwnerBoss.InterruptToStun(2.0f);
-                    }
-
-                    InterruptPattern(InterruptReason.ExplosiveStun);
-                    return true;
-                }
-
-                // 2. 플레이어 충돌 검사
+                // 플레이어 충돌 검사
                 if (!_hasHitPlayer && hit.CompareTag("Player"))
                 {
                     if (IsPlayerInvincible(hit.gameObject))
@@ -540,7 +529,30 @@ namespace RealSteel.Boss.JunkWheeler
                     }
                 }
             }
-            return false;
+        }
+
+        /// <summary>
+        /// 돌진 방향 앞쪽 벽까지 여유 거리가 지나치게 짧으면 반대편 넓은 공간으로 방향을 반전해 즉시 정지를 방지함.
+        /// </summary>
+        private void EnsureChargeDirectionHasClearance()
+        {
+            if (OwnerBoss == null) return;
+
+            const float minChargeClearance = 1.5f;
+            float currentX = OwnerBoss.transform.position.x;
+            float forwardWallX = CalculateTargetWallX(currentX, _chargeDirection);
+            float forwardClearance = Mathf.Abs(forwardWallX - currentX);
+
+            if (forwardClearance < minChargeClearance)
+            {
+                float oppositeDir = -_chargeDirection;
+                float oppositeWallX = CalculateTargetWallX(currentX, oppositeDir);
+                float oppositeClearance = Mathf.Abs(oppositeWallX - currentX);
+                if (oppositeClearance > forwardClearance)
+                {
+                    _chargeDirection = oppositeDir;
+                }
+            }
         }
 
         private void DetermineChargeDirection()

@@ -330,11 +330,113 @@ namespace RealSteel.UI
                 textComp.alignment = TextAlignmentOptions.Center;
             }
 
-            var tmp = slotObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (tmp != null)
+            ResolvePartDisplayInfo(partKey, out string displayName, out int maxDur);
+
+            bool isCritical = maxDur > 0 ? currentDur <= Mathf.CeilToInt(maxDur * 0.25f) : currentDur <= 20;
+            string durColor = currentDur <= 0 ? "#FF4444" : (isCritical ? "#FFCC00" : "#FFFFFF");
+            string durText = maxDur > 0 ? $"<color={durColor}>{currentDur}</color>/{maxDur}" : $"<color={durColor}>{currentDur}</color>";
+
+            Transform nameTr = slotObj.transform.Find("PartNameText");
+            Transform durTr = slotObj.transform.Find("PartDurabilityText");
+            var nameTmp = nameTr != null ? nameTr.GetComponent<TextMeshProUGUI>() : null;
+            var durTmp = durTr != null ? durTr.GetComponent<TextMeshProUGUI>() : null;
+
+            if (nameTmp == null || durTmp == null)
             {
-                string durColor = currentDur <= 0 ? "#FF4444" : (currentDur <= 20 ? "#FFCC00" : "#FFFFFF");
-                tmp.text = $"{partKey}: <color={durColor}>{currentDur}</color>";
+                var tmps = slotObj.GetComponentsInChildren<TextMeshProUGUI>(true);
+                if (tmps.Length >= 2)
+                {
+                    if (nameTmp == null) nameTmp = tmps[0];
+                    if (durTmp == null) durTmp = tmps[1];
+                }
+                else if (tmps.Length == 1 && nameTmp == null)
+                {
+                    nameTmp = tmps[0];
+                }
+            }
+
+            if (nameTmp != null && durTmp != null)
+            {
+                nameTmp.text = displayName;
+                durTmp.text = durText;
+            }
+            else if (nameTmp != null)
+            {
+                nameTmp.text = $"{displayName}: {durText}";
+            }
+        }
+
+        private static void ResolvePartDisplayInfo(string partKey, out string displayName, out int maxDur)
+        {
+            displayName = partKey;
+            maxDur = 0;
+
+            var hub = CombatDataHub.Instance;
+            var snapshot = hub != null ? hub.PlayerSnapshot : null;
+            if (snapshot != null && snapshot.partStates != null)
+            {
+                foreach (var kvp in snapshot.partStates)
+                {
+                    var state = kvp.Value;
+                    if (state != null && state.partID == partKey)
+                    {
+                        maxDur = state.maxDurability;
+                        if (state.masterData != null && !string.IsNullOrEmpty(state.masterData.partName))
+                        {
+                            displayName = state.masterData.partName;
+                            return;
+                        }
+
+                        var invDef = InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null
+                            ? InventoryHost.Instance.Catalog.Find(partKey)
+                            : null;
+                        if (invDef != null && !string.IsNullOrEmpty(invDef.DisplayName))
+                        {
+                            displayName = invDef.DisplayName;
+                            return;
+                        }
+
+                        displayName = GetBodyPartKoreanName(state.partType);
+                        return;
+                    }
+                }
+            }
+
+            if (InventoryHost.Instance != null && InventoryHost.Instance.Catalog != null)
+            {
+                var def = InventoryHost.Instance.Catalog.Find(partKey);
+                if (def != null)
+                {
+                    if (!string.IsNullOrEmpty(def.DisplayName)) displayName = def.DisplayName;
+                    maxDur = def.Durability;
+                    return;
+                }
+            }
+
+            if (partKey != null && partKey.StartsWith("DEFAULT_", System.StringComparison.OrdinalIgnoreCase))
+            {
+                string suffix = partKey.Substring("DEFAULT_".Length);
+                if (System.Enum.TryParse(suffix, true, out BodyPart parsedPart))
+                {
+                    displayName = GetBodyPartKoreanName(parsedPart);
+                }
+                else
+                {
+                    displayName = suffix;
+                }
+            }
+        }
+
+        private static string GetBodyPartKoreanName(BodyPart part)
+        {
+            switch (part)
+            {
+                case BodyPart.Head: return "머리";
+                case BodyPart.LeftArm: return "왼팔";
+                case BodyPart.RightArm: return "오른팔";
+                case BodyPart.LeftLeg: return "왼다리";
+                case BodyPart.RightLeg: return "오른다리";
+                default: return part.ToString();
             }
         }
 

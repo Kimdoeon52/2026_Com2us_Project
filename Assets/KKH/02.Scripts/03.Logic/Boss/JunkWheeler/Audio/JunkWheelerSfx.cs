@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using RealSteel.Boss.Core;
 using UnityEngine;
 
 namespace RealSteel.Boss.JunkWheeler
@@ -21,15 +22,26 @@ namespace RealSteel.Boss.JunkWheeler
         private static AudioSource _bgmSource;
         private static readonly List<AudioSource> _oneShotVoices = new();
         private static readonly List<AudioSource> _activeLoops = new();
+        private static readonly Dictionary<AudioSource, float> _loopUnscaledVolumes = new();
         private static int _nextVoiceIndex;
         private static CancellationTokenSource _bgmDuckCts;
         private static CancellationTokenSource _bgmFadeCts;
+        private static float _bgmFadeLevel = 1f;
+        private static float _bgmDuckMultiplier = 1f;
+        private static float _lastSmBgmVol = -1f;
+        private static float _lastSmSfxVol = -1f;
 
         public static JunkWheelerSfxData Data => _data;
 
         public static void Bind(JunkWheelerSfxData sfxData)
         {
             _data = sfxData;
+            if (Application.isPlaying)
+            {
+                BossAudioBridge.EnsureSoundManagerInitialized();
+                _lastSmBgmVol = BossAudioBridge.GetBgmVolume();
+                _lastSmSfxVol = BossAudioBridge.GetSfxVolume();
+            }
         }
 
         public static void Unbind()
@@ -37,6 +49,35 @@ namespace RealSteel.Boss.JunkWheeler
             StopAllLoops();
             StopBgmImmediate();
             _data = null;
+            _lastSmBgmVol = -1f;
+            _lastSmSfxVol = -1f;
+        }
+
+        /// <summary>
+        /// 공용 SoundManager의 BGM/SFX 음량 슬라이더 변경 및 외부 BGM 전환을 실시간 반영함.
+        /// </summary>
+        public static void SyncVolumes()
+        {
+            if (!Application.isPlaying || _data == null) return;
+
+            if (_bgmSource != null && _bgmSource.isPlaying && BossAudioBridge.HasExternalBgmTakenOver())
+            {
+                StopBgmImmediate();
+            }
+
+            float smBgm = BossAudioBridge.GetBgmVolume();
+            if (!Mathf.Approximately(_lastSmBgmVol, smBgm))
+            {
+                _lastSmBgmVol = smBgm;
+                ApplyCurrentBgmVolume();
+            }
+
+            float smSfx = BossAudioBridge.GetSfxVolume();
+            if (!Mathf.Approximately(_lastSmSfxVol, smSfx))
+            {
+                _lastSmSfxVol = smSfx;
+                RefreshActiveLoopsVolume(smSfx);
+            }
         }
 
         // ========================================================================
@@ -132,7 +173,8 @@ namespace RealSteel.Boss.JunkWheeler
 
             EnsureHost();
             var source = _host.AddComponent<AudioSource>();
-            ApplyCueToSource(source, cue, clip, worldPos, pitch, volumeScale);
+            BossAudioBridge.ApplySfxRouting(source);
+            float unscaledVol = ApplyCueToSource(source, cue, clip, worldPos, pitch, volumeScale);
             source.loop = true;
             if (randomStartTime && clip.length > 0.2f)
             {
@@ -141,6 +183,7 @@ namespace RealSteel.Boss.JunkWheeler
             source.Play();
 
             _activeLoops.Add(source);
+            _loopUnscaledVolumes[source] = unscaledVol;
             return source;
         }
 
@@ -152,7 +195,16 @@ namespace RealSteel.Boss.JunkWheeler
             if (loopSource == null || _data == null) return;
             loopSource.panStereo = ComputeStereoPan(worldPos);
             if (pitch > 0f) loopSource.pitch = pitch;
-            if (volume >= 0f) loopSource.volume = volume * _data.masterSfxVolume;
+            if (volume >= 0f)
+            {
+                float unscaledVol = Mathf.Clamp01(volume * _data.masterSfxVolume);
+                _loopUnscaledVolumes[loopSource] = unscaledVol;
+                loopSource.volume = Mathf.Clamp01(unscaledVol * BossAudioBridge.GetSfxVolume());
+            }
+            else if (_loopUnscaledVolumes.TryGetValue(loopSource, out float cachedVol))
+            {
+                loopSource.volume = Mathf.Clamp01(cachedVol * BossAudioBridge.GetSfxVolume());
+            }
         }
 
         public static void Stop(ref AudioSource loopSource)
@@ -160,6 +212,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (loopSource != null)
             {
                 _activeLoops.Remove(loopSource);
+                _loopUnscaledVolumes.Remove(loopSource);
                 loopSource.Stop();
                 Object.Destroy(loopSource);
             }
@@ -178,6 +231,24 @@ namespace RealSteel.Boss.JunkWheeler
                 }
             }
             _activeLoops.Clear();
+            _loopUnscaledVolumes.Clear();
+        }
+
+        private static void RefreshActiveLoopsVolume(float smSfxVolume)
+        {
+            for (int i = _activeLoops.Count - 1; i >= 0; i--)
+            {
+                AudioSource s = _activeLoops[i];
+                if (s == null)
+                {
+                    _activeLoops.RemoveAt(i);
+                    continue;
+                }
+                if (_loopUnscaledVolumes.TryGetValue(s, out float unscaledVol))
+                {
+                    s.volume = Mathf.Clamp01(unscaledVol * smSfxVolume);
+                }
+            }
         }
 
         // ========================================================================
@@ -187,28 +258,37 @@ namespace RealSteel.Boss.JunkWheeler
         public static void PlayBgm(AudioClip clip, float fadeInDuration = 0.4f)
         {
             if (!Application.isPlaying || _data == null || clip == null) return;
+            BossAudioBridge.StopExternalSoundManagerBgm(fadeInDuration);
             EnsureHost();
             EnsureBgmSource();
 
-            if (_bgmSource.clip == clip && _bgmSource.isPlaying) return;
+            if (_bgmSource.clip == clip && _bgmSource.isPlaying && _bgmFadeCts == null)
+            {
+                _bgmFadeLevel = 1f;
+                ApplyCurrentBgmVolume();
+                return;
+            }
 
             CancelBgmFade();
+            CancelBgmDuck();
+            _bgmDuckMultiplier = 1f;
             _bgmSource.clip = clip;
             _bgmSource.loop = true;
             _bgmSource.panStereo = 0f;
             _bgmSource.spatialBlend = 0f;
             _bgmSource.priority = 0;
 
-            float targetVol = _data.bgmVolume;
             if (fadeInDuration <= 0.01f)
             {
-                _bgmSource.volume = targetVol;
+                _bgmFadeLevel = 1f;
+                ApplyCurrentBgmVolume();
                 _bgmSource.Play();
             }
             else
             {
+                _bgmFadeLevel = 0f;
                 _bgmFadeCts = new CancellationTokenSource();
-                FadeBgmVolumeAsync(0f, targetVol, fadeInDuration, true, _bgmFadeCts.Token).Forget();
+                FadeBgmVolumeAsync(0f, 1f, fadeInDuration, true, _bgmFadeCts.Token).Forget();
             }
         }
 
@@ -224,7 +304,7 @@ namespace RealSteel.Boss.JunkWheeler
             else
             {
                 _bgmFadeCts = new CancellationTokenSource();
-                FadeBgmVolumeAsync(_bgmSource.volume, 0f, fadeOutDuration, false, _bgmFadeCts.Token).Forget();
+                FadeBgmVolumeAsync(_bgmFadeLevel, 0f, fadeOutDuration, false, _bgmFadeCts.Token).Forget();
             }
         }
 
@@ -241,23 +321,32 @@ namespace RealSteel.Boss.JunkWheeler
         {
             CancelBgmFade();
             CancelBgmDuck();
+            _bgmFadeLevel = 1f;
+            _bgmDuckMultiplier = 1f;
             if (_bgmSource != null)
             {
                 _bgmSource.Stop();
             }
         }
 
+        private static void ApplyCurrentBgmVolume()
+        {
+            if (_bgmSource == null || _data == null) return;
+            _bgmSource.volume = Mathf.Clamp01(_data.bgmVolume * _bgmFadeLevel * _bgmDuckMultiplier * BossAudioBridge.GetBgmVolume());
+        }
+
         private static async UniTaskVoid FadeBgmVolumeAsync(
-            float from,
-            float to,
+            float fromLevel,
+            float toLevel,
             float duration,
             bool startPlayback,
             CancellationToken token)
         {
             if (_bgmSource == null) return;
+            _bgmFadeLevel = fromLevel;
+            ApplyCurrentBgmVolume();
             if (startPlayback)
             {
-                _bgmSource.volume = from;
                 _bgmSource.Play();
             }
 
@@ -268,13 +357,15 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     token.ThrowIfCancellationRequested();
                     elapsed += Time.unscaledDeltaTime;
-                    _bgmSource.volume = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration));
+                    _bgmFadeLevel = Mathf.Lerp(fromLevel, toLevel, Mathf.Clamp01(elapsed / duration));
+                    ApplyCurrentBgmVolume();
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
                 if (_bgmSource != null)
                 {
-                    _bgmSource.volume = to;
-                    if (to <= 0.001f && !startPlayback) _bgmSource.Stop();
+                    _bgmFadeLevel = toLevel;
+                    ApplyCurrentBgmVolume();
+                    if (toLevel <= 0.001f && !startPlayback) _bgmSource.Stop();
                 }
             }
             catch (System.OperationCanceledException) { }
@@ -283,8 +374,8 @@ namespace RealSteel.Boss.JunkWheeler
         private static async UniTaskVoid RunBgmDuckAsync(float duration, float duckRatio, CancellationToken token)
         {
             if (_bgmSource == null || _data == null) return;
-            float baseVol = _data.bgmVolume;
-            _bgmSource.volume = baseVol * duckRatio;
+            _bgmDuckMultiplier = duckRatio;
+            ApplyCurrentBgmVolume();
 
             float elapsed = 0f;
             try
@@ -294,13 +385,12 @@ namespace RealSteel.Boss.JunkWheeler
                     token.ThrowIfCancellationRequested();
                     elapsed += Time.unscaledDeltaTime;
                     float t = Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration));
-                    _bgmSource.volume = Mathf.Lerp(baseVol * duckRatio, _data.bgmVolume, t);
+                    _bgmDuckMultiplier = Mathf.Lerp(duckRatio, 1f, t);
+                    ApplyCurrentBgmVolume();
                     await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken: token);
                 }
-                if (_bgmSource != null && _data != null)
-                {
-                    _bgmSource.volume = _data.bgmVolume;
-                }
+                _bgmDuckMultiplier = 1f;
+                ApplyCurrentBgmVolume();
             }
             catch (System.OperationCanceledException) { }
         }
@@ -314,7 +404,7 @@ namespace RealSteel.Boss.JunkWheeler
             return Application.isPlaying && _data != null && cue != null && cue.HasValidClip;
         }
 
-        private static void ApplyCueToSource(
+        private static float ApplyCueToSource(
             AudioSource source,
             BossSfxCue cue,
             AudioClip clip,
@@ -322,22 +412,21 @@ namespace RealSteel.Boss.JunkWheeler
             float pitch,
             float volumeScale)
         {
+            BossAudioBridge.ApplySfxRouting(source);
             source.clip = clip;
-            source.volume = Mathf.Clamp01(cue.volume * volumeScale * _data.masterSfxVolume);
+            float unscaledVol = Mathf.Clamp01(cue.volume * volumeScale * _data.masterSfxVolume);
+            source.volume = Mathf.Clamp01(unscaledVol * BossAudioBridge.GetSfxVolume());
             float jitter = cue.pitchJitter > 0f ? Random.Range(-cue.pitchJitter, cue.pitchJitter) : 0f;
             source.pitch = Mathf.Clamp(pitch * (1f + jitter), 0.35f, 2.5f);
             source.panStereo = ComputeStereoPan(worldPos);
             source.spatialBlend = 0f;
             source.playOnAwake = false;
+            return unscaledVol;
         }
 
         private static float ComputeStereoPan(Vector3 worldPos)
         {
-            if (_data == null) return 0f;
-            Camera cam = Camera.main;
-            if (cam == null) return 0f;
-            Vector3 vp = cam.WorldToViewportPoint(worldPos);
-            return Mathf.Clamp((vp.x - 0.5f) * 2f, -1f, 1f) * _data.stereoSpread;
+            return _data != null ? BossAudioBridge.ComputeStereoPan(worldPos, _data.stereoSpread) : 0f;
         }
 
         private static AudioSource AcquireOneShotVoice()
@@ -348,6 +437,7 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 var voice = _host.AddComponent<AudioSource>();
                 voice.playOnAwake = false;
+                BossAudioBridge.ApplySfxRouting(voice);
                 _oneShotVoices.Add(voice);
             }
 
@@ -368,25 +458,27 @@ namespace RealSteel.Boss.JunkWheeler
 
         private static void EnsureHost()
         {
-            if (_host != null) return;
-
-            _host = new GameObject("[JunkWheeler_AudioHost]");
-            if (Object.FindAnyObjectByType<AudioListener>() == null)
+            if (BossAudioBridge.EnsureAudioHost(ref _host, "[JunkWheeler_AudioHost]"))
             {
-                _host.AddComponent<AudioListener>();
+                _oneShotVoices.Clear();
+                _activeLoops.Clear();
+                _loopUnscaledVolumes.Clear();
+                _bgmSource = null;
+                _nextVoiceIndex = 0;
             }
-            _oneShotVoices.Clear();
-            _activeLoops.Clear();
-            _bgmSource = null;
-            _nextVoiceIndex = 0;
         }
 
         private static void EnsureBgmSource()
         {
-            if (_bgmSource != null) return;
+            if (_bgmSource != null)
+            {
+                BossAudioBridge.ApplyBgmRouting(_bgmSource);
+                return;
+            }
             EnsureHost();
             _bgmSource = _host.AddComponent<AudioSource>();
             _bgmSource.playOnAwake = false;
+            BossAudioBridge.ApplyBgmRouting(_bgmSource);
         }
 
         private static void CancelBgmFade()

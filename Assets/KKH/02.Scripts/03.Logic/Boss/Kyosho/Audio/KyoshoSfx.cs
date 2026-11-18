@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using RealSteel.Boss.Core;
 using UnityEngine;
 
 namespace RealSteel.Boss.Kyosho
@@ -70,12 +71,20 @@ namespace RealSteel.Boss.Kyosho
         private static CancellationTokenSource _fadeCts;
         private static bool _bgmIsBeatSynced;
         private static float _bgmSyncedLoopBeats = 32f;
+        private static float _bgmFadeLevel = 1f;
+        private static float _bgmDuckLevel = 1f;
+        private static float _lastSmBgmVol = -1f;
 
         public static KyoshoSfxData Data => _data;
 
         public static void Bind(KyoshoSfxData data)
         {
             _data = data;
+            if (Application.isPlaying)
+            {
+                BossAudioBridge.EnsureSoundManagerInitialized();
+                _lastSmBgmVol = BossAudioBridge.GetBgmVolume();
+            }
             PopulateMissingCuesAtRuntime(data);
         }
 
@@ -84,6 +93,7 @@ namespace RealSteel.Boss.Kyosho
             _bgmIsBeatSynced = false;
             StopBgmImmediate();
             _data = null;
+            _lastSmBgmVol = -1f;
         }
 
         // ====================================================================
@@ -492,11 +502,19 @@ namespace RealSteel.Boss.Kyosho
         public static void PlayBgm(AudioClip clip, float fadeIn = 0.4f, bool beatSynced = false, double currentTotalBeats = 0.0, float loopBeats = 32f)
         {
             if (!Application.isPlaying || clip == null) return;
+            BossAudioBridge.StopExternalSoundManagerBgm(fadeIn);
             EnsureHost();
             EnsureBgmSource();
-            if (_bgmSource.clip == clip && _bgmSource.isPlaying) return;
+            if (_bgmSource.clip == clip && _bgmSource.isPlaying && _fadeCts == null)
+            {
+                _bgmFadeLevel = 1f;
+                ApplyCurrentBgmVolume();
+                return;
+            }
 
             CancelFade();
+            CancelDuck();
+            _bgmDuckLevel = 1f;
             _bgmSource.clip = clip;
             _bgmSource.loop = true;
             _bgmSource.panStereo = 0f;
@@ -516,23 +534,36 @@ namespace RealSteel.Boss.Kyosho
                 _bgmSource.timeSamples = 0;
             }
 
-            float targetVol = _data != null ? _data.bgmVolume : 0.4f;
-
             if (fadeIn <= 0.01f)
             {
-                _bgmSource.volume = targetVol;
+                _bgmFadeLevel = 1f;
+                ApplyCurrentBgmVolume();
                 _bgmSource.Play();
             }
             else
             {
+                _bgmFadeLevel = 0f;
                 _fadeCts = new CancellationTokenSource();
-                FadeBgmAsync(0f, targetVol, fadeIn, true, _fadeCts.Token).Forget();
+                FadeBgmAsync(0f, 1f, fadeIn, true, _fadeCts.Token).Forget();
             }
         }
 
         public static void SyncBgmWithBeatClock(KyoshoBeatClock clock)
         {
             if (_bgmSource == null || _bgmSource.clip == null) return;
+            if (_bgmSource.isPlaying && BossAudioBridge.HasExternalBgmTakenOver())
+            {
+                StopBgmImmediate();
+                return;
+            }
+
+            float smBgm = BossAudioBridge.GetBgmVolume();
+            if (!Mathf.Approximately(_lastSmBgmVol, smBgm))
+            {
+                _lastSmBgmVol = smBgm;
+                ApplyCurrentBgmVolume();
+            }
+
             float targetPitch = Time.timeScale > 0f ? Time.timeScale : 0f;
             if (!Mathf.Approximately(_bgmSource.pitch, targetPitch))
             {
@@ -579,7 +610,7 @@ namespace RealSteel.Boss.Kyosho
             else
             {
                 _fadeCts = new CancellationTokenSource();
-                FadeBgmAsync(_bgmSource.volume, 0f, fadeOut, false, _fadeCts.Token).Forget();
+                FadeBgmAsync(_bgmFadeLevel, 0f, fadeOut, false, _fadeCts.Token).Forget();
             }
         }
 
@@ -595,14 +626,25 @@ namespace RealSteel.Boss.Kyosho
         {
             CancelFade();
             CancelDuck();
+            _bgmFadeLevel = 1f;
+            _bgmDuckLevel = 1f;
             _bgmIsBeatSynced = false;
             if (_bgmSource != null) _bgmSource.Stop();
         }
 
-        private static async UniTaskVoid FadeBgmAsync(float from, float to, float duration, bool startPlay, CancellationToken token)
+        private static void ApplyCurrentBgmVolume()
         {
             if (_bgmSource == null) return;
-            if (startPlay) { _bgmSource.volume = from; _bgmSource.Play(); }
+            float baseVol = _data != null ? _data.bgmVolume : 0.4f;
+            _bgmSource.volume = Mathf.Clamp01(baseVol * _bgmFadeLevel * _bgmDuckLevel * BossAudioBridge.GetBgmVolume());
+        }
+
+        private static async UniTaskVoid FadeBgmAsync(float fromLevel, float toLevel, float duration, bool startPlay, CancellationToken token)
+        {
+            if (_bgmSource == null) return;
+            _bgmFadeLevel = fromLevel;
+            ApplyCurrentBgmVolume();
+            if (startPlay) _bgmSource.Play();
             float elapsed = 0f;
             try
             {
@@ -610,13 +652,15 @@ namespace RealSteel.Boss.Kyosho
                 {
                     token.ThrowIfCancellationRequested();
                     elapsed += Time.unscaledDeltaTime;
-                    _bgmSource.volume = Mathf.Lerp(from, to, Mathf.Clamp01(elapsed / duration));
+                    _bgmFadeLevel = Mathf.Lerp(fromLevel, toLevel, Mathf.Clamp01(elapsed / duration));
+                    ApplyCurrentBgmVolume();
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
                 if (_bgmSource != null)
                 {
-                    _bgmSource.volume = to;
-                    if (to <= 0.001f && !startPlay)
+                    _bgmFadeLevel = toLevel;
+                    ApplyCurrentBgmVolume();
+                    if (toLevel <= 0.001f && !startPlay)
                     {
                         _bgmSource.Stop();
                         _bgmIsBeatSynced = false;
@@ -628,8 +672,8 @@ namespace RealSteel.Boss.Kyosho
 
         private static async UniTaskVoid RunDuckAsync(float duration, float ratio, CancellationToken token)
         {
-            float baseVol = _data != null ? _data.bgmVolume : 0.4f;
-            _bgmSource.volume = baseVol * ratio;
+            _bgmDuckLevel = ratio;
+            ApplyCurrentBgmVolume();
             float elapsed = 0f;
             try
             {
@@ -637,10 +681,12 @@ namespace RealSteel.Boss.Kyosho
                 {
                     token.ThrowIfCancellationRequested();
                     elapsed += Time.unscaledDeltaTime;
-                    _bgmSource.volume = Mathf.Lerp(baseVol * ratio, baseVol, Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration)));
+                    _bgmDuckLevel = Mathf.Lerp(ratio, 1f, Mathf.Clamp01(elapsed / Mathf.Max(0.01f, duration)));
+                    ApplyCurrentBgmVolume();
                     await UniTask.Yield(PlayerLoopTiming.Update, token);
                 }
-                if (_bgmSource != null) _bgmSource.volume = baseVol;
+                _bgmDuckLevel = 1f;
+                ApplyCurrentBgmVolume();
             }
             catch (System.OperationCanceledException) { }
         }
@@ -655,9 +701,10 @@ namespace RealSteel.Boss.Kyosho
             AudioSource src = AcquireVoice();
             if (src == null) return;
 
+            BossAudioBridge.ApplySfxRouting(src);
             float master = _data != null ? _data.masterSfxVolume : 0.85f;
             src.clip = clip;
-            src.volume = Mathf.Clamp01(volume * master);
+            src.volume = Mathf.Clamp01(volume * master * BossAudioBridge.GetSfxVolume());
             src.pitch = Mathf.Clamp(pitch, 0.35f, 2.5f);
             src.panStereo = ComputePan(worldPos);
             src.spatialBlend = 0f;
@@ -669,10 +716,7 @@ namespace RealSteel.Boss.Kyosho
         private static float ComputePan(Vector3 worldPos)
         {
             float spread = _data != null ? _data.stereoSpread : 0.5f;
-            Camera cam = Camera.main;
-            if (cam == null) return 0f;
-            Vector3 vp = cam.WorldToViewportPoint(worldPos);
-            return Mathf.Clamp((vp.x - 0.5f) * 2f, -1f, 1f) * spread;
+            return BossAudioBridge.ComputeStereoPan(worldPos, spread);
         }
 
         private static AudioSource AcquireVoice()
@@ -683,6 +727,7 @@ namespace RealSteel.Boss.Kyosho
             {
                 var s = _host.AddComponent<AudioSource>();
                 s.playOnAwake = false;
+                BossAudioBridge.ApplySfxRouting(s);
                 _voices.Add(s);
             }
 
@@ -703,23 +748,25 @@ namespace RealSteel.Boss.Kyosho
 
         private static void EnsureHost()
         {
-            if (_host != null) return;
-            _host = new GameObject("[Kyosho_AudioHost]");
-            if (Object.FindAnyObjectByType<AudioListener>() == null)
+            if (BossAudioBridge.EnsureAudioHost(ref _host, "[Kyosho_AudioHost]"))
             {
-                _host.AddComponent<AudioListener>();
+                _voices.Clear();
+                _bgmSource = null;
+                _nextVoiceIndex = 0;
             }
-            _voices.Clear();
-            _bgmSource = null;
-            _nextVoiceIndex = 0;
         }
 
         private static void EnsureBgmSource()
         {
-            if (_bgmSource != null) return;
+            if (_bgmSource != null)
+            {
+                BossAudioBridge.ApplyBgmRouting(_bgmSource);
+                return;
+            }
             EnsureHost();
             _bgmSource = _host.AddComponent<AudioSource>();
             _bgmSource.playOnAwake = false;
+            BossAudioBridge.ApplyBgmRouting(_bgmSource);
         }
 
         private static void CancelFade()

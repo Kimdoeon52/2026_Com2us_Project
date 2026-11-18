@@ -179,6 +179,12 @@ namespace RealSteel.Boss.JunkWheeler
             }
         }
 
+        protected override void Update()
+        {
+            base.Update();
+            JunkWheelerSfx.SyncVolumes();
+        }
+
         protected override void OnBossInitialized()
         {
             base.OnBossInitialized();

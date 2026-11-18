@@ -404,6 +404,22 @@ PrefabInstance:
       propertyPath: m_Mesh
       value: 
       objectReference: {fileID: 0}
+    - target: {fileID: 946171866501966071, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Size.x
+      value: 9.514047
+      objectReference: {fileID: 0}
+    - target: {fileID: 946171866501966071, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Size.z
+      value: 15.639199
+      objectReference: {fileID: 0}
+    - target: {fileID: 946171866501966071, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Center.x
+      value: 4.7383366
+      objectReference: {fileID: 0}
+    - target: {fileID: 946171866501966071, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Center.z
+      value: -5.6332936
+      objectReference: {fileID: 0}
     - target: {fileID: 994472442908659429, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
       propertyPath: cacheHash
       value: d79699fbb540d3a1
@@ -507,6 +523,26 @@ PrefabInstance:
     - target: {fileID: 1425349892457303951, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
       propertyPath: m_Mesh
       value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1433514498788746118, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Size.x
+      value: 5.9906664
+      objectReference: {fileID: 0}
+    - target: {fileID: 1433514498788746118, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Size.z
+      value: 13.4222975
+      objectReference: {fileID: 0}
+    - target: {fileID: 1433514498788746118, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Center.x
+      value: 2.9107618
+      objectReference: {fileID: 0}
+    - target: {fileID: 1433514498788746118, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Center.y
+      value: 2.2500002
+      objectReference: {fileID: 0}
+    - target: {fileID: 1433514498788746118, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Center.z
+      value: -6.7708535
       objectReference: {fileID: 0}
     - target: {fileID: 1437005351071644539, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
       propertyPath: cacheHash
@@ -1080,6 +1116,10 @@ PrefabInstance:
       propertyPath: cacheMesh
       value: 
       objectReference: {fileID: 4300000, guid: baedd503d66f4b54e9f40889a8e46ac0, type: 2}
+    - target: {fileID: 4049627667680768137, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4106873672834119658, guid: 1fa74d2808f6c83459e1fe933889ad5a, type: 3}
       propertyPath: m_Mesh
       value: 

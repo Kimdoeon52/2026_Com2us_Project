@@ -546,6 +546,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 33159c479d33cb14b8cc9199d735d825, type: 2}
@@ -819,6 +820,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 08b6c7530fa84c740897476e422a28f1, type: 2}
@@ -1366,6 +1368,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 461b1c5301f7cdd46815c64b1a882694, type: 2}
@@ -2151,6 +2154,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: fe95dda6ccb36144081514c281646626, type: 2}
@@ -2704,6 +2708,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 08b6c7530fa84c740897476e422a28f1, type: 2}
@@ -3319,7 +3324,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2210085226924712355}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2310c06d34b042548f365abca31ac3a6, type: 3}
   m_Name: 
@@ -3330,6 +3335,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 724bbfaa806d5aa43990ee461d451aac, type: 2}
@@ -3623,7 +3629,7 @@ Transform:
   m_GameObject: {fileID: 2546051349321234286}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.75, z: -0.05}
+  m_LocalPosition: {x: 0, y: 0.65, z: -0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3908,6 +3914,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c6129c1d9857aea43a834ada19a145bc, type: 2}
@@ -4162,6 +4169,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 33159c479d33cb14b8cc9199d735d825, type: 2}
@@ -4370,6 +4378,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 155e5daf87f8b6145a3468291ea503dd, type: 2}
@@ -4768,6 +4777,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: cb7a4f726d1ba354fa7f15d56de9bb36, type: 2}
@@ -5211,6 +5221,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 710b7abab2dc1324e88c54587992f44c, type: 2}
@@ -5271,6 +5282,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 41e6d25f50fe59041a9976e052ee881d, type: 2}
@@ -5469,7 +5481,7 @@ Transform:
   m_GameObject: {fileID: 3298906432001231976}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.2, y: 0.8125, z: 0.1}
+  m_LocalPosition: {x: 1.2, y: 0.7125, z: 0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5968,6 +5980,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 0d58d3aaca75b9943b1e2d9132611129, type: 2}
@@ -6167,6 +6180,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: a9726fa74c477474cba9a30bea6e6dee, type: 2}
@@ -6229,6 +6243,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: c1744c147a7549f4593e82a211570447, type: 2}
@@ -6676,6 +6691,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3e6ee3496b5670f4880cd2aba2ab47df, type: 2}
@@ -7189,6 +7205,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 08b6c7530fa84c740897476e422a28f1, type: 2}
@@ -7461,6 +7478,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: de4ecc1878c05ca4ca85655e3f0c8a39, type: 2}
@@ -9227,6 +9245,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 0
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: b37426a5899b56046899a34d2e21fa20, type: 2}
@@ -9292,6 +9311,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 08b6c7530fa84c740897476e422a28f1, type: 2}
@@ -9426,6 +9446,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 08b6c7530fa84c740897476e422a28f1, type: 2}
@@ -10064,6 +10085,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 33159c479d33cb14b8cc9199d735d825, type: 2}
@@ -10751,6 +10773,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 65d6cf187588892479720b83a7bac1e6, type: 2}
@@ -11926,6 +11949,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: eea7e097a5cdaa84a8929167527ca9cf, type: 2}
@@ -12175,6 +12199,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 7cce9b43846392042b48107fd89dbe59, type: 2}
@@ -12903,6 +12928,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3676386612049301459}
   - component: {fileID: 5367233542255558852}
+  - component: {fileID: 9107014203742205296}
   m_Layer: 0
   m_Name: "\uC0AC\uB78C"
   m_TagString: Untagged
@@ -12919,8 +12945,8 @@ Transform:
   m_GameObject: {fileID: 7980974934641921358}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.27}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2179671257958671449}
@@ -12932,7 +12958,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7980974934641921358}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff39d6708d6c48678f441121b125608b, type: 3}
   m_Name: 
@@ -12956,6 +12982,61 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: d3b29868a1c3
+--- !u!212 &9107014203742205296
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7980974934641921358}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 776483976, guid: e21ed7396f528a847b3557b3fe84592f, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.25, y: 0.64}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &8046816133459612834
 GameObject:
   m_ObjectHideFlags: 0
@@ -13876,7 +13957,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 4, y: 0.75, z: 0.75}
+  size: {x: 4, y: 0.65, z: 0.75}
   sides: 8
   topScale: 1
   steps: 4
@@ -14009,6 +14090,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 87101a2822fddec4eb07a66ef823b7cc, type: 2}
@@ -14160,6 +14242,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 97513467bc70ee241bae72a7b2d7b7ec, type: 2}
@@ -14650,6 +14733,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: fc6992e95be9e1a4f900b7868c278a31, type: 2}
@@ -14883,6 +14967,7 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
   cacheMesh: {fileID: 4300000, guid: 3c6330a088d56934caaff9ed9378dd22, type: 2}

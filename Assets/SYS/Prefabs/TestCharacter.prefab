@@ -40,11 +40,11 @@ Light:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 750792687156729324}
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 11
   m_Type: 2
   m_Color: {r: 1, g: 0.8, b: 0.55, a: 1}
-  m_Intensity: 0
+  m_Intensity: 1.4822211
   m_Range: 5
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
@@ -288,7 +288,7 @@ CharacterController:
   serializedVersion: 3
   m_Height: 0.79
   m_Radius: 0.12
-  m_SlopeLimit: 45
+  m_SlopeLimit: 47
   m_StepOffset: 0.175
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
@@ -315,6 +315,9 @@ MonoBehaviour:
   snapToRSTerrain: 1
   keepOnWalkable: 1
   maxSlideSpeed: 6
+  maxStepHeight: 0.2
+  slopeHysteresis: 4
+  minSlideTime: 0.15
   cameraMode: 0
   fixedPitch: 12
   fixedYaw: 0

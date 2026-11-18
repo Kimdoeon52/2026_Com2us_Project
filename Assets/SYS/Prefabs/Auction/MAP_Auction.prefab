@@ -424,10 +424,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: c61c720692dc6114b816bfe874ce55e0, type: 2}
-  cacheHash: 2ca816a9435d5de4
+  cacheMesh: {fileID: 4300000, guid: b29e701cff7a5444f8074996c413d8d6, type: 2}
+  cacheHash: 7a273e259ab00407
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -562,10 +563,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 19e5affd251443e4c893107b7c5cb231, type: 2}
-  cacheHash: fa9fd3f2608ed2de
+  cacheMesh: {fileID: 4300000, guid: 5a64630e68ac5b74b96c64a4f945fd4f, type: 2}
+  cacheHash: 08d918210e00edbd
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -775,10 +777,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 6e6d3001d1409c24eab9c40434166e16, type: 2}
-  cacheHash: bff11b3c9a03f5cb
+  cacheMesh: {fileID: 4300000, guid: 730a830252001864999fd33378a83e28, type: 2}
+  cacheHash: 9f9811b3dedc4c88
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -1025,6 +1028,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8877267575908006279}
   - component: {fileID: 5194862748698140048}
+  - component: {fileID: 7470119056452932967}
   m_Layer: 0
   m_Name: "\uC0AC\uB78C"
   m_TagString: Untagged
@@ -1042,7 +1046,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3829358266514859013}
@@ -1078,6 +1082,61 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: 1a87abddeb7f
+--- !u!212 &7470119056452932967
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 259986706070344086}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 2047028769, guid: e21ed7396f528a847b3557b3fe84592f, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.26, y: 0.66}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &264623110867855069
 GameObject:
   m_ObjectHideFlags: 0
@@ -1511,10 +1570,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 5f9e2240d25c6a84697d2bf5da9f566b, type: 2}
-  cacheHash: 873fc953bc890cb9
+  cacheMesh: {fileID: 4300000, guid: 63fc4e37f7a87554d993f4079f8d365d, type: 2}
+  cacheHash: 37ea24cc849b99cc
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
@@ -1870,10 +1930,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: ea99cfbaadf20794d99f20affe77ad2e, type: 2}
-  cacheHash: 06ca3117afe6fb4c
+  cacheMesh: {fileID: 4300000, guid: e4c2efcd608a5284797d4c6c4bba7ba3, type: 2}
+  cacheHash: bee3e9454574e38f
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -2581,10 +2642,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 596ed751038c116408703843c2200e68, type: 2}
-  cacheHash: 4b3661002fc88e26
+  cacheMesh: {fileID: 4300000, guid: 885b29145afee4f4b9527384c5593910, type: 2}
+  cacheHash: d2d5e7715b2f8935
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -2730,10 +2792,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 0a24b15a9cad0ea41b81a616d86c0534, type: 2}
-  cacheHash: 1dceefe9c398f8af
+  cacheMesh: {fileID: 4300000, guid: 23c53307316e46349961b05d83f0f963, type: 2}
+  cacheHash: 861bbe83fef06552
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
@@ -3165,10 +3228,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: be7f8c36c1de09342be6db63663918c4, type: 2}
-  cacheHash: b21ee595861a7170
+  cacheMesh: {fileID: 4300000, guid: 3d30dc8fda4b30943b6229724930035f, type: 2}
+  cacheHash: cf5ef297f8fdf283
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -3605,10 +3669,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 6bb3690985c767b4b905fd8d84bb961a, type: 2}
-  cacheHash: adc1ef777993e71a
+  cacheMesh: {fileID: 4300000, guid: 808fd88dc4d725445a9f9351dcf6c875, type: 2}
+  cacheHash: 2867a1cbe8d80155
   cacheSurfaces:
   - {fileID: 11400000, guid: 1acc4a731da9aa548b19beff7d4c3e00, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
@@ -4619,10 +4684,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 1519239353c6879459b17d11c7b06392, type: 2}
-  cacheHash: 13c325b62ee8a586
+  cacheMesh: {fileID: 4300000, guid: 1bc617437741b7446b1f6fde433801f6, type: 2}
+  cacheHash: 2f7eaf9a4cdb649d
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -4649,86 +4715,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.6360003, y: 1.8, z: 0.49919996}
   m_Center: {x: -0.000000059604645, y: 0.9, z: -0.009999871}
---- !u!1 &1637528140073109162
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6428915521086653650}
-  - component: {fileID: 2190587428016137240}
-  - component: {fileID: 4698251945022975136}
-  m_Layer: 0
-  m_Name: "\uC784\uC2DC_NPC_\uC785\uCC30\uB2F4\uB2F9_2"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6428915521086653650
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1637528140073109162}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 8268469104296097484}
-  m_Father: {fileID: 7459305359429659086}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2190587428016137240
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1637528140073109162}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2310c06d34b042548f365abca31ac3a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  palette: {fileID: 11400000, guid: c223cfb4f61e37d41a6c6a8bbc423219, type: 2}
-  defaultSurface: {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-  snap: 0
-  sheet: {fileID: 0}
-  copyHints: []
-  colliders: 0
-  castShadows: 1
-  shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: a7d7f7ba1945fe64a9c4b724cd75270f, type: 2}
-  cacheHash: d6c8b31c0126d5bb
-  cacheSurfaces:
-  - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-  cacheKinds: 00000000
---- !u!65 &4698251945022975136
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1637528140073109162}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.48, y: 1.8, z: 0.48}
-  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &1670228388214862352
 GameObject:
   m_ObjectHideFlags: 0
@@ -4849,10 +4835,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: e47918376c2d03e4eb89b186f611749b, type: 2}
-  cacheHash: 7793fccfd46057cd
+  cacheMesh: {fileID: 4300000, guid: fea2a2cc82972e747aba455a28152652, type: 2}
+  cacheHash: 76c885b1fe805b8e
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -5688,10 +5675,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 9f27d0a8643f98c45b767386b823b998, type: 2}
-  cacheHash: 829350cefdc9008c
+  cacheMesh: {fileID: 4300000, guid: 6c1241ea97315d849a160a37b8ef7d1c, type: 2}
+  cacheHash: 697b16ccf40d17b7
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -6757,7 +6745,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 3
-  size: {x: 1.4, y: 0.5, z: 0.5}
+  size: {x: 1.4, y: 0.42, z: 0.5}
   sides: 8
   topScale: 1
   steps: 2
@@ -6947,10 +6935,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 32e1131506a402f428723c864dd29118, type: 2}
-  cacheHash: f5e3c7e45a28fd7d
+  cacheMesh: {fileID: 4300000, guid: 0dc5c352ea9b2594aaaa4eef968f4581, type: 2}
+  cacheHash: e3eb8a1668a4891e
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -7493,10 +7482,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 5cbd1cff57fec48429f5e35a0d5a1884, type: 2}
-  cacheHash: 3d1275adb04ebbe6
+  cacheMesh: {fileID: 4300000, guid: 76d98a6b69b7e984eba4823161f42e39, type: 2}
+  cacheHash: 5ebeafac3396d9c5
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -7577,10 +7567,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: d9244ee65c06539409265a555f8b2938, type: 2}
-  cacheHash: fe3d5654f8e18b71
+  cacheMesh: {fileID: 4300000, guid: 635098df6101a2c41a39411229a3589a, type: 2}
+  cacheHash: ad555a302ebe179a
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 2279f698c5b2a5d4888899771d8087ca, type: 2}
@@ -8074,10 +8065,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: a7b64f77f8c11e446929fb9e00ab0125, type: 2}
-  cacheHash: e456f4df9be51a5e
+  cacheMesh: {fileID: 4300000, guid: 312c267891d12c647b4b13bb25807d5a, type: 2}
+  cacheHash: 09668860af40f00d
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -8277,7 +8269,7 @@ Transform:
   m_GameObject: {fileID: 3233823265974763215}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.84375, z: 0}
+  m_LocalPosition: {x: 0, y: 0.53775, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8648,7 +8640,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3449281381205847235}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2310c06d34b042548f365abca31ac3a6, type: 3}
   m_Name: 
@@ -8659,10 +8651,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 8862a8b3c7d764248b5d18f16eaacdf7, type: 2}
-  cacheHash: fc564653025bde3a
+  cacheMesh: {fileID: 4300000, guid: 5e0af1c62a657f541abae40d6a86d731, type: 2}
+  cacheHash: 8aa375dae44953b9
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
@@ -8739,10 +8732,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 5040d7e38f53f414c9b8ba061293406a, type: 2}
-  cacheHash: 0daa182bc0958b17
+  cacheMesh: {fileID: 4300000, guid: fb0ebb048abaf8f48bac54befc94bbda, type: 2}
+  cacheHash: ef98505a8e0cbe8c
   cacheSurfaces:
   - {fileID: 11400000, guid: 4c1ba355229532c4e80789cddd12d37c, type: 2}
   - {fileID: 11400000, guid: f973e62bfc7b0cd49af49004e06e05a9, type: 2}
@@ -8979,10 +8973,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 8e8239f61fc33db44a3ff2a3f9225971, type: 2}
-  cacheHash: 99a31ef1b97aa8fe
+  cacheMesh: {fileID: 4300000, guid: 0a08b7a172c13f34c9210b14768254b4, type: 2}
+  cacheHash: 43517d4208594b85
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -9490,7 +9485,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 3
-  size: {x: 1.4, y: 0.5, z: 0.5}
+  size: {x: 1.4, y: 0.42, z: 0.5}
   sides: 8
   topScale: 1
   steps: 2
@@ -9560,10 +9555,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 864e00db9cbb2874a90af05766b48f76, type: 2}
-  cacheHash: 997dde2ba4de816e
+  cacheMesh: {fileID: 4300000, guid: e78c62555b5503a4f93a73e5687c5f08, type: 2}
+  cacheHash: 2730aba53367a13d
   cacheSurfaces:
   - {fileID: 11400000, guid: 4c1ba355229532c4e80789cddd12d37c, type: 2}
   - {fileID: 11400000, guid: f973e62bfc7b0cd49af49004e06e05a9, type: 2}
@@ -9814,10 +9810,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 6242916d14136d846b838aa7f24e571b, type: 2}
-  cacheHash: 53b3153c5c46b205
+  cacheMesh: {fileID: 4300000, guid: 21f96ba21c9c8814a8f39c40d1d52a07, type: 2}
+  cacheHash: 6e86f9890dc9d716
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -9985,7 +9982,7 @@ Transform:
   m_GameObject: {fileID: 3874791231123946093}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.35, y: 0.90625, z: 0.1}
+  m_LocalPosition: {x: -0.35, y: 0.60025, z: 0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10079,10 +10076,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 420aed5a50ab6544cafed6fdc2cd347c, type: 2}
-  cacheHash: 2625172447dd76dd
+  cacheMesh: {fileID: 4300000, guid: bca1486a09d03c542b545e8417e0b6f6, type: 2}
+  cacheHash: 9157d82a73a32f06
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -10740,10 +10738,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: f9aa77c1beeb7424f8c3928b3d4cf3c7, type: 2}
-  cacheHash: ae28d6fe79b372f4
+  cacheMesh: {fileID: 4300000, guid: 4f5a234fe14557240a65d65d9e255113, type: 2}
+  cacheHash: 4eed80df326c9707
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -10865,86 +10864,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5298373610976254936}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &4157480237315697526
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 446183554025325579}
-  - component: {fileID: 4135900759247160466}
-  - component: {fileID: 5926995673770082358}
-  m_Layer: 0
-  m_Name: "\uC784\uC2DC_NPC_\uC785\uCC30\uB2F4\uB2F9_1"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &446183554025325579
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4157480237315697526}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 2661606468430581280}
-  m_Father: {fileID: 2063365030833033431}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4135900759247160466
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4157480237315697526}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2310c06d34b042548f365abca31ac3a6, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  palette: {fileID: 11400000, guid: c223cfb4f61e37d41a6c6a8bbc423219, type: 2}
-  defaultSurface: {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-  snap: 0
-  sheet: {fileID: 0}
-  copyHints: []
-  colliders: 0
-  castShadows: 1
-  shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: cc3228c5c4377594aa74bf4f2c331118, type: 2}
-  cacheHash: b89b3a5a71d106cf
-  cacheSurfaces:
-  - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-  cacheKinds: 00000000
---- !u!65 &5926995673770082358
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4157480237315697526}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.48, y: 1.8, z: 0.48}
-  m_Center: {x: 0, y: 0.9, z: 0}
 --- !u!1 &4171353243681911675
 GameObject:
   m_ObjectHideFlags: 0
@@ -11125,10 +11044,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 3cace653e13f64c4b9bd5c7a3d312109, type: 2}
-  cacheHash: f13d8277ae011eb8
+  cacheMesh: {fileID: 4300000, guid: 9d68f2ea1b5b8f14b9038be0a5b6d731, type: 2}
+  cacheHash: 056f6112e6206773
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 2279f698c5b2a5d4888899771d8087ca, type: 2}
@@ -11334,69 +11254,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 4278900571969717192}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &4357476580489119829
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2661606468430581280}
-  - component: {fileID: 5207115084224654121}
-  m_Layer: 0
-  m_Name: "\uC0AC\uB78C"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2661606468430581280
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4357476580489119829}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 446183554025325579}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5207115084224654121
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4357476580489119829}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff39d6708d6c48678f441121b125608b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shape: 2
-  size: {x: 0.5, y: 1.7, z: 0.5}
-  sides: 8
-  topScale: 1
-  steps: 4
-  roof: 0
-  overhang: 0.25
-  thickness: 0.125
-  paint:
-    face: -1
-    mode: 0
-    surface: {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-    offset: {x: 0, y: 0}
-    rotate: 0
-    flip: 0
-    border: {x: 4, y: 4, z: 4, w: 4}
-  facePaints: []
-  brightJitter: 0
-  id: d1f3aeb993fa
 --- !u!1 &4366799203361624978
 GameObject:
   m_ObjectHideFlags: 0
@@ -11501,7 +11358,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4393864028890716057}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2310c06d34b042548f365abca31ac3a6, type: 3}
   m_Name: 
@@ -11512,10 +11369,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: dbc6d3128e959824a8d0e6e0e24874d2, type: 2}
-  cacheHash: d77b1988946f5dd7
+  cacheMesh: {fileID: 4300000, guid: 66dd103f755d5aa46bbea01345d9e780, type: 2}
+  cacheHash: d372251b257657f4
   cacheSurfaces:
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
   cacheKinds: 00000000
@@ -11692,7 +11550,7 @@ Transform:
   m_GameObject: {fileID: 4439295675031171290}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.5625, z: -0.36}
+  m_LocalPosition: {x: 0, y: 0.2565, z: -0.36}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -12332,69 +12190,6 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: a6001ca48e05
---- !u!1 &4760443083391985661
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8268469104296097484}
-  - component: {fileID: 6117013992560086591}
-  m_Layer: 0
-  m_Name: "\uC0AC\uB78C"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8268469104296097484
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4760443083391985661}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 6428915521086653650}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6117013992560086591
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4760443083391985661}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ff39d6708d6c48678f441121b125608b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  shape: 2
-  size: {x: 0.5, y: 1.7, z: 0.5}
-  sides: 8
-  topScale: 1
-  steps: 4
-  roof: 0
-  overhang: 0.25
-  thickness: 0.125
-  paint:
-    face: -1
-    mode: 0
-    surface: {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-    offset: {x: 0, y: 0}
-    rotate: 0
-    flip: 0
-    border: {x: 4, y: 4, z: 4, w: 4}
-  facePaints: []
-  brightJitter: 0
-  id: 508482941ef2
 --- !u!1 &4932837885744933157
 GameObject:
   m_ObjectHideFlags: 0
@@ -12458,55 +12253,6 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: 54be5c671416
---- !u!1 &4967665834536191257
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2063365030833033431}
-  - component: {fileID: 8753819788096353676}
-  m_Layer: 0
-  m_Name: "SLOT_NPC_\uC785\uCC30\uB2F4\uB2F9_1"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2063365030833033431
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967665834536191257}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.8, y: 0.5, z: 7.2}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 446183554025325579}
-  m_Father: {fileID: 851235273240035232}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8753819788096353676
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4967665834536191257}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 320d3132aae4f614e93526bde666b443, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  note: "\uC804\uD654 \uC785\uCC30 \uB2F4\uB2F9 \uC9C1\uC6D0 \uC790\uB9AC"
-  size: {x: 0.6, y: 1.7, z: 0.6}
-  autoHideTemp: 1
-  gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &4978598619363202791
 GameObject:
   m_ObjectHideFlags: 0
@@ -12564,10 +12310,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: b4ee6650ea8ace149800d64bde7a2928, type: 2}
-  cacheHash: 3af3e5cae2c6a84f
+  cacheMesh: {fileID: 4300000, guid: aa2bab704b4fd8e4c8a9af54138280f6, type: 2}
+  cacheHash: b722309edbc383cc
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -13720,7 +13467,7 @@ Transform:
   m_GameObject: {fileID: 5496373785241273664}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.6, y: 0.8125, z: 0.05}
+  m_LocalPosition: {x: -0.6, y: 0.5625, z: 0.05}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -14006,10 +13753,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 774d59eaf9c081f429fbe988ffda6ce8, type: 2}
-  cacheHash: 025e47329ff711e7
+  cacheMesh: {fileID: 4300000, guid: b62620e49f6ff8b4b86e1e48b95fc052, type: 2}
+  cacheHash: fd707be0e309652c
   cacheSurfaces:
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}
   - {fileID: 11400000, guid: 6a66a06be5430644ba41d07c22109fa6, type: 2}
@@ -15681,10 +15429,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 2269a1301a92a11469ca660c496cb88f, type: 2}
-  cacheHash: a726271ff3572078
+  cacheMesh: {fileID: 4300000, guid: c897260053407d74790407c9127cdb15, type: 2}
+  cacheHash: 48b975e0793b07cb
   cacheSurfaces:
   - {fileID: 11400000, guid: 324501dbcb9ff2346b8e09723a5bd3d5, type: 2}
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
@@ -15936,10 +15685,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 9646bff229c77af4c9f79d87f6e822dc, type: 2}
-  cacheHash: 116488766347d053
+  cacheMesh: {fileID: 4300000, guid: 87db332c84cbf8445806794a6ac6f90e, type: 2}
+  cacheHash: 20408095898888a0
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -16023,10 +15773,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 8cf8267fac4598d458087f7af86fffae, type: 2}
-  cacheHash: 22c4639a88809c81
+  cacheMesh: {fileID: 4300000, guid: f2fcd5f2d5dc09a44b523ccd71bb6ae9, type: 2}
+  cacheHash: 734355d7d861cdba
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -16079,7 +15830,7 @@ Transform:
   m_GameObject: {fileID: 6658010931320103767}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.75, z: 0}
+  m_LocalPosition: {x: 0, y: 0.55, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -16173,10 +15924,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: be1cd9c861219d240b0aa6c06be835d2, type: 2}
-  cacheHash: e697c9f0e7f96f0a
+  cacheMesh: {fileID: 4300000, guid: c38e50a7144f8e2458ef14128b86f05a, type: 2}
+  cacheHash: da2d12e5738ebb79
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -16673,10 +16425,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 8cc67a418e9b12542bd7140bf85f83b0, type: 2}
-  cacheHash: 1729a603c119d0f7
+  cacheMesh: {fileID: 4300000, guid: 1b8fe769734ba2c4c9b46d7e6be2db78, type: 2}
+  cacheHash: be8ec7edf37b9600
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
@@ -16838,6 +16591,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7717032112428646789}
   - component: {fileID: 1504349381486875709}
+  - component: {fileID: 7810250845048807247}
   m_Layer: 0
   m_Name: "\uC0AC\uB78C"
   m_TagString: Untagged
@@ -16855,7 +16609,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7744253968328305103}
@@ -16867,7 +16621,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7040252485657501907}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ff39d6708d6c48678f441121b125608b, type: 3}
   m_Name: 
@@ -16891,6 +16645,61 @@ MonoBehaviour:
   facePaints: []
   brightJitter: 0
   id: afa7db8f170d
+--- !u!212 &7810250845048807247
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7040252485657501907}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_Sprite: {fileID: 2047028769, guid: e21ed7396f528a847b3557b3fe84592f, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 0.26, y: 0.66}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &7060184315164791589
 GameObject:
   m_ObjectHideFlags: 0
@@ -17297,10 +17106,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 1
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: f2bba9c50d93ef54ba6510d82f74df55, type: 2}
-  cacheHash: d1006649268d3a4f
+  cacheMesh: {fileID: 4300000, guid: 6d51ecc094a621f44b80cf4f1864a789, type: 2}
+  cacheHash: 5c0fc5451fd9cfc8
   cacheSurfaces:
   - {fileID: 11400000, guid: a94ae0b42995a7042b862b7ab9793c39, type: 2}
   - {fileID: 11400000, guid: e9d147a7d3fadeb47ab8ecf93d7c5e04, type: 2}
@@ -17497,10 +17307,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 3995a0a72218feb48972bd6c7e0edb4a, type: 2}
-  cacheHash: 0268c69b3d44fb0f
+  cacheMesh: {fileID: 4300000, guid: 73c367f710dcc614580fdf2a16643fec, type: 2}
+  cacheHash: d2c5ae2ddbe02a0c
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -18896,7 +18707,7 @@ Transform:
   m_GameObject: {fileID: 7863813028439156051}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.03, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18915,7 +18726,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 1.1, y: 0.84375, z: 0.7}
+  size: {x: 1.1, y: 0.57, z: 0.7}
   sides: 8
   topScale: 1
   steps: 4
@@ -19140,7 +18951,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 2.4, y: 0.75, z: 0.6}
+  size: {x: 2.4, y: 0.55, z: 0.6}
   sides: 8
   topScale: 1
   steps: 4
@@ -19438,10 +19249,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: a80f6e54a0829ab47a00ec23f2e7ca25, type: 2}
-  cacheHash: cd9818999e2997af
+  cacheMesh: {fileID: 4300000, guid: bd03c864f635aec4abcc896d652b25ba, type: 2}
+  cacheHash: b257366c69bf3f74
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -19557,7 +19369,7 @@ Transform:
   m_GameObject: {fileID: 8272474991870945596}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.3, y: 0.90625, z: 0}
+  m_LocalPosition: {x: 0.3, y: 0.60025, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -19651,10 +19463,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: c3fd5ea50809e5249bc6c605466d28f1, type: 2}
-  cacheHash: d2ccda44603035f3
+  cacheMesh: {fileID: 4300000, guid: ac9ab27bc56325641b4e017c13a76ed4, type: 2}
+  cacheHash: a04aaee1c38a70f0
   cacheSurfaces:
   - {fileID: 11400000, guid: ebda0c370b3259f4ea827780fdc88fa0, type: 2}
   - {fileID: 11400000, guid: 60c7648da61e4d54c9f89873baf8ec51, type: 2}
@@ -20133,8 +19946,6 @@ Transform:
   - {fileID: 5690900477867614227}
   - {fileID: 5531007722564851253}
   - {fileID: 5057568981373988410}
-  - {fileID: 2063365030833033431}
-  - {fileID: 7459305359429659086}
   - {fileID: 1395785460465710489}
   - {fileID: 5929560182053505015}
   - {fileID: 123011773419997388}
@@ -20196,55 +20007,6 @@ MonoBehaviour:
     \uB4E4\uC5B4\uC628\uB2E4"
   size: {x: 0.6, y: 1, z: 0.6}
   autoHideTemp: 0
-  gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
---- !u!1 &8654303987153521778
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 7459305359429659086}
-  - component: {fileID: 2437667400373069313}
-  m_Layer: 0
-  m_Name: "SLOT_NPC_\uC785\uCC30\uB2F4\uB2F9_2"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &7459305359429659086
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8654303987153521778}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 4.2, y: 0.5, z: 7.2}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6428915521086653650}
-  m_Father: {fileID: 851235273240035232}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2437667400373069313
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8654303987153521778}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 320d3132aae4f614e93526bde666b443, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  note: "\uC804\uD654 \uC785\uCC30 \uB2F4\uB2F9 \uC9C1\uC6D0 \uC790\uB9AC"
-  size: {x: 0.6, y: 1.7, z: 0.6}
-  autoHideTemp: 1
   gizmoColor: {r: 1, g: 0.62, b: 0.2, a: 0.9}
 --- !u!1 &8711417987152074096
 GameObject:
@@ -21277,10 +21039,11 @@ MonoBehaviour:
   sheet: {fileID: 0}
   copyHints: []
   colliders: 0
+  stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 3df82d5d92a6b15429a91c626302a6cd, type: 2}
-  cacheHash: 0f1ad712583422f4
+  cacheMesh: {fileID: 4300000, guid: c2938309383742f49803cd49b7deb301, type: 2}
+  cacheHash: c3477a17279e8883
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
   - {fileID: 11400000, guid: 464416a9da91c0b46a995ff8f70997f1, type: 2}

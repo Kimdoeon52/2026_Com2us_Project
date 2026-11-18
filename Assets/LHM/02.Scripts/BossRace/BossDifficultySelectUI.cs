@@ -94,6 +94,28 @@ namespace RealSteel.BossRace
             if (IsOpen) Close();
         }
 
+        // 정비하기: 수리창이 떠 있는 동안 잠깐 숨김. 콜백 · UI 스택 등록은 그대로 둬서 시계 정지 · 이동 잠금 유지
+        public bool IsSuspended { get; private set; }
+
+        public void Suspend()
+        {
+            if (!IsOpen) return;
+            IsOpen = false;
+            IsSuspended = true;
+            if (root != null && root != gameObject) root.SetActive(false);
+        }
+
+        public void Resume()
+        {
+            if (!IsSuspended) return;
+            IsSuspended = false;
+            IsOpen = true;
+            if (root != null) root.SetActive(true);
+            openedAt = Time.unscaledTime;
+            RefreshParts();
+            Select(selected);
+        }
+
         public bool Open(IBossRaceProgress source, BossRaceEntry target, IRobotPartStatus parts, string initialDifficulty, Action<string> started, Action back, string backLabel = null)
         {
             if (IsOpen || source == null || target == null) return false;
@@ -296,8 +318,14 @@ namespace RealSteel.BossRace
 
         private void RequestMaintenance()
         {
-            Debug.Log("[Difficulty] 정비하기 — 수리 UI 연결 전 (MaintenanceRequested 이벤트)");
-            MaintenanceRequested?.Invoke();
+            if (!IsOpen) return;
+            if (MaintenanceRequested == null)
+            {
+                Debug.LogWarning("[Difficulty] 정비하기 — 연결된 수리 기능이 없습니다 (HuntDeparture 확인).", this);
+                return;
+            }
+            Debug.Log("[Difficulty] 정비하기 → 수리창");
+            MaintenanceRequested.Invoke();
         }
 
         private void Close()

@@ -17,15 +17,15 @@ namespace RealSteel.MainMenu
         [SerializeField] private PanelManager mainPanels;
         [SerializeField] private CreditsManager credits;
         [SerializeField] private ModalWindowManager quitWindow;
+        [Tooltip("세이브가 있을 때 새 게임 확인창. 비우면 확인 없이 바로 초기화")]
+        [SerializeField] private ModalWindowManager newGameWindow;
         [SerializeField] private BoxButtonManager continueButton;
 
         [Header("씬")]
         [SerializeField] private string newGameScene = "OpeningCutscene";
         [SerializeField] private string continueScene = "JunkShop_Map";
 
-        [Header("이어하기")]
-        [SerializeField] private bool continueAvailable;
-
+        private bool continueAvailable;
         private bool isLeaving;
         private bool isCreditsOpen;
         private int escapeBlockedFrame = -1;
@@ -51,11 +51,12 @@ namespace RealSteel.MainMenu
                 });
             }
             if (quitWindow != null) quitWindow.onClose.AddListener(() => escapeBlockedFrame = Time.frameCount);
+            if (newGameWindow != null) newGameWindow.onClose.AddListener(() => escapeBlockedFrame = Time.frameCount);
         }
 
         private void Start()
         {
-            SetContinueAvailable(continueAvailable);
+            SetContinueAvailable(GameSaveReset.HasSave());
         }
 
         public void SetContinueAvailable(bool available)
@@ -68,6 +69,20 @@ namespace RealSteel.MainMenu
 
         public void NewGame()
         {
+            if (isLeaving) return;
+            if (continueAvailable && newGameWindow != null)
+            {
+                newGameWindow.OpenWindow();
+                return;
+            }
+            ConfirmNewGame();
+        }
+
+        public void ConfirmNewGame()
+        {
+            if (isLeaving) return;
+            if (!CanLoad(newGameScene, "새 게임")) return;
+            GameSaveReset.ResetForNewGame();
             LoadScene(newGameScene, "새 게임");
         }
 
@@ -145,14 +160,16 @@ namespace RealSteel.MainMenu
             QualitySettings.vSyncCount = on ? 1 : 0;
         }
 
+        private bool CanLoad(string sceneName, string label)
+        {
+            if (!string.IsNullOrEmpty(sceneName) && Application.CanStreamedLevelBeLoaded(sceneName)) return true;
+            Debug.LogError($"[MainMenu] {label} — 씬 '{sceneName}'이 Build Settings에 없어 이동하지 않습니다.", this);
+            return false;
+        }
+
         private void LoadScene(string sceneName, string label)
         {
-            if (isLeaving) return;
-            if (string.IsNullOrEmpty(sceneName) || !Application.CanStreamedLevelBeLoaded(sceneName))
-            {
-                Debug.LogError($"[MainMenu] {label} — 씬 '{sceneName}'이 Build Settings에 없어 이동하지 않습니다.", this);
-                return;
-            }
+            if (isLeaving || !CanLoad(sceneName, label)) return;
             isLeaving = true;
             Debug.Log($"[MainMenu] {label} → {sceneName}", this);
             SceneManager.LoadScene(sceneName);

@@ -64,8 +64,9 @@ namespace RealSteel.Dialogue.EditorTools
             GreetingPoolId = "",
             Flow = "E → 1. 토벌 신청  2. 랭킹 보드  3. 포상 수령  4. 대화  5. 나가기\n" +
                    "  토벌 신청 → 이번 시즌 보스 난이도 선택 → 보스 진입 대사 → 전투 씬 (대화 시스템 프리팹에 포함)\n" +
+                   "  난이도 선택의 정비하기 → 수리창 (닫으면 난이도 선택으로)\n" +
                    "  랭킹 보드 · 포상 수령은 시스템 연결 전이라 로그만",
-            ImportCrafting = false,
+            ImportCrafting = true,   // 정비하기용 수리창
             AllowOutsideLhm = true,
         };
 

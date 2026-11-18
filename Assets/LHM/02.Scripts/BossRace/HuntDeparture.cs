@@ -1,8 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using RealSteel.Dialogue;
 using UnityEngine;
-using UnityEngine.SceneManagement;
+using UnityEngine.InputSystem;
 
 namespace RealSteel.BossRace
 {
@@ -26,6 +27,8 @@ namespace RealSteel.BossRace
         [Header("전투 씬 (빌드 설정에 등록된 씬)")]
         [SerializeField] private string defaultBattleScene = "Copys_1020/Battle";
         [SerializeField] private List<BossBattleScene> battleScenes = new List<BossBattleScene>();
+        [Tooltip("씬에 로딩 화면이 없을 때 만들어 쓸 LJS 로딩 프리팹 (LodingManager.prefab). 비우면 로딩 화면 없이 비동기 이동")]
+        [SerializeField] private GameObject loadingScreenPrefab;
 
         [Header("이번 시즌 보스 = race.id 순서의 보스")]
         [SerializeField] private string[] raceIds = { "race1", "race2", "race3", "final" };
@@ -40,6 +43,7 @@ namespace RealSteel.BossRace
         private string bossId;
         private string difficulty;
         private bool busy;
+        private bool maintaining;
 
         public bool IsBusy => busy;
         public event Action<string, string, string> Departing;
@@ -59,6 +63,7 @@ namespace RealSteel.BossRace
             }
 
             menu.ActionChosen += OnActionChosen;
+            difficultySelect.MaintenanceRequested += OnMaintenance;
         }
 
         private void AutoResolveReferencesIfMissing()
@@ -85,6 +90,48 @@ namespace RealSteel.BossRace
         private void OnDestroy()
         {
             if (menu != null) menu.ActionChosen -= OnActionChosen;
+            if (difficultySelect != null) difficultySelect.MaintenanceRequested -= OnMaintenance;
+        }
+
+        // 정비하기: 난이도 창을 숨기고 YJW 수리창을 띄움 → 닫히면(닫기 버튼 · Esc) 난이도 창으로 돌아와 내구도 다시 표시
+        private void OnMaintenance()
+        {
+            if (!busy || maintaining) return;
+
+            MonoBehaviour owner = CraftingWindowBridge.FindOwner();
+            if (owner == null)
+            {
+                Debug.LogWarning($"[Hunt] 정비하기 — 이 씬에 수리창({CraftingWindowBridge.OwnerTypeName})이 없습니다. 대화 툴 '길드 접수원 연결'을 다시 실행하면 JunkShop_Map에서 가져옵니다.", this);
+                return;
+            }
+
+            GameObject window = CraftingWindowBridge.Open(owner, CraftingWindowBridge.FixWindowField, CraftingWindowBridge.FixOpenMethod, "수리");
+            if (window == null) return;
+
+            difficultySelect.Suspend();
+            StartCoroutine(WaitMaintenance(owner, window));
+        }
+
+        private IEnumerator WaitMaintenance(MonoBehaviour owner, GameObject window)
+        {
+            maintaining = true;
+            Debug.Log($"[Hunt] 정비 — 수리창 열림 ({window.name}), 닫으면 난이도 선택으로 돌아감");
+            yield return null;   // 정비하기를 누른 입력이 바로 닫기로 이어지지 않게 한 프레임 쉼
+
+            while (window != null && window.activeSelf)
+            {
+                if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+                {
+                    CraftingWindowBridge.Close(owner, CraftingWindowBridge.FixCloseMethod, window);
+                    yield return null;   // 같은 Esc가 난이도 창의 '뒤로'로 이어지지 않게
+                    break;
+                }
+                yield return null;
+            }
+
+            maintaining = false;
+            difficultySelect.Resume();
+            Debug.Log("[Hunt] 정비 끝 → 난이도 선택");
         }
 
         private void OnActionChosen(NpcInteractable npc, NpcAction action)
@@ -168,7 +215,7 @@ namespace RealSteel.BossRace
             manager.Save();
             Debug.Log($"[Hunt] 전투 출발 — {bossId} / {battleDifficulty} → 씬 '{scene}'");
             Departing?.Invoke(bossId, difficulty, scene);
-            SceneManager.LoadScene(scene);
+            SceneLoader.Load(scene, loadingScreenPrefab);
         }
 
         private string CurrentSeasonBoss()

@@ -28,18 +28,27 @@ namespace RealSteel.Dialogue.EditorTools
 
         private const string OutsideId = "home_outside";
         private const string InsideId = "home_inside";
+        private const string GuildExitId = "guild_inside";
         private const string HomeSceneName = "Home_Workshop";
         private const string FieldSceneName = "Map_Test";
+        private const string GuildSceneName = "League_Lobby";
+        private const string GuildDoorPrefix = "SLOT_Entrance";   // SLOT_Gate는 경기장으로 가는 셔터문이라 출구 아님
+        private const float GuildExitRadius = 1.2f;              // 플레이어 시작 위치(원점)가 입구에서 1.25m라 들어오자마자 안내가 뜨지 않게
 
+        // 길드(League_Lobby) 출구: 고물상 맵으로 나감. 맵에는 짝 문이 없어 원래 시작 위치에 도착 (길드 입장은 LJS 지도로 함)
         private sealed class Side
         {
             public bool Inside;
-            public string EntranceName => Inside ? "집 출구 ([E] 나가기)" : "집 입구 ([E] 들어가기)";
-            public string Label => Inside ? "나가기" : "들어가기";
-            public string DoorId => Inside ? InsideId : OutsideId;
-            public string ArriveAt => Inside ? OutsideId : InsideId;
-            public string TargetName => Inside ? FieldSceneName : HomeSceneName;
+            public bool Guild;
+            public string EntranceName => Guild ? "길드 출구 ([E] 나가기)" : Inside ? "집 출구 ([E] 나가기)" : "집 입구 ([E] 들어가기)";
+            public string Label => Inside || Guild ? "나가기" : "들어가기";
+            public string DoorId => Guild ? GuildExitId : Inside ? InsideId : OutsideId;
+            public string ArriveAt => Guild ? "" : Inside ? OutsideId : InsideId;
+            public string TargetName => Inside || Guild ? FieldSceneName : HomeSceneName;
+            public string Kind => Guild ? "길드 출구 → 고물상 맵" : Inside ? "집 안 출입문 → 고물상 맵" : "고물상 맵의 집 문 → 집 안";
         }
+
+        private static bool IsGuildScene(Scene scene) => scene.name.StartsWith(GuildSceneName);
 
         internal static bool Exists()
         {
@@ -60,9 +69,10 @@ namespace RealSteel.Dialogue.EditorTools
                 return;
             }
 
-            var side = new Side { Inside = IsInsideDoor(door) };
-            // 바깥 문은 SYS 컨테이너 밖에, 집 안 문은 SYS 소품 자리 밖(씬 맨 위)에 둠 → SYS 도구를 다시 눌러도 안 지워짐
-            Transform parent = side.Inside ? null
+            bool guild = IsGuildScene(scene);
+            var side = new Side { Guild = guild, Inside = !guild && IsInsideDoor(door) };
+            // 바깥 문은 SYS 컨테이너 밖에, 집 안 문 · 길드 출구는 SYS 소품 자리 밖(씬 맨 위)에 둠 → SYS 도구를 다시 눌러도 안 지워짐
+            Transform parent = side.Inside || side.Guild ? null
                 : door.parent != null && door.parent.name == FacadeHolderName ? door.parent.parent : door.parent;
             DoorInteractable existing = FindExisting(scene, parent, side);
             string targetScene = FindTargetScene(scene, side);
@@ -71,13 +81,15 @@ namespace RealSteel.Dialogue.EditorTools
             if (!SetupKit.Dialog(Title,
                     $"'{PathOf(door)}' 앞에 씬 이동 지점을 {(existing != null ? "다시 맞춥니다" : "만듭니다")}.\n" +
                     (SetupKit.IsLhmScene(scene) ? "" : $"※ LHM 밖의 씬입니다: {current}\n  다른 팀 씬이면 저장 전에 담당자와 확인하세요.\n") +
-                    $"- 종류: {(side.Inside ? "집 안 출입문 → 고물상 맵" : "고물상 맵의 집 문 → 집 안")}\n" +
+                    $"- 종류: {side.Kind}\n" +
                     $"- 오브젝트: {(parent != null ? parent.name + "/" : "")}{side.EntranceName}\n" +
                     $"- 가까이 가면 \"[E] {side.Label}\", 멀어지면 사라짐. E → 씬 이동\n" +
                     $"- 이동할 씬: {targetScene ?? "(못 찾음 — 인스펙터에서 지정)"}\n" +
                     (targetScene != null && SceneUtility.GetBuildIndexByScenePath(targetScene) < 0
                         ? "  ※ Build Settings에 없어서 에디터 플레이에서만 넘어갑니다 (빌드 전에 추가 필요)\n" : "") +
-                    $"- 도착: 넘어가면 그 씬의 '{side.ArriveAt}' 문 앞에 나타남 (반대쪽 씬에서도 이 버튼을 눌러 두세요)\n" +
+                    (side.Guild
+                        ? "- 도착: 고물상 맵의 원래 시작 위치 (맵에는 길드 문이 없음)\n"
+                        : $"- 도착: 넘어가면 그 씬의 '{side.ArriveAt}' 문 앞에 나타남 (반대쪽 씬에서도 이 버튼을 눌러 두세요)\n") +
                     "\n씬은 자동 저장하지 않습니다. (Ctrl+Z로 되돌리기)",
                     existing != null ? "다시 맞추기" : "만들기", "취소"))
             {
@@ -104,7 +116,8 @@ namespace RealSteel.Dialogue.EditorTools
                 log.AppendLine($"- 기존 {PathOf(entrance.transform)} 위치 · 설정 다시 맞춤");
             }
 
-            if (side.Inside) PlaceInside(entrance, door, log);
+            if (side.Guild) PlaceAtGuildEntrance(entrance, door, log);
+            else if (side.Inside) PlaceInside(entrance, door, log);
             else PlaceOutside(entrance, door, parent, log);
 
             var so = new SerializedObject(entrance);
@@ -123,7 +136,9 @@ namespace RealSteel.Dialogue.EditorTools
             }
             so.ApplyModifiedProperties();
             log.AppendLine($"- 이동할 씬: {(string.IsNullOrEmpty(entrance.ScenePath) ? "(비어 있음 — 인스펙터에서 지정)" : entrance.ScenePath)}");
-            log.AppendLine($"- 문 이름표 '{side.DoorId}' / 넘어가면 '{side.ArriveAt}' 문 앞에 도착");
+            log.AppendLine(side.Guild
+                ? $"- 문 이름표 '{side.DoorId}' / 넘어가면 고물상 맵의 원래 시작 위치에 도착"
+                : $"- 문 이름표 '{side.DoorId}' / 넘어가면 '{side.ArriveAt}' 문 앞에 도착");
 
             Selection.activeGameObject = entrance.gameObject;
             Undo.CollapseUndoOperations(group);
@@ -171,6 +186,11 @@ namespace RealSteel.Dialogue.EditorTools
             }
 
             Transform[] all = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).ToArray();
+            if (IsGuildScene(scene))
+            {
+                Transform gate = all.FirstOrDefault(t => t.name.StartsWith(GuildDoorPrefix));
+                if (gate != null) return gate;
+            }
             return all.FirstOrDefault(t => t.name == DoorName && t.parent != null && t.parent.name == FacadeHolderName)
                    ?? all.FirstOrDefault(t => t.name.StartsWith(InsideDoorPrefix))
                    ?? all.FirstOrDefault(t => t.name.Contains(InsideDoorKeyword) && !t.name.StartsWith(RSPropSlot.TempPrefix));
@@ -224,6 +244,20 @@ namespace RealSteel.Dialogue.EditorTools
 
             SetPose(entrance, bottom + inward * 0.6f, inward, height + 0.3f);
             log.AppendLine($"- 위치: 출입문 아래 방 안쪽 0.6m, 안내 높이 {height + 0.3f:0.0}m (방 반대쪽에 생기면 오브젝트를 180° 돌려 옮기세요)");
+        }
+
+        // 길드 입구 소품 자리 위에 그대로 둠 (앞 = 길드 안쪽). 반경은 시작 위치와 겹치지 않게 줄임
+        private static void PlaceAtGuildEntrance(DoorInteractable entrance, Transform door, StringBuilder log)
+        {
+            float height = door.TryGetComponent(out RSPropSlot slot) ? Mathf.Max(0.5f, slot.size.y * Mathf.Abs(door.lossyScale.y)) : 2.5f;
+            Vector3 forward = door.forward;
+            forward.y = 0f;
+            SetPose(entrance, door.position, forward, height + 0.3f);
+
+            var so = new SerializedObject(entrance);
+            so.FindProperty("interactRadius").floatValue = GuildExitRadius;
+            so.ApplyModifiedProperties();
+            log.AppendLine($"- 위치: 길드 입구 자리, 반경 {GuildExitRadius}m, 안내 높이 {height + 0.3f:0.0}m");
         }
 
         private static void SetPose(DoorInteractable entrance, Vector3 position, Vector3 forward, float promptHeight)

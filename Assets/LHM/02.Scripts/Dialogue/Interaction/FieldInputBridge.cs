@@ -21,6 +21,8 @@ namespace RealSteel.Dialogue
         [SerializeField] private NpcChoiceMenu menu;
         [SerializeField] private Behaviour[] uiHotkeys = new Behaviour[0];
 
+        private static readonly int SpeedHash = Animator.StringToHash("Speed");
+
         private readonly List<Behaviour> disabledHotkeys = new List<Behaviour>();
 
         private readonly List<Behaviour> disabledMovement = new List<Behaviour>();
@@ -97,6 +99,20 @@ namespace RealSteel.Dialogue
                 if (behaviour == null || !behaviour.enabled) continue;
                 behaviour.enabled = false;
                 disabledMovement.Add(behaviour);
+                StopMoveAnimation(behaviour);
+            }
+        }
+
+        // 이동 컴포넌트를 끄면 애니메이터 Speed가 마지막 값에 멈춰 제자리 달리기가 됨 (SYS RSSimpleCharacter가 매 프레임 넣던 값)
+        private static void StopMoveAnimation(Behaviour behaviour)
+        {
+            Animator animator = behaviour.GetComponentInChildren<Animator>();
+            if (animator == null || animator.runtimeAnimatorController == null) return;
+            foreach (AnimatorControllerParameter parameter in animator.parameters)
+            {
+                if (parameter.nameHash != SpeedHash || parameter.type != AnimatorControllerParameterType.Float) continue;
+                animator.SetFloat(SpeedHash, 0f);
+                return;
             }
         }
 

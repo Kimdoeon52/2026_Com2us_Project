@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using RealSteel.Dialogue;
 using UnityEngine;
@@ -35,8 +36,16 @@ namespace RealSteel.BossRace
             partDurability = newPartDurability;
         }
 
+        // KDU 인벤토리(장착 파츠)의 실제 내구도. 인벤토리가 없는 테스트 씬만 인스펙터 값 사용
         public bool TryGetDurability(BodyPart part, out float ratio)
         {
+            if (InventoryHost.Instance != null && Enum.TryParse(part.ToString(), out Slot slot))
+            {
+                PartsDefinition equipped = InventoryHost.Instance.GetEquipped(slot);
+                ratio = equipped != null && equipped.Durability > 0 ? (float)InventoryHost.Instance.GetDurability(slot) / equipped.Durability : 0f;
+                return true;
+            }
+
             int index = (int)part;
             bool exists = partDurability != null && index >= 0 && index < partDurability.Length;
             ratio = exists ? partDurability[index] : 0f;

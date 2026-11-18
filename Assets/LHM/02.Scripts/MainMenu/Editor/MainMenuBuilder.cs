@@ -72,6 +72,7 @@ namespace RealSteel.MainMenu.EditorTools
 
             CreditsManager credits = BuildCredits(ctx, creditsPreset);
             ModalWindowManager quit = BuildQuitWindow(ctx);
+            ModalWindowManager newGameWindow = BuildNewGameWindow(ctx);
             Animator splash = BuildSplash(ctx);
             ImageFading init = BuildInitScreen(ctx);
 
@@ -86,6 +87,7 @@ namespace RealSteel.MainMenu.EditorTools
             Set(ctx.controller, "mainPanels", ctx.panels);
             Set(ctx.controller, "credits", credits);
             Set(ctx.controller, "quitWindow", quit);
+            Set(ctx.controller, "newGameWindow", newGameWindow);
             Set(ctx.controller, "continueButton", continueBox);
 
             log.AppendLine($"- Heat UI Manager 연결: {BindUIManager(canvasGo, ui)}곳, Roboto → 나눔바른고딕: {ReplaceHeatFonts(canvasGo, ui)}곳");
@@ -283,15 +285,25 @@ namespace RealSteel.MainMenu.EditorTools
 
         private static ModalWindowManager BuildQuitWindow(Context ctx)
         {
-            GameObject go = Prefab("UI Elements/Modal Window/Modal Window.prefab", ctx.canvas, "Quit Window");
+            return BuildConfirmWindow(ctx, "Quit Window", "게임 종료", "게임을 종료할까요?", "종료", ctx.controller.Quit);
+        }
+
+        private static ModalWindowManager BuildNewGameWindow(Context ctx)
+        {
+            return BuildConfirmWindow(ctx, "New Game Window", "새 게임", "저장된 진행이 모두 지워집니다.\n새 게임을 시작할까요?", "시작", ctx.controller.ConfirmNewGame);
+        }
+
+        private static ModalWindowManager BuildConfirmWindow(Context ctx, string name, string title, string description, string confirmLabel, UnityEngine.Events.UnityAction onConfirm)
+        {
+            GameObject go = Prefab("UI Elements/Modal Window/Modal Window.prefab", ctx.canvas, name);
             var modal = go.GetComponent<ModalWindowManager>();
-            modal.titleText = "게임 종료";
-            modal.descriptionText = "게임을 종료할까요?";
+            modal.titleText = title;
+            modal.descriptionText = description;
             modal.useLocalization = false;
-            Label(modal.confirmButton, "종료");
+            Label(modal.confirmButton, confirmLabel);
             Label(modal.cancelButton, "취소");
             modal.UpdateUI();
-            Listen(modal.onConfirm, ctx.controller.Quit);
+            Listen(modal.onConfirm, onConfirm);
             return modal;
         }
 

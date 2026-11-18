@@ -87,8 +87,6 @@ namespace RealSteel.Dialogue
         private string openWindowClose;
         private bool windowPending;
 
-        // YJW 제작 · 수리 창 이름 — 그쪽 코드를 직접 참조하지 않고 이름으로 찾음 (바뀌면 콘솔에 안내)
-        private const string CraftingUiTypeName = "CraftingUIManager";
         // LJS 랭킹 창 — 이름으로 찾음
         private const string RankingUiTypeName = "RankingUiManager";
         private const string RankingToggleMethod = "ToggleRankingUI";
@@ -438,32 +436,22 @@ namespace RealSteel.Dialogue
         // 제작 · 수리 창 열기: 창 관리자의 열기 함수를 부르고, 창이 꺼질 때까지 기다렸다가 상호작용 종료
         private bool OpenCraftingUi(string windowField, string openMethod, string closeMethod, string label)
         {
-            MonoBehaviour owner = craftingUi != null ? craftingUi : FindCraftingUi();
+            if (craftingUi == null) craftingUi = CraftingWindowBridge.FindOwner();
+            MonoBehaviour owner = craftingUi;
             if (owner == null)
             {
-                Debug.LogWarning($"[NPC] 이 씬에 {label} 창 관리자({CraftingUiTypeName})가 없어 열 수 없습니다. 제작 · 수리 창이 있는 씬인지 확인하세요.", this);
+                Debug.LogWarning($"[NPC] 이 씬에 {label} 창 관리자({CraftingWindowBridge.OwnerTypeName})가 없어 열 수 없습니다. 제작 · 수리 창이 있는 씬인지 확인하세요.", this);
                 return false;
             }
 
-            System.Type type = owner.GetType();
-            var window = type.GetField(windowField, AnyInstance)?.GetValue(owner) as GameObject;
-            MethodInfo open = type.GetMethod(openMethod, AnyInstance, null, System.Type.EmptyTypes, null);
-            if (window == null)
-            {
-                Debug.LogWarning($"[NPC] {type.Name}의 '{windowField}' 칸이 비어 있거나 이름이 바뀌어 {label} 창을 열 수 없습니다.", owner);
-                return false;
-            }
-
-            if (open != null) open.Invoke(owner, null);
-            else Debug.LogWarning($"[NPC] {type.Name}에 '{openMethod}' 함수가 없어 창만 켭니다.", owner);
-            if (!window.activeSelf) window.SetActive(true);
+            GameObject window = CraftingWindowBridge.Open(owner, windowField, openMethod, label);
+            if (window == null) return false;
 
             openWindow = window;
             openWindowOwner = owner;
             openWindowClose = closeMethod;
             ChangeState(State.Window);
             Debug.Log($"[NPC] {label} 창 열림 ({window.name}) — 창의 닫기 버튼 또는 Esc로 닫으면 상호작용 종료");
-            if (!window.activeInHierarchy) Debug.LogWarning($"[NPC] '{window.name}'의 부모가 꺼져 있어 화면에 보이지 않습니다.", window);
             return true;
         }
 
@@ -590,15 +578,6 @@ namespace RealSteel.Dialogue
             return null;
         }
 
-        private MonoBehaviour FindCraftingUi()
-        {
-            foreach (MonoBehaviour behaviour in FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-            {
-                if (behaviour != null && behaviour.GetType().Name == CraftingUiTypeName) return craftingUi = behaviour;
-            }
-            return null;
-        }
-
         private void HandleWindowInput()
         {
             if (windowPending) return;
@@ -621,9 +600,7 @@ namespace RealSteel.Dialogue
         // 창 관리자의 닫기 함수를 우선 사용 (제작창은 올려 둔 재료 되돌리기 · 인벤토리 숨기기까지 해 줌)
         private void CloseOpenWindow()
         {
-            MethodInfo close = openWindowOwner != null ? openWindowOwner.GetType().GetMethod(openWindowClose, AnyInstance, null, System.Type.EmptyTypes, null) : null;
-            if (close != null) close.Invoke(openWindowOwner, null);
-            if (openWindow.activeSelf) openWindow.SetActive(false);
+            CraftingWindowBridge.Close(openWindowOwner, openWindowClose, openWindow);
         }
 
         private void OnDialogueClosed()

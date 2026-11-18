@@ -1,8 +1,7 @@
 using UnityEngine;
-using System.Collections;
 
 /// <summary>
-/// 전반적인 UI의 온오프 담당하는 매니저. 현재는 맵과 달력뿐임
+/// 전반적인 UI의 온오프 담당하는 매니저. 
 /// </summary>
 public class SystemUiOnOffManager : MonoBehaviour
 {
@@ -16,28 +15,32 @@ public class SystemUiOnOffManager : MonoBehaviour
         bool isCalendarActive = CalendarUiManager.Instance.calendarCanvas.activeSelf;
         bool isRankingActive = RankingUiManager.Instance.rankingCanvas.activeSelf;
 
+        // 지도
         if (Input.GetKeyDown(KeyCode.M))
         {
             if (isMapActive)
             {
                 IsoMapSystemManager.Instance.ToggleMapUI();
             }
-            else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isCalendarActive)
+            else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isCalendarActive || isRankingActive)
             {
-                if (isCalendarActive) CalendarUiManager.Instance.ToggleCalendarUI(); // 켜져있는 달력 강제 종료
+                if (isCalendarActive) CalendarUiManager.Instance.ToggleCalendarUI(); // 켜져있는 달력, 랭킹창 강제 종료
+                if (isRankingActive) RankingUiManager.Instance.ToggleRankingUI();
                 IsoMapSystemManager.Instance.ToggleMapUI(); // 지도 켜기
             }
         }
 
+        // 달력
         else if (Input.GetKeyDown(KeyCode.O))
         {
             if (isCalendarActive)
             {
                 CalendarUiManager.Instance.ToggleCalendarUI();
             }
-            else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isMapActive)
+            else if (TimeSystemManager.Instance.currentState == TimeSystemManager.TimeState.Running || isMapActive || isRankingActive)
             {
-                if (isMapActive) IsoMapSystemManager.Instance.ToggleMapUI(); // 켜져있는 지도 강제 종료
+                if (isMapActive) IsoMapSystemManager.Instance.ToggleMapUI(); // 켜져있는 지도, 랭킹 강제 종료
+                if (isRankingActive) RankingUiManager.Instance.ToggleRankingUI();
                 CalendarUiManager.Instance.ToggleCalendarUI(); // 달력 켜기
             }
         }

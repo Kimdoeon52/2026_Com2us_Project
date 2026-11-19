@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 // 부품을 덮은 고물 조각을 창 밖으로 끌어내 전부 치우면 성공.
 // 제한 시간은 베이스의 Time Limit에서 설정한다
@@ -15,6 +16,19 @@ public class DebrisClearMinigame : ScrapMinigameBase
     [Tooltip("조각 프리팹")]
     [SerializeField] private DraggableDebris _debrisPrefab;
 
+    [Tooltip("조각 그림 후보. 비우면 프리팹 그대로")]
+    [SerializeField] private Sprite[] _debrisSprites;
+
+    [Tooltip("이 알파 미만인 부분은 클릭이 통과한다")]
+    [Range(0f, 1f)]
+    [SerializeField] private float _hitAlphaThreshold = 0.1f;
+
+    [Tooltip("바닥과 구분되는 조각 외곽선 색. 알파 0이면 끈다")]
+    [SerializeField] private Color _outlineColor = new Color(0.78f, 0.74f, 0.64f, 1f);
+
+    [Tooltip("외곽선 두께. 그림 픽셀 크기에 맞춘다")]
+    [SerializeField] private Vector2 _outlineDistance = new Vector2(2f, 2f);
+
     [Tooltip("드래그 좌표 보정용 캔버스")]
     [SerializeField] private Canvas _canvas;
 
@@ -26,6 +40,10 @@ public class DebrisClearMinigame : ScrapMinigameBase
     [Tooltip("생성 영역 가장자리 여백")]
     [Min(0f)]
     [SerializeField] private float _edgePadding = 24f;
+
+    [Tooltip("생성 범위 비율. 작을수록 가운데로 몰린다")]
+    [Range(0.05f, 1f)]
+    [SerializeField] private float _spawnSpread = 1f;
 
     [Tooltip("조각 회전 범위(도). 0이면 회전하지 않는다")]
     [Min(0f)]
@@ -75,15 +93,40 @@ public class DebrisClearMinigame : ScrapMinigameBase
             rect.anchoredPosition = RandomPoint();
             rect.localRotation = Quaternion.Euler(0f, 0f, _rng.Range(-_rotationRange, _rotationRange));
 
+            ApplySprite(debris);
             debris.Setup(_boundsRect, _canvas, OnDebrisRemoved);
         }
+    }
+
+    // 그림을 무작위로 바꾸고 크기를 그림에 맞춘다
+    private void ApplySprite(DraggableDebris debris)
+    {
+        if (_debrisSprites == null || _debrisSprites.Length == 0)
+            return;
+
+        if (!debris.TryGetComponent(out Image image))
+            return;
+
+        Sprite sprite = _debrisSprites[_rng.Range(0, _debrisSprites.Length)];
+        if (sprite == null)
+            return;
+
+        image.sprite = sprite;
+        image.color = Color.white;
+        image.SetNativeSize();
+        image.alphaHitTestMinimumThreshold = _hitAlphaThreshold;
+
+        Outline outline = debris.GetOrAddComponent<Outline>();
+        outline.enabled = _outlineColor.a > 0f;
+        outline.effectColor = _outlineColor;
+        outline.effectDistance = _outlineDistance;
     }
 
     private Vector2 RandomPoint()
     {
         Rect area = _spawnArea.rect;
-        float halfWidth = Mathf.Max(0f, (area.width * 0.5f) - _edgePadding);
-        float halfHeight = Mathf.Max(0f, (area.height * 0.5f) - _edgePadding);
+        float halfWidth = Mathf.Max(0f, (area.width * 0.5f) - _edgePadding) * _spawnSpread;
+        float halfHeight = Mathf.Max(0f, (area.height * 0.5f) - _edgePadding) * _spawnSpread;
 
         return new Vector2(_rng.Range(-halfWidth, halfWidth), _rng.Range(-halfHeight, halfHeight));
     }

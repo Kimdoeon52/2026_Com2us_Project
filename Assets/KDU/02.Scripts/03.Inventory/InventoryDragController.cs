@@ -58,6 +58,12 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
             Debug.LogWarning("UI 오브젝트에 붙여야 드래그가 들어온다.");
     }
 
+    // 드래그 중 창이 닫히면 OnEndDrag가 안 오므로 여기서 취소
+    private void OnDisable()
+    {
+        ClearDrag();
+    }
+
     public void OnBeginDrag(PointerEventData eventData)
     {
         _index = None;
@@ -135,6 +141,12 @@ public class InventoryDragController : MonoBehaviour, IBeginDragHandler, IDragHa
             Host.MoveEntry(_index, ToOrigin(local));
         }
 
+        ClearDrag();
+    }
+
+    // 고스트·원본 표시를 되돌리고 드래그 상태를 비운다
+    private void ClearDrag()
+    {
         RestoreSource();
         HideGhost();
         _index = None;

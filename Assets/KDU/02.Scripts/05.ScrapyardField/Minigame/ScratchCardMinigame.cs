@@ -89,8 +89,15 @@ public class ScratchCardMinigame : ScrapMinigameBase
         {
             EnsureCell(i);
             _cellImages[i].color = _cellColor;
-            _cellLabels[i].text = _cells[i] != null ? _cells[i].DisplayName : string.Empty;
+            _cellLabels[i].text = _cells[i] != null ? CellLabel(_cells[i].DisplayName) : string.Empty;
         }
+    }
+
+    // 칸이 좁아 글자 단위로 끊기지 않게 첫 띄어쓰기에서만 줄을 나눈다
+    private static string CellLabel(string displayName)
+    {
+        int space = displayName.IndexOf(' ');
+        return space < 0 ? displayName : displayName.Substring(0, space) + "\n" + displayName.Substring(space + 1);
     }
 
     // 칸은 처음 한 번만 만들고 재사용한다
@@ -128,6 +135,7 @@ public class ScratchCardMinigame : ScrapMinigameBase
 
         label.color = _labelColor;
         label.alignment = TextAlignmentOptions.Center;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
         label.enableAutoSizing = true;
         label.fontSizeMin = 10f;
         label.fontSizeMax = 28f;

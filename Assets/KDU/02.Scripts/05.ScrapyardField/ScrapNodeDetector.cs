@@ -9,6 +9,9 @@ public class ScrapNodeDetector : MonoBehaviour
     [Tooltip("추적할 대상. 플레이어를 교체하면 여기만 다시 꽂는다")]
     [SerializeField] private Transform _trackedTarget;
 
+    [Tooltip("총량 확인용. 비우면 같은 오브젝트에서 찾는다")]
+    [SerializeField] private ScrapyardFieldHost _host;
+
     [Tooltip("탐지 갱신 간격(초). 0이면 매 프레임")]
     [Min(0f)]
     [SerializeField] private float _tickInterval = 0.05f;
@@ -30,6 +33,21 @@ public class ScrapNodeDetector : MonoBehaviour
 
     // 매 틱 방송. 연출·사운드·상호작용이 각자 구독한다
     public event Action<ScrapDetectionState> StateUpdated;
+
+    private void Awake()
+    {
+        if (_host == null)
+            _host = GetComponent<ScrapyardFieldHost>();
+    }
+
+    // 소모되지 않았고 지역 총량도 남은 노드만 탐지 대상이다
+    public bool IsAvailable(ScrapNode node)
+    {
+        if (node == null || node.Consumed)
+            return false;
+
+        return _host == null || node.Pile == null || _host.HasRemaining(node.Pile.Definition);
+    }
 
     private void Update()
     {
@@ -61,6 +79,14 @@ public class ScrapNodeDetector : MonoBehaviour
 
                 // 직선 거리
                 float distance = Vector3.Distance(origin, node.transform.position);
+                if (!IsAvailable(node))
+                {
+                    if (node.IsWithinInteract(distance))
+                        next.DepletedNearby = true;
+
+                    continue;
+                }
+
                 if (!node.IsWithinDetect(distance) || distance >= bestDistance)
                     continue;
 

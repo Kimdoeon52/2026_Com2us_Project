@@ -3,6 +3,8 @@ using UnityEngine;
 // 상호작용 입력을 직접 받는다. 플레이어 이동 스크립트와 완전히 분리되어 있다
 public class ScrapInteractor : MonoBehaviour
 {
+    private const string DepletedMessage = "이번 달 고철이 바닥났다";
+
     [Tooltip("대상 노드 공급원")]
     [SerializeField] private ScrapNodeDetector _detector;
 
@@ -36,7 +38,7 @@ public class ScrapInteractor : MonoBehaviour
         ScrapDetectionState state = _detector != null ? _detector.State : default;
         if (!state.InInteractRange)
         {
-            ShowWarning(state.HasTarget ? "너무 멀다" : "주변에 아무것도 없다");
+            ShowWarning(state.DepletedNearby ? DepletedMessage : state.HasTarget ? "너무 멀다" : "주변에 아무것도 없다");
             return;
         }
 
@@ -52,7 +54,7 @@ public class ScrapInteractor : MonoBehaviour
         ScrapyardDefinition definition = pile.Definition;
         if (!_host.TryCollect(definition, out CollectOutcome outcome))
         {
-            ShowWarning("더 이상 나올 게 없다");
+            ShowWarning(_host.HasRemaining(definition) ? "더 이상 나올 게 없다" : DepletedMessage);
             return;
         }
 

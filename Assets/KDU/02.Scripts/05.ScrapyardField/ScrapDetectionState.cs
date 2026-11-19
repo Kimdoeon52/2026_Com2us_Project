@@ -6,5 +6,8 @@ public struct ScrapDetectionState
     public float Intensity01;
     public bool InInteractRange;
 
+    // 손 닿는 거리에 노드는 있지만 이번 달 총량이 바닥나 대상에서 빠졌다
+    public bool DepletedNearby;
+
     public bool HasTarget => Node != null;
 }

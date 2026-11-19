@@ -54,6 +54,15 @@ public class ScrapyardFieldHost : MonoBehaviour
         return true;
     }
 
+    // 이번 달 총량이 남았는지. 상태가 아직 없으면 남은 것으로 본다
+    public bool HasRemaining(ScrapyardDefinition definition)
+    {
+        if (definition == null || _states == null)
+            return true;
+
+        return _states.GetOrCreate(definition.RegionIndex).HasRemaining(definition.MonthlyTotal);
+    }
+
     // 미니게임 결과 보상. 실패해도 낮은 등급이 나오므로 성패를 받아 분기한다
     public bool ResolveMinigame(ScrapyardDefinition definition, MinigameRewardTable table, ScrapMinigameResult result, out CollectOutcome outcome)
     {

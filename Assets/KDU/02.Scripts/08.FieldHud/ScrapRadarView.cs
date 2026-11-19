@@ -72,7 +72,7 @@ public class ScrapRadarView : MonoBehaviour
             for (int i = 0; i < nodes.Count; i++)
             {
                 ScrapNode node = nodes[i];
-                if (node == null || node.Consumed)
+                if (!IsVisible(node))
                     continue;
 
                 Vector3 offset = view * (node.transform.position - target.position);
@@ -118,13 +118,19 @@ public class ScrapRadarView : MonoBehaviour
         return diff >= 0f && diff <= _sweep.fillAmount * 360f;
     }
 
+    // 탐지기와 같은 기준. 총량이 바닥난 지역 노드도 감춘다
+    private bool IsVisible(ScrapNode node)
+    {
+        return _detector != null ? _detector.IsAvailable(node) : node != null && !node.Consumed;
+    }
+
     // 다 사라졌거나 수집된 노드 기록은 지운다
     private void ForgetStale(float now)
     {
         _expired.Clear();
         foreach (KeyValuePair<ScrapNode, float> pair in _lastHit)
         {
-            if (pair.Key == null || pair.Key.Consumed || now - pair.Value > _fadeTime)
+            if (!IsVisible(pair.Key) || now - pair.Value > _fadeTime)
                 _expired.Add(pair.Key);
         }
 

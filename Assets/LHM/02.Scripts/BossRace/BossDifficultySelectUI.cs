@@ -302,6 +302,12 @@ namespace RealSteel.BossRace
         {
             if (!IsOpen || selected < 0 || selected >= difficulties.Count || BossUiInputGate.IsBlocked()) return;
 
+            // _261119_selectedNameText의 텍스트와 색상(Hex 문자열)을 PlayerPrefs에 저장. 전투씬 난이도 표기를 위해서
+            string label = selectedNameText != null ? selectedNameText.text : difficulties[selected].label;
+            Color color = selectedNameText != null ? selectedNameText.color : ColorOf(selected);
+            PlayerPrefs.SetString("SelectedDifficultyText", label);
+            PlayerPrefs.SetString("SelectedDifficultyColor", ColorUtility.ToHtmlStringRGBA(color));
+
             string id = difficulties[selected].id;
             Action<string> callback = onStart;
             Debug.Log($"[Difficulty] 레이스 시작 — {boss.bossName} / {difficulties[selected].label} ({id})");

@@ -61,6 +61,15 @@ public class InventoryToggle : MonoBehaviour
         if (_current != null && !IsFullyOpen(_current))
             Close(false);
 
+        // 미니게임 중에는 열지 않고, 열려 있던 창도 닫는다
+        if (ScrapMinigameBase.IsAnyRunning)
+        {
+            if (_current != null)
+                Close(true);
+
+            return;
+        }
+
         if (_current != null && Input.GetKeyDown(_closeKey))
         {
             Close(true);

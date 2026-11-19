@@ -17,9 +17,14 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
     [Tooltip("남은 시간 표시. 00.00 형식")]
     [SerializeField] private TMP_Text _timerLabel;
 
+    private static int _runningCount;
+
     private Action<ScrapMinigameResult> _onComplete;
     private float _remaining;
     private bool _running;
+
+    // 미니게임이 하나라도 진행 중인지. 다른 창이 열리지 않게 막는 데 쓴다
+    public static bool IsAnyRunning => _runningCount > 0;
 
     protected bool IsRunning => _running;
     protected float TimeLimit => _timeLimit;
@@ -33,6 +38,7 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
         _onComplete = onComplete;
         _running = true;
         _remaining = _timeLimit;
+        _runningCount++;
 
         ScrapInputGate.Push();
 
@@ -77,6 +83,7 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
             _overlayRoot.SetActive(false);
 
         ScrapInputGate.Pop();
+        _runningCount = Mathf.Max(0, _runningCount - 1);
 
         Action<ScrapMinigameResult> callback = _onComplete;
         _onComplete = null;
@@ -93,6 +100,10 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
     protected virtual void OnTick() { }
 
     protected virtual void OnFinish() { }
+
+    // 도메인 리로드를 끈 상태에서도 플레이 진입 시 풀려 있어야 한다
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => _runningCount = 0;
 
     private void UpdateTimerLabel()
     {

@@ -1,5 +1,7 @@
 using DG.Tweening;
+using RealSteel.Dialogue;
 using RealSteel.Tutorial;
+using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -23,6 +25,28 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] private Button _settingsButton;
     [SerializeField] private Button _quitButton;
 
+    [Header("현재 상태")]
+    [Tooltip("날짜 / 멈춘 시각 / 현재 위치를 보여줄 글자")]
+    [SerializeField] private TMP_Text _statusText;
+
+    [Tooltip("씬 이름별 현재 지역 이름. 목록에 없는 씬은 지역을 비운다")]
+    [SerializeField] private SceneLabel[] _sceneLabels =
+    {
+        new SceneLabel { Scene = "Main_Home_Workshop", Label = "거점" },
+        new SceneLabel { Scene = "Main_Junk_Shop", Label = "고물상" },
+        new SceneLabel { Scene = "Main_Auction_Hall", Label = "경매장" },
+        new SceneLabel { Scene = "Main_League_Lobby", Label = "길드" },
+        new SceneLabel { Scene = "Main_Fight_Map_1", Label = "경기장" },
+        new SceneLabel { Scene = "Main_Boss1", Label = "보스전" },
+    };
+
+    [System.Serializable]
+    private struct SceneLabel
+    {
+        public string Scene;
+        public string Label;
+    }
+
     [Header("연결")]
     [Tooltip("환경설정 버튼으로 열 창. 비어 있으면 경고만 띄운다")]
     [SerializeField] private GameObject _settingsWindow;
@@ -38,6 +62,10 @@ public class PauseMenu : MonoBehaviour
     private CanvasGroup _group;
     private bool _blockedLastFrame;
     private bool _closing;
+
+    // 게임 시계는 Time.timeScale과 상관없이 흐르므로 따로 멈췄는지 기억한다
+    private bool _stoppedClock;
+    private bool _pushedUiStack;
 
     public bool IsOpen => _panel.activeSelf && !_closing;
 
@@ -91,7 +119,7 @@ public class PauseMenu : MonoBehaviour
 
     private void OnDisable()
     {
-        GamePause.Remove(this);
+        ResumeTime();
     }
 
     public void Open()
@@ -99,9 +127,89 @@ public class PauseMenu : MonoBehaviour
         _closing = false;
         _group.DOKill();
         _group.interactable = true;
+
+        // 글자가 한 글자씩 나오는 연출이 켜질 때 글자 수를 재므로 켜기 전에 채운다
+        RefreshStatus();
         _panel.SetActive(true);
         FitContent();
+        StopTime();
+    }
+
+    // 실제 시간(timeScale)과 게임 시계(TimeSystemManager)를 함께 멈춘다
+    // 열린 UI를 세는 LHM UI 스택이 있으면 거기에 등록해서 다른 창들과 같은 방식으로 시계를 멈춘다
+    private void StopTime()
+    {
         GamePause.Push(this);
+
+        if (UiStack.Current != null)
+        {
+            UiStack.Push(this);
+            _pushedUiStack = true;
+            return;
+        }
+
+        TimeSystemManager clock = GameClock();
+        if (clock != null && clock.currentState == TimeSystemManager.TimeState.Running)
+        {
+            clock.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
+            _stoppedClock = true;
+        }
+    }
+
+    // 메뉴가 멈춘 것만 되돌린다. 메뉴 동안 다른 창이 시계 상태를 바꿨으면 건드리지 않는다
+    private void ResumeTime()
+    {
+        GamePause.Remove(this);
+
+        if (_pushedUiStack)
+        {
+            _pushedUiStack = false;
+            UiStack.Remove(this);
+        }
+
+        if (!_stoppedClock) return;
+        _stoppedClock = false;
+
+        TimeSystemManager clock = GameClock();
+        if (clock != null && clock.currentState == TimeSystemManager.TimeState.UIOpen)
+            clock.ChangeTimeState(TimeSystemManager.TimeState.Running);
+    }
+
+    // 게임 내 날짜·시각 (TimeSystemManager의 year · month · day · hour) / 현재 지역
+    // 예: 2080.03.28  /  14:00  /  고물상
+    private void RefreshStatus()
+    {
+        if (_statusText == null) return;
+
+        TimeSystemManager clock = GameClock();
+        string date = clock != null ? $"{clock.year}.{clock.month:D2}.{clock.day:D2}  /  {clock.hour:D2}:00" : "----.--.--  /  --:--";
+        string location = CurrentLocation();
+
+        _statusText.text = string.IsNullOrEmpty(location) ? date : $"{date}  /  {location}";
+    }
+
+    // 싱글톤이 아직 안 잡혔거나 꺼져 있어도 씬에 있으면 찾는다
+    private static TimeSystemManager GameClock()
+    {
+        if (TimeSystemManager.Instance != null) return TimeSystemManager.Instance;
+        return FindAnyObjectByType<TimeSystemManager>(FindObjectsInactive.Include);
+    }
+
+    private string CurrentLocation()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+
+        // 목록에 있는 본 게임(Main) 씬만 지역을 보여주고, 테스트 씬 등은 비운다
+        if (_sceneLabels != null)
+        {
+            foreach (SceneLabel label in _sceneLabels)
+            {
+                if (label.Scene == scene && !string.IsNullOrEmpty(label.Label))
+                    return label.Label;
+            }
+        }
+
+        return "";
     }
 
     public void Resume()
@@ -117,7 +225,7 @@ public class PauseMenu : MonoBehaviour
         {
             _panel.SetActive(false);
             _closing = false;
-            GamePause.Remove(this);
+            ResumeTime();
         });
     }
 
@@ -134,7 +242,7 @@ public class PauseMenu : MonoBehaviour
 
     public void QuitGame()
     {
-        GamePause.Remove(this);
+        ResumeTime();
         _group.DOKill();
 
         if (!string.IsNullOrEmpty(_quitScene) && Application.CanStreamedLevelBeLoaded(_quitScene))

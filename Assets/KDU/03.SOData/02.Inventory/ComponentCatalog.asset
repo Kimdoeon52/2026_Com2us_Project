@@ -20,6 +20,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uC9C0\uB3C4?"
     _grade: 0
     _maxCount: 0
+    _price: 0
   - _id: ITEM_10_1_002
     _displayName: "B\uC0AC \uC77C\uBC18 \uBD80\uD488"
     _sprite: {fileID: 21300000, guid: 216c53aef79eaaf40a1800cc5e542dc3, type: 3}
@@ -27,6 +28,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uC9C0\uB3C4?"
     _grade: 0
     _maxCount: 0
+    _price: 0
   - _id: ITEM_10_1_003
     _displayName: "C\uC0AC \uC77C\uBC18 \uBD80\uD488"
     _sprite: {fileID: -886734559, guid: c7b1ad07c1e705e4db6aac67c4716ae9, type: 3}
@@ -34,6 +36,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uC9C0\uB3C4?"
     _grade: 0
     _maxCount: 0
+    _price: 0
   - _id: ITEM_10_2_001
     _displayName: "A\uC0AC \uB808\uC5B4 \uBD80\uD488"
     _sprite: {fileID: -1343123644, guid: 1e23b8991afbd9447ab64341607ebd39, type: 3}
@@ -41,6 +44,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uAC70 \uAC19\uB2E4."
     _grade: 1
     _maxCount: 0
+    _price: 10
   - _id: ITEM_10_2_002
     _displayName: "B\uC0AC \uB808\uC5B4 \uBD80\uD488"
     _sprite: {fileID: 1170888526, guid: ef6e2574058fa304588c9a25cf14c1e3, type: 3}
@@ -48,6 +52,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uAC70 \uAC19\uB2E4."
     _grade: 1
     _maxCount: 0
+    _price: 10
   - _id: ITEM_10_2_003
     _displayName: "C\uC0AC \uB808\uC5B4 \uBD80\uD488"
     _sprite: {fileID: 1028981832, guid: bb14adfb1901c504185646519cdc6b87, type: 3}
@@ -55,6 +60,7 @@ MonoBehaviour:
       \uB9CC\uB4E4 \uC218 \uC788\uC744\uAC70 \uAC19\uB2E4."
     _grade: 1
     _maxCount: 0
+    _price: 10
   - _id: ITEM_10_3_001
     _displayName: "A\uC0AC \uC5D0\uD53D \uBD80\uD488"
     _sprite: {fileID: 21300000, guid: 30c210f9ccc297f40a870f2ca6cf86c0, type: 3}
@@ -62,6 +68,7 @@ MonoBehaviour:
       \uB9CC\uB4E4\uC5B4 \uBCFC\uAE4C?"
     _grade: 2
     _maxCount: 0
+    _price: 300
   - _id: ITEM_10_3_002
     _displayName: "B\uC0AC \uC5D0\uD53D \uBD80\uD488"
     _sprite: {fileID: 21300000, guid: b6f82308a7f3ab5488295cdfecf3efb6, type: 3}
@@ -69,6 +76,7 @@ MonoBehaviour:
       \uB9CC\uB4E4\uC5B4 \uBCFC\uAE4C?"
     _grade: 2
     _maxCount: 0
+    _price: 300
   - _id: ITEM_10_3_003
     _displayName: "C\uC0AC \uC5D0\uD53D \uBD80\uD488"
     _sprite: {fileID: -892351704, guid: 9ae28588325294c48bb2544b3b467674, type: 3}
@@ -76,6 +84,7 @@ MonoBehaviour:
       \uB9CC\uB4E4\uC5B4 \uBCFC\uAE4C?"
     _grade: 2
     _maxCount: 0
+    _price: 300
   - _id: ITEM_10_4_001
     _displayName: "A\uC0AC \uC804\uC124 \uBD80\uD488"
     _sprite: {fileID: 21300000, guid: 72167e9e79964b04b9eff690b93c1dd8, type: 3}
@@ -83,6 +92,7 @@ MonoBehaviour:
       \uD560\uC218\uC788\uC744\uAC70 \uAC19\uB2E4."
     _grade: 3
     _maxCount: 0
+    _price: 500
   - _id: ITEM_10_4_002
     _displayName: "B\uC0AC \uC804\uC124 \uBD80\uD488"
     _sprite: {fileID: -1322684026, guid: 780c535e5b101604a921e9878e012135, type: 3}
@@ -90,9 +100,11 @@ MonoBehaviour:
       \uD560\uC218\uC788\uC744\uAC70 \uAC19\uB2E4."
     _grade: 3
     _maxCount: 0
+    _price: 500
   - _id: ITEM_10_4_003
     _displayName: "C\uC0AC \uC804\uC124 \uBD80\uD488"
     _sprite: {fileID: -804871254, guid: 780c535e5b101604a921e9878e012135, type: 3}
     _description: 
     _grade: 3
     _maxCount: 0
+    _price: 500

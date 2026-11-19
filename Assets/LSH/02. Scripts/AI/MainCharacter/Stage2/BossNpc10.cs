@@ -28,7 +28,7 @@ public class BossNpc10 : BossAiBase
     {
         SkillFx.Flash(SkillColor, 0.3f, 0.45f, 2);
         SpriteRenderer lot = m.LotImage;
-        PartsDefinition next = null;
+        ComponentDefinition next = null;
         await SkillFx.FlipX(lot != null ? lot.transform : null, () => next = m.SwapAuctionItem(), 0.5f); // 뒤집히는 순간 바뀜
         SkillFx.PulseText(m.auctionName, SkillColor, 0.4f);
         SkillFx.Stamp("짜잔!", SkillColor, 0.7f, 12f).Forget();

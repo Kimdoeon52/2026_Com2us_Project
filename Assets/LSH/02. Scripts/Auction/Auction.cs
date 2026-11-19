@@ -5,58 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-/*
-
- 입찰 프로세스 
-물건의 기준 가격 제시
-3~8명의 AI NPC입찰자(보스 포함)가 등장
-각 AI 입찰가 순차적으로 1회씩 입찰
-플레이어가 그에 맞춰 가격을 올릴수있음
-남은시간이 10초 이하일때 입찰마다 카운트 10초 초기화 진행
-최종 낙찰
-
-AI 입찰 아키타입
-후반 형
-경매 종료 직전(10초전) 구간에만 개입
-그전 까지는 개입X
-초반형
-경매 시작 직후 시세보다 높게 지르기 위해 입찰을 시작한다.
-추격형
-남이 입찰할때 마다 기준가+30 % 기준 아래로 계속 따라 붙는다.
-신중형
-중반까지 지켜보다가 경쟁자 수가 2명 이하일때 진입
-집착형
-선호 카테고리 부품이면 기준가 + 50%기준 질러버린다.
-
-NPC 입찰자 스탯 구조
-선호 부품 카테고리
-NPC가 특정 종류의 부품을 더 적극적이게 입찰하게 설정
-예산 규모
-NPC가 입찰할수있는 최대 자금
-관계도
-경쟁(입찰)을 통해 누적되는 수치
-
-
- 10/4 해야할꺼.
- 판매 ui 대충 물건 올리는거 부분 그리기. 기능 필요없음 시각적으로 보이게만.
-
- AI 성격 5개 기획서 확인하고 만들기.
- 보스 세명.
- 조무레기 다섯명. 골드 상관x
- 물건 바꾸기. 장비들로.
-
- 보스 일정 조건에 달성하면서 큰 레이즈하면 컷씬 연출하기.
-
- 보스 스킬 1: 크게 걸기
- 보스 스킬 2: 블라인드(자신이 제시한 가격 이하로 입찰한 사람은 포기하게 만들기)
-
-
- 경매 종류를 늘리기.
- 일반 경매
- 주먹 경매
-
-
- */
 
 public class Auction : Singleton<Auction>
 {
@@ -77,6 +25,7 @@ public class Auction : Singleton<Auction>
     [SerializeField] public TextMeshPro auctionGrade;// 물건 등급
     [SerializeField] private Color gradeColorRare; //레어등급 색상
     [SerializeField] private Color gradeColorEpic; //에픽등급 색상
+    [SerializeField] private Color gradeColorLegendary = new Color(1f, 0.8f, 0.2f); //전설등급 색상
     [Header("대사 & 메시지 UI")]
     [SerializeField] public TextMeshProUGUI chat; //경매하는 사람 채팅 나올 곳
     [SerializeField] public TextMeshProUGUI errorMessage; //에러 메시지 나올 곳
@@ -95,13 +44,18 @@ public class Auction : Singleton<Auction>
     public float FistBidTime => fistBidTime;
 
     [Header("참여 AI 리스트")]
-    [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록
+    [SerializeField] public List<NpcAiBase> npcAiList; //참여Ai목록 
     [SerializeField] private AuctionStageData stageData; //스테이지별 참여Boss목록
     [SerializeField] public List<AllAiBase> auctionAiList; //지금 경매에 참여하고 있는 Ai들
     [SerializeField] private int dayOfEnterNpc; //오늘 경매에 참여할 NPC수
 
     [Header("경매 물품 리스트")]
-    public List<PartsDefinition> auctionItem; // 경매에 나올 모든 물품들 모아놓은 곳
+    [Tooltip("경매에 나올 부품 카탈로그. 비우면 InventoryHost의 카탈로그를 사용")]
+    [UnityEngine.Serialization.FormerlySerializedAs("partsIngredient")]
+    [SerializeField] private ComponentCatalog componentCatalog;
+    [SerializeField] private PartGrade minAuctionGrade = PartGrade.Rare;      // 이 등급부터
+    [SerializeField] private PartGrade maxAuctionGrade = PartGrade.Legendary; // 이 등급까지 경매에 나옴
+    [System.NonSerialized] public List<ComponentDefinition> auctionItem; // 경매에 나올 모든 물품들 (카탈로그에서 등급으로 걸러서 생성)
 
     [Header("컷씬 매니저")]
     [SerializeField] private AuctionCutsceneManager cutsceneManager; //컷씬 용
@@ -162,7 +116,7 @@ public class Auction : Singleton<Auction>
     private bool IsShopOpen => shopPanel != null && shopPanel.activeSelf;
     private bool IsRepairOpen => repairWindow != null && repairWindow.activeSelf;
     //===============================ai 슬롯 위치====================
-    [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 npcsPos 사용)")]
+    [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 rankerSeatPoints 사용)")]
     [SerializeField] private List<Transform> aiSlots;
 
     private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
@@ -178,7 +132,7 @@ public class Auction : Singleton<Auction>
     public int WinnerID { get; set; } = -1; //승자 ID를 저장할 변수
     public bool IfPlayerWin { get; set; } = false; //플레이어가 이겼는지 체크하는 변수
 
-    public PartsDefinition stuff; //현재 경매 물품을 저장할 용도
+    public ComponentDefinition stuff; //현재 경매 물품(부품)을 저장할 용도
     public PartGrade stuffGrade; //경매 물품 등급을 저장할 용도
     private Vector2 errorMessagePos; //에러 메시지가 나올 초기 위치
     private bool isPlayerGiveUp = false; //플레이가 포기했는지 체크하는 용도
@@ -191,20 +145,59 @@ public class Auction : Singleton<Auction>
 
     //======================슬롯 이미지 및 위치=====================
     [Header("플레이어 및 NPC 슬롯")]
-    [SerializeField] public SpriteRenderer[] npcs; //여기가 npc이미지들
+    // [SerializeField] public SpriteRenderer[] npcs; //여기가 npc이미지들 (구 방식: 인스펙터 연결 → rankerSeatPoints로 대체)
+    [System.NonSerialized] public SpriteRenderer[] npcs; // 랭커 좌석 초상화들 (BuildRankerSeats에서 생성)
     [SerializeField] private SpriteRenderer playerImage; //플레이어 들어갈 곳
-    [SerializeField] public Transform[] npcsPos; //여기는 npc위치들
+    // [SerializeField] public Transform[] npcsPos; //여기는 npc위치들 (구 방식: 좌석 = 생성한 초상화 Transform으로 대체)
     [SerializeField] private Transform playerImagePos;
     public Transform PlayerSlot => playerImage != null ? playerImagePos : null;
+
+    [Header("랭커 좌석 (맵 프리팹 안의 오브젝트 위치만 사용)")]
+    [Tooltip("이 위치들에 랭커 초상화를 코드로 생성함. 맵 오브젝트는 건드리지 않음")]
+    [SerializeField] private Transform[] rankerSeatPoints;
+    [SerializeField] private Vector3 rankerSeatOffset = Vector3.zero; // 위치 미세 조정용
+    [SerializeField] private Vector3 rankerSeatScale = Vector3.one;
+    [SerializeField] private string rankerSortingLayerName = "Default";
+    [SerializeField] private int rankerSortingOrder = 20;
+    private Transform rankerSeatRoot; // 생성된 랭커 좌석들의 부모 (씬 루트에 생성)
+
+    [Header("무대 바라보기")]
+    [Tooltip("관객(랭커/구경꾼)이 바라볼 무대 중앙. 비우면 경매 물건 위치(lotItemPoint)를 사용")]
+    [SerializeField] private Transform stagePoint;
+    public Transform StagePoint => stagePoint != null ? stagePoint : lotItemPoint;
+
+    // from 위치에서 무대를 수평으로 바라보는 회전 (Y축만 회전, 뒷모습 스프라이트 기준: +Z가 무대를 향함)
+    public static Quaternion FaceStage(Vector3 from, Transform stage)
+    {
+        if (stage == null) return Quaternion.identity;
+        Vector3 dir = stage.position - from;
+        dir.y = 0f;
+        return dir.sqrMagnitude > 0.0001f ? Quaternion.LookRotation(dir) : Quaternion.identity;
+    }
     [Tooltip("좌석 초상화의 월드 높이. 0이면 플레이어 초상화 높이에 맞춤 (보스/조무레기 크기 통일)")]
     [SerializeField] private float portraitWorldHeight = 0f;
     [Tooltip("좌석 초상화 크기 배율 (플레이어 포함 모두 같이 적용)")]
     [SerializeField] private float portraitSizeMultiplier = 0.9f;
 
-    [Header("경매 물건 이미지 (무대 받침대 위)")]
-    [Tooltip("비우면 '임시_Lot_경매물건/파츠'의 SpriteRenderer를 자동으로 찾음")]
-    [SerializeField] private SpriteRenderer lotItemImage;
-    [SerializeField] private string lotObjectName = "임시_Lot_경매물건";
+    [Header("경매 물건 이미지 (맵 위치만 사용)")]
+    [Tooltip("채우면 이 위치에 물건 이미지를 코드로 생성해서 띄움 (맵 오브젝트는 건드리지 않음)")]
+    [SerializeField] private Transform lotItemPoint;
+    [SerializeField] private Vector3 lotItemOffset = Vector3.zero; // 위치 미세 조정용
+    [Tooltip("물건 이미지 긴 변의 월드 크기. 어떤 부품이든 이 크기 안에 맞춤")]
+    [SerializeField] private float lotItemSize = 1f;
+    [SerializeField] private string lotSortingLayerName = "Default";
+    [SerializeField] private int lotSortingOrder = 30;
+    [Tooltip("둥둥 떠다니는 높이 (0이면 안 움직임)")]
+    [SerializeField] private float lotFloatHeight = 0.15f;
+    [Tooltip("한 번 올라가는 데 걸리는 시간")]
+    [SerializeField] private float lotFloatDuration = 1.2f;
+
+    // ===== 구 방식 (맵의 SpriteRenderer 직접 사용) → lotItemPoint로 대체 =====
+    // [Header("경매 물건 이미지 (무대 받침대 위)")]
+    // [Tooltip("비우면 '임시_Lot_경매물건/파츠'의 SpriteRenderer를 자동으로 찾음")]
+    // [SerializeField] private SpriteRenderer lotItemImage;
+    // [SerializeField] private string lotObjectName = "임시_Lot_경매물건";
+    private SpriteRenderer createdLotItemImage; // lotItemPoint 위치에 코드로 만든 물건 이미지
     private float lotItemBoxSize = -1f; // 원래 들어있던 임시 이미지 크기 (새 물품도 이 크기 안에 맞춤)
     private Vector3 lotItemBaseScale = Vector3.one;
     private readonly Dictionary<Transform, Vector3> seatBaseScales = new Dictionary<Transform, Vector3>();
@@ -276,6 +269,8 @@ public class Auction : Singleton<Auction>
     protected override void Awake()
     {
         base.Awake(); // Instance용 base
+
+        if (Instance == this) BuildRankerSeats(); // 맵 위치를 받아 랭커 좌석 초상화 생성 (npcs/npcsPos 대체)
 
         // 전략 등록
         nowAuctionMode = new Dictionary<AuctionType, IAuctionMode> // noewAuctionMode에 현재 모드 넣기
@@ -552,9 +547,10 @@ public class Auction : Singleton<Auction>
     // 회차 시작 전 물품/참가자/상태 초기화
     private bool PrepareRound()
     {
+        BuildAuctionItems();
         if (auctionItem == null || auctionItem.Count == 0)
         {
-            Debug.LogError("경매 물품 리스트가 읍다");
+            Debug.LogError($"경매 물품 리스트가 읍다. ComponentCatalog에 {minAuctionGrade}~{maxAuctionGrade} 등급 부품이 있는지 확인해라");
             return false;
         }
 
@@ -562,7 +558,7 @@ public class Auction : Singleton<Auction>
         if (stageBosses == null) return false; // 보스 명단이 없으면 중단
 
         stuff = auctionItem[Random.Range(0, auctionItem.Count)]; // stuff에 경매에 있는 아이템 랜덤 등록
-        CurrentCost = stuff.Cost / 2; //원가의 절반
+        CurrentCost = stuff.Price / 2; //원가의 절반
         stuffGrade = stuff.Grade; // 등급 넣기
         if (auctionGrade != null)
         {
@@ -574,6 +570,9 @@ public class Auction : Singleton<Auction>
                     break;
                 case PartGrade.Epic:
                     auctionGrade.color = gradeColorEpic;
+                    break;
+                case PartGrade.Legendary:
+                    auctionGrade.color = gradeColorLegendary;
                     break;
                 default:
                     auctionGrade.color = Color.white;
@@ -834,6 +833,9 @@ public class Auction : Singleton<Auction>
                 case PartGrade.Epic:
                     auctionGrade.color = gradeColorEpic;
                     break;
+                case PartGrade.Legendary:
+                    auctionGrade.color = gradeColorLegendary;
+                    break;
                 default:
                     auctionGrade.color = Color.white;
                     break;
@@ -849,12 +851,43 @@ public class Auction : Singleton<Auction>
 
     private SpriteRenderer GetLotItemImage()
     {
-        if (lotItemImage != null) return lotItemImage;
-        GameObject lot = string.IsNullOrEmpty(lotObjectName) ? null : GameObject.Find(lotObjectName);
-        if (lot == null) return null;
-        Transform part = lot.transform.Find("파츠");
-        lotItemImage = part != null ? part.GetComponent<SpriteRenderer>() : lot.GetComponentInChildren<SpriteRenderer>(true);
-        return lotItemImage;
+        if (createdLotItemImage != null) return createdLotItemImage;
+        if (lotItemPoint != null) return CreateLotItemImage(); // 위치만 받아서 생성
+        return null;
+
+        // ===== 구 방식: 맵의 '임시_Lot_경매물건/파츠' SpriteRenderer를 찾아서 사용 =====
+        // if (lotItemImage != null) return lotItemImage;
+        // GameObject lot =string.IsNullOrEmpty(lotObjectName) ? null : GameObject.Find(lotObjectName);
+        // if (lot == null) return null;
+        // Transform part = lot.transform.Find("파츠");
+        // lotItemImage = part != null ? part.GetComponent<SpriteRenderer>() : lot.GetComponentInChildren<SpriteRenderer>(true);
+        // return lotItemImage;
+    }
+
+    // lotItemPoint 위치에 물건 이미지를 생성. 구조: LotItemAnchor(둥둥 이동) → LotItemImage(SpriteRenderer)
+    // 떠다니는 트윈은 부모에, 보스 스킬 연출(뒤집기/떨림)은 자식에 걸려서 서로 덮어쓰지 않음
+    private SpriteRenderer CreateLotItemImage()
+    {
+        Transform anchor = new GameObject("LotItemAnchor").transform; // 씬 루트에 생성
+        anchor.position = lotItemPoint.position + lotItemOffset;
+
+        GameObject imageGo = new GameObject("LotItemImage");
+        imageGo.transform.SetParent(anchor, false);
+        createdLotItemImage = imageGo.AddComponent<SpriteRenderer>();
+        createdLotItemImage.sortingLayerName = lotSortingLayerName;
+        createdLotItemImage.sortingOrder = lotSortingOrder;
+
+        lotItemBaseScale = Vector3.one;
+        lotItemBoxSize = Mathf.Max(0.1f, lotItemSize); // 기준 상자 크기를 인스펙터 값으로 고정
+
+        if (lotFloatHeight > 0f && lotFloatDuration > 0f)
+        {
+            anchor.DOMoveY(anchor.position.y + lotFloatHeight, lotFloatDuration)
+                .SetEase(Ease.InOutSine)
+                .SetLoops(-1, LoopType.Yoyo)
+                .SetLink(anchor.gameObject);
+        }
+        return createdLotItemImage;
     }
 
     // 현재 경매 물품(stuff)의 이미지를 받침대 위에 표시. 크기는 원래 임시 이미지 크기 안에 맞춤
@@ -863,12 +896,13 @@ public class Auction : Singleton<Auction>
         SpriteRenderer image = GetLotItemImage();
         if (image == null) return;
 
-        if (lotItemBoxSize < 0f) // 처음 한 번: 임시 이미지 크기를 기준 상자로 저장
-        {
-            lotItemBaseScale = image.transform.localScale;
-            Vector3 size = image.sprite != null ? image.bounds.size : Vector3.one;
-            lotItemBoxSize = Mathf.Max(0.1f, Mathf.Max(size.x, size.y));
-        }
+        // 구 방식: 처음 한 번 맵의 임시 이미지 크기를 기준 상자로 저장 (지금은 CreateLotItemImage에서 lotItemSize로 정함)
+        // if (lotItemBoxSize < 0f)
+        // {
+        //     lotItemBaseScale = image.transform.localScale;
+        //     Vector3 size = image.sprite != null ? image.bounds.size : Vector3.one;
+        //     lotItemBoxSize = Mathf.Max(0.1f, Mathf.Max(size.x, size.y));
+        // }
 
         Sprite sprite = stuff != null ? stuff.Sprite : null;
         image.sprite = sprite;
@@ -883,18 +917,38 @@ public class Auction : Singleton<Auction>
     }
 
     // 바꿔치기: 경매 물품을 다른 물품으로 교체. 가격은 새 물품 시작가보다 낮아지지 않음
-    public PartsDefinition SwapAuctionItem()
+    public ComponentDefinition SwapAuctionItem()
     {
         if (auctionItem == null || auctionItem.Count < 2) return null;
-        PartsDefinition next;
+        ComponentDefinition next;
         do { next = auctionItem[Random.Range(0, auctionItem.Count)]; } while (next == stuff);
 
         stuff = next;
         stuffGrade = next.Grade;
-        CurrentCost = Mathf.Max(CurrentCost, next.Cost / 2);
+        CurrentCost = Mathf.Max(CurrentCost, next.Price / 2);
         RefreshAuctionInfoUI();
         //AppendConsoleLog($"경매 물품이 [{next.DisplayName}]({next.Grade})(으)로 바뀌었습니다!");
         return next;
+    }
+
+    // 부품 카탈로그에서 min~max 등급 부품만 골라 경매 물품 리스트를 만든다 (한 번만)
+    private void BuildAuctionItems()
+    {
+        if (auctionItem != null && auctionItem.Count > 0) return;
+
+        ComponentCatalog catalog = componentCatalog;
+        if (catalog == null && InventoryHost.Instance != null) catalog = InventoryHost.Instance.ComponentCatalog;
+        if (catalog == null || catalog.Components == null) return;
+
+        auctionItem = new List<ComponentDefinition>();
+        foreach (ComponentDefinition component in catalog.Components)
+        {
+            if (component == null) continue;
+            if (component.Grade < minAuctionGrade || component.Grade > maxAuctionGrade) continue;
+            if (component.Price <= 0)
+                Debug.LogWarning($"[Auction] 부품 '{component.DisplayName}'({component.Id})의 가격이 0이라 시작가가 0G가 됩니다. ComponentCatalog에서 가격을 넣어주세요.");
+            auctionItem.Add(component);
+        }
     }
 
     //=========================경매 진행자(AuctionGirl) 대사===================
@@ -1243,7 +1297,8 @@ public class Auction : Singleton<Auction>
         if (IfPlayerWin) //플레이어가 이겼을 경우
         {
             // 인벤토리에 먼저 넣어보고 성공했을 때만 골드 차감 (칸이 없으면 골드만 빠지는 거 방지)
-            if (InventoryHost.Instance != null && InventoryHost.Instance.GivePart(stuff))
+            InventoryHost inventory = InventoryHost.Instance;
+            if (inventory != null && inventory.CanGiveComponent(stuff) && inventory.GiveComponent(stuff, 1) > 0)
             {
                 GlobalGold.Instance.UseGold(GlobalGold.Instance.mainCharacterdata[0].mainCharacterID, CurrentCost); // 플레이어 골드 소모
                 UpdateGoldDisplay(); // 골드 시각적으로 보이기
@@ -1521,10 +1576,48 @@ public class Auction : Singleton<Auction>
         return referencePortraitHeight * portraitSizeMultiplier;
     }
 
-    // 좌석 Transform (npcsPos 우선, 없으면 초상화 SpriteRenderer의 Transform)
+    // 맵 프리팹의 위치용 오브젝트에서 위치만 읽어, 그 자리에 랭커 초상화(SpriteRenderer)를 새로 만들어 npcs로 사용
+    // 맵 쪽 오브젝트는 건드리지 않고, 생성물은 씬 루트의 별도 오브젝트 아래에 모아둠
+    private void BuildRankerSeats()
+    {
+        // if (rankerSeatPoints == null || rankerSeatPoints.Length == 0) return; // 구 방식: 비어 있으면 인스펙터 npcs 사용
+        if (rankerSeatPoints == null || rankerSeatPoints.Length == 0)
+        {
+            Debug.LogError("[Auction] rankerSeatPoints가 비어있다. 랭커 자리 위치를 인스펙터에 넣어라");
+            npcs = new SpriteRenderer[0];
+            return;
+        }
+
+        if (rankerSeatRoot == null) rankerSeatRoot = new GameObject("RankerSeats").transform;
+
+        List<SpriteRenderer> seats = new List<SpriteRenderer>();
+        for (int i = 0; i < rankerSeatPoints.Length; i++)
+        {
+            Transform point = rankerSeatPoints[i];
+            if (point == null) continue;
+
+            GameObject go = new GameObject($"RankerSeat_{i}");
+            go.transform.SetParent(rankerSeatRoot, false);
+            go.transform.position = point.position + rankerSeatOffset;
+            go.transform.rotation = FaceStage(go.transform.position, StagePoint); // 무대 중앙을 바라봄
+            go.transform.localScale = rankerSeatScale;
+
+            SpriteRenderer sr = go.AddComponent<SpriteRenderer>();
+            sr.sortingLayerName = rankerSortingLayerName;
+            sr.sortingOrder = rankerSortingOrder;
+            go.SetActive(false); // NPCImageOn에서 켜짐
+
+            seats.Add(sr);
+        }
+
+        npcs = seats.ToArray();
+        // npcsPos = null; // 좌석 = 생성한 초상화 Transform (GetSeat이 npcs[i].transform을 사용)
+    }
+
+    // 좌석 Transform = 생성한 초상화 SpriteRenderer의 Transform
     private Transform GetSeat(int index)
     {
-        if (npcsPos != null && index < npcsPos.Length && npcsPos[index] != null) return npcsPos[index];
+        // if (npcsPos != null && index < npcsPos.Length && npcsPos[index] != null) return npcsPos[index]; // 구 방식
         return npcs[index] != null ? npcs[index].transform : null;
     }
 

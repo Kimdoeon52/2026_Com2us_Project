@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class NormalAuctionMode : IAuctionMode //일반 경매 방식
 {
-    public async UniTask DoingAuctionAsync(Auction manager, PartsDefinition stuff, List<AllAiBase> participants) //participants에는 지금 경매중인 ai들이 전달될 것이다.
+    public async UniTask DoingAuctionAsync(Auction manager, ComponentDefinition stuff, List<AllAiBase> participants) //participants에는 지금 경매중인 ai들이 전달될 것이다.
     {
-        manager.CurrentCost = stuff.Cost / 2; // 반값 시작
+        manager.CurrentCost = stuff.Price / 2; // 반값 시작
         manager.UpdateAuctionCostUI(); // 코스트 가격 시각적 업데이트
 
         manager.IsTimeRunning = true; // 시간 가는거 true로
@@ -23,7 +23,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
         await manager.StartAuctionTimer(); //제한 시간 작동 On
     }
 
-    private async UniTask RunAllAiAsync(Auction manager, PartsDefinition stuff, List<AllAiBase> participants) 
+    private async UniTask RunAllAiAsync(Auction manager, ComponentDefinition stuff, List<AllAiBase> participants) 
     {
         List<UniTask> aiTasks = new List<UniTask>(); //각 AI들의 비동기 작업(Task)들을 하나로 담아두기 위한 리스트
         foreach (var ai in participants) //AI경매 참여 인원들
@@ -36,7 +36,7 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
         await UniTask.WhenAll(aiTasks); //모든 AI의 루틴 작업이 전부 끝날 때까지 이 자리에서 대기
     }
 
-    private async UniTask AiRoutine(Auction manager, AllAiBase ai, PartsDefinition stuff, List<AllAiBase> participants)
+    private async UniTask AiRoutine(Auction manager, AllAiBase ai, ComponentDefinition stuff, List<AllAiBase> participants)
     {
         // 각 AI가 다른 시점에 첫 고민을 시작하도록 랜덤 초기 딜레이 (딱 한 번만 실행)
         await UniTask.Delay(Random.Range(500, ai.ThinkDelay));
@@ -74,25 +74,26 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
             if (!manager.IsTimeRunning || manager.IsAuctioningFin) break;
             if (ai.IsGiveUp) continue; // 고민하는 사이 다른 보스 스킬로 쫓겨남
 
-            // ===== 보스 스킬: 레이즈와 별개로 매 고민마다 조건/확률 체크 =====
-            if (boss != null && boss.TryRollSkill(manager))
-            {
-                await UseBossSkillAsync(manager, boss);
-                if (CheckEndCountdown(manager)) break;
-                continue;
-            }
+            // ===== [보류] 보스 스킬: 레이즈와 별개로 매 고민마다 조건/확률 체크 =====
+            // 보스 스킬 기능 보류 중. 다시 켜려면 아래 블록과 UseBossSkillAsync 주석 해제
+            // if (boss != null && boss.TryRollSkill(manager))
+            // {
+            //     await UseBossSkillAsync(manager, boss);
+            //     if (CheckEndCountdown(manager)) break;
+            //     continue;
+            // }
 
             if (manager.WinnerID == ai.NPCID) continue; // 선두라면 스킬만 노림
 
-            PartsDefinition item = manager.stuff != null ? manager.stuff : stuff; // 바꿔치기 스킬로 물품이 바뀔 수 있음
+            ComponentDefinition item = manager.stuff != null ? manager.stuff : stuff; // 바꿔치기 스킬로 물품이 바뀔 수 있음
 
             // 공통 판단: 필요 없는 물건이거나 원가 x 2~3배 한도를 넘으면 포기
-            if (!ai.PassCommonRaiseRule(manager.CurrentCost, item.Cost, item.Grade))
+            if (!ai.PassCommonRaiseRule(manager.CurrentCost, item.Price, item.Grade))
             {
                 ai.IsGiveUp = true;
             }
 
-            if (!ai.IsGiveUp && ai.RaiseThink(manager.CurrentCost, item.Cost, item.Grade))
+            if (!ai.IsGiveUp && ai.RaiseThink(manager.CurrentCost, item.Price, item.Grade))
             {
                 manager.CurrentCost += ai.RaiseGold;
                 manager.UpdateAuctionCostUI();
@@ -124,25 +125,25 @@ public class NormalAuctionMode : IAuctionMode //일반 경매 방식
         return true;
     }
 
-    // 보스 스킬: 대사 → 컷씬(타이머 정지) → 효과 → 가격/선두가 바뀌었으면 입찰로 인정
-    private async UniTask UseBossSkillAsync(Auction manager, BossAiBase boss)
-    {
-        int beforeCost = manager.CurrentCost;
-        int beforeWinner = manager.WinnerID;
-
-        boss.ShowThinkChatWithText(boss.SkillLine);
-        manager.PlaySound(manager.useSkillEffect);
-        //manager.AppendConsoleLog($"[스킬] {boss.NPCName}의 <{boss.SkillName}>!");
-        await boss.TriggerCutscene(boss.NPCName, boss.SkillName);
-        if (!manager.IsTimeRunning || manager.IsAuctioningFin) return;
-
-        boss.PlaySkillIntroFx(); // 내 초상화 기합 연출
-        await boss.UseSkillAsync(manager); // 효과 + 보스별 전용 연출
-        manager.UpdateAuctionCostUI();
-
-        bool tookLead = manager.WinnerID == boss.NPCID && (beforeWinner != boss.NPCID || manager.CurrentCost != beforeCost);
-        if (tookLead) ApplyAiBid(manager, boss, boss.SkillRefreshesTimer);
-    }
+    // ===== [보류] 보스 스킬: 대사 → 컷씬(타이머 정지) → 효과 → 가격/선두가 바뀌었으면 입찰로 인정 =====
+    // private async UniTask UseBossSkillAsync(Auction manager, BossAiBase boss)
+    // {
+    //     int beforeCost = manager.CurrentCost;
+    //     int beforeWinner = manager.WinnerID;
+    //
+    //     boss.ShowThinkChatWithText(boss.SkillLine);
+    //     manager.PlaySound(manager.useSkillEffect);
+    //     //manager.AppendConsoleLog($"[스킬] {boss.NPCName}의 <{boss.SkillName}>!");
+    //     await boss.TriggerCutscene(boss.NPCName, boss.SkillName);
+    //     if (!manager.IsTimeRunning || manager.IsAuctioningFin) return;
+    //
+    //     boss.PlaySkillIntroFx(); // 내 초상화 기합 연출
+    //     await boss.UseSkillAsync(manager); // 효과 + 보스별 전용 연출
+    //     manager.UpdateAuctionCostUI();
+    //
+    //     bool tookLead = manager.WinnerID == boss.NPCID && (beforeWinner != boss.NPCID || manager.CurrentCost != beforeCost);
+    //     if (tookLead) ApplyAiBid(manager, boss, boss.SkillRefreshesTimer);
+    // }
 
     private void ApplyAiBid(Auction manager, AllAiBase ai, bool refreshTimer = true) // AI를 최고 입찰자로 등록
     {

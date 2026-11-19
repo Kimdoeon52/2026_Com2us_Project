@@ -23,10 +23,10 @@ public class BossNpc5 : BossAiBase
         RaiseGold = 10;
     }
 
-    private int NegoPrice(Auction m) => Mathf.Max(m.stuff != null ? m.stuff.Cost / 2 : 1, Mathf.RoundToInt(m.CurrentCost * 0.8f));
+    private int NegoPrice(Auction m) => Mathf.Max(m.stuff != null ? m.stuff.Price / 2 : 1, Mathf.RoundToInt(m.CurrentCost * 0.8f));
 
     protected override bool WantsSkill(Auction m)
-        => !IsLeading(m) && m.stuff != null && m.CurrentCost > m.stuff.Cost * 1.2f && CanAffordBid(m, NegoPrice(m));
+        => !IsLeading(m) && m.stuff != null && m.CurrentCost > m.stuff.Price * 1.2f && CanAffordBid(m, NegoPrice(m));
 
     public override async UniTask UseSkillAsync(Auction m)
     {

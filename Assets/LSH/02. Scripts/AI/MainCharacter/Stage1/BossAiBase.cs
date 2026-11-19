@@ -175,7 +175,7 @@ public class BossAiBase : AllAiBase
     {
         if (manager.stuff == null || data == null) return false;
         if (!NeedsItem(manager.stuff.Grade)) return false;
-        if (price > MaxBidPrice(manager.stuff.Cost)) return false;
+        if (price > MaxBidPrice(manager.stuff.Price)) return false;
         return GlobalGold.Instance != null && GlobalGold.Instance.CanUseGold(NPCID, price);
     }
 

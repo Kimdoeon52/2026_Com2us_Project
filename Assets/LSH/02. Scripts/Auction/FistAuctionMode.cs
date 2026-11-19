@@ -31,7 +31,7 @@ public class FistAuctionMode : IAuctionMode
 
     private int submitCounter;
 
-    public async UniTask DoingAuctionAsync(Auction manager, PartsDefinition stuff, List<AllAiBase> participants)
+    public async UniTask DoingAuctionAsync(Auction manager, ComponentDefinition stuff, List<AllAiBase> participants)
     {
         manager.ClearRoundUI();
         submitCounter = 0;
@@ -172,7 +172,7 @@ public class FistAuctionMode : IAuctionMode
         //manager.AppendConsoleLog($"{player.Name}님이 입찰서를 제출했습니다.");
     }
 
-    private async UniTask AiWriteBidAsync(Auction manager, Bidder bidder, PartsDefinition stuff, float bidTime)
+    private async UniTask AiWriteBidAsync(Auction manager, Bidder bidder, ComponentDefinition stuff, float bidTime)
     {
         AllAiBase ai = bidder.Ai;
         ai.ShowThinkChat();
@@ -181,7 +181,7 @@ public class FistAuctionMode : IAuctionMode
         int maxDelay = Mathf.Max(1000, Mathf.Min(ai.ThinkDelay, (int)((bidTime - 1f) * 1000)));
         await UniTask.Delay(Random.Range(800, maxDelay));
 
-        bidder.Bid = ai.CalculateFistBid(stuff.Cost, stuff.Grade); // 필요 없으면 0G, 필요하면 원가 x 2~4배
+        bidder.Bid = ai.CalculateFistBid(stuff.Price, stuff.Grade); // 필요 없으면 0G, 필요하면 원가 x 2~4배
         Submit(bidder);
         ai.ShowThinkChatWithText("결정했다.");
         //manager.AppendConsoleLog($"{ai.NPCName}님이 입찰서를 제출했습니다.");

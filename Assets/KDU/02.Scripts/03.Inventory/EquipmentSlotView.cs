@@ -45,6 +45,9 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         _emptySprite = _icon.sprite;
         _emptyColor = _icon.color;
         _icon.preserveAspect = true;
+
+        // 첫 갱신 전에 흰 사각형으로 보이지 않게
+        _icon.enabled = _emptySprite != null;
     }
 
     // 코어 칸은 코어를, 나머지는 장착 파츠를 그린다
@@ -73,6 +76,9 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         // 이미지가 아직 없으면 빈 칸 이미지를 흰색으로 그려 찬 칸임을 보인다
         _icon.sprite = sprite != null ? sprite : _emptySprite;
         _icon.color = filled ? Color.white : _emptyColor;
+
+        // 빈 칸 이미지도 없으면 흰 사각형이 되므로 감춘다
+        _icon.enabled = _icon.sprite != null;
 
         // 파츠 그림일 때만 등급 외곽선
         PartOutline.Apply(_icon, sprite != null ? parts : null);

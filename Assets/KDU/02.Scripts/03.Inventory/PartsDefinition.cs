@@ -152,7 +152,9 @@ public class PartsDefinition : ScriptableObject
     public string Description => _description;
     public PartsShape Shape => _shape;
     public int MaxCount => _maxCount;
-    public Sprite Sprite => _sprite;
+    // 오른쪽 파츠는 왼쪽 그림을 좌우 반전해 쓴다. 에디터 비실행 중엔 원본
+    public Sprite Sprite => IsRightSide && Application.isPlaying ? SpriteMirror.FlipX(_sprite) : _sprite;
+    public bool IsRightSide => _slot == Slot.RightArm || _slot == Slot.RightLeg;
     public Slot Slot => _slot;
     public PartGrade Grade => _grade;
     public DestructiveResistance DestructiveResistance => _destructiveResistance;

@@ -24,6 +24,13 @@ public class EquipmentView : MonoBehaviour
         Refresh();
     }
 
+    // 꺼져 있던 동안 놓친 갱신이 남지 않게 켤 때마다 다시 그린다
+    private void OnEnable()
+    {
+        if (_host != null)
+            Refresh();
+    }
+
     private void OnDestroy()
     {
         if (_host != null)

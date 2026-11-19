@@ -11,13 +11,17 @@ public class ShapeRenderer : MonoBehaviour
     private RectTransform _layer;
     private int _active;
 
-    private void Awake()
+    // 꺼진 레이어에 만들어지면 Awake 전에 그려질 수 있어 그릴 때 찾는다
+    private void EnsureImage()
     {
-        TryGetComponent(out _image);
+        if (_image == null)
+            TryGetComponent(out _image);
     }
 
     public void Draw(PartsShape shape, Sprite sprite, float cellSize, Color color)
     {
+        EnsureImage();
+
         if (sprite != null)
         {
             DrawSprite(sprite, color);
@@ -29,6 +33,8 @@ public class ShapeRenderer : MonoBehaviour
 
     public void Tint(Color color)
     {
+        EnsureImage();
+
         if (_image != null && _image.enabled)
             _image.color = color;
 

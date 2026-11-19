@@ -156,14 +156,17 @@ MonoBehaviour:
   - {fileID: -766853760, guid: 155f9ca3a4110c14fa7f2405425dd25d, type: 3}
   emergeFps: 14
   retractFps: 10
-  autoAlignBottom: 1
   groggyDuration: 4
   damageMultiplier: 1.5
   tirePierceDamage: 1
-  destroyOnPuncture: 0
+  isSingleUse: 1
+  destroyDelay: 0.8
+  destroyOnPuncture: 1
   retractDelayAfterGroggy: 4
+  onlyActivateOnSlam: 1
   triggerOnStep: 1
   playerStepDamage: 20
   playerDamageCooldown: 1
+  consumeOnPlayerStep: 0
   breakVfxPrefab: {fileID: 0}
   breakParticle: {fileID: 0}

@@ -184,6 +184,7 @@ MonoBehaviour:
   currentHpView: 0
   isGroggyView: 0
   clampToCameraBounds: 1
+  customVisualHalfWidth: 0.85
   cameraEdgePadding: 0.5
   targetCamera: {fileID: 0}
   animationController: {fileID: 8812345678901234501}
@@ -369,7 +370,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   patternData: {fileID: 11400000, guid: 8f1e29a43a0d11ef88b100155d000401, type: 2}
   rushSpeed: 14
-  maxBounceCount: 3
+  maxBounceCount: 6
   cameraPaddingX: 0.5
   cameraPaddingY: 0.5
   groundPaddingY: 0.1

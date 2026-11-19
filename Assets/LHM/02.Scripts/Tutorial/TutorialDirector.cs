@@ -270,7 +270,8 @@ namespace RealSteel.Tutorial
                 return;
             }
 
-            if (TryIntro(dialogue, current)) return;
+            // 창이 열려서 걸린 튜토리얼은 안내 대사 없이 가이드 창을 바로 띄움 (대사를 기다리는 동안 늦게 뜨던 문제, BUG-046)
+            if (current.trigger != TutorialTrigger.WindowOpened && TryIntro(dialogue, current)) return;
             OpenPanel(current);
         }
 

@@ -266,7 +266,7 @@ namespace RealSteel.MainMenu.EditorTools
         internal static HotkeyEvent Hotkey(Transform parent, string name, string label)
         {
             var hotkey = Prefab("UI Elements/Input/Hotkey Indicator.prefab", parent, name).GetComponent<HotkeyEvent>();
-            hotkey.keyID = "Escape";
+            hotkey.keyID = "Go Back";
             hotkey.hotkeyLabel = label;
             hotkey.useLocalization = false;
             hotkey.hotkey = KeyAction(name, "<Keyboard>/escape", "<Gamepad>/buttonEast");

@@ -90,6 +90,8 @@ namespace RealSteel.BossRace
                 SetRouteHint(routeHint, HintNormal);
             }
 
+            // 튜토리얼 · 대화가 떠 있는 동안은 입력 무시, 닫힌 뒤에도 입력 무시 시간을 다시 줌 (닫은 키가 확정으로 이어지지 않게)
+            if (BossUiInputGate.IsBlocked()) openedAt = Time.unscaledTime;
             if (Time.unscaledTime - openedAt < openInputDelay) return;
 
             Keyboard keyboard = Keyboard.current;
@@ -254,7 +256,7 @@ namespace RealSteel.BossRace
 
         private void OnCardClicked(BossRaceCard card)
         {
-            if (!IsOpen) return;
+            if (!IsOpen || BossUiInputGate.IsBlocked()) return;
 
             if (!card.IsSelectable)
             {
@@ -277,7 +279,7 @@ namespace RealSteel.BossRace
 
         private void Confirm()
         {
-            if (!IsOpen || selected < 0 || selected >= entries.Count || !cards[selected].IsSelectable) return;
+            if (!IsOpen || selected < 0 || selected >= entries.Count || !cards[selected].IsSelectable || BossUiInputGate.IsBlocked()) return;
 
             string bossId = entries[selected].bossId;
             Action<string> callback = onConfirm;
@@ -288,7 +290,7 @@ namespace RealSteel.BossRace
 
         private void Cancel()
         {
-            if (!IsOpen || !canCancel) return;
+            if (!IsOpen || !canCancel || BossUiInputGate.IsBlocked()) return;
 
             Action callback = onCancel;
             Debug.Log("[BossRace] 길드 접수처로 돌아감");

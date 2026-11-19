@@ -158,7 +158,10 @@ namespace RealSteel.BossRace
 
         private void Update()
         {
-            if (!IsOpen || Time.unscaledTime - openedAt < openInputDelay) return;
+            if (!IsOpen) return;
+            // 튜토리얼 · 대화가 떠 있는 동안은 입력 무시, 닫힌 뒤에도 입력 무시 시간을 다시 줌 (닫은 키가 시작으로 이어지지 않게)
+            if (BossUiInputGate.IsBlocked()) openedAt = Time.unscaledTime;
+            if (Time.unscaledTime - openedAt < openInputDelay) return;
 
             bool up, down, confirm, cancel;
             InputModeController input = InputModeController.Current;
@@ -208,7 +211,7 @@ namespace RealSteel.BossRace
 
         private void OnRowClicked(DifficultyRow row)
         {
-            if (!IsOpen) return;
+            if (!IsOpen || BossUiInputGate.IsBlocked()) return;
             if (row.Index == selected) StartRace();
             else Select(row.Index);
         }
@@ -297,7 +300,7 @@ namespace RealSteel.BossRace
 
         private void StartRace()
         {
-            if (!IsOpen || selected < 0 || selected >= difficulties.Count) return;
+            if (!IsOpen || selected < 0 || selected >= difficulties.Count || BossUiInputGate.IsBlocked()) return;
 
             string id = difficulties[selected].id;
             Action<string> callback = onStart;
@@ -308,7 +311,7 @@ namespace RealSteel.BossRace
 
         private void Back()
         {
-            if (!IsOpen) return;
+            if (!IsOpen || BossUiInputGate.IsBlocked()) return;
 
             Action callback = onBack;
             Debug.Log("[Difficulty] 보스 선택으로 돌아감");

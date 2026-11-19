@@ -4,8 +4,13 @@ using UnityEngine.InputSystem;
 
 namespace RealSteel.Dialogue
 {
+    // FieldInputBridge(-90)보다 먼저 돌아야 같은 프레임의 대상 NPC로 고철 안내 · 이동을 막음 (InputModeController -100 다음)
+    [DefaultExecutionOrder(-95)]
     public class PlayerInteractor : MonoBehaviour
     {
+        // 이미 잡은 대상은 반경보다 조금 더 멀어져야 놓음 (경계에서 이름표가 깜빡이지 않게)
+        private const float KeepTargetMargin = 0.3f;
+
         [Header("연결")]
         [SerializeField] private DialogueManager manager;
         [SerializeField] private NpcChoiceMenu menu;
@@ -44,8 +49,14 @@ namespace RealSteel.Dialogue
             HidePrompt();
         }
 
+        private void OnEnable()
+        {
+            Canvas.willRenderCanvases += FollowPrompt;
+        }
+
         private void OnDisable()
         {
+            Canvas.willRenderCanvases -= FollowPrompt;
             current = null;
             HidePrompt();
             BlockCameraStep(false);
@@ -98,14 +109,22 @@ namespace RealSteel.Dialogue
 
             foreach (NpcInteractable npc in NpcInteractable.Active)
             {
-                float distance = Vector3.Distance(position, npc.transform.position);
-                if (distance > npc.InteractRadius || distance >= nearestDistance) continue;
+                float distance = HorizontalDistance(position, npc.transform.position);
+                float radius = npc == current ? npc.InteractRadius + KeepTargetMargin : npc.InteractRadius;
+                if (distance > radius || distance >= nearestDistance) continue;
 
                 nearest = npc;
                 nearestDistance = distance;
             }
 
             return nearest;
+        }
+
+        private static float HorizontalDistance(Vector3 a, Vector3 b)
+        {
+            a.y = 0f;
+            b.y = 0f;
+            return Vector3.Distance(a, b);
         }
 
         private void UpdatePrompt()
@@ -134,6 +153,16 @@ namespace RealSteel.Dialogue
 
             prompt.transform.position = screen;
             prompt.gameObject.SetActive(true);
+        }
+
+        // SYS 카메라는 LateUpdate에서 움직이므로, 모든 LateUpdate가 끝난 뒤(캔버스 그리기 직전) 이름표 위치를 다시 맞춤
+        private void FollowPrompt()
+        {
+            if (prompt == null || shownFor == null || worldCamera == null || !prompt.gameObject.activeSelf) return;
+
+            Vector3 screen = worldCamera.WorldToScreenPoint(shownFor.PromptPosition);
+            if (screen.z < 0f) HidePrompt();
+            else prompt.transform.position = screen;
         }
 
         private void HidePrompt()

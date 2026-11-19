@@ -57,6 +57,7 @@ namespace RealSteel.MainMenu
         private void Start()
         {
             SetContinueAvailable(GameSaveReset.HasSave());
+            ResolutionLimit.Apply(this);
         }
 
         public void SetContinueAvailable(bool available)

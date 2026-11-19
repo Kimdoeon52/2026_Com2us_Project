@@ -99,7 +99,7 @@ namespace RealSteel.BossRace.EditorTools
             var backButton = back.gameObject.AddComponent<Button>();
             backButton.targetGraphic = backImage;
             Ui.Text(back, "Label", 0f, 0f, 115f, 43f, "<   보스 선택", 13f, TextBody, true, TextAlignmentOptions.Center);
-            Ui.Text(layout, "Title", 162f, 12f, 600f, 40f, "보스 레이스 <color=#F2A900>·</color> 난이도 선택", 25f, TextMain, true, TextAlignmentOptions.MidlineLeft);
+            Ui.Text(layout, "Title", 162f, 12f, 600f, 40f, "토벌 신청 <color=#F2A900>·</color> 난이도 선택", 25f, TextMain, true, TextAlignmentOptions.MidlineLeft);
 
             Ui.Text(layout, "SeasonLabel", 897f, 11f, 150f, 18f, "시즌 종료까지", 12.5f, TextSub, false, TextAlignmentOptions.Right);
             TMP_Text season = Ui.Text(layout, "SeasonValue", 897f, 30f, 150f, 24f, "D-[00]", 16f, TextMain, true, TextAlignmentOptions.Right);
@@ -197,7 +197,7 @@ namespace RealSteel.BossRace.EditorTools
             Image startImage = Ui.AddImage(start, Gold, true);
             var startButton = start.gameObject.AddComponent<Button>();
             startButton.targetGraphic = startImage;
-            Ui.Text(start, "Label", 0f, 0f, 300f, 64f, "레이스 시작   >", 22f, Dark, true, TextAlignmentOptions.Center);
+            Ui.Text(start, "Label", 0f, 0f, 300f, 64f, "토벌 시작   >", 22f, Dark, true, TextAlignmentOptions.Center);
 
             var so = new SerializedObject(ui);
             SerializedProperty list = so.FindProperty("difficulties");

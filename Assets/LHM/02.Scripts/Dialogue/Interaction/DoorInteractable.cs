@@ -12,6 +12,11 @@ namespace RealSteel.Dialogue
     [DisallowMultipleComponent]
     public class DoorInteractable : MonoBehaviour
     {
+        private const float MinArrivalDistance = 0.8f;
+        private const float DefaultPlayerRadius = 0.3f;
+        private const float DefaultPlayerHeight = 1.8f;
+        private const float GroundClearance = 0.15f;
+
         private static readonly List<DoorInteractable> active = new List<DoorInteractable>();
         private static TMP_Text sharedPrompt;
         private static DoorInteractable promptOwner;
@@ -167,12 +172,12 @@ namespace RealSteel.Dialogue
                 return;
             }
 
-            Vector3 position = ArrivalPosition;
-            position.y = transform.position.y;
-            Vector3 facing = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
+            var controller = target.GetComponent<CharacterController>();
+            Vector3 position = FindFreeArrival(target, controller);
+            Vector3 facing = Vector3.ProjectOnPlane(position - transform.position, Vector3.up);
+            if (facing.sqrMagnitude < 0.0001f) facing = Vector3.ProjectOnPlane(transform.forward, Vector3.up);
 
             // CharacterController가 켜져 있으면 위치를 바로 바꿔도 되돌아감 → 잠깐 끄고 옮김
-            var controller = target.GetComponent<CharacterController>();
             bool wasEnabled = controller != null && controller.enabled;
             if (wasEnabled) controller.enabled = false;
             target.position = position;
@@ -182,6 +187,56 @@ namespace RealSteel.Dialogue
             player = target;
             waitForExit = true;
             Debug.Log($"[Door] '{doorId}' 문 앞에 도착 ({target.name} → {position})", this);
+        }
+
+        // 도착 자리가 벽 · 컨테이너에 막혀 있으면 문 반대쪽 → 더 먼 곳 → 옆 순서로 빈자리를 찾음 (씬마다 문 방향이 달라도 끼지 않게)
+        private Vector3 FindFreeArrival(Transform target, CharacterController controller)
+        {
+            float distance = Mathf.Max(MinArrivalDistance, Mathf.Abs(arrivalOffset.z));
+            Vector3[] candidates =
+            {
+                arrivalOffset,
+                new Vector3(arrivalOffset.x, arrivalOffset.y, -arrivalOffset.z),
+                new Vector3(arrivalOffset.x, arrivalOffset.y, distance * 2f),
+                new Vector3(arrivalOffset.x, arrivalOffset.y, -distance * 2f),
+                new Vector3(distance * 1.5f, arrivalOffset.y, 0f),
+                new Vector3(-distance * 1.5f, arrivalOffset.y, 0f),
+            };
+
+            Physics.SyncTransforms();
+            Vector3 first = Vector3.zero;
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                Vector3 position = transform.TransformPoint(candidates[i]);
+                position.y = transform.position.y;
+                if (i == 0) first = position;
+                if (!IsFree(target, controller, position)) continue;
+
+                if (i > 0) Debug.Log($"[Door] '{doorId}' 도착 자리가 막혀 있어 {i + 1}번째 후보 자리로 옮김 ({position})", this);
+                return position;
+            }
+
+            Debug.LogWarning($"[Door] '{doorId}' 문 주변에 빈자리가 없어 기본 도착 자리에 세웁니다. 문의 Arrival Offset을 확인하세요.", this);
+            return first;
+        }
+
+        private static bool IsFree(Transform target, CharacterController controller, Vector3 position)
+        {
+            Vector3 scale = target.lossyScale;
+            float radius = controller != null ? controller.radius * Mathf.Max(scale.x, scale.z) : DefaultPlayerRadius;
+            float height = controller != null ? controller.height * scale.y : DefaultPlayerHeight;
+            Vector3 center = position + (controller != null ? Vector3.Scale(controller.center, scale) : Vector3.up * height * 0.5f);
+
+            float half = Mathf.Max(0f, height * 0.5f - radius);
+            Vector3 bottom = center - Vector3.up * half;
+            Vector3 top = center + Vector3.up * half;
+            bottom.y = Mathf.Min(bottom.y + GroundClearance, top.y);
+
+            foreach (Collider hit in Physics.OverlapCapsule(bottom, top, radius, Physics.AllLayers, QueryTriggerInteraction.Ignore))
+            {
+                if (!hit.transform.IsChildOf(target)) return false;
+            }
+            return true;
         }
 
         private string ResolveScene()

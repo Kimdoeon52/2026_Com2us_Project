@@ -5873,6 +5873,7 @@ GameObject:
   - component: {fileID: 2294359818619470463}
   - component: {fileID: 6388452704168304124}
   - component: {fileID: 1669013420}
+  - component: {fileID: 7351846290147385521}
   m_Layer: 5
   m_Name: craftingWindow
   m_TagString: Untagged
@@ -10693,3 +10694,15 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7351846290147385521
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5208436198877787571}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2a832a32ff346667fd817718231e1cfb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 

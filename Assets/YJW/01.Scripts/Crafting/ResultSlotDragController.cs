@@ -95,7 +95,10 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
             return false;
 
         float size = Mathf.Max(1f, _view.CellSize);
-        origin = new Vector2Int(Mathf.FloorToInt(local.x / size), Mathf.FloorToInt(local.y / size));
+        Vector2Int cell = new Vector2Int(Mathf.FloorToInt(local.x / size), Mathf.FloorToInt(local.y / size));
+
+        // 고스트가 포인터 중앙에 뜨므로, 파츠도 포인터 칸이 가운데가 되게 원점을 뺀다 (인벤토리 드래그와 같은 계산)
+        origin = cell - _dragged.Size / 2;
         return true;
     }
 
@@ -116,8 +119,13 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
         if (_ghostImage != null)
         {
             _ghostImage.sprite = _dragged.Sprite;
+            _ghostImage.preserveAspect = true;
             _ghostImage.enabled = true;
         }
+
+        // 인벤토리에 차지할 칸 크기 그대로 그려서 어디에 놓일지 보이게 한다
+        if (_view != null)
+            _ghost.sizeDelta = (Vector2)_dragged.Size * _view.CellSize;
 
         _ghost.gameObject.SetActive(true);
         _ghost.SetAsLastSibling();   // 다른 패널들 위에 그려지도록 맨 뒤로
@@ -138,8 +146,8 @@ public class ResultSlotDragController : MonoBehaviour, IBeginDragHandler, IDragH
             _ghostLayer.rect.width * _ghostLayer.pivot.x,
             _ghostLayer.rect.height * _ghostLayer.pivot.y);
 
-        // 고스트 크기만큼 왼쪽·아래로 밀어서, 마우스가 고스트의 오른쪽 위 모서리에 오게 함
-        _ghost.anchoredPosition = local + pivotOffset - _ghost.rect.size;
+        // 고스트 크기의 절반만큼 왼쪽·아래로 밀어서, 마우스가 고스트 중앙에 오게 함
+        _ghost.anchoredPosition = local + pivotOffset - _ghost.rect.size * 0.5f;
     }
 
     private void HideGhost()

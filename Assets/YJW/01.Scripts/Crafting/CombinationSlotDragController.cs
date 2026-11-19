@@ -156,8 +156,8 @@ public class CombinationSlotDragController : MonoBehaviour, IBeginDragHandler, I
             _ghostLayer.rect.width * _ghostLayer.pivot.x,
             _ghostLayer.rect.height * _ghostLayer.pivot.y);
 
-        // 고스트 크기만큼 왼쪽·아래로 밀어서, 마우스가 고스트의 오른쪽 위 모서리에 오게 함
-        _ghost.anchoredPosition = local + pivotOffset - _ghost.rect.size;
+        // 고스트 크기의 절반만큼 왼쪽·아래로 밀어서, 마우스가 고스트 중앙에 오게 함
+        _ghost.anchoredPosition = local + pivotOffset - _ghost.rect.size * 0.5f;
     }
 
     private void HideGhost()

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 /// <summary>
@@ -24,6 +25,9 @@ public class Unit : MonoBehaviour
     /// <summary>등 뒤 슬롯 번호 (0 ~ MaxCylinder-1). 생성 시 고정</summary>
     [HideInInspector] public int slotIndex;
 
+    /// <summary>_261119_장전 상태가 변경될때 호출. true가 장전, false는 소모</summary>
+    public event Action<bool> OnChargeChanged;
+
     // 대기 슬롯으로 부드럽게 따라갈 때 쓰는 속도 버퍼 (SmoothDamp용)
     [HideInInspector] public Vector3 velocity;
 
@@ -38,6 +42,12 @@ public class Unit : MonoBehaviour
         for (int i = 0; i < renderers.Length; i++) originalColors[i] = renderers[i].color;
 
         trails = GetComponentsInChildren<TrailRenderer>(true);
+    }
+
+    // _261119_드론 파괴 시 등록된 이벤트 구독자 참조 해제
+    private void OnDestroy()
+    {
+        OnChargeChanged = null;
     }
 
     /// <summary>위치를 바로 옮긴다 (전투 시작 배치용)</summary>
@@ -71,6 +81,9 @@ public class Unit : MonoBehaviour
 
         for (int i = 0; i < renderers.Length; i++)
             renderers[i].color = charged ? originalColors[i] : spentColor;
+
+        // _261119_상태 변경 완료 후 구독자에게 알림 전송
+        OnChargeChanged?.Invoke(charged);
     }
 
     private void ClearTrails()

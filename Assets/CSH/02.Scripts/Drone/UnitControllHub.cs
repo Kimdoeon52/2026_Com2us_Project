@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -61,6 +62,11 @@ public class UnitControllHub : MonoBehaviour
     // ---- 드론 (슬롯 순서 고정) ----
     private readonly List<Unit> drones = new List<Unit>(CombatantSnapshot.MaxCylinder);
 
+    /// <summary>_261119_UI 등에서 초기 상태를 읽어갈 수 있도록 읽기 전용 리스트 공개</summary>
+    public IReadOnlyList<Unit> Drones => drones;
+    /// <summary>_261119_(슬롯 인덱스 0~2, 장전 여부) 변경 이벤트</summary>
+    public event Action<int, bool> OnDroneChargeChanged;
+
     // ---- 진행 중인 출격 1건 ----
     // ActionState는 한 번에 행동 하나만 돌리므로 출격도 동시에 1건만 존재한다
     private class Sortie
@@ -118,15 +124,25 @@ public class UnitControllHub : MonoBehaviour
             d.name = $"{name}_Drone_{i}";
             d.slotIndex = i;
             d.Place(IdleSlotWorld(i));
+
+            // _261119_개별 드론의 장전 상태 변화를 슬롯 번호와 함께 허브 이벤트로 중계
+            int slot = i;
+            d.OnChargeChanged += charged => OnDroneChargeChanged?.Invoke(slot, charged);
+
             drones.Add(d);
         }
         SyncCharge();
+
+        // _261119_DroneUI.Start()가 먼저 실행되었을 경우를 대비해 초기 슬롯 상태를 1회 확정 전송
+        for (int i = 0; i < drones.Count; i++)
+            OnDroneChargeChanged?.Invoke(i, drones[i].IsCharged);
     }
 
     private void OnDestroy()
     {
         if (executor != null) executor.OnCylinderSpent -= OnCylinderSpent;
         if (state != null) state.OnDead -= OnDead;
+        OnDroneChargeChanged = null; // _261119_구독자 참조 해제
 
         foreach (var d in drones)
             if (d != null) Destroy(d.gameObject);

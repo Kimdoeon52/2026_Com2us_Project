@@ -3377,7 +3377,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 9.044678, y: 18.427368}
+  m_LightCookieOffset: {x: 22.264755, y: 9.108309}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:
@@ -4598,6 +4598,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 41357765}
     m_Modifications:
+    - target: {fileID: 957742498605142145, guid: 7bbf2d0661d2d90439c796fd0e70f70c, type: 3}
+      propertyPath: targetHub
+      value: 
+      objectReference: {fileID: 1607610013}
     - target: {fileID: 6358272221344636422, guid: 7bbf2d0661d2d90439c796fd0e70f70c, type: 3}
       propertyPath: m_Name
       value: LJS_BattleUiCanvas

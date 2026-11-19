@@ -3667,8 +3667,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1113322275361586529}
+  - component: {fileID: 957742498605142145}
   m_Layer: 5
-  m_Name: DroneUis
+  m_Name: DroneUis_Code
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3697,6 +3698,25 @@ RectTransform:
   m_AnchoredPosition: {x: -656.6172, y: -177.40186}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &957742498605142145
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8191957250993254631}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33e4c83df45119f489fcef0b057c9a3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetHub: {fileID: 0}
+  droneImages:
+  - {fileID: 784886086356526161}
+  - {fileID: 8777492317158285737}
+  - {fileID: 4613939527697230716}
+  activeColor: {r: 1, g: 1, b: 1, a: 1}
+  inactiveColor: {r: 0.2, g: 0.2, b: 0.2, a: 0.5}
 --- !u!1 &8274244141000342263
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,7 +1,9 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 
 public class IsoMapSystemManager : MonoBehaviour
 {
@@ -16,8 +18,13 @@ public class IsoMapSystemManager : MonoBehaviour
     public GameObject confirmButton;
     public TextMeshProUGUI confirmText;
 
+    [Header("예외 안내")]
+    public GameObject currentLocationUI; // 현재 위치입니다 패널
+    public float noticeDuration = 1f;
+
     private MapElement3D selectedElement; // 💡 3D 요소로 변경
     private MapElement3D currentHoveredElement; // 현재 마우스가 올라가 있는 요소
+    private Tween noticeDt; // 숨김용 도트윈 변수
 
     private bool isMapOpen = false;
     public bool isConfirmOpen = false;
@@ -29,6 +36,7 @@ public class IsoMapSystemManager : MonoBehaviour
 
         mapCanvas.SetActive(false);
         confirmButton.SetActive(false);
+        if (currentLocationUI != null) currentLocationUI.SetActive(false);
         if (mapCamera != null) mapCamera.gameObject.SetActive(false);
     }
 
@@ -76,6 +84,12 @@ public class IsoMapSystemManager : MonoBehaviour
         else ClearHover(); // 허공을 가리킴
     }
 
+    private void OnDestroy()
+    {
+        // 오브젝트 파괴 시 실행 중인 트윈 정리
+        noticeDt?.Kill();
+    }
+
     private void ClearHover()
     {
         if (currentHoveredElement != null)
@@ -110,17 +124,53 @@ public class IsoMapSystemManager : MonoBehaviour
             isConfirmOpen = false;
             selectedElement = null;
             ClearHover();
+            HideCurrentLocationUI();
         }
     }
 
-    public void OpenConfirmPopup(MapElement3D element)
+    public void OpenConfirmPopup(MapElement3D element) // UI 팝업. 현재 지역이면 불가 
     {
+
+        if (SceneManager.GetActiveScene().name == element.targetSceneName)
+        {
+            ClearHover();
+            ShowCurrentLocationUI();
+            return;
+        }
+        HideCurrentLocationUI();
+
         selectedElement = element;
         confirmText.text = $"'{element.elementName}'(으)로\n이동하시겠습니까?";
         confirmButton.SetActive(true);
         isConfirmOpen = true;
 
         ClearHover();
+    }
+
+    private void ShowCurrentLocationUI()
+    {
+        if (currentLocationUI == null) return;
+        noticeDt?.Kill();
+        currentLocationUI.SetActive(true);
+
+        noticeDt = DOVirtual.DelayedCall(noticeDuration, () => // 변수 시간만큼 대기 후 ui 비활성화
+        {
+            if (currentLocationUI != null)
+            {
+                currentLocationUI.SetActive(false);
+            }
+        }).SetUpdate(true);
+    }
+
+    private void HideCurrentLocationUI()
+    {
+        noticeDt?.Kill();
+        noticeDt = null;
+
+        if (currentLocationUI != null)
+        {
+            currentLocationUI.SetActive(false);
+        }
     }
 
     public void OnClickMove()

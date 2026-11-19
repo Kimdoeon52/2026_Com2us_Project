@@ -100,6 +100,15 @@ Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속�
     Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)  KyodaiEditPreview.cs(플레이 전 실제 로봇 자세 미리보기)  KyodaiBonePicker.cs(Scene 뷰 뼈 선택)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
+Assets/NYH/02. Scripts/Boss/Maestro/   (2026-11-19 — 보스3 「마에스트로: 월광」, 기획서 07.Md/보스3_월광_기획.md. KKH 쿄쇼는 폐기(사용자 결정))
+    MaestroBossController.cs(BossControllerBase 상속 — 나노봇 덩어리 몸 + 악장 HP 1 고정 → 무너짐 → 다시 쌓기 전환)  MaestroTransitionState.cs(전환 중 FSM 대기 상태)
+    MaestroNotePattern.cs(1악장 음표 공격 — 휘두르기 궤적에 음표 N개 → 음+반짝임 순서대로 플레이어 향해 직선 비행 → 모래 → 재흡수)  MaestroNoteData.cs(음표 수치 SO)
+    MaestroCurtainPattern.cs(1악장 달빛 커튼 — 천장 띠 → 빛 기둥 예고 → 커튼 낙하·움직이는 틈 → 모래)  MaestroCurtainData.cs(커튼 수치 SO)
+    Test/       NanoBotTestRunner.cs(리그 클립 시험 재생 — 테스트 전용, Time.deltaTime 기준)
+    Editor/     MaestroBuilder.cs(메뉴 NYH/보스3/마에스트로 만들기·갱신)  NanoBotTestBuilder.cs(메뉴 NYH/보스3/나노봇 시험 배치)
+    나노봇 엔진(RSNano*)은 KKH/02.Scripts/03.Logic/Boss/Kyosho/Visual/NanoBoss/ — 참조만, 수정 금지. 엔진이 LateUpdate로 그림을 돌리므로 판정·패턴 타이밍은 우리 CombatClock 틱에서 센다
+Assets/NYH/04. SO/Boss/Maestro/   Maestro_Master.asset · Maestro_Pattern_Notes.asset(KKH 패턴 데이터) · Maestro_NoteData.asset · Maestro_Pattern_Curtain.asset · Maestro_CurtainData.asset (빌더가 만듦)
+
 Assets/NYH/04. SO/Combat/
     Actions/    D.asset  왼팔액티브.asset  오른팔액티브.asset  왼다리액티브.asset  오른다리액티브.asset  회피.asset  ... (2026-09-29 기준. 이름은 파츠 스킬 확정 후 갱신)
     (Parts/, Cores/ 폴더는 만들지 않음 — Assets/KKH/03.SOData/의 PartMasterData 참조)

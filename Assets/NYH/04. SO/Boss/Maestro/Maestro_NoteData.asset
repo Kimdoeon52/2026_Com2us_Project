@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1899ed4f60123c84fbbcc71ee299ceee, type: 3}
+  m_Name: Maestro_NoteData
+  m_EditorClassIdentifier: 
+  whole:
+    speed: 3
+    hitRadius: 0.35
+    visualScale: 1
+  quarter:
+    speed: 5
+    hitRadius: 0.25
+    visualScale: 1
+  eighth:
+    speed: 8
+    hitRadius: 0.18
+    visualScale: 1
+  difficulty:
+  - notes: 000000000000000000000000
+    interval: 1
+  - notes: 00000000010000000000000001000000
+    interval: 0.9
+  - notes: 0100000001000000020000000100000001000000
+    interval: 0.8
+  - notes: 010000000200000001000000020000000100000001000000
+    interval: 0.7
+  - notes: 02000000020000000100000002000000020000000100000002000000
+    interval: 0.6
+  swingSeconds: 1.2
+  arcRadius: 2.6
+  arcLift: 0.5
+  arcAngles: {x: 120, y: 0}
+  minSpawnHeight: 0.6
+  firstSoundDelay: 0.3
+  launchDelay: 0.15
+  aimHeight: 0.6
+  maxFlightSeconds: 6
+  reabsorbDelay: 1
+  glow: 1.5
+  melody: 380000003d00000040000000
+  noteClips: []
+  volume: 0.6

@@ -535,8 +535,8 @@ namespace RealSteel.Boss.JunkWheeler
         {
             minY = _groundY + groundPaddingY;
             maxY = _groundY + 4.2f;
-            minX = -6.65f;
-            maxX = 6.65f;
+            minX = -7.0f;
+            maxX = 7.0f;
 
             if (OwnerBoss != null)
             {

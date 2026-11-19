@@ -18,6 +18,11 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private ParticleSystem phase2FireVFX; // 2페이즈 엔진 불꽃 파티클
         [SerializeField] private ParticleSystem defeatExplosionVFX; // 토벌 사망 폭발 파티클
 
+        [Header("1보스 좌/우 이동 한계 X")]
+        [SerializeField] private bool useFixedMoveBoundsX = true;
+        [SerializeField] private float moveMinX = -7.0f;
+        [SerializeField] private float moveMaxX = 7.0f;
+
         [Header("사운드 데이터 (SO)")]
         [SerializeField] private JunkWheelerSfxData sfxData;
         [SerializeField] private bool playIdleEngineLoop = true;
@@ -177,6 +182,17 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 field.SetValue(gimmick, data);
             }
+        }
+
+        public override bool TryGetStageWallBoundsX(out float minX, out float maxX, float padding = -1f)
+        {
+            if (useFixedMoveBoundsX)
+            {
+                minX = Mathf.Min(moveMinX, moveMaxX);
+                maxX = Mathf.Max(moveMinX, moveMaxX);
+                return true;
+            }
+            return base.TryGetStageWallBoundsX(out minX, out maxX, padding);
         }
 
         protected override void Update()

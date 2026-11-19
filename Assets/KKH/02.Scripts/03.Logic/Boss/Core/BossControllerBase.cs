@@ -94,10 +94,18 @@ namespace RealSteel.Boss.Core
         [Header("4. 애니메이션 컨트롤러 (미할당 시 자동 탐색)")]
         [SerializeField] protected BossAnimationController animationController;
 
+        [Header("5. 패턴 선택 무작위성")]
+        [SerializeField] protected bool randomizePatternOrder = true;
+        [SerializeField] [Range(0f, 1f)] protected float twoPatternRepeatWeight = 0.25f;
+        [SerializeField] [Min(0f)] protected float starvationWeightStep = 0.6f;
+
         protected readonly Dictionary<string, BossGimmickBase> gimmickRegistry = new();
         protected readonly List<BossPatternGimmickBase> activePatternPool = new();
         protected CancellationTokenSource _stateCts;
         protected int _patternIndex = 0;
+        protected BossPatternGimmickBase _lastSelectedPattern;
+        protected int _consecutiveSamePatternCount = 0;
+        private readonly Dictionary<BossPatternGimmickBase, int> _turnsSincePatternUsed = new();
         private CombatDataHub _subscribedHub;
         private bool _isDefeatedHandled = false;
 
@@ -235,7 +243,7 @@ namespace RealSteel.Boss.Core
         /// CombatCamera가 줌아웃(farZ) 및 스테이지 이동 한계(minX~maxX)에 도달했을 때의 '최대 전장 카메라 벽(Stage Wall)' 좌/우 X 경계를 반환함.
         /// 돌진이나 당구 바운스처럼 카메라를 밀어붙이며 화면 끝까지 가야 하는 패턴에서 사용함.
         /// </summary>
-        public bool TryGetStageWallBoundsX(out float minX, out float maxX, float padding = -1f)
+        public virtual bool TryGetStageWallBoundsX(out float minX, out float maxX, float padding = -1f)
         {
             float pad = padding >= 0f ? padding : GetBossVisualHalfWidth();
             Camera cam = TargetCamera;
@@ -546,6 +554,11 @@ namespace RealSteel.Boss.Core
 
         protected virtual void StartCombatLoop()
         {
+            _patternIndex = 0;
+            _lastSelectedPattern = null;
+            _consecutiveSamePatternCount = 0;
+            _turnsSincePatternUsed.Clear();
+
             var token = RenewStateCancellationToken();
             float postDelay = masterData != null ? masterData.patternPostDelay : 1.0f;
             StateMachine.Initialize(new BossIdleState(this, token, postDelay));
@@ -659,16 +672,107 @@ namespace RealSteel.Boss.Core
         {
             if (activePatternPool.Count == 0) return null;
 
-            // 기획서 §6.10.4: 난이도별 최대 허용 패턴 수로 풀 제한 (아주쉬움: 2종, 쉬움: 3종, 보통 이상: 4종)
+            // 기획서 §6.10.4: 난이도별 최대 허용 패턴 수로 풀 제한 (아주쉬움: 2종, 쉬움: 3종, 보통 이상: 4~5종)
             int allowedCount = Snapshot != null ? Mathf.Clamp(Snapshot.maxAllowedPatterns, 1, activePatternPool.Count) : activePatternPool.Count;
             var poolToUse = activePatternPool.GetRange(0, allowedCount);
 
-            var validPool = poolToUse.FindAll(p => p != null && !Snapshot.IsSkillSealed(p.GimmickID));
-            if (validPool.Count == 0) validPool = poolToUse;
+            var validPool = poolToUse.FindAll(p => p != null && (Snapshot == null || !Snapshot.IsSkillSealed(p.GimmickID)));
+            if (validPool.Count == 0) validPool = poolToUse.FindAll(p => p != null);
+            if (validPool.Count == 0) return null;
 
-            var pattern = validPool[_patternIndex % validPool.Count];
+            BossPatternGimmickBase selected;
+            if (!randomizePatternOrder || validPool.Count == 1)
+            {
+                selected = validPool[_patternIndex % validPool.Count];
+            }
+            else
+            {
+                selected = SelectWeightedRandomPattern(validPool);
+            }
+
+            RecordPatternSelection(selected, validPool);
+            return selected;
+        }
+
+        private BossPatternGimmickBase SelectWeightedRandomPattern(List<BossPatternGimmickBase> validPool)
+        {
+            float totalWeight = 0f;
+            float[] weights = new float[validPool.Count];
+
+            for (int i = 0; i < validPool.Count; i++)
+            {
+                var candidate = validPool[i];
+                bool isSameAsLast = candidate == _lastSelectedPattern;
+
+                float weight;
+                if (validPool.Count >= 3)
+                {
+                    if (isSameAsLast)
+                    {
+                        weights[i] = 0f;
+                        continue;
+                    }
+                    int turnsUnused = _turnsSincePatternUsed.TryGetValue(candidate, out int turns) ? turns : 0;
+                    weight = 1f + Mathf.Min(turnsUnused, 6) * Mathf.Max(0f, starvationWeightStep);
+                }
+                else
+                {
+                    if (isSameAsLast)
+                    {
+                        weight = _consecutiveSamePatternCount >= 2 ? 0f : Mathf.Clamp01(twoPatternRepeatWeight);
+                    }
+                    else
+                    {
+                        int turnsUnused = _turnsSincePatternUsed.TryGetValue(candidate, out int turns) ? turns : 0;
+                        weight = 1f + Mathf.Min(turnsUnused, 6) * Mathf.Max(0f, starvationWeightStep);
+                    }
+                }
+
+                weights[i] = weight;
+                totalWeight += weight;
+            }
+
+            if (totalWeight <= 0f)
+            {
+                return validPool[UnityEngine.Random.Range(0, validPool.Count)];
+            }
+
+            float roll = UnityEngine.Random.Range(0f, totalWeight);
+            float cumulative = 0f;
+            for (int i = 0; i < validPool.Count; i++)
+            {
+                if (weights[i] <= 0f) continue;
+                cumulative += weights[i];
+                if (roll <= cumulative)
+                {
+                    return validPool[i];
+                }
+            }
+
+            return validPool[validPool.Count - 1];
+        }
+
+        private void RecordPatternSelection(BossPatternGimmickBase selected, List<BossPatternGimmickBase> validPool)
+        {
+            for (int i = 0; i < validPool.Count; i++)
+            {
+                var p = validPool[i];
+                if (p == null) continue;
+                int prev = _turnsSincePatternUsed.TryGetValue(p, out int turns) ? turns : 0;
+                _turnsSincePatternUsed[p] = p == selected ? 0 : prev + 1;
+            }
+
+            if (selected == _lastSelectedPattern)
+            {
+                _consecutiveSamePatternCount++;
+            }
+            else
+            {
+                _lastSelectedPattern = selected;
+                _consecutiveSamePatternCount = 1;
+            }
+
             _patternIndex++;
-            return pattern;
         }
 
         public virtual void InterruptToGroggy(float duration = 4.0f, float damageMultiplier = 1.5f)

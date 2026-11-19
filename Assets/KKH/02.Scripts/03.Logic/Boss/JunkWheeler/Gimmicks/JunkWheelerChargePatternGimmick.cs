@@ -597,7 +597,7 @@ namespace RealSteel.Boss.JunkWheeler
 
                 if (hit.collider != null && hit.collider.gameObject != OwnerBoss.gameObject && !hit.collider.isTrigger)
                 {
-                    float wallHitX = hit.point.x - (directionX * pad);
+                    float wallHitX = hit.point.x - (directionX * Mathf.Max(0f, wallEdgePadding));
                     return directionX > 0f ? Mathf.Min(cameraWallX, wallHitX) : Mathf.Max(cameraWallX, wallHitX);
                 }
             }

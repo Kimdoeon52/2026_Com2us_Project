@@ -785,6 +785,8 @@ MonoBehaviour:
   clock: {fileID: 4923512759371986076}
   seasonCall: {fileID: 5430131075287256123}
   seasonLength: 90
+  firstSeasonMonth: 4
+  firstSeasonDay: 1
 --- !u!1 &4936536295010782590
 GameObject:
   m_ObjectHideFlags: 0
@@ -1192,6 +1194,9 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 57a9bf875617a334d9d79728d03288db, type: 3}
   - {fileID: 4900000, guid: 88ef38b83005f24439139ce9426531d4, type: 3}
   - {fileID: 4900000, guid: 70039d29e3bd460468f8a140decf4a5e, type: 3}
+  - {fileID: 4900000, guid: f12888ad7d8851a43a8bdae27820e915, type: 3}
+  - {fileID: 4900000, guid: 19fcbb29da7cf494e93a032882fcf213, type: 3}
+  - {fileID: 4900000, guid: 84cf8a9dfacb8cf4a91588d0ae2187f1, type: 3}
   stringTableJson: {fileID: 4900000, guid: 4e4251f76178643468cedab3c0537b8c, type: 3}
   variablesJson: {fileID: 4900000, guid: 026c7a03f67200e4d91190ec48cd4897, type: 3}
   packedData: {fileID: 4900000, guid: e4fadc75ece54b14783ec4f1437d68b0, type: 3}
@@ -1334,6 +1339,8 @@ MonoBehaviour:
   - final
   fallbackBossId: boss.wheel
   backLabel: "\uAE38\uB4DC \uC811\uC218\uCC98"
+  blockBeforeSeason: 1
+  preseasonDialogueId: hunt_preseason
 --- !u!1001 &3130425325876315223
 PrefabInstance:
   m_ObjectHideFlags: 0

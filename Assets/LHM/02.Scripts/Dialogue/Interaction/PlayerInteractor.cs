@@ -64,7 +64,7 @@ namespace RealSteel.Dialogue
 
         private void Update()
         {
-            if (!manager.IsReady || IsBusy || menu.EndedThisFrame)
+            if (!manager.IsReady || IsBusy || menu.EndedThisFrame || OtherUiOpen())
             {
                 // 대화가 끝나는 프레임에 이동 스크립트가 다시 켜지며 같은 E를 읽을 수 있어 대화 중에도 막아 둠
                 BlockCameraStep(IsBusy || menu.EndedThisFrame);
@@ -163,6 +163,11 @@ namespace RealSteel.Dialogue
             Vector3 screen = worldCamera.WorldToScreenPoint(shownFor.PromptPosition);
             if (screen.z < 0f) HidePrompt();
             else prompt.transform.position = screen;
+        }
+
+        private static bool OtherUiOpen()
+        {
+            return RealSteel.Tutorial.GamePause.IsPaused || (UiStack.Current != null && UiStack.Current.Count > 0);
         }
 
         private void HidePrompt()

@@ -100,9 +100,12 @@ namespace RealSteel.Dialogue
             }
 
             var closeUps = new HashSet<Camera>(GetComponentsInChildren<Camera>(true));
+            int playerMask = target != null ? 1 << target.gameObject.layer : 1;
             Camera best = FindObjectsByType<Camera>(FindObjectsSortMode.None)
                 .Where(c => c.targetTexture == null && c.enabled && !closeUps.Contains(c))
-                .OrderByDescending(c => c.depth)
+                .OrderByDescending(c => (c.cullingMask & playerMask) != 0)
+                .ThenByDescending(c => c.CompareTag("MainCamera"))
+                .ThenByDescending(c => c.depth)
                 .FirstOrDefault();
             return best != null ? best : Camera.main;
         }

@@ -101,7 +101,8 @@ public class PauseMenu : MonoBehaviour
 
     private void LateUpdate()
     {
-        _blockedLastFrame = AnyBlockerOpen();
+        // 메뉴가 닫혀 있을 때만 잰다 (열려 있는 동안은 메뉴 자신이 UI 스택 · 게임 정지에 들어가 있음)
+        _blockedLastFrame = !_panel.activeSelf && (AnyBlockerOpen() || OtherUiOpen());
 
         // 열려 있는 동안 창 크기가 바뀌어도 맞춘다
         if (_panel.activeSelf) FitContent();
@@ -179,11 +180,15 @@ public class PauseMenu : MonoBehaviour
     // 예: 2080.03.28  /  14:00  /  고물상
     private void RefreshStatus()
     {
+        string location = CurrentLocation();
+
+        // 진행 상황 · 저장 정보 · 버전 글자를 실제 값으로 채운다 (값이 없는 칸은 "-")
+        RealSteel.MainMenu.PauseMenuInfo.Fill(_panel.transform, location);
+
         if (_statusText == null) return;
 
         TimeSystemManager clock = GameClock();
         string date = clock != null ? $"{clock.year}.{clock.month:D2}.{clock.day:D2}  /  {clock.hour:D2}:00" : "----.--.--  /  --:--";
-        string location = CurrentLocation();
 
         _statusText.text = string.IsNullOrEmpty(location) ? date : $"{date}  /  {location}";
     }
@@ -256,6 +261,14 @@ public class PauseMenu : MonoBehaviour
 #else
         Application.Quit();
 #endif
+    }
+
+    // 대화창 · NPC 선택지 · 튜토리얼 · 보스 선택 · 달력 같은 창은 열릴 때 LHM UI 스택이나 게임 정지에 등록되므로
+    // 하나라도 열려 있으면 Esc는 그 창(대화 스킵 · 닫기)에 양보한다. 창마다 _blockers에 넣지 않아도 된다
+    private static bool OtherUiOpen()
+    {
+        if (UiStack.Current != null && UiStack.Current.Count > 0) return true;
+        return GamePause.IsPaused;
     }
 
     private bool AnyBlockerOpen()

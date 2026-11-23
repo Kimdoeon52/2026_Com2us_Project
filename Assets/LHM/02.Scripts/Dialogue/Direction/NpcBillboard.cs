@@ -10,7 +10,7 @@ namespace RealSteel.Dialogue
 
         private void LateUpdate()
         {
-            Camera camera = FindRenderingCamera();
+            Camera camera = FindRenderingCamera(gameObject.layer);
             if (camera == null) return;
 
             Vector3 forward = camera.transform.forward;
@@ -23,8 +23,9 @@ namespace RealSteel.Dialogue
             transform.rotation = Quaternion.LookRotation(forward, Vector3.up);
         }
 
-        private static Camera FindRenderingCamera()
+        public static Camera FindRenderingCamera(int layer)
         {
+            int mask = 1 << layer;
             int count = Camera.allCamerasCount;
             if (count == 0) return null;
             if (buffer.Length < count) buffer = new Camera[count];
@@ -34,7 +35,7 @@ namespace RealSteel.Dialogue
             for (int i = 0; i < count; i++)
             {
                 Camera camera = buffer[i];
-                if (camera == null || camera.targetTexture != null) continue;
+                if (camera == null || camera.targetTexture != null || (camera.cullingMask & mask) == 0) continue;
                 if (best == null || camera.depth > best.depth) best = camera;
             }
             return best;

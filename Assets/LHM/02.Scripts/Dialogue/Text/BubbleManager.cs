@@ -47,9 +47,9 @@ namespace RealSteel.Dialogue
             }
         }
 
-        private void Update()
+        private void LateUpdate()
         {
-            bool suppressed = manager != null && manager.IsTalking;
+            bool suppressed = (manager != null && manager.IsTalking) || RealSteel.Tutorial.GamePause.IsPaused;
             float deltaTime = Time.unscaledDeltaTime;
             foreach (BubbleView view in views) view.Tick(deltaTime, suppressed);
         }

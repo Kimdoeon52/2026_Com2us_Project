@@ -81,7 +81,9 @@ namespace RealSteel.Dialogue
                 return;
             }
 
-            Vector3 screen = worldCamera.WorldToScreenPoint(Target.position + offset);
+            Camera cam = NpcBillboard.FindRenderingCamera(Target.gameObject.layer);
+            if (cam == null) cam = worldCamera;
+            Vector3 screen = cam.WorldToScreenPoint(Target.position + offset);
             bool visible = !suppressed && screen.z >= 0f;
             group.alpha = visible ? 1f - fade : 0f;
             rect.position = new Vector3(screen.x, screen.y, 0f);

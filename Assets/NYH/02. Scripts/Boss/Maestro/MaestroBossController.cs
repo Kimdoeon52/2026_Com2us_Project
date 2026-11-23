@@ -332,6 +332,14 @@ public class MaestroBossController : BossControllerBase
     }
 
 #if UNITY_EDITOR
+    // 시험용 (2026-11-23): 남은 HP만큼 실제 피해 경로(TakeDamage)로 넣어 악장 끝을 바로 본다 — 플레이 중 컴포넌트 ⋮ 메뉴
+    [ContextMenu("시험: 이번 악장 HP 0으로 (악장 전환·격파 확인)")]
+    private void DebugFinishMovement()
+    {
+        if (!Application.isPlaying || Snapshot == null || InTransition || defeated) return;
+        TakeDamage(Snapshot.currentHp, true);
+    }
+
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;

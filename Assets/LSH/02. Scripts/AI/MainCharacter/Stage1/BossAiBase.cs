@@ -125,14 +125,21 @@ public class BossAiBase : AllAiBase
         return true;
     }
 
-    // 낙찰 정산: GlobalGold로 골드 차감 + 장비 등급 교체 후 저장
-    public override void OnWinAuction(int finalPrice, PartGrade stuffGrade)
+    // 낙찰 정산: GlobalGold로 골드 차감 + 부품 1개 획득 (같은 부품 3개면 장비 강화) 후 저장
+    // 반환값 = 말풍선 대사 (강화되면 강화 소식, 아니면 개성 낙찰 대사 + 모은 개수)
+    public override string OnWinAuction(int finalPrice, ComponentDefinition item)
     {
-        if (GlobalGold.Instance == null) return;
+        if (GlobalGold.Instance == null) return GetWinLine();
         if (!GlobalGold.Instance.UseGold(NPCID, finalPrice))
             Debug.LogWarning($"[낙찰] {NPCName} 골드 부족으로 차감 실패 ({finalPrice}G)");
-        GlobalGold.Instance.ChangePartsGrade(NPCID, stuffGrade);
-        GlobalGold.Instance.SaveGame();
+
+        // GlobalGold.Instance.ChangePartsGrade(NPCID, item.Grade); // 구 방식: 낙찰 즉시 장비 강화
+        bool upgraded = GlobalGold.Instance.AddComponent(NPCID, item, out PartGrade newGrade);
+        GlobalGold.Instance.SaveGame(); // 골드 + 부품 개수 + 장비 등급 함께 저장
+
+        if (upgraded) return $"{item.DisplayName} {GlobalGold.ComponentsPerUpgrade}개! 장비가 {newGrade}(으)로 강화됐다!";
+        int count = item != null ? GlobalGold.Instance.GetComponentCount(NPCID, item.Id) : 0;
+        return $"{GetWinLine()} ({count}/{GlobalGold.ComponentsPerUpgrade})";
     }
 
     //==================================스킬===================================

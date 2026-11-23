@@ -115,9 +115,9 @@ public class Auction : Singleton<Auction>
     private bool isSelectingMode = false; //모드 선택 대기 중인지 체크 (상점은 이때만 열 수 있음)
     private bool IsShopOpen => shopPanel != null && shopPanel.activeSelf;
     private bool IsRepairOpen => repairWindow != null && repairWindow.activeSelf;
-    //===============================ai 슬롯 위치====================
-    [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 rankerSeatPoints 사용)")]
-    [SerializeField] private List<Transform> aiSlots;
+    //===============================ai 슬롯 위치 (구 방식, 사용 안 함 → rankerSeatPoints로 대체)====================
+    // [Header("AI 슬롯 (구 UI 슬롯, 사용 안 함 - 좌석은 rankerSeatPoints 사용)")]
+    // [SerializeField] private List<Transform> aiSlots;
 
     private List<AllAiBase> spawnedAiList = new List<AllAiBase>();
     private List<GameObject> roundUiList = new List<GameObject>(); // 회차마다 지울 연출용 UI (주먹 경매 명패 등)
@@ -150,7 +150,7 @@ public class Auction : Singleton<Auction>
     [SerializeField] private SpriteRenderer playerImage; //플레이어 들어갈 곳
     // [SerializeField] public Transform[] npcsPos; //여기는 npc위치들 (구 방식: 좌석 = 생성한 초상화 Transform으로 대체)
     [SerializeField] private Transform playerImagePos;
-    public Transform PlayerSlot => playerImage != null ? playerImagePos : null;
+    public Transform PlayerSlot => playerImage != null ? playerImage.transform : null; // 플레이어 초상화 위치 (명패/말풍선 기준)
 
     [Header("랭커 좌석 (맵 프리팹 안의 오브젝트 위치만 사용)")]
     [Tooltip("이 위치들에 랭커 초상화를 코드로 생성함. 맵 오브젝트는 건드리지 않음")]
@@ -270,7 +270,11 @@ public class Auction : Singleton<Auction>
     {
         base.Awake(); // Instance용 base
 
-        if (Instance == this) BuildRankerSeats(); // 맵 위치를 받아 랭커 좌석 초상화 생성 (npcs/npcsPos 대체)
+        if (Instance == this)
+        {
+            BuildRankerSeats(); // 맵 위치를 받아 랭커 좌석 초상화 생성 (npcs/npcsPos 대체)
+            BuildPlayerSeat(); // 플레이어 좌석 초상화도 같은 방식으로 생성 (playerImage가 비어 있을 때)
+        }
 
         // 전략 등록
         nowAuctionMode = new Dictionary<AuctionType, IAuctionMode> // noewAuctionMode에 현재 모드 넣기
@@ -410,9 +414,9 @@ public class Auction : Singleton<Auction>
     // 좌석에 플레이어 초상화 표시. 보여줄 이미지가 있으면 true
     private bool ShowPlayerPortrait()
     {
+        BuildPlayerSeat(); // 혹시 아직 없으면 생성
         if (playerImage == null) return false;
-        if (AuctionPlayer.Instance != null && AuctionPlayer.Instance.playerImage != null)
-            playerImage.sprite = AuctionPlayer.Instance.playerImage;
+        if (PlayerSeatSprite != null) playerImage.sprite = PlayerSeatSprite;
         if (playerImage.sprite == null) return false;
 
         playerImage.gameObject.SetActive(true);
@@ -1315,8 +1319,8 @@ public class Auction : Singleton<Auction>
             {
                 if (ai != null && ai.NPCID == WinnerID) // 이긴 ai 찾기
                 {
-                    ai.OnWinAuction(CurrentCost, stuffGrade); // 보스는 GlobalGold 정산, 일반 NPC는 기록만
-                    ai.ShowThinkChatWithText(ai.GetWinLine()); // 낙찰 소감 (보스는 개성 대사)
+                    string winLine = ai.OnWinAuction(CurrentCost, stuff); // 보스는 골드 차감 + 부품 수집(3개면 장비 강화), 일반 NPC는 기록만
+                    ai.ShowThinkChatWithText(winLine); // 낙찰 소감 (강화되면 강화 소식)
                     break;
                 }
             }
@@ -1527,12 +1531,13 @@ public class Auction : Singleton<Auction>
         auctionAiList = new List<AllAiBase>(spawnedAiList);
 
         // 플레이어 말풍선도 플레이어 좌석 머리 위로 옮김
-        if (AuctionPlayer.Instance != null && playerImagePos != null && playerImage != null)
+        if (AuctionPlayer.Instance != null && playerImage != null)
         {
-            if (AuctionPlayer.Instance.playerImage != null) playerImage.sprite = AuctionPlayer.Instance.playerImage;
+            if (PlayerSeatSprite != null) playerImage.sprite = PlayerSeatSprite;
             NormalizePortrait(playerImage); // 플레이어 초상화도 같은 배율로
-            Vector3 head = GetHeadPosition(playerImagePos, playerImage);
-            AuctionPlayer.Instance.AttachBubbleTo(playerImagePos, head, playerImage);
+            Transform portrait = playerImage.transform; // 초상화 기준 (말풍선이 초상화를 따라다님)
+            Vector3 head = GetHeadPosition(portrait, playerImage);
+            AuctionPlayer.Instance.AttachBubbleTo(portrait, head, playerImage);
         }
     }
 
@@ -1569,7 +1574,7 @@ public class Auction : Singleton<Auction>
         if (portraitWorldHeight > 0f) return portraitWorldHeight * portraitSizeMultiplier;
         if (referencePortraitHeight < 0f)
         {
-            Sprite playerSprite = AuctionPlayer.Instance != null ? AuctionPlayer.Instance.playerImage : null;
+            Sprite playerSprite = PlayerSeatSprite; // 좌석에 실제로 나오는 플레이어 이미지 기준
             if (playerSprite == null || playerImage == null) return 0f; // 기준이 없으면 보정 안 함
             referencePortraitHeight = playerSprite.bounds.size.y * playerImage.transform.lossyScale.y; // 약 1.28m (64px / PPU100 x 좌석 2배)
         }
@@ -1613,6 +1618,30 @@ public class Auction : Singleton<Auction>
         npcs = seats.ToArray();
         // npcsPos = null; // 좌석 = 생성한 초상화 Transform (GetSeat이 npcs[i].transform을 사용)
     }
+
+    // 플레이어 좌석 초상화: 인스펙터 playerImage가 비어 있으면 playerImagePos(맵의 '앉는 위치')에 랭커와 똑같이 코드로 생성
+    // 맵 오브젝트는 건드리지 않고 RankerSeats 아래에 만듦. 이미지는 ShowPlayerPortrait에서 넣음
+    private void BuildPlayerSeat()
+    {
+        if (playerImage != null || playerImagePos == null) return;
+
+        if (rankerSeatRoot == null) rankerSeatRoot = new GameObject("RankerSeats").transform;
+        GameObject go = new GameObject("PlayerSeat");
+        go.transform.SetParent(rankerSeatRoot, false);
+        go.transform.position = playerImagePos.position + rankerSeatOffset;
+        go.transform.rotation = FaceStage(go.transform.position, StagePoint); // 랭커와 똑같이 무대를 바라봄
+        go.transform.localScale = rankerSeatScale;
+
+        playerImage = go.AddComponent<SpriteRenderer>();
+        playerImage.sortingLayerName = rankerSortingLayerName;
+        playerImage.sortingOrder = rankerSortingOrder;
+        go.SetActive(false); // 착석/경매 시작 때 켜짐
+    }
+
+    // 플레이어 좌석 초상화에 넣을 이미지 (AuctionPlayer의 이미지 → 없으면 인스펙터의 playerSeatSprite)
+    private Sprite PlayerSeatSprite => AuctionPlayer.Instance != null && AuctionPlayer.Instance.playerImage != null
+        ? AuctionPlayer.Instance.playerImage
+        : playerSeatSprite;
 
     // 좌석 Transform = 생성한 초상화 SpriteRenderer의 Transform
     private Transform GetSeat(int index)
@@ -1701,15 +1730,15 @@ public class Auction : Singleton<Auction>
         // 뽑힌 랜덤한 npcs 위치들에 순서대로 auctionAiList의 데이터를 집어넣음
         npcs[index].sprite = auctionAiList[cnt].npcImage;
         SetImageAlpha(npcs[index], 1f); // 참여하는 칸은 불투명
-        if (AuctionPlayer.Instance != null)
-            playerImage.sprite = AuctionPlayer.Instance.playerImage;
+        if (playerImage != null && PlayerSeatSprite != null)
+            playerImage.sprite = PlayerSeatSprite;
     }
     
     private void NPCImageOn()
     {
+        if (playerImage != null) playerImage.gameObject.SetActive(true); // 비어 있으면 건너뜀 (예전엔 여기서 예외로 경매가 멈춤)
         for (int i = 0; i < npcs.Length; i++)
         {
-            playerImage.gameObject.SetActive(true);
             npcs[i].gameObject.SetActive(true);
             SetImageAlpha(npcs[i], 0f); // 일단 투명, 참여하는 칸만 InsertNPCData에서 불투명 처리
         }
@@ -1724,9 +1753,9 @@ public class Auction : Singleton<Auction>
     private void NPCImageOff()
     {
         bool keepPlayer = seatLock != null && seatLock.IsSeated; // 착석 중이면 플레이어 모습은 계속 보임
+        if (!keepPlayer && playerImage != null) playerImage.gameObject.SetActive(false);
         for (int i = 0; i < npcs.Length; i++)
         {
-            if (!keepPlayer) playerImage.gameObject.SetActive(false);
             npcs[i].gameObject.SetActive(false);
         }
     }

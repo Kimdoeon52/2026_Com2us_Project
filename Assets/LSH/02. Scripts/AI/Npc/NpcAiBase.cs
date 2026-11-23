@@ -49,9 +49,10 @@ public class NpcAiBase : AllAiBase
 
     // 일반 NPC(조무레기)는 골드/장비가 저장되지 않음 (기획: 골드 상관X).
     // NpcGold는 ScriptableObject라 에디터에서 값을 깎으면 에셋 자체가 바뀌므로 차감하지 않고 기록만 남김
-    public override void OnWinAuction(int finalPrice, PartGrade stuffGrade)
+    public override string OnWinAuction(int finalPrice, ComponentDefinition item)
     {
-        Debug.Log($"[낙찰] {NPCName} : {finalPrice}G (일반 NPC라 골드는 차감하지 않음)");
+        Debug.Log($"[낙찰] {NPCName} : {finalPrice}G (일반 NPC라 골드/부품은 저장하지 않음)");
+        return GetWinLine();
     }
     
 }

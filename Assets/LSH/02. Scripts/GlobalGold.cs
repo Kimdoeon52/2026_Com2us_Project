@@ -156,7 +156,67 @@ public class GlobalGold: PersistentSingleton<GlobalGold>, IGoldSource
         }
         return false;
     }
-    //==========================================장비 등급 교체==========================================================
+    //==========================================부품 수집 → 장비 강화==========================================================
+    public const int ComponentsPerUpgrade = 3; // 같은 부품을 이만큼 모으면 강화
+
+    // 랭커가 부품 1개를 얻음. 같은 부품이 3개 모이면 장비 중 그 등급보다 낮은 칸 하나를 그 등급으로 올리고 3개 소모.
+    // 강화됐으면 true (upgradedGrade에 올라간 등급)
+    public bool AddComponent(int id, ComponentDefinition component, out PartGrade upgradedGrade)
+    {
+        upgradedGrade = PartGrade.Basic;
+        MainCharacterGold data = FindCharacter(id);
+        if (data == null || component == null) return false;
+        if (data.components == null) data.components = new List<OwnedComponent>();
+
+        OwnedComponent owned = data.components.Find(c => c.id == component.Id);
+        if (owned == null)
+        {
+            owned = new OwnedComponent { id = component.Id, displayName = component.DisplayName, grade = component.Grade, count = 0 };
+            data.components.Add(owned);
+        }
+        owned.count++;
+        Debug.Log($"[부품] {data.mainCharacterName} : {component.DisplayName} {owned.count}/{ComponentsPerUpgrade}");
+
+        if (owned.count < ComponentsPerUpgrade) return false;
+        if (!UpgradeLowestPart(data, owned.grade)) return false; // 올릴 칸이 없으면(전부 같거나 높음) 부품은 그대로 보관
+
+        owned.count -= ComponentsPerUpgrade;
+        upgradedGrade = owned.grade;
+        Debug.Log($"[강화] {data.mainCharacterName} : {component.DisplayName} {ComponentsPerUpgrade}개 → 장비 한 칸이 {owned.grade}(으)로 강화 (남은 개수 {owned.count})");
+        return true;
+    }
+
+    // 이 랭커가 가진 특정 부품 개수
+    public int GetComponentCount(int id, string componentId)
+    {
+        MainCharacterGold data = FindCharacter(id);
+        if (data == null || data.components == null) return 0;
+        OwnedComponent owned = data.components.Find(c => c.id == componentId);
+        return owned != null ? owned.count : 0;
+    }
+
+    // 장비 칸 중 grade보다 낮은 칸들 가운데 가장 낮은 칸을 grade로 올림
+    private static bool UpgradeLowestPart(MainCharacterGold data, PartGrade grade)
+    {
+        if (data.parts == null || data.parts.Length == 0) return false;
+        int lowest = -1;
+        for (int i = 0; i < data.parts.Length; i++)
+        {
+            if (data.parts[i] >= grade) continue;
+            if (lowest < 0 || data.parts[i] < data.parts[lowest]) lowest = i;
+        }
+        if (lowest < 0) return false;
+        data.parts[lowest] = grade;
+        return true;
+    }
+
+    private MainCharacterGold FindCharacter(int id)
+    {
+        if (mainCharacterdata == null) return null;
+        return mainCharacterdata.Find(d => d != null && d.mainCharacterID == id);
+    }
+
+    //==========================================장비 등급 교체 (구 방식: 낙찰 즉시 강화 → AddComponent로 대체)==========================================================
     public void ChangePartsGrade(int id, PartGrade stuffGrade) //장비 등급 교체 함수
     {
         foreach (var data in mainCharacterdata) //모든 데이터를 돌면서 같은 id가 있는 npc나 플레이어에게 골드를 추가해줌

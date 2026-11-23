@@ -33,7 +33,8 @@ public abstract class AllAiBase : MonoBehaviour
     public abstract void ReadyForAction();
     public virtual string GetRaiseLine(int cost) => $"{cost}G 가본다!"; // 레이즈 말풍선 (보스는 개성 대사로 덮어씀)
     public virtual string GetWinLine() => "앗싸, 내 거다!"; // 낙찰 말풍선 (보스는 개성 대사로 덮어씀)
-    public abstract void OnWinAuction(int finalPrice, PartGrade stuffGrade); // 낙찰 정산 (보스: GlobalGold 차감/장비 교체, NPC: 기록만)
+    // 낙찰 정산. 반환값 = 낙찰 후 말풍선에 띄울 대사 (보스: 골드 차감 + 부품 수집/강화, NPC: 기록만)
+    public abstract string OnWinAuction(int finalPrice, ComponentDefinition item);
     public abstract bool RaiseThink(int actionPrise, int actionRealPrise, PartGrade stuffGrade);
 
     //==================================공통 경매 판단===================================

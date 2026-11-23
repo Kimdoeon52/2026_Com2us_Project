@@ -1,12 +1,5 @@
 using UnityEngine;
 
-public enum DestructiveResistance  // 파괴 저항력
-{
-    VeryLow,
-    Low,
-    Normal
-}
-
 public enum Slot
 {
     LeftArm,
@@ -76,14 +69,8 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("점유 모양")]
     [SerializeField] private PartsShape _shape = new PartsShape();
 
-    [Tooltip("최대 소지 갯수")]
-    [SerializeField] private int _maxCount;
-
     [Tooltip("파츠 이미지. 외곽 비율에 맞춰 그린다")]
     [SerializeField] private Sprite _sprite;
-
-    [Tooltip("파괴 저항력")]
-    [SerializeField] private DestructiveResistance _destructiveResistance;
 
     [Tooltip("가격")]
     [SerializeField] private int cost;
@@ -130,10 +117,6 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("사거리 증가 (%)")]
     [Min(0f)][SerializeField] private float _rangeIncrease;
 
-    [Tooltip("치명타 저항력")]
-    [SerializeField] private float _critResistance;   // 머리 파츠: 치명타 저항
-    [SerializeField] private float _critDamageReduction;
-
     [Header("스킬 연동")]
     [Tooltip("액티브 스킬 ID")]
     [SerializeField] private string _activeSkillId = "";
@@ -141,23 +124,18 @@ public class PartsDefinition : ScriptableObject
     [Tooltip("패시브 수치 (%). 머리 파츠만 사용, 등급 반영값")]
     [Min(0f)][SerializeField] private float _passiveValue;
 
-    [Tooltip("기믹 파훼 태그")]
-    [SerializeField] private GimmickTag _gimmickTag = GimmickTag.None;
-
-    [Tooltip("스킬 코스트")]
+    [Tooltip("스킬 코스트. 머리(패시브)는 표시 안 함")]
     [Min(0)][SerializeField] private int _skillCost = 1;
 
     public string Id => _id;
     public string DisplayName => _displayName;
     public string Description => _description;
     public PartsShape Shape => _shape;
-    public int MaxCount => _maxCount;
     // 오른쪽 파츠는 왼쪽 그림을 좌우 반전해 쓴다. 에디터 비실행 중엔 원본
     public Sprite Sprite => IsRightSide && Application.isPlaying ? SpriteMirror.FlipX(_sprite) : _sprite;
     public bool IsRightSide => _slot == Slot.RightArm || _slot == Slot.RightLeg;
     public Slot Slot => _slot;
     public PartGrade Grade => _grade;
-    public DestructiveResistance DestructiveResistance => _destructiveResistance;
     public int Durability => _durability;
     public int Cost => cost;
     public int RepairCost => _repairCost;
@@ -178,11 +156,11 @@ public class PartsDefinition : ScriptableObject
     public float CooldownReduction => _cooldownReduction;
     public float DefenseBonus => _defenseBonus;
     public float RangeIncrease => _rangeIncrease;
-    public float CritResistance => _critResistance;
-    public float CritDamageReduction => _critDamageReduction;
     public string ActiveSkillId => _activeSkillId;
-    public GimmickTag GimmickTag => _gimmickTag;
     public int SkillCost => _skillCost;
+
+    // 머리는 패시브 스킬
+    public bool IsPassive => _slot == Slot.Head;
 
 
     // 외곽 크기. 렌더 크기 계산용
@@ -223,8 +201,6 @@ public class PartsDefinition : ScriptableObject
             "------------------------------\n" +
             $"설명: {_description}\n" +
             $"등급: <color=#{hex}>{_grade}</color>\n" +
-            $"최대 소지 갯수: {_maxCount}\n" +
-            $"파괴저항력: {_destructiveResistance}\n" +
             $"내구도: {durability}\n";
     }
 }

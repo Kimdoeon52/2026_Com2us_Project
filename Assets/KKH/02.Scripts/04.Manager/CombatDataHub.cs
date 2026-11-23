@@ -136,6 +136,7 @@ public class CombatDataHub : MonoBehaviour
 
         CacheSnapshotPartMasters(player);
         CacheSnapshotPartMasters(enemyRobot);
+        BindPlayerEquipmentModifiers();
 
         BroadcastFullState();
     }
@@ -150,6 +151,7 @@ public class CombatDataHub : MonoBehaviour
         SyncBossToEnemyProxy();
 
         CacheSnapshotPartMasters(player);
+        BindPlayerEquipmentModifiers();
 
         BroadcastFullState();
     }
@@ -275,6 +277,19 @@ public class CombatDataHub : MonoBehaviour
     {
         if (executor == null || string.IsNullOrEmpty(executor.FighterId)) return;
         executorLookup[executor.FighterId] = executor;
+        if (executor.FighterId.IndexOf("Player", StringComparison.OrdinalIgnoreCase) >= 0 && executor.State != null)
+        {
+            executor.State.SetModifierResolver(InventoryBattleBridge.ApplyModifiers);
+        }
+    }
+
+    private void BindPlayerEquipmentModifiers()
+    {
+        ActionExecutor playerExec = GetExecutor("Player");
+        if (playerExec != null && playerExec.State != null)
+        {
+            playerExec.State.SetModifierResolver(InventoryBattleBridge.ApplyModifiers);
+        }
     }
 
     public void UnregisterExecutor(ActionExecutor executor)

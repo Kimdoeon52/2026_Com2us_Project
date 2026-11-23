@@ -108,8 +108,8 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         BattleSettlementProcessor.OnSettlementCompleted += ApplySettlement;
 
         // 첫 씬에서 자동 생성되면 전투 데이터 허브의 Awake보다 늦는다
-        if (CombatDataHub.Instance != null)
-            InventoryBattleBridge.ApplyTo(CombatDataHub.Instance.PlayerSnapshot);
+        if (CombatDataHub.Instance != null && InventoryBattleBridge.TryApplyTo(CombatDataHub.Instance.PlayerSnapshot))
+            CombatDataHub.Instance.BroadcastFullState();
     }
 
     protected override void OnDestroy()

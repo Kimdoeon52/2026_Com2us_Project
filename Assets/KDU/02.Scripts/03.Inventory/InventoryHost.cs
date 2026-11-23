@@ -432,6 +432,16 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return _catalog != null ? _catalog.Find(_save.Equipment.Get(slot)) : null;
     }
 
+    // 스탯 계산용. 빈 부위는 전투 입장 시 기본 파츠가 끼워지므로 시작 파츠로 본다
+    public PartsDefinition GetEquippedOrStarting(Slot slot)
+    {
+        PartsDefinition equipped = GetEquipped(slot);
+        if (equipped != null)
+            return equipped;
+
+        return _catalog != null ? _catalog.FindStarting(slot) : null;
+    }
+
     public IReadOnlyList<string> GetEquippedPartIds()
     {
         var ids = new List<string>(EquipmentSaveData.SlotCount);

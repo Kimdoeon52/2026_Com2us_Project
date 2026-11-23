@@ -131,8 +131,8 @@ public class PartsDefinition : ScriptableObject
     [Min(0f)][SerializeField] private float _rangeIncrease;
 
     [Tooltip("치명타 저항력")]
-    private float _critResistance;   // 머리 파츠: 치명타 저항
-    private float _critDamageReduction;
+    [SerializeField] private float _critResistance;   // 머리 파츠: 치명타 저항
+    [SerializeField] private float _critDamageReduction;
 
     [Header("스킬 연동")]
     [Tooltip("액티브 스킬 ID")]
@@ -142,7 +142,7 @@ public class PartsDefinition : ScriptableObject
     [Min(0f)][SerializeField] private float _passiveValue;
 
     [Tooltip("기믹 파훼 태그")]
-    private GimmickTag _gimmickTag = GimmickTag.None;
+    [SerializeField] private GimmickTag _gimmickTag = GimmickTag.None;
 
     [Tooltip("스킬 코스트")]
     [Min(0)][SerializeField] private int _skillCost = 1;

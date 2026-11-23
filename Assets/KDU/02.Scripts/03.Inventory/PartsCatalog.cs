@@ -26,4 +26,19 @@ public class PartsCatalog : ScriptableObject
 
         return null;
     }
+
+    // 해당 부위의 시작 파츠. 빈 부위 기본값으로 쓴다
+    public PartsDefinition FindStarting(Slot slot)
+    {
+        if (_startingEquipment == null)
+            return null;
+
+        for (int i = 0; i < _startingEquipment.Length; i++)
+        {
+            if (_startingEquipment[i] != null && _startingEquipment[i].Slot == slot)
+                return _startingEquipment[i];
+        }
+
+        return null;
+    }
 }

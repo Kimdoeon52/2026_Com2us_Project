@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 3171317772504865833}
   - component: {fileID: 2539897104991312386}
   - component: {fileID: 9183399761991261950}
+  - component: {fileID: 16330477202680066}
   m_Layer: 5
   m_Name: LodingCanvas
   m_TagString: Untagged
@@ -60,7 +61,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 50
+  m_SortingOrder: 1000
   m_TargetDisplay: 0
 --- !u!114 &2539897104991312386
 MonoBehaviour:
@@ -119,7 +120,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1091952513900140722
 RectTransform:
   m_ObjectHideFlags: 0
@@ -361,3 +362,18 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   loadingCanvas: {fileID: 4785182726414478045}
+--- !u!114 &16330477202680066
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4785182726414478045}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad2668a1ff621b2a710a90185f94fbf4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  font: {fileID: 11400000, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
+  ticks: {fileID: 21300000, guid: 3e47c8b150b42603c0f1b3d941d2f7cd, type: 3}
+  chamfer: {fileID: 21300000, guid: c167c9a18c3fdadf45abb724bb7fb0b4, type: 3}

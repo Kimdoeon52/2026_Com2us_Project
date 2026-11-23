@@ -152,7 +152,7 @@ namespace RealSteel.Dialogue
             else if (keyboard.f9Key.wasPressedThisFrame) ShiftRank(shift ? -1 : 1);
             else if (keyboard.f10Key.wasPressedThisFrame) manager.OpenDirect("test_prologue");
             else if (keyboard.f11Key.wasPressedThisFrame) manager.OpenDirect("test_intermission");
-            else if (keyboard.f12Key.wasPressedThisFrame) manager.ResetAll(shift);
+            else if (keyboard.f12Key.wasPressedThisFrame && FindAnyObjectByType<TestTools.TestPanel>() == null) manager.ResetAll(shift);
         }
 #endif
 

@@ -96,6 +96,7 @@ Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속�
     Kyodai/ (2026-11-04 2D 개편) KyodaiBossController.cs(2D)  KyodaiHand.cs  KyodaiHandMotion.cs  KyodaiHandFeel.cs  KyodaiHandPattern.cs
                 KyodaiHpDebugView.cs  KyodaiCameraShake.cs   — 아래 3D 파일들은 전부 Kyodai/_Legacy3D/로 옮김(보관)
     Editor/     Kyodai2DBuilder.cs(메뉴 NYH/쿄다이/2D 쿄다이 만들기·갱신 — 11-04 만들기·패턴 갱신 통합)  Kyodai2DPreviewWindow.cs(메뉴 NYH/쿄다이/2D 패턴 미리보기)
+                Kyodai2DPrefabMenu.cs(메뉴 NYH/쿄다이/프리팹으로 저장·갱신, 2026-11-23 — 프리팹: Assets/NYH/05. Prefab/Boss/Boss2_Kyodai.prefab)
     (이하 3D 보관분 — 2026-11-04 이전 기록)
     Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)  KyodaiEditPreview.cs(플레이 전 실제 로봇 자세 미리보기)  KyodaiBonePicker.cs(Scene 뷰 뼈 선택)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
@@ -754,6 +755,7 @@ CompareFunction.Always`로 강제해야 항상 맨 위에 그려진다 — Scene
 71. 🔶 (2026-11-16) **보스 공용 데미지 숫자**(사용자: 보스 1·2·3 모두 플레이어가 때리면 메이플식 데미지 표시) — KKH 보스 베이스는 안 고침. 플레이어 → 보스 타격이 전부 `HitDetection` → 허브 `ProcessHit`을 지나므로 거기서 띄운다: 근접(`ResolveBossHit` — 보스를 맞힌 첫 Hit박스 가운데, 박스마다 따로 맞는 행동은 숫자도 따로)·투사체(`TryProjectileHitBoss` — 총알 자리)·촉수 등(`ResolveTargetHits`). HitDetection을 안 거치는 경로(CSH `ProjectileExplosion` 폭발 범위 등)는 허브 `OnBossDamaged`로 받아 보스 콜라이더 가운데에(크리 정보 없음). 같은 타격이 두 번 안 뜨게 HitDetection이 처리하는 동안(`bossHitInProgress`)은 허브 이벤트 무시. 그리기는 기존 `DamageNumberEmitter`에 `ShowDealt(데미지, 크리, 자리)` 추가(쌓기·순차·튀기 공용, 색 dealtColor) — 맞은 대상에 없으면 자동 부착, 보스 프리팹에 미리 붙이면 그 값. ⬜ 플레이 검증 아직(보스 1·2·3)
 72. 🔶 (2026-11-16) **데미지 숫자 공용 스타일**(사용자: 글꼴을 한 곳에서) — `DamageNumberStyle`(Combat/Data, SO: 글꼴·크기·크리 배율·굵기·테두리·맞음/때림/MISS 색·표시 형식·튀기). 에셋 `04. SO/Combat/Resources/DamageNumberStyle`을 `Resources.Load`로 모든 `DamageNumberEmitter`가 자동으로 씀(자동 부착된 보스·적 숫자 포함, 연결 불필요). 대상별로 다르게 = 그 emitter의 `style` 칸. 스타일이 없으면 emitter 자기 값. 재사용 글자도 뜰 때마다 스타일을 다시 입혀 플레이 중 수정 반영. 움직임 값(떠오름·쌓기·순차)은 여전히 emitter별
 73. 🔶 (2026-11-16) **회피 성공 연출**(사용자: 회피 성공 시 MISS + DOTween 줌인 + 잠깐 슬로우) — 감지: `HitDetection.IsInvincibleNow`가 플레이어를 무적으로 판정하는 순간 = 공격이 회피 무적에 닿음(KKH `IsPlayerInvincible` → 쿄다이·KKH 보스 공격, 로봇 공격, CSH 폭발). 그래서 **`HurtboxColliderSync`는 회피 무적 중에도 콜라이더를 켜 둠**(사망만 끔) — KKH·쿄다이 공격은 전부 데미지 전에 무적을 직접 검사해 피해는 안 들어감(확인함). 상태만 볼 땐 `IsDodging`(연출 없음). 연출: `DodgeSuccessDirector` — MISS(`DamageNumberEmitter.ShowMiss`, 플레이어 evaded 결과의 MISS는 중복이라 안 띄움), `Time.timeScale` 트윈(실제 시간, 끝나거나 끊기면 원래 배율로 복구, 일시정지 0은 안 덮음), 줌은 `CameraFx`(그리는 순간에만 시야각·위치 — 경기장 계산·판정 무관, 흔들림과 한 곳에서 합쳐 복원 충돌 방지). 값: `DodgeSuccessSettings`(Resources). 쿨다운 0.8초(레이저처럼 매 틱 닿아도 1번). 한계: KKH 일부 기물(돌진·폭발 상자·불길·못판·충격파)은 무적 플래그를 직접 봐서 연출이 안 남. CSH 폭발은 범위 확인 전에 무적을 물어 적 폭발이 멀리서 터져도 연출이 날 수 있음. ⬜ 플레이 검증 아직
+74. 🔶 (2026-11-23) **쿄다이 프리팹화**(사용자) — 메뉴 `NYH/쿄다이/프리팹으로 저장·갱신`(`Kyodai2DPrefabMenu`): 씬 쿄다이 → `05. Prefab/Boss/Boss2_Kyodai.prefab` 저장·연결, 이미 연결돼 있으면 변경분 반영(Apply All), 연결 안 된 채 파일이 있으면 물어보고 덮어씀. 저장 전 미리보기 멈춤·DontSave 자식 제거. **빌더는 씬에서만 돈다** — 프리팹을 고칠 땐 씬 인스턴스에 `만들기·갱신` → 이 메뉴. 루트 위치(`Anchor`)·`groundY`·본체 자리는 씬(카메라·바닥) 기준이라 다른 씬에선 덮어쓸 것. Battle3(NYH 밖) 교체는 사용자 결정 대기. ⬜ 메뉴 실행·플레이 검증 아직
 
 ---
 

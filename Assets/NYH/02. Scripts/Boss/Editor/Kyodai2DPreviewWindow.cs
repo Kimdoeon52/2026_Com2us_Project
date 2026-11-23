@@ -402,7 +402,7 @@ public class Kyodai2DPreviewWindow : EditorWindow
         return p != null ? Mathf.Clamp(p.transform.position.x, boss.ArenaMinX, boss.ArenaMaxX) : boss.ArenaCenterX;
     }
 
-    private void StopPreview()
+    internal void StopPreview()
     {
         if (!previewing) return;
         previewing = playing = false;

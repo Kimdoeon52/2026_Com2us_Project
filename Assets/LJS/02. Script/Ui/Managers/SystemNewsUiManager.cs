@@ -13,6 +13,10 @@ public class SystemNewsUiManager : MonoBehaviour
     // !중요! 다른 시스템에서 이 이벤트로 문자열을 던지면 UI가 알아서 출력함 !중요!
     // 예: SystemNewsUiManager.OnSystemNews?.Invoke("텍스트");
     public static event Action<string> OnSystemNews;
+    public static void SendNews(string message) // RankingSeasonResult.cs에서만 사용되는 이벤트 발송용 함수
+    {
+        OnSystemNews?.Invoke(message);
+    }
 
     [Header("UI 컴포넌트")]
     public CanvasGroup newsGroup; // 투명도 캔버스 그룹
@@ -47,6 +51,7 @@ public class SystemNewsUiManager : MonoBehaviour
         TimeSystemManager.OnWeekMartOpen += MartOpenNews;
         TimeSystemManager.OnWeekMartClose += MartCloseNews;
         TimeSystemManager.OnDayRankingRestore += RankingRestoreNews;
+        TimeSystemManager.OnQuarterRankingReset += QuarterRankingResetNews;
     }
 
     private void OnDisable()
@@ -57,6 +62,7 @@ public class SystemNewsUiManager : MonoBehaviour
         TimeSystemManager.OnWeekMartOpen -= MartOpenNews;
         TimeSystemManager.OnWeekMartClose -= MartCloseNews;
         TimeSystemManager.OnDayRankingRestore -= RankingRestoreNews;
+        TimeSystemManager.OnQuarterRankingReset -= QuarterRankingResetNews;
 
         if (currentSequence != null && currentSequence.IsActive()) // 해당 오브젝트 비활성화시 DOTween Kill
         {
@@ -71,6 +77,7 @@ public class SystemNewsUiManager : MonoBehaviour
     private void MartOpenNews() { EnqueueNews("경매장에서 경매가 시작되었습니다!"); }
     private void MartCloseNews() { EnqueueNews("금일의 경매가 종료되었습니다."); }
     private void RankingRestoreNews() { EnqueueNews("랭킹이 갱신되었습니다."); }
+    private void QuarterRankingResetNews() { EnqueueNews("분기 랭킹이 정산되어 순위와 점수가 초기화되었습니다!"); }
 
     [ContextMenu("테스트: 알림 띄우기")]
     public void TestNotification() // 컴포넌트에 있는 점 3개 누르고 클릭

@@ -53,6 +53,9 @@ public class RankingSystemManager : MonoBehaviour
     [Header("NPC Data")]
     public NpcNameData npcNameData; // 스크립터블 오브젝트용
 
+    [Header("Season Settlement")]
+    public RankingSeasonResult seasonResult; // 분기 랭킹 보상 지급용
+
     public List<NPC> npcList = new List<NPC>(101); // Npc랭킹 리스트. 플레이어까지 101명
     private NPC playerRef;
 
@@ -156,10 +159,12 @@ public class RankingSystemManager : MonoBehaviour
     private void OnEnable()
     {
         TimeSystemManager.OnDayRankingRestore += OnEventTriggered;
+        TimeSystemManager.OnQuarterRankingReset += OnQuarterResetTriggered;
     }
     private void OnDisable()
     {
         TimeSystemManager.OnDayRankingRestore -= OnEventTriggered;
+        TimeSystemManager.OnQuarterRankingReset -= OnQuarterResetTriggered;
     }
 
     private void UpdateCombatPower()
@@ -298,5 +303,21 @@ public class RankingSystemManager : MonoBehaviour
             }
         }
         return 10;
+    }
+
+    private void OnQuarterResetTriggered()
+    {
+        if (seasonResult != null)
+        {
+            seasonResult.ProcessSeasonReward(npcList);
+        }
+
+        for (int i = 0; i < npcList.Count; i++)
+        {
+            npcList[i].score = 0;
+        }
+
+        SortAndRank();
+        UpdateGroupVariables();
     }
 }

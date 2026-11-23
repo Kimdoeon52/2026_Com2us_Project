@@ -21,6 +21,8 @@ GameObject:
   - component: {fileID: 8812345678901234501}
   - component: {fileID: 8812345678901234502}
   - component: {fileID: 8957008211139764899}
+  - component: {fileID: 8957008211139764905}
+  - component: {fileID: 8957008211139764900}
   m_Layer: 0
   m_Name: Boss1_JunkWheeler
   m_TagString: Boss
@@ -479,3 +481,55 @@ MonoBehaviour:
   tellCrackVfxPrefab: {fileID: 9178325458825612213, guid: dab7938460794e04c8b617c488995be0, type: 3}
   hitVfxPrefab: {fileID: 1204032300895634818, guid: 9c74fed4d40f1174ca57466ca29c5b88, type: 3}
   dribbleVfxOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &8957008211139764905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3268763706634737369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16e96b55827f42d0b4c32aa206c75d78, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  radius: 0.72
+  widthScale: 1.25
+  strength: 0.62
+  color: {r: 0.12, g: 0.1, b: 0.2, a: 1}
+  softness: 0.45
+  bands: 3
+  pixelSnap: 1
+  pixelsPerMeter: 32
+  offset: {x: 0, y: 0}
+  fadeHeight: 3.8
+  minScale: 0.45
+  minStrength: 0.35
+  resolution: 7
+  maxStep: 0.45
+  probeUp: 0.8
+  probeDown: 8
+  lift: 0.02
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  shader: {fileID: 4800000, guid: c6710f7f04c94e6b85745b4443078fdc, type: 3}
+--- !u!114 &8957008211139764900
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3268763706634737369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b05519a0d5ad00174f2c8e1a3b7d9e42, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bossController: {fileID: 1718334131696809367}
+  animationController: {fileID: 8812345678901234501}
+  bossSpriteRenderer: {fileID: 559362491712179911}
+  blobShadow: {fileID: 8957008211139764905}
+  castGroundShadow: 1
+  followSquashWidth: 1
+  squashWidthInfluence: 0.5

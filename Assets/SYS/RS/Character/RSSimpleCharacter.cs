@@ -10,7 +10,7 @@
 //  · CharacterController 가 자동으로 붙는다. 모델이 없으면 플레이할 때 임시 캡슐을 만든다
 //  · 카메라(기본 Main Camera)는 지금 각도를 그대로 유지한 채 부드럽게 따라온다 (옥토패스식 고정 각도)
 //  · RS 지형 위라면 콜라이더가 없어도 지면에 붙는다
-//  · 바닥에 붙이기: 내려가는 계단 · 경사에서 붕 뜨지 않고 따라 내려간다. '붙이는 높이'보다 높은 턱에서는 떨어진다
+//  · 바닥에 붙이기: 내리막은 바닥 면을 따라 비스듬히(대각선) 내려가고, 턱 높이보다 깊은 낭떠러지는 중력(사다리꼴 적분)으로 떨어진다
 //  · 경사 · 계단 (언리얼 CharacterMovement · KCC 방식 — 바닥 판단은 '캡슐 아래로 쓸기' 하나로만):
 //      바닥 = 캡슐 반지름 구를 아래로 쓸어 닿은 면. 걸을 수 있는지는 그 면(닿은 곳 · 발 중심 아래 중 완만한 쪽)의 기울기로
 //      가파른 면(Slope Limit 초과)에 서면 미끄러짐 — 시작 · 멈춤 각도에 여유(히스테리시스) + 최소 미끄럼 시간 → 경계에서 떨지 않음
@@ -80,6 +80,12 @@ public class RSSimpleCharacter : MonoBehaviour
     public float slopeHysteresis = 4f;
     [Tooltip("한 번 미끄러지기 시작하면 최소 이 시간(초)은 미끄러진다 (경계에서 깜빡임 방지)")]
     public float minSlideTime = 0.15f;
+    [Tooltip("떨어질 때 최고 속도 (m/s)")]
+    public float maxFallSpeed = 30f;
+    [Tooltip("내리막에서 이동 방향을 바닥 면에 맞춰 비스듬히(대각선으로) 내려간다.\n끄면 예전처럼 수평으로 나간 뒤 아래로 붙인다 (뜨고 붙기를 되풀이해 끊겨 보일 수 있다)")]
+    public bool followSlopeDown = true;
+    [Tooltip("턱 높이보다 깊은 낭떠러지는 바로 붙이지 않고 중력으로 떨어진다 (툭 순간이동하듯 내려앉지 않는다).\n끄면 '붙이는 높이'까지는 한 프레임에 바로 붙인다")]
+    public bool fallOffLedges = true;
 
     public enum CameraMode
     {
@@ -311,9 +317,26 @@ public class RSSimpleCharacter : MonoBehaviour
         else slideSpeed = 0f;
 
         // ── 세로 ──
-        if (sliding && keepOnWalkable) vy = -1f;          // 면을 따라 내려가는 건 slideMove 가 한다. 살짝 눌러 붙어 있게
-        else if (onGround) vy = -2f;                       // 비탈에서 뜨지 않게 살짝 누른다
-        else vy += gravity * dt;
+        // vy = 실제 세로 속도 (공중으로 나가면 그대로 이어받는다), vyMove = 이번 프레임 이동에 쓰는 평균 세로 속도
+        float vyMove;
+        if (sliding && keepOnWalkable)
+        {
+            vy = -1f;                                      // 면을 따라 내려가는 건 slideMove 가 한다. 살짝 눌러 붙어 있게
+            vyMove = vy;
+        }
+        else if (onGround)
+        {
+            // 걷는 중: 바닥 면을 따라 비스듬히 내려간다 (수평으로 나간 뒤 떠서 다시 붙는 톱니 모양 X)
+            vy = followSlopeDown ? SlopeDownVy(velocity, lim) : 0f;
+            vyMove = vy - GroundPress;                     // 울퉁불퉁한 곳에서 뜨지 않게 살짝 누르는 건 이동에만
+        }
+        else
+        {
+            // 공중: 사다리꼴 적분 — 등가속도에서 정확하다 (프레임레이트가 달라도 같은 포물선)
+            float vy0 = vy;
+            vy = Mathf.Max(vy + gravity * dt, -Mathf.Abs(maxFallSpeed));
+            vyMove = (vy0 + vy) * 0.5f;
+        }
 
         // ── 턱 · 계단: 앞이 걸을 수 있는 디딤판이면 그 높이까지, 윗면이 가파르면 턱 오르기를 끈다 ──
         if (keepOnWalkable) cc.stepOffset = StepOffsetFor(transform.position, velocity, lim);
@@ -322,7 +345,7 @@ public class RSSimpleCharacter : MonoBehaviour
         Vector3 before = transform.position;
         walls.Clear();
         collecting = true;
-        cc.Move((velocity + slideMove + Vector3.up * vy) * dt);
+        cc.Move((velocity + slideMove + Vector3.up * vyMove) * dt);
         collecting = false;
 
         // 미끄러지는 중에는 높이를 얻을 수 없다 — CharacterController 가 면을 따라 미끄러지며 위로 밀려 올라간 만큼 되돌린다
@@ -366,7 +389,17 @@ public class RSSimpleCharacter : MonoBehaviour
         float reach = Mathf.Max(0.05f, stickDistance);
         bool has = ProbeGround(transform.position, reach, lim, out GroundInfo g);
         float tol = GroundTolerance();
-        if (wasWalking && has && g.gap > tol && g.gap <= reach && g.angle <= lim + slopeHysteresis * 0.5f)
+        // 붙일 수 있는 깊이: 턱 하나 + 이번에 수평으로 간 만큼 경사로 내려갈 수 있는 높이. 그보다 깊으면 중력으로 떨어진다
+        float snapMax = reach;
+        if (fallOffLedges)
+        {
+            Vector3 mvh = transform.position - before;
+            float horiz = new Vector2(mvh.x, mvh.z).magnitude;
+            float stepDown = Mathf.Max(maxStepHeight, baseStepOffset > 0f ? baseStepOffset : cc.stepOffset);
+            snapMax = Mathf.Min(reach, stepDown + horiz * Mathf.Tan(lim * Mathf.Deg2Rad) + 0.03f);
+        }
+        // 예전엔 틈이 tol(Skin Width + 5 cm)을 넘어야 붙여서, 내리막에서 '한 프레임 뜸 → 다음 프레임 툭 붙음'이 되풀이됐다 → 작은 틈부터 바로 붙인다
+        if (wasWalking && has && g.gap > SnapEpsilon && g.gap <= snapMax && g.angle <= lim + slopeHysteresis * 0.5f)
         {
             cc.Move(Vector3.down * (g.gap + 0.01f));
             has = ProbeGround(transform.position, reach, lim, out g);
@@ -629,6 +662,23 @@ public class RSSimpleCharacter : MonoBehaviour
         public float angle;       // 걸을 수 있는지 판단할 기울기 (도)
         public float cgap;        // 발 중심 바로 아래 바닥까지 (m) — 떠오름 검사용 (가장자리에 걸쳐도 '내 발밑'은 이것)
         public bool perched;      // 넘을 수 있는 턱(이번 Step Offset 이하, 윗면 걸을 수 있음)의 코에 걸쳐 있다
+    }
+
+    const float GroundPress = 1f;      // 걷는 중 바닥 쪽으로 살짝 누르는 속도 (m/s)
+    const float SnapEpsilon = 0.02f;   // 이보다 작은 틈은 이미 닿은 것으로 (m)
+
+    /// <summary>
+    /// 걸을 수 있는 바닥 위에서 수평 속도 v 를 바닥 면에 붙였을 때의 세로 속도 (내려가는 쪽만, 0 이하).
+    /// 수평 속도는 그대로 두고 세로만 맞춘다 (언리얼 ComputeGroundMovementDelta 와 같음) → 대각선으로 가도 화면상 속도가 같다.
+    /// 오르막은 CharacterController 가 면을 따라 올려 주므로 손대지 않는다 (꼭대기에서 붕 뜨지 않게).
+    /// </summary>
+    float SlopeDownVy(Vector3 v, float lim)
+    {
+        Vector3 n = groundN;
+        if (n.y < 0.2f) return 0f;
+        if (Vector3.Angle(Vector3.up, n) > lim + Mathf.Max(0f, slopeHysteresis) * 0.5f) return 0f;
+        float y = -(n.x * v.x + n.z * v.z) / n.y;
+        return Mathf.Min(0f, y);
     }
 
     float CosLimit() => Mathf.Cos(Mathf.Clamp(cc.slopeLimit, 1f, 89f) * Mathf.Deg2Rad);

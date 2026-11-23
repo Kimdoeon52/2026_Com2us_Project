@@ -1289,7 +1289,7 @@ Transform:
   m_GameObject: {fileID: 349153567516312723}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.45, z: 0.05}
+  m_LocalPosition: {x: 0, y: 0.4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2920,7 +2920,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.827}
+  m_AnchoredPosition: {x: 0, y: 0.7}
   m_SizeDelta: {x: 200, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &9019066531246437857
@@ -2946,7 +2946,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  - {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2990,8 +2990,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uACBD\uB9E4 \uBB3C\uD488 \uC774\uB984"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
-  m_sharedMaterial: {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
+  m_sharedMaterial: {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3015,8 +3015,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2
-  m_fontSizeBase: 2
+  m_fontSize: 5
+  m_fontSizeBase: 5
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -7504,7 +7504,7 @@ Transform:
   m_GameObject: {fileID: 2966581657894266681}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.0625, z: 0}
+  m_LocalPosition: {x: 0, y: -0.5625, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7523,7 +7523,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 6.125, y: 0.0625, z: 0.15}
+  size: {x: 6.125, y: 0.1, z: 0.15}
   sides: 8
   topScale: 1
   steps: 4
@@ -11077,7 +11077,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.434}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &7928611107657086128
@@ -11103,7 +11103,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  - {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -11147,8 +11147,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uACBD\uB9E4 \uAC00\uACA9"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
-  m_sharedMaterial: {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
+  m_sharedMaterial: {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -11172,8 +11172,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2
-  m_fontSizeBase: 2
+  m_fontSize: 3
+  m_fontSizeBase: 3
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -16699,7 +16699,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 1.228}
+  m_AnchoredPosition: {x: 0, y: 1.2}
   m_SizeDelta: {x: 20, y: 5}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!23 &247442019456147205
@@ -16725,7 +16725,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  - {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -16769,8 +16769,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uACBD\uB9E4 \uB4F1\uAE09"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
-  m_sharedMaterial: {fileID: -6565192831850442398, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
+  m_sharedMaterial: {fileID: 7835574326607724339, guid: 0ce851f70eb203241a5934f65a96acde, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -16794,8 +16794,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 2
-  m_fontSizeBase: 2
+  m_fontSize: 4
+  m_fontSizeBase: 4
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -16961,12 +16961,11 @@ MonoBehaviour:
   stairRamps: 1
   castShadows: 1
   shader: {fileID: 4800000, guid: 28ef9f8fe93f42e890f70809438585f9, type: 3}
-  cacheMesh: {fileID: 4300000, guid: 1b8fe769734ba2c4c9b46d7e6be2db78, type: 2}
-  cacheHash: be8ec7edf37b9600
+  cacheMesh: {fileID: 4300000, guid: 4981d911722d2a14f8fadd1a4954c6fc, type: 2}
+  cacheHash: a2f0a3f553708d7a
   cacheSurfaces:
   - {fileID: 11400000, guid: d3b876fdfaf6f2646825be848fd3116b, type: 2}
-  - {fileID: 11400000, guid: 58e79cada0b632540843b87419be05d9, type: 2}
-  cacheKinds: 0000000000000000
+  cacheKinds: 00000000
 --- !u!65 &5960479348758124918
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -18200,7 +18199,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 6.125, y: 0.0625, z: 0.15}
+  size: {x: 6.125, y: 0.1, z: 0.15}
   sides: 8
   topScale: 1
   steps: 4
@@ -18491,7 +18490,7 @@ Transform:
   m_GameObject: {fileID: 7573537206531119832}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: -0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -18510,7 +18509,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   shape: 0
-  size: {x: 6, y: 1.5, z: 0.125}
+  size: {x: 6, y: 2, z: 0.125}
   sides: 8
   topScale: 1
   steps: 4
@@ -18528,7 +18527,7 @@ MonoBehaviour:
   facePaints:
   - face: 0
     mode: 1
-    surface: {fileID: 11400000, guid: 52b6c14d310f0f14385dddc72b72ee80, type: 2}
+    surface: {fileID: 11400000, guid: f1c2246e7df67ba4d8b2b0e85a21da1e, type: 2}
     offset: {x: 0, y: 0}
     rotate: 0
     flip: 0
@@ -21716,6 +21715,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5498954609611530766}
     m_Modifications:
+    - target: {fileID: 3279321096197487260, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
+      propertyPath: cacheHash
+      value: d711d2407d58b9a3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3279321096197487260, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
+      propertyPath: cacheMesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 858ab8a636249ba43a0df2b314df25c6, type: 2}
     - target: {fileID: 4605247151429658539, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
       propertyPath: m_Name
       value: NPC_Auctioneer
@@ -21778,6 +21785,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5498954609611530766}
     m_Modifications:
+    - target: {fileID: 3279321096197487260, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
+      propertyPath: cacheHash
+      value: d711d2407d58b9a3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3279321096197487260, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
+      propertyPath: cacheMesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 858ab8a636249ba43a0df2b314df25c6, type: 2}
     - target: {fileID: 4605247151429658539, guid: e20a119fe9c52e541a78a5d8cb660a78, type: 3}
       propertyPath: m_Name
       value: NPC_Auctioneer

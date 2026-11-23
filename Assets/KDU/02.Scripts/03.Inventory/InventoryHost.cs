@@ -338,10 +338,13 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return true;
     }
 
-    // 최대 소지 개수를 넘는 양은 버려진다. 실제 지급량 반환
+    // 넘친 양은 새 칸에 쌓고, 빈칸이 모자라 못 받는 양은 버려진다. 실제 지급량 반환
     public int GiveComponent(ComponentDefinition component, int amount)
     {
-        int added = _save.Components.Add(component, amount);
+        if (component == null || amount <= 0)
+            return 0;
+
+        int added = _save.Components.Add(component, Mathf.Min(amount, ComponentCapacity(component)));
         _grid.SyncComponents();
         Changed?.Invoke();
         return added;
@@ -491,14 +494,25 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
         return true;
     }
 
-    // 인벤토리 칸 하나를 버린다. 부품 칸은 쌓인 수량을 모두 버린다
+    // 특정 칸(스택)에서만 소모
+    public bool ConsumeComponent(ComponentStock.Slot stack, int amount)
+    {
+        if (!_save.Components.TryConsume(stack, amount))
+            return false;
+
+        _grid.SyncComponents();
+        Changed?.Invoke();
+        return true;
+    }
+
+    // 인벤토리 칸 하나를 버린다. 부품 칸은 그 칸에 쌓인 수량만 버린다
     public bool DiscardEntry(int index)
     {
         if (_grid == null || !_grid.TryGetEntry(index, out InventoryGrid.Entry entry))
             return false;
 
         if (entry.IsComponent)
-            return entry.Component != null && ConsumeComponent(entry.Component.Id, _save.Components.Get(entry.Component.Id));
+            return entry.Stack != null && ConsumeComponent(entry.Stack, entry.Stack.Count);
 
         if (!_grid.Remove(index))
             return false;
@@ -510,31 +524,36 @@ public class InventoryHost : PersistentSingleton<InventoryHost>, IEquipmentSourc
     // 지급해도 버려지거나 칸이 없어 안 보이게 되지 않는지. 크래프팅 슬롯에서 돌려주기 전에 확인한다
     public bool CanGiveComponent(ComponentDefinition component, int amount = 1)
     {
-        if (component == null || _grid == null)
-            return false;
+        return component != null && _grid != null && ComponentCapacity(component) >= amount;
+    }
 
-        if (component.RemainingCapacity(_save.Components.Get(component.Id)) < amount)
-            return false;
+    // 기존 스택 여유 + 빈칸마다 새 스택 하나
+    private int ComponentCapacity(ComponentDefinition component)
+    {
+        if (_grid == null)
+            return 0;
 
-        // 이미 칸이 있으면 수량만 늘어난다
-        var entries = _grid.Entries;
-        for (int i = 0; i < entries.Count; i++)
-        {
-            if (entries[i].IsComponent && entries[i].Component.Id == component.Id)
-                return true;
-        }
+        int room = _save.Components.RoomInStacks(component);
+        int perCell = component.RemainingCapacity(0);
+        if (room == int.MaxValue || perCell == int.MaxValue)
+            return room > 0 || CountFreeCells() > 0 ? int.MaxValue : 0;
 
-        // 새 칸이 필요하면 빈칸이 하나는 있어야 한다
+        return room + CountFreeCells() * perCell;
+    }
+
+    private int CountFreeCells()
+    {
+        int free = 0;
         for (int y = 0; y < _grid.Height; y++)
         {
             for (int x = 0; x < _grid.Width; x++)
             {
                 if (_grid.GetIndexAt(new Vector2Int(x, y)) < 0)
-                    return true;
+                    free++;
             }
         }
 
-        return false;
+        return free;
     }
 
     [ContextMenu("전체 비우기")]

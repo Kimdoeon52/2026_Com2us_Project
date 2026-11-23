@@ -9,6 +9,7 @@ public class InventoryGrid
     {
         public bool IsComponent;
         public ComponentDefinition Component;
+        public ComponentStock.Slot Stack;
         public PartsInstance Parts;
         public PartsDefinition Definition;
         public PartsShape Shape;
@@ -141,8 +142,8 @@ public class InventoryGrid
         Fill(entry.Shape, entry.Origin, Empty);
         entry.Origin = origin;
 
-        if (entry.IsComponent && _stock != null)
-            _stock.SetOrigin(entry.Component.Id, origin);
+        if (entry.IsComponent && entry.Stack != null)
+            entry.Stack.Origin = origin;
         else if (!entry.IsComponent && entry.Parts != null)
             entry.Parts.Origin = origin;
 
@@ -171,6 +172,7 @@ public class InventoryGrid
         if (_stock == null || _components == null)
             return;
 
+        _stock.SplitOversized(_components);
         RemoveEmptyComponents();
 
         var slots = _stock.Slots;
@@ -179,7 +181,7 @@ public class InventoryGrid
             if (slots[i] == null || slots[i].Count <= 0)
                 continue;
 
-            if (IndexOfComponent(slots[i].Id) >= 0)
+            if (IndexOfStack(slots[i]) >= 0)
                 continue;
 
             // 카탈로그에서 빠진 부품은 칸을 만들지 않는다
@@ -187,7 +189,7 @@ public class InventoryGrid
             if (component == null)
                 continue;
 
-            PlaceComponent(component);
+            PlaceComponent(component, slots[i]);
         }
     }
 
@@ -244,10 +246,10 @@ public class InventoryGrid
     }
 
     // 저장된 좌표를 먼저 쓰고, 막혀 있으면 빈자리를 찾는다
-    private void PlaceComponent(ComponentDefinition component)
+    private void PlaceComponent(ComponentDefinition component, ComponentStock.Slot stack)
     {
-        Vector2Int origin;
-        bool hasSaved = _stock.TryGetOrigin(component.Id, out origin) && CanPlace(SingleCell, origin);
+        Vector2Int origin = stack.Origin;
+        bool hasSaved = stack.HasOrigin && CanPlace(SingleCell, origin);
 
         if (!hasSaved && !TryFindFreeOrigin(SingleCell, out origin))
             return;
@@ -256,24 +258,28 @@ public class InventoryGrid
         {
             IsComponent = true,
             Component = component,
+            Stack = stack,
             Shape = SingleCell,
             Origin = origin,
             Size = Vector2Int.one,
         });
 
-        _stock.SetOrigin(component.Id, origin);
+        stack.Origin = origin;
     }
 
+    // 다 쓰여 목록에서 빠진 스택의 칸을 지운다
     private void RemoveEmptyComponents()
     {
         bool removed = false;
         for (int i = _entries.Count - 1; i >= 0; i--)
         {
             Entry entry = _entries[i];
-            if (!entry.IsComponent || _stock.Get(entry.Component.Id) > 0)
+            if (!entry.IsComponent || (entry.Stack != null && entry.Stack.Count > 0 && ContainsStack(entry.Stack)))
                 continue;
 
-            _stock.ClearOrigin(entry.Component.Id);
+            if (entry.Stack != null)
+                entry.Stack.Origin = ComponentStock.NoOrigin;
+
             _entries.RemoveAt(i);
             removed = true;
         }
@@ -282,11 +288,23 @@ public class InventoryGrid
             RebuildCells();
     }
 
-    private int IndexOfComponent(string id)
+    private bool ContainsStack(ComponentStock.Slot stack)
+    {
+        var slots = _stock.Slots;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (ReferenceEquals(slots[i], stack))
+                return true;
+        }
+
+        return false;
+    }
+
+    private int IndexOfStack(ComponentStock.Slot stack)
     {
         for (int i = 0; i < _entries.Count; i++)
         {
-            if (_entries[i].IsComponent && _entries[i].Component.Id == id)
+            if (_entries[i].IsComponent && ReferenceEquals(_entries[i].Stack, stack))
                 return i;
         }
 

@@ -20,7 +20,7 @@ public class ComponentDefinition
     [Tooltip("등급")]
     [SerializeField] private PartGrade _grade;
 
-    [Tooltip("최대 소지 개수. 0이면 무제한")]
+    [Tooltip("한 칸 최대 개수. 넘치면 다른 칸에 쌓는다. 0이면 무제한")]
     [Min(0)]
     [SerializeField] private int _maxCount;
 
@@ -34,7 +34,7 @@ public class ComponentDefinition
     public int MaxCount => _maxCount;
     public int Price => _price;
 
-    // 현재 수량에서 더 받을 수 있는 양
+    // 한 칸에 current개 있을 때 더 받을 수 있는 양
     public int RemainingCapacity(int current)
     {
         if (_maxCount <= 0)

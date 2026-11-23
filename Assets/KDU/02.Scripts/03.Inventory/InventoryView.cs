@@ -175,7 +175,7 @@ public class InventoryView : MonoBehaviour
 
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)
-            label.text = _host.Save.Components.Get(entry.Component.Id).ToString();
+            label.text = $"x{(entry.Stack != null ? entry.Stack.Count : 0)}";
 
         return rect;
     }

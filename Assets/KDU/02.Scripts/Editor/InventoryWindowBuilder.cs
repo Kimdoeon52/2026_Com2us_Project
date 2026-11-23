@@ -320,7 +320,7 @@ public static class InventoryWindowBuilder
         TextMeshProUGUI skillName = PlaceLabel(card.transform, "SkillName", "비어 있음", 24, Bone, TextAlignmentOptions.Left, 20f, 6f, 300f, 30f);
         PlaceLabel(card.transform, "SlotLabel", slotLabel, 12, Cyan, TextAlignmentOptions.Right, width - 220f, 44f, 200f, 16f);
         TextMeshProUGUI partName = PlaceLabel(card.transform, "PartName", "", 14, Neutral, TextAlignmentOptions.Left, 140f, 40f, 220f, 20f);
-        PlaceLabel(card.transform, "CostLabel", "COST", 12, Neutral, TextAlignmentOptions.Left, 20f, 42f, 44f, 16f);
+        TextMeshProUGUI costLabel = PlaceLabel(card.transform, "CostLabel", "COST", 12, Neutral, TextAlignmentOptions.Left, 20f, 42f, 44f, 16f);
 
         var pips = new Image[MaxCostPips];
         for (int i = 0; i < MaxCostPips; i++)
@@ -349,6 +349,7 @@ public static class InventoryWindowBuilder
         so.FindProperty("_partLabel").objectReferenceValue = partName;
         so.FindProperty("_tagRoot").objectReferenceValue = tag;
         so.FindProperty("_tagLabel").objectReferenceValue = tagLabel;
+        so.FindProperty("_costLabel").objectReferenceValue = costLabel;
 
         SerializedProperty pipArray = so.FindProperty("_costPips");
         pipArray.arraySize = pips.Length;

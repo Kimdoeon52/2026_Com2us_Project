@@ -23,6 +23,15 @@ public class SkillCardView : MonoBehaviour
     [Tooltip("코스트 칸. 앞에서부터 켠다")]
     [SerializeField] private Image[] _costPips;
 
+    [Tooltip("코스트 라벨")]
+    [SerializeField] private TextMeshProUGUI _costLabel;
+
+    [Tooltip("코스트 라벨 문구")]
+    [SerializeField] private string _costText = "COST";
+
+    [Tooltip("패시브 문구")]
+    [SerializeField] private string _passiveText = "패시브";
+
     [Tooltip("빈 카드 문구")]
     [SerializeField] private string _emptyText = "비어 있음";
 
@@ -51,7 +60,9 @@ public class SkillCardView : MonoBehaviour
         if (hasTag)
             SetText(_tagLabel, typeLabel);
 
-        SetCost(part.SkillCost);
+        // 패시브는 코스트 칸 대신 패시브 표시
+        SetText(_costLabel, part.IsPassive ? _passiveText : _costText);
+        SetCost(part.IsPassive ? 0 : part.SkillCost);
     }
 
     public void ShowEmpty()
@@ -63,6 +74,7 @@ public class SkillCardView : MonoBehaviour
         if (_tagRoot != null)
             _tagRoot.SetActive(false);
 
+        SetText(_costLabel, _costText);
         SetCost(0);
     }
 

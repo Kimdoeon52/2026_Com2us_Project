@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// 부품별 스택. 부품 1종당 1칸, 수량은 정의의 최대 소지 개수까지
+// 부품 스택 목록. 스택 1개가 1칸이고, 한 칸 최대 개수를 넘으면 같은 부품이라도 스택을 나눈다
 [Serializable]
 public class ComponentStock : IComponentSink
 {
@@ -12,66 +12,128 @@ public class ComponentStock : IComponentSink
         public string Id;
         public int Count;
         public Vector2Int Origin = NoOrigin;
+
+        // 배치된 칸이 있는지
+        public bool HasOrigin => Origin.x >= 0 && Origin.y >= 0;
     }
 
     [SerializeField] private List<Slot> _slots = new List<Slot>();
 
     public IReadOnlyList<Slot> Slots => _slots;
 
+    public static Vector2Int NoOrigin => new Vector2Int(-1, -1);
+
+    // 모든 스택 합계
     public int Get(string id)
     {
-        Slot slot = FindSlot(id);
-        return slot != null ? slot.Count : 0;
+        int total = 0;
+        for (int i = 0; i < _slots.Count; i++)
+        {
+            if (_slots[i] != null && _slots[i].Id == id)
+                total += _slots[i].Count;
+        }
+
+        return total;
     }
 
-    // 최대 소지 개수를 넘는 양은 버린다. 실제로 더해진 양을 반환
+    // 기존 스택을 먼저 채우고 남으면 새 스택을 만든다. 더해진 양을 반환
     public int Add(ComponentDefinition component, int amount)
     {
         if (component == null || string.IsNullOrEmpty(component.Id) || amount <= 0)
             return 0;
 
-        Slot slot = GetOrCreateSlot(component.Id);
-        int added = Mathf.Min(amount, component.RemainingCapacity(slot.Count));
-        slot.Count += added;
-        return added;
+        int left = amount;
+        for (int i = 0; i < _slots.Count && left > 0; i++)
+        {
+            Slot slot = _slots[i];
+            if (slot == null || slot.Id != component.Id)
+                continue;
+
+            int take = Mathf.Min(left, component.RemainingCapacity(slot.Count));
+            slot.Count += take;
+            left -= take;
+        }
+
+        while (left > 0)
+        {
+            int take = Mathf.Min(left, component.RemainingCapacity(0));
+            _slots.Add(new Slot { Id = component.Id, Count = take });
+            left -= take;
+        }
+
+        return amount;
     }
 
+    // 기존 스택에 더 들어갈 수 있는 양
+    public int RoomInStacks(ComponentDefinition component)
+    {
+        int room = 0;
+        for (int i = 0; i < _slots.Count; i++)
+        {
+            if (_slots[i] == null || _slots[i].Id != component.Id)
+                continue;
+
+            int remaining = component.RemainingCapacity(_slots[i].Count);
+            if (remaining == int.MaxValue)
+                return int.MaxValue;
+
+            room += remaining;
+        }
+
+        return room;
+    }
+
+    // 적게 남은 스택부터 소모해 빈 칸을 먼저 비운다
     public bool TryConsume(string id, int amount)
     {
-        if (amount <= 0)
+        if (amount <= 0 || Get(id) < amount)
             return false;
 
-        Slot slot = FindSlot(id);
-        if (slot == null || slot.Count < amount)
-            return false;
+        int left = amount;
+        while (left > 0)
+        {
+            Slot smallest = FindSmallest(id);
+            int take = Mathf.Min(left, smallest.Count);
+            smallest.Count -= take;
+            left -= take;
 
-        slot.Count -= amount;
+            if (smallest.Count <= 0)
+                _slots.Remove(smallest);
+        }
+
         return true;
     }
 
-    // 배치된 칸 좌표. x가 음수면 미배치
-    public bool TryGetOrigin(string id, out Vector2Int origin)
+    // 지정한 스택에서만 소모
+    public bool TryConsume(Slot slot, int amount)
     {
-        origin = Vector2Int.zero;
-
-        Slot slot = FindSlot(id);
-        if (slot == null)
+        if (slot == null || amount <= 0 || slot.Count < amount || !_slots.Contains(slot))
             return false;
 
-        origin = slot.Origin;
-        return origin.x >= 0 && origin.y >= 0;
+        slot.Count -= amount;
+        if (slot.Count <= 0)
+            _slots.Remove(slot);
+
+        return true;
     }
 
-    public void SetOrigin(string id, Vector2Int origin)
+    // 한 칸 최대 개수를 넘는 스택을 나눈다. 최대 개수를 줄였거나 예전 세이브일 때
+    public void SplitOversized(ComponentCatalog catalog)
     {
-        Slot slot = FindSlot(id);
-        if (slot != null)
-            slot.Origin = origin;
-    }
+        if (catalog == null)
+            return;
 
-    public void ClearOrigin(string id)
-    {
-        SetOrigin(id, NoOrigin);
+        for (int i = _slots.Count - 1; i >= 0; i--)
+        {
+            Slot slot = _slots[i];
+            ComponentDefinition component = slot != null ? catalog.Find(slot.Id) : null;
+            if (component == null || component.MaxCount <= 0 || slot.Count <= component.MaxCount)
+                continue;
+
+            int overflow = slot.Count - component.MaxCount;
+            slot.Count = component.MaxCount;
+            Add(component, overflow);
+        }
     }
 
     public void Clear()
@@ -79,33 +141,19 @@ public class ComponentStock : IComponentSink
         _slots.Clear();
     }
 
-    private static Vector2Int NoOrigin => new Vector2Int(-1, -1);
-
-    private Slot FindSlot(string id)
+    private Slot FindSmallest(string id)
     {
-        if (_slots == null || string.IsNullOrEmpty(id))
-            return null;
-
+        Slot smallest = null;
         for (int i = 0; i < _slots.Count; i++)
         {
-            if (_slots[i] != null && _slots[i].Id == id)
-                return _slots[i];
+            Slot slot = _slots[i];
+            if (slot == null || slot.Id != id || slot.Count <= 0)
+                continue;
+
+            if (smallest == null || slot.Count < smallest.Count)
+                smallest = slot;
         }
 
-        return null;
-    }
-
-    private Slot GetOrCreateSlot(string id)
-    {
-        Slot slot = FindSlot(id);
-        if (slot != null)
-            return slot;
-
-        if (_slots == null)
-            _slots = new List<Slot>();
-
-        slot = new Slot { Id = id };
-        _slots.Add(slot);
-        return slot;
+        return smallest;
     }
 }

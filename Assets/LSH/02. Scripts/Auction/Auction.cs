@@ -14,7 +14,7 @@ public class Auction : Singleton<Auction>
     [Header("연속 경매 설정")]
     [SerializeField] private int totalAuctionRounds = 3; //연속으로 진행할 경매 횟수
     [Tooltip("경매가 모두 끝나거나 '나가기'를 누르면 이동할 씬 (경로 또는 이름). Build Settings에 등록돼 있어야 함")]
-    [SerializeField] private string exitScenePath = "Assets/Scenes/Copys_1116/Map_Test.unity";
+    [SerializeField] private string exitScenePath = "Assets/Scenes/MainScene/Main_Junk_Shop.unity";
     private AuctionType? sessionAuctionType; // 첫 회차에 고른 경매 방식 (이후 회차는 이걸로 자동 진행)
     private int currentRound = 0; //현재 진행 중인 회차
     [SerializeField] [Min(1f)] private float giveUpTimeScale = 3f; //플레이어가 포기하면 경매를 n배속으로 진행 (빠른 종료 유도)

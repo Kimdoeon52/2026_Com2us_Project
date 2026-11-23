@@ -1323,14 +1323,12 @@ MonoBehaviour:
   difficultySelect: {fileID: 5132096703082599170}
   entryDialogue: {fileID: 3893411068354327625}
   progressSource: {fileID: 9211482739731581967}
-  defaultBattleScene: Battle_Boss_Test
+  defaultBattleScene: Main_Boss1
   battleScenes:
   - bossId: boss.wheel
-    sceneName: Battle_Boss_Test
+    sceneName: Main_Boss1
   - bossId: boss.kyodai
-    sceneName: Battle3
-  - bossId: boss.region3
-    sceneName: Battle_Boss_Test 3
+    sceneName: Main_Fight_Map_2
   loadingScreenPrefab: {fileID: 9160524714589638927, guid: bcdb4630b00049947b82e0081f7e5606, type: 3}
   raceIds:
   - race1

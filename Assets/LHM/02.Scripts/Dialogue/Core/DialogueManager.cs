@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 
@@ -87,6 +88,10 @@ namespace RealSteel.Dialogue
             dialogueBox.SetReadLog(history);
             IsReady = true;
             Debug.Log($"[DialogueManager] 데이터: {DataSource}");
+
+            Canvas canvas = dialogueBox.GetComponentInParent<Canvas>(true);
+            Transform uiRoot = canvas != null ? canvas.rootCanvas.transform : dialogueBox.transform;
+            GlyphPrewarm.Warm(uiRoot.GetComponentsInChildren<TMPro.TMP_Text>(true).Where(t => t.font != null && t.font.atlasPopulationMode == TMPro.AtlasPopulationMode.Dynamic), database.AllStrings, "대사");
         }
 
         private bool LoadData()

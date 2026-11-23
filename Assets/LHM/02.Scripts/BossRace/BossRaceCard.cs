@@ -99,7 +99,7 @@ namespace RealSteel.BossRace
                     SetText(statusText, "클리어", Green);
                     break;
                 default:
-                    SetText(statusText, "잠김", Muted);
+                    SetText(statusText, entry.unreleased ? "미개방" : "잠김", Muted);
                     break;
             }
 

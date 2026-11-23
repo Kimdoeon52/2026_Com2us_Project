@@ -23,6 +23,8 @@ namespace RealSteel.BossRace
         [TextArea(2, 4)] public string description = "";
         public Sprite icon;
         public string targetParts = "";
+        [Tooltip("켜면 진행과 상관없이 선택 불가 (카드에 '미개방'). 보스 · 씬이 아직 없는 지역")]
+        public bool unreleased;
 
         public string RegionText => regionLabel == FinalRegion ? "최종" : $"지역 {regionLabel}";
     }

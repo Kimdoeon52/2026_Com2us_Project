@@ -159,6 +159,12 @@ namespace RealSteel.BossRace
                 return false;
             }
 
+            if (entry.unreleased)
+            {
+                Debug.LogWarning($"[Hunt] 토벌 신청 거절 — {entry.RegionText} {entry.bossName}({bossId})는 미개방 지역입니다.", this);
+                return false;
+            }
+
             if (!difficultySelect.Open(Progress, entry, Parts, lastDifficulty, OnDifficultyChosen, OnCancelled, backLabel)) return false;
 
             busy = true;

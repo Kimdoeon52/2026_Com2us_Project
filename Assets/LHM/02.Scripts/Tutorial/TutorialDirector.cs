@@ -75,6 +75,7 @@ namespace RealSteel.Tutorial
         {
             catalog = source;
             CreatePanel();
+            StartCoroutine(PrewarmGlyphs());
             SceneManager.sceneLoaded += OnSceneLoaded;
             Scan(SceneManager.GetActiveScene());
             Debug.Log($"[Tutorial] 자동 튜토리얼 {catalog.guides.Count(g => g != null)}종 감시 시작 (본 것 {catalog.guides.Count(g => g != null && TutorialPanel.HasSeen(g.guideId))}개) · 도움말 {catalog.helpKey}");
@@ -99,6 +100,25 @@ namespace RealSteel.Tutorial
             canvas.name = "TutorialCanvas";
             panel = canvas.GetComponentInChildren<TutorialPanel>(true);
             if (panel == null) Debug.LogWarning("[Tutorial] Panel Prefab에 TutorialPanel이 없습니다.", catalog);
+        }
+
+        private System.Collections.IEnumerator PrewarmGlyphs()
+        {
+            yield return null;
+            if (panel == null) yield break;
+
+            var sources = new List<string>();
+            foreach (TutorialGuide guide in catalog.guides.Where(g => g != null))
+            {
+                sources.Add(guide.title);
+                foreach (TutorialStep step in guide.steps.Where(s => s != null))
+                {
+                    sources.Add(step.title);
+                    sources.Add(step.description);
+                }
+            }
+
+            GlyphPrewarm.Warm(panel.GetComponentsInChildren<TMP_Text>(true), sources, "튜토리얼");
         }
 
         // ── 조건 확인 ─────────────────────────────
@@ -256,7 +276,7 @@ namespace RealSteel.Tutorial
             if (dialogue != null)
             {
                 // 씬 입장 직후엔 대화 시스템이 준비될 때까지 잠깐 기다림. 다른 대화 중이면 끝난 뒤에
-                if (!dialogue.IsReady && Time.unscaledTime - queuedAt < catalog.waitForDialogueSeconds) return;
+                if (catalog.playIntroDialogue && !dialogue.IsReady && Time.unscaledTime - queuedAt < catalog.waitForDialogueSeconds) return;
                 if (dialogue.IsTalking) return;
             }
 
@@ -271,7 +291,7 @@ namespace RealSteel.Tutorial
             }
 
             // 창이 열려서 걸린 튜토리얼은 안내 대사 없이 가이드 창을 바로 띄움 (대사를 기다리는 동안 늦게 뜨던 문제, BUG-046)
-            if (current.trigger != TutorialTrigger.WindowOpened && TryIntro(dialogue, current)) return;
+            if (catalog.playIntroDialogue && current.trigger != TutorialTrigger.WindowOpened && TryIntro(dialogue, current)) return;
             OpenPanel(current);
         }
 

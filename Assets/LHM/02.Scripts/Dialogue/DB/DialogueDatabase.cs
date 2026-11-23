@@ -25,6 +25,7 @@ namespace RealSteel.Dialogue
         public IReadOnlyDictionary<string, VariableDef> VariableDefs => variableDefs;
         public IEnumerable<string> PoolIds => pools.Keys;
         public int StringCount => strings.Count;
+        public IEnumerable<string> AllStrings => strings.Values;
 
         public bool Load(IReadOnlyList<TextAsset> poolAssets, TextAsset stringTableAsset, TextAsset variablesAsset)
         {

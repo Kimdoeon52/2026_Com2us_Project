@@ -21,6 +21,8 @@ namespace RealSteel.Tutorial
         public bool autoOpen = true;
         [Tooltip("씬에 들어온 직후 대화 시스템이 준비될 때까지 기다리는 최대 시간 (초)")]
         [Min(0f)] public float waitForDialogueSeconds = 2f;
+        [Tooltip("켜면 가이드 창 전에 안내 대사(Intro Dialogue Id)를 대화창으로 먼저 보여 줌. 끄면 가이드 창을 바로 엶")]
+        public bool playIntroDialogue = false;
 
         [Header("도움말 (본 튜토리얼 다시 보기)")]
         public Key helpKey = Key.F10;

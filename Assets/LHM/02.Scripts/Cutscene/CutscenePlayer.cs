@@ -21,7 +21,7 @@ namespace RealSteel.Cutscene
         [SerializeField] private bool playOnStart = true;
         [SerializeField] private bool playOnlyOnce;
         [Tooltip("끝나면 이동할 씬. 이름 또는 경로(Assets/....unity). Build Settings에 없으면 에디터에서만 경로로 이동")]
-        [SerializeField] private string nextSceneName = "Assets/Scenes/Copys_1116/Map_Test.unity";
+        [SerializeField] private string nextSceneName = "Assets/Scenes/MainScene/Main_Home_Workshop.unity";
 
         [Header("화면")]
         [SerializeField] private GameObject root;

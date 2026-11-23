@@ -171,6 +171,7 @@ namespace RealSteel.BossRace
         public BossRaceCardState StateOf(int index)
         {
             if (progress == null || index < 0 || index >= entries.Count) return BossRaceCardState.Locked;
+            if (entries[index] == null || entries[index].unreleased) return BossRaceCardState.Locked;
             if (progress.IsRegionCleared(entries[index].bossId)) return BossRaceCardState.Cleared;
 
             bool previousCleared = index == 0 || progress.IsRegionCleared(entries[index - 1].bossId);
@@ -272,7 +273,8 @@ namespace RealSteel.BossRace
         private void ShowLockHint(int index)
         {
             string previous = index > 0 && index - 1 < entries.Count ? entries[index - 1].RegionText : "이전 지역";
-            SetRouteHint($"잠김 — {previous} 레이스 시즌 1위 달성 시 개방", HintLocked);
+            bool unreleased = index >= 0 && index < entries.Count && entries[index] != null && entries[index].unreleased;
+            SetRouteHint(unreleased ? "미개방 — 아직 열리지 않은 지역입니다" : $"잠김 — {previous} 레이스 시즌 1위 달성 시 개방", HintLocked);
             hintUntil = Time.unscaledTime + lockHintSeconds;
             Debug.Log($"[BossRace] 잠긴 지역 선택 시도: {(index < entries.Count ? entries[index].RegionText : index.ToString())} (선택 불가)");
         }

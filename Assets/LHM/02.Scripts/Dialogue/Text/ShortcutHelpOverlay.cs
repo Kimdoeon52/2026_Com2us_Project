@@ -111,14 +111,14 @@ namespace RealSteel.Dialogue
             MonoBehaviour scrap = Find("ScrapInteractor");
             if (scrap != null) field.Add(KeyName(ReadKey(scrap, "InteractKey", "_interactKey")), "고철 뒤지기");
             MonoBehaviour inventory = Find("InventoryToggle");
-            if (inventory != null) field.Add(InventoryKeys(inventory), "인벤토리 (Esc 닫기)");
-            if (Has("CraftingUIManager")) field.Add("C", "제작창").Add("K", "상점창");
+            if (inventory != null) field.Add(InventoryKeys(inventory), "인벤토리 / 인벤토리 + 제작창 (Esc 닫기)");
             if (Has("SystemUiOnOffManager")) field.Add("M", "지도").Add("O", "달력").Add("Shift + R", "랭킹");
             if (Has("GlobalGold")) field.Add("Shift + S", "골드 수동 저장");
             if (Has("TimingBarMinigame")) field.Add("Space", "고철 미니게임 타이밍 맞추기");
             MonoBehaviour skill = Find("SkillWindowView");
             if (skill != null) field.Add(KeyName(ReadKey(skill, "ToggleKey", "_toggleKey")), "스킬창 (Esc 닫기)");
             if (Has("TutorialDirector")) field.Add("F10", "도움말 · 튜토리얼 다시 보기");
+            if (Has("PauseMenu")) field.Add("Esc", "일시정지 메뉴 (다른 창 · 대화가 열려 있으면 그 창이 먼저)");
             field.Add("Home", "단축키 안내 (Home · Esc 닫기)");
             list.Add(field);
 
@@ -158,8 +158,7 @@ namespace RealSteel.Dialogue
                     .Add("F6 / F7 / F8", "저장 / 다시 읽기 / 세이브 폴더")
                     .Add("F9 · Shift + F9", "순위 구간 올리기 · 내리기")
                     .Add("F10 / F11", "풀스크린 / 인터미션 대사")
-                    .Add("F12 · Shift + F12", "기록 초기화 · 세이브 삭제")
-                    .Add("Shift + Z",  "수리 복구 기능");
+                    .Add("F12 · Shift + F12", "기록 초기화 · 세이브 삭제 (테스트 패널이 있으면 F12는 패널)");
             }
             if (Has(nameof(Step112_MidnightTest)))
             {
@@ -186,14 +185,17 @@ namespace RealSteel.Dialogue
             if (Has(nameof(Step14_BarkTest))) test.Add("6 / 7 / 8 / 9 · 0", "전투 바크: 파츠 파괴 / 자막 T10 / 부위 파괴 / 그로기 (Shift = 체력 20%) · 기록 초기화");
             if (Has(nameof(Step18_TutorialTest))) test.Add("P / I", "가짜 지도 UI (T3) / 가짜 토벌 신청 UI (T9)");
             if (Has("WorkshopTestKit")) test.Add("F9", "제작 · 수리 테스트 재료 다시 지급");
-            if (Has("DebugPartGiver")) test.Add("F6", "파츠 지급 창 (KDU)");
-            if (Has("DebugCoreLevelKey")) test.Add("Shift + X", "코어 레벨업 (KDU)");
-            if (Has("UIPickerDebugger")) test.Add("F1", "마우스 아래 UI 보기 (LSH, 모든 빌드)");
             if (Has(nameof(Step10_InputTest))) test.Add("` (1 왼쪽)", "필드 ↔ 전투 입력 전환");
-            if (Has("InventoryHost")) test.Add("Shift + Q", "디버그 부품 지급");
-            if (Has("CorrectRecipe")) test.Add("T", "제작 슬롯 새로고침");
-            MonoBehaviour scenes = Find("GameSceneManager");
-            if (scenes != null && ReadBool(scenes, "_shortcutEnabled")) test.Add("F1 ~ F5", "테스트 씬 전환 (위 F키와 겹침)");
+            if (Has("TestPanel")) test.Add("F12", "테스트 패널 (씬이동 · 파츠 · 골드 · 전투 · 일정 · 데이터)");
+            if (TestConditionResetHotkeys.ActiveIn(UnityEngine.SceneManagement.SceneManager.GetActiveScene().name))
+            {
+                test.Add("Ctrl + F9", "대화 조건 · 세이브 초기화")
+                    .Add("Ctrl + F11", "시즌 초기화")
+                    .Add("Ctrl + F12 · Ctrl + Shift + F12", "받을 시즌 포상 추가 (1위 · 3위)");
+            }
+            if (Has(nameof(SeasonRewardTestKeys))) test.Add("Ctrl + J · Ctrl + Shift + J", "LJS 분기 보상 처리 (플레이어 1위 · 10위 밖)").Add("Ctrl + G", "골드 · 받을 포상 보기");
+            if (Has("DebugLeftArmSkillSwapper")) test.Add("Shift + Alt + 1 ~ 6", "왼팔 스킬 바꾸기 (CSH, 전투)");
+            if (Has("FrameStepper")) test.Add("키패드 7 / 8 / 9", "일시정지 / 1프레임 전진 / 판정 박스 (NYH, 전투)");
             if (test.entries.Count > 0) list.Add(test);
             return list;
         }
@@ -213,12 +215,6 @@ namespace RealSteel.Dialogue
             if (info != null && info.PropertyType == typeof(KeyCode)) return (KeyCode)info.GetValue(target);
             FieldInfo fieldInfo = type.GetField(field, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             return fieldInfo != null && fieldInfo.FieldType == typeof(KeyCode) ? (KeyCode)fieldInfo.GetValue(target) : KeyCode.None;
-        }
-
-        private static bool ReadBool(object target, string field)
-        {
-            FieldInfo info = target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            return info != null && info.FieldType == typeof(bool) && (bool)info.GetValue(target);
         }
 
         private static string InventoryKeys(object toggle)

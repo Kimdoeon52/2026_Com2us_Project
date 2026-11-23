@@ -26,6 +26,8 @@ namespace RealSteel.Dialogue
 
         private static TestConditionResetHotkeys instance;
 
+        public static bool ActiveIn(string sceneName) => TargetScenes.Contains(sceneName);
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void EnsureInstance()
         {

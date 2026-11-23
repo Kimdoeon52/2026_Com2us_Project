@@ -99,7 +99,7 @@ namespace RealSteel.Dialogue.EditorTools
             log.AppendLine($"- {menu.name} → {canvasGo.name} (정렬 {PauseCanvasOrder}, 화면 전체)");
         }
 
-        private static void EnsureEventSystem(Scene scene, StringBuilder log)
+        internal static void EnsureEventSystem(Scene scene, StringBuilder log)
         {
             bool exists = scene.GetRootGameObjects().Any(r => r.GetComponentInChildren<EventSystem>(true) != null);
             if (exists)
@@ -113,7 +113,7 @@ namespace RealSteel.Dialogue.EditorTools
             log.AppendLine("- EventSystem 생성");
         }
 
-        private static void Instantiate(string path, Scene scene, StringBuilder log)
+        internal static void Instantiate(string path, Scene scene, StringBuilder log)
         {
             var go = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(path), scene);
             go.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);

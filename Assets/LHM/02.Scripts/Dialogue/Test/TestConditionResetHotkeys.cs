@@ -11,6 +11,7 @@ namespace RealSteel.Dialogue
     /// - Ctrl + F9  : 대화 조건 초기화 (DialogueManager.ResetAll(true))
     /// - Ctrl + F10 : 튜토리얼 초기화 (TutorialDirector.ResetAll())
     /// - Ctrl + F11 : 시즌 초기화 (SeasonResetHotkey.ResetSeason())
+    /// - Ctrl + F12 : 테스트 포상 추가 (1위 10,000골드, Shift를 같이 누르면 3위 6,000골드)
     /// </summary>
     public class TestConditionResetHotkeys : MonoBehaviour
     {
@@ -19,7 +20,8 @@ namespace RealSteel.Dialogue
             "Map_Test",
             "League_Lobby",
             "Auction",
-            "Home_Workshop"
+            "Home_Workshop",
+            "SeasonRewardTest"
         };
 
         private static TestConditionResetHotkeys instance;
@@ -53,6 +55,12 @@ namespace RealSteel.Dialogue
             else if (keyboard.f11Key.wasPressedThisFrame)
             {
                 ResetSeason();
+            }
+            else if (keyboard.f12Key.wasPressedThisFrame)
+            {
+                bool first = !keyboard.shiftKey.isPressed;
+                Reward.SeasonRewardStore.Add(first ? 1 : 3, first ? 10000 : 6000, $"테스트({System.DateTime.Now:HH:mm:ss})");
+                Debug.Log($"[TestHotkey] 테스트 포상 추가: {(first ? "1위 10,000" : "3위 6,000")}골드 → 접수원 '포상 수령' (Ctrl{(first ? "" : " + Shift")} + F12)", this);
             }
         }
 

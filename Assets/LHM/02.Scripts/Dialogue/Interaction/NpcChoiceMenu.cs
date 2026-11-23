@@ -380,10 +380,9 @@ namespace RealSteel.Dialogue
                     if (!OpenRankingBoard()) End();
                     break;
 
-                // 포상 시스템이 아직 없어 접수원 안내 한 줄로 임시 대체 (기록 · 세이브 안 함)
                 case NpcAction.RewardClaim:
                     ChangeState(State.Talking);
-                    if (!SayLine(npc, "menu.reward_none")) End();
+                    if (manager.Box == null || manager.IsTalking || !SayLines(npc, ClaimSeasonRewards())) End();
                     break;
 
                 case NpcAction.Exit:
@@ -481,17 +480,56 @@ namespace RealSteel.Dialogue
             return true;
         }
 
-        // 대사 풀을 거치지 않고 NPC 이름으로 문장 한 줄을 대화창에 띄움
-        private bool SayLine(NpcInteractable speaker, string textKey)
+        private List<string> ClaimSeasonRewards()
+        {
+            var texts = new List<string>();
+            if (!Reward.SeasonRewardStore.HasPending)
+            {
+                texts.Add(manager.GetText("menu.reward_none"));
+                return texts;
+            }
+
+            if (!GlobalGoldWallet.IsAvailable)
+            {
+                Debug.LogWarning($"[NPC] 포상 수령 — LSH GlobalGold가 없어 지급하지 못했습니다. 받을 포상 {Reward.SeasonRewardStore.Pending.Count}건은 그대로 남습니다.", this);
+                texts.Add(manager.GetText("menu.reward_unavailable"));
+                return texts;
+            }
+
+            List<Reward.SeasonReward> rewards = Reward.SeasonRewardStore.TakeAll();
+            int total = 0;
+            foreach (Reward.SeasonReward reward in rewards)
+            {
+                total += reward.gold;
+                string key = reward.rank == 1 ? "menu.reward_first" : "menu.reward_top10";
+                texts.Add(Format(manager.GetText(key), reward.season, reward.rank, reward.gold));
+            }
+
+            GlobalGoldWallet.AddPlayerGold(total);
+            texts.Add(Format(manager.GetText("menu.reward_paid"), "", 0, total));
+            Debug.Log($"[NPC] 포상 수령 — {rewards.Count}건, {total}골드 지급");
+            return texts;
+        }
+
+        private static string Format(string text, string season, int rank, int gold)
+        {
+            return (text ?? "").Replace("{season}", season).Replace("{rank}", rank.ToString()).Replace("{gold}", gold.ToString("N0"));
+        }
+
+        private bool SayLines(NpcInteractable speaker, List<string> texts)
         {
             DialogueBox box = manager.Box;
-            if (box == null || manager.IsTalking) return false;
+            if (box == null || manager.IsTalking || texts.Count == 0) return false;
 
-            var line = new DialogueLine(speaker.SpeakerId, manager.GetSpeakerName(speaker.SpeakerId), manager.GetText(textKey))
+            var lines = new DialogueLine[texts.Count];
+            for (int i = 0; i < texts.Count; i++)
             {
-                speakerTitle = manager.GetSpeakerTitle(speaker.SpeakerId),
-            };
-            box.Open(new[] { line });
+                lines[i] = new DialogueLine(speaker.SpeakerId, manager.GetSpeakerName(speaker.SpeakerId), texts[i])
+                {
+                    speakerTitle = manager.GetSpeakerTitle(speaker.SpeakerId),
+                };
+            }
+            box.Open(lines);
             return true;
         }
 

@@ -27,6 +27,7 @@ namespace RealSteel.MainMenu
         public static void ResetForNewGame()
         {
             new DialogueSaveSystem(DialogueSavePath).DeleteAll();
+            Reward.SeasonRewardStore.DeleteAll();
             BossProgressStore.DeleteSave();
             ResetSeenFlags();
             ResetInventory();

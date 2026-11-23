@@ -26,7 +26,8 @@ public class RankingSeasonResult : MonoBehaviour
     private string FilePath => Path.Combine(Application.dataPath, "LSH", "06. JSon", jsonFileName);
 
     /// <summary>
-    /// 점수가 초기화되기 전 정렬된 랭킹 리스트를 받아 상위 1~10위 중 플레이어에게만 보상을 지급합니다.
+    /// 점수가 초기화되기 전 정렬된 랭킹 리스트를 받아 상위 1~10위 중 플레이어에게만 보상을 기록합니다.
+    /// 실제 골드 지급은 길드 접수원 '포상 수령'에서 GlobalGold로 처리합니다 (mainGold.json 직접 수정은 GlobalGold 메모리 값에 덮어써짐).
     /// </summary>
     public void ProcessSeasonReward(List<NPC> sortedNpcList)
     {
@@ -44,13 +45,11 @@ public class RankingSeasonResult : MonoBehaviour
             // 1등(인덱스 0)은 10,000골드, 2~10등(인덱스 1~9)은 6,000골드
             int rewardGold = (i == 0) ? 10000 : 6000;
 
-            if (AddPlayerGoldToJson(rewardGold))
-            {
-                // 플레이어 보상 획득 시스템 알림 발송
-                SystemNewsUiManager.SendNews(
-                    $"분기 랭킹 {i + 1}위 달성! 보상으로 {rewardGold:N0}골드를 획득했습니다."
-                );
-            }
+            // 바로 지급하지 않고 '받을 포상'으로 기록 → 길드 접수원 '포상 수령'에서 대사와 함께 지급 (LHM SeasonRewardStore)
+            RealSteel.Reward.SeasonRewardStore.Add(i + 1, rewardGold);
+            SystemNewsUiManager.SendNews(
+                $"분기 랭킹 {i + 1}위 달성! 길드 접수원에게서 포상 {rewardGold:N0}골드를 받으세요."
+            );
         }
     }
 

@@ -101,13 +101,13 @@ public class EquipmentSlotView : MonoBehaviour, IPointerClickHandler, IPointerEn
         if (_slot == Slot.Core)
         {
             if (host.Core != null)
-                _tooltip.Show(host.Core.GetTooltip(host.CoreLevel));
+                _tooltip.ShowCore(host.Core, host.CoreLevel);
             return;
         }
 
         PartsDefinition parts = host.GetEquipped(_slot);
         if (parts != null)
-            _tooltip.Show(parts.GetTooltip());
+            _tooltip.ShowParts(parts, host.GetDurability(_slot));
     }
 
     public void OnPointerExit(PointerEventData eventData)

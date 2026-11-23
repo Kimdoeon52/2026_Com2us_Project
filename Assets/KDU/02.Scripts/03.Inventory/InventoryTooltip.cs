@@ -19,7 +19,10 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     [Tooltip("툴팁 박스")]
     [SerializeField] private GameObject _box;
 
-    [Tooltip("툴팁 텍스트")]
+    [Tooltip("툴팁 카드. 비우면 텍스트로 표시")]
+    [SerializeField] private TooltipView _card;
+
+    [Tooltip("툴팁 텍스트. 카드가 없을 때만")]
     [SerializeField] private TextMeshProUGUI _text;
 
     [Tooltip("툴팁 정렬 순서. 다른 캔버스 팝업보다 높게")]
@@ -41,6 +44,9 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     // 격자에서 띄운 툴팁인지. 장착 칸이 띄운 건 격자 밖 이동으로 끄지 않는다
     private bool _fromGrid;
 
+    // 지금 보여주는 격자 엔트리. 같은 칸 위에서는 다시 그리지 않는다
+    private int _shownIndex = -1;
+
     // 메뉴를 연 엔트리. 열린 사이에 배치가 바뀌었는지 확인하려고 원점도 같이 둔다
     private int _menuIndex = -1;
     private Vector2Int _menuOrigin;
@@ -56,6 +62,16 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
     {
         if (_view == null)
             _view = FindAnyObjectByType<InventoryView>();
+    }
+
+    // 프리팹에서 켜진 채로 들어와도 처음엔 숨긴다
+    private void Awake()
+    {
+        if (_box == null && _card != null)
+            _box = _card.gameObject;
+
+        if (_box != null)
+            _box.SetActive(false);
     }
 
     private void OnDisable()
@@ -75,13 +91,67 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
         if (_text != null)
             _text.text = text;
 
-        _box.SetActive(true);
-        _fromGrid = false;
+        Open();
+    }
 
-        // 장착 팝업 위에 그린다. 켠 뒤에 건다
-        Canvas canvas = _box.GetOrAddComponent<Canvas>();
-        canvas.overrideSorting = true;
-        canvas.sortingOrder = _sortingOrder;
+    public void ShowParts(PartsDefinition part, int durability, bool destroyed = false)
+    {
+        if (part == null)
+        {
+            Hide();
+            return;
+        }
+
+        if (_card == null)
+        {
+            Show(part.GetTooltip(destroyed));
+            return;
+        }
+
+        string subtitle = $"{PartGrades.ToLabel(part.Grade)} {SlotLabel(part.Slot)} 파츠";
+        if (destroyed)
+            subtitle += " <color=red>파괴됨</color>";
+
+        string description = JoinLines(part.Description, $"내구도 {durability} / {part.Durability}");
+        bool isLeg = part.Slot == Slot.LeftLeg || part.Slot == Slot.RightLeg;
+        OpenCard(part.DisplayName, part.Sprite, part.Grade, subtitle, description, isLeg);
+    }
+
+    public void ShowComponent(ComponentDefinition component)
+    {
+        if (component == null)
+        {
+            Hide();
+            return;
+        }
+
+        if (_card == null)
+        {
+            Show(component.GetTooltip());
+            return;
+        }
+
+        OpenCard(component.DisplayName, component.Sprite, component.Grade, $"{PartGrades.ToLabel(component.Grade)} 부품", component.Description, false);
+    }
+
+    public void ShowCore(CoreDefinition core, int level)
+    {
+        if (core == null)
+        {
+            Hide();
+            return;
+        }
+
+        if (_card == null)
+        {
+            Show(core.GetTooltip(level));
+            return;
+        }
+
+        CoreLevel stats = core.GetLevel(level);
+        string exp = level >= core.MaxLevel ? "MAX" : stats.ExpToNext.ToString("N0");
+        string body = $"체력 {stats.Hp:N0}\n방어력 {stats.Defense:N0}\n다음 레벨까지 {exp}\n복구비 {stats.RepairCost:N0}G";
+        OpenCard(core.DisplayName, core.Sprite, PartGrade.Basic, $"코어 Lv.{level} / {core.MaxLevel}", JoinLines(core.Description, body), false);
     }
 
     public void Hide()
@@ -93,6 +163,53 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
             _box.SetActive(false);
 
         _fromGrid = false;
+        _shownIndex = -1;
+    }
+
+    private void OpenCard(string name, Sprite icon, PartGrade grade, string subtitle, string description, bool isLeg)
+    {
+        if (_box == null)
+            return;
+
+        // 켠 뒤에 채워야 레이아웃이 바로 잡힌다
+        Open();
+        _card.Show(name, icon, grade, subtitle, description, isLeg);
+    }
+
+    private void Open()
+    {
+        _box.SetActive(true);
+        _fromGrid = false;
+        _shownIndex = -1;
+
+        // 장착 팝업 위에 그린다. 켠 뒤에 건다
+        Canvas canvas = _box.GetOrAddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = _sortingOrder;
+    }
+
+    private static string JoinLines(string head, string tail)
+    {
+        return string.IsNullOrEmpty(head) ? tail : $"{head}\n\n{tail}";
+    }
+
+    private static string SlotLabel(Slot slot)
+    {
+        switch (slot)
+        {
+            case Slot.LeftArm:
+                return "왼팔";
+            case Slot.RightArm:
+                return "오른팔";
+            case Slot.LeftLeg:
+                return "왼다리";
+            case Slot.RightLeg:
+                return "오른다리";
+            case Slot.Head:
+                return "머리";
+            default:
+                return "코어";
+        }
     }
 
     public void OnPointerMove(PointerEventData eventData)
@@ -111,8 +228,13 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
             return;
         }
 
-        Show(GetEntryText(Host.Grid.GetIndexAt(cell)));
+        int index = Host.Grid.GetIndexAt(cell);
+        if (index >= 0 && index == _shownIndex)
+            return;
+
+        ShowEntry(index);
         _fromGrid = true;
+        _shownIndex = index;
     }
 
     public void OnPointerExit(PointerEventData eventData)
@@ -147,15 +269,23 @@ public class InventoryTooltip : MonoBehaviour, IPointerMoveHandler, IPointerExit
         OpenMenu(index, entry.Origin, eventData.position);
     }
 
-    private string GetEntryText(int index)
+    private void ShowEntry(int index)
     {
         if (!Host.Grid.TryGetEntry(index, out InventoryGrid.Entry entry))
-            return null;
+        {
+            Hide();
+            return;
+        }
 
         if (entry.IsComponent)
-            return entry.Component != null ? entry.Component.GetTooltip() : null;
+        {
+            ShowComponent(entry.Component);
+            return;
+        }
 
-        return entry.Definition != null ? entry.Definition.GetTooltip() : null;
+        bool destroyed = entry.Parts != null && entry.Parts.IsDestroyed;
+        int durability = entry.Parts != null ? entry.Parts.CurrentDurability : (entry.Definition != null ? entry.Definition.Durability : 0);
+        ShowParts(entry.Definition, durability, destroyed);
     }
 
     // 격자 밖이면 false

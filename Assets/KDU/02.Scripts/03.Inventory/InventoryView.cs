@@ -169,9 +169,15 @@ public class InventoryView : MonoBehaviour
     {
         RectTransform rect = Prepare(_componentLayer, _componentPrefab, poolIndex, entry);
 
+        // 이미지가 있으면 그대로, 없으면 등급 색 블록
         var image = rect.GetComponent<Image>();
         if (image != null)
-            image.color = GetGradeColor(entry.Component.Grade);
+        {
+            Sprite sprite = entry.Component.Sprite;
+            image.sprite = sprite;
+            image.preserveAspect = sprite != null;
+            image.color = sprite != null ? Color.white : GetGradeColor(entry.Component.Grade);
+        }
 
         var label = rect.GetComponentInChildren<TMP_Text>();
         if (label != null)

@@ -308,7 +308,7 @@ MonoBehaviour:
   hoverDuration: 0.4
   slamDuration: 0.22
   impactRadius: 0.75
-  nailBoardDetectRadius: 0.85
+  nailBoardDetectRadius: 0.65
   slamRounds: 3
   slamSquashScale: {x: 1.45, y: 0.5}
   squashFastInDuration: 0.04
@@ -377,7 +377,7 @@ MonoBehaviour:
   cameraPaddingY: 0.5
   groundPaddingY: 0.1
   initialAngleDeg: 40
-  bladeHitRadius: 0.7
+  bladeHitRadius: 0.55
   flashColor: {r: 1, g: 0.2, b: 0.1, a: 1}
   flashStartInterval: 0.25
   flashEndInterval: 0.04
@@ -437,7 +437,7 @@ MonoBehaviour:
     jumpDuration: 0.16
     fallDuration: 0.12
     shockwaveMaxDistance: 0.7
-    shockwaveHitWidth: 0.12
+    shockwaveHitWidth: 0.22
     shockwaveScaleX: 0.8
     shockwaveSpeed: 2.5
     coreDamage: 20
@@ -447,7 +447,7 @@ MonoBehaviour:
     jumpDuration: 0.18
     fallDuration: 0.13
     shockwaveMaxDistance: 1.05
-    shockwaveHitWidth: 0.14
+    shockwaveHitWidth: 0.26
     shockwaveScaleX: 1.1
     shockwaveSpeed: 3.2
     coreDamage: 25
@@ -457,7 +457,7 @@ MonoBehaviour:
     jumpDuration: 0.2
     fallDuration: 0.14
     shockwaveMaxDistance: 1.4
-    shockwaveHitWidth: 0.16
+    shockwaveHitWidth: 0.3
     shockwaveScaleX: 1.4
     shockwaveSpeed: 4.2
     coreDamage: 30
@@ -467,7 +467,7 @@ MonoBehaviour:
     jumpDuration: 0.24
     fallDuration: 0.16
     shockwaveMaxDistance: 1.88
-    shockwaveHitWidth: 0.18
+    shockwaveHitWidth: 0.35
     shockwaveScaleX: 1.8
     shockwaveSpeed: 5.5
     coreDamage: 40

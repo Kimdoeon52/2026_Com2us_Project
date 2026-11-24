@@ -31,7 +31,7 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float slamDuration = 0.22f;
         [Tooltip("플레이어 피격 판정 반경 (정밀 타격: 0.75m)")]
         [SerializeField] private float impactRadius = 0.75f;
-        [SerializeField] private float nailBoardDetectRadius = 0.85f;
+        [SerializeField] private float nailBoardDetectRadius = 0.65f;
         [SerializeField] private int slamRounds = 3;
 
         [Header("비대칭 임팩트 펀치 파라미터")]

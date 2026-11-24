@@ -204,7 +204,7 @@ public class Auction : Singleton<Auction>
 
     //==========================사운드=============================
     [Header("효과음 설정")]
-    [SerializeField] private AudioSource sfxAudioSource; // 사운드 재생용 컴포넌트
+    // [SerializeField] private AudioSource sfxAudioSource; // 구 방식: 자체 AudioSource로 재생 → 이제 공용 SoundManager(LHM)가 재생
     [SerializeField] public AudioClip giveUpEffect;      // GiveUpEffect
     [SerializeField] public AudioClip dialogueEffect;    // DialogueEffect
     [SerializeField] public AudioClip useSkillEffect;    // UseSkillEffect
@@ -212,6 +212,8 @@ public class Auction : Singleton<Auction>
     [Header("배경음 설정")]
     [SerializeField] private AudioClip normalBGM;
     [SerializeField] private AudioClip fistBGM;
+    [Min(0f)] [SerializeField] private float bgmFadeSeconds = 0.8f; // 경매 BGM으로 바뀌거나 돌아갈 때 크로스페이드 시간
+    private AudioClip bgmBeforeAuction; // 경매 BGM 틀기 전에 나오던 곡 (씬 BGM) → 경매가 끝나면 다시 틀어줌
     /*
     UniTaskCompletionSource: 비동기 작업을 수동으로 완료시킬 수 있는 신호기
     "버튼 클릭이나 입력 같은 이벤트가 일어날 때까지 코드를 멈춰두었다가, 이벤트가 발생하면 입력받은 데이터(값)를 가지고 다음으로 넘어가게 해주는 비동기 대기용 신호기"
@@ -1783,32 +1785,32 @@ public class Auction : Singleton<Auction>
     }
     //=========================사운드 재생======================
     // 사운드 재생 통합 함수
+    // 효과음/BGM 모두 공용 SoundManager로 재생 → 설정 음량 · 믹서 적용, 효과음 16채널이라 BGM을 멈춰도 효과음이 안 끊김
     public void PlaySound(AudioClip clip)
     {
-        if (sfxAudioSource != null && clip != null)
-        {
-            sfxAudioSource.PlayOneShot(clip); // 메모리 추가 할당 없이 재생
-        }
+        if (clip == null) return;
+        RealSteel.Sound.SoundManager.Sfx(clip);
     }
     public void PlayBGM(AuctionType currentAuctionType)
     {
-        switch(currentAuctionType)
-        {
-            case AuctionType.Normal:
-                sfxAudioSource.clip = normalBGM;
-                break;
-            case AuctionType.Fist:
-                sfxAudioSource.clip = fistBGM;
-                break;
-        }
-        sfxAudioSource.Play();
+        AudioClip clip = currentAuctionType == AuctionType.Fist ? fistBGM : normalBGM;
+        if (clip == null) return;
+
+        var sound = RealSteel.Sound.SoundManager.Instance;
+        if (sound == null) return;
+        // 경매 BGM이 아닌 곡(씬 BGM)이 나오고 있었으면 기억해 둠
+        AudioClip current = sound.CurrentBgm;
+        if (current != normalBGM && current != fistBGM) bgmBeforeAuction = current;
+        RealSteel.Sound.SoundManager.Bgm(clip, bgmFadeSeconds); // 크로스페이드로 전환
     }
     public void StopMusic()
     {
-        if (sfxAudioSource.isPlaying || sfxAudioSource.clip != null)
-        {
-            sfxAudioSource.Stop();
-            sfxAudioSource.clip = null; // 클립 해제까지 원하시면 추가
-        }
+        var sound = RealSteel.Sound.SoundManager.Instance;
+        if (sound == null) return;
+        AudioClip current = sound.CurrentBgm;
+        if (current != normalBGM && current != fistBGM) return; // 경매 BGM이 아니면 건드리지 않음
+        // 경매 전에 나오던 씬 BGM으로 되돌림 (없으면 페이드아웃)
+        if (bgmBeforeAuction != null) RealSteel.Sound.SoundManager.Bgm(bgmBeforeAuction, bgmFadeSeconds);
+        else RealSteel.Sound.SoundManager.StopBgm(bgmFadeSeconds);
     }
 }

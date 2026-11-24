@@ -42,6 +42,9 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
 
         ScrapInputGate.Push();
 
+        // 진행 중에는 Esc 일시정지 메뉴가 열리지 않는다
+        UiStackGate.Open(this);
+
         if (_overlayRoot != null)
             _overlayRoot.SetActive(true);
 
@@ -82,12 +85,29 @@ public abstract class ScrapMinigameBase : MonoBehaviour, IScrapMinigame
         if (_overlayRoot != null)
             _overlayRoot.SetActive(false);
 
-        ScrapInputGate.Pop();
-        _runningCount = Mathf.Max(0, _runningCount - 1);
+        Release();
 
         Action<ScrapMinigameResult> callback = _onComplete;
         _onComplete = null;
         callback?.Invoke(result);
+    }
+
+    // 진행 중에 꺼지거나 씬이 바뀌어도 잠금이 남지 않게 푼다
+    private void OnDisable()
+    {
+        if (!_running)
+            return;
+
+        _running = false;
+        _onComplete = null;
+        Release();
+    }
+
+    private void Release()
+    {
+        ScrapInputGate.Pop();
+        UiStackGate.Close(this);
+        _runningCount = Mathf.Max(0, _runningCount - 1);
     }
 
     protected virtual void OnTimeout() => Finish(ScrapMinigameResult.Lose(PerformanceOnTimeout()));

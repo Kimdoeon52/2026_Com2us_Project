@@ -20,6 +20,12 @@ using UnityEngine;
 /// 아직 없는 것: 순환 순서, 첫 큐, 헬 2→3악장 가짜 격파 연출(0.5, 지금은 일반 전환과 같다), 그로기 기믹.
 /// 플레이어 → 보스 피해는 HitDetection → 허브 ProcessHit(보스 모드)가 깎는다 — 여기서 NotifyDamageFromHub를 부르지 않는다.
 /// </summary>
+/// <summary>마에스트로 패턴 중 특정 악장부터 나오는 것 (원형 음탄·크레셴도 = 2악장 후보)</summary>
+public interface IMaestroMovementGate
+{
+    int MinMovement { get; }
+}
+
 [RequireComponent(typeof(RSNanoSwarm))]
 [RequireComponent(typeof(BoxCollider2D))]
 public class MaestroBossController : BossControllerBase
@@ -329,6 +335,33 @@ public class MaestroBossController : BossControllerBase
     // 악장은 HP 문턱이 아니라 "HP 1 고정 → 전환"으로만 넘어간다
     protected override void CheckPhaseTransition() { }
 
+    // 패턴 고르기 — 지금 악장에 나올 수 있는 것만, 이번 악장에 새로 나오는 패턴을 앞에 (KKH는 쉬운 난이도에서 앞의 N개만 쓴다).
+    // 그 안에서는 순서대로 돌린다. 기획서 1.1의 순환 순서(첫 큐 → 음표 → 커튼 → 음표 → 지휘봉)는 아직 — 5단계
+    private readonly List<BossPatternGimmickBase> patternChoices = new List<BossPatternGimmickBase>();
+    private int patternCursor;
+
+    public override BossPatternGimmickBase GetNextPatternGimmick()
+    {
+        patternChoices.Clear();
+        int m = Movement;
+        for (int pass = 0; pass < 2; pass++)
+            foreach (var p in activePatternPool)
+            {
+                if (p == null) continue;
+                int min = p is IMaestroMovementGate g ? g.MinMovement : 1;
+                if (min > m) continue;                       // 아직 안 나오는 악장
+                bool fresh = min == m && m > 1;               // 이번 악장에 새로 나오는 패턴
+                if ((pass == 0) != fresh) continue;
+                if (Snapshot != null && Snapshot.IsSkillSealed(p.GimmickID)) continue;
+                patternChoices.Add(p);
+            }
+        if (patternChoices.Count == 0) return null;
+        int allowed = Snapshot != null ? Mathf.Clamp(Snapshot.maxAllowedPatterns, 1, patternChoices.Count) : patternChoices.Count;
+        var pick = patternChoices[patternCursor % allowed];
+        patternCursor++;
+        return pick;
+    }
+
     // ① HP 1 고정 + 무적 + 진행 중 패턴 중단 → ② 무너짐 시작
     private void BeginMovementTransition()
     {
@@ -410,6 +443,7 @@ public class MaestroBossController : BossControllerBase
     protected override void OnPhaseChanged(int prevPhase, int newPhase)
     {
         Debug.Log($"[Maestro] {prevPhase}악장 → {newPhase}악장 (HP {Snapshot?.currentHp}/{Snapshot?.maxHp})");
+        patternCursor = 0; // 새 악장은 그 악장 첫 패턴부터
         if (look != null && look.Ready) look.SetMovement(newPhase); // 시트 '페이즈별 변화' — 그림 연출만
     }
 

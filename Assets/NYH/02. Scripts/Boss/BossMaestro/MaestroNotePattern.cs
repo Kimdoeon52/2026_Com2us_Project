@@ -47,7 +47,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     private readonly List<Note> notes = new List<Note>(8);
     private readonly List<int> tmp = new List<int>(512);
     private readonly List<Vector3> shape = new List<Vector3>(512);
-    private readonly Dictionary<int, AudioClip> synth = new Dictionary<int, AudioClip>();
+    private static readonly Dictionary<int, AudioClip> synth = new Dictionary<int, AudioClip>(); // 패턴끼리 공용 (원형 음탄도 씀)
     private AudioSource audioSource;
     private bool running, subscribed;
     private int frame, side;
@@ -320,7 +320,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     }
 
     // 음표 실루엣 (머리 중심 = 원점, m). 단순한 음표만 — 기획서 1.4 구현 메모
-    private static void BuildShape(MaestroNoteKind kind, float scale, float pitch, List<Vector3> into)
+    public static void BuildShape(MaestroNoteKind kind, float scale, float pitch, List<Vector3> into) // 원형 음탄도 씀
     {
         into.Clear();
         pitch = Mathf.Max(0.005f, pitch);
@@ -382,7 +382,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     }
 
     // TODO: 임시 합성음 — 자체 편곡 음원이 나오면 noteClips로 교체
-    private AudioClip Synth(int midi)
+    public static AudioClip Synth(int midi) // 원형 음탄도 씀
     {
         if (synth.TryGetValue(midi, out var cached)) return cached;
         const int rate = 44100;

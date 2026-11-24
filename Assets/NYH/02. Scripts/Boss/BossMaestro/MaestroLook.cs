@@ -10,6 +10,8 @@ public enum MaestroGesture
     Swing,       // 크게 한 번 휘두르기 — 음표 공격
     RaiseBoth,   // 두 팔을 들어 올림 — 달빛 커튼, 거대 지휘봉 ①
     ConductFast, // 몸 전체로 격렬하게 지휘 — 거대 지휘봉 ④ (배경에서)
+    Spread,      // 두 팔을 활짝 펼침 — 원형 음탄 (시트 '음표 폭풍')
+    Strike,      // 지휘봉을 치켜들었다 바닥으로 내리침 — 크레셴도 파도마다
 }
 
 /// <summary>
@@ -148,6 +150,23 @@ public class MaestroLook : MonoBehaviour
         new Key(0.65f,  8f,   6f,   90f, -10f,  40f,  20f, 1f,     40f, -10f,  20f, -0.6f), // 휘두름
         new Key(0.85f,  4f,   3f,   75f,   5f,  15f,   8f, 0.9f,   25f,   0f,  10f, -0.3f), // 지나침
         new Key(1f,     2f,   1f,   55f,   5f,   5f,   0f, 0.7f,   15f,   0f,   0f,  0f),   // 여운
+    };
+
+    //                         상체  머리 지휘어깨 팔꿈치 손목 지휘봉 쥠  반대어깨 팔꿈치 손목 손가락
+    private static readonly Key[] SpreadKeys =
+    {
+        new Key(0f,     0f,   0f,    0f,   0f,   0f,   0f, 0.5f,    0f,   0f,   0f,  0.3f),
+        new Key(0.2f,   4f,   3f,  -10f,  20f,   5f,   0f, 0.9f,  -10f,  20f,   0f,  0.9f), // 예비: 팔을 안으로 모음, 주먹
+        new Key(0.5f,  -4f,  -4f,   45f, -25f,  10f,   5f, 0.8f,   45f, -20f,  10f, -0.7f), // 활짝 펼침, 손가락 쫙
+        new Key(1f,    -3f,  -3f,   42f, -22f,   8f,   3f, 0.8f,   42f, -18f,   8f, -0.6f), // 유지
+    };
+
+    private static readonly Key[] StrikeKeys =
+    {
+        new Key(0f,     0f,   0f,    0f,   0f,   0f,   0f, 0.5f,    0f,   0f,   0f,  0.3f),
+        new Key(0.35f, -8f,  -6f,  -50f,  30f, -30f, -10f, 1f,     30f,  10f,   0f,  0.9f), // 치켜듦
+        new Key(0.55f, 10f,   8f,  100f,  -5f,  40f,  15f, 1f,    -10f,   0f,   0f,  1f),   // 내리침
+        new Key(1f,     4f,   2f,   80f,   5f,  15f,   5f, 0.8f,    0f,   0f,   0f,  0.5f), // 여운
     };
 
     private static readonly Key[] RaiseKeys =
@@ -470,7 +489,7 @@ public class MaestroLook : MonoBehaviour
         gestureTime = 0f;
         gestureLength = seconds;
         // 시트 '지휘봉 준비': 팔이 오르며 지휘봉이 입자로 모여 생긴다
-        if (g == MaestroGesture.Swing || g == MaestroGesture.RaiseBoth) FormBaton(Mathf.Clamp(seconds * 0.35f, 0.25f, 0.6f));
+        if ((g == MaestroGesture.Swing || g == MaestroGesture.RaiseBoth || g == MaestroGesture.Spread) && batonForm >= 1f) FormBaton(Mathf.Clamp(seconds * 0.35f, 0.25f, 0.6f));
     }
 
     public void Stop() => gesture = MaestroGesture.None;
@@ -844,6 +863,15 @@ public class MaestroLook : MonoBehaviour
         {
             case MaestroGesture.Swing:
                 EvalKeys(SwingKeys, u, c);
+                return;
+            case MaestroGesture.Spread:
+                EvalKeys(SpreadKeys, Mathf.Clamp01(gestureTime / Mathf.Min(1f, Mathf.Max(0.3f, gestureLength))), c);
+                c[(int)Ch.Chest] += 2f * Mathf.Sin(t * 2.2f); // 펼친 채 리듬을 탄다
+                c[(int)Ch.OShoulder] += 4f * Mathf.Sin(t * 4.4f);
+                c[(int)Ch.BShoulder] += 4f * Mathf.Sin(t * 4.4f + 1f);
+                return;
+            case MaestroGesture.Strike:
+                EvalKeys(StrikeKeys, u, c);
                 return;
             case MaestroGesture.RaiseBoth:
                 EvalKeys(RaiseKeys, Mathf.Clamp01(gestureTime / Mathf.Min(1.2f, Mathf.Max(0.3f, gestureLength))), c);

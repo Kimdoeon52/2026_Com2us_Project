@@ -94,6 +94,15 @@ public class FixWindowManager : Singleton<FixWindowManager>
             if (!NeedRepair(slot)) _checked.Remove(slot);
         }
 
+        // 숨겨진 부위(기본 파츠)가 선택돼 있으면 보이는 첫 부위로 옮긴다
+        if (!IsShown(SelectedSlot))
+        {
+            foreach (Slot slot in RepairSlots)
+            {
+                if (IsShown(slot)) { SelectedSlot = slot; break; }
+            }
+        }
+
         foreach (var row in _rows)
         {
             row.Refresh();
@@ -134,6 +143,16 @@ public class FixWindowManager : Singleton<FixWindowManager>
         {
             if (NeedRepair(slot)) _checked.Add(slot);
         }
+    }
+
+    // 기본 파츠는 수리할 수 없으므로 수리 창 목록과 진단 그림에 띄우지 않는다. 빈 슬롯은 그대로 보인다
+    public bool IsShown(Slot slot)
+    {
+        InventoryHost host = InventoryHost.Instance;
+        if (host == null) return true;
+
+        PartsDefinition part = host.GetEquipped(slot);
+        return part == null || part.Grade != PartGrade.Basic;
     }
 
     public bool NeedRepair(Slot slot)

@@ -27,7 +27,8 @@ public class RepairDetailPanel : MonoBehaviour
     public void Refresh()
     {
         Slot slot = FixWindowManager.Instance.SelectedSlot;
-        PartsDefinition part = InventoryHost.Instance.GetEquipped(slot);
+        // 모든 부위가 기본 파츠라 보일 부위가 없으면 빈 슬롯처럼 보여준다
+        PartsDefinition part = FixWindowManager.Instance.IsShown(slot) ? InventoryHost.Instance.GetEquipped(slot) : null;
         int current = InventoryHost.Instance.GetDurability(slot);
         int max = part != null ? part.Durability : 0;
         RepairPartState state = RepairRules.GetState(part, current);

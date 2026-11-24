@@ -17,6 +17,11 @@ public class RepairDiagnosisSlot : MonoBehaviour
 
     public void Refresh()
     {
+        // 기본 파츠 부위는 진단 그림에서도 숨긴다
+        bool shown = FixWindowManager.Instance.IsShown(_slot);
+        gameObject.SetActive(shown);
+        if (!shown) return;
+
         PartsDefinition part = InventoryHost.Instance.GetEquipped(_slot);
         int current = InventoryHost.Instance.GetDurability(_slot);
         RepairPartState state = RepairRules.GetState(part, current);

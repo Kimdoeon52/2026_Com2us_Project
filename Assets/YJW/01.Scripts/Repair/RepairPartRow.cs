@@ -37,6 +37,12 @@ public class RepairPartRow : MonoBehaviour, IPointerClickHandler
     public void Refresh()
     {
         FixWindowManager manager = FixWindowManager.Instance;
+
+        // 기본 파츠 줄은 숨긴다 (목록이 세로 레이아웃이라 나머지 줄이 위로 붙는다)
+        bool shown = manager.IsShown(_slot);
+        gameObject.SetActive(shown);
+        if (!shown) return;
+
         PartsDefinition part = InventoryHost.Instance.GetEquipped(_slot);
         int current = InventoryHost.Instance.GetDurability(_slot);
         RepairPartState state = RepairRules.GetState(part, current);

@@ -166,6 +166,30 @@ public static class MaestroSpriteBaker
         return true;
     }
 
+    /// <summary>픽셀 목록(원점 기준 정수 좌표, 위가 +)을 한 프레임 그림 모양으로 굽는다 — PNG 없이 (마에스트로 하체 실루엣 등)</summary>
+    public static void BakePixels(RSNanoSpriteShape shape, List<Vector2Int> pts, List<Color32> cols, string key)
+    {
+        int n = Mathf.Max(1, pts.Count);
+        shape.frameCount = 1;
+        shape.botCount = n;
+        shape.filled = new[] { pts.Count };
+        shape.pixels = new int[n];
+        shape.colors = new int[n];
+        int minX = int.MaxValue, minY = int.MaxValue, maxX = int.MinValue, maxY = int.MinValue;
+        for (int k = 0; k < pts.Count; k++)
+        {
+            var p = pts[k];
+            shape.pixels[k] = RSNanoSpriteShape.Pack(p.x, p.y, 0);
+            var c = cols[k];
+            shape.colors[k] = c.r | (c.g << 8) | (c.b << 16);
+            minX = Mathf.Min(minX, p.x); maxX = Mathf.Max(maxX, p.x);
+            minY = Mathf.Min(minY, p.y); maxY = Mathf.Max(maxY, p.y);
+        }
+        if (pts.Count == 0) { shape.pixels[0] = RSNanoSpriteShape.Pack(0, 0, 0); minX = minY = maxX = maxY = 0; }
+        shape.minX = minX; shape.minY = minY; shape.maxX = maxX; shape.maxY = maxY;
+        shape.bakedKey = key;
+    }
+
     private static bool Picked(RSNanoSpriteShape shape, Color32 c)
     {
         if (shape.pick == NanoSpritePick.Opaque) return true;

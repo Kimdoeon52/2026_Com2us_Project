@@ -90,12 +90,12 @@ public class MaestroBossController : BossControllerBase
     }
 
     /// <summary>
-    /// 패턴이 빌려 쓸 수 있는 봇 수. 외형이면 발밑 웅덩이(남는 봇)에서 10%만 남기고, 덩어리 몸이면 몸이 전체의 keepRatio 아래로 줄지 않게
+    /// 패턴이 빌려 쓸 수 있는 봇 수. 외형이면 남는 봇(몸에 겹쳐 숨긴 봇)에서 10%만 남기고, 덩어리 몸이면 몸이 전체의 keepRatio 아래로 줄지 않게
     /// </summary>
     public int SpareBots(float keepRatio)
     {
         if (swarm == null) return 0;
-        if (look != null && look.Ready) return BodyBotCount - Mathf.CeilToInt(look.PoolCount * 0.1f);
+        if (look != null && look.Ready) return BodyBotCount - Mathf.CeilToInt(look.ReserveCount * 0.1f);
         return BodyBotCount - Mathf.CeilToInt(swarm.Count * keepRatio);
     }
 
@@ -153,6 +153,7 @@ public class MaestroBossController : BossControllerBase
             Transform player = PlayerTransform;
             float face = player != null ? Mathf.Sign(player.position.x - transform.position.x) : -1f;
             look.Init(new Vector3(transform.position.x, groundY, transform.position.z), face);
+            look.SetMovement(Movement, instant: true);
             SyncHurtbox();
             return;
         }
@@ -319,6 +320,9 @@ public class MaestroBossController : BossControllerBase
             BeginMovementTransition();
             return;
         }
+        // 피격 반응 (그림만) — 큰 피해일수록 크게 (최대 HP의 2%면 최대)
+        if (look != null && look.Ready && finalDamage > 0 && Snapshot != null)
+            look.Hit(Mathf.Clamp(finalDamage / Mathf.Max(1f, Snapshot.maxHp * 0.02f), 0.35f, 1f));
         base.ProcessPostDamageReactions(finalDamage);
     }
 
@@ -406,28 +410,40 @@ public class MaestroBossController : BossControllerBase
     protected override void OnPhaseChanged(int prevPhase, int newPhase)
     {
         Debug.Log($"[Maestro] {prevPhase}악장 → {newPhase}악장 (HP {Snapshot?.currentHp}/{Snapshot?.maxHp})");
+        if (look != null && look.Ready) look.SetMovement(newPhase); // 시트 '페이즈별 변화' — 그림 연출만
     }
+
+#if UNITY_EDITOR
+    // 시험용: 악장 연출만 바로 바꿔 본다 (HP·패턴은 그대로) — 플레이 중 컴포넌트 ⋮ 메뉴
+    [ContextMenu("시험: 연출만 1악장")] private void DebugLook1() { if (look != null) look.SetMovement(1); }
+    [ContextMenu("시험: 연출만 2악장")] private void DebugLook2() { if (look != null) look.SetMovement(2); }
+    [ContextMenu("시험: 연출만 3악장")] private void DebugLook3() { if (look != null) look.SetMovement(3); }
+#endif
 
     protected override void OnBossDefeated()
     {
         defeated = true;
         step = TransitionStep.None;
         Debug.Log($"[Maestro] 격파 ({Movement}악장)");
+        if (look != null) look.refillEnabled = false; // 격파 뒤엔 다시 쌓지 않는다
         DropBody();
     }
 
-    // 몸 전체를 모래로 — 덩어리(외형이면 발밑 웅덩이)와 외형 그림 부위(리그) 봇 모두.
-    // 다시 쌓기는 모래를 덩어리에 되붙이고, 외형이면 리그가 거기서 봇을 가져가 그림이 아래부터 다시 채워진다
+    // 몸 전체를 모래로 — 덩어리(외형이면 하체에 숨긴 남는 봇)와 외형 그림 봇(퍼펫) 모두.
+    // 다시 쌓기는 모래를 덩어리에 되붙이고, 외형이면 퍼펫이 거기서 봇을 가져가 그림이 아래부터 다시 채워진다
     private void DropBody()
     {
         if (swarm == null) return;
-        for (int g = 0; g < 2; g++)
+        if (look != null && look.Ready)
         {
-            var bound = swarm.AllIn(BotMode.Bound, tmp, g == 0 ? RSNanoSwarm.G_Blob : RSNanoSwarm.G_Rig);
-            foreach (int i in bound)
-                swarm.Drop(i, new Vector3(Random.Range(-collapseKick.y, collapseKick.y) * 0.5f,
-                                          Random.Range(collapseKick.x, collapseKick.y), 0f));
+            // 외형: 위에서부터 차례로 부드럽게 부스러진다 (무너짐 시간 안에 끝나게). 되돌리기는 전환의 다시 쌓기가 맡는다
+            look.DropAll(Mathf.Min(0.8f, collapseFrames * CombatClock.TICK * 0.6f));
+            return;
         }
+        var bound = swarm.AllIn(BotMode.Bound, tmp, RSNanoSwarm.G_Blob);
+        foreach (int i in bound)
+            swarm.Drop(i, new Vector3(Random.Range(-collapseKick.y, collapseKick.y) * 0.5f,
+                                      Random.Range(collapseKick.x, collapseKick.y), 0f));
     }
 
 #if UNITY_EDITOR

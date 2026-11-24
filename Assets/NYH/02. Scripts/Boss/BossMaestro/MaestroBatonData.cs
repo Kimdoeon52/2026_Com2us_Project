@@ -55,6 +55,18 @@ public class MaestroBatonData : ScriptableObject
     [Tooltip("8자가 나올 확률 (나머지는 무한대)")]
     [Range(0f, 1f)] public float eightChance = 0.5f;
 
+    [Header("화면 맞춤 (11-24 사용자: 너무 피하기 쉬움 → 카메라 기준으로 화면 전체를 뒤덮게)")]
+    [Tooltip("켜면 궤적·지휘봉 크기를 카메라에 보이는 범위로 정한다 (위의 m 값 대신). 궤적 중심 = 화면 가운데")]
+    public bool fitToCamera = true;
+    [Tooltip("궤적 가로 반폭 = 화면 반폭 × 이 값 — x 무한대(가로), y 8자(세로)")]
+    public Vector2 screenWidthRatio = new Vector2(0.9f, 0.55f);
+    [Tooltip("궤적 세로 반높이 = 화면 높이 × 이 값")]
+    [Range(0.1f, 0.5f)] public float screenHeightRatio = 0.37f;
+    [Tooltip("궤적 중심 높이 = 바닥 + 화면 높이 × 이 값")]
+    [Range(0.1f, 0.9f)] public float screenCenterRatio = 0.43f;
+    [Tooltip("지휘봉 길이 = 화면 높이 × 이 값. 봇이 모자라면 길이 대신 굵기를 줄인다")]
+    [Range(0.1f, 1f)] public float screenLengthRatio = 0.55f;
+
     [Header("지휘봉 (TODO 임시값)")]
     [Tooltip("지휘봉 길이 (m). 봇이 모자라면 굵기 대신 길이를 줄인다 (기획서 1.3)")]
     [Min(0.5f)] public float length = 3.5f;

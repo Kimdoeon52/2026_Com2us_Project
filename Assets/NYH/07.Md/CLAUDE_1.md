@@ -101,7 +101,7 @@ Assets/NYH/02. Scripts/Boss/   (2026-10-28 — KKH BossControllerBase를 상속�
     Editor/     KyodaiPlaceholderBuilder.cs(메뉴 NYH/쿄다이/임시 보스 만들기)  KyodaiMotionWindow.cs(메뉴 NYH/쿄다이/모션 창)  KyodaiEditPreview.cs(플레이 전 실제 로봇 자세 미리보기)  KyodaiBonePicker.cs(Scene 뷰 뼈 선택)
 Assets/NYH/04. SO/Boss/Kyodai/   Kyodai_Master.asset  Kyodai_손바닥압착.asset (빌더가 만듦)
 
-Assets/NYH/02. Scripts/Boss/Maestro/   (2026-11-19 — 보스3 「마에스트로: 월광」, 기획서 07.Md/보스3_월광_기획.md. KKH 쿄쇼는 폐기(사용자 결정))
+Assets/NYH/02. Scripts/Boss/BossMaestro/   (2026-11-24 사용자가 Maestro → BossMaestro로 이름 바꿈. 2026-11-19 — 보스3 「마에스트로: 월광」, 기획서 07.Md/보스3_월광_기획.md. KKH 쿄쇼는 폐기(사용자 결정))
     MaestroBossController.cs(BossControllerBase 상속 — 나노봇 덩어리 몸 + 악장 HP 1 고정 → 무너짐 → 다시 쌓기 전환)  MaestroTransitionState.cs(전환 중 FSM 대기 상태)
     MaestroNotePattern.cs(1악장 음표 공격 — 휘두르기 궤적에 음표 N개 → 음+반짝임 순서대로 플레이어 향해 직선 비행 → 모래 → 재흡수)  MaestroNoteData.cs(음표 수치 SO)
     MaestroCurtainPattern.cs(1악장 달빛 커튼 — 천장 띠 → 빛 기둥 예고 → 커튼 낙하·움직이는 틈 → 모래)  MaestroCurtainData.cs(커튼 수치 SO)

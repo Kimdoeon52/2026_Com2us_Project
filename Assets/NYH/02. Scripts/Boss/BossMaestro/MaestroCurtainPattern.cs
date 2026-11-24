@@ -40,6 +40,8 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
     private readonly List<SpriteRenderer> pillars = new List<SpriteRenderer>(4);
     private readonly List<Collider2D> playerColliders = new List<Collider2D>(8);
     private static Sprite pillarSprite;
+    private MaestroFx fx;
+    private Vector3 headCluster; // 시트: 머리 위로 봇이 먼저 모이는 자리
 
     private MaestroCurtainData.DifficultyRow row;
     private Phase phase = Phase.Idle;
@@ -107,7 +109,10 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
                 int i = bots[s * streakLen + k];
                 // 대기를 길게 걸어 엔진이 스스로 날리지 않게 — 자리는 LateUpdate가 정한다 (몸에서 천장으로 흘러간다)
                 swarm.Fire(i, new Vector3(x, y + k * spacing, z), 9999f, Vector3.zero, 9999f, RSNanoSwarm.G_Blob, clump: 1);
-                swarm.SetGlow(i, curtainData.glow);
+                // 시트: 머리(아래 끝)가 가장 밝은 빛줄기 — 꼬리로 갈수록 옅게. 몸에서 빌린 어두운 봇을 달빛색으로
+                float u = streakLen > 1 ? k / (float)(streakLen - 1) : 0f;
+                swarm.SetGlow(i, curtainData.glow * Mathf.Lerp(2.6f, 0.5f, u));
+                swarm.SetTint(i, Color.Lerp(MaestroFx.MoonWhite, MaestroFx.Lavender, u));
             }
         }
 
@@ -126,6 +131,12 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
         hitCooldownLeft = 0;
         phase = Phase.Flow;
         running = true;
+        fx = MaestroFx.Get(maestro);
+        float bossH = maestro.Look != null && maestro.Look.Ready ? maestro.Look.Height : 3f;
+        headCluster = maestro.BodyCenter + Vector3.up * bossH * 0.55f;
+        headCluster.z = z;
+        // 시트 '연출 순서' 첫 장면: 보스 발밑에 원형 바닥이 퍼진다
+        if (fx != null) fx.Ring(new Vector3(maestro.BodyCenter.x, ground, z), 0.3f, bossH * 0.7f, 0.9f, MaestroFx.Lavender, flat: true);
         // ① 지휘봉(과 두 팔)을 위로 — 커튼이 끝날 때까지 들고 있다
         if (maestro.Look != null) maestro.Look.Play(MaestroGesture.RaiseBoth, attackEnd * CombatClock.TICK);
         Debug.Log($"[Maestro] 달빛 커튼 — 틈 {row.gapCount}개 · 너비 {row.gapWidth}m · 줄기 {streakCount}개({streakCount * streakLen}봇) ({maestro.SelectedDifficulty})");
@@ -252,6 +263,8 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
         {
             phase = Phase.Tell;
             ShowPillars(true); // ② 틈 위치에 빛 기둥
+            // 시트 '연출 순서': 바닥 원형 → 기둥 — 틈 자리 바닥에 퍼지는 고리
+            if (fx != null) foreach (float gx in gaps) fx.Ring(new Vector3(gx, ground, Swarm.FrontZ), 0.2f, row.gapWidth * 0.6f, 0.6f, MaestroFx.Lavender, flat: true);
         }
         else if (phase == Phase.Tell && frame >= tellEnd)
         {
@@ -386,6 +399,16 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
                 if (st.state == StreakState.Done) continue;
                 bool snap = st.state == StreakState.Falling;
                 float x = Mathf.Lerp(st.prevX, st.x, a), y = Mathf.Lerp(st.prevY, st.y, a);
+                if (phase == Phase.Flow && frame < flowEnd / 2 && maestro != null)
+                {
+                    // 시트: 먼저 머리 위로 봇이 모여 빛 덩어리가 됐다가 천장으로 퍼진다
+                    float hs = Mathf.Repeat(Mathf.Sin(s * 12.9898f) * 43758.5453f, 1f);
+                    float ang = hs * Mathf.PI * 2f + Time.time * 3f;
+                    float rad = 0.25f + 0.35f * Mathf.Repeat(hs * 7.31f, 1f);
+                    Vector3 c = headCluster + new Vector3(Mathf.Cos(ang) * rad, Mathf.Sin(ang) * rad * 0.6f, 0f);
+                    x = c.x;
+                    y = c.y;
+                }
                 for (int k = 0; k < streakLen; k++)
                 {
                     int idx = s * streakLen + k;
@@ -406,8 +429,9 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
             for (int g = 0; g < pillars.Count && g < gaps.Length; g++)
             {
                 var r = pillars[g];
-                r.transform.position = new Vector3(gaps[g], ground, swarm != null ? swarm.FrontZ + 0.05f : 0f);
-                r.transform.localScale = new Vector3(row.gapWidth, ceiling - ground, 1f);
+                // 부드러운 빛기둥 (가운데 밝고 양옆·위아래로 옅게)
+                r.transform.position = new Vector3(gaps[g], (ground + ceiling) * 0.5f, swarm != null ? swarm.FrontZ + 0.05f : 0f);
+                r.transform.localScale = new Vector3(row.gapWidth * 1.3f, ceiling - ground, 1f);
                 Color c = curtainData.pillarColor;
                 c.a *= pulse;
                 r.color = c;
@@ -417,11 +441,7 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
 
     private void EnsurePillars(int n)
     {
-        if (pillarSprite == null)
-        {
-            var tex = Texture2D.whiteTexture;
-            pillarSprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0f), tex.width);
-        }
+        if (pillarSprite == null) pillarSprite = MaestroFx.Beam;
         while (pillars.Count < n)
         {
             var go = new GameObject("달빛 커튼 빛 기둥") { hideFlags = HideFlags.DontSave };

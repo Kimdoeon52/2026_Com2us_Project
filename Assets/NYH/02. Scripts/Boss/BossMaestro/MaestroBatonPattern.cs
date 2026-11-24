@@ -38,6 +38,9 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
     private readonly List<int> loopEnds = new List<int>(4);
     private BoxCollider2D hurtBox;
     private LineRenderer tellLine;
+    private MaestroFx fx;
+    private MaestroFx.Sweep sweep;   // 시트: 휘두르면 초승달 잔상
+    private SpriteRenderer tipGlow;
 
     private Phase phase = Phase.Idle;
     private bool running, subscribed, broken, eight;
@@ -46,6 +49,24 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
     private int batonHp, batonMaxHp;
     private float batonLength;
     private Vector3 refCenter, handStart;
+    private Vector2 sizeInfinity, sizeEight;   // 이번 패턴의 궤적 크기 (화면 맞춤이면 카메라 기준)
+    private float gripHeight;
+    private bool tubeSaved;
+    private float tubeStiffness, tubeDamping, tubeMaxSpeed;
+
+    // 카메라에 보이는 범위 (바닥 높이의 좌우 끝, 화면 위 끝)
+    private bool ScreenBox(float planeZ, out float minX, out float maxX, out float top)
+    {
+        top = 0f;
+        if (!CameraBounds.TryGetVisibleX(Camera.main, planeZ, maestro.GroundY, out minX, out maxX)) return false;
+        var cam = Camera.main;
+        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 1f, 0f));
+        if (Mathf.Abs(ray.direction.z) < 1e-6f) return false;
+        float t = (planeZ - ray.origin.z) / ray.direction.z;
+        if (t <= 0f) return false;
+        top = ray.origin.y + ray.direction.y * t;
+        return top > maestro.GroundY + 1f;
+    }
     private Vector3 grip, tip, prevGrip, prevTip;   // 논리 위치 (틱)
     private Vector3 moveFromGrip, moveFromTip;
 
@@ -85,10 +106,28 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         float refX = player != null ? player.position.x : body.x + side * 4f;
         refCenter = new Vector3(refX, maestro.GroundY + batonData.centerHeight, swarm.FrontZ);
         eight = Random.value < batonData.eightChance;
+        sizeInfinity = batonData.infinitySize;
+        sizeEight = batonData.eightSize;
+        gripHeight = batonData.gripHeight;
+        float wantLength = batonData.length;
 
-        // 지휘봉 봇 — 몸 최소 크기를 지키는 만큼. 모자라면 굵기 대신 길이를 줄인다
+        // 화면 맞춤 — 궤적이 카메라에 보이는 범위 전체를 쓴다 (중심 = 화면 가운데, 바닥 ~ 화면 위쪽)
+        float camMinX = 0f, camMaxX = 0f, camTop = 0f;
+        bool fitted = batonData.fitToCamera && ScreenBox(swarm.FrontZ, out camMinX, out camMaxX, out camTop);
+        if (fitted)
+        {
+            float halfW = (camMaxX - camMinX) * 0.5f, height = camTop - maestro.GroundY;
+            refCenter = new Vector3((camMinX + camMaxX) * 0.5f, maestro.GroundY + height * batonData.screenCenterRatio, swarm.FrontZ);
+            float halfH = height * batonData.screenHeightRatio;
+            sizeInfinity = new Vector2(halfW * batonData.screenWidthRatio.x, halfH);
+            sizeEight = new Vector2(halfW * batonData.screenWidthRatio.y, halfH);
+            gripHeight = camTop - refCenter.y + height * 0.05f; // 손은 화면 위쪽 바깥 — 지휘봉이 위에서 내려와 휘두른다
+            wantLength = height * batonData.screenLengthRatio;
+        }
+
+        // 지휘봉 봇 — 몸 최소 크기를 지키는 만큼. 화면 맞춤이면 길이를 지키고 봇이 모자라면 굵기를 줄인다
         int spare = maestro.SpareBots(batonData.bodyMinRatio);
-        int n = Mathf.Min(batonData.maxBots, spare);
+        int n = fitted ? spare : Mathf.Min(batonData.maxBots, spare);
         if (n < 32)
         {
             Debug.LogWarning("[Maestro] 거대 지휘봉 — 몸에 남은 봇이 모자라 지휘봉을 만들지 못함 (bodyMinRatio)");
@@ -97,7 +136,14 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         float r0 = batonData.thickness.x, r1 = batonData.thickness.y;
         float sp = swarm.spacing;
         float maxLen = n * sp * sp / Mathf.Max(0.01f, r0 + r1);
-        batonLength = Mathf.Clamp(maxLen, 0.5f, batonData.length);
+        if (fitted)
+        {
+            batonLength = Mathf.Max(0.5f, wantLength);
+            float k = Mathf.Min(1f, maxLen / batonLength);
+            r0 *= k;
+            r1 *= k;
+        }
+        else batonLength = Mathf.Clamp(maxLen, 0.5f, wantLength);
 
         handStart = maestro.HandPoint(side); // 외형이면 지휘봉 끝에서 거대 지휘봉이 자라난다
         handStart.z = swarm.FrontZ;
@@ -106,6 +152,10 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         swarm.TubeA.r1 = r1;
         swarm.TubeA.glow = batonData.glow;
         swarm.TubeA.danger = false; // 판정은 이 스크립트가 (전투 틱)
+        // 봇이 지휘봉 자리를 거의 즉시 따라가게 — 기본(강성 420·최고 속도 70m/s)은 화면 전체 궤적을 못 따라가
+        // 끝 발광·잔상(논리 위치)보다 봉이 늦게 보였다 (11-24 사용자). 엔진 스프링은 해석해라 값을 키워도 안정
+        // ①② 흐름 동안은 기본 느낌(봇이 손으로 흘러와 자람), ③ 예고부터 빠르게 (FastTube)
+        if (!tubeSaved) { tubeStiffness = swarm.TubeA.stiffness; tubeDamping = swarm.TubeA.damping; tubeMaxSpeed = swarm.TubeA.maxSpeed; tubeSaved = true; }
         foreach (int i in batonBots) swarm.Bind(i, RSNanoSwarm.G_TubeA);
 
         // 단계 시간
@@ -151,7 +201,25 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         SetHurtBox(false);
         if (tellLine != null) tellLine.enabled = false;
         ReleaseBaton(batonData != null ? Frames(batonData.collapseSeconds) : 30);
+        HideFx();
         RestoreBoss();
+    }
+
+    // 지휘봉 봇이 자리를 거의 즉시 따라가게 (고유 진동수 200 rad/s, 감쇠비 0.95, 최고 속도 600m/s) — ReleaseBaton이 원래 값으로 되돌림
+    private void FastTube()
+    {
+        var swarm = Swarm;
+        if (swarm == null) return;
+        swarm.TubeA.stiffness = 40000f;
+        swarm.TubeA.damping = 2f * 200f * 0.95f;
+        swarm.TubeA.maxSpeed = 600f;
+    }
+
+    // 지휘봉이 사라질 때 끝 발광을 끄고 잔상은 저절로 흐려지게
+    private void HideFx()
+    {
+        if (tipGlow != null) tipGlow.color = Color.clear;
+        if (sweep != null) sweep.emitting = false;
     }
 
     // ───────────────────────── 전투 틱 ─────────────────────────
@@ -211,6 +279,7 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
                 {
                     phase = Phase.Tell; // ③ 궤적 예고선
                     DrawTellLine();
+                    FastTube();
                 }
                 break;
             }
@@ -258,16 +327,23 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         int collapse = Frames(batonData.collapseSeconds);
         int rebuild = Mathf.Max(1, Frames(batonData.rebuildSeconds));
         ReleaseBaton(collapse, rebuild);
+        HideFx();
         // 몸 봇도 전부 모래로 — 제자리(앞판)로 되돌린 자세에 나눠서 다시 쌓인다
-        // 외형이면 그림 부위(리그) 봇도 — 모래가 발밑 웅덩이로 돌아가면 리그가 다시 가져가 그림이 차오른다
-        var swarm = Swarm;
-        for (int g = 0; g < 2; g++)
+        // 외형이면 그림 봇(퍼펫)도 — 모래가 덩어리로 돌아가면 퍼펫이 다시 가져가 그림이 아래부터 차오른다
+        if (maestro.Look != null && maestro.Look.Ready)
         {
-            swarm.AllIn(BotMode.Bound, tmp, g == 0 ? RSNanoSwarm.G_Blob : RSNanoSwarm.G_Rig);
-            for (int k = 0; k < tmp.Count; k++)
-                maestro.ReleaseToSand(tmp[k], new Vector3(Random.Range(-1.5f, 1.5f), Random.Range(0.5f, 2.5f), 0f),
-                                      collapse + rebuild * k / Mathf.Max(1, tmp.Count));
+            // 외형: 부드럽게 부스러졌다가 나눠서 되돌아와 아래부터 다시 쌓인다
+            float c = collapse * CombatClock.TICK, r = rebuild * CombatClock.TICK;
+            maestro.Look.DropAll(c, c, r);
+            RestoreBoss();
+            collapseEnd = frame + collapse + rebuild;
+            return;
         }
+        var swarm = Swarm;
+        swarm.AllIn(BotMode.Bound, tmp, RSNanoSwarm.G_Blob);
+        for (int k = 0; k < tmp.Count; k++)
+            maestro.ReleaseToSand(tmp[k], new Vector3(Random.Range(-1.5f, 1.5f), Random.Range(0.5f, 2.5f), 0f),
+                                  collapse + rebuild * k / Mathf.Max(1, tmp.Count));
         RestoreBoss();
         collapseEnd = frame + collapse + rebuild;
     }
@@ -278,7 +354,7 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
     private Vector3 CurvePoint(float u)
     {
         float th = Mathf.PI * 0.5f + u * Mathf.PI * 2f;
-        Vector2 size = eight ? batonData.eightSize : batonData.infinitySize;
+        Vector2 size = eight ? sizeEight : sizeInfinity;
         float x = eight ? size.x * Mathf.Sin(2f * th) : size.x * Mathf.Sin(th);
         float y = eight ? size.y * Mathf.Sin(th) : size.y * Mathf.Sin(2f * th);
         // 무한대는 보스 쪽 끝에서 시작하도록 좌우를 맞춘다
@@ -292,7 +368,7 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
     private void PoseAt(float u, out Vector3 g, out Vector3 t)
     {
         t = CurvePoint(u);
-        Vector3 hand = refCenter + Vector3.up * batonData.gripHeight;
+        Vector3 hand = refCenter + Vector3.up * gripHeight;
         Vector3 dir = hand - t;
         dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.up;
         g = t + dir * batonLength;
@@ -328,9 +404,11 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         // 파괴 → 패턴 즉시 끝, 보스가 제자리로 떨어져 그로기
         broken = true;
         batonHp = 0;
+        if (fx != null) fx.Ring((grip + tip) * 0.5f, 0.3f, batonLength * 0.8f, 0.5f, MaestroFx.MoonWhite); // 부서지는 순간 퍼지는 고리
         Debug.Log($"[Maestro] 지휘봉 파괴 → 그로기 {batonData.groggySeconds}초");
         SetHurtBox(false);
         ReleaseBaton(Frames(batonData.collapseSeconds));
+        HideFx();
         RestoreBoss();
         running = false;
         InterruptPattern(InterruptReason.GimmickGroggy);
@@ -400,6 +478,7 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
                                       delay + (spread > 0 ? spread * k / Mathf.Max(1, batonBots.Count) : 0));
             }
             swarm.TubeA.glow = 0f;
+            if (tubeSaved) { swarm.TubeA.stiffness = tubeStiffness; swarm.TubeA.damping = tubeDamping; swarm.TubeA.maxSpeed = tubeMaxSpeed; }
         }
         batonBots.Clear();
     }
@@ -415,6 +494,13 @@ public class MaestroBatonPattern : BossPatternGimmickBase, IPlayerHitTarget
         Vector3 g = Vector3.Lerp(prevGrip, grip, a), t = Vector3.Lerp(prevTip, tip, a);
         g.z = t.z = swarm.FrontZ;
         swarm.TubeA.SetLine(g, t);
+
+        // 이펙트 — 공격 중엔 지휘봉 끝 쪽 초승달 잔상 + 끝 발광 (판정과 무관, 그림만)
+        if (fx == null) { fx = MaestroFx.Get(maestro); sweep = fx.CreateSweep(); tipGlow = fx.Acquire(); }
+        sweep.emitting = phase == Phase.Attack;
+        sweep.Add(g, t);
+        float glowA = phase == Phase.Attack ? 0.75f : phase == Phase.Tell ? 0.4f + 0.3f * Mathf.Sin(Time.time * 12f) : 0.25f;
+        fx.Place(tipGlow, t, Vector2.one * batonData.thickness.x * 9f, new Color(MaestroFx.MoonWhite.r, MaestroFx.MoonWhite.g, MaestroFx.MoonWhite.b, glowA));
     }
 
     private void EnsureTellLine()

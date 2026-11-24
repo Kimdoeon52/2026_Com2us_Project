@@ -62,6 +62,8 @@ public static class CameraFx
     private static void BeforeRender(ScriptableRenderContext context, Camera cam)
     {
         if (cam.cameraType != CameraType.Game) return;
+        // Play 종료 후에도 static 값·렌더 훅이 남아 에디터 Game 뷰가 흔들리던 문제 방지
+        if (!Application.isPlaying) return;
         float now = Time.realtimeSinceStartup;
         float shake = CurrentShake(now);
         float zoom = Mathf.Clamp01(Zoom01);

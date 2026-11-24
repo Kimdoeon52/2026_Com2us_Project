@@ -25,7 +25,7 @@ public static class MaestroBuilder
     private const string CurtainDataPath = DataFolder + "/Maestro_CurtainData.asset";
     private const string BatonPatternPath = DataFolder + "/Maestro_Pattern_Baton.asset";
     private const string BatonDataPath = DataFolder + "/Maestro_BatonData.asset";
-    // 발밑 모래 웅덩이 봇 — 패턴이 빌려 쓴다 (커튼 3000 · 지휘봉 2400 · 음표 ~1500, 동시엔 하나). TODO 임시값
+    // 남는 봇 (몸 그림에 겹쳐 숨김) — 패턴이 빌려 쓴다 (커튼 3000 · 지휘봉 2400 · 음표 ~1500, 동시엔 하나). TODO 임시값
     private const int LookPoolBots = 4000;
     private const float DefaultDistanceFromPlayer = 6f; // 새로 세울 때 플레이어 오른쪽 거리(월드) — 배치 편의값
 

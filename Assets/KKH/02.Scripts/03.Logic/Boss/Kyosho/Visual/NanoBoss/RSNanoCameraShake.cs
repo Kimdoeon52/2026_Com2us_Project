@@ -30,6 +30,7 @@ namespace RealSteel.NanoBoss
         static void Begin(ScriptableRenderContext ctx, Camera cam)
         {
             if (cam.cameraType != CameraType.Game) return;
+            if (!Application.isPlaying) return;   // Play 종료 후 에디터 Game 뷰 흔들림 방지
             float a = Current(Time.realtimeSinceStartup);
             if (a <= 0f) return;
             shaking = cam;

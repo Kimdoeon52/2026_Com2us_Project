@@ -34,7 +34,11 @@ public class MaestroNotePattern : BossPatternGimmickBase
         public Vector3 pos, prevPos, vel;
         public readonly List<int> bots = new List<int>(256);
         public readonly List<Vector3> offsets = new List<Vector3>(256);
+        public SpriteRenderer halo; // 시트: 발광하는 음표
+        public float flash;
     }
+
+    private MaestroFx fx;
 
     private static readonly List<Collider2D> overlap = new List<Collider2D>(8);
     private static readonly ContactFilter2D overlapFilter = new ContactFilter2D { useTriggers = true };
@@ -168,7 +172,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     {
         note.pos = note.prevPos = ArcPoint(note.spawnFrame);
         var spec = noteData.Spec(note.kind);
-        BuildShape(note.kind, spec.visualScale, Swarm.spacing, shape);
+        BuildShape(note.kind, spec.visualScale, Mathf.Max(Swarm.spacing, 0.025f), shape); // 외형 크기를 줄여 칸이 작아져도 음표 하나에 봇이 너무 많이 들지 않게
         Swarm.Collect(RSNanoSwarm.G_Blob, note.pos, shape.Count, tmp);
         note.bots.Clear();
         note.offsets.Clear();
@@ -178,10 +182,13 @@ public class MaestroNotePattern : BossPatternGimmickBase
             // 대기(wait)를 길게 걸어 엔진이 스스로 날리지 않게 — 자리(hold)는 매 프레임 이 스크립트가 정한다
             Swarm.Fire(i, note.pos + shape[k], 9999f, Vector3.zero, 9999f, RSNanoSwarm.G_Blob, clump: 1);
             Swarm.SetGlow(i, noteData.glow);
+            Swarm.SetTint(i, MaestroFx.MoonWhite); // 몸에서 빌린 봇(어두운 색)을 달빛 흰색으로 — 시트의 빛나는 음표
             note.bots.Add(i);
             note.offsets.Add(shape[k]);
         }
         note.state = NoteState.Forming;
+        if (fx == null) fx = MaestroFx.Get(maestro);
+        if (fx != null) { note.halo = fx.Acquire(); note.flash = 0.6f; }
     }
 
     // ③ 음이 울리는 프레임에 반짝이고, 그 순간 플레이어 위치로 조준
@@ -190,6 +197,8 @@ public class MaestroNotePattern : BossPatternGimmickBase
         int order = notes.IndexOf(note);
         PlayTone(order);
         foreach (int i in note.bots) Swarm.SetFlash(i, 1f);
+        note.flash = 1f;
+        if (fx != null) fx.Ring(note.pos, noteData.Spec(note.kind).hitRadius, noteData.Spec(note.kind).hitRadius * 2.5f, 0.35f, MaestroFx.Lavender); // 음이 울리는 순간 퍼지는 고리
         if (maestro.Look != null) maestro.Look.Flick(); // 음이 울릴 때마다 지휘봉을 튕긴다
 
         Vector3 aim = note.pos + Vector3.right * side;
@@ -229,6 +238,8 @@ public class MaestroNotePattern : BossPatternGimmickBase
     // ⑤ 흩어져 모래가 됐다가 잠시 뒤 몸으로 재흡수
     private void Collapse(Note note)
     {
+        // 시트 탄환 연출: 음표 → 고리로 터짐
+        if (fx != null) fx.Ring(note.pos, noteData.Spec(note.kind).hitRadius * 0.5f, noteData.Spec(note.kind).hitRadius * 3f, 0.4f, MaestroFx.MoonWhite);
         DropBots(note);
         note.state = NoteState.Done;
     }
@@ -249,6 +260,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
         }
         note.bots.Clear();
         note.offsets.Clear();
+        if (fx != null && note.halo != null) { fx.Release(note.halo); note.halo = null; }
     }
 
     private void ClearNotes(bool drop)
@@ -285,6 +297,16 @@ public class MaestroNotePattern : BossPatternGimmickBase
             if (note.state == NoteState.Waiting || note.state == NoteState.Done) continue;
             Vector3 p = Vector3.Lerp(note.prevPos, note.pos, a);
             bool snap = note.state == NoteState.Flying;
+            if (note.halo != null)
+            {
+                // 발광 번짐 — 음이 울리면 크게 번쩍했다 가라앉고, 은은하게 맥동
+                note.flash = Mathf.MoveTowards(note.flash, 0f, Time.deltaTime * 2.5f);
+                float r = noteData.Spec(note.kind).hitRadius;
+                float pulse = 0.85f + 0.15f * Mathf.Sin(Time.time * 6f + note.spawnFrame);
+                Color c = MaestroFx.Lavender;
+                c.a = (0.35f + 0.55f * note.flash) * pulse;
+                fx.Place(note.halo, p + Vector3.up * r * 0.6f, Vector2.one * r * (4f + 3f * note.flash), c);
+            }
             for (int k = 0; k < note.bots.Count; k++)
             {
                 int i = note.bots[k];

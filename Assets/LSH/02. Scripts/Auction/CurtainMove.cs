@@ -35,8 +35,10 @@ public class CurtainMove : MonoBehaviour
             //     오른쪽커튼.gameObject.SetActive(false);
         });
     }
-    public void CloseCurtain()
+    // 닫히는 연출 Tween을 돌려줌 → 호출한 쪽에서 AsyncWaitForCompletion으로 다 닫힐 때까지 기다릴 수 있음
+    public Tween CloseCurtain()
     {
+        if (curtainLeft == null || curtainRight == null) return null;
         // 닫기 전 오브젝트가 꺼져있을 수 있으므로 활성화 보장
         curtainLeft.gameObject.SetActive(true);
         curtainRight.gameObject.SetActive(true);
@@ -51,5 +53,6 @@ public class CurtainMove : MonoBehaviour
         {
             // 닫힌 후 추가로 처리할 연출이 있다면 여기에 작성
         });
+        return curtainCloseSequence;
     }
 }

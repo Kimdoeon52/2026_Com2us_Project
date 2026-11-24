@@ -101,26 +101,41 @@ public class AuctionPlayer : Singleton<AuctionPlayer>
         if (playerThinkImage == null || playerThinkChat == null) return;
         InitBubble();
 
+        // 이미 떠 있는 말풍선인지 (레이즈 연타처럼 연달아 말할 때는 0에서 다시 튀어나오지 않고 글자만 바꿔서 이어감)
+        Transform bubble = playerThinkImage.transform;
+        bool alreadyShown = playerThinkImage.gameObject.activeSelf && bubble.localScale.x > newScale.x * 0.5f;
+
         // 이전 애니메이션 진행 중이면 중단
         thinkSequence?.Kill();
+        bubble.DOKill();
 
         // 텍스트 적용 및 초기 상태 설정
         if (bubbleFitter != null) bubbleFitter.GetSize(message);
         else playerThinkChat.text = message;
         playerThinkImage.gameObject.SetActive(true);
-        playerThinkImage.transform.localPosition = originalLocalPos;
-        playerThinkImage.transform.localScale = Vector3.zero; // 0 크기에서 시작
+        bubble.localPosition = originalLocalPos;
         SetAlpha(1f);
-        // DOTween 연출 시퀀스 생성
+
         thinkSequence = DOTween.Sequence();
+        if (alreadyShown)
+        {
+            // 떠 있던 말풍선은 그대로 두고 살짝 펀치만 (말이 끊기지 않게)
+            bubble.localScale = newScale;
+            thinkSequence.Append(bubble.DOPunchScale(newScale * 0.12f, 0.25f, 6, 0.5f));
+        }
+        else
+        {
+            // 1. 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
+            bubble.localScale = Vector3.zero; // 0 크기에서 시작
+            thinkSequence.Append(bubble.DOScale(newScale, 0.5f).SetEase(Ease.OutBack));
+        }
 
         thinkSequence
-            // 1. 통튀듯이 말풍선 튀어나오기 (Ease.OutBack)
-            .Append(playerThinkImage.transform.DOScale(newScale, 1f).SetEase(Ease.OutBack))
-            // 2. 대기하면서 말풍선이 둥실둥실 살짝 올라감
-            .Append(playerThinkImage.transform.DOLocalMoveY(originalLocalPos.y + 0.3f, 2f).SetEase(Ease.OutQuad))
-            // 3. 서서히 사라짐 (말풍선 + 글자)
-            .Join(DOTween.To(() => 1f, SetAlpha, 0f, 2f))
+            // 2. 읽을 시간 동안 그대로 유지
+            .AppendInterval(1f)
+            // 3. 둥실 떠오르며 서서히 사라짐 (말풍선 + 글자)
+            .Append(bubble.DOLocalMoveY(originalLocalPos.y + 0.3f, 1.5f).SetEase(Ease.OutQuad))
+            .Join(DOTween.To(() => 1f, SetAlpha, 0f, 1.5f))
             .OnComplete(ResetThinkBubble);
     }
 

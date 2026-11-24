@@ -320,6 +320,7 @@ public class Auction : Singleton<Auction>
                 : timeBar.gameObject;
         }
         ShowTimer(false); // 타이머는 경매(입찰)가 시작돼야 나타남
+        ShowGold(false); // 보유 골드는 경매를 시작해야 나타남
 
         NormalAuctionButtonReady(false); // 레이즈/포기   버튼 비활
         EnableFistAuctionUI(false);
@@ -369,6 +370,8 @@ public class Auction : Singleton<Auction>
         // 좌측 '경매 시작' 버튼을 누를 때까지는 자유롭게 돌아다님
         await WaitStartAuctionButtonAsync();
         SeatPlayer(); // 플레이어 좌석 착석 + 이동 잠금 + 카메라 무대 정면 고정
+        UpdateGoldDisplay();
+        ShowGold(true); // 경매 시작 → 보유 골드 표시
 
         for (currentRound = 1; currentRound <= totalAuctionRounds; currentRound++)
         {
@@ -496,6 +499,18 @@ public class Auction : Singleton<Auction>
     private void ReleasePlayer()
     {
         if (seatLock != null) seatLock.Release();
+        ShowGold(false); // 경매가 끝나면 보유 골드도 다시 숨김
+    }
+
+    // 보유 골드 표시/숨김. 글자의 부모가 골드 표시용 묶음(이름에 Gold 포함)이면 배경까지 함께
+    private void ShowGold(bool show)
+    {
+        if (myGold == null) return;
+        Transform parent = myGold.transform.parent;
+        bool parentIsGoldGroup = parent != null && parent.GetComponent<Canvas>() == null
+                                 && parent.name.IndexOf("gold", System.StringComparison.OrdinalIgnoreCase) >= 0;
+        (parentIsGoldGroup ? parent.gameObject : myGold.gameObject).SetActive(show);
+        if (show) myGold.gameObject.SetActive(true);
     }
 
     // 일반 경매 버튼을 복제해서 화면 좌측 가운데에 '경매 시작' 버튼 생성 (같은 디자인 유지)
@@ -1374,10 +1389,12 @@ public class Auction : Singleton<Auction>
             await SpeakAsync(lines); // 낙찰자 발표 후 퇴장
         }
 
-        curtainMove.CloseCurtain(); //커튼 닫기
+        Tween closing = curtainMove != null ? curtainMove.CloseCurtain() : null; //커튼 닫기
         StopMusic();
         if (!IsLastRound) AnnounceBriefAsync(ChatList.Instance.GetLines("회차마무리")[0], 1.2f).Forget(); // 다음 물품 예고
-        await UniTask.Delay(1000); //1초 대기
+        // 커튼이 완전히 닫힐 때까지 기다림 → 그 뒤에 다음 회차(PrepareRound)에서 물품이 바뀜 (닫히는 중에 바뀌어 보이던 문제)
+        if (closing != null && closing.IsActive()) await closing.AsyncWaitForCompletion();
+        await UniTask.Delay(300); // 닫힌 상태로 잠깐 멈춤
     }
 
     private async UniTask WaitInput() // 입력대기 (스페이스바 또는 마우스 왼쪽 클릭)
@@ -1689,9 +1706,12 @@ public class Auction : Singleton<Auction>
         spawnedAiList.Clear();
     }
     // ==============================에러 메시지==========================
+    private int errorMessageVersion; // 메시지가 새로 뜰 때마다 증가 (이전 메시지의 지연 처리가 새 메시지를 끄지 않게)
+
     public async UniTask ShowErrorMessage(string message) //에러 메시지 출력 (중앙부 부터 쭉 올라가면서 메시지 출력)
     {
         if (errorMessage == null) return;
+        int version = ++errorMessageVersion;
 
         errorMessage.DOKill();
         errorMessage.rectTransform.DOKill();
@@ -1703,7 +1723,8 @@ public class Auction : Singleton<Auction>
         errorMessage.color = color;
         errorMessage.rectTransform.anchoredPosition = errorMessagePos;
 
-        await UniTask.Delay(500);
+        await UniTask.Delay(800);
+        if (this == null || version != errorMessageVersion) return; // 그 사이 새 메시지가 떴으면 그쪽이 마무리
 
         float floatTime = 1f;
         float floatHight = 50f;
@@ -1711,6 +1732,7 @@ public class Auction : Singleton<Auction>
         _ = errorMessage.rectTransform.DOAnchorPosY(errorMessagePos.y + floatHight, floatTime).SetEase(Ease.OutQuad);
         await errorMessage.DOFade(0f, floatTime).SetEase(Ease.OutQuad).AsyncWaitForCompletion();
 
+        if (this == null || version != errorMessageVersion) return; // 사라지는 중에 새 메시지가 떴으면 끄지 않음
         errorMessage.gameObject.SetActive(false);
     }
 

@@ -34,7 +34,7 @@ public class RSSeeThrough : MonoBehaviour
     [Tooltip("항상: 캐릭터 앞에 있는 건 늘 뚫는다 (가볍고 확실)\n가려질 때만: 카메라→캐릭터 사이에 콜라이더 · RS 지형이 있을 때만 서서히 뚫는다")]
     public Mode mode = Mode.Always;
     [Range(0.3f, 5f), Tooltip("구멍 반지름 (m). 캐릭터 키의 0.7~1배 정도가 자연스럽다")]
-    public float radius = 1.4f;
+    public float radius = 0.9f;
     [Range(0f, 1f), Tooltip("가운데 뚫리는 정도. 1 = 완전히 비움 / 0.7 = 벽이 조금 남아 어디 있는지 보인다")]
     public float strength = 0.85f;
     [Range(0.05f, 1f), Tooltip("가장자리 부드러움. 클수록 점무늬가 넓게 번지며 사라진다")]

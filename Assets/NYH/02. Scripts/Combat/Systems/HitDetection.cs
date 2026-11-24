@@ -409,10 +409,15 @@ public class HitDetection : MonoBehaviour
             if (hitBox.type != BoxType.Hit) continue;
             WorldBox worldHit = BoxResolver.ToWorldBox(attacker.transform.position, hitBox, facingRight);
             if (CollectHitTargets(worldHit, targetBuffer)) hitPoint = worldHit.Center;
-            BossControllerBase boss = FindBoss(worldHit, out BossHurtZone zone);
+            BossControllerBase boss = FindBoss(worldHit, out BossHurtZone zone, out Collider2D bossCollider);
             if (boss == null || (target != null && boss != target)) continue;
 
-            if (target == null) bossPoint = worldHit.Center;
+            // 박스당 피해 행동(부스트샷·레이저 등 부채꼴 광선)은 박스 중심이 광선 한가운데라 아래로 쏜 광선이면 땅속에 찍힌다 —
+            // 광선이 보스 콜라이더에 처음 닿는 점을 쓴다
+            if (target == null)
+                bossPoint = action.PerBoxDamage
+                    ? RayContactPoint(worldHit, bossCollider, attacker.transform.position)
+                    : worldHit.Center;
             target = boss;
             if (targetZone == null) targetZone = zone; // 여러 부위에 걸치면 처음 찾은 부위 배율
             weight += hitBox.DamageScaleOrOne;
@@ -460,9 +465,12 @@ public class HitDetection : MonoBehaviour
 
     // 박스 자리에 겹친 콜라이더 중 살아있는 보스를 찾는다. 보스 자식 콜라이더(부위)여도 부모의 BossControllerBase로 올라간다.
     // zone: 그 콜라이더가 BossHurtZone(쿄다이 부위)이면 함께 돌려준다 — 부위 배율을 데미지에 곱한다
-    private static BossControllerBase FindBoss(in WorldBox box, out BossHurtZone zone)
+    private static BossControllerBase FindBoss(in WorldBox box, out BossHurtZone zone) => FindBoss(box, out zone, out _);
+
+    private static BossControllerBase FindBoss(in WorldBox box, out BossHurtZone zone, out Collider2D hitCollider)
     {
         zone = null;
+        hitCollider = null;
         float angle = box.IsRotated ? Mathf.Atan2(box.AxisX.y, box.AxisX.x) * Mathf.Rad2Deg : 0f;
         int count = Physics2D.OverlapBox(box.Center, box.Half * 2f, angle, overlapFilter, overlapBuffer);
         for (int i = 0; i < count; i++)
@@ -472,9 +480,51 @@ public class HitDetection : MonoBehaviour
             var boss = overlapBuffer[i].GetComponentInParent<BossControllerBase>();
             if (boss == null || boss.Snapshot == null || !boss.Snapshot.IsAlive) continue;
             zone = overlapBuffer[i].GetComponent<BossHurtZone>();
+            hitCollider = overlapBuffer[i];
             return boss;
         }
         return null;
+    }
+
+    // 광선형 박스(긴 축 = 광선 방향)가 보스 콜라이더에 처음 들어가는 점. 공격자에 가까운 쪽 끝을 광선 시작점으로 본다.
+    // 콜라이더 AABB와 교차 검사 — 못 찾으면 콜라이더 위에서 시작점에 가장 가까운 점, 그것도 없으면 박스 중심
+    private static Vector2 RayContactPoint(in WorldBox box, Collider2D col, Vector2 attackerPos)
+    {
+        if (col == null) return box.Center;
+
+        Vector2 a = box.Center - box.AxisX * box.Half.x;
+        Vector2 b = box.Center + box.AxisX * box.Half.x;
+        if ((b - attackerPos).sqrMagnitude < (a - attackerPos).sqrMagnitude) (a, b) = (b, a);
+
+        Vector2 dir = b - a;
+        float len = dir.magnitude;
+        if (len < 1e-4f) return box.Center;
+        dir /= len;
+
+        Bounds bounds = col.bounds;
+        Vector2 min = bounds.min;
+        Vector2 max = bounds.max;
+        float tMin = 0f;
+        float tMax = len;
+        bool hit = true;
+        for (int axis = 0; axis < 2 && hit; axis++)
+        {
+            float o = a[axis];
+            float d = dir[axis];
+            if (Mathf.Abs(d) < 1e-6f)
+            {
+                if (o < min[axis] || o > max[axis]) hit = false;
+                continue;
+            }
+            float t1 = (min[axis] - o) / d;
+            float t2 = (max[axis] - o) / d;
+            if (t1 > t2) (t1, t2) = (t2, t1);
+            tMin = Mathf.Max(tMin, t1);
+            tMax = Mathf.Min(tMax, t2);
+            if (tMin > tMax) hit = false;
+        }
+
+        return hit ? a + dir * tMin : col.ClosestPoint(a);
     }
 
     // weight: 맞힌 Hit박스 계수의 합. 박스당 피해 행동이면 데미지에도 곱하고, 아니면 히트스톱에만 쓴다

@@ -6,10 +6,50 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static UiBuildKit;
 
-// 열린 씬에 고물상 필드 HUD를 만든다. 이름으로 찾아 재사용하므로 다시 실행해도 쌓이지 않는다
+// 열린 씬에 장소별 필드 HUD를 만든다. 이름으로 찾아 재사용하므로 다시 실행해도 쌓이지 않는다
 public static class FieldHudBuilder
 {
-    private const string Title = "고물상 HUD 생성";
+    // 장소마다 다른 문구·구성
+    private sealed class Profile
+    {
+        public string Title;
+        public string Location;
+        public string Sector;
+        public string Arrival;
+        public bool Radar;
+        public (string key, string label)[] KeyHints;
+    }
+
+    private static readonly Profile Scrapyard = new Profile
+    {
+        Title = "고물상 HUD 생성",
+        Location = "고물상",
+        Sector = "SEC-03  //  SCRAPYARD · OUTDOOR",
+        Arrival = "ARRIVED  //  SCRAPYARD",
+        Radar = true,
+        KeyHints = new[] { ("WASD", "이동"), ("E", "상호작용"), ("TAB", "인벤토리"), ("I", "제작"), ("M", "지도"), ("ESC", "메뉴") },
+    };
+
+    private static readonly Profile Workshop = new Profile
+    {
+        Title = "거점·정비소 HUD 생성",
+        Location = "정비소",
+        Sector = "SEC-01  //  HOME · WORKSHOP",
+        Arrival = "ARRIVED  //  HOME",
+        Radar = false,
+        KeyHints = new[] { ("WASD", "이동"), ("E", "상호작용"), ("TAB", "인벤토리"), ("V", "스킬"), ("M", "지도"), ("ESC", "메뉴") },
+    };
+
+    private static readonly Profile GuildLobby = new Profile
+    {
+        Title = "길드 로비 HUD 생성",
+        Location = "길드 로비",
+        Sector = "SEC-02  //  LEAGUE · GUILD LOBBY",
+        Arrival = "ARRIVED  //  GUILD LOBBY",
+        Radar = false,
+        KeyHints = new[] { ("WASD", "이동"), ("E", "대화"), ("O", "달력"), ("SHIFT+R", "랭킹"), ("M", "지도"), ("ESC", "메뉴") },
+    };
+
     private const string CanvasName = "Canvas_FieldHUD";
     private const int SortingOrder = -1;
     private const int TimelineSegments = 20;
@@ -32,70 +72,99 @@ public static class FieldHudBuilder
         (Slot.RightLeg, "R.LEG 우다리", 1, 2),
     };
 
-    // 키 안내: 키, 설명
-    private static readonly (string key, string label)[] KeyHints =
-    {
-        ("WASD", "이동"),
-        ("E", "상호작용"),
-        ("TAB", "인벤토리"),
-        ("I", "제작"),
-        ("M", "지도"),
-        ("ESC", "메뉴"),
-    };
+    [MenuItem("KDU/UI/필드 HUD/고물상")]
+    public static void BuildScrapyard() => Build(Scrapyard);
 
-    [MenuItem("KDU/고물상/필드 HUD 생성")]
-    public static void Build()
+    [MenuItem("KDU/UI/필드 HUD/거점·정비소")]
+    public static void BuildWorkshop() => Build(Workshop);
+
+    [MenuItem("KDU/UI/필드 HUD/길드 로비")]
+    public static void BuildGuildLobby() => Build(GuildLobby);
+
+    private static void Build(Profile profile)
     {
         string missing = Load();
         if (missing != null)
         {
-            EditorUtility.DisplayDialog(Title, $"리소스를 불러오지 못했습니다.\n{missing}", "확인");
+            EditorUtility.DisplayDialog(profile.Title, $"리소스를 불러오지 못했습니다.\n{missing}", "확인");
             return;
         }
 
         Scene scene = SceneManager.GetActiveScene();
-        Undo.SetCurrentGroupName(Title);
+        Undo.SetCurrentGroupName(profile.Title);
         int group = Undo.GetCurrentGroup();
 
-        GameObject canvas = BuildCanvas(scene);
+        GameObject canvas = BuildCanvas(scene, profile.Title);
         Transform root = canvas.transform;
 
         DummyFieldHudSource source = GetOrAdd<DummyFieldHudSource>(canvas);
         FieldHudView hud = GetOrAdd<FieldHudView>(canvas);
         var so = new SerializedObject(hud);
         so.FindProperty("_source").objectReferenceValue = source;
+        so.FindProperty("_locationName").stringValue = profile.Location;
 
-        BuildHeader(root, so);
+        BuildHeader(root, so, profile);
         BuildClockCard(root, so);
-        BuildBanner(root, so);
+        BuildBanner(root, so, profile);
         BuildResources(root, so);
-        BuildMinimap(root);
-        BuildMissions(root, so);
+
+        // 레이더가 없는 장소는 미션 패널을 그 자리로 올린다
+        if (profile.Radar)
+        {
+            BuildMinimap(root);
+            SetShown(root.Find("Minimap").gameObject, true);
+        }
+        else
+            RemoveChild(root, "Minimap");
+
+        BuildMissions(root, so, profile.Radar ? 366f : 100f);
         so.ApplyModifiedPropertiesWithoutUndo();
 
         BuildRobotStatus(root);
-        BuildKeyHints(root);
+        BuildKeyHints(root, profile.KeyHints);
         ApplyFont(canvas);
 
         Undo.CollapseUndoOperations(group);
         EditorSceneManager.MarkSceneDirty(scene);
         Selection.activeGameObject = canvas;
-        Debug.Log($"[{Title}] 완료. 씬을 저장하세요.");
+        Debug.Log($"[{profile.Title}] 완료. 씬을 저장하세요.");
     }
 
-    private static GameObject BuildCanvas(Scene scene)
+    // 다른 장소용으로 만들었던 요소를 지운다. 프리팹 인스턴스 안이면 지울 수 없어 숨긴다
+    private static void RemoveChild(Transform parent, string name)
+    {
+        Transform child = parent.Find(name);
+        if (child == null)
+            return;
+
+        if (PrefabUtility.IsPartOfPrefabInstance(child.gameObject))
+            SetShown(child.gameObject, false);
+        else
+            Undo.DestroyObjectImmediate(child.gameObject);
+    }
+
+    private static void SetShown(GameObject go, bool shown)
+    {
+        if (go.activeSelf == shown)
+            return;
+
+        Undo.RecordObject(go, "HUD");
+        go.SetActive(shown);
+    }
+
+    private static GameObject BuildCanvas(Scene scene, string undoName)
     {
         GameObject go = FindRoot(scene, CanvasName);
         if (go == null)
         {
             go = new GameObject(CanvasName, typeof(RectTransform));
-            Undo.RegisterCreatedObjectUndo(go, Title);
+            Undo.RegisterCreatedObjectUndo(go, undoName);
             SceneManager.MoveGameObjectToScene(go, scene);
             go.layer = LayerMask.NameToLayer("UI");
         }
         else
         {
-            Undo.RegisterFullObjectHierarchyUndo(go, Title);
+            Undo.RegisterFullObjectHierarchyUndo(go, undoName);
         }
 
         Canvas canvas = GetOrAdd<Canvas>(go);
@@ -111,7 +180,7 @@ public static class FieldHudBuilder
     }
 
     //================================ 좌상단: 위치 ================================
-    private static void BuildHeader(Transform root, SerializedObject hud)
+    private static void BuildHeader(Transform root, SerializedObject hud, Profile profile)
     {
         GameObject header = FindOrCreate(root, "Header");
         PlaceRect(header, 40f, 24f, 380f, 104f);
@@ -121,9 +190,9 @@ public static class FieldHudBuilder
         PlaceLabel(t, "System", "RS-OS   FIELD HUD", 11, Bone, TextAlignmentOptions.Left, 14f, 0f, 160f, 16f);
         PlaceBox(t, "Line", Ghost, 140f, 8f, 100f, 1f);
         PlaceLabel(t, "Version", "//// v0.3", 11, Neutral, TextAlignmentOptions.Left, 248f, 0f, 100f, 16f);
-        PlaceLabel(t, "Sector", "SEC-03  //  SCRAPYARD · OUTDOOR", 11, Neutral, TextAlignmentOptions.Left, 0f, 24f, 300f, 16f);
+        PlaceLabel(t, "Sector", profile.Sector, 11, Neutral, TextAlignmentOptions.Left, 0f, 24f, 300f, 16f);
         PlaceDiamond(t, "Diamond", Yellow, 8f, 50f, 13f);
-        TextMeshProUGUI title = PlaceLabel(t, "Location", "고물상", 36, Bone, TextAlignmentOptions.Left, 30f, 44f, 300f, 46f);
+        TextMeshProUGUI title = PlaceLabel(t, "Location", profile.Location, 36, Bone, TextAlignmentOptions.Left, 30f, 44f, 300f, 46f);
         PlaceBox(t, "Ruler", Ghost, 0f, 100f, 360f, 1f);
         for (int i = 0; i <= 9; i++)
         {
@@ -170,7 +239,7 @@ public static class FieldHudBuilder
     }
 
     //================================ 상단 중앙: 도착 배너 ================================
-    private static void BuildBanner(Transform root, SerializedObject hud)
+    private static void BuildBanner(Transform root, SerializedObject hud, Profile profile)
     {
         GameObject banner = FindOrCreate(root, "ArrivalBanner");
         PlaceRect(banner, 632f, 32f, 656f, 120f);
@@ -181,8 +250,8 @@ public static class FieldHudBuilder
 
         PlacePanel(t, "Plate", "bg_picker_populated", Color.white, 1f, 8f, 8f, 640f, 104f);
         PlaceBox(t, "Accent", Orange, 8f, 8f, 8f, 104f);
-        PlaceLabel(t, "Caption", "ARRIVED  //  SCRAPYARD", 12, Dim, TextAlignmentOptions.Left, 36f, 22f, 300f, 16f);
-        TextMeshProUGUI title = PlaceLabel(t, "Title", "고물상", 34, Ink, TextAlignmentOptions.Left, 34f, 40f, 300f, 42f);
+        PlaceLabel(t, "Caption", profile.Arrival, 12, Dim, TextAlignmentOptions.Left, 36f, 22f, 300f, 16f);
+        TextMeshProUGUI title = PlaceLabel(t, "Title", profile.Location, 34, Ink, TextAlignmentOptions.Left, 34f, 40f, 300f, 42f);
         TextMeshProUGUI omen = PlaceLabel(t, "Omen", "오늘의 징후: -", 13, Ink, TextAlignmentOptions.Left, 36f, 86f, 420f, 18f);
         TextMeshProUGUI clock = PlaceLabel(t, "Clock", "14:00", 40, Ink, TextAlignmentOptions.Right, 420f, 40f, 198f, 44f);
         TextMeshProUGUI travel = PlaceLabel(t, "Travel", "TRAVEL 25 MIN", 10, Dim, TextAlignmentOptions.Right, 420f, 88f, 180f, 14f);
@@ -344,10 +413,10 @@ public static class FieldHudBuilder
     }
 
     //================================ 우측: 미션 ================================
-    private static void BuildMissions(Transform root, SerializedObject hud)
+    private static void BuildMissions(Transform root, SerializedObject hud, float y)
     {
         GameObject panel = FindOrCreate(root, "Missions");
-        PlaceRect(panel, 1560f, 366f, 320f, 230f);
+        PlaceRect(panel, 1560f, y, 320f, 230f);
         Transform t = panel.transform;
 
         PlaceDiamond(t, "Mark", Yellow, 18f, 6f, 9f);
@@ -448,25 +517,33 @@ public static class FieldHudBuilder
     }
 
     //================================ 우하단: 키 안내 ================================
-    private static void BuildKeyHints(Transform root)
+    private static void BuildKeyHints(Transform root, (string key, string label)[] hints)
     {
         GameObject bar = FindOrCreate(root, "KeyHints");
         PlaceRect(bar, 1100f, 1012f, 780f, 32f);
 
+        // 장소마다 항목 수가 달라 남는 칸은 숨긴다. 프리팹 인스턴스여도 되도록 지우지 않는다
+        foreach (Transform child in bar.transform)
+        {
+            SetShown(child.gameObject, false);
+        }
+
         // 오른쪽 끝에서부터 채운다
         float right = 780f;
-        for (int i = KeyHints.Length - 1; i >= 0; i--)
+        for (int i = hints.Length - 1; i >= 0; i--)
         {
-            (string key, string label) = KeyHints[i];
+            (string key, string label) = hints[i];
             float labelWidth = label.Length * 15f + 4f;
             float keyWidth = Mathf.Max(30f, key.Length * 11f + 16f);
 
             right -= labelWidth;
-            PlaceLabel(bar.transform, $"Label_{i}", label, 14, Bone, TextAlignmentOptions.Left, right, 4f, labelWidth, 24f);
+            TextMeshProUGUI text = PlaceLabel(bar.transform, $"Label_{i}", label, 14, Bone, TextAlignmentOptions.Left, right, 4f, labelWidth, 24f);
+            SetShown(text.gameObject, true);
 
             right -= keyWidth + 8f;
             GameObject chip = PlacePanel(bar.transform, $"Key_{i}", "bg_picker_populated", Color.white, 4f, right, 2f, keyWidth, 28f);
             PlaceLabel(chip.transform, "Label", key, 12, Ink, TextAlignmentOptions.Center, 0f, 0f, keyWidth, 28f);
+            SetShown(chip, true);
 
             right -= 22f;
         }

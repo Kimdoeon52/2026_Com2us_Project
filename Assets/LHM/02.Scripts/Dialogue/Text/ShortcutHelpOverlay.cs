@@ -112,7 +112,13 @@ namespace RealSteel.Dialogue
             if (scrap != null) field.Add(KeyName(ReadKey(scrap, "InteractKey", "_interactKey")), "고철 뒤지기");
             MonoBehaviour inventory = Find("InventoryToggle");
             if (inventory != null) field.Add(InventoryKeys(inventory), "인벤토리 / 인벤토리 + 제작창 (Esc 닫기)");
-            if (Has("SystemUiOnOffManager")) field.Add("M", "지도").Add("O", "달력").Add("Shift + R", "랭킹");
+            // 단축키는 KDU ExclusiveWindowManager가 처리하고, 창은 LJS 상주 프리팹에 있을 때만 뜬다
+            if (Has("ExclusiveWindowManager"))
+            {
+                if (Has("IsoMapSystemManager")) field.Add("M", "지도");
+                if (Has("CalendarUiManager")) field.Add("O", "달력");
+                if (Has("RankingUiManager")) field.Add("Shift + R", "랭킹");
+            }
             if (Has("GlobalGold")) field.Add("Shift + S", "골드 수동 저장");
             if (Has("TimingBarMinigame")) field.Add("Space", "고철 미니게임 타이밍 맞추기");
             MonoBehaviour skill = Find("SkillWindowView");

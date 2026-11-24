@@ -2,8 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
-// 등록한 창 중 하나가 켜지면 나머지를 닫는다. 씬과 상주 프리팹에 따로 있어도 서로의 창까지 닫는다
+// 등록한 창 중 하나가 켜지면 나머지를 닫는다. 씬마다 하나 두고, 씬을 넘어 남는 창은 실행 중에 찾아 등록한다
 public class ExclusiveWindowManager : MonoBehaviour
 {
     [Serializable]
@@ -31,46 +32,33 @@ public class ExclusiveWindowManager : MonoBehaviour
         public UnityEvent OnToggle = new UnityEvent();
     }
 
+    private const string AutoName = "ExclusiveWindowManager (Auto)";
+
     [Tooltip("서로 배타적인 창")]
     [SerializeField] private List<Entry> _entries = new List<Entry>();
 
-    private static readonly List<ExclusiveWindowManager> _active = new List<ExclusiveWindowManager>();
-
     private bool[] _wasOpen;
+    private bool _coreRegistered;
 
 #if UNITY_EDITOR
     public List<Entry> EditorEntries => _entries;
 #endif
 
-    // 모든 매니저를 통틀어 열린 창이 있는지
-    public static bool IsAnyOpen
+    // 실행 중에 창을 추가한다. 같은 창은 한 번만 등록된다
+    public void Register(Entry entry)
     {
-        get
-        {
-            for (int m = 0; m < _active.Count; m++)
-            {
-                List<Entry> entries = _active[m]._entries;
-                for (int i = 0; i < entries.Count; i++)
-                {
-                    if (IsOpen(entries[i]))
-                        return true;
-                }
-            }
+        if (entry == null || entry.Root == null || Contains(entry.Root))
+            return;
 
-            return false;
-        }
+        _entries.Add(entry);
     }
-
-    private void OnEnable()
-    {
-        if (!_active.Contains(this))
-            _active.Add(this);
-    }
-
-    private void OnDisable() => _active.Remove(this);
 
     private void Update()
     {
+        // 지도·달력·랭킹은 상주 프리팹이 늦게 생길 수 있어 찾을 때까지 시도한다
+        if (!_coreRegistered)
+            _coreRegistered = CoreSystemWindows.TryRegister(this);
+
         // 미니게임 중에는 단축키로 창을 열지 않는다
         if (ScrapMinigameBase.IsAnyRunning)
             return;
@@ -89,7 +77,7 @@ public class ExclusiveWindowManager : MonoBehaviour
     }
 
     // 열 때는 다른 창을 먼저 닫는다
-    private static void Toggle(Entry entry)
+    private void Toggle(Entry entry)
     {
         if (IsOpen(entry))
         {
@@ -97,7 +85,7 @@ public class ExclusiveWindowManager : MonoBehaviour
             return;
         }
 
-        if (!TimeSystemWindowGate.CanOpen(IsAnyOpen))
+        if (!TimeSystemWindowGate.CanOpen(IsAnyOpen()))
             return;
 
         CloseAllExcept(entry);
@@ -107,7 +95,7 @@ public class ExclusiveWindowManager : MonoBehaviour
     // 창을 여는 Update가 모두 끝난 뒤에 본다
     private void LateUpdate()
     {
-        // 첫 프레임은 시작 상태만 기록한다
+        // 첫 프레임과 창이 추가된 프레임은 상태만 기록한다
         if (_wasOpen == null || _wasOpen.Length != _entries.Count)
         {
             _wasOpen = new bool[_entries.Count];
@@ -133,18 +121,13 @@ public class ExclusiveWindowManager : MonoBehaviour
         return -1;
     }
 
-    // 같은 창을 여러 매니저에 등록했어도 방금 연 창은 닫지 않는다
-    private static void CloseAllExcept(Entry keep)
+    private void CloseAllExcept(Entry keep)
     {
-        for (int m = 0; m < _active.Count; m++)
+        for (int i = 0; i < _entries.Count; i++)
         {
-            List<Entry> entries = _active[m]._entries;
-            for (int i = 0; i < entries.Count; i++)
-            {
-                Entry entry = entries[i];
-                if (entry != keep && entry.Root != keep.Root && IsOpen(entry))
-                    Close(entry);
-            }
+            Entry entry = _entries[i];
+            if (entry != keep && IsOpen(entry))
+                Close(entry);
         }
 
         // 다른 창을 닫으면서 함께 꺼졌을 수 있다
@@ -160,6 +143,28 @@ public class ExclusiveWindowManager : MonoBehaviour
             entry.Root.SetActive(false);
     }
 
+    private bool IsAnyOpen()
+    {
+        for (int i = 0; i < _entries.Count; i++)
+        {
+            if (IsOpen(_entries[i]))
+                return true;
+        }
+
+        return false;
+    }
+
+    private bool Contains(GameObject root)
+    {
+        for (int i = 0; i < _entries.Count; i++)
+        {
+            if (_entries[i].Root == root)
+                return true;
+        }
+
+        return false;
+    }
+
     private void Record()
     {
         for (int i = 0; i < _entries.Count; i++)
@@ -173,7 +178,21 @@ public class ExclusiveWindowManager : MonoBehaviour
         return entry.Root != null && entry.Root.activeInHierarchy;
     }
 
-    // 도메인 리로드를 끈 상태에서도 플레이 진입 시 비어 있어야 한다
+    // 매니저를 두지 않은 씬에서도 지도 단축키가 동작하도록 없으면 만든다
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStatics() => _active.Clear();
+    private static void Subscribe()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (FindAnyObjectByType<ExclusiveWindowManager>() != null)
+            return;
+
+        var go = new GameObject(AutoName);
+        SceneManager.MoveGameObjectToScene(go, scene);
+        go.AddComponent<ExclusiveWindowManager>();
+    }
 }

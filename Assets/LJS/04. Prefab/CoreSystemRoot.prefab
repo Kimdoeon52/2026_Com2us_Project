@@ -84,9 +84,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7294819735351608451}
-  - component: {fileID: 2567344598089558771}
   m_Layer: 0
-  m_Name: ExclusiveWindowManager
+  m_Name: SystemUiOnOffManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -107,124 +106,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 8176368948466304412}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2567344598089558771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 19752580410836356}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 524738b18da00f34290c2c1996fdffcf, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _entries:
-  - Name: "\uC9C0\uB3C4"
-    Root: {fileID: 6050200621586924470}
-    Companion: {fileID: 0}
-    OnForceClose:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4406511715984464017}
-          m_TargetAssemblyTypeName: IsoMapSystemManager, Assembly-CSharp
-          m_MethodName: ToggleMapUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    Key: 109
-    Shift: 0
-    OnToggle:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 4406511715984464017}
-          m_TargetAssemblyTypeName: IsoMapSystemManager, Assembly-CSharp
-          m_MethodName: ToggleMapUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  - Name: "\uB2EC\uB825"
-    Root: {fileID: 1575652909766493590}
-    Companion: {fileID: 0}
-    OnForceClose:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 7372436896345817170}
-          m_TargetAssemblyTypeName: CalendarUiManager, Assembly-CSharp
-          m_MethodName: ToggleCalendarUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    Key: 111
-    Shift: 0
-    OnToggle:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 7372436896345817170}
-          m_TargetAssemblyTypeName: CalendarUiManager, Assembly-CSharp
-          m_MethodName: ToggleCalendarUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-  - Name: "\uB7AD\uD0B9"
-    Root: {fileID: 3965940099632136350}
-    Companion: {fileID: 0}
-    OnForceClose:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 5224157815387719811}
-          m_TargetAssemblyTypeName: RankingUiManager, Assembly-CSharp
-          m_MethodName: ToggleRankingUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
-    Key: 114
-    Shift: 1
-    OnToggle:
-      m_PersistentCalls:
-        m_Calls:
-        - m_Target: {fileID: 5224157815387719811}
-          m_TargetAssemblyTypeName: RankingUiManager, Assembly-CSharp
-          m_MethodName: ToggleRankingUI
-          m_Mode: 0
-          m_Arguments:
-            m_ObjectArgument: {fileID: 0}
-            m_ObjectArgumentAssemblyTypeName: 
-            m_IntArgument: 0
-            m_FloatArgument: 0
-            m_StringArgument: 
-            m_BoolArgument: 0
-          m_CallState: 2
 --- !u!1 &27938205121200666
 GameObject:
   m_ObjectHideFlags: 0

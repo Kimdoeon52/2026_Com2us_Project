@@ -27,7 +27,7 @@ public static class FieldHudBuilder
         Sector = "SEC-03  //  SCRAPYARD · OUTDOOR",
         Arrival = "ARRIVED  //  SCRAPYARD",
         Radar = true,
-        KeyHints = new[] { ("WASD", "이동"), ("E", "상호작용"), ("TAB", "인벤토리"), ("I", "제작"), ("M", "지도"), ("ESC", "메뉴") },
+        KeyHints = new[] { ("WASD", "이동"), ("E", "상호작용"), ("TAB", "인벤토리"), ("M", "지도"), ("ESC", "메뉴") },
     };
 
     private static readonly Profile Workshop = new Profile

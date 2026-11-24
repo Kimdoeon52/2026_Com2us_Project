@@ -31,7 +31,7 @@ namespace RealSteel.Boss.JunkWheeler
         [SerializeField] private float slamDuration = 0.22f;
         [Tooltip("플레이어 피격 판정 반경 (정밀 타격: 0.75m)")]
         [SerializeField] private float impactRadius = 0.75f;
-        [SerializeField] private float nailBoardDetectRadius = 1.2f;
+        [SerializeField] private float nailBoardDetectRadius = 0.85f;
         [SerializeField] private int slamRounds = 3;
 
         [Header("비대칭 임팩트 펀치 파라미터")]
@@ -54,7 +54,8 @@ namespace RealSteel.Boss.JunkWheeler
 
         public bool IsSlamActive { get; private set; } = false;
         public int CurrentSlamRound { get; private set; } = 0;
-        public bool CanTriggerNailBoard => IsSlamActive && CurrentSlamRound > 1;
+        public bool IsDescendingForSlam { get; private set; } = false;
+        public bool CanTriggerNailBoard => IsSlamActive && IsDescendingForSlam;
 
         protected override void OnPreExecute()
         {
@@ -83,6 +84,7 @@ namespace RealSteel.Boss.JunkWheeler
             if (OwnerBoss == null) return;
             IsSlamActive = true;
             CurrentSlamRound = 0;
+            IsDescendingForSlam = false;
 
             try
             {
@@ -90,6 +92,7 @@ namespace RealSteel.Boss.JunkWheeler
                 {
                     token.ThrowIfCancellationRequested();
                     CurrentSlamRound = round;
+                    IsDescendingForSlam = false;
 
                     // [텐션 1단계]: 도약 직전 바닥 웅크림 (Squash Anticipation)
                     if (OwnerBoss.Animation != null)
@@ -144,14 +147,18 @@ namespace RealSteel.Boss.JunkWheeler
                     // 3단계: 급강하 직전 공중 정지 (예고) - 회전 루프 유지
                     await UniTask.Delay(TimeSpan.FromSeconds(hoverDuration), cancellationToken: token);
 
-                    // 기획 변경: 최초 1회차(1회차 도약)는 못판 판정 무시 (2회차부터 못판 선제 가동 및 판정 적용)
-                    if (CanTriggerNailBoard)
+                    if (OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
                     {
-                        var targetNailBoard = FindNailBoardNear(OwnerBoss.transform.position.x);
-                        if (targetNailBoard != null)
-                        {
-                            targetNailBoard.TriggerEmerge();
-                        }
+                        IsDescendingForSlam = false;
+                        return;
+                    }
+
+                    // 실제 급강하 직전에만 못판 상호작용 허용 (1~3회차 모두 동일 규칙 적용 + 이륙 전 오반응 차단)
+                    IsDescendingForSlam = true;
+                    var targetNailBoard = CanTriggerNailBoard ? FindNailBoardNear(OwnerBoss.transform.position.x) : null;
+                    if (targetNailBoard != null)
+                    {
+                        targetNailBoard.TriggerEmerge();
                     }
 
                     // 4단계: 급강하 내려찍기 (지면 충돌) - 실제 낙하 시점에 낙하 루프 재생
@@ -161,19 +168,32 @@ namespace RealSteel.Boss.JunkWheeler
                     _currentTween = OwnerBoss.transform.DOMoveY(_groundY, slamDuration).SetEase(Ease.InQuad);
                     await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
 
+                    if (OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                    {
+                        IsDescendingForSlam = false;
+                        return;
+                    }
+
                     // [착지 VFX]: 충돌 프레임 0에 지면 충격파 이펙트 스폰!
                     SpawnVfx(groundImpactVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
 
-                    // [지면 충돌 즉시 판정 (Frame 0)]: 최초 1회차는 못판 판정 무시, 2회차부터 못판 상호작용 판정!
-                    if (CanTriggerNailBoard && CheckNailBoardInteraction())
+                    // [지면 충돌 즉시 판정 (Frame 0)]: 착지 위치 근방 못판 상호작용 판정
+                    if (CanTriggerNailBoard && CheckNailBoardInteraction(targetNailBoard))
                     {
+                        IsDescendingForSlam = false;
                         SpawnVfx(nailPunctureVfxPrefab, new Vector3(OwnerBoss.transform.position.x, _groundY, OwnerBoss.transform.position.z));
                         if (OwnerBoss.Animation != null)
                         {
                             OwnerBoss.Animation.PlayGroggy();
                         }
                         InterruptPattern(InterruptReason.GimmickGroggy);
-                        return; // 남은 내려찍기 회차 즉시 중단
+                        return; // 남은 내려찍기 회차 및 플레이어 피격 즉시 중단
+                    }
+
+                    IsDescendingForSlam = false;
+                    if (OwnerBoss == null || OwnerBoss.IsCombatStopped || OwnerBoss.Snapshot == null || !OwnerBoss.Snapshot.IsAlive)
+                    {
+                        return;
                     }
 
                     // 고철 못판이 없으면 착지 순간 즉시 플레이어 피격 판정 (쾅! 충돌과 동시에 대미지 적용)
@@ -198,6 +218,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
             finally
             {
+                IsDescendingForSlam = false;
                 IsSlamActive = false;
                 CurrentSlamRound = 0;
             }
@@ -235,9 +256,18 @@ namespace RealSteel.Boss.JunkWheeler
             return closest;
         }
 
-        private bool CheckNailBoardInteraction()
+        private bool CheckNailBoardInteraction(NailBoardFieldGimmick preTriggeredBoard = null)
         {
             if (OwnerBoss == null) return false;
+
+            if (preTriggeredBoard != null
+                && preTriggeredBoard.IsInteractable
+                && !preTriggeredBoard.IsConsumed
+                && Mathf.Abs(preTriggeredBoard.transform.position.x - OwnerBoss.transform.position.x) <= nailBoardDetectRadius)
+            {
+                preTriggeredBoard.TriggerBySlam(OwnerBoss.gameObject);
+                return true;
+            }
 
             Vector2 center = OwnerBoss.transform.position;
             Collider2D[] hits = Physics2D.OverlapCircleAll(center, nailBoardDetectRadius);
@@ -298,6 +328,7 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void OnInterrupted(InterruptReason reason)
         {
             base.OnInterrupted(reason);
+            IsDescendingForSlam = false;
             IsSlamActive = false;
             CurrentSlamRound = 0;
             KillCurrentTween();
@@ -308,6 +339,7 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void CleanupEffects()
         {
             base.CleanupEffects();
+            IsDescendingForSlam = false;
             IsSlamActive = false;
             KillCurrentTween();
             ResetToGround();
@@ -320,6 +352,10 @@ namespace RealSteel.Boss.JunkWheeler
             {
                 _currentTween.Kill();
                 _currentTween = null;
+            }
+            if (OwnerBoss != null)
+            {
+                OwnerBoss.transform.DOKill();
             }
         }
 

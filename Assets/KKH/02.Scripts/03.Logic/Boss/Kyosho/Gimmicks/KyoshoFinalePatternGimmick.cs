@@ -211,12 +211,11 @@ namespace RealSteel.Boss.Kyosho
         private bool IsPlayerSafe(GameObject player)
         {
             if (player == null) return true;
-            if (IsPlayerInvincible(player)) return true;
 
             Vector3 p = player.transform.position;
             float halfW = safeZoneWidth * 0.5f;
             float floorY = Kyosho.ArenaFloorY;
-            if (p.y > floorY + 2.2f) return false;
+            if (p.y > floorY + 2.2f) return IsPlayerInvincible(player);
 
             for (int i = 0; i < _safeZones.Count; i++)
             {
@@ -225,7 +224,8 @@ namespace RealSteel.Boss.Kyosho
                     return true;
                 }
             }
-            return false;
+
+            return IsPlayerInvincible(player);
         }
 
         private void SpawnSafeZones(int count, float minX, float maxX, float floorY, float edgeInset)

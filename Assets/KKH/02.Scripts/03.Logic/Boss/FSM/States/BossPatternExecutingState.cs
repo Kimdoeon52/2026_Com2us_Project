@@ -35,6 +35,14 @@ namespace RealSteel.Boss.FSM
             ExecuteAsync().Forget();
         }
 
+        public override void Exit()
+        {
+            if (_gimmick != null && _gimmick.IsExecuting)
+            {
+                _gimmick.InterruptPattern(InterruptReason.PhaseTransition);
+            }
+        }
+
         private async UniTaskVoid ExecuteAsync()
         {
             PatternExecutionResult result;

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.FSM;
 using RealSteel.Boss.Visual;
@@ -381,6 +382,11 @@ namespace RealSteel.Boss.Core
         // ========================================================================
         public void InitializeBoss()
         {
+            if (!Mathf.Approximately(Time.timeScale, 1f))
+            {
+                Time.timeScale = 1f;
+            }
+
             _isDefeatedHandled = false;
             IsCombatStopped = false;
             if (!_hasInitialGroundY)
@@ -466,6 +472,20 @@ namespace RealSteel.Boss.Core
                     if (curEnemy == null || !curEnemy.activeInHierarchy)
                     {
                         enemyField.SetValue(bm, gameObject);
+                    }
+                }
+
+                var playerField = typeof(BattleManager).GetField("playerRobotObject", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (playerField != null)
+                {
+                    var curPlayer = playerField.GetValue(bm) as GameObject;
+                    if (curPlayer == null || !curPlayer.activeInHierarchy)
+                    {
+                        var playerObj = PlayerTransform != null ? PlayerTransform.gameObject : null;
+                        if (playerObj != null)
+                        {
+                            playerField.SetValue(bm, playerObj);
+                        }
                     }
                 }
             }
@@ -607,7 +627,14 @@ namespace RealSteel.Boss.Core
             {
                 _isDefeatedHandled = true;
                 StopBossCombat();
-                OnBossDefeated();
+                try
+                {
+                    OnBossDefeated();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e, this);
+                }
                 BattleManager.Instance?.OnFighterKilled(Snapshot.bossID);
                 return;
             }
@@ -625,6 +652,7 @@ namespace RealSteel.Boss.Core
         {
             IsCombatStopped = true;
             CancelCurrentStateToken();
+            StateMachine?.CurrentState?.Exit();
             foreach (var pattern in activePatternPool)
             {
                 if (pattern != null)
@@ -632,6 +660,9 @@ namespace RealSteel.Boss.Core
                     pattern.InterruptPattern(InterruptReason.PhaseTransition);
                 }
             }
+            transform.DOKill();
+            SnapToGroundY();
+            animationController?.ResetScale();
         }
 
         // ========================================================================

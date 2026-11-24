@@ -23,6 +23,8 @@ namespace RealSteel.Boss.Core
         protected bool _isTellPhase = false;
         protected CancellationTokenSource _patternCTS;
         private bool _isInterrupted = false;
+        private bool _isExecuting = false;
+        public bool IsExecuting => _isExecuting && !_isInterrupted;
 
         /// <summary>
         /// [공격 패턴 전체 실행 시퀀스 골격]
@@ -30,6 +32,7 @@ namespace RealSteel.Boss.Core
         public async UniTask<PatternExecutionResult> ExecutePatternSequenceAsync(CancellationToken token)
         {
             _isInterrupted = false;
+            _isExecuting = true;
             _patternCTS = CancellationTokenSource.CreateLinkedTokenSource(token);
             var linkedToken = _patternCTS.Token;
 
@@ -87,6 +90,7 @@ namespace RealSteel.Boss.Core
             }
             finally
             {
+                _isExecuting = false;
                 _isTellPhase = false;
                 CleanupEffects();
                 if (_patternCTS != null)
@@ -142,6 +146,7 @@ namespace RealSteel.Boss.Core
 
         public virtual void InterruptPattern(InterruptReason reason)
         {
+            if (_isExecuting && _isInterrupted) return;
             _isInterrupted = true;
             if (_patternCTS != null && !_patternCTS.IsCancellationRequested)
             {

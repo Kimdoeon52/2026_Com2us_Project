@@ -18,7 +18,7 @@ namespace RealSteel.Boss.JunkWheeler
         [Header("타이어 기믹 설정")]
         [SerializeField] private ParticleSystem flatTireParticle; // 펑크 시 연기/스파크 파티클 (선택)
 
-        public bool IsPermanentlyBroken => BreakCount >= 2;
+        public bool IsPermanentlyBroken => IsBroken || BreakCount >= 1;
 
         private void Awake()
         {

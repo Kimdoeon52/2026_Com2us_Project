@@ -489,10 +489,21 @@ namespace RealSteel.UI
             if (expValueText != null)
             {
                 expValueText.text = "+0 EXP";
-                _animSequence.Join(DOVirtual.Int(0, targetExp, numberRollDuration, val =>
+                var expTextTween = DOVirtual.Int(0, targetExp, numberRollDuration, val =>
                 {
                     expValueText.text = $"+{val} EXP";
-                }).SetEase(Ease.OutQuad));
+                }).SetEase(Ease.OutQuad);
+                if (settlement.CoreLeveledUp)
+                {
+                    expTextTween.OnComplete(() =>
+                    {
+                        if (expValueText != null)
+                        {
+                            expValueText.text = $"+{targetExp} EXP (LV.{settlement.CoreLevelBefore} → LV.{settlement.CoreLevelAfter})";
+                        }
+                    });
+                }
+                _animSequence.Join(expTextTween);
             }
 
             // 4-1. 랭킹 점수 롤링 카운팅 (기획서 §10.5 토벌 랭킹 점수)
@@ -519,8 +530,44 @@ namespace RealSteel.UI
 
             if (coreExpSlider != null)
             {
-                coreExpSlider.value = 0f;
-                _animSequence.Join(coreExpSlider.DOValue(0.75f, numberRollDuration).SetEase(Ease.OutQuad));
+                float startRatio = settlement.CoreRequiredExpBefore > 0
+                    ? Mathf.Clamp01((float)settlement.CoreExpBefore / settlement.CoreRequiredExpBefore)
+                    : (settlement.CoreLevelBefore >= CoreMasterData.MaxLevel ? 1f : 0f);
+
+                float endRatio;
+                if (settlement.CoreRequiredExpAfter > 0)
+                {
+                    endRatio = Mathf.Clamp01((float)settlement.CoreExpAfter / settlement.CoreRequiredExpAfter);
+                }
+                else if (settlement.CoreLevelAfter >= CoreMasterData.MaxLevel)
+                {
+                    endRatio = 1f;
+                }
+                else if (settlement.CoreExpGained > 0)
+                {
+                    endRatio = Mathf.Clamp01(settlement.CoreExpGained / 200f);
+                }
+                else
+                {
+                    endRatio = startRatio;
+                }
+
+                coreExpSlider.value = startRatio;
+                if (settlement.CoreLeveledUp)
+                {
+                    var expBarSeq = DOTween.Sequence();
+                    expBarSeq.Append(coreExpSlider.DOValue(1f, numberRollDuration * 0.45f).SetEase(Ease.OutQuad));
+                    expBarSeq.AppendCallback(() =>
+                    {
+                        if (coreExpSlider != null) coreExpSlider.value = 0f;
+                    });
+                    expBarSeq.Append(coreExpSlider.DOValue(endRatio, numberRollDuration * 0.55f).SetEase(Ease.OutQuad));
+                    _animSequence.Join(expBarSeq);
+                }
+                else
+                {
+                    _animSequence.Join(coreExpSlider.DOValue(endRatio, numberRollDuration).SetEase(Ease.OutQuad));
+                }
             }
 
             _animSequence.OnComplete(() =>

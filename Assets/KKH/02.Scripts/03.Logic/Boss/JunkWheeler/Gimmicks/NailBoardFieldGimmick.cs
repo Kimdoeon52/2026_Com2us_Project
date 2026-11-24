@@ -266,11 +266,11 @@ namespace RealSteel.Boss.JunkWheeler
         {
             if (IsConsumed || !IsInteractable || bossActor == null) return;
             var boss = bossActor.GetComponent<BossControllerBase>() ?? bossActor.GetComponentInParent<BossControllerBase>();
-            if (boss != null)
-            {
-                var slam = boss.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
-                if (slam != null && !slam.CanTriggerNailBoard) return;
-            }
+            if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive) return;
+
+            var slam = boss.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
+            if (slam != null && !slam.CanTriggerNailBoard) return;
+
             ExecuteGimmickEffect(bossActor);
             OnPostInteract();
         }
@@ -300,9 +300,9 @@ namespace RealSteel.Boss.JunkWheeler
 
         protected override void ExecuteGimmickEffect(GameObject actor)
         {
-            if (IsConsumed) return;
+            if (IsConsumed || actor == null) return;
             var boss = actor.GetComponent<BossControllerBase>() ?? actor.GetComponentInParent<BossControllerBase>();
-            if (boss == null) return;
+            if (boss == null || boss.IsCombatStopped || boss.Snapshot == null || !boss.Snapshot.IsAlive) return;
 
             // 1. 상태 즉시 일회용 소모 확정 및 콜라이더 비활성화 (다중 충돌 및 중복 인터럽트 원천 차단)
             IsConsumed = true;
@@ -394,19 +394,10 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             // [내려찍기(Slam) 전용 모드]
+            // - 물리 트리거가 낙하 도중 선제 발동하여 착지 판정/플레이어 피격과 경합하지 않도록
+            //   JunkWheelerSlamPatternGimmick의 TriggerEmerge + 착지 TriggerBySlam 단일 경로로 일원화함.
             if (onlyActivateOnSlam)
             {
-                // 보스가 밟았고 현재 내려찍기(Slam) 패턴 중일 때만 반응
-                var bossObj = (other.GetComponent<BossControllerBase>() ?? other.GetComponentInParent<BossControllerBase>());
-                if (bossObj != null && IsInteractable && !IsConsumed)
-                {
-                    var slam = bossObj.GetGimmick<JunkWheelerSlamPatternGimmick>("PATTERN_SLAM");
-                    if (slam != null && slam.CanTriggerNailBoard)
-                    {
-                        TriggerEmerge(() => ExecuteGimmickEffect(bossObj.gameObject));
-                    }
-                }
-                // 일반 이동, 돌진, 플레이어 보행 중에는 못판이 전혀 반응하지 않음 (가시 숨김 유지)
                 return;
             }
 

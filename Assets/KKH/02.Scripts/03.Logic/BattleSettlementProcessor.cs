@@ -19,6 +19,13 @@ public class BattleSettlementResult
     public Dictionary<string, int> FinalPartDurabilities = new Dictionary<string, int>(); // [YJW 연동] 부품별 최종 잔여 내구도
     public bool CoreUnstable;
     public int CoreExpGained;
+    public int CoreLevelBefore = 1;
+    public int CoreExpBefore = 0;
+    public int CoreRequiredExpBefore = 200;
+    public int CoreLevelAfter = 1;
+    public int CoreExpAfter = 0;
+    public int CoreRequiredExpAfter = 200;
+    public bool CoreLeveledUp => CoreLevelAfter > CoreLevelBefore;
     public string SummaryMessage;
 }
 
@@ -85,35 +92,132 @@ public static class BattleSettlementProcessor
         }
     }
 
-    /// <summary>
-    /// 코어 경험치 누적 및 레벨업 처리 (최대 30레벨)
-    /// </summary> 
-    public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreMasterData coreMaster)
+    private static readonly int[] DefaultCoreRequiredExpTable =
     {
-        if (player == null || coreMaster == null)
+        200, 260, 340, 450, 470, 500, 520, 550, 580, 610,
+        640, 670, 700, 740, 770, 810, 850, 890, 940, 990,
+        1030, 1090, 1140, 1200, 1260, 1320, 1390, 1460, 1530, 0
+    };
+
+    private static int GetCoreMaxLevel(CoreMasterData coreMaster)
+    {
+        var hostCore = InventoryHost.Instance != null ? InventoryHost.Instance.Core : null;
+        if (hostCore != null && hostCore.MaxLevel > 0)
         {
-            Debug.LogError("[정산기] 코어 경험치 처리 실패: player 또는 coreMaster가 null임");
+            return hostCore.MaxLevel;
+        }
+        return CoreMasterData.MaxLevel;
+    }
+
+    private static int GetCoreRequiredExp(int level, CoreMasterData coreMaster)
+    {
+        int maxLevel = GetCoreMaxLevel(coreMaster);
+        if (level < 1 || level >= maxLevel) return 0;
+
+        var hostCore = InventoryHost.Instance != null ? InventoryHost.Instance.Core : null;
+        if (hostCore != null && level <= hostCore.MaxLevel)
+        {
+            int expToNext = hostCore.GetLevel(level).ExpToNext;
+            if (expToNext > 0) return expToNext;
+        }
+
+        if (coreMaster != null && level <= CoreMasterData.MaxLevel)
+        {
+            int req = coreMaster.GetRequiredEXP(level);
+            if (req > 0) return req;
+        }
+
+        if (level - 1 < DefaultCoreRequiredExpTable.Length)
+        {
+            return DefaultCoreRequiredExpTable[level - 1];
+        }
+
+        return CoreMasterData.CalculateRequiredExpByFormula(level);
+    }
+
+    private static void ApplyCoreLevelStats(CombatantSnapshot player, CoreMasterData coreMaster)
+    {
+        if (player == null) return;
+
+        var hostCore = InventoryHost.Instance != null ? InventoryHost.Instance.Core : null;
+        if (hostCore != null && hostCore.MaxLevel > 0)
+        {
+            CoreLevel levelData = hostCore.GetLevel(player.coreLevel);
+            if (levelData.Hp > 0) player.maxHp = levelData.Hp;
+            player.baseDefense = levelData.Defense;
+        }
+        else if (coreMaster != null)
+        {
+            player.maxHp = coreMaster.GetMaxHp(player.coreLevel);
+            player.baseDefense = coreMaster.GetDefense(player.coreLevel);
+        }
+
+        player.currentHp = player.maxHp; // 레벨업 시 체력 회복 처리함
+    }
+
+    private static void ApplyCoreExpAndRecord(CombatantSnapshot player, BattleSettlementResult result, CoreMasterData coreMaster)
+    {
+        if (result == null) return;
+
+        if (player == null)
+        {
+            result.CoreLevelBefore = 1;
+            result.CoreExpBefore = 0;
+            result.CoreRequiredExpBefore = GetCoreRequiredExp(1, coreMaster);
+            result.CoreLevelAfter = 1;
+            result.CoreExpAfter = Mathf.Max(0, result.CoreExpGained);
+            result.CoreRequiredExpAfter = result.CoreRequiredExpBefore;
             return;
         }
-        if (player.coreLevel >= CoreMasterData.MaxLevel)
+
+        player.coreLevel = Mathf.Max(1, player.coreLevel);
+        player.currentCoreExp = Mathf.Max(0, player.currentCoreExp);
+
+        result.CoreLevelBefore = player.coreLevel;
+        result.CoreExpBefore = player.currentCoreExp;
+        result.CoreRequiredExpBefore = GetCoreRequiredExp(result.CoreLevelBefore, coreMaster);
+
+        ProcessCoreExp(player, result.CoreExpGained, coreMaster);
+
+        result.CoreLevelAfter = player.coreLevel;
+        result.CoreExpAfter = player.currentCoreExp;
+        result.CoreRequiredExpAfter = GetCoreRequiredExp(result.CoreLevelAfter, coreMaster);
+    }
+
+    /// <summary>
+    /// 코어 경험치 누적 및 레벨업 처리 (CoreMasterData 미할당 시 InventoryHost CoreDefinition / 기본 테이블 폴백 지원)
+    /// </summary>
+    public static void ProcessCoreExp(CombatantSnapshot player, int gainedExp, CoreMasterData coreMaster = null)
+    {
+        if (player == null || gainedExp <= 0)
         {
+            return;
+        }
+
+        player.coreLevel = Mathf.Max(1, player.coreLevel);
+        player.currentCoreExp = Mathf.Max(0, player.currentCoreExp);
+
+        int maxLevel = GetCoreMaxLevel(coreMaster);
+        if (player.coreLevel >= maxLevel)
+        {
+            player.currentCoreExp = 0;
             return;
         }
 
         player.currentCoreExp += gainedExp;
-        int reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
+        int reqExp = GetCoreRequiredExp(player.coreLevel, coreMaster);
 
-        while (player.currentCoreExp >= reqExp && player.coreLevel < CoreMasterData.MaxLevel)
+        while (reqExp > 0 && player.currentCoreExp >= reqExp && player.coreLevel < maxLevel)
         {
             player.currentCoreExp -= reqExp;
             player.coreLevel++;
-            player.maxHp = coreMaster.GetMaxHp(player.coreLevel);
-            player.baseDefense = coreMaster.GetDefense(player.coreLevel);
-            player.currentHp = player.maxHp; // 레벨업 시 체력 회복 처리함
-            if (player.coreLevel < CoreMasterData.MaxLevel)
-            {
-                reqExp = coreMaster.requiredEXPTable[player.coreLevel - 1];
-            }
+            ApplyCoreLevelStats(player, coreMaster);
+            reqExp = player.coreLevel < maxLevel ? GetCoreRequiredExp(player.coreLevel, coreMaster) : 0;
+        }
+
+        if (player.coreLevel >= maxLevel)
+        {
+            player.currentCoreExp = 0;
         }
     }
 
@@ -187,10 +291,7 @@ public static class BattleSettlementProcessor
                 result.CoreExpGained = CalculateGainedEXP(basePrice, layer.coreExpMultiplier, levelDiffMultiplier, isWin: true);
                 result.CoreUnstable = false;
 
-                if (coreMaster != null)
-                {
-                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-                }
+                ApplyCoreExpAndRecord(player, result, coreMaster);
 
                 if (player != null)
                 {
@@ -220,10 +321,7 @@ public static class BattleSettlementProcessor
                 result.CoreExpGained = CalculateGainedEXP(basePrice, layer.coreExpMultiplier, levelDiffMultiplier, isWin: false);
                 result.CoreUnstable = layer.coreUnstableOnLoss;
 
-                if (coreMaster != null)
-                {
-                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-                }
+                ApplyCoreExpAndRecord(player, result, coreMaster);
 
                 if (player != null)
                 {
@@ -282,10 +380,7 @@ public static class BattleSettlementProcessor
                 result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: true);
                 result.CoreUnstable = false;
 
-                if (coreMaster != null)
-                {
-                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-                }
+                ApplyCoreExpAndRecord(player, result, coreMaster);
 
                 if (player != null)
                 {
@@ -308,10 +403,7 @@ public static class BattleSettlementProcessor
                 result.CoreExpGained = CalculateGainedEXP(regionBasePrice, 1.0f, 1.0f, isWin: false);
                 result.CoreUnstable = true;
 
-                if (coreMaster != null)
-                {
-                    ProcessCoreExp(player, result.CoreExpGained, coreMaster);
-                }
+                ApplyCoreExpAndRecord(player, result, coreMaster);
 
                 if (player != null)
                 {
@@ -378,49 +470,99 @@ public static class BattleSettlementProcessor
         }
 
         // 2. 대외 브로드캐스팅 처리 (KDU InventoryHost가 파츠 내구도/파괴를 처리하고 inventory.json 자동 저장)
-        OnSettlementCompleted?.Invoke(result);
-
-        if (result.DestroyedPartIDs.Count > 0)
+        try
         {
-            OnPartsPermanentlyDestroyed?.Invoke(result.DestroyedPartIDs);
+            OnSettlementCompleted?.Invoke(result);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
         }
 
-        OnGoldReward?.Invoke(result.GoldDelta);
-        OnCoreStateChanged?.Invoke(result.CoreUnstable);
+        // 기본 파츠만 장착했거나 무피격 승리 시에도 코어 EXP/레벨 변경이 inventory.json에 즉시 디스크 저장되도록 보장
+        if (InventoryHost.Instance != null)
+        {
+            try
+            {
+                var hostType = typeof(InventoryHost);
+                var saveToFile = hostType.GetMethod("SaveToFile", BindingFlags.NonPublic | BindingFlags.Instance);
+                if (saveToFile != null)
+                {
+                    saveToFile.Invoke(InventoryHost.Instance, null);
+                }
+                else
+                {
+                    hostType.GetMethod("MarkSaveDirty", BindingFlags.NonPublic | BindingFlags.Instance)?.Invoke(InventoryHost.Instance, null);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[정산기] InventoryHost 저장 동기화 중 경고: {e.Message}");
+            }
+        }
+
+        try
+        {
+            if (result.DestroyedPartIDs.Count > 0)
+            {
+                OnPartsPermanentlyDestroyed?.Invoke(result.DestroyedPartIDs);
+            }
+
+            OnGoldReward?.Invoke(result.GoldDelta);
+            OnCoreStateChanged?.Invoke(result.CoreUnstable);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+        }
 
         // 3. LSH 골드 파트 GlobalGold 싱글톤 연동 및 디스크 파일(.mainGold.json) 즉시 영구 저장
-        if (GlobalGold.Instance != null && result.GoldDelta != 0)
+        try
         {
-            const int playerId = 0;
-            if (result.GoldDelta > 0)
-                GlobalGold.Instance.GetGold(playerId, result.GoldDelta);
-            else
-                GlobalGold.Instance.UseGold(playerId, Mathf.Abs(result.GoldDelta));
+            if (GlobalGold.Instance != null && result.GoldDelta != 0)
+            {
+                const int playerId = 0;
+                if (result.GoldDelta > 0)
+                    GlobalGold.Instance.GetGold(playerId, result.GoldDelta);
+                else
+                    GlobalGold.Instance.UseGold(playerId, Mathf.Abs(result.GoldDelta));
 
-            // 변경된 골드 디스크 즉시 저장 호출
-            GlobalGold.Instance.SaveGame();
+                // 변경된 골드 디스크 즉시 저장 호출
+                GlobalGold.Instance.SaveGame();
+            }
+            else if (GlobalGold.Instance == null && result.GoldDelta != 0)
+            {
+                Debug.LogWarning($"[정산기] GlobalGold.Instance가 씬에 없어 골드 변동({result.GoldDelta:+#;-#;0}G)이 디스크에 기록되지 않았습니다 (단독 씬 테스트 환경).");
+            }
         }
-        else if (GlobalGold.Instance == null && result.GoldDelta != 0)
+        catch (Exception e)
         {
-            Debug.LogWarning($"[정산기] GlobalGold.Instance가 씬에 없어 골드 변동({result.GoldDelta:+#;-#;0}G)이 디스크에 기록되지 않았습니다 (단독 씬 테스트 환경).");
+            Debug.LogWarning($"[정산기] GlobalGold 저장 연동 중 경고: {e.Message}");
         }
 
         // 4. LHM 보스 레이스 진행도 및 대사 변수(BossProgressStore) 동기화
         if (bossMaster != null)
         {
-            var progressStore = UnityEngine.Object.FindFirstObjectByType<RealSteel.BossRace.BossProgressStore>();
-            if (progressStore != null)
+            try
             {
-                string resultStr = playerWon ? "win" : "lose";
-                string diffStr = difficulty.ToString().ToLower();
-                string bossId = bossMaster.bossID switch
+                var progressStore = UnityEngine.Object.FindFirstObjectByType<RealSteel.BossRace.BossProgressStore>();
+                if (progressStore != null)
                 {
-                    "BOSS_REGION_02" => "boss.kyodai",
-                    "BOSS_REGION_03" => "boss.region3",
-                    null or "" or "BOSS_REGION_01" => "boss.wheel",
-                    _ => bossMaster.bossID
-                };
-                progressStore.RecordHunt(resultStr, bossId, diffStr);
+                    string resultStr = playerWon ? "win" : "lose";
+                    string diffStr = difficulty.ToString().ToLower();
+                    string bossId = bossMaster.bossID switch
+                    {
+                        "BOSS_REGION_02" => "boss.kyodai",
+                        "BOSS_REGION_03" => "boss.region3",
+                        null or "" or "BOSS_REGION_01" => "boss.wheel",
+                        _ => bossMaster.bossID
+                    };
+                    progressStore.RecordHunt(resultStr, bossId, diffStr);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[정산기] BossProgressStore 연동 중 경고: {e.Message}");
             }
         }
 

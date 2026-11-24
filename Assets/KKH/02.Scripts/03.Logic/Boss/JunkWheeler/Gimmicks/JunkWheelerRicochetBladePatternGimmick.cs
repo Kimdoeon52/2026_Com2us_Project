@@ -574,13 +574,10 @@ namespace RealSteel.Boss.JunkWheeler
             var player = OwnerBoss.PlayerTransform;
             if (player == null) return false;
 
-            // 1. 플레이어가 무적 회피(Space 회피 등) 중이면 피격 판정 및 피격 이펙트 완전 배제
-            if (IsPlayerInvincible(player.gameObject)) return false;
-
             Vector2 center = OwnerBoss.transform.position;
             float radius = Mathf.Max(0.1f, bladeHitRadius);
 
-            // 2. HurtboxColliderSync와 연동된 Physics2D Overlap 검사 (플레이어 Hurt 콜라이더 유효성 검증)
+            // 1. HurtboxColliderSync와 연동된 Physics2D Overlap 검사 (플레이어 Hurt 콜라이더 유효성 검증)
             Collider2D[] hits = Physics2D.OverlapCircleAll(center, radius);
             bool collided = false;
             GameObject targetPlayerObj = null;
@@ -602,7 +599,11 @@ namespace RealSteel.Boss.JunkWheeler
                 var playerCollider = player.GetComponentInChildren<Collider2D>();
                 if (playerCollider != null && !playerCollider.enabled)
                 {
-                    // 회피 무적이나 사망으로 콜라이더가 비활성화된 상태이면 피격 무시
+                    // 실제 공격 반경 안에서 회피 무적으로 콜라이더가 꺼진 경우에만 회피 성공 연출을 트리거
+                    if (Vector2.Distance(center, player.position) <= radius)
+                    {
+                        IsPlayerInvincible(player.gameObject);
+                    }
                     return false;
                 }
 
@@ -620,10 +621,10 @@ namespace RealSteel.Boss.JunkWheeler
 
             if (collided && targetPlayerObj != null)
             {
-                // 최종 무적 재검사
+                // 실제 피격 범위와 겹친 뒤에만 회피 무적 검사 (범위 밖에서 Space 연타 시 회피 연출 오발동 방지)
                 if (IsPlayerInvincible(targetPlayerObj)) return false;
 
-                // 3. 실제 데미지 적용에 성공한 경우에만 피격 로그 및 피격 파티클 스폰
+                // 2. 실제 데미지 적용에 성공한 경우에만 피격 로그 및 피격 파티클 스폰
                 if (ApplyDamageToPlayer(targetPlayerObj))
                 {
                     // [VFX 2] 플레이어 피격 참격 이펙트 스폰

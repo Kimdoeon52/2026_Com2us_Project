@@ -116,6 +116,11 @@ public class BattleManager : MonoBehaviour
             return;
         }
 
+        if (!Mathf.Approximately(Time.timeScale, 1f))
+        {
+            Time.timeScale = 1f;
+        }
+
         if (s_hasPreBattleDifficulty)
         {
             selectedDifficulty = s_preBattleDifficulty;
@@ -184,6 +189,10 @@ public class BattleManager : MonoBehaviour
 
         // 남윤호의 사망한 로봇 조작 비활성화 처리함
         GameObject defeatedObj = isPlayerDefeated ? playerRobotObject : enemyRobotObject;
+        if (defeatedObj == null && isPlayerDefeated)
+        {
+            defeatedObj = GameObject.FindWithTag("Player");
+        }
         if (defeatedObj != null)
         {
             var executor = defeatedObj.GetComponent<ActionExecutor>();
@@ -228,6 +237,11 @@ public class BattleManager : MonoBehaviour
 
         SetState(BattleState.BattleEnd);
 
+        if (!Mathf.Approximately(Time.timeScale, 1f))
+        {
+            Time.timeScale = 1f;
+        }
+
         // 전투 종료 시 씬 내 활성 보스의 비동기 FSM 루프 즉시 중단
         var bossCtrl = (enemyRobotObject != null ? enemyRobotObject.GetComponent<RealSteel.Boss.Core.BossControllerBase>() : null)
                        ?? FindFirstObjectByType<RealSteel.Boss.Core.BossControllerBase>();
@@ -245,29 +259,50 @@ public class BattleManager : MonoBehaviour
             : null;
         BossDifficulty activeDifficulty = bossCtrl != null ? bossCtrl.SelectedDifficulty : selectedDifficulty;
 
-        var settlement = BattleSettlementProcessor.ProcessSettlement(
-            playerWon, player, enemy, betGold,
-            coreMaster: (player != null ? player.coreMasterData : null),
-            partMasterLookup: (hub != null ? hub.GetPartMasterLookup() : null),
-            bossMaster: bossMaster,
-            difficulty: activeDifficulty);
-
-        OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
-
-        // 씬 내에 비활성화된 채 배치된 BattleResultUI가 있다면 강제 활성화 및 팝업 보장 (작업자가 인스펙터에서 Canvas를 꺼둔 경우 대응)
-        if (RealSteel.UI.BattleResultUI.Instance == null || !RealSteel.UI.BattleResultUI.Instance.gameObject.activeInHierarchy)
+        BattleSettlementResult settlement = null;
+        try
         {
-            var resultUI = FindFirstObjectByType<RealSteel.UI.BattleResultUI>(FindObjectsInactive.Include);
-            if (resultUI != null)
+            settlement = BattleSettlementProcessor.ProcessSettlement(
+                playerWon, player, enemy, betGold,
+                coreMaster: (player != null ? player.coreMasterData : null),
+                partMasterLookup: (hub != null ? hub.GetPartMasterLookup() : null),
+                bossMaster: bossMaster,
+                difficulty: activeDifficulty);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e, this);
+            settlement = new BattleSettlementResult
             {
-                var rootCanvas = resultUI.GetComponentInParent<Canvas>(true);
-                if (rootCanvas != null && !rootCanvas.gameObject.activeSelf)
-                {
-                    rootCanvas.gameObject.SetActive(true);
-                }
-                resultUI.gameObject.SetActive(true);
-                resultUI.ShowResult(settlement, playerWon);
+                PlayerWon = playerWon,
+                SelectedDifficulty = activeDifficulty
+            };
+        }
+
+        try
+        {
+            OnBattleFinished?.Invoke(playerWon, winnerId, settlement);
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e, this);
+        }
+
+        // 씬 내에 비활성화/숨김 배치된 BattleResultUI를 항상 탐색해 결과 팝업을 100% 보장함 (ShowResult 내부 중복 가드 적용)
+        var resultUI = RealSteel.UI.BattleResultUI.Instance
+                       ?? FindFirstObjectByType<RealSteel.UI.BattleResultUI>(FindObjectsInactive.Include);
+        if (resultUI != null)
+        {
+            var rootCanvas = resultUI.GetComponentInParent<Canvas>(true);
+            if (rootCanvas != null && !rootCanvas.gameObject.activeSelf)
+            {
+                rootCanvas.gameObject.SetActive(true);
             }
+            if (!resultUI.gameObject.activeSelf)
+            {
+                resultUI.gameObject.SetActive(true);
+            }
+            resultUI.ShowResult(settlement, playerWon);
         }
     }
 

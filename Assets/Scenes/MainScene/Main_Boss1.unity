@@ -2941,6 +2941,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -25
       objectReference: {fileID: 0}
+    - target: {fileID: 4280887111625499782, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5786628704536557931, guid: 5e732ad6cf7797e4fa38b61d4b25ba1a, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -3532,7 +3536,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 19.138159, y: 7.829246}
+  m_LightCookieOffset: {x: 6.970581, y: 33.942505}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

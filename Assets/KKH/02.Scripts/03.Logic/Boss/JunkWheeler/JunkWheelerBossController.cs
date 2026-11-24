@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Core;
 using RealSteel.Boss.FSM;
@@ -283,6 +284,28 @@ namespace RealSteel.Boss.JunkWheeler
         protected override void OnBossDefeated()
         {
             base.OnBossDefeated();
+
+            SnapToGroundY();
+            animationController?.ResetScale();
+
+            foreach (var col in GetComponentsInChildren<Collider2D>(true))
+            {
+                if (col != null)
+                {
+                    col.enabled = false;
+                }
+            }
+
+            animationController?.PlayGroggy();
+
+            foreach (var sr in GetComponentsInChildren<SpriteRenderer>(true))
+            {
+                if (sr != null)
+                {
+                    sr.DOKill();
+                    sr.DOFade(0f, 0.55f).SetUpdate(true).SetLink(sr.gameObject);
+                }
+            }
 
             if (phase2FireVFX != null)
             {

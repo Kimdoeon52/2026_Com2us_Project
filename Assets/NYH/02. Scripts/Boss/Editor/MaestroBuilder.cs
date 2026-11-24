@@ -12,6 +12,7 @@ using UnityEngine;
 ///   · 이미 있으면 빠진 것(마스터 연결·셰이더)만 채운다. 손으로 고친 값은 건드리지 않는다
 ///   · 2단계(11-19): 음표 공격 — Maestro_Pattern_Notes(KKH 패턴 데이터)·Maestro_NoteData(음표 수치)와 자식 "패턴_음표 공격"
 ///   · 3단계(11-19): 달빛 커튼 — Maestro_Pattern_Curtain(머리)·Maestro_CurtainData와 자식 "패턴_달빛 커튼"
+///   · 4단계(11-24): 거대 지휘봉 — Maestro_Pattern_Baton(오른팔)·Maestro_BatonData와 자식 "패턴_거대 지휘봉"
 /// 전투에 필요한 씬 구성(Player·CombatDataHub·BattleManager·CombatClock·HP 캔버스)은 이 메뉴가 만들지 않는다 — Boss2 씬과 같은 구성을 써야 한다.
 /// </summary>
 public static class MaestroBuilder
@@ -22,6 +23,10 @@ public static class MaestroBuilder
     private const string NoteDataPath = DataFolder + "/Maestro_NoteData.asset";
     private const string CurtainPatternPath = DataFolder + "/Maestro_Pattern_Curtain.asset";
     private const string CurtainDataPath = DataFolder + "/Maestro_CurtainData.asset";
+    private const string BatonPatternPath = DataFolder + "/Maestro_Pattern_Baton.asset";
+    private const string BatonDataPath = DataFolder + "/Maestro_BatonData.asset";
+    // 발밑 모래 웅덩이 봇 — 패턴이 빌려 쓴다 (커튼 3000 · 지휘봉 2400 · 음표 ~1500, 동시엔 하나). TODO 임시값
+    private const int LookPoolBots = 4000;
     private const float DefaultDistanceFromPlayer = 6f; // 새로 세울 때 플레이어 오른쪽 거리(월드) — 배치 편의값
 
     [MenuItem("NYH/보스3/마에스트로 만들기·갱신 (현재 씬)", false, 200)]
@@ -91,8 +96,13 @@ public static class MaestroBuilder
             Debug.Log("[Maestro] 이미 있음 — 빠진 것만 채움");
         }
 
+        // 외형 (2026-11-24): 사용자 참고 그림 → 부위 그림 + 몸짓. 누를 때마다 다시 굽는다(그림 수정 반영). MaestroLook 값은 유지
+        var look = MaestroLookBuilder.BuildLook(boss.GetComponent<RSNanoSwarm>(), boss.transform, LookPoolBots);
+        if (look != null) SetFields(boss, s => s.FindProperty("look").objectReferenceValue = look);
+
         EnsureNotePattern(boss);
         EnsureCurtainPattern(boss);
+        EnsureBatonPattern(boss);
 
         Selection.activeGameObject = boss.gameObject;
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
@@ -130,6 +140,23 @@ public static class MaestroBuilder
         });
         var curtainData = LoadOrCreate<MaestroCurtainData>(CurtainDataPath, null);
         EnsurePatternChild<MaestroCurtainPattern>(boss, "패턴_달빛 커튼", pattern, "curtainData", curtainData);
+    }
+
+    // 4단계 거대 지휘봉 (기획서 1.3)
+    private static void EnsureBatonPattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(BatonPatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_BATON";
+            p.patternName = "거대 지휘봉";
+            p.description = "보스3_월광_기획 1.3 — 보스는 배경으로, 지휘봉 끝이 8자·무한대 궤적. 지휘봉 파괴 시 그로기";
+            p.tellDuration = 0f;                  // 예고는 패턴 안(③ 궤적 예고선)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.RightArm; // 기획서 0.3: 오른팔
+            // baseDamage·partDurabilityDamage·postDelay: 기획 수치 없음 — KKH 기본값 그대로(TODO)
+        });
+        var batonData = LoadOrCreate<MaestroBatonData>(BatonDataPath, null);
+        EnsurePatternChild<MaestroBatonPattern>(boss, "패턴_거대 지휘봉", pattern, "batonData", batonData);
     }
 
     // 보스 자식에 패턴이 없으면 만들고, 비어 있는 연결(패턴 데이터·수치 에셋)만 채운다

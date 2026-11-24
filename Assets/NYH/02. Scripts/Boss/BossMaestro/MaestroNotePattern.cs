@@ -98,6 +98,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
         }
         frame = 0;
         running = true;
+        if (maestro.Look != null) maestro.Look.Play(MaestroGesture.Swing, noteData.swingSeconds); // ① 크게 한 번 휘두르기
         Debug.Log($"[Maestro] 음표 공격 — {n}개, 간격 {row.interval}초 ({maestro.SelectedDifficulty})");
     }
 
@@ -189,6 +190,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
         int order = notes.IndexOf(note);
         PlayTone(order);
         foreach (int i in note.bots) Swarm.SetFlash(i, 1f);
+        if (maestro.Look != null) maestro.Look.Flick(); // 음이 울릴 때마다 지휘봉을 튕긴다
 
         Vector3 aim = note.pos + Vector3.right * side;
         Transform player = maestro.PlayerTransform;

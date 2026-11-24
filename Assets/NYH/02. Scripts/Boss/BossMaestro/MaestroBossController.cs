@@ -16,7 +16,8 @@ using UnityEngine;
 ///   · 전환 진행은 전투 틱(CombatClock)에서 센다. 군집의 그림 시뮬레이션은 엔진이 LateUpdate로 돌린다(그림만)
 ///
 /// 패턴: 자식의 BossPatternGimmickBase를 등록 — 음표 공격(2단계)·달빛 커튼(3단계). 패턴이 쓴 봇의 모래 → 재흡수는 ReleaseToSand(공용).
-/// 아직 없는 것: 거대 지휘봉·순환 순서, 첫 큐, 헬 2→3악장 가짜 격파 연출(0.5, 지금은 일반 전환과 같다), 그로기 기믹.
+/// 거대 지휘봉(4단계)은 SetBodyPose로 몸을 키우고 뒤판으로 보낸다 (뒤판이면 본체 판정 꺼짐).
+/// 아직 없는 것: 순환 순서, 첫 큐, 헬 2→3악장 가짜 격파 연출(0.5, 지금은 일반 전환과 같다), 그로기 기믹.
 /// 플레이어 → 보스 피해는 HitDetection → 허브 ProcessHit(보스 모드)가 깎는다 — 여기서 NotifyDamageFromHub를 부르지 않는다.
 /// </summary>
 [RequireComponent(typeof(RSNanoSwarm))]
@@ -28,7 +29,10 @@ public class MaestroBossController : BossControllerBase
     [Tooltip("바닥 높이 y(월드) — 플레이어가 서 있는 높이. 군집 모래도 여기 쌓인다")]
     [SerializeField] private float groundY;
 
-    [Header("몸 (나노봇 덩어리)")]
+    [Tooltip("외형 (2026-11-24 사용자 참고 그림 → 부위 그림 + 몸짓). 비우면 자식에서 찾고, 없으면 아래 덩어리 몸을 쓴다")]
+    [SerializeField] private MaestroLook look;
+
+    [Header("몸 (외형이 없을 때만 — 나노봇 덩어리)")]
     [Tooltip("TODO: 임시값. 덩어리 가로 : 세로 : 깊이 비율 — 실제 크기는 봇 수로 정해진다. 지휘자라 세로로 길게")]
     [SerializeField] private Vector3 blobShape = new Vector3(2.2f, 3.0f, 0.9f);
 
@@ -71,8 +75,29 @@ public class MaestroBossController : BossControllerBase
 
     public bool InTransition => step != TransitionStep.None;
 
-    /// <summary>몸 중심 (덩어리 중심)</summary>
-    public Vector3 BodyCenter => swarm != null ? swarm.Blob.center : transform.position;
+    /// <summary>외형 (부위 그림 + 몸짓). 없으면 null — 덩어리 몸</summary>
+    public MaestroLook Look => look;
+
+    /// <summary>몸 중심 (외형이면 몸통 판정 중심, 아니면 덩어리 중심)</summary>
+    public Vector3 BodyCenter => look != null && look.Ready ? look.BodyCenter : swarm != null ? swarm.Blob.center : transform.position;
+
+    /// <summary>패턴이 몸에서 손을 뻗을 자리 — 외형이면 지휘봉 끝, 아니면 덩어리 위 앞쪽</summary>
+    public Vector3 HandPoint(int side)
+    {
+        if (look != null && look.Ready) return look.BatonTip;
+        if (swarm == null) return transform.position;
+        return swarm.Blob.center + new Vector3(side * swarm.Blob.radius.x * 0.8f, swarm.Blob.radius.y * 0.5f, 0f);
+    }
+
+    /// <summary>
+    /// 패턴이 빌려 쓸 수 있는 봇 수. 외형이면 발밑 웅덩이(남는 봇)에서 10%만 남기고, 덩어리 몸이면 몸이 전체의 keepRatio 아래로 줄지 않게
+    /// </summary>
+    public int SpareBots(float keepRatio)
+    {
+        if (swarm == null) return 0;
+        if (look != null && look.Ready) return BodyBotCount - Mathf.CeilToInt(look.PoolCount * 0.1f);
+        return BodyBotCount - Mathf.CeilToInt(swarm.Count * keepRatio);
+    }
 
     // ───────────────────────── 초기화 ─────────────────────────
 
@@ -106,6 +131,7 @@ public class MaestroBossController : BossControllerBase
         defeated = false;
         step = TransitionStep.None;
         swarm = GetComponent<RSNanoSwarm>();
+        if (look == null) look = GetComponentInChildren<MaestroLook>(true);
         hurtbox = GetComponent<BoxCollider2D>();
         hurtbox.isTrigger = true;
         BuildBody();
@@ -119,8 +145,21 @@ public class MaestroBossController : BossControllerBase
         if (swarm.shader == null) swarm.shader = Shader.Find(RSNanoSwarm.ShaderName);
         swarm.floorFromTransform = false;
         swarm.floorY = groundY;
+        if (look != null)
+        {
+            // 외형: 그림 부위 + 발밑 웅덩이. 처음엔 플레이어를 본다
+            look.standalone = false;
+            ResetBodyPose();
+            Transform player = PlayerTransform;
+            float face = player != null ? Mathf.Sign(player.position.x - transform.position.x) : -1f;
+            look.Init(new Vector3(transform.position.x, groundY, transform.position.z), face);
+            SyncHurtbox();
+            return;
+        }
         swarm.Blob.aspect = blobShape.x / Mathf.Max(0.01f, blobShape.y);
-        swarm.Blob.radius = swarm.BlobSize(swarm.botCount, blobShape) * bodyScale;
+        baseRadius = swarm.BlobSize(swarm.botCount, blobShape) * bodyScale;
+        ResetBodyPose();
+        swarm.Blob.radius = baseRadius;
         swarm.Blob.center = BlobCenterAt(transform.position.x);
         swarm.Build(swarm.Blob.center);
         swarm.ResetBotLooks();
@@ -128,6 +167,32 @@ public class MaestroBossController : BossControllerBase
     }
 
     private Vector3 BlobCenterAt(float x) => new Vector3(x, groundY + swarm.Blob.radius.y, transform.position.z);
+
+    // ───────────────────────── 몸 자세 (패턴이 바꾼다 — 거대 지휘봉 등) ─────────────────────────
+
+    private Vector3 baseRadius;
+    private Vector3 poseOffset;
+    private float poseGrow = 1f;
+    private bool poseBack;
+
+    /// <summary>몸 자세: 원래 자리에서 offset(월드, x·y) 만큼, 크기 grow 배, back이면 뒤판(배경)에 그린다. 봇은 스프링으로 흘러간다</summary>
+    public void SetBodyPose(Vector2 offset, float grow, bool back)
+    {
+        poseOffset = offset;
+        poseGrow = Mathf.Max(0.1f, grow);
+        poseBack = back;
+        if (look != null) look.SetPose(offset, poseGrow, back);
+    }
+
+    public void ResetBodyPose() => SetBodyPose(Vector2.zero, 1f, false);
+
+    /// <summary>지금 자세 기준 몸 중심 목표 (그림)</summary>
+    private Vector3 PosedCenter()
+    {
+        Vector3 c = BlobCenterAt(transform.position.x) + poseOffset;
+        if (poseBack) c.z = swarm.BackZ;
+        return c;
+    }
 
     private void OnEnable() => Subscribe();
 
@@ -167,7 +232,8 @@ public class MaestroBossController : BossControllerBase
     public void ReleaseToSand(int bot, Vector3 vel, int delayFrames)
     {
         if (swarm == null || bot < 0 || bot >= swarm.Count) return;
-        if (swarm.Bots[bot].mode == BotMode.Free) swarm.Drop(bot, vel);
+        var mode = swarm.Bots[bot].mode;
+        if (mode == BotMode.Free || mode == BotMode.Bound) swarm.Drop(bot, vel); // 날던 봇 · 패턴이 다른 가이드(지휘봉 줄기 등)에 붙인 봇
         swarm.SetGlow(bot, 0f);
         if (!InTransition && !defeated) pendingSand.Add(new PendingSand { bot = bot, frames = delayFrames });
     }
@@ -195,22 +261,43 @@ public class MaestroBossController : BossControllerBase
         Vector3 s = transform.localScale;
         if (s.x < 0f) transform.localScale = new Vector3(-s.x, s.y, s.z);
         if (swarm == null) return;
-        if (!InTransition) swarm.Blob.center = BlobCenterAt(transform.position.x);
+        if (look != null && look.Ready)
+        {
+            // 외형: 발밑을 루트에 맞추고, 전환 중이 아니면 플레이어 쪽을 본다 (돌아설 때 부드럽게 뒤집힘)
+            look.SetFeet(new Vector3(transform.position.x, groundY, transform.position.z));
+            Transform player = PlayerTransform;
+            if (!InTransition && !defeated && player != null) look.SetFacing(player.position.x - transform.position.x);
+        }
+        else if (!InTransition)
+        {
+            swarm.Blob.radius = baseRadius * poseGrow;
+            swarm.Blob.center = PosedCenter();
+        }
         SyncHurtbox();
     }
 
-    // 맞는 범위 = 덩어리 크기 (루트 스케일 1 기준 로컬)
+    // 맞는 범위 = 외형이면 몸통·머리 판정 사각형, 아니면 덩어리 크기 (루트 스케일 1 기준 로컬)
     private void SyncHurtbox()
     {
         if (hurtbox == null || swarm == null) return;
+        if (look != null && look.Ready)
+        {
+            Rect r = look.HurtRect;
+            hurtbox.offset = r.center - (Vector2)transform.position;
+            hurtbox.size = r.size * (hurtboxScale / 0.8f); // 0.8 = 기본값 → 판정 사각형 그대로
+            hurtbox.enabled = !poseBack;
+            return;
+        }
         Vector3 local = swarm.Blob.center - transform.position;
         hurtbox.offset = new Vector2(local.x, local.y);
         hurtbox.size = new Vector2(swarm.Blob.radius.x, swarm.Blob.radius.y) * (2f * hurtboxScale);
+        hurtbox.enabled = !poseBack; // 배경(뒤판)에 있는 동안은 아예 안 맞는다 (거대 지휘봉 ②~④ — 때리는 건 지휘봉)
     }
 
     public override float GetBossVisualHalfWidth()
     {
-        float half = swarm != null ? swarm.Blob.radius.x * hurtboxScale : 1f;
+        float half = look != null && look.Ready ? look.ArtHalfWidth
+                   : swarm != null ? swarm.Blob.radius.x * hurtboxScale : 1f;
         return half + cameraEdgePadding;
     }
 
@@ -243,19 +330,21 @@ public class MaestroBossController : BossControllerBase
     {
         Snapshot.currentHp = 1;
         Snapshot.isInvincible = true;
+        // 패턴이 바꾼 자세(거대화·뒤판)는 원래대로 — 무너짐·다시 쌓기는 제자리에서
+        ResetBodyPose();
+        if (swarm != null && look == null)
+        {
+            swarm.Blob.radius = baseRadius;
+            swarm.Blob.center = PosedCenter();
+        }
+        if (look != null) look.Stop();
         RefreshHud();
 
         foreach (var pattern in activePatternPool)
             if (pattern != null) pattern.InterruptPattern(InterruptReason.PhaseTransition);
         StateMachine?.ChangeState(new MaestroTransitionState(this, RenewStateCancellationToken()));
 
-        if (swarm != null)
-        {
-            var bound = swarm.AllIn(BotMode.Bound, tmp, RSNanoSwarm.G_Blob);
-            foreach (int i in bound)
-                swarm.Drop(i, new Vector3(Random.Range(-collapseKick.y, collapseKick.y) * 0.5f,
-                                          Random.Range(collapseKick.x, collapseKick.y), 0f));
-        }
+        DropBody();
 
         pendingSand.Clear();
         step = TransitionStep.Collapse;
@@ -324,11 +413,21 @@ public class MaestroBossController : BossControllerBase
         defeated = true;
         step = TransitionStep.None;
         Debug.Log($"[Maestro] 격파 ({Movement}악장)");
+        DropBody();
+    }
+
+    // 몸 전체를 모래로 — 덩어리(외형이면 발밑 웅덩이)와 외형 그림 부위(리그) 봇 모두.
+    // 다시 쌓기는 모래를 덩어리에 되붙이고, 외형이면 리그가 거기서 봇을 가져가 그림이 아래부터 다시 채워진다
+    private void DropBody()
+    {
         if (swarm == null) return;
-        var bound = swarm.AllIn(BotMode.Bound, tmp, RSNanoSwarm.G_Blob);
-        foreach (int i in bound)
-            swarm.Drop(i, new Vector3(Random.Range(-collapseKick.y, collapseKick.y) * 0.5f,
-                                      Random.Range(collapseKick.x, collapseKick.y), 0f));
+        for (int g = 0; g < 2; g++)
+        {
+            var bound = swarm.AllIn(BotMode.Bound, tmp, g == 0 ? RSNanoSwarm.G_Blob : RSNanoSwarm.G_Rig);
+            foreach (int i in bound)
+                swarm.Drop(i, new Vector3(Random.Range(-collapseKick.y, collapseKick.y) * 0.5f,
+                                          Random.Range(collapseKick.x, collapseKick.y), 0f));
+        }
     }
 
 #if UNITY_EDITOR

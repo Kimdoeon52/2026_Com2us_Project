@@ -85,7 +85,7 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
 
         // 커튼 봇 — 몸 최소 크기를 지키는 만큼만
         streakLen = Mathf.Max(1, curtainData.streakBots);
-        int spare = maestro.BodyBotCount - Mathf.CeilToInt(swarm.Count * curtainData.bodyMinRatio);
+        int spare = maestro.SpareBots(curtainData.bodyMinRatio);
         int pool = Mathf.Min(curtainData.curtainBots, spare);
         streakCount = Mathf.Max(0, pool / streakLen);
         if (streakCount == 0)
@@ -126,6 +126,8 @@ public class MaestroCurtainPattern : BossPatternGimmickBase
         hitCooldownLeft = 0;
         phase = Phase.Flow;
         running = true;
+        // ① 지휘봉(과 두 팔)을 위로 — 커튼이 끝날 때까지 들고 있다
+        if (maestro.Look != null) maestro.Look.Play(MaestroGesture.RaiseBoth, attackEnd * CombatClock.TICK);
         Debug.Log($"[Maestro] 달빛 커튼 — 틈 {row.gapCount}개 · 너비 {row.gapWidth}m · 줄기 {streakCount}개({streakCount * streakLen}봇) ({maestro.SelectedDifficulty})");
     }
 

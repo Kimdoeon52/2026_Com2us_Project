@@ -105,10 +105,13 @@ Assets/NYH/02. Scripts/Boss/Maestro/   (2026-11-19 — 보스3 「마에스트�
     MaestroBossController.cs(BossControllerBase 상속 — 나노봇 덩어리 몸 + 악장 HP 1 고정 → 무너짐 → 다시 쌓기 전환)  MaestroTransitionState.cs(전환 중 FSM 대기 상태)
     MaestroNotePattern.cs(1악장 음표 공격 — 휘두르기 궤적에 음표 N개 → 음+반짝임 순서대로 플레이어 향해 직선 비행 → 모래 → 재흡수)  MaestroNoteData.cs(음표 수치 SO)
     MaestroCurtainPattern.cs(1악장 달빛 커튼 — 천장 띠 → 빛 기둥 예고 → 커튼 낙하·움직이는 틈 → 모래)  MaestroCurtainData.cs(커튼 수치 SO)
+    MaestroBatonPattern.cs(1악장 거대 지휘봉 — 거대화 → 보스 뒤판 → 궤적 예고선 → 8자·무한대 휘두르기, 지휘봉 따로 체력(IPlayerHitTarget) → 파괴 시 그로기)  MaestroBatonData.cs(지휘봉 수치 SO)
+    MaestroLook.cs(외형 — 참고 그림 부위 6장 리그 + 몸짓·부드러운 이동)  Editor/MaestroLookBuilder.cs(외형 세우기·시안 메뉴)  Editor/MaestroSpriteBaker.cs(PNG → 나노봇 그림 굽기)
+    그림: 03. Image/Boss/Maestro/마에스트로_*.png (원본 시트 + 전체 + 부위 6장)
     Test/       NanoBotTestRunner.cs(리그 클립 시험 재생 — 테스트 전용, Time.deltaTime 기준)
     Editor/     MaestroBuilder.cs(메뉴 NYH/보스3/마에스트로 만들기·갱신)  NanoBotTestBuilder.cs(메뉴 NYH/보스3/나노봇 시험 배치)
     나노봇 엔진(RSNano*)은 KKH/02.Scripts/03.Logic/Boss/Kyosho/Visual/NanoBoss/ — 참조만, 수정 금지. 엔진이 LateUpdate로 그림을 돌리므로 판정·패턴 타이밍은 우리 CombatClock 틱에서 센다
-Assets/NYH/04. SO/Boss/Maestro/   Maestro_Master.asset · Maestro_Pattern_Notes.asset(KKH 패턴 데이터) · Maestro_NoteData.asset · Maestro_Pattern_Curtain.asset · Maestro_CurtainData.asset (빌더가 만듦)
+Assets/NYH/04. SO/Boss/Maestro/   Maestro_Master.asset · Maestro_Pattern_Notes.asset(KKH 패턴 데이터) · Maestro_NoteData.asset · Maestro_Pattern_Curtain.asset · Maestro_CurtainData.asset · Maestro_Pattern_Baton.asset · Maestro_BatonData.asset (빌더가 만듦)
 
 Assets/NYH/04. SO/Combat/
     Actions/    D.asset  왼팔액티브.asset  오른팔액티브.asset  왼다리액티브.asset  오른다리액티브.asset  회피.asset  ... (2026-09-29 기준. 이름은 파츠 스킬 확정 후 갱신)

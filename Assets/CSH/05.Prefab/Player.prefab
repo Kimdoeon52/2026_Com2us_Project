@@ -281,7 +281,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7ad8a534a368abc4082835de48579edc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  style: {fileID: 0}
+  style: {fileID: 11400000, guid: 5c8e1a3f7d2b4c9e8a6f1d3b5e7c9a2f, type: 2}
   spawnOffset: {x: 0, y: 0.75}
   lifetimeSeconds: 0.8
   riseDistance: 0.35
@@ -433,6 +433,19 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a1eb701c456a7af4bb711b788c0bb1a1, type: 2}
   - {fileID: 11400000, guid: 1e81d74a499624144bdb329523c526ee, type: 2}
   loadout: {fileID: 3685781193736738476}
+--- !u!114 &7741203958164420931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6106450479770191762}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 008939c821c789096b15b2bc14b1daec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _baseIndex: 100
 --- !u!1 &7833894196472337517
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,16 +552,3 @@ MonoBehaviour:
   maxAlpha: 0.45
   minAlpha: 0.15
   lift: 0.02
---- !u!114 &7741203958164420931
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6106450479770191762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 008939c821c789096b15b2bc14b1daec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _baseIndex: 100

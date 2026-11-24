@@ -26,8 +26,8 @@ MonoBehaviour:
   damage: 70
   hitIntervalFrames: 0
   hitStopScale: 1
-  animationClipName: Jap
-  activeClipName: Straight1
+  animationClipName: Player_Charge
+  activeClipName: Player_ChargeShot
   activeClipFrames: 0
   keepClipSpeed: 0
   leapVelocity: {x: 0, y: 0}
@@ -39,7 +39,6 @@ MonoBehaviour:
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.05, y: 0.27}
-  flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 5011422705881722773, guid: 50d4588dd79bd37582fee442039ef5b0, type: 3}
     phase: 2

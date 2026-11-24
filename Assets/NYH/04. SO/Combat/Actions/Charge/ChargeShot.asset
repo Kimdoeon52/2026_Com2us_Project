@@ -39,7 +39,6 @@ MonoBehaviour:
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0, y: 0}
-  flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 4309570157106769708, guid: ae056f74556bc4041ab862674a9d61f9, type: 3}
     phase: 0
@@ -180,7 +179,7 @@ MonoBehaviour:
   maxHoldFrames: 150
   enhancedVariant: {fileID: 11400000, guid: fdfc9feff4dcb404ea72bdb6f914edc2, type: 2}
   enhanceSlot: 0
-  enhanceMode: 2
+  enhanceMode: 1
   interruptCooldownScale: 1
   stage2Frames: 60
   stage3Frames: 90

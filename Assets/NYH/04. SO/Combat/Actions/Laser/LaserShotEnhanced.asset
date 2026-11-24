@@ -39,12 +39,11 @@ MonoBehaviour:
   projectile: {fileID: 0}
   projectileIntervalFrames: 15
   projectileMuzzle: {x: 0.05, y: 0.27}
-  flame: {fileID: 0}
   vfx:
   - prefab: {fileID: 8782443870682921938, guid: b05f3266b6dd10b77c4ba1f6342a7065, type: 3}
     phase: 2
-    repeat: 0
-    repeatIntervalFrames: 0
+    repeat: 1
+    repeatIntervalFrames: 18
     repeatStartOffsetFrames: 0
     endMode: 0
     offset: {x: 0, y: 0.35}
@@ -76,7 +75,7 @@ MonoBehaviour:
   interruptCooldownScale: 1
   fan:
     rays: 11
-    spreadDegrees: 90
+    spreadDegrees: 0
     range: 7
     thickness: 0.1
     hitLength: 0

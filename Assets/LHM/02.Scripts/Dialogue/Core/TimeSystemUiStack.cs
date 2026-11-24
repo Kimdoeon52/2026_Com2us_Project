@@ -22,7 +22,8 @@ namespace RealSteel.Dialogue
 
         public int Count => opened.Count + (ExternalUiOpen ? 1 : 0);
         public TimeSystemManager Clock => timeSystem != null ? timeSystem : timeSystem = TimeSystemManager.Instance;
-        public bool ExternalUiOpen => countExternalUi && !pausedByUs && Clock != null && Clock.currentState == TimeSystemManager.TimeState.UIOpen;
+        // 이 스택 말고 다른 창(지도 · 달력 등)이 시계를 멈춰 두었는지
+        public bool ExternalUiOpen => countExternalUi && Clock != null && Clock.PauseCount - (Clock.IsPausedBy(this) ? 1 : 0) > 0;
 
         public event Action<int> DaysPassed;
 
@@ -48,10 +49,8 @@ namespace RealSteel.Dialogue
             if (ReferenceEquals(UiStack.Current, this)) UiStack.Current = null;
 
             TimeSystemManager clock = Clock;
-            if (clock != null && (pausedByUs || combatByUs) && clock.currentState != TimeSystemManager.TimeState.Running)
-            {
-                clock.ChangeTimeState(TimeSystemManager.TimeState.Running);
-            }
+            if (clock != null && pausedByUs) clock.Resume(this);
+            if (clock != null && combatByUs) clock.SetCombat(false);
             pausedByUs = false;
             combatByUs = false;
         }
@@ -124,9 +123,10 @@ namespace RealSteel.Dialogue
 
         private void Pause(TimeSystemManager clock)
         {
-            if (pausedByUs || clock.currentState != TimeSystemManager.TimeState.Running) return;
+            if (pausedByUs) return;
 
-            clock.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
+            // 시계가 정지 주체를 세므로 다른 창이 이미 멈춰 두었어도 등록해 둔다
+            clock.Pause(this);
             pausedByUs = true;
         }
 
@@ -135,7 +135,7 @@ namespace RealSteel.Dialogue
             if (!pausedByUs) return;
 
             pausedByUs = false;
-            if (clock.currentState == TimeSystemManager.TimeState.UIOpen) clock.ChangeTimeState(TimeSystemManager.TimeState.Running);
+            clock.Resume(this);
         }
 
         private void SyncCombat(TimeSystemManager clock)
@@ -143,17 +143,17 @@ namespace RealSteel.Dialogue
             InputModeController input = InputModeController.Current;
             bool battle = input != null && input.BaseMode == InputMode.Battle;
 
-            if (battle && !combatByUs && clock.currentState == TimeSystemManager.TimeState.Running)
+            if (battle && !combatByUs)
             {
-                clock.ChangeTimeState(TimeSystemManager.TimeState.Combat);
+                clock.SetCombat(true);
                 combatByUs = true;
                 Debug.Log("[UiStack] 전투 시작 → LJS 시간 Combat");
             }
             else if (!battle && combatByUs)
             {
                 combatByUs = false;
-                if (clock.currentState == TimeSystemManager.TimeState.Combat) clock.ChangeTimeState(TimeSystemManager.TimeState.Running);
-                Debug.Log("[UiStack] 전투 종료 → LJS 시간 Running");
+                clock.SetCombat(false);
+                Debug.Log($"[UiStack] 전투 종료 → LJS 시간 {clock.currentState}");
             }
         }
 

@@ -149,10 +149,11 @@ public class PauseMenu : MonoBehaviour
             return;
         }
 
+        // 시계가 정지 주체를 세므로 다른 창이 이미 멈춰 두었어도 등록해 둔다
         TimeSystemManager clock = GameClock();
-        if (clock != null && clock.currentState == TimeSystemManager.TimeState.Running)
+        if (clock != null)
         {
-            clock.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
+            clock.Pause(this);
             _stoppedClock = true;
         }
     }
@@ -172,8 +173,8 @@ public class PauseMenu : MonoBehaviour
         _stoppedClock = false;
 
         TimeSystemManager clock = GameClock();
-        if (clock != null && clock.currentState == TimeSystemManager.TimeState.UIOpen)
-            clock.ChangeTimeState(TimeSystemManager.TimeState.Running);
+        if (clock != null)
+            clock.Resume(this);
     }
 
     // 게임 내 날짜·시각 (TimeSystemManager의 year · month · day · hour) / 현재 지역

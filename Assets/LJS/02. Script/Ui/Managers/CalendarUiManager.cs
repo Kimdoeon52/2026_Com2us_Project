@@ -66,12 +66,12 @@ public class CalendarUiManager : MonoBehaviour
 
         if (isCalendarOpen)
         {
-            TimeSystemManager.Instance.BeginAction();
+            TimeSystemManager.Instance.BeginAction(this);
             RefreshCalendar();
         }
         else
         {
-            TimeSystemManager.Instance.EndAction(0);
+            TimeSystemManager.Instance.EndAction(this, 0);
             confirmPopup.SetActive(false);
             isConfirmOpen = false;
         }

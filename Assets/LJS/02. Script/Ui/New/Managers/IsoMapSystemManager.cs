@@ -110,10 +110,10 @@ public class IsoMapSystemManager : MonoBehaviour
 
         mapCanvas.SetActive(isMapOpen);
 
-        if (isMapOpen) TimeSystemManager.Instance.BeginAction();
+        if (isMapOpen) TimeSystemManager.Instance.BeginAction(this);
         else
         {
-            TimeSystemManager.Instance.EndAction(0);
+            TimeSystemManager.Instance.EndAction(this, 0);
             OnMapClosed?.Invoke();
         }
 

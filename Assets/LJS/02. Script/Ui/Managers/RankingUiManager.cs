@@ -50,15 +50,11 @@ public class RankingUiManager : MonoBehaviour
         bool isActive = !rankingCanvas.activeSelf;
         rankingCanvas.SetActive(isActive);
 
+        // 랭킹 창은 시간을 멈추지 않으므로 닫을 때도 시간 상태를 건드리지 않는다
         if (isActive)
         {
-            //TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.UIOpen);
             // 창을 열 때는 애니메이션 없이 즉시 화면 배치 (true 전달)
             RefreshUI(true);
-        }
-        else
-        {
-            TimeSystemManager.Instance.ChangeTimeState(TimeSystemManager.TimeState.Running);
         }
     }
 

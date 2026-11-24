@@ -2,6 +2,7 @@ using UnityEngine;
 using DG.Tweening;
 using TMPro;
 using System;
+using System.Collections.Generic;
 using RealSteel.Lighting; // Dotween 사용용. UI 깜빡임에 사용
 
 public class TimeSystemManager : MonoBehaviour
@@ -51,6 +52,9 @@ public class TimeSystemManager : MonoBehaviour
     }
     private void Update() // 사용자 환경에 맞춘 시간 흐름이기 때문에 update
     {
+        // 해제 없이 파괴된 창 때문에 시간이 계속 멈춰 있지 않게
+        if (currentState == TimeState.UIOpen) RefreshState();
+
         if (currentState != TimeState.Running) return;               // 게임이 현재 정상 실행중이면 무시
 
         if (Time.unscaledTime >=  nextHourTime)                   // 게임 내 시간 증가
@@ -69,13 +73,46 @@ public class TimeSystemManager : MonoBehaviour
         }
     }
 
-    // 시간이 소모되는 행동용 함수. begin은 행동 시작시 시간 멈춤. End는 시간 소모(passtime)후 시간 다시 흐름
-    public void BeginAction() { ChangeTimeState(TimeState.UIOpen); }
-    public void EndAction(int inputHours) 
+    // 시간을 멈춘 주체 목록. 하나라도 남아 있으면 UIOpen, 모두 풀려야 Running
+    private readonly List<object> pauseOwners = new List<object>();
+    private bool inCombat;
+
+    // 주체를 넘기지 않는 기존 호출이 함께 쓰는 자리
+    private static readonly object LegacyOwner = new object();
+
+    public int PauseCount => pauseOwners.Count;
+    public bool IsPausedBy(object owner) => pauseOwners.Contains(owner);
+
+    // 시간 정지 등록. 같은 주체는 한 번만 센다
+    public void Pause(object owner)
     {
-        PassTime(inputHours); 
-        ChangeTimeState(TimeState.Running);
-       
+        if (owner != null && !pauseOwners.Contains(owner)) pauseOwners.Add(owner);
+        RefreshState();
+    }
+
+    // 시간 정지 해제. 다른 주체가 남아 있으면 계속 멈춰 있다
+    public void Resume(object owner)
+    {
+        pauseOwners.Remove(owner);
+        RefreshState();
+    }
+
+    // 전투 중에는 정지 목록과 상관없이 Combat
+    public void SetCombat(bool combat)
+    {
+        inCombat = combat;
+        RefreshState();
+    }
+
+    // 시간이 소모되는 행동용 함수. begin은 행동 시작시 시간 멈춤. End는 시간 소모(passtime)후 시간 다시 흐름
+    public void BeginAction() { BeginAction(LegacyOwner); }
+    public void BeginAction(object owner) { Pause(owner); }
+    public void EndAction(int inputHours) { EndAction(LegacyOwner, inputHours); }
+    public void EndAction(object owner, int inputHours)
+    {
+        PassTime(inputHours);
+        Resume(owner);
+
         if (timeOfDay != null)
         {
             float transitionTime = 1.5f; // 해당 시간동안 전환 연출
@@ -162,7 +199,36 @@ public class TimeSystemManager : MonoBehaviour
         timeText.text = $"{year}년 {month:D2}월 {day:D2}일 {hour:D2}시";
     }
 
-    public void ChangeTimeState(TimeState newState) // 시간 시스템의 상태 변화함수
+    // 기존 호출 호환용. Running은 주체 없이 건 정지만 풀고, 다른 창이 건 정지는 건드리지 않는다
+    public void ChangeTimeState(TimeState newState)
+    {
+        switch (newState)
+        {
+            case TimeState.Combat:
+                SetCombat(true);
+                break;
+
+            case TimeState.UIOpen:
+                Pause(LegacyOwner);
+                break;
+
+            default:
+                inCombat = false;
+                Resume(LegacyOwner);
+                break;
+        }
+    }
+
+    // 파괴된 주체는 정리하고 정지 목록 · 전투 여부로 상태를 정한다
+    private void RefreshState()
+    {
+        pauseOwners.RemoveAll(o => o is UnityEngine.Object unityObject && unityObject == null);
+
+        TimeState target = inCombat ? TimeState.Combat : pauseOwners.Count > 0 ? TimeState.UIOpen : TimeState.Running;
+        if (target != currentState) ApplyState(target);
+    }
+
+    private void ApplyState(TimeState newState) // 시간 시스템의 상태 변화함수
     {
         currentState = newState;
 

@@ -12,6 +12,8 @@ using static UiBuildKit;
 public static class ExclusiveWindowBuilder
 {
     private const string ObjectName = "ExclusiveWindowManager";
+    private const string LegacyObjectName = "SystemUiOnOffManager";
+    private const string CorePrefabPath = "Assets/LJS/04. Prefab/CoreSystemRoot.prefab";
 
     [MenuItem("KDU/UI/창 매니저 연결")]
     public static void Build()
@@ -34,7 +36,6 @@ public static class ExclusiveWindowBuilder
         GameObject grid = AddInventory(entries);
         AddCrafting(entries, grid);
         AddSkillWindow(entries);
-        AddTimeWindows(entries);
 
         EditorUtility.SetDirty(manager);
         EditorSceneManager.MarkSceneDirty(scene);
@@ -90,23 +91,71 @@ public static class ExclusiveWindowBuilder
         Add(entries, "스킬", Field(new SerializedObject(skill), "_panel"), null, skill.Close);
     }
 
-    // 닫을 때 시간 정지를 풀어야 하는 창. 토글 함수로만 닫는다
-    private static void AddTimeWindows(List<ExclusiveWindowManager.Entry> entries)
+    // 지도·달력·랭킹은 씬을 넘어 상주하는 CoreSystemRoot에 있어서 그 프리팹 안에 매니저를 따로 둔다
+    [MenuItem("KDU/UI/코어 창 매니저 연결")]
+    public static void BuildCore()
     {
-        IsoMapSystemManager map = FindInScene<IsoMapSystemManager>();
-        if (map != null)
-            Add(entries, "지도", map.mapCanvas, null, map.ToggleMapUI);
+        GameObject root = PrefabUtility.LoadPrefabContents(CorePrefabPath);
 
-        CalendarUiManager calendar = FindInScene<CalendarUiManager>();
-        if (calendar != null)
-            Add(entries, "달력", calendar.calendarCanvas, null, calendar.ToggleCalendarUI);
+        try
+        {
+            IsoMapSystemManager map = root.GetComponentInChildren<IsoMapSystemManager>(true);
+            CalendarUiManager calendar = root.GetComponentInChildren<CalendarUiManager>(true);
+            RankingUiManager ranking = root.GetComponentInChildren<RankingUiManager>(true);
 
-        RankingUiManager ranking = FindInScene<RankingUiManager>();
-        if (ranking != null)
-            Add(entries, "랭킹", ranking.rankingCanvas, null, ranking.ToggleRankingUI);
+            GameObject go = FindCoreHost(root, map);
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(go);
+            go.name = ObjectName;
+
+            ExclusiveWindowManager manager = go.GetComponent<ExclusiveWindowManager>();
+            if (manager == null)
+                manager = go.AddComponent<ExclusiveWindowManager>();
+
+            List<ExclusiveWindowManager.Entry> entries = manager.EditorEntries;
+            entries.Clear();
+
+            // 닫을 때 시간 정지를 풀어야 해서 토글 함수로만 열고 닫는다
+            if (map != null)
+                Add(entries, "지도", map.mapCanvas, null, map.ToggleMapUI, KeyCode.M, false, map.ToggleMapUI);
+
+            if (calendar != null)
+                Add(entries, "달력", calendar.calendarCanvas, null, calendar.ToggleCalendarUI, KeyCode.O, false, calendar.ToggleCalendarUI);
+
+            if (ranking != null)
+                Add(entries, "랭킹", ranking.rankingCanvas, null, ranking.ToggleRankingUI, KeyCode.R, true, ranking.ToggleRankingUI);
+
+            PrefabUtility.SaveAsPrefabAsset(root, CorePrefabPath);
+            Debug.Log($"코어 창 매니저 연결 완료. {entries.Count}개 → {CorePrefabPath}");
+        }
+        finally
+        {
+            PrefabUtility.UnloadPrefabContents(root);
+        }
+    }
+
+    // 기존 SystemUiOnOffManager 자리를 재사용한다. 없으면 매니저들 옆에 만든다
+    private static GameObject FindCoreHost(GameObject root, IsoMapSystemManager map)
+    {
+        Transform parent = map != null ? map.transform.parent : root.transform;
+
+        Transform existing = parent.Find(ObjectName);
+        if (existing == null)
+            existing = parent.Find(LegacyObjectName);
+
+        if (existing != null)
+            return existing.gameObject;
+
+        var go = new GameObject(ObjectName);
+        go.transform.SetParent(parent, false);
+        return go;
     }
 
     private static void Add(List<ExclusiveWindowManager.Entry> entries, string name, GameObject root, GameObject companion, UnityAction close)
+    {
+        Add(entries, name, root, companion, close, KeyCode.None, false, null);
+    }
+
+    private static void Add(List<ExclusiveWindowManager.Entry> entries, string name, GameObject root, GameObject companion, UnityAction close, KeyCode key, bool shift, UnityAction toggle)
     {
         if (root == null)
         {
@@ -114,8 +163,12 @@ public static class ExclusiveWindowBuilder
             return;
         }
 
-        var entry = new ExclusiveWindowManager.Entry { Name = name, Root = root, Companion = companion };
+        var entry = new ExclusiveWindowManager.Entry { Name = name, Root = root, Companion = companion, Key = key, Shift = shift };
         UnityEventTools.AddPersistentListener(entry.OnForceClose, close);
+
+        if (toggle != null)
+            UnityEventTools.AddPersistentListener(entry.OnToggle, toggle);
+
         entries.Add(entry);
     }
 

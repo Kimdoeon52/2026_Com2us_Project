@@ -37185,7 +37185,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 2.6017203, y: 1.0643401}
+  m_LightCookieOffset: {x: 12.936523, y: 3.6557617}
   m_SoftShadowQuality: 0
 --- !u!108 &789245354
 Light:
@@ -38728,6 +38728,10 @@ PrefabInstance:
       propertyPath: m_TextStyleHashCode
       value: -1183493901
       objectReference: {fileID: 0}
+    - target: {fileID: 5660725587922741954, guid: 919fe1bfa360aec419bd12951c6d9e83, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6715174445974577840, guid: 919fe1bfa360aec419bd12951c6d9e83, type: 3}
       propertyPath: m_TextStyleHashCode
       value: -1183493901
@@ -40186,6 +40190,9 @@ MonoBehaviour:
   maxStepHeight: 0.2
   slopeHysteresis: 4
   minSlideTime: 0.15
+  maxFallSpeed: 30
+  followSlopeDown: 1
+  fallOffLedges: 1
   cameraMode: 0
   fixedPitch: 12
   fixedYaw: 0
@@ -94368,6 +94375,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: abae2f4fd85f79a43bd3c788db0d1bb6, type: 3}
+--- !u!1 &9003243118664806984 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7519323305427421083, guid: 2b313d2dba9cd004e9ada066234e7850, type: 3}
+  m_PrefabInstance: {fileID: 1489549493193913811}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -94395,8 +94407,3 @@ SceneRoots:
   - {fileID: 1489549493193913811}
   - {fileID: 7484831417311875267}
   - {fileID: 7593737525197714242}
---- !u!1 &9003243118664806984 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 7519323305427421083, guid: 2b313d2dba9cd004e9ada066234e7850, type: 3}
-  m_PrefabInstance: {fileID: 1489549493193913811}
-  m_PrefabAsset: {fileID: 0}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-// 등록한 창 중 하나가 켜지면 나머지를 닫는다. 창 코드를 고치지 않고 켜지는 순간만 감시한다
+// 등록한 창 중 하나가 켜지면 나머지를 닫는다. 씬과 상주 프리팹에 따로 있어도 서로의 창까지 닫는다
 public class ExclusiveWindowManager : MonoBehaviour
 {
     [Serializable]
@@ -20,10 +20,21 @@ public class ExclusiveWindowManager : MonoBehaviour
 
         [Tooltip("닫기 처리. 비우면 창만 끈다")]
         public UnityEvent OnForceClose = new UnityEvent();
+
+        [Tooltip("단축키. None이면 쓰지 않는다")]
+        public KeyCode Key = KeyCode.None;
+
+        [Tooltip("Shift 동시 입력")]
+        public bool Shift;
+
+        [Tooltip("단축키 열기/닫기 처리")]
+        public UnityEvent OnToggle = new UnityEvent();
     }
 
     [Tooltip("서로 배타적인 창")]
     [SerializeField] private List<Entry> _entries = new List<Entry>();
+
+    private static readonly List<ExclusiveWindowManager> _active = new List<ExclusiveWindowManager>();
 
     private bool[] _wasOpen;
 
@@ -31,11 +42,73 @@ public class ExclusiveWindowManager : MonoBehaviour
     public List<Entry> EditorEntries => _entries;
 #endif
 
+    // 모든 매니저를 통틀어 열린 창이 있는지
+    public static bool IsAnyOpen
+    {
+        get
+        {
+            for (int m = 0; m < _active.Count; m++)
+            {
+                List<Entry> entries = _active[m]._entries;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    if (IsOpen(entries[i]))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (!_active.Contains(this))
+            _active.Add(this);
+    }
+
+    private void OnDisable() => _active.Remove(this);
+
+    private void Update()
+    {
+        // 미니게임 중에는 단축키로 창을 열지 않는다
+        if (ScrapMinigameBase.IsAnyRunning)
+            return;
+
+        bool shift = Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift);
+
+        for (int i = 0; i < _entries.Count; i++)
+        {
+            Entry entry = _entries[i];
+            if (entry.Key == KeyCode.None || (entry.Shift && !shift) || !Input.GetKeyDown(entry.Key))
+                continue;
+
+            Toggle(entry);
+            return;
+        }
+    }
+
+    // 열 때는 다른 창을 먼저 닫는다
+    private static void Toggle(Entry entry)
+    {
+        if (IsOpen(entry))
+        {
+            entry.OnToggle?.Invoke();
+            return;
+        }
+
+        if (!TimeSystemWindowGate.CanOpen(IsAnyOpen))
+            return;
+
+        CloseAllExcept(entry);
+        entry.OnToggle?.Invoke();
+    }
+
     // 창을 여는 Update가 모두 끝난 뒤에 본다
     private void LateUpdate()
     {
         // 첫 프레임은 시작 상태만 기록한다
-        if (_wasOpen == null)
+        if (_wasOpen == null || _wasOpen.Length != _entries.Count)
         {
             _wasOpen = new bool[_entries.Count];
             Record();
@@ -44,7 +117,7 @@ public class ExclusiveWindowManager : MonoBehaviour
 
         int opened = FindOpened();
         if (opened >= 0)
-            CloseOthers(opened);
+            CloseAllExcept(_entries[opened]);
 
         Record();
     }
@@ -60,25 +133,30 @@ public class ExclusiveWindowManager : MonoBehaviour
         return -1;
     }
 
-    private void CloseOthers(int opened)
+    // 같은 창을 여러 매니저에 등록했어도 방금 연 창은 닫지 않는다
+    private static void CloseAllExcept(Entry keep)
     {
-        for (int i = 0; i < _entries.Count; i++)
+        for (int m = 0; m < _active.Count; m++)
         {
-            if (i != opened && IsOpen(_entries[i]))
-                Close(_entries[i]);
+            List<Entry> entries = _active[m]._entries;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                Entry entry = entries[i];
+                if (entry != keep && entry.Root != keep.Root && IsOpen(entry))
+                    Close(entry);
+            }
         }
 
         // 다른 창을 닫으면서 함께 꺼졌을 수 있다
-        GameObject companion = _entries[opened].Companion;
-        if (companion != null && !companion.activeSelf)
-            companion.SetActive(true);
+        if (keep.Companion != null && !keep.Companion.activeSelf)
+            keep.Companion.SetActive(true);
     }
 
     private static void Close(Entry entry)
     {
         entry.OnForceClose?.Invoke();
 
-        if (entry.Root.activeSelf)
+        if (entry.Root != null && entry.Root.activeSelf)
             entry.Root.SetActive(false);
     }
 
@@ -94,4 +172,8 @@ public class ExclusiveWindowManager : MonoBehaviour
     {
         return entry.Root != null && entry.Root.activeInHierarchy;
     }
+
+    // 도메인 리로드를 끈 상태에서도 플레이 진입 시 비어 있어야 한다
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics() => _active.Clear();
 }

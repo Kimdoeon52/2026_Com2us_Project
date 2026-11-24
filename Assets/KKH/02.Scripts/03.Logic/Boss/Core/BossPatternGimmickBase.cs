@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using UnityEngine;
 using RealSteel.Boss.Visual;
 
@@ -150,13 +151,40 @@ namespace RealSteel.Boss.Core
             _isInterrupted = true;
             if (_patternCTS != null && !_patternCTS.IsCancellationRequested)
             {
-                _patternCTS.Cancel();
+                try
+                {
+                    _patternCTS.Cancel();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[{GetType().Name}] 패턴 토큰 취소 중 예외 격리: {e.Message}");
+                }
             }
             OnInterrupted(reason);
             if (reason == InterruptReason.DpsCheckStun && OwnerBoss != null && !OwnerBoss.IsCombatStopped && OwnerBoss.Snapshot != null && OwnerBoss.Snapshot.IsAlive)
             {
                 float stunDur = patternData != null ? patternData.interruptStunDuration : 3.0f;
                 OwnerBoss.InterruptToStun(stunDur);
+            }
+        }
+
+        protected static async UniTask WaitTweenSafeAsync(Tween tween, CancellationToken token)
+        {
+            if (tween == null) return;
+            try
+            {
+                while (tween.IsActive() && !tween.IsComplete())
+                {
+                    token.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+            }
+            finally
+            {
+                if (tween.IsActive())
+                {
+                    tween.Kill(false);
+                }
             }
         }
 

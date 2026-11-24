@@ -831,9 +831,20 @@ namespace RealSteel.Boss.Core
         {
             if (_stateCts != null)
             {
-                if (!_stateCts.IsCancellationRequested) _stateCts.Cancel();
-                _stateCts.Dispose();
+                var cts = _stateCts;
                 _stateCts = null;
+                try
+                {
+                    if (!cts.IsCancellationRequested) cts.Cancel();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[BossControllerBase] 상태 토큰 취소 중 예외 격리: {e.Message}");
+                }
+                finally
+                {
+                    cts.Dispose();
+                }
             }
         }
 

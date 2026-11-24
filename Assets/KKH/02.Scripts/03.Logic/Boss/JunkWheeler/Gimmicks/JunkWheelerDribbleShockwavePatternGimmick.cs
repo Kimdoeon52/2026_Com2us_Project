@@ -278,13 +278,13 @@ namespace RealSteel.Boss.JunkWheeler
 
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY + config.jumpHeight, config.jumpDuration)
                     .SetEase(Ease.OutQuad);
-                await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+                await WaitTweenSafeAsync(_currentTween, token);
 
                 // 3단계: 지면 급강하 (Fall Down)
                 OwnerBoss.Animation?.PlaySlamFall();
                 _currentTween = OwnerBoss.transform.DOMoveY(_groundY, config.fallDuration)
                     .SetEase(Ease.InQuad);
-                await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+                await WaitTweenSafeAsync(_currentTween, token);
 
                 // 4단계: 착지 (Land 쾅!)
                 OwnerBoss.SnapToGroundY();

@@ -1654,7 +1654,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 3268763706634737369, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1048134572}
   m_SourcePrefab: {fileID: 100100000, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
 --- !u!1 &979021177
 GameObject:
@@ -2624,6 +2627,38 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 649127880802901263, guid: 982baeff2a5500e4287e7ff325193144, type: 3}
   m_PrefabInstance: {fileID: 974597018}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1048134572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1048134557}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ad8a534a368abc4082835de48579edc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  style: {fileID: 11400000, guid: 5c8e1a3f7d2b4c9e8a6f1d3b5e7c9a2f, type: 2}
+  spawnOffset: {x: 0, y: 1}
+  lifetimeSeconds: 0.8
+  riseDistance: 0.35
+  stackSpacing: 0.14
+  maxStackCount: 3
+  sequenceInterval: 0.06
+  spawnJitterX: 0.08
+  driftX: 0.12
+  popScale: 1.4
+  popSeconds: 0.1
+  stackWindowSeconds: 0.6
+  damageFormat: '{0}'
+  missText: MISS
+  font: {fileID: 11400000, guid: 25a5fb9e590d9954a85baefdeef7c150, type: 2}
+  fontSize: 3
+  criticalScale: 1.4
+  takenColor: {r: 0.75, g: 0.35, b: 1, a: 1}
+  dealtColor: {r: 1, g: 0.6, b: 0.1, a: 1}
+  missColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
 --- !u!1 &1097919355
 GameObject:
   m_ObjectHideFlags: 0
@@ -3536,7 +3571,7 @@ MonoBehaviour:
   m_ShadowLayerMask: 1
   m_ShadowRenderingLayers: 1
   m_LightCookieSize: {x: 36, y: 36}
-  m_LightCookieOffset: {x: 6.970581, y: 33.942505}
+  m_LightCookieOffset: {x: 12.284302, y: 1.7526245}
   m_SoftShadowQuality: 0
 --- !u!4 &1311525515
 Transform:

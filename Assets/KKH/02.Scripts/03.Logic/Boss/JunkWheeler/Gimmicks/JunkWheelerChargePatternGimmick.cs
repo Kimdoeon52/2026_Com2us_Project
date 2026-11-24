@@ -300,7 +300,7 @@ namespace RealSteel.Boss.JunkWheeler
                 pullBackPosition.x = OwnerBoss.ClampToStageWallX(pullBackPosition.x);
             }
             _currentTween = OwnerBoss.transform.DOMoveX(pullBackPosition.x, anticipatedDuration).SetEase(Ease.OutQuad);
-            await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+            await WaitTweenSafeAsync(_currentTween, token);
 
             // 2단계: 타이어 파괴 상태 확인 -> 돌진 속도 결정
             bool isTireBroken = _isTireBrokenDebuffed;
@@ -433,7 +433,7 @@ namespace RealSteel.Boss.JunkWheeler
             }
 
             _currentTween = OwnerBoss.transform.DOMoveX(reboundTargetX, reboundDuration).SetEase(Ease.OutQuad);
-            await _currentTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+            await WaitTweenSafeAsync(_currentTween, token);
 
             // 스쿼시 트윈 완료 대기
             await squashTask;

@@ -77,6 +77,26 @@ namespace RealSteel.Boss.Visual
             if (Mathf.Approximately(_baseScaleZ, 0f)) _baseScaleZ = 1f;
         }
 
+        private static async UniTask WaitTweenSafeAsync(Tween tween, CancellationToken token)
+        {
+            if (tween == null) return;
+            try
+            {
+                while (tween.IsActive() && !tween.IsComplete())
+                {
+                    token.ThrowIfCancellationRequested();
+                    await UniTask.Yield(PlayerLoopTiming.Update, token);
+                }
+            }
+            finally
+            {
+                if (tween.IsActive())
+                {
+                    tween.Kill(false);
+                }
+            }
+        }
+
         private void KillScaleTween()
         {
             if (_scaleTween != null && _scaleTween.IsActive())
@@ -201,7 +221,7 @@ namespace RealSteel.Boss.Visual
             {
                 // 1단계: 초고속 압착 (Fast In)
                 _scaleTween = target.DOScale(squashedScale, inDuration).SetEase(Ease.InQuad);
-                await _scaleTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+                await WaitTweenSafeAsync(_scaleTween, token);
 
                 if (_squashVersion != currentVersion || target == null) return;
 
@@ -212,7 +232,7 @@ namespace RealSteel.Boss.Visual
 
                 // 2단계: 탄성 로그 감쇠 복원 (Elastic Out)
                 _scaleTween = target.DOScale(originalScale, outDuration).SetEase(Ease.OutElastic);
-                await _scaleTween.ToUniTask(TweenCancelBehaviour.KillAndCancelAwait, cancellationToken: token);
+                await WaitTweenSafeAsync(_scaleTween, token);
             }
             catch (OperationCanceledException)
             {

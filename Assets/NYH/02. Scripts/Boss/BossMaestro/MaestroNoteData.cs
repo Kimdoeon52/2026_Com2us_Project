@@ -72,6 +72,12 @@ public class MaestroNoteData : ScriptableObject
     [Tooltip("음표가 바닥에서 최소 이만큼 위에 생긴다 (m)")]
     [Min(0f)] public float minSpawnHeight = 0.6f;
 
+    [Header("화면 맞추기 (11-25 사용자: 음표가 너무 커서 화면 밖으로 나감 · 밖에서 날아오다 화면 끝에 부딪혀 사라짐) — TODO 임시값")]
+    [Tooltip("음표 크기 배율 = 플레이어 키 × 이 값 (그림과 판정 반지름을 같이 줄임 — 보이는 곳 = 맞는 곳). 0이면 예전 크기")]
+    [Range(0f, 1.5f)] public float sizePerPlayer = 0.4f;
+    [Tooltip("생기는 자리를 화면 끝에서 음표 크기의 이 배만큼 안쪽으로 들여 놓는다")]
+    [Min(0f)] public float screenMargin = 1.2f;
+
     [Header("③ 예고 · ④ 공격 (TODO 임시값)")]
     [Tooltip("휘두르기가 끝나고 첫 음이 울리기까지 (초)")]
     [Min(0f)] public float firstSoundDelay = 0.3f;

@@ -37,6 +37,13 @@ public class MaestroWaveData : ScriptableObject
     [Min(0.1f)] public float windupSeconds = 0.7f;
     [Tooltip("내리치기 → 파도가 출발하기까지 (초). 바닥에 고리가 번쩍이는 예고")]
     [Min(0f)] public float launchDelay = 0.15f;
+    [Tooltip("파도가 출발하기 전 바닥을 따라 빛줄기 경고가 보이는 시간 (초) — 11-25 사용자: 잘 안 보여 불합리. launchDelay보다 길면 이 값이 출발 지연")]
+    [Min(0f)] public float floorWarnSeconds = 0.35f;
+    [Tooltip("파도 색 — 몸통·마루 (잘 보이게 밝은 라벤더 → 흰빛)")]
+    public Color bodyColor = new Color(0.66f, 0.62f, 0.9f);
+    public Color crestColor = new Color(0.95f, 0.94f, 1f);
+    [Tooltip("파도 뒤 번짐 진하기")]
+    [Range(0f, 1f)] public float haloAlpha = 0.35f;
     [Tooltip("파도 폭 (m, 앞뒤 길이)")]
     [Min(0.2f)] public float width = 1.0f;
     [Tooltip("판정 폭 = 파도 폭 × 이 값 (가장자리는 성겨서 조금 좁게)")]

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using RealSteel.Boss.Core;
@@ -52,6 +52,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     private bool running, subscribed;
     private int frame, side;
     private float swingCenterX;
+    private float noteScale = 1f;   // 음표 크기 배율 (플레이어 키 기준 — 그림·판정 같이)
 
     protected override bool UseExternalTellPhase => true;
 
@@ -82,6 +83,9 @@ public class MaestroNotePattern : BossPatternGimmickBase
         Transform player = maestro.PlayerTransform;
         side = player != null && player.position.x < maestro.BodyCenter.x ? -1 : 1;
         swingCenterX = maestro.BodyCenter.x;
+        // 11-25 사용자: 음표가 너무 커서 화면 밖으로 → 플레이어 키에 맞춰 줄인다 (늘리지는 않음)
+        float ph = maestro.Look != null && maestro.Look.Ready ? maestro.Look.PlayerHeight : 1.5f;
+        noteScale = noteData.sizePerPlayer > 0f ? Mathf.Min(1f, ph * noteData.sizePerPlayer) : 1f;
 
         int n = row.notes.Length;
         int swing = Mathf.Max(1, Frames(noteData.swingSeconds));
@@ -172,7 +176,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     {
         note.pos = note.prevPos = ArcPoint(note.spawnFrame);
         var spec = noteData.Spec(note.kind);
-        BuildShape(note.kind, spec.visualScale, Mathf.Max(Swarm.spacing, 0.025f), shape); // 외형 크기를 줄여 칸이 작아져도 음표 하나에 봇이 너무 많이 들지 않게
+        BuildShape(note.kind, spec.visualScale * noteScale, Mathf.Max(Swarm.spacing, 0.025f), shape); // 외형 크기를 줄여 칸이 작아져도 음표 하나에 봇이 너무 많이 들지 않게
         Swarm.Collect(RSNanoSwarm.G_Blob, note.pos, shape.Count, tmp);
         note.bots.Clear();
         note.offsets.Clear();
@@ -198,7 +202,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
         PlayTone(order);
         foreach (int i in note.bots) Swarm.SetFlash(i, 1f);
         note.flash = 1f;
-        if (fx != null) fx.Ring(note.pos, noteData.Spec(note.kind).hitRadius, noteData.Spec(note.kind).hitRadius * 2.5f, 0.35f, MaestroFx.Lavender); // 음이 울리는 순간 퍼지는 고리
+        if (fx != null) fx.Ring(note.pos, HitR(note), HitR(note) * 2.5f, 0.35f, MaestroFx.Lavender); // 음이 울리는 순간 퍼지는 고리
         if (maestro.Look != null) maestro.Look.Flick(); // 음이 울릴 때마다 지휘봉을 튕긴다
 
         Vector3 aim = note.pos + Vector3.right * side;
@@ -218,7 +222,8 @@ public class MaestroNotePattern : BossPatternGimmickBase
         note.flightFrames++;
         var spec = noteData.Spec(note.kind);
 
-        int count = Physics2D.OverlapCircle(note.pos, spec.hitRadius, overlapFilter, overlap);
+        float hitR = spec.hitRadius * noteScale;
+        int count = Physics2D.OverlapCircle(note.pos, hitR, overlapFilter, overlap);
         for (int k = 0; k < count; k++)
         {
             if (!overlap[k].CompareTag("Player")) continue;
@@ -226,10 +231,11 @@ public class MaestroNotePattern : BossPatternGimmickBase
             break;
         }
 
-        bool floor = note.pos.y - spec.hitRadius <= maestro.GroundY;
+        bool floor = note.pos.y - hitR <= maestro.GroundY;
         bool wall = false;
-        if (CameraBounds.TryGetVisibleX(Camera.main, Swarm.FrontZ, maestro.GroundY, out float minX, out float maxX))
-            wall = note.pos.x - spec.hitRadius <= minX || note.pos.x + spec.hitRadius >= maxX;
+        // 화면 끝은 바깥으로 나가는 쪽일 때만 벽 (11-25 사용자: 밖에서 날아오던 음표가 화면 끝에 부딪혀 밖에서 사라짐)
+        if (CameraBounds.TryGetVisibleX(Camera.main, Swarm.FrontZ, note.pos.y, out float minX, out float maxX))
+            wall = (note.pos.x - hitR <= minX && note.vel.x < 0f) || (note.pos.x + hitR >= maxX && note.vel.x > 0f);
         else
             wall = Mathf.Abs(note.pos.x - swingCenterX) > 30f;
         if (floor || wall || note.flightFrames >= Frames(noteData.maxFlightSeconds)) Collapse(note);
@@ -239,7 +245,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
     private void Collapse(Note note)
     {
         // 시트 탄환 연출: 음표 → 고리로 터짐
-        if (fx != null) fx.Ring(note.pos, noteData.Spec(note.kind).hitRadius * 0.5f, noteData.Spec(note.kind).hitRadius * 3f, 0.4f, MaestroFx.MoonWhite);
+        if (fx != null) fx.Ring(note.pos, HitR(note) * 0.5f, HitR(note) * 3f, 0.4f, MaestroFx.MoonWhite);
         DropBots(note);
         note.state = NoteState.Done;
     }
@@ -279,7 +285,35 @@ public class MaestroNotePattern : BossPatternGimmickBase
         Vector3 c = maestro.BodyCenter + Vector3.up * noteData.arcLift;
         var p = new Vector3(c.x + Mathf.Cos(a) * noteData.arcRadius * side, c.y + Mathf.Sin(a) * noteData.arcRadius, Swarm.FrontZ);
         p.y = Mathf.Max(p.y, maestro.GroundY + noteData.minSpawnHeight);
+        return ClampToScreen(p);
+    }
+
+    private float HitR(Note note) => noteData.Spec(note.kind).hitRadius * noteScale;
+
+    // 생기는 자리를 화면 안으로 (11-25 사용자: 화면 밖에 생겨서 안 보이거나 밖에서 사라짐). 음표 크기 ≈ 키 1m × 배율
+    private Vector3 ClampToScreen(Vector3 p)
+    {
+        var cam = Camera.main;
+        if (cam == null) return p;
+        float size = noteScale * 1f;              // 음표 실루엣 높이 ≈ 1 × 배율 (머리 아래 0.2 · 기둥 위 0.95)
+        float m = size * noteData.screenMargin * 0.5f;
+        if (TopY(cam, p.z, out float top)) p.y = Mathf.Min(p.y, top - size - m);
+        p.y = Mathf.Max(p.y, maestro.GroundY + noteData.minSpawnHeight);
+        if (CameraBounds.TryGetVisibleX(cam, p.z, p.y, out float minX, out float maxX) && maxX - minX > m * 2f)
+            p.x = Mathf.Clamp(p.x, minX + m, maxX - m);
         return p;
+    }
+
+    // 화면 위쪽 끝이 평면 z에 닿는 높이
+    private static bool TopY(Camera cam, float z, out float y)
+    {
+        y = 0f;
+        Ray ray = cam.ViewportPointToRay(new Vector3(0.5f, 1f, 0f));
+        if (Mathf.Abs(ray.direction.z) < 1e-6f) return false;
+        float t = (z - ray.origin.z) / ray.direction.z;
+        if (t <= 0f) return false;
+        y = ray.origin.y + ray.direction.y * t;
+        return true;
     }
 
     // ───────────────────────── 그림 ─────────────────────────
@@ -301,7 +335,7 @@ public class MaestroNotePattern : BossPatternGimmickBase
             {
                 // 발광 번짐 — 음이 울리면 크게 번쩍했다 가라앉고, 은은하게 맥동
                 note.flash = Mathf.MoveTowards(note.flash, 0f, Time.deltaTime * 2.5f);
-                float r = noteData.Spec(note.kind).hitRadius;
+                float r = HitR(note);
                 float pulse = 0.85f + 0.15f * Mathf.Sin(Time.time * 6f + note.spawnFrame);
                 Color c = MaestroFx.Lavender;
                 c.a = (0.35f + 0.55f * note.flash) * pulse;

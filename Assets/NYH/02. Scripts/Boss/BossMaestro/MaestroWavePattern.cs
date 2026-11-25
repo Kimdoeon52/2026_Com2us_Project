@@ -28,6 +28,7 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
         public int dir;
         public bool hit, done;
         public float sprayAcc;
+        public SpriteRenderer halo; // 파도 뒤 번짐 — 실루엣이 잘 보이게
         public readonly List<int> bots = new List<int>(512);
         public readonly List<Vector2> local = new List<Vector2>(512); // 파도 중심 바닥 기준 (앞 = +x)
     }
@@ -86,7 +87,7 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
             gestureFrames.Add(Mathf.Max(0, s - lead));
         }
         nextStrike = nextGesture = 0;
-        delay = Frames(waveData.launchDelay);
+        delay = Frames(Mathf.Max(waveData.launchDelay, waveData.floorWarnSeconds)); // 바닥 경고를 볼 시간
         launched = 0;
         frame = 0;
         running = true;
@@ -139,15 +140,29 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
         // 내리치는 박 — 발밑 고리, launchDelay 뒤 파도 출발
         while (nextStrike < strikeFrames.Count && frame >= strikeFrames[nextStrike])
         {
-            if (fx != null) fx.Ring(new Vector3(maestro.BodyCenter.x, maestro.GroundY, Swarm.FrontZ), 0.2f, waveData.width * 1.5f, 0.35f, MaestroFx.MoonWhite, flat: true);
+            if (fx != null)
+            {
+                float bx = maestro.BodyCenter.x, gy = maestro.GroundY, z = Swarm.FrontZ;
+                fx.Ring(new Vector3(bx, gy, z), 0.2f, waveData.width * 1.5f, 0.35f, MaestroFx.MoonWhite, flat: true);
+                // 바닥 경고 — 보스에서 양쪽 화면 끝까지 바닥을 따라 빛줄기 (파도가 지나갈 길). 다음 파도일수록 굵게(커지는 파도)
+                float u = strikeFrames.Count > 1 ? nextStrike / (float)(strikeFrames.Count - 1) : 1f;
+                float thick = Mathf.Lerp(0.25f, 0.5f, u);
+                float warn = Mathf.Max(0.2f, waveData.floorWarnSeconds + 0.15f);
+                var col = new Color(MaestroFx.Lavender.r, MaestroFx.Lavender.g, MaestroFx.Lavender.b, 0.85f);
+                float leftLen = Mathf.Max(0.5f, bx - minX), rightLen = Mathf.Max(0.5f, maxX - bx);
+                fx.Flash(MaestroFx.Beam, new Vector3(bx - leftLen * 0.5f, gy + 0.05f, z), new Vector2(thick, leftLen), 90f, col, warn);
+                fx.Flash(MaestroFx.Beam, new Vector3(bx + rightLen * 0.5f, gy + 0.05f, z), new Vector2(thick, rightLen), 90f, col, warn);
+            }
             nextStrike++;
         }
         while (launched < strikeFrames.Count && frame >= strikeFrames[launched] + delay)
         {
             float u = strikeFrames.Count > 1 ? launched / (float)(strikeFrames.Count - 1) : 1f;
             float h = Mathf.Lerp(row.height.x, row.height.y, u * u); // 크레셴도 — 뒤로 갈수록 가파르게 커짐
-            Spawn(-1, h);
-            Spawn(1, h);
+            // 남는 봇을 양쪽 파도에 반씩 — 먼저 만든 쪽이 다 가져가 반대쪽이 조각만 나오던 문제 (11-25 사용자)
+            int budget = Mathf.Max(0, maestro.SpareBots(0.5f)) / 2;
+            Spawn(-1, h, budget);
+            Spawn(1, h, budget);
             launched++;
         }
 
@@ -162,33 +177,47 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
     }
 
     // 파도 하나 — 반쪽 사인 언덕 모양을 봇 간격으로 채움. 몸에서 빌린 봇이 발밑에서 솟는다
-    private void Spawn(int dir, float height)
+    private void Spawn(int dir, float height, int budget)
     {
         var swarm = Swarm;
         var w = new Wave { dir = dir, height = height, x = maestro.BodyCenter.x + dir * 0.3f };
         w.prevX = w.x;
-        float pitch = Mathf.Max(0.01f, waveData.botPitch), half = waveData.width * 0.5f;
+        float half = waveData.width * 0.5f;
+        float pitch = Mathf.Max(0.01f, waveData.botPitch);
+        // 봇이 모자라면 앞에서 잘라 쓰지 않고(한쪽 조각만 생겼다) 간격을 넓혀 같은 크기·모양을 성기게 채운다
+        float area = waveData.width * height * 2f / Mathf.PI;
+        int need = Mathf.CeilToInt(area / (pitch * pitch));
+        if (budget > 0 && need > budget) pitch *= Mathf.Sqrt(need / (float)budget) * 1.05f;
         var pts = new List<Vector2>();
         for (float lx = -half; lx <= half; lx += pitch)
         {
             float top = height * Mathf.Sin(Mathf.PI * (lx + half) / waveData.width);
             for (float ly = 0f; ly <= top; ly += pitch) pts.Add(new Vector2(lx, ly));
         }
-        int want = Mathf.Min(pts.Count, Mathf.Max(0, maestro.SpareBots(0.5f)));
+        if (budget <= 8) Debug.LogWarning($"[Maestro] 크레셴도 — 남는 봇이 거의 없어 파도가 비었음 (예산 {budget})");
+        int want = Mathf.Min(pts.Count, budget);
         swarm.Collect(RSNanoSwarm.G_Blob, new Vector3(w.x, maestro.GroundY, swarm.FrontZ), want, tmp);
+        if (tmp.Count < pts.Count)
+        {
+            // 그래도 모자라면(Collect가 덜 줌) 고르게 솎아 모양 전체를 유지
+            var even = new List<Vector2>(tmp.Count);
+            for (int k = 0; k < tmp.Count; k++) even.Add(pts[(int)((long)k * pts.Count / Mathf.Max(1, tmp.Count))]);
+            pts = even;
+        }
         for (int k = 0; k < tmp.Count; k++)
         {
             int i = tmp[k];
             Vector2 l = pts[k];
             var p = WorldOf(w, l);
             swarm.Fire(i, p, 9999f, Vector3.zero, 9999f, RSNanoSwarm.G_Blob, snap: true, clump: 1);
-            // 마루(위쪽)는 달빛 라벤더로 빛나고 몸통은 모래색
+            // 잘 보이게: 몸통은 밝은 라벤더, 마루(위쪽)는 흰빛으로 강하게 빛남 (11-25 사용자: 모래색이라 안 보임)
             float crest = Mathf.Clamp01(l.y / Mathf.Max(0.01f, height * Mathf.Sin(Mathf.PI * (l.x + half) / waveData.width)) * 1.3f - 0.3f);
-            swarm.SetTint(i, Color32.Lerp(Sand, (Color32)MaestroFx.Lavender, crest));
-            swarm.SetGlow(i, waveData.crestGlow * crest);
+            swarm.SetTint(i, Color.Lerp(waveData.bodyColor, waveData.crestColor, crest));
+            swarm.SetGlow(i, waveData.crestGlow * (0.45f + 1.2f * crest));
             w.bots.Add(i);
             w.local.Add(l);
         }
+        if (fx != null) w.halo = fx.Acquire(MaestroFx.Disc);
         waves.Add(w);
     }
 
@@ -238,6 +267,7 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
         w.bots.Clear();
         w.local.Clear();
         w.done = true;
+        if (fx != null && w.halo != null) { fx.Release(w.halo); w.halo = null; }
     }
 
     private void Clear()
@@ -268,6 +298,12 @@ public class MaestroWavePattern : BossPatternGimmickBase, IMaestroMovementGate
         {
             if (w.done) continue;
             float x = Mathf.Lerp(w.prevX, w.x, alpha);
+            if (w.halo != null && fx != null)
+            {
+                Color hc = MaestroFx.Lavender;
+                hc.a = waveData.haloAlpha * (0.85f + 0.15f * Mathf.Sin(t * 12f));
+                fx.Place(w.halo, new Vector3(x + w.dir * w.height * 0.2f, maestro.GroundY + w.height * 0.45f, swarm.FrontZ), new Vector2(waveData.width * 1.8f, w.height * 1.6f), hc);
+            }
             for (int k = 0; k < w.bots.Count; k++)
             {
                 int i = w.bots[k];

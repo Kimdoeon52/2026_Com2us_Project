@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Maestro_Pattern_Orbit
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_MAESTRO_ORBIT
+  patternName: "\uC6D0\uD615 \uC74C\uD0C4"
+  description: "2\uC545\uC7A5 \uD6C4\uBCF4 \u2014 \uC74C\uD45C\uAC00 \uBCF4\uC2A4
+    \uB458\uB808 \uACE0\uB9AC\uB85C \uB3CC\uB2E4\uAC00 \uBC15\uC790\uB9C8\uB2E4 \uBC14\uAE65\uC73C\uB85C
+    \uBC1C\uC0AC(\uB098\uC120), \uB9C8\uC9C0\uB9C9 \uBC15\uC5D0 \uD55C\uAEBC\uBC88\uC5D0"
+  tellDuration: 0
+  postDelay: 1
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 1
+  partDurabilityDamage: 25
+  baseDamage: 50
+  damageRatio: 100
+  actionData: {fileID: 0}

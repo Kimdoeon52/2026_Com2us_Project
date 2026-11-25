@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d27210e2a77816e40be92ce5233f21db, type: 3}
+  m_Name: Maestro_OrbitData
+  m_EditorClassIdentifier: 
+  difficulty:
+  - notes: 8
+    spinDegPerSec: 40
+    interval: 0.5
+    speed: 4
+    finalBurst: 2
+  - notes: 10
+    spinDegPerSec: 50
+    interval: 0.45
+    speed: 4.5
+    finalBurst: 3
+  - notes: 12
+    spinDegPerSec: 60
+    interval: 0.4
+    speed: 5
+    finalBurst: 3
+  - notes: 14
+    spinDegPerSec: 75
+    interval: 0.35
+    speed: 5.5
+    finalBurst: 4
+  - notes: 16
+    spinDegPerSec: 90
+    interval: 0.3
+    speed: 6
+    finalBurst: 4
+  gatherSeconds: 1
+  spinSeconds: 1
+  burstPause: 0.3
+  ringRadiusRatio: 0.55
+  ringFlatten: 0.75
+  hitRadius: 0.2
+  visualScale: 0.8
+  glow: 1.8
+  maxFlightSeconds: 5
+  reabsorbDelay: 0.8
+  volume: 0.5

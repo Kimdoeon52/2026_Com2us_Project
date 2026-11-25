@@ -106,6 +106,7 @@ Assets/NYH/02. Scripts/Boss/BossMaestro/   (2026-11-24 사용자가 Maestro → 
     MaestroNotePattern.cs(1악장 음표 공격 — 휘두르기 궤적에 음표 N개 → 음+반짝임 순서대로 플레이어 향해 직선 비행 → 모래 → 재흡수)  MaestroNoteData.cs(음표 수치 SO)
     MaestroCurtainPattern.cs(1악장 달빛 커튼 — 천장 띠 → 빛 기둥 예고 → 커튼 낙하·움직이는 틈 → 모래)  MaestroCurtainData.cs(커튼 수치 SO)
     MaestroBatonPattern.cs(1악장 거대 지휘봉 — 거대화 → 보스 뒤판 → 궤적 예고선 → 8자·무한대 휘두르기, 지휘봉 따로 체력(IPlayerHitTarget) → 파괴 시 그로기)  MaestroBatonData.cs(지휘봉 수치 SO)
+    MaestroOrbitPattern.cs·MaestroOrbitData.cs(2악장 후보 원형 음탄)  MaestroWavePattern.cs·MaestroWaveData.cs(2악장 후보 크레셴도)  MaestroFx.cs(공통 이펙트)  MaestroPuppetData.cs(퍼펫 데이터)
     MaestroLook.cs(외형 — 참고 그림 부위 6장 리그 + 몸짓·부드러운 이동)  Editor/MaestroLookBuilder.cs(외형 세우기·시안 메뉴)  Editor/MaestroSpriteBaker.cs(PNG → 나노봇 그림 굽기)
     그림: 03. Image/Boss/Maestro/마에스트로_*.png (원본 시트 + 전체 + 부위 6장)
     Test/       NanoBotTestRunner.cs(리그 클립 시험 재생 — 테스트 전용, Time.deltaTime 기준)

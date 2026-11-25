@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7115cb053e4d6d449a17c8853a6b6375, type: 3}
+  m_Name: Maestro_SlashData
+  m_EditorClassIdentifier: 
+  difficulty:
+  - firstWindup: 0.95
+    windup: 0.65
+    swing: 0.44
+  - firstWindup: 0.85
+    windup: 0.6
+    swing: 0.4
+  - firstWindup: 0.8
+    windup: 0.55
+    swing: 0.36
+  - firstWindup: 0.7
+    windup: 0.48
+    swing: 0.32
+  - firstWindup: 0.6
+    windup: 0.42
+    swing: 0.28
+  directions: ffffffff01000000ffffffff
+  formSeconds: 0.5
+  endHoldSeconds: 0.45
+  bladeHeight: 1
+  hitHalfHeight: 0.7
+  reachRatio: 1.15
+  planeCos: 0.9
+  thickness: {x: 0.12, y: 0.035}
+  glow: 2
+  warnAlpha: 0.7

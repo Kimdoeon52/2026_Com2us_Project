@@ -76,6 +76,7 @@ public static class MaestroLookBuilder
         look.swarm = swarm;
         look.data = data;
         look.reserveShape = reserve;
+        look.poseSet = MaestroPoseBaker.Bake(data); // 모션 시트 키 포즈 (11-25 B-2)
         EditorUtility.SetDirty(look);
         EditorUtility.SetDirty(swarm);
         return look;

@@ -126,9 +126,38 @@ public class MaestroFx : MonoBehaviour
         Place(f.r, f.pos, new Vector2(rad * 2f, rad * 2f * (f.flat ? 0.3f : 1f)), c);
     }
 
+    // ───────────────────────── 번쩍임 (잠깐 보였다 사라지는 그림 — 바닥 경고 등) ─────────────────────────
+
+    private class FlashFx { public SpriteRenderer r; public Vector3 pos; public Vector2 size; public float angle, age, life; public Color color; }
+    private readonly List<FlashFx> flashes = new List<FlashFx>();
+
+    /// <summary>sprite를 life초 동안 보였다가 흐려지게 (처음 20%에 밝아지고 나머지에 사라짐). angle = 도</summary>
+    public void Flash(Sprite sprite, Vector3 pos, Vector2 size, float angle, Color color, float life)
+    {
+        var f = new FlashFx { r = Acquire(sprite), pos = pos, size = size, angle = angle, color = color, life = Mathf.Max(0.05f, life) };
+        flashes.Add(f);
+        UpdateFlash(f);
+    }
+
+    private void UpdateFlash(FlashFx f)
+    {
+        float u = Mathf.Clamp01(f.age / f.life);
+        float a = u < 0.2f ? u / 0.2f : 1f - (u - 0.2f) / 0.8f;
+        Color c = f.color;
+        c.a *= a;
+        Place(f.r, f.pos, f.size, c, f.angle);
+    }
+
     private void LateUpdate()
     {
         float dt = Time.deltaTime;
+        for (int i = flashes.Count - 1; i >= 0; i--)
+        {
+            var f = flashes[i];
+            f.age += dt;
+            if (f.age >= f.life) { Release(f.r); flashes.RemoveAt(i); continue; }
+            UpdateFlash(f);
+        }
         for (int i = rings.Count - 1; i >= 0; i--)
         {
             var f = rings[i];
@@ -137,6 +166,11 @@ public class MaestroFx : MonoBehaviour
             UpdateRing(f);
         }
         foreach (var s in sweeps) s.Tick(dt);
+        for (int i = crescents.Count - 1; i >= 0; i--)
+        {
+            crescents[i].Tick(dt);
+            if (crescents[i].Done) { crescents[i].Destroy(); crescents.RemoveAt(i); }
+        }
     }
 
     // ───────────────────────── 지휘봉 잔상 (초승달) ─────────────────────────
@@ -215,6 +249,130 @@ public class MaestroFx : MonoBehaviour
     }
 
     private readonly List<Sweep> sweeps = new List<Sweep>();
+
+    // ───────────────────────── 초승달 베기 (사용자 시트 '지휘봉 패턴 모션 — 3연속 횡베기') ─────────────────────────
+
+    /// <summary>
+    /// 크고 두꺼운 초승달(C자) 베기 궤적. 타원(반지름 rx, ry) 위를 각도 a0 → a1 (도, 반시계 +)로 그려 나가며(reveal 0~1),
+    /// 두께는 가운데가 가장 굵고 양 끝이 가늘다. 바깥 가장자리가 밝고 안쪽으로 옅어진다. Finish 하면 fade초에 흐려진다.
+    /// 쓴 쪽이 매 프레임 reveal을 정한다 (판정과 같은 진행률).
+    /// </summary>
+    public class Crescent
+    {
+        public Vector3 center;
+        public float rx, ry, a0, a1, thickness;   // thickness = 타원 반지름에 대한 비율 (가장 굵은 곳)
+        public float reveal;                       // 0~1
+        public Color core = MoonWhite, edge = Lavender;
+        [Tooltip("안쪽(쓸고 지나간 부채꼴) 채움 진하기 — 알파만 씀")]
+        public Color fill = new Color(0f, 0f, 0f, 0f);
+        public float fadeSeconds = 0.35f;
+        private float fade = 1f;
+        private bool finishing;
+        private readonly Mesh mesh;
+        private readonly MeshRenderer renderer;
+        private readonly List<Vector3> verts = new List<Vector3>();
+        private readonly List<Color> cols = new List<Color>();
+        private readonly List<int> tris = new List<int>();
+        public bool Done => finishing && fade <= 0f;
+
+        public Crescent(Transform parent, int order)
+        {
+            var go = new GameObject("초승달 베기") { hideFlags = HideFlags.DontSave };
+            go.transform.SetParent(parent, false);
+            mesh = new Mesh { name = "초승달 베기" };
+            mesh.MarkDynamic();
+            go.AddComponent<MeshFilter>().sharedMesh = mesh;
+            renderer = go.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = Mat;
+            renderer.sortingOrder = order;
+        }
+
+        public void Finish() => finishing = true;
+        public void Destroy() { if (renderer != null) Object.Destroy(renderer.gameObject); }
+
+        /// <summary>각도 a(도)의 타원 위 점, r = 반지름 배율</summary>
+        public Vector3 Point(float aDeg, float r)
+        {
+            float a = aDeg * Mathf.Deg2Rad;
+            return center + new Vector3(Mathf.Cos(a) * rx * r, Mathf.Sin(a) * ry * r, 0f);
+        }
+
+        /// <summary>
+        /// 진행률 s(0~1)의 두께 비율 (0~1) — 시트 베기 초승달처럼 시작은 가늘고, 3분의 2쯤(앞쪽)에서 가장 굵고, 끝은 날카롭게 좁아진다.
+        /// 판정(MaestroSlashPattern)도 같은 모양을 쓴다
+        /// </summary>
+        public static float Profile(float s) => Mathf.Pow(Mathf.Max(0f, Mathf.Sin(Mathf.PI * Mathf.Pow(Mathf.Clamp01(s), 1.5f))), 0.6f); // 끝(s=1)의 sin π가 아주 작은 음수 → 0.6제곱이 NaN 되던 것 막음
+
+        /// <summary>진행률 s(0~1)에서의 두께 비율</summary>
+        public float ThicknessAt(float s) => thickness * Profile(s);
+
+        /// <summary>그려지는 머리에서 튀는 불티 (시트 초승달 둘레 파편) — 쓴 쪽이 넣는다. 없으면 안 튐</summary>
+        public MaestroFx sparks;
+        private int sparked;
+
+        public void Tick(float dt)
+        {
+            if (finishing) fade = Mathf.MoveTowards(fade, 0f, dt / Mathf.Max(0.05f, fadeSeconds));
+            verts.Clear(); cols.Clear(); tris.Clear();
+            const int N = 56;
+            int shown = Mathf.Clamp(Mathf.CeilToInt(N * Mathf.Clamp01(reveal)), 0, N);
+            var tr = renderer.transform;
+            // 띠 4겹: 바깥 번짐(투명) → 바깥 가장자리 흰빛(가장 밝음) → 라벤더 → 안쪽 보라(옅게) — 시트 초승달 색 층
+            for (int i = 0; i <= shown; i++)
+            {
+                float s = i / (float)N;
+                float a = Mathf.Lerp(a0, a1, s);
+                float th = ThicknessAt(s);
+                // 막 그려진 앞쪽(머리)이 가장 밝고, 지나간 뒤쪽은 조금 옅게
+                float head = shown > 0 ? 0.55f + 0.45f * Mathf.Clamp01(1f - (shown - i) / 20f) : 1f;
+                Color co = core; co.a *= fade * head;
+                Color ce = edge; ce.a = 0f;
+                Color cm = edge; cm.a *= fade * head * 0.75f;
+                Color ci = Violet; ci.a = edge.a * fade * head * 0.12f;
+                Color cf = Violet; cf.a = fill.a * fade;
+                verts.Add(tr.InverseTransformPoint(Point(a, 1f + th * 0.3f))); cols.Add(ce);
+                verts.Add(tr.InverseTransformPoint(Point(a, 1f))); cols.Add(co);
+                verts.Add(tr.InverseTransformPoint(Point(a, 1f - th * 0.35f))); cols.Add(cm);
+                verts.Add(tr.InverseTransformPoint(Point(a, 1f - th))); cols.Add(ci);
+                verts.Add(tr.InverseTransformPoint(Point(a, 0.04f))); cols.Add(cf);   // 안쪽 채움 (쓸고 지나간 자리 = 판정)
+            }
+            for (int i = 0; i < shown; i++)
+            {
+                int v = i * 5;
+                for (int k = 0; k < 4; k++)
+                {
+                    tris.Add(v + k); tris.Add(v + k + 1); tris.Add(v + k + 5);
+                    tris.Add(v + k + 1); tris.Add(v + k + 6); tris.Add(v + k + 5);
+                }
+            }
+            // 새로 그려진 칸마다 바깥 가장자리 근처에 불티 (진하게 보일 때만)
+            if (sparks != null && core.a > 0.5f && !finishing)
+                for (; sparked < shown; sparked++)
+                {
+                    if (((sparked * 7919) & 3) == 0) continue; // 4칸 중 3칸
+                    float s = sparked / (float)N;
+                    float a = Mathf.Lerp(a0, a1, s);
+                    float jitter = ((sparked * 2654435761u) % 1000u) / 1000f;
+                    var p = Point(a + (jitter - 0.5f) * 6f, 1f + ThicknessAt(s) * (0.1f + 0.5f * jitter));
+                    float size = Mathf.Min(rx, ry) * (0.05f + 0.06f * jitter);
+                    sparks.Flash(Disc, p, Vector2.one * size, 0f, MoonWhite, 0.18f + 0.2f * jitter);
+                }
+            mesh.Clear();
+            mesh.SetVertices(verts);
+            mesh.SetColors(cols);
+            mesh.SetTriangles(tris, 0);
+            renderer.enabled = verts.Count > 0 && fade > 0f;
+        }
+    }
+
+    private readonly List<Crescent> crescents = new List<Crescent>();
+
+    public Crescent CreateCrescent()
+    {
+        var c = new Crescent(transform, sortingOrder + 1) { sparks = this };
+        crescents.Add(c);
+        return c;
+    }
 
     public Sweep CreateSweep()
     {

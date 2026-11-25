@@ -25,6 +25,12 @@ public static class MaestroBuilder
     private const string CurtainDataPath = DataFolder + "/Maestro_CurtainData.asset";
     private const string BatonPatternPath = DataFolder + "/Maestro_Pattern_Baton.asset";
     private const string BatonDataPath = DataFolder + "/Maestro_BatonData.asset";
+    private const string SlashPatternPath = DataFolder + "/Maestro_Pattern_Slash.asset";
+    private const string SlashDataPath = DataFolder + "/Maestro_SlashData.asset";
+    private const string OrbitPatternPath = DataFolder + "/Maestro_Pattern_Orbit.asset";
+    private const string OrbitDataPath = DataFolder + "/Maestro_OrbitData.asset";
+    private const string WavePatternPath = DataFolder + "/Maestro_Pattern_Wave.asset";
+    private const string WaveDataPath = DataFolder + "/Maestro_WaveData.asset";
     // 남는 봇 (몸 그림에 겹쳐 숨김) — 패턴이 빌려 쓴다 (커튼 3000 · 지휘봉 2400 · 음표 ~1500, 동시엔 하나). TODO 임시값
     private const int LookPoolBots = 4000;
     private const float DefaultDistanceFromPlayer = 6f; // 새로 세울 때 플레이어 오른쪽 거리(월드) — 배치 편의값
@@ -99,10 +105,15 @@ public static class MaestroBuilder
         // 외형 (2026-11-24): 사용자 참고 그림 → 부위 그림 + 몸짓. 누를 때마다 다시 굽는다(그림 수정 반영). MaestroLook 값은 유지
         var look = MaestroLookBuilder.BuildLook(boss.GetComponent<RSNanoSwarm>(), boss.transform, LookPoolBots);
         if (look != null) SetFields(boss, s => s.FindProperty("look").objectReferenceValue = look);
+        // 디버그 패널 (플레이 중 F8) — 패턴 골라 쓰기·상태 보기·실시간 조절 (11-25)
+        if (boss.GetComponent<MaestroDebugPanel>() == null) Undo.AddComponent<MaestroDebugPanel>(boss.gameObject);
 
         EnsureNotePattern(boss);
         EnsureCurtainPattern(boss);
         EnsureBatonPattern(boss);
+        EnsureSlashPattern(boss);
+        EnsureOrbitPattern(boss);
+        EnsureWavePattern(boss);
 
         Selection.activeGameObject = boss.gameObject;
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
@@ -157,6 +168,71 @@ public static class MaestroBuilder
         });
         var batonData = LoadOrCreate<MaestroBatonData>(BatonDataPath, null);
         EnsurePatternChild<MaestroBatonPattern>(boss, "패턴_거대 지휘봉", pattern, "batonData", batonData);
+    }
+
+    // 11-25 사용자: 거대 지휘봉(8자·무한대)은 잠시 꺼 두고, 지휘봉 베기(검처럼 오른쪽→왼쪽·왼쪽→오른쪽·오른쪽→왼쪽, 회피로 피함)를 대신 쓴다.
+    // 예전 패턴은 지우지 않는다 — 오브젝트만 꺼 둠(다시 켜면 그대로 돌아온다). 꺼 둔 패턴은 컨트롤러가 등록하지 않는다
+    private static void EnsureSlashPattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(SlashPatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_SLASH";
+            p.patternName = "지휘봉 베기";
+            p.description = "지휘봉을 검처럼 길게 — 오른쪽→왼쪽, 왼쪽→오른쪽, 오른쪽→왼쪽 수평 베기 3번. 가슴 높이 화면 전체, 회피로 피함";
+            p.tellDuration = 0f;                  // 예고는 패턴 안(감아올림 · 빛줄기)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.RightArm; // 기획서 0.3: 거대 지휘봉 = 오른팔 자리를 이어받음
+        });
+        var data = LoadOrCreate<MaestroSlashData>(SlashDataPath, null);
+        bool firstTime = boss.GetComponentInChildren<MaestroSlashPattern>(true) == null;
+        EnsurePatternChild<MaestroSlashPattern>(boss, "패턴_지휘봉 베기", pattern, "slashData", data);
+
+        // 베기를 처음 만들 때만 예전 패턴을 꺼 둔다 — 사용자가 다시 켜 두면 그대로 둔다
+        var old = boss.GetComponentInChildren<MaestroBatonPattern>(true);
+        if (firstTime && old != null && old.gameObject.activeSelf)
+        {
+            Undo.RecordObject(old.gameObject, "거대 지휘봉 꺼 두기");
+            old.gameObject.SetActive(false);
+            Debug.Log("[Maestro] 예전 거대 지휘봉 패턴을 꺼 둠 (오브젝트 '패턴_거대 지휘봉' — 다시 켜면 다시 나온다)");
+        }
+    }
+
+    // 2악장 후보 (11-24 사용자 결정 '1, 2 만들어봐') — 원형 음탄 (시트 '음표 폭풍'). 기획서에 아직 없음. 부위 임시 왼팔
+    private static void EnsureOrbitPattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(OrbitPatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_ORBIT";
+            p.patternName = "원형 음탄";
+            p.description = "2악장 후보 — 음표가 보스 둘레 고리로 돌다가 박자마다 바깥으로 발사(나선), 마지막 박에 한꺼번에";
+            p.tellDuration = 0f;                  // 예고는 패턴 안(② 고리 회전)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.LeftArm; // TODO: 기획서에 없음 — 음표 탄 계열이라 임시로 왼팔
+        });
+        var data = LoadOrCreate<MaestroOrbitData>(OrbitDataPath, null);
+        EnsurePatternChild<MaestroOrbitPattern>(boss, "패턴_원형 음탄", pattern, "orbitData", data);
+        // 선율·음원은 음표 공격 수치를 같이 쓴다
+        var orbit = boss.GetComponentInChildren<MaestroOrbitPattern>(true);
+        var so = new SerializedObject(orbit);
+        var nd = so.FindProperty("noteData");
+        if (nd.objectReferenceValue == null) nd.objectReferenceValue = AssetDatabase.LoadAssetAtPath<MaestroNoteData>(NoteDataPath);
+        so.ApplyModifiedPropertiesWithoutUndo();
+    }
+
+    // 2악장 후보 — 크레셴도 (바닥 모래 파도). 부위 오른다리 = 기획서 0.3 '2악장에서 배정' 자리
+    private static void EnsureWavePattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(WavePatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_WAVE";
+            p.patternName = "크레셴도";
+            p.description = "2악장 후보 — 내리칠 때마다 모래 파도가 좌우로 밀려가며 점점 커짐. 점프로 넘고 마지막은 회피";
+            p.tellDuration = 0f;                  // 예고는 패턴 안(치켜듦 · 바닥 고리)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.RightLeg;
+        });
+        var data = LoadOrCreate<MaestroWaveData>(WaveDataPath, null);
+        EnsurePatternChild<MaestroWavePattern>(boss, "패턴_크레셴도", pattern, "waveData", data);
     }
 
     // 보스 자식에 패턴이 없으면 만들고, 비어 있는 연결(패턴 데이터·수치 에셋)만 채운다

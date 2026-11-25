@@ -22,16 +22,37 @@ public class MaestroOrbitData : ScriptableObject
         [Min(0.5f)] public float speed = 4.5f;
         [Tooltip("마지막 박에 한꺼번에 터지는 음표 수")]
         [Min(0)] public int finalBurst = 3;
+        [Tooltip("유도 — 플레이어 쪽으로 꺾는 최대 각속도 (도/초). 0 이하면 난이도 기본값")]
+        public float homingDegPerSec = 90f;
     }
+
+    // 예전 에셋(유도 칸이 없던 때)용 난이도 기본 유도 (아주 쉬움 → 헬)
+    public static readonly float[] DefaultHoming = { 60f, 75f, 90f, 115f, 140f };
+
+    public float Homing(BossDifficulty d, DifficultyRow row)
+    {
+        if (row != null && row.homingDegPerSec > 0f) return row.homingDegPerSec;
+        return DefaultHoming[Mathf.Clamp((int)d, 0, DefaultHoming.Length - 1)];
+    }
+
+    [Header("배경에서 날리기 (11-25 사용자: 지휘봉처럼 뒤로 물러나 유도탄처럼)")]
+    [Tooltip("보스가 배경(뒤판)으로 물러날 때 자리 (원래 자리 기준, m)")]
+    public Vector2 backOffset = new Vector2(0f, 0.6f);
+    [Tooltip("배경에서 몸 크기 배율")]
+    [Min(0.5f)] public float backGrow = 1.15f;
+    [Tooltip("음표가 배경에서 앞으로 튀어나오는 시간 (초) — 이동안은 느리게 출발하고 판정 없음")]
+    [Min(0.05f)] public float emergeSeconds = 0.4f;
+    [Tooltip("유도하는 시간 (초) — 지나면 직선으로 날아간다(옆으로 빠지면 피할 수 있게)")]
+    [Min(0f)] public float homingSeconds = 1.3f;
 
     [Header("난이도별 (아주 쉬움 · 쉬움 · 보통 · 어려움 · 헬) — TODO 전부 임시값")]
     public DifficultyRow[] difficulty =
     {
-        new DifficultyRow { notes = 8,  spinDegPerSec = 40f, interval = 0.5f,  speed = 4f,   finalBurst = 2 },
-        new DifficultyRow { notes = 10, spinDegPerSec = 50f, interval = 0.45f, speed = 4.5f, finalBurst = 3 },
-        new DifficultyRow { notes = 12, spinDegPerSec = 60f, interval = 0.4f,  speed = 5f,   finalBurst = 3 },
-        new DifficultyRow { notes = 14, spinDegPerSec = 75f, interval = 0.35f, speed = 5.5f, finalBurst = 4 },
-        new DifficultyRow { notes = 16, spinDegPerSec = 90f, interval = 0.3f,  speed = 6f,   finalBurst = 4 },
+        new DifficultyRow { notes = 8,  spinDegPerSec = 40f, interval = 0.5f,  speed = 4f,   finalBurst = 2, homingDegPerSec = 60f },
+        new DifficultyRow { notes = 10, spinDegPerSec = 50f, interval = 0.45f, speed = 4.5f, finalBurst = 3, homingDegPerSec = 75f },
+        new DifficultyRow { notes = 12, spinDegPerSec = 60f, interval = 0.4f,  speed = 5f,   finalBurst = 3, homingDegPerSec = 90f },
+        new DifficultyRow { notes = 14, spinDegPerSec = 75f, interval = 0.35f, speed = 5.5f, finalBurst = 4, homingDegPerSec = 115f },
+        new DifficultyRow { notes = 16, spinDegPerSec = 90f, interval = 0.3f,  speed = 6f,   finalBurst = 4, homingDegPerSec = 140f },
     };
 
     [Header("단계 (TODO 임시값)")]

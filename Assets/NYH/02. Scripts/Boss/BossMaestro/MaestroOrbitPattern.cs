@@ -77,6 +77,10 @@ public class MaestroOrbitPattern : BossPatternGimmickBase, IMaestroMovementGate
         if (row == null) return;
         fx = MaestroFx.Get(maestro);
 
+        // 지휘봉 패턴처럼 배경(뒤판)으로 물러난다 — 그동안 무적(본체 판정도 꺼짐), 끝나면 제자리 (11-25 사용자)
+        maestro.SetBodyPose(orbitData.backOffset, orbitData.backGrow, true);
+        if (OwnerBoss.Snapshot != null) OwnerBoss.Snapshot.isInvincible = true;
+
         float bossH = maestro.Look != null && maestro.Look.Ready ? maestro.Look.Height : 3f;
         ringRadius = bossH * orbitData.ringRadiusRatio;
         ringAngle = Random.value * Mathf.PI * 2f;
@@ -134,6 +138,13 @@ public class MaestroOrbitPattern : BossPatternGimmickBase, IMaestroMovementGate
     {
         running = false;
         Clear();
+        // 배경에서 제자리로 — 악장 전환 중이면 무적은 전환이 맡는다
+        if (maestro != null)
+        {
+            maestro.ResetBodyPose();
+            if (maestro.Look != null) maestro.Look.Stop();
+            if (!maestro.InTransition && OwnerBoss.Snapshot != null) OwnerBoss.Snapshot.isInvincible = false;
+        }
     }
 
     // ───────────────────────── 전투 틱 ─────────────────────────
@@ -183,20 +194,29 @@ public class MaestroOrbitPattern : BossPatternGimmickBase, IMaestroMovementGate
         if (!anyLeft) running = false;
     }
 
+    // 고리 — 배경(뒤판)으로 물러난 보스 둘레
     private Vector3 RingPoint(float slot)
     {
         float a = ringAngle + slot;
         Vector3 c = maestro.BodyCenter;
-        return new Vector3(c.x + Mathf.Cos(a) * ringRadius, c.y + Mathf.Sin(a) * ringRadius * orbitData.ringFlatten, Swarm.FrontZ);
+        return new Vector3(c.x + Mathf.Cos(a) * ringRadius, c.y + Mathf.Sin(a) * ringRadius * orbitData.ringFlatten, Swarm.BackZ);
     }
 
-    // ③④ 발사 — 보스 중심에서 음표 쪽(바깥)으로. 음이 울리고 번쩍
+    private Vector3 AimPoint()
+    {
+        Transform player = maestro.PlayerTransform;
+        float aim = noteData != null ? noteData.aimHeight : 0.6f;
+        return player != null ? player.position + Vector3.up * aim : maestro.BodyCenter + Vector3.right * 4f;
+    }
+
+    // ③④ 발사 — 플레이어 쪽으로 출발 (배경에서 앞으로 튀어나오며 점점 빨라짐). 음이 울리고 번쩍
     private void Launch(Orb o, bool playTone)
     {
-        Vector3 dir = o.pos - maestro.BodyCenter;
+        Vector3 dir = AimPoint() - o.pos;
         dir.z = 0f;
         dir = dir.sqrMagnitude > 1e-6f ? dir.normalized : Vector3.up;
         o.vel = dir * row.speed;
+        o.flightFrames = 0;
         o.state = OrbState.Flying;
         o.flash = 1f;
         foreach (int i in o.bots) Swarm.SetFlash(i, 1f);
@@ -205,10 +225,34 @@ public class MaestroOrbitPattern : BossPatternGimmickBase, IMaestroMovementGate
         fired++;
     }
 
+    // 비행: ① 튀어나옴(배경 → 앞판, 느리게 출발, 판정 없음) ② 유도(플레이어 쪽으로 꺾음, 최대 각속도) ③ 직선
     private void Fly(Orb o)
     {
-        o.pos += o.vel * CombatClock.TICK;
         o.flightFrames++;
+        int emerge = Mathf.Max(1, Frames(orbitData.emergeSeconds));
+        float u = Mathf.Clamp01(o.flightFrames / (float)emerge);
+        float speed = row.speed * Mathf.Lerp(0.25f, 1f, u * u);
+
+        if (o.flightFrames <= emerge + Frames(orbitData.homingSeconds))
+        {
+            Vector3 want = AimPoint() - o.pos;
+            want.z = 0f;
+            if (want.sqrMagnitude > 1e-4f)
+            {
+                float cur = Mathf.Atan2(o.vel.y, o.vel.x) * Mathf.Rad2Deg;
+                float tgt = Mathf.Atan2(want.y, want.x) * Mathf.Rad2Deg;
+                float turn = orbitData.Homing(maestro.SelectedDifficulty, row) * CombatClock.TICK * (u < 1f ? 2f : 1f); // 튀어나오는 동안은 더 크게 꺾어 방향을 잡는다
+                float a = Mathf.MoveTowardsAngle(cur, tgt, turn) * Mathf.Deg2Rad;
+                o.vel = new Vector3(Mathf.Cos(a), Mathf.Sin(a), 0f);
+            }
+        }
+        Vector3 dir = o.vel.sqrMagnitude > 1e-6f ? o.vel.normalized : Vector3.right;
+        o.vel = dir * speed;
+        Vector3 next = o.pos + o.vel * CombatClock.TICK;
+        next.z = Mathf.Lerp(Swarm.BackZ, Swarm.FrontZ, Mathf.SmoothStep(0f, 1f, u)); // 배경에서 앞판으로
+        o.pos = next;
+        if (u < 1f) return; // 튀어나오는 중엔 판정·벽·바닥 없음
+
         int count = Physics2D.OverlapCircle(o.pos, orbitData.hitRadius, overlapFilter, overlap);
         for (int k = 0; k < count; k++)
         {

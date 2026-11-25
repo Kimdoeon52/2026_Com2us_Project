@@ -340,8 +340,33 @@ public class MaestroBossController : BossControllerBase
     private readonly List<BossPatternGimmickBase> patternChoices = new List<BossPatternGimmickBase>();
     private int patternCursor;
 
+    // ── 디버그 패널용 (MaestroDebugPanel) ──
+    private BossPatternGimmickBase forcedPattern;
+    /// <summary>켜면 자동으로 패턴을 고르지 않는다 (디버그 — 몸짓·연출만 볼 때)</summary>
+    [System.NonSerialized] public bool debugPauseAuto;
+    public BossPatternGimmickBase LastPattern { get; private set; }
+    public IReadOnlyList<BossPatternGimmickBase> DebugPatterns => activePatternPool;
+
+    /// <summary>디버그: 진행 중이던 패턴을 끊고 이 패턴을 바로 실행 (악장 전환·격파 중엔 안 함)</summary>
+    public void DebugRunPattern(BossPatternGimmickBase pattern)
+    {
+        if (pattern == null || InTransition || defeated || Snapshot == null || !Snapshot.IsAlive) return;
+        foreach (var p in activePatternPool) if (p != null) p.InterruptPattern(InterruptReason.Manual);
+        forcedPattern = pattern;
+        StateMachine?.ChangeState(new BossIdleState(this, RenewStateCancellationToken(), 0.05f));
+    }
+
+    /// <summary>디버그: 이번 악장 HP를 0으로 (악장 전환·격파 확인)</summary>
+    public void DebugFinishMovement()
+    {
+        if (!Application.isPlaying || Snapshot == null || InTransition || defeated) return;
+        TakeDamage(Snapshot.currentHp, true);
+    }
+
     public override BossPatternGimmickBase GetNextPatternGimmick()
     {
+        if (forcedPattern != null) { var f = forcedPattern; forcedPattern = null; LastPattern = f; return f; }
+        if (debugPauseAuto) return null;
         patternChoices.Clear();
         int m = Movement;
         for (int pass = 0; pass < 2; pass++)
@@ -359,6 +384,7 @@ public class MaestroBossController : BossControllerBase
         int allowed = Snapshot != null ? Mathf.Clamp(Snapshot.maxAllowedPatterns, 1, patternChoices.Count) : patternChoices.Count;
         var pick = patternChoices[patternCursor % allowed];
         patternCursor++;
+        LastPattern = pick;
         return pick;
     }
 
@@ -483,11 +509,7 @@ public class MaestroBossController : BossControllerBase
 #if UNITY_EDITOR
     // 시험용 (2026-11-23): 남은 HP만큼 실제 피해 경로(TakeDamage)로 넣어 악장 끝을 바로 본다 — 플레이 중 컴포넌트 ⋮ 메뉴
     [ContextMenu("시험: 이번 악장 HP 0으로 (악장 전환·격파 확인)")]
-    private void DebugFinishMovement()
-    {
-        if (!Application.isPlaying || Snapshot == null || InTransition || defeated) return;
-        TakeDamage(Snapshot.currentHp, true);
-    }
+    private void DebugFinishMovementMenu() => DebugFinishMovement();
 
     private void OnDrawGizmosSelected()
     {

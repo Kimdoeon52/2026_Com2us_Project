@@ -193,6 +193,18 @@ public class MaestroBossController : BossControllerBase
 
     public void ResetBodyPose() => SetBodyPose(Vector2.zero, 1f, false);
 
+    /// <summary>지금 몸 자세 (모션 편집기가 보스 이동 미리보기 뒤 되돌릴 때)</summary>
+    public void GetBodyPose(out Vector2 offset, out float grow, out bool back)
+    {
+        offset = poseOffset; grow = poseGrow; back = poseBack;
+    }
+
+    /// <summary>몸 깊이(z): 0 = 앞판, 1 = 뒤판, 음수 = 원래대로 — 판정은 SetBodyPose의 back으로 따로 켜고 끈다</summary>
+    public void SetBodyDepth(float depth) { if (look != null) look.SetDepth(depth); }
+
+    /// <summary>뒤판(배경)에 있어 공격을 안 맞는 중</summary>
+    public bool IsBodyBack => poseBack;
+
     /// <summary>지금 자세 기준 몸 중심 목표 (그림)</summary>
     private Vector3 PosedCenter()
     {

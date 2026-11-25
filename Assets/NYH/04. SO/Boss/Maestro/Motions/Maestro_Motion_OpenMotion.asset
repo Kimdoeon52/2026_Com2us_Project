@@ -1,0 +1,202 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0730b19b24fe66e4b8dd4af7518f1e8b, type: 3}
+  m_Name: Maestro_Motion_OpenMotion
+  m_EditorClassIdentifier: 
+  length: 4
+  loop: 0
+  crisp: 1
+  memo: 
+  keys:
+  - time: 0
+    ch:
+    - 0
+    - 0
+    - -8.036364
+    - 66.186226
+    - 0
+    - 0
+    - 0.5
+    - 44.53923
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 1.1084572, y: 0.38276213}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: -0.023568856, y: 0.048365243}
+    hip: {x: 0.0342807, y: -0.0065295505}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: "\uC2DC\uC791"
+  - time: 1
+    ch:
+    - 0
+    - 0
+    - -84.525826
+    - 92.211296
+    - 0
+    - 0
+    - 0.5
+    - 108.025894
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 1.1084572, y: 0.38276213}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: -0.023568856, y: 0.048365243}
+    hip: {x: 0.0342807, y: -0.0065295505}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 2.493
+    ch:
+    - 0
+    - 0
+    - -84.525826
+    - 92.211296
+    - 0
+    - 0
+    - 0.5
+    - 108.025894
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 1.1084572, y: 0.38276213}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: -0.023568856, y: 0.048365243}
+    hip: {x: 0.0342807, y: -0.0065295505}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 4
+    ch:
+    - 0
+    - 0
+    - 40.417007
+    - 92.211296
+    - 0
+    - 0
+    - 0.5
+    - -8.810715
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 1.1084572, y: 0.38276213}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: -0.023568856, y: 0.048365243}
+    hip: {x: 0.0342807, y: -0.0065295505}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  events:
+  - type: 1
+    name: "\uC1201"
+    time: 0
+    anchor: 5
+    offset: {x: 0.011766197, y: 0.07481796}
+    duration: 0.6
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 3
+    lineFeel: 6
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: -0.21052878, y: 0.040539168}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 1
+    moveDepth: 0.802
+    moveGrow: 0.992
+  - type: 1
+    name: "\uC1202"
+    time: 3.4
+    anchor: 5
+    offset: {x: 0, y: 0}
+    duration: 0.6
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 3
+    lineFeel: 6
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0, y: -0.075}
+    - {x: 0, y: -0.15}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 1
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC8103"
+    time: 1.1
+    anchor: 3
+    offset: {x: -0.0076039704, y: 0.34773582}
+    duration: 0.4
+    count: 1
+    memo: "\uAC1C\uD070 \uC74C\uD45C\uB97C \uB9CC\uB4E0\uD6C4 \uD50C\uB808\uC774\uC5B4\uAC00
+      \uC788\uB294 \uBC1C\uD310\uC73C\uB85C \uD22C\uCC99\uD558\uC5EC \uACF5\uACA9
+      \uBC1C\uD310\uC5D0 \uB2FF\uC73C\uBA74 \uD130\uC9C0\uBA74\uC11C \uC88C\uC6B0\uB85C
+      \uD37C\uC838\uB098\uAC00\uB294 \uC6E8\uC774\uBE0C\n\uC2DD\uC758 \uACF5\uACA9\uC774
+      \uB098\uAC10 \uADF8\uD6C4 \uB2E4\uC2DC \uC55E\uC73C\uB85C \uBCF5\uADC0"
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.4
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  hideDepth: 0.323

@@ -370,7 +370,20 @@ public class MaestroLook : MonoBehaviour
     }
 
     private float FlipX => Mathf.Abs(face * artFacing) < 0.02f ? 0.02f * Mathf.Sign(faceTarget * artFacing) : face * artFacing;
-    private float PlaneZ => swarm != null ? (back > 0.5f ? swarm.BackZ : swarm.FrontZ) : transform.position.z;
+    private float PlaneZ => swarm == null ? transform.position.z
+                          : depthOverride >= 0f ? DepthToZ(depthOverride)
+                          : (back > 0.5f ? swarm.BackZ : swarm.FrontZ);
+
+    // 깊이(z) 직접 지정 — 0 = 앞판, 1 = 뒤판(배경). 음수면 끔(앞판/뒤판 둘 중 하나로 넘어가는 원래 방식)
+    private float depthOverride = -1f;
+
+    /// <summary>몸을 앞판(0)~뒤판(1) 사이 깊이에 그린다 (z로 스르륵 들어가기). 음수 = 원래대로</summary>
+    public void SetDepth(float depth) => depthOverride = depth < 0f ? -1f : Mathf.Max(0f, depth);
+
+    public float Depth => depthOverride;
+
+    /// <summary>깊이(0 앞판 ~ 1 뒤판) → 월드 z</summary>
+    public float DepthToZ(float depth) => swarm == null ? transform.position.z : Mathf.LerpUnclamped(swarm.FrontZ, swarm.BackZ, depth);
 
     // ───────────────────────── 시작 ─────────────────────────
 
@@ -585,6 +598,12 @@ public class MaestroLook : MonoBehaviour
     public void SetFacing(float dir) { if (turnToPlayer && Mathf.Abs(dir) > 0.01f) faceTarget = Mathf.Sign(dir); }
 
     /// <summary>자세: 발밑에서 offset(m) 만큼, 크기 grow 배, back이면 뒤판(배경). 부드럽게 넘어간다</summary>
+    /// <summary>지금 자세 목표 (SetPose로 건 값) — 편집기가 미리보기 뒤 되돌릴 때</summary>
+    public void GetPose(out Vector2 offset, out float growTo, out bool backTo)
+    {
+        offset = poseOffset; growTo = growTarget; backTo = backTarget > 0.5f;
+    }
+
     public void SetPose(Vector2 offset, float grow, bool back)
     {
         poseOffset = offset;
@@ -1745,22 +1764,26 @@ public class MaestroLook : MonoBehaviour
             case MaestroMotion.Anchor.OtherHand: return W3(BonePoint(iOW, fingerAim));
             case MaestroMotion.Anchor.Head: return W3(BonePoint(iHead, headAim));
             case MaestroMotion.Anchor.Feet: return W3(rootArt + new Vector2(0f, RootHandleY));
+            case MaestroMotion.Anchor.Free: return MotionHomeWorld;
             default: return BodyCenter;
         }
     }
 
-    /// <summary>모션 좌표(키 대비, x + = 앞) → 월드 이동량. 보스가 보는 쪽·크기 반영</summary>
-    public Vector3 MotionToWorldDelta(Vector2 r)
+    /// <summary>자유 자리 기준 — 보스 원래 자리(발밑, 앞판). 자세 이동·뒤판을 안 따라감</summary>
+    public Vector3 MotionHomeWorld => new Vector3(feet.x, feet.y, swarm != null ? swarm.FrontZ : transform.position.z);
+
+    /// <summary>모션 좌표(키 대비, x + = 앞) → 월드 이동량. 보스가 보는 쪽 반영, useGrow면 지금 크기도 (보스 이동은 원래 크기 기준)</summary>
+    public Vector3 MotionToWorldDelta(Vector2 r, bool useGrow = true)
     {
-        float h = (data != null ? data.artHeightPx : 150f) * cell * grow;
+        float h = (data != null ? data.artHeightPx : 150f) * cell * (useGrow ? grow : 1f);
         float front = -Mathf.Sign(FlipX == 0f ? 1f : FlipX); // 그림 −x = 앞
         return new Vector3(r.x * h * front, r.y * h, 0f);
     }
 
     /// <summary>월드 이동량 → 모션 좌표 (MotionToWorldDelta의 반대)</summary>
-    public Vector2 WorldDeltaToMotion(Vector3 d)
+    public Vector2 WorldDeltaToMotion(Vector3 d, bool useGrow = true)
     {
-        float h = Mathf.Max(1e-4f, (data != null ? data.artHeightPx : 150f) * cell * grow);
+        float h = Mathf.Max(1e-4f, (data != null ? data.artHeightPx : 150f) * cell * (useGrow ? grow : 1f));
         float front = -Mathf.Sign(FlipX == 0f ? 1f : FlipX);
         return new Vector2(d.x / (h * front), d.y / h);
     }

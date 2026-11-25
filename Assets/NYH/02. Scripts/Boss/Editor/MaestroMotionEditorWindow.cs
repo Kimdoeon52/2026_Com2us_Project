@@ -48,6 +48,18 @@ public class MaestroMotionEditorWindow : EditorWindow
     private float lastSceneTime = -1f;
     private bool showEvents = true;
 
+    // Scene 뷰에서 자유 배치 — Shift+클릭: 시작 자리 옮김, Ctrl+클릭: 경로 점 추가, Ctrl+끌기: 경로 그리기
+    private readonly List<Vector3> stroke = new List<Vector3>();
+    private bool stroking;
+    private static readonly int PlaceHash = "MaestroEventPlace".GetHashCode();
+
+    // 보스 이동(BossMove) 미리보기 — 편집 시작 때 자세를 기억해 두고 끝날 때 되돌린다
+    private bool movePreview, savedPoseBack;
+    private Vector2 savedPoseOffset;
+    private float savedPoseGrow = 1f;
+
+    private static readonly string[] AnchorNames = { "지휘봉 끝", "지휘 손", "반대 손끝", "머리", "몸 가운데", "발밑 (이동 따라감)", "자유 자리 (무대 고정)" };
+
     private static readonly Color[] HandleColors =
     {
         new Color(1f, 0.85f, 0.2f), new Color(1f, 0.6f, 0.2f), new Color(0.95f, 0.45f, 0.9f), new Color(0.95f, 0.45f, 0.9f),
@@ -106,6 +118,7 @@ public class MaestroMotionEditorWindow : EditorWindow
         look.EditStill = still;
         look.EditSnap = dragHandle >= 0 || snap; // 끄는 동안은 항상 정확히 (스프링이 늦게 따라오면 손잡이가 튄다)
         look.EditTime = time;
+        TickMovePreview();
 
         if (hasPendingDrag && Time.frameCount != lastApplyFrame)
         {
@@ -143,6 +156,7 @@ public class MaestroMotionEditorWindow : EditorWindow
                 foreach (var p in boss.DebugPatterns) if (p != null) p.InterruptPattern(InterruptReason.Manual);
         }
         look.EditBegin(motion);
+        SavePose();
         editing = true;
         time = Mathf.Clamp(time, 0f, motion.length);
         if (selKey >= 0 && selKey < motion.keys.Count) time = motion.keys[selKey].time;
@@ -154,8 +168,43 @@ public class MaestroMotionEditorWindow : EditorWindow
         editing = false;
         playing = false;
         dragHandle = -1;
+        stroking = false;
+        RestorePose();
         if (look != null) look.EditEnd();
         if (boss != null) boss.debugPauseAuto = prevPauseAuto;
+    }
+
+    // ── 보스 이동 미리보기 (BossMove 선) ──
+
+    private void SavePose()
+    {
+        movePreview = false;
+        if (boss != null) boss.GetBodyPose(out savedPoseOffset, out savedPoseGrow, out savedPoseBack);
+        else if (look != null) look.GetPose(out savedPoseOffset, out savedPoseGrow, out savedPoseBack);
+    }
+
+    private void RestorePose()
+    {
+        if (!movePreview) return;
+        movePreview = false;
+        if (boss != null) boss.SetBodyPose(savedPoseOffset, savedPoseGrow, savedPoseBack);
+        else if (look != null) look.SetPose(savedPoseOffset, savedPoseGrow, savedPoseBack);
+        if (look != null) look.SetDepth(-1f);
+    }
+
+    // 모션의 보스 이동을 지금 시간까지 쌓아 몸 자세로 건다 (뒤판이면 판정도 꺼짐 — 컨트롤러 SetBodyPose)
+    private void TickMovePreview()
+    {
+        if (!motion.HasMove) { RestorePose(); return; }
+        motion.EvaluateMove(time, out var off, out float grow, out float depth);
+        bool back = depth >= motion.hideDepth;
+        Vector3 w = look.MotionToWorldDelta(off, false);
+        Vector2 o = savedPoseOffset + new Vector2(w.x, w.y);
+        float g = savedPoseGrow * grow;
+        if (boss != null) boss.SetBodyPose(o, g, back);
+        else look.SetPose(o, g, back);
+        look.SetDepth(depth);
+        movePreview = true;
     }
 
     // 지금 시간의 키 (없으면 지금 자세로 새로 찍음 — 자동 키)
@@ -628,8 +677,9 @@ public class MaestroMotionEditorWindow : EditorWindow
         EditorGUILayout.Space(2);
         e.name = EditorGUILayout.TextField(new GUIContent("이름", "패턴 코드에서 찾는 이름"), e.name);
         e.time = EditorGUILayout.Slider("시간 (초)", e.time, 0f, motion.length);
-        e.anchor = (MaestroMotion.Anchor)EditorGUILayout.EnumPopup(new GUIContent("기준", "이 시간에 이 자리에서 시작"), e.anchor);
-        e.offset = EditorGUILayout.Vector2Field(new GUIContent("기준에서 (키 대비)", "x + = 앞, y + = 위"), e.offset);
+        var newAnchor = (MaestroMotion.Anchor)EditorGUILayout.Popup(new GUIContent("기준", "이 시간에 이 자리에서 시작 — 자유 자리는 무대에 고정 (Scene 뷰 Shift+클릭으로 바로 놓기)"), (int)e.anchor, AnchorNames);
+        if (newAnchor != e.anchor) ChangeAnchor(e, newAnchor);
+        e.offset = EditorGUILayout.Vector2Field(new GUIContent(e.anchor == MaestroMotion.Anchor.Free ? "자리 (키 대비, 원래 발밑에서)" : "기준에서 (키 대비)", "x + = 앞, y + = 위"), e.offset);
         e.duration = Mathf.Max(0.01f, EditorGUILayout.FloatField(new GUIContent(e.type == MaestroMotion.EventType.Point ? "남아 있는 시간 (초)" : "끝까지 가는 시간 (초)"), e.duration));
         e.count = Mathf.Max(1, EditorGUILayout.IntField("개수", e.count));
 
@@ -653,7 +703,27 @@ public class MaestroMotionEditorWindow : EditorWindow
             e.aimAtPlayer = EditorGUILayout.Toggle(new GUIContent("플레이어 쪽으로 돌리기", "경로 모양은 그대로, 첫 점 → 끝 점 방향이 플레이어를 향함"), e.aimAtPlayer);
             e.width = EditorGUILayout.Slider(new GUIContent("두께 (키 대비)", "판정 굵기"), e.width, 0f, 0.4f);
             if (e.count > 1) e.interval = EditorGUILayout.Slider(new GUIContent("연속 간격 (초)", "하나씩 이 선을 타는 간격 (0 = 한꺼번에)"), e.interval, 0f, 1f);
-            e.startAtPoint = EditorGUILayout.TextField(new GUIContent("이 점에서 시작", "점 이벤트 이름 — 비우면 기준+offset"), e.startAtPoint);
+            if (e.lineRole == MaestroMotion.LineRole.BossMove)
+            {
+                EditorGUILayout.HelpBox("보스 이동: 경로 모양만큼 몸이 옮겨 가고(화면 x·y), 깊이를 바꾸면 z로 배경 쪽에 스르륵 들어갑니다.\n" +
+                                        "이동은 이어서 쌓여요 — 뒤로 들어간 뒤 다른 이동 선으로 나오기. 깊이·크기도 경로와 같은 속도 느낌으로 바뀜.", MessageType.None);
+                e.changeDepth = EditorGUILayout.ToggleLeft(new GUIContent("깊이(z)·크기 바꾸기", "끄면 지금 깊이·크기 그대로 옆으로만 이동"), e.changeDepth);
+                if (e.changeDepth)
+                {
+                    EditorGUI.indentLevel++;
+                    e.moveDepth = EditorGUILayout.Slider(new GUIContent("도착 깊이 (z)", "0 = 앞판(플레이어 줄) · 1 = 뒤판(배경) · 1보다 크면 더 뒤"), e.moveDepth, 0f, 1.5f);
+                    e.moveGrow = EditorGUILayout.Slider(new GUIContent("도착 크기", "1 = 그대로 (멀어지면 원근으로 이미 작아 보임)"), e.moveGrow, 0.3f, 1.5f);
+                    EditorGUI.indentLevel--;
+                }
+                motion.hideDepth = EditorGUILayout.Slider(new GUIContent("이 깊이부터 공격 안 맞음", "모션 공통 — 보스가 이 깊이보다 뒤에 있으면 판정이 꺼짐"), motion.hideDepth, 0.05f, 1f);
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("뒤로 들어가기 (z)")) MovePreset(e, new Vector2(0f, 0.15f), true, 1f, 1f, MaestroMotion.LineFeel.Anticipate);
+                if (GUILayout.Button("앞으로 나오기 (z)")) MovePreset(e, new Vector2(0f, -0.15f), true, 0f, 1f, MaestroMotion.LineFeel.Smooth);
+                if (GUILayout.Button("돌진")) MovePreset(e, new Vector2(1.2f, 0f), false, 0f, 1f, MaestroMotion.LineFeel.Accelerate);
+                EditorGUILayout.EndHorizontal();
+            }
+            else
+                e.startAtPoint = EditorGUILayout.TextField(new GUIContent("이 점에서 시작", "점 이벤트 이름 — 비우면 기준+offset"), e.startAtPoint);
             EditorGUILayout.BeginHorizontal();
             GUILayout.Label($"경로 점 {e.path.Count}개", GUILayout.Width(80));
             if (GUILayout.Button("+ 경로 점"))
@@ -673,6 +743,41 @@ public class MaestroMotionEditorWindow : EditorWindow
         if (GUILayout.Button("이 이벤트 시간으로 이동")) { time = e.time; playing = false; }
     }
 
+    // 기준을 바꿔도 화면 속 자리는 그대로 (offset을 새 기준에 맞춰 다시 계산)
+    private void ChangeAnchor(MaestroMotion.MotionEvent e, MaestroMotion.Anchor a)
+    {
+        if (editing && look != null && look.Ready && string.IsNullOrEmpty(e.startAtPoint))
+        {
+            Vector3 w = EventStart(e);
+            e.anchor = a;
+            anchorCache.Remove(e);
+            e.offset = ToM(e, w - AnchorAt(e));
+        }
+        else e.anchor = a;
+    }
+
+    // 보스 이동 프리셋 — to: 화면 이동(키 대비), depth: 도착 깊이(changeDepth일 때)
+    private void MovePreset(MaestroMotion.MotionEvent e, Vector2 to, bool changeDepth, float depth, float grow, MaestroMotion.LineFeel feel)
+    {
+        e.anchor = MaestroMotion.Anchor.Feet;
+        e.offset = Vector2.zero;
+        e.path = new List<Vector2> { Vector2.zero, to * 0.5f + new Vector2(0f, Mathf.Abs(to.x) * 0.12f), to };
+        e.curved = true;
+        e.changeDepth = changeDepth;
+        e.moveDepth = depth;
+        e.moveGrow = grow;
+        e.lineFeel = feel;
+        if (string.IsNullOrEmpty(e.name)) e.name = !changeDepth ? "돌진" : depth > 0.5f ? "뒤로들어가기" : "앞으로나오기";
+    }
+
+    // 보스 이동 선은 원래 크기 기준 (뒤판에서 작아져도 경로 길이는 그대로)
+    private static bool IsMove(MaestroMotion.MotionEvent e) => e.type == MaestroMotion.EventType.Line && e.lineRole == MaestroMotion.LineRole.BossMove;
+    private Vector3 ToW(MaestroMotion.MotionEvent e, Vector2 r) => look.MotionToWorldDelta(r, !IsMove(e));
+    private Vector2 ToM(MaestroMotion.MotionEvent e, Vector3 d) => look.WorldDeltaToMotion(d, !IsMove(e));
+
+    private Vector3 AnchorAt(MaestroMotion.MotionEvent e)
+        => anchorCache.TryGetValue(e, out var b) ? b : look.MotionAnchorWorld(e.anchor);
+
     // ── Scene 뷰: 이벤트 그리기 ──
 
     // 이벤트 시작 자리 (월드). 기준 자리는 '그 이벤트 시간의 자세'로 기억해 둔다(재생 위치가 그 시간을 지날 때 잡음) — 없으면 지금 자세
@@ -681,17 +786,17 @@ public class MaestroMotionEditorWindow : EditorWindow
         Vector3 b;
         var from = depth < 3 && !string.IsNullOrEmpty(e.startAtPoint) ? motion.FindEvent(e.startAtPoint) : null;
         if (from != null && from != e) b = EventStart(from, depth + 1);
-        else if (!anchorCache.TryGetValue(e, out b)) b = look.MotionAnchorWorld(e.anchor);
-        return b + look.MotionToWorldDelta(e.offset);
+        else b = AnchorAt(e);
+        return b + ToW(e, e.offset);
     }
 
     // 경로 회전 (플레이어 쪽으로) — 라디안
     private float EventAim(MaestroMotion.MotionEvent e, Vector3 start)
     {
-        if (!e.aimAtPlayer || e.path == null || e.path.Count < 2) return 0f;
+        if (!e.aimAtPlayer || IsMove(e) || e.path == null || e.path.Count < 2) return 0f;
         var player = GameObject.FindWithTag("Player");
         if (player == null) return 0f;
-        Vector3 d = look.MotionToWorldDelta(e.path[e.path.Count - 1] - e.path[0]);
+        Vector3 d = ToW(e, e.path[e.path.Count - 1] - e.path[0]);
         Vector3 to = player.transform.position - start;
         if (d.sqrMagnitude < 1e-8f || to.sqrMagnitude < 1e-8f) return 0f;
         return Mathf.Atan2(to.y, to.x) - Mathf.Atan2(d.y, d.x);
@@ -699,9 +804,16 @@ public class MaestroMotionEditorWindow : EditorWindow
 
     private Vector3 EventPathWorld(MaestroMotion.MotionEvent e, Vector3 start, float aim, float s)
     {
-        Vector3 d = look.MotionToWorldDelta(MaestroMotion.PathPoint(e, s));
+        Vector3 d = ToW(e, MaestroMotion.PathPoint(e, s));
         float c = Mathf.Cos(aim), sn = Mathf.Sin(aim);
-        return start + new Vector3(c * d.x - sn * d.y, sn * d.x + c * d.y, 0f);
+        var p = start + new Vector3(c * d.x - sn * d.y, sn * d.x + c * d.y, 0f);
+        if (IsMove(e) && e.changeDepth)
+        {
+            // 보스 이동: 이 이동 전 깊이 → 도착 깊이로 z도 같이 (선이 배경 쪽으로 들어가는 게 보이게)
+            float before = motion.DepthAt(Mathf.Max(0f, e.time - 1e-3f));
+            p.z = look.DepthToZ(Mathf.LerpUnclamped(before, e.moveDepth, Mathf.Clamp01(s)));
+        }
+        return p;
     }
 
     private void CaptureAnchors()
@@ -803,6 +915,138 @@ public class MaestroMotionEditorWindow : EditorWindow
             }
         }
         DrawSelectedEventHandles();
+        HandleEventPlacement();
+        DrawBackBadge();
+    }
+
+    // 뒤판에 있는 동안 표시 (공격 안 맞음)
+    private void DrawBackBadge()
+    {
+        if (!movePreview) return;
+        float depth = motion.DepthAt(time);
+        if (depth <= 0.01f) return;
+        var c = look.BodyCenter;
+        bool hidden = depth >= motion.hideDepth;
+        Handles.color = new Color(0.45f, 0.75f, 1f, 0.9f);
+        Handles.Label(c + Vector3.up * look.MotionToWorldDelta(Vector2.up).y * 0.6f,
+            $"깊이 {depth:0.00}" + (hidden ? " — 공격 안 맞음" : ""), EditorStyles.whiteBoldLabel);
+    }
+
+    // Scene 뷰 자유 배치: Shift+클릭 = 고른 이벤트 시작 자리를 거기로(자유 자리), Ctrl+클릭 = 경로 점 추가, Ctrl+끌기 = 경로를 손으로 그림
+    private void HandleEventPlacement()
+    {
+        if (!SelEventValid) return;
+        var e = motion.events[selEvent];
+        var ev = Event.current;
+        int id = GUIUtility.GetControlID(PlaceHash, FocusType.Passive);
+        bool line = e.type == MaestroMotion.EventType.Line;
+        Vector3 start = EventStart(e);
+        float H = look.MotionToWorldDelta(Vector2.up).y;
+
+        if (ev.type == EventType.Layout && (ev.shift || (ev.control && line)) && !ev.alt) HandleUtility.AddDefaultControl(id);
+
+        switch (ev.type)
+        {
+            case EventType.MouseDown when ev.button == 0 && !ev.alt && HandleUtility.nearestControl == id:
+                if (!PlanePoint(ev.mousePosition, start.z, out var w)) break;
+                if (ev.shift)
+                {
+                    Undo.RecordObject(motion, "이벤트 자리 (클릭)");
+                    PlaceStart(e, w);
+                    EditorUtility.SetDirty(motion);
+                    ev.Use();
+                }
+                else if (ev.control && line)
+                {
+                    stroking = true;
+                    stroke.Clear(); stroke.Add(w);
+                    GUIUtility.hotControl = id;
+                    ev.Use();
+                }
+                break;
+            case EventType.MouseDrag when stroking && GUIUtility.hotControl == id:
+                if (PlanePoint(ev.mousePosition, start.z, out var wd) && Vector3.Distance(wd, stroke[stroke.Count - 1]) > H * 0.02f) stroke.Add(wd);
+                ev.Use();
+                break;
+            case EventType.MouseUp when stroking && GUIUtility.hotControl == id:
+                GUIUtility.hotControl = 0;
+                stroking = false;
+                Undo.RecordObject(motion, "경로 그리기");
+                ApplyStroke(e, start, H);
+                EditorUtility.SetDirty(motion);
+                stroke.Clear();
+                ev.Use();
+                break;
+        }
+
+        if (stroking && stroke.Count > 1)
+        {
+            Handles.color = new Color(1f, 1f, 1f, 0.9f);
+            Handles.DrawAAPolyLine(4f, stroke.ToArray());
+        }
+        if (ev.shift || (ev.control && line))
+        {
+            Handles.BeginGUI();
+            var r = new Rect(ev.mousePosition.x + 14f, ev.mousePosition.y + 10f, 230f, 20f);
+            GUI.Label(r, ev.shift ? "클릭: 시작 자리를 여기로" : "클릭: 경로 점 추가 · 끌기: 경로 그리기", EditorStyles.helpBox);
+            Handles.EndGUI();
+            if (ev.type == EventType.MouseMove) SceneView.RepaintAll();
+        }
+    }
+
+    // 시작 자리를 월드 w로 — 보스 이동은 발밑 기준 그대로(offset만), 나머지는 자유 자리로 바꿔 무대에 고정
+    private void PlaceStart(MaestroMotion.MotionEvent e, Vector3 w)
+    {
+        if (!IsMove(e)) { e.anchor = MaestroMotion.Anchor.Free; e.startAtPoint = ""; }
+        anchorCache.Remove(e);
+        e.offset = ToM(e, w - AnchorAt(e));
+    }
+
+    // 그린 선 → 경로 점 (길이 따라 고르게 최대 8개, 곡선으로 이음). 시작 자리 근처에서 그리기 시작하면 시작 자리는 그대로
+    private void ApplyStroke(MaestroMotion.MotionEvent e, Vector3 start, float H)
+    {
+        if (stroke.Count == 0) return;
+        float len = 0f;
+        for (int i = 1; i < stroke.Count; i++) len += Vector3.Distance(stroke[i - 1], stroke[i]);
+        bool click = stroke.Count < 3 || len < H * 0.05f;
+
+        if (!click && !IsMove(e) && Vector3.Distance(stroke[0], start) > H * 0.08f)
+        {
+            PlaceStart(e, stroke[0]);
+            start = EventStart(e);
+        }
+        float aim = EventAim(e, start);
+        float c = Mathf.Cos(-aim), sn = Mathf.Sin(-aim);
+        Vector2 Local(Vector3 w)
+        {
+            Vector3 d = w - start;
+            return ToM(e, new Vector3(c * d.x - sn * d.y, sn * d.x + c * d.y, 0f));
+        }
+
+        if (click)
+        {
+            // 클릭 한 번 = 끝에 경로 점 하나 추가
+            e.path.Add(Local(stroke[stroke.Count - 1]));
+            return;
+        }
+
+        int n = Mathf.Clamp(Mathf.RoundToInt(len / (H * 0.15f)) + 1, 2, 8);
+        Vector2 first = Local(stroke[0]);
+        var path = new List<Vector2> { Vector2.zero };
+        for (int k = 1; k < n; k++)
+        {
+            float target = len * k / (n - 1), acc = 0f;
+            Vector3 p = stroke[stroke.Count - 1];
+            for (int i = 1; i < stroke.Count; i++)
+            {
+                float d = Vector3.Distance(stroke[i - 1], stroke[i]);
+                if (acc + d >= target) { p = Vector3.Lerp(stroke[i - 1], stroke[i], d > 1e-6f ? (target - acc) / d : 0f); break; }
+                acc += d;
+            }
+            path.Add(Local(p) - first); // 첫 점은 시작 자리(0,0) 기준
+        }
+        e.path = path;
+        e.curved = n > 2;
     }
 
     private void DrawSelectedEventHandles()
@@ -822,7 +1066,7 @@ public class MaestroMotionEditorWindow : EditorWindow
         if (EditorGUI.EndChangeCheck() && PlanePoint(ev.mousePosition, start.z, out var w))
         {
             Undo.RecordObject(motion, "이벤트 자리");
-            e.offset += look.WorldDeltaToMotion(w - start);
+            e.offset += ToM(e, w - start);
             EditorUtility.SetDirty(motion);
         }
 
@@ -831,10 +1075,10 @@ public class MaestroMotionEditorWindow : EditorWindow
         float c = Mathf.Cos(aim), sn = Mathf.Sin(aim);
         for (int k = 1; k < e.path.Count; k++)
         {
-            Vector3 d = look.MotionToWorldDelta(e.path[k]);
+            Vector3 d = ToW(e, e.path[k]);
             Vector3 p = start + new Vector3(c * d.x - sn * d.y, sn * d.x + c * d.y, 0f);
             Handles.color = new Color(1f, 1f, 1f, 0.5f);
-            Vector3 dPrev = look.MotionToWorldDelta(e.path[k - 1]);
+            Vector3 dPrev = ToW(e, e.path[k - 1]);
             Handles.DrawDottedLine(start + new Vector3(c * dPrev.x - sn * dPrev.y, sn * dPrev.x + c * dPrev.y, 0f), p, 2f);
             Handles.color = EventColor(e);
             int pid = GUIUtility.GetControlID(FocusType.Passive);
@@ -845,7 +1089,7 @@ public class MaestroMotionEditorWindow : EditorWindow
                 Undo.RecordObject(motion, "경로 점");
                 Vector3 dw = wp - p;
                 Vector3 un = new Vector3(c * dw.x + sn * dw.y, -sn * dw.x + c * dw.y, 0f); // 회전 되돌림
-                e.path[k] += look.WorldDeltaToMotion(un);
+                e.path[k] += ToM(e, un);
                 EditorUtility.SetDirty(motion);
             }
             if (showLabels) Handles.Label(p + Vector3.up * size * 1.5f, $"경로 {k}", EditorStyles.whiteMiniLabel);

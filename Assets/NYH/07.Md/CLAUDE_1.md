@@ -109,8 +109,8 @@ Assets/NYH/02. Scripts/Boss/BossMaestro/   (2026-11-24 사용자가 Maestro → 
     MaestroOrbitPattern.cs·MaestroOrbitData.cs(2악장 후보 원형 음탄)  MaestroWavePattern.cs·MaestroWaveData.cs(2악장 후보 크레셴도)  MaestroFx.cs(공통 이펙트)  MaestroPuppetData.cs(퍼펫 데이터)
     MaestroLook.cs(외형 — 참고 그림 부위 6장 리그 + 몸짓·부드러운 이동)  Editor/MaestroLookBuilder.cs(외형 세우기·시안 메뉴)  Editor/MaestroSpriteBaker.cs(PNG → 나노봇 그림 굽기)
     그림: 03. Image/Boss/Maestro/마에스트로_*.png (원본 시트 + 전체 + 부위 6장)
-    MaestroMotion.cs(모션 에셋 SO — 관절 채널 11개 + 몸 기울기·이동·눌림 + 어깨·허리·자락·머리 장식 시간 키 + 이벤트 점·선(패턴 표시: 역할·느낌·경로), 2026-11-25)  MaestroMotionSet.cs(몸짓 → 모션 연결표 SO, Resources/Maestro_MotionSet)
-    Editor/MaestroMotionEditorWindow.cs(메뉴 NYH/보스3/모션 편집기 — 플레이 중 Scene 뷰 손잡이로 자세를 끌어 키 찍기·타임라인·코드 몸짓 가져오기·몸짓 연결, 2026-11-25)
+    MaestroMotion.cs(모션 에셋 SO — 관절 채널 11개 + 몸 기울기·이동·눌림 + 어깨·허리·자락·머리 장식 시간 키 + 이벤트 점·선(패턴 표시: 역할·느낌·경로, 자유 자리 기준, 보스 이동 z깊이(SetDepth)·hideDepth부터 무적·EvaluateMove), 2026-11-25)  MaestroMotionSet.cs(몸짓 → 모션 연결표 SO, Resources/Maestro_MotionSet)
+    Editor/MaestroMotionEditorWindow.cs(메뉴 NYH/보스3/모션 편집기 — 플레이 중 Scene 뷰 손잡이로 자세를 끌어 키 찍기·타임라인·코드 몸짓 가져오기·몸짓 연결·이벤트 Shift+클릭 배치/Ctrl+끌기 경로 그리기·보스 이동 미리보기, 2026-11-25)
     모션 에셋: 04. SO/Boss/Maestro/Motions/*.asset · 연결표: 04. SO/Boss/Maestro/Resources/Maestro_MotionSet.asset
     Test/       NanoBotTestRunner.cs(리그 클립 시험 재생 — 테스트 전용, Time.deltaTime 기준)
     Editor/     MaestroBuilder.cs(메뉴 NYH/보스3/마에스트로 만들기·갱신)  NanoBotTestBuilder.cs(메뉴 NYH/보스3/나노봇 시험 배치)

@@ -118,7 +118,8 @@ public class MaestroMotion : ScriptableObject
         OtherHand,  // 반대 손끝
         Head,       // 머리
         Body,       // 몸 가운데
-        Feet,       // 발밑 (바닥)
+        Feet,       // 발밑 (바닥) — 보스가 이동하면 따라감
+        Free,       // 자유 자리 — 보스 원래 자리(발밑) 기준 고정. 몸·이동을 안 따라감 (무대 아무 곳)
     }
 
     /// <summary>점 역할</summary>
@@ -150,7 +151,7 @@ public class MaestroMotion : ScriptableObject
         Projectile, // 탄 궤적 — 무언가 이 선을 따라 날아감
         Sweep,      // 휩쓸기 — 이 선이 지나간 자리가 판정 (베기·파도)
         Telegraph,  // 예고선 — 판정 없이 경로만 보여 줌
-        BossMove,   // 보스 이동 경로 (돌진·후퇴)
+        BossMove,   // 보스 이동 경로 (돌진·후퇴·뒤판으로 물러나기) — 경로 모양만큼 몸이 옮겨 감
         Memo,       // 메모
     }
 
@@ -215,6 +216,14 @@ public class MaestroMotion : ScriptableObject
         [Tooltip("이 이름의 점 이벤트 자리에서 시작 (비우면 기준+offset) — '여기서 생긴 음표가 이 선으로 날아감'")]
         public string startAtPoint = "";
 
+        [Header("보스 이동 (역할 BossMove)")]
+        [Tooltip("켜면 이 이동 동안 깊이(z)·크기를 바꾼다. 끄면 지금 깊이·크기 그대로 옆으로만")]
+        public bool changeDepth;
+        [Tooltip("도착 깊이 — 0 = 앞판(플레이어와 같은 줄), 1 = 뒤판(배경). 경로와 같은 속도 느낌으로 z를 따라 들어감/나옴")]
+        [Range(0f, 1.5f)] public float moveDepth;
+        [Tooltip("도착했을 때 크기 (1 = 그대로)")]
+        [Range(0.3f, 1.5f)] public float moveGrow = 1f;
+
         public MotionEvent Clone()
         {
             var e = (MotionEvent)MemberwiseClone();
@@ -226,6 +235,9 @@ public class MaestroMotion : ScriptableObject
     }
 
     public List<MotionEvent> events = new List<MotionEvent>();
+
+    [Tooltip("보스 이동: 이 깊이(0 앞판 ~ 1 뒤판)보다 깊이 들어가 있으면 공격을 안 맞음")]
+    [Range(0.05f, 1f)] public float hideDepth = 0.3f;
 
     public MotionEvent FindEvent(string eventName)
     {
@@ -352,6 +364,47 @@ public class MaestroMotion : ScriptableObject
         float t2 = t * t, t3 = t2 * t;
         return 0.5f * (2f * p1 + (-p0 + p2) * t + (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 + (-p0 + 3f * p1 - 3f * p2 + p3) * t3);
     }
+
+    /// <summary>
+    /// 보스 이동(BossMove 선)을 time까지 누적 — 원래 자리에서 옮겨 간 양(키 대비, x + = 앞), 크기, 깊이(0 앞판 ~ 1 뒤판).
+    /// 경로 모양(첫 점 → 지금 자리)만 쓴다(기준·offset·플레이어 조준 무시). 깊이·크기는 경로와 같은 속도 느낌으로 바뀜.
+    /// 공격 안 맞음 = depth >= hideDepth. 편집기 미리보기·패턴 구현 공용
+    /// </summary>
+    public void EvaluateMove(float time, out Vector2 offset, out float grow, out float depth)
+    {
+        offset = Vector2.zero; grow = 1f; depth = 0f;
+        if (events == null) return;
+        // 시간순으로 쌓는다 (리스트 순서가 섞여 있어도)
+        tmpMoves.Clear();
+        foreach (var e in events)
+            if (e != null && e.type == EventType.Line && e.lineRole == LineRole.BossMove && time >= e.time) tmpMoves.Add(e);
+        tmpMoves.Sort((a, b) => a.time.CompareTo(b.time));
+        foreach (var e in tmpMoves)
+        {
+            float u = e.duration > 0f ? Mathf.Clamp01((time - e.time) / e.duration) : 1f;
+            float s = LineProgress(e.lineFeel, u, e.feelStrength);
+            offset += PathPoint(e, s) - PathPoint(e, 0f);
+            if (!e.changeDepth) continue;
+            float k = Mathf.Clamp01(s);
+            grow = Mathf.LerpUnclamped(grow, e.moveGrow, k);
+            depth = Mathf.LerpUnclamped(depth, e.moveDepth, k);
+        }
+    }
+
+    public bool HasMove
+    {
+        get
+        {
+            if (events == null) return false;
+            foreach (var e in events) if (e != null && e.type == EventType.Line && e.lineRole == LineRole.BossMove) return true;
+            return false;
+        }
+    }
+
+    /// <summary>이 시간의 보스 깊이 (BossMove 누적)</summary>
+    public float DepthAt(float time) { EvaluateMove(time, out _, out _, out float d); return d; }
+
+    [NonSerialized] private readonly List<MotionEvent> tmpMoves = new List<MotionEvent>();
 
     public void SortEvents() { if (events != null) events.Sort((a, b) => a.time.CompareTo(b.time)); }
 

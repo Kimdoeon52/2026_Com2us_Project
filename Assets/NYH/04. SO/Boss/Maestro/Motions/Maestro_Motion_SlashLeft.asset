@@ -1,0 +1,157 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0730b19b24fe66e4b8dd4af7518f1e8b, type: 3}
+  m_Name: Maestro_Motion_SlashLeft
+  m_EditorClassIdentifier: 
+  length: 1
+  loop: 0
+  crisp: 1
+  memo: "\uCF54\uB4DC \uBAB8\uC9D3 'SlashLeft'\uC5D0\uC11C \uAC00\uC838\uC634 (2026-11-25)"
+  keys:
+  - time: 0
+    ch:
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0
+    - 0.5
+    - 0
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: -0, y: 0}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 0.4
+    ch:
+    - 9
+    - 7
+    - 30
+    - 60
+    - -25
+    - 0
+    - 1
+    - -15
+    - 45
+    - 0
+    - 0.9
+    lean: -14
+    root: {x: -0.05, y: -0.08}
+    stretch: 0.92
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 0.5
+    ch:
+    - 12.703704
+    - 7.740741
+    - 72.96296
+    - 6.6666684
+    - 2.4074066
+    - 0
+    - 1
+    - 47.96296
+    - -3.1481466
+    - 7.4074073
+    - -0.06296294
+    lean: 15.629629
+    root: {x: 0.061111107, y: -0.03851852}
+    stretch: 1.06
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 0.55
+    ch:
+    - 14
+    - 8
+    - 88
+    - -12
+    - 12
+    - 0
+    - 1
+    - 70
+    - -20
+    - 10
+    - -0.4
+    lean: 26
+    root: {x: 0.1, y: -0.024}
+    stretch: 1.050625
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 0.7
+    ch:
+    - 11.407408
+    - 6.4444447
+    - 75.55556
+    - -2.40741
+    - 8.888889
+    - 0
+    - 0.9481482
+    - 57.03704
+    - -10.925928
+    - 7.407408
+    - -0.16666673
+    lean: 20.814816
+    root: {x: 0.07407408, y: -0.01777778}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 1
+    ch:
+    - 4
+    - 2
+    - 40
+    - 25
+    - 0
+    - 0
+    - 0.8
+    - 20
+    - 15
+    - 0
+    - 0.5
+    lean: 6
+    root: {x: -0, y: 0}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 

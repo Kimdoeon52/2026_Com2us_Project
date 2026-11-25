@@ -14,6 +14,7 @@ public enum MaestroGesture
     Strike,      // 지휘봉을 치켜들었다 바닥으로 내리침 — 크레셴도 파도마다
     SlashLeft,   // 검처럼 오른쪽→왼쪽으로 크게 벰 — 지휘봉 베기 (PlayTimed로 베는 순간을 맞춘다)
     SlashRight,  // 왼쪽→오른쪽으로 벰
+    Custom,      // 모션 에셋 재생 (MaestroLook.PlayMotion — 모션 편집기로 만든 것)
 }
 
 /// <summary>
@@ -37,6 +38,9 @@ public class MaestroLook : MonoBehaviour
 
     [Tooltip("모션 시트 키 포즈 (빌더가 채움 — MaestroPoseBaker). 비어 있으면 베기는 예전 퍼펫 몸짓으로")]
     public MaestroPoseSet poseSet;
+
+    [Tooltip("몸짓 → 모션 연결표 (모션 편집기). 비우면 Resources/Maestro_MotionSet을 찾는다")]
+    public MaestroMotionSet motionSet;
 
     [Tooltip("시안 단독 실행 — 보스 컨트롤러 없이 시작할 때 군집을 켠다")]
     public bool standalone;
@@ -140,6 +144,13 @@ public class MaestroLook : MonoBehaviour
     [Range(0f, 2f)] public float chestScale = 1f;
     [Tooltip("눌림·늘어남 배율 (준비에 눌렸다 튀어나갈 때 늘어남)")]
     [Range(0f, 2f)] public float squashScale = 1f;
+    [Header("이음새 (11-25 사용자: 허리 빈 공간 · 어깨 떨어짐)")]
+    [Tooltip("허리 이음새 띠 반폭 (그림 픽셀) — 상체가 꺾일 때 이 띠 안의 픽셀은 상체·하체 움직임을 섞어 벌어지지 않게. 클수록 부드럽게 휨")]
+    [Range(2f, 40f)] public float waistBlendPx = 16f;
+    [Tooltip("어깨 주변 반경 (그림 픽셀) — 이 안의 상체 픽셀이 어깨 들썩임을 따라간다")]
+    [Range(4f, 40f)] public float shoulderBlendPx = 20f;
+    [Tooltip("어깨 들썩임 최대 거리 (키 대비) — 더 멀리 가면 어깨가 몸에서 떨어져 보인다")]
+    [Range(0f, 0.2f)] public float maxShoulderShift = 0.07f;
     [Tooltip("몸 뒤(뒤판)에 숨기는 남는 봇 실루엣 크기 — 몸이 기울어도 앞에서 안 보이게 작게")]
     [Range(0.3f, 1f)] public float reserveScale = 0.7f;
 
@@ -397,6 +408,7 @@ public class MaestroLook : MonoBehaviour
         swarm.Collect(RSNanoSwarm.G_Blob, swarm.Blob.center, pixelCount, tmp);
         for (int k = 0; k < pixelCount && k < tmp.Count; k++) Assign(k, tmp[k], snap: true);
         InitPoses();
+        if (motionSet == null) motionSet = Resources.Load<MaestroMotionSet>(MaestroMotionSet.ResourcePath);
         started = true;
         Debug.Log($"[Maestro] 외형 시작 — 키 {height:0.00}m (칸 {cell * 100f:0.00}cm), 그림 봇 {pixelCount}, 남는 봇 {ReserveCount}");
     }
@@ -418,6 +430,8 @@ public class MaestroLook : MonoBehaviour
         iBaton = data.BoneIndex("지휘봉"); iBGrip = data.BoneIndex("지휘_손가락");
         iOS = data.BoneIndex("반대_위팔"); iOE = data.BoneIndex("반대_아래팔"); iOW = data.BoneIndex("반대_손");
         iF1 = data.BoneIndex("손가락1"); iF2 = data.BoneIndex("손가락2"); iF3 = data.BoneIndex("손가락3");
+        moonFromHead = iMoon >= 0 && iHead >= 0 ? ArtPx(data.bones[iMoon].pivotPx) - ArtPx(data.bones[iHead].pivotPx) : Vector2.zero;
+        aimReady = false;
 
         // 천: 뼈대 쉬는 모양(붙은 뼈 기준)
         cloth = new ClothSim[data.cloths.Length];
@@ -451,6 +465,30 @@ public class MaestroLook : MonoBehaviour
             if (owner >= 0) pixLocal[k] = p - ArtPx(data.bones[owner].pivotPx);
             else if (owner == -1) pixLocal[k] = p;
             else BindCloth(k, -2 - owner, p);
+        }
+
+        // 이음새 무게 (11-25 사용자: 상체가 꺾이면 허리에 빈 공간 / 어깨를 옮기면 어깨가 몸에서 떨어짐)
+        //  · skinW: 상체(1) ↔ 하체(0) — 허리 관절 높이 ± waistBlendPx 띠 안에서 부드럽게 섞는다 (상체·하체 픽셀 둘 다)
+        //  · shBW/shOW: 상체 픽셀이 어깨 관절에 가까울수록 어깨 들썩임을 따라감
+        pixRest = new Vector2[np]; skinW = new float[np]; shBW = new float[np]; shOW = new float[np];
+        chestPivArt = iChest >= 0 ? ArtPx(data.bones[iChest].pivotPx) : Vector2.zero;
+        float waist = chestPivArt.y, band = Mathf.Max(1f, waistBlendPx) * cell, shR = Mathf.Max(1f, shoulderBlendPx) * cell;
+        Vector2 shB = iBS >= 0 ? ArtPx(data.bones[iBS].pivotPx) : Vector2.one * 1e4f, shO = iOS >= 0 ? ArtPx(data.bones[iOS].pivotPx) : Vector2.one * 1e4f;
+        for (int k = 0; k < np; k++)
+        {
+            Vector2 p = ArtPx(data.pixPos[k] + new Vector2(0.5f, 0.5f));
+            pixRest[k] = p;
+            int owner = data.pixOwner[k];
+            if (iChest < 0 || (owner != iChest && owner != -1)) continue;
+            bool drip = owner == -1 && data.pixKind[k] == (byte)MaestroPuppetData.PixelKind.Drip;
+            float u = Mathf.Clamp01((p.y - (waist - band)) / (2f * band));
+            skinW[k] = drip ? 0f : u * u * (3f - 2f * u);
+            if (owner == iChest)
+            {
+                float a = Mathf.Clamp01(1f - Vector2.Distance(p, shB) / shR), b = Mathf.Clamp01(1f - Vector2.Distance(p, shO) / shR);
+                shBW[k] = a * a * (3f - 2f * a);
+                shOW[k] = b * b * (3f - 2f * b);
+            }
         }
 
         // 지휘봉 픽셀: 손잡이(관절)에서 끝까지 비율 — 지휘봉이 손에서부터 생기게
@@ -580,6 +618,14 @@ public class MaestroLook : MonoBehaviour
         if (s < timedStrike) return 0.4f + 0.15f * s / timedStrike;
         s -= timedStrike;
         return Mathf.Min(1f, 0.55f + 0.45f * s / timedHold);
+    }
+
+    /// <summary>모션 에셋을 재생 (모션 편집기로 만든 것). seconds ≤ 0이면 모션 길이대로(반복 모션이면 Stop까지 계속)</summary>
+    public void PlayMotion(MaestroMotion m, float seconds = -1f)
+    {
+        if (m == null) return;
+        Play(MaestroGesture.Custom, seconds > 0f ? seconds : m.loop ? 0f : m.length);
+        customMotion = m;
     }
 
     public void Play(MaestroGesture g, float seconds)
@@ -734,12 +780,19 @@ public class MaestroLook : MonoBehaviour
         back = Mathf.SmoothDamp(back, backTarget, ref backVel, 0.3f, Mathf.Infinity, dt);
         face = Mathf.SmoothDamp(face, faceTarget, ref faceVel, turnSmooth, Mathf.Infinity, dt);
 
-        if (gesture != MaestroGesture.None)
+        if (editOn)
+        {
+            // 모션 편집기: 몸짓을 편집 중인 모션의 editTime 자세로 붙잡아 둔다
+            gesture = MaestroGesture.Custom; customMotion = editMotion; timed = false;
+            gestureTime = 0f; gestureLength = 0f;
+        }
+        else if (gesture != MaestroGesture.None)
         {
             gestureTime += dt;
             if (gestureLength > 0f && gestureTime >= gestureLength) gesture = MaestroGesture.None;
         }
         gestureWeight = Mathf.SmoothDamp(gestureWeight, gesture == MaestroGesture.None ? 0f : 1f, ref gestureWeightVel, 0.12f, Mathf.Infinity, dt);
+        if (editOn && editSnap) { gestureWeight = 1f; gestureWeightVel = 0f; }
         flick = Mathf.MoveTowards(flick, 0f, dt * 3.5f);
         hitPulse = Mathf.MoveTowards(hitPulse, 0f, dt * 4f);
         batonForm = Mathf.MoveTowards(batonForm, 1f, dt / Mathf.Max(0.05f, batonFormDur));
@@ -755,7 +808,13 @@ public class MaestroLook : MonoBehaviour
         // 남는 봇 = 몸 뒤(뒤판)에 작게 숨긴다 — 몸이 기울고 휘어도 앞에서 어긋나 보이지 않게 (11-25: 하체도 움직이도록)
         // 11-25 사용자 '뒤에 나노봇 모이는 곳이 이상함': 원근 카메라라 뒤판(+z)에 같은 x,y로 두면 작아지며 화면 가운데 쪽으로 밀려 몸 옆에 보였다
         // → 카메라에서 발밑(앞판)을 지나는 선 위 뒤판 자리에 두고, 멀어진 만큼 키워서 화면에선 몸과 정확히 겹치게(몸 뒤에 가려짐)
-        Vector3 rootFront = new Vector3(RootWorld().x, RootWorld().y, PlaneZ);
+        // 11-25 사용자 '몸을 기울이면 아래에 덩어리가 남음': 덩어리는 돌릴 수 없으니, 하체 가운데가 기울며 옮겨 간 만큼 같이 옮기고
+        // 많이 기울수록 작게 줄여 몸 뒤에 숨긴다
+        float midY = WaistY * 0.5f;
+        Vector2 lowerShift = BendRoot(new Vector2(0f, midY)) + LowerOffset(midY) - new Vector2(0f, midY);
+        Vector2 rootW2 = ArtToWorld(rootArt + lowerShift);
+        Vector3 rootFront = new Vector3(rootW2.x, rootW2.y, PlaneZ);
+        float leanShrink = Mathf.Lerp(1f, 0.55f, Mathf.Clamp01(Mathf.Abs(rootLean) / 35f));
         float depthRatio = 1f;
         Vector3 reserveAt = new Vector3(rootFront.x, rootFront.y, swarm.BackZ);
         var cam = Camera.main;
@@ -770,7 +829,7 @@ public class MaestroLook : MonoBehaviour
             }
         }
         swarm.Blob.center = reserveAt;
-        swarm.Blob.shapeScale = grow * reserveScale * depthRatio;
+        swarm.Blob.shapeScale = grow * reserveScale * depthRatio * leanShrink;
         // 하체에 숨긴 남는 봇: 몸이 움직이는 동안은 즉시 따라오게 (11-25 사용자: 런지 때 하체 덩어리가 뒤에 남음),
         // 멈춰 있을 땐 기본 느낌(돌아오는 모래가 부드럽게 흡수)
         bool moving = feetVel.sqrMagnitude > 0.04f || Mathf.Abs(growVel) > 0.05f || Mathf.Abs(backVel) > 0.05f || gestureRootW > 0.05f;
@@ -865,11 +924,15 @@ public class MaestroLook : MonoBehaviour
     {
         int nb = data.bones.Length;
         float h = data.artHeightPx * cell;
+        EvaluateMotion();
+        TickExtraWeight(dt);
+        bool snap = dt <= 0f || (editOn && editSnap);
+        float still = editOn && editStill ? 0f : 1f; // 편집기 '흔들림 끄기' — 떠다니기·평소 흔들림 없이 자세만
 
         // 몸 전체 떠다니기 — 주기가 다른 두 흔들림(8자) + 느린 노이즈 (쿄다이 떠다니기와 같은 원리)
         float nx = Mathf.PerlinNoise(t * 0.3f, 0.17f) - 0.5f, ny = Mathf.PerlinNoise(0.63f, t * 0.3f) - 0.5f;
-        rootArt = new Vector2(floatRatio.x * cur.floatScale * h * (Mathf.Sin(t * 2f * Mathf.PI / floatPeriods.x) + nx),
-                              floatRatio.y * cur.floatScale * h * (Mathf.Sin(t * 2f * Mathf.PI / floatPeriods.y) + ny));
+        rootArt = still * new Vector2(floatRatio.x * cur.floatScale * h * (Mathf.Sin(t * 2f * Mathf.PI / floatPeriods.x) + nx),
+                                      floatRatio.y * cur.floatScale * h * (Mathf.Sin(t * 2f * Mathf.PI / floatPeriods.y) + ny));
         rootArt += GestureRoot(h); // 몸 전체 움직임 (베기: 준비에 웅크림 → 벨 때 앞으로 튀어나감)
 
         Vector2 rootW = RootWorld();
@@ -880,10 +943,11 @@ public class MaestroLook : MonoBehaviour
         // 몸 전체 기울기·휨 (11-25 사용자: 몸이 통짜로 둥둥 떠다니기만 함) — 이동 기울기 + 몸짓 기울기 + 평소 흔들림을 스프링으로.
         // 발밑을 축으로, 위로 갈수록 더 기울어 척추처럼 휜다(BendRoot). + = 앞(그림 왼쪽)으로
         float sway = idleSway * Mathf.Sin(t * 0.8f) + idleSway * 0.6f * (Mathf.PerlinNoise(t * 0.35f, 3.3f) - 0.5f) * 2f;
-        float leanTarget = leanAng + GestureLean() + sway * (1f - gestureWeight * 0.7f);
-        if (dt <= 0f) { rootLean = leanTarget; rootLeanVel = 0f; rootLeanPrev = leanTarget; }
+        float leanTarget = leanAng * still + GestureLean() + sway * still * (1f - gestureWeight * 0.7f);
+        if (snap) { rootLean = leanTarget; rootLeanVel = 0f; rootLeanPrev = leanTarget; }
         else SecondOrder(ref rootLean, ref rootLeanVel, ref rootLeanPrev, leanTarget, dt, bodyLeanFrequency, Mathf.Lerp(0.5f, 0.85f, CrispWeight), 0.3f);
-        stretch = Mathf.SmoothDamp(stretch, GestureStretch(), ref stretchVel, 0.08f, Mathf.Infinity, dt);
+        if (snap && dt > 0f) { stretch = GestureStretch(); stretchVel = 0f; }
+        else stretch = Mathf.SmoothDamp(stretch, GestureStretch(), ref stretchVel, 0.08f, Mathf.Infinity, dt);
 
         var target = new float[nb];
         Targets(t, target);
@@ -896,7 +960,7 @@ public class MaestroLook : MonoBehaviour
             if (bone.parent >= 0 && bone.followThrough > 0f) x -= angVel[bone.parent] * bone.followThrough;
             // 지휘봉은 단단한 막대 — 손에 그대로 붙인다 (스프링·팔로스루 없음. 11-24 사용자: 고무처럼 휜다)
             if (b == iBaton) { ang[b] = 0f; angVel[b] = 0f; angPrevTarget[b] = 0f; }
-            else if (dt <= 0f) { ang[b] = x; angVel[b] = 0f; angPrevTarget[b] = x; }
+            else if (snap) { ang[b] = x; angVel[b] = 0f; angPrevTarget[b] = x; }
             else
             {
                 // 절도 있는 몸짓 중엔 단단하게: 감쇠 ≥ 0.9(넘치지 않음), 1.5배 빠르게, 예비 반응 없음 — 딱 들어가 딱 멈춘다
@@ -907,16 +971,26 @@ public class MaestroLook : MonoBehaviour
                 SecondOrder(ref ang[b], ref angVel[b], ref angPrevTarget[b], x, dt, f, z, r);
             }
 
-            if (bone.parent >= 0)
+            if (b == iMoon && iHead >= 0)
+            {
+                // 머리 장식(달)은 머리를 따라 돈다 (11-25 사용자: 목을 움직이면 뒤 장식도 같이 움직여야)
+                bonePos[b] = bonePos[iHead] + Rot(moonFromHead, boneAng[iHead]);
+                boneAng[b] = boneAng[iHead] + ang[b] * Mathf.Deg2Rad;
+            }
+            else if (bone.parent >= 0)
             {
                 float parentAng = boneAng[bone.parent];
-                bonePos[b] = bonePos[bone.parent] + Rot(restOffset[b], parentAng);
+                Vector2 off = restOffset[b];
+                // 어깨 들썩임 (상체 기준 — 몸이 기울면 같이 기움)
+                if (b == iBS) off += ShoulderArt(mExtra.bShoulder);
+                else if (b == iOS) off += ShoulderArt(mExtra.oShoulder);
+                bonePos[b] = bonePos[bone.parent] + Rot(off, parentAng);
                 boneAng[b] = parentAng + ang[b] * Mathf.Deg2Rad;
             }
             else
             {
-                // 발밑 원점에 붙은 뼈(상체): 몸 휨을 따라 자리·각도가 같이 기운다
-                bonePos[b] = rootArt + BendRoot(restOffset[b]);
+                // 발밑 원점에 붙은 뼈(상체): 몸 휨을 따라 자리·각도가 같이 기운다 + 허리 이동
+                bonePos[b] = rootArt + BendRoot(restOffset[b]) + HipArt;
                 boneAng[b] = BendAngle(restOffset[b].y) + ang[b] * Mathf.Deg2Rad;
             }
         }
@@ -969,7 +1043,8 @@ public class MaestroLook : MonoBehaviour
 
         Set(target, iChest, c[(int)Ch.Chest] * chestScale); // 이동 기울기는 이제 몸 전체(BendRoot)가 맡는다
         Set(target, iHead, c[(int)Ch.Head]);
-        Set(target, iMoon, 4f * Mathf.Sin(t * 0.5f) - c[(int)Ch.Head] * 0.5f);
+        // 장식은 이제 머리를 따라 돌므로(Pose) 반대로 돌리던 −머리×0.5는 뺐다. 살짝 흔들림 + 모션의 장식 각도
+        Set(target, iMoon, 4f * Mathf.Sin(t * 0.5f) * (editOn && editStill ? 0f : 1f) + mExtra.moon * extraW);
         Set(target, iBS, c[(int)Ch.BShoulder]);
         Set(target, iBE, c[(int)Ch.BElbow]);
         Set(target, iBW, c[(int)Ch.BWrist]);
@@ -980,7 +1055,7 @@ public class MaestroLook : MonoBehaviour
         Set(target, iOW, c[(int)Ch.OWrist]);
         // 손가락: 손가락마다 조금씩 늦게·다르게 (오므림 = 시계방향)
         float curl = c[(int)Ch.OCurl] - 0.25f; // 그림 = 살짝 편 손 (0.25)
-        float wiggle = 6f * (1f - CrispWeight); // 절도 있는 몸짓 중엔 손가락도 고정
+        float wiggle = 6f * (1f - CrispWeight) * (editOn && editStill ? 0f : 1f); // 절도 있는 몸짓 중엔 손가락도 고정
         Set(target, iF1, -fingerCurlDeg * curl + wiggle * Mathf.Sin(t * 1.3f));
         Set(target, iF2, -fingerCurlDeg * curl * 1.1f + wiggle * Mathf.Sin(t * 1.3f - 0.6f));
         Set(target, iF3, -fingerCurlDeg * curl * 1.2f + wiggle * Mathf.Sin(t * 1.3f - 1.2f));
@@ -1068,6 +1143,7 @@ public class MaestroLook : MonoBehaviour
     private float GestureLean()
     {
         float u = GestureU, v;
+        if (motionOn) return mLean * gestureWeight; // 모션 에셋: 편집기에서 본 그대로 (배율 없음)
         switch (gesture)
         {
             case MaestroGesture.SlashLeft: v = Piece(u, LeanSlashLeft); break;
@@ -1094,6 +1170,7 @@ public class MaestroLook : MonoBehaviour
     private float GestureStretch()
     {
         float u = GestureU, v = 1f;
+        if (motionOn) return 1f + (mStretch - 1f) * gestureWeight;
         if (gesture == MaestroGesture.SlashLeft || gesture == MaestroGesture.SlashRight) v = Piece(u, SquashSlash);
         else if (gesture == MaestroGesture.Strike) v = Piece(u, SquashStrike);
         return 1f + (v - 1f) * squashScale * gestureWeight;
@@ -1104,6 +1181,12 @@ public class MaestroLook : MonoBehaviour
     private float gestureRootW;
     private Vector2 GestureRoot(float h)
     {
+        if (motionOn)
+        {
+            // 모션 에셋: root = 키 대비, x + = 앞 (그림이 왼쪽을 보므로 그림 공간 −x)
+            gestureRootW = mRoot.sqrMagnitude > 1e-6f ? gestureWeight : 0f;
+            return new Vector2(-mRoot.x * h, mRoot.y * h) * gestureWeight;
+        }
         bool slash = gesture == MaestroGesture.SlashLeft || gesture == MaestroGesture.SlashRight;
         gestureRootW = slash ? gestureWeight : 0f;
         if (!slash) return Vector2.zero;
@@ -1120,12 +1203,14 @@ public class MaestroLook : MonoBehaviour
 
     // 절도 있게 움직이는 몸짓인지 (관절 스프링을 단단하게 — 출렁임 없이 딱 멈춤)
     private float CrispWeight =>
+        motionOn ? (activeMotion.crisp ? gestureWeight : 0f) :
         gesture == MaestroGesture.ConductFast || gesture == MaestroGesture.Spread || gesture == MaestroGesture.Strike ||
         gesture == MaestroGesture.SlashLeft || gesture == MaestroGesture.SlashRight ? gestureWeight : 0f;
 
     private void GestureChannels(float t, float[] c, float[] idle)
     {
         float u = gestureLength > 0f ? Mathf.Clamp01(gestureTime / gestureLength) : 0f;
+        if (motionOn) { Array.Copy(mCh, c, Mathf.Min(c.Length, mCh.Length)); return; }
         switch (gesture)
         {
             case MaestroGesture.Swing:
@@ -1198,13 +1283,13 @@ public class MaestroLook : MonoBehaviour
 
             if (!sim.init)
             {
-                for (int i = 0; i < n; i++) sim.pos[i] = sim.prev[i] = ArtToWorld(onRoot ? rootArt + BendRoot(sim.restLocal[i]) : pPos + Rot(sim.restLocal[i], pAng));
+                for (int i = 0; i < n; i++) sim.pos[i] = sim.prev[i] = ArtToWorld(onRoot ? rootArt + BendRoot(sim.restLocal[i]) + LowerOffset(sim.restLocal[i].y) : pPos + Rot(sim.restLocal[i], pAng));
                 sim.init = true;
             }
 
             for (int i = 0; i < n; i++)
             {
-                Vector2 rest = ArtToWorld(onRoot ? rootArt + BendRoot(sim.restLocal[i]) : pPos + Rot(sim.restLocal[i], pAng));
+                Vector2 rest = ArtToWorld(onRoot ? rootArt + BendRoot(sim.restLocal[i]) + LowerOffset(sim.restLocal[i].y) : pPos + Rot(sim.restLocal[i], pAng));
                 if (i == 0) { sim.prev[0] = sim.pos[0]; sim.pos[0] = rest; continue; } // 뿌리 고정
                 float u = i / (float)(n - 1);
                 float k = Mathf.Lerp(def.stiffnessRoot, def.stiffnessTip, u);
@@ -1321,7 +1406,10 @@ public class MaestroLook : MonoBehaviour
         int owner = data.pixOwner[k];
         if (owner >= 0)
         {
-            Vector2 art = bonePos[owner] + Rot(pixLocal[k], boneAng[owner]);
+            Vector2 local = pixLocal[k];
+            if (owner == iChest && extraW > 0f) local += ShoulderArt(mExtra.bShoulder) * shBW[k] + ShoulderArt(mExtra.oShoulder) * shOW[k]; // 어깨 주변 살이 어깨를 따라
+            Vector2 art = bonePos[owner] + Rot(local, boneAng[owner]);
+            if (owner == iChest && skinW[k] < 1f) art = Vector2.Lerp(LowerAt(pixRest[k]), art, skinW[k]); // 허리 띠: 하체 쪽과 섞음
             if (owner == iBaton && batonForm < 1f)
             {
                 // 아직 안 생긴 부분은 손잡이 주위를 맴돌다가, 생기는 앞자리가 지나가면 제자리로 날아간다
@@ -1336,7 +1424,9 @@ public class MaestroLook : MonoBehaviour
         }
         if (owner == -1)
         {
-            Vector2 p = rootArt + BendRoot(pixLocal[k]); // 하체도 몸 휨을 따라 (위로 갈수록 더)
+            Vector2 p = LowerAt(pixLocal[k]); // 하체도 몸 휨을 따라 (위로 갈수록 더) + 허리·자락
+            if (skinW[k] > 0f && iChest >= 0) // 허리 띠: 상체 쪽과 섞음 (상체가 꺾여도 이음새가 벌어지지 않게)
+                p = Vector2.Lerp(p, bonePos[iChest] + Rot(pixRest[k] - chestPivArt, boneAng[iChest]), skinW[k]);
             byte kind = data.pixKind[k];
             float h = pixHash[k];
             if (kind == (byte)MaestroPuppetData.PixelKind.Drip)
@@ -1360,6 +1450,381 @@ public class MaestroLook : MonoBehaviour
         dir = len > 1e-6f ? dir / len : Vector2.down;
         Vector2 perp = new Vector2(-dir.y, dir.x);
         return Vector2.Lerp(a, b, clothT[k]) + perp * (clothD[k] * grow * Mathf.Sign(FlipX));
+    }
+
+    // ───────────────────────── 모션 에셋 · 모션 편집기 (11-25) ─────────────────────────
+    // 몸짓 = 코드 키(SwingKeys 등) 또는 모션 에셋(MaestroMotion). 모션 에셋이 걸리면 채널·몸 기울기·이동·눌림을 에셋에서 읽는다.
+    //  · PlayMotion(m) → 몸짓 Custom
+    //  · motionSet에 연결된 몸짓(예: Swing → 내가 만든 휘두르기)은 패턴이 Play(Swing)를 걸면 모션이 대신 나온다
+    //  · 편집기: EditBegin → 편집 중인 모션의 editTime 자세로 붙잡고, 손잡이(EditHandle)를 끌면 키 값을 거꾸로 풀어 넣는다(EditDrag)
+    private MaestroMotion customMotion, activeMotion;
+    private bool motionOn;
+    private readonly float[] mCh = MaestroMotion.NewChannels();
+    private float mLean, mStretch = 1f;
+    private Vector2 mRoot;
+
+    private bool editOn, editSnap = true, editStill = true;
+    private MaestroMotion editMotion;
+    private float editTime;
+
+    private void EvaluateMotion()
+    {
+        activeMotion = null;
+        float time = 0f;
+        if (gesture == MaestroGesture.Custom)
+        {
+            activeMotion = customMotion;
+            if (activeMotion != null)
+                time = editOn ? editTime : activeMotion.loop || gestureLength <= 0f ? gestureTime : gestureTime / gestureLength * activeMotion.length;
+        }
+        else if (gesture != MaestroGesture.None && motionSet != null)
+        {
+            activeMotion = motionSet.Find(gesture);
+            // 패턴이 건 길이에 비율대로 맞춘다 (나눠 건 몸짓은 감아올림·벰·버팀 경계 0.4 / 0.55도 그대로). 반복 모션은 실제 초로 돈다
+            if (activeMotion != null) time = activeMotion.loop || (!timed && gestureLength <= 0f) ? gestureTime : GestureU * activeMotion.length;
+        }
+        motionOn = activeMotion != null;
+        if (motionOn) activeMotion.Evaluate(time, mCh, out mLean, out mRoot, out mStretch, out mExtra);
+    }
+
+    // ── 추가 조종점 (어깨·허리·자락·머리 장식, 11-25 2차) — 모션이 끝나도 툭 끊기지 않게 무게를 천천히 뺀다 ──
+    private MaestroMotion.Extra mExtra;
+    private float extraW;
+    private Vector2 moonFromHead;   // 머리 관절 → 장식 관절 (그림 공간 m)
+
+    private void TickExtraWeight(float dt)
+    {
+        if (motionOn) extraW = gestureWeight;
+        else extraW = Mathf.MoveTowards(extraW, 0f, dt * 6f);
+        if (dt <= 0f && !motionOn) extraW = 0f;
+    }
+
+    // 키 대비 비율(x + = 앞) → 그림 공간 m (그림이 왼쪽을 보므로 앞 = −x)
+    private Vector2 FwdArt(Vector2 r) => new Vector2(-r.x * ArtH, r.y * ArtH) * extraW;
+    private Vector2 HipArt => FwdArt(mExtra.hip);
+    // 어깨 들썩임 (그림 공간 m) — 너무 멀리 가면 몸에서 떨어져 보이므로 키의 maxShoulderShift까지
+    private Vector2 ShoulderArt(Vector2 r) => Vector2.ClampMagnitude(FwdArt(r), maxShoulderShift * ArtH);
+    // 하체 자리 (발밑 기준 그림 좌표 p → 몸 휨 + 허리·자락)
+    private Vector2 LowerAt(Vector2 p) => rootArt + BendRoot(p) + LowerOffset(p.y);
+    private Vector2[] pixRest = Array.Empty<Vector2>();
+    private float[] skinW = Array.Empty<float>(), shBW = Array.Empty<float>(), shOW = Array.Empty<float>();
+    private Vector2 chestPivArt;
+    private float WaistY => iChest >= 0 ? Mathf.Max(0.05f, restOffset[iChest].y) : ArtH * 0.45f;
+
+    /// <summary>하체(발밑에 붙은 픽셀·천) 높이 y에서의 추가 이동 — 허리 쪽은 상체를 따라, 아랫단 쪽은 자락을 따라</summary>
+    private Vector2 LowerOffset(float y)
+    {
+        if (extraW <= 0f) return Vector2.zero;
+        float u = Mathf.Clamp01(y / WaistY);
+        return HipArt * (u * u * (3f - 2f * u)) + FwdArt(mExtra.hem) * Mathf.Pow(1f - u, 1.5f);
+    }
+
+    /// <summary>지금 걸린 모션 (없으면 null) — 디버그 표시용</summary>
+    public MaestroMotion CurrentMotion => motionOn ? activeMotion : null;
+
+    // ── 편집기 ──
+    public bool EditActive => editOn;
+    public MaestroMotion EditingMotion { get => editMotion; set => editMotion = value; }
+    /// <summary>편집 중 보이는 시간 (초)</summary>
+    public float EditTime { get => editTime; set => editTime = Mathf.Max(0f, value); }
+    /// <summary>켜면 관절 스프링 없이 키 자세 그대로 (손잡이가 정확히 따라옴). 끄면 물리 반응을 보며 편집</summary>
+    public bool EditSnap { get => editSnap; set => editSnap = value; }
+    /// <summary>켜면 떠다니기·평소 흔들림·손가락 꼼지락 끔</summary>
+    public bool EditStill { get => editStill; set => editStill = value; }
+
+    public void EditBegin(MaestroMotion m)
+    {
+        editOn = true;
+        editMotion = m;
+        if (kpOn) PoseRelease(0.15f);
+    }
+
+    public void EditEnd()
+    {
+        editOn = false;
+        gesture = MaestroGesture.None;
+    }
+
+    /// <summary>편집기 손잡이 (몸 → 팔 순서)</summary>
+    public enum EditHandle { Root, Lean, Chest, Head, BatonElbow, BatonHand, BatonTip, OtherElbow, OtherHand, OtherFingers, BatonShoulder, OtherShoulder, Hip, Hem, Ornament }
+
+    public static readonly string[] EditHandleNames =
+    {
+        "몸 이동", "몸 기울기", "상체", "머리", "지휘 팔꿈치", "지휘 손", "지휘봉 끝", "반대 팔꿈치", "반대 손", "반대 손끝",
+        "지휘 어깨", "반대 어깨", "허리", "하체 자락", "머리 장식",
+    };
+
+    private Vector2 headAim, fingerAim, batonAim, moonAim;
+    private bool aimReady;
+
+    private void EnsureAims()
+    {
+        if (aimReady || data == null) return;
+        headAim = RestCentroid(iHead, -99, -99) - ArtPx(data.bones[iHead].pivotPx);
+        fingerAim = RestCentroid(iOW, iF1, iF2, iF3) - ArtPx(data.bones[iOW].pivotPx);
+        batonAim = ArtPx(batonTipPx) - ArtPx(data.bones[iBW].pivotPx);
+        moonAim = iMoon >= 0 ? RestCentroid(iMoon, -99, -99) - ArtPx(data.bones[iMoon].pivotPx) : Vector2.up * 0.1f;
+        if (moonAim.sqrMagnitude < 1e-6f) moonAim = Vector2.up * 0.1f;
+        aimReady = true;
+    }
+
+    private Vector2 RestCentroid(params int[] owners)
+    {
+        Vector2 sum = Vector2.zero;
+        int n = 0;
+        for (int k = 0; k < data.PixelCount; k++)
+            if (Array.IndexOf(owners, (int)data.pixOwner[k]) >= 0) { sum += ArtPx(data.pixPos[k] + new Vector2(0.5f, 0.5f)); n++; }
+        return n > 0 ? sum / n : ArtPx(data.bones[owners[0]].pivotPx);
+    }
+
+    private Vector2 WorldToArt(Vector2 w)
+    {
+        Vector2 f = FeetWorld();
+        float sx = FlipX * grow / Mathf.Sqrt(stretch), sy = grow * stretch;
+        return new Vector2((w.x - f.x) / sx, (w.y - f.y) / sy);
+    }
+
+    private Vector3 W3(Vector2 art) { Vector2 w = ArtToWorld(art); return new Vector3(w.x, w.y, PlaneZ); }
+    private Vector2 BonePoint(int b, Vector2 local) => bonePos[b] + Rot(local, boneAng[b]);
+    private float ArtH => data.artHeightPx * cell;
+
+    /// <summary>손잡이 자리(월드)와 선을 그을 기준점(월드)</summary>
+    public bool EditHandlePos(EditHandle h, out Vector3 pos, out Vector3 anchor)
+    {
+        pos = anchor = transform.position;
+        if (!started || data == null || iChest < 0) return false;
+        EnsureAims();
+        switch (h)
+        {
+            case EditHandle.Root: pos = anchor = W3(rootArt + new Vector2(0f, RootHandleY)); return true; // 바닥 높이(묻힌 발밑보다 위)
+            case EditHandle.Lean: anchor = W3(rootArt); pos = W3(rootArt + BendRoot(new Vector2(0f, ArtH * 1.08f))); return true;
+            case EditHandle.Chest: anchor = W3(bonePos[iChest]); pos = W3(bonePos[iHead]); return true;
+            case EditHandle.Head: anchor = W3(bonePos[iHead]); pos = W3(BonePoint(iHead, headAim)); return true;
+            case EditHandle.BatonElbow: anchor = W3(bonePos[iBS]); pos = W3(bonePos[iBE]); return true;
+            case EditHandle.BatonHand: anchor = W3(bonePos[iBE]); pos = W3(bonePos[iBW]); return true;
+            case EditHandle.BatonTip: anchor = W3(bonePos[iBW]); pos = W3(BonePoint(iBW, batonAim)); return true;
+            case EditHandle.OtherElbow: anchor = W3(bonePos[iOS]); pos = W3(bonePos[iOE]); return true;
+            case EditHandle.OtherHand: anchor = W3(bonePos[iOE]); pos = W3(bonePos[iOW]); return true;
+            case EditHandle.OtherFingers: anchor = W3(bonePos[iOW]); pos = W3(BonePoint(iOW, fingerAim)); return true;
+            case EditHandle.BatonShoulder: anchor = W3(bonePos[iChest]); pos = W3(bonePos[iBS]); return true;
+            case EditHandle.OtherShoulder: anchor = W3(bonePos[iChest]); pos = W3(bonePos[iOS]); return true;
+            case EditHandle.Hip: anchor = W3(rootArt + BendRoot(new Vector2(0f, WaistY))); pos = W3(bonePos[iChest]); return true;
+            case EditHandle.Hem: anchor = W3(rootArt + BendRoot(new Vector2(0f, WaistY)) + LowerOffset(WaistY)); pos = W3(HemPoint()); return true;
+            case EditHandle.Ornament: if (iMoon < 0) return false; anchor = W3(bonePos[iMoon]); pos = W3(BonePoint(iMoon, moonAim)); return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// 손잡이를 world로 끌었을 때 key 값을 고친다 — 지금 보이는 자세에서 바뀐 만큼만 더한다(스프링·흔들림이 켜져 있어도 맞게 수렴).
+    /// 팔꿈치 = 어깨를 돌림, 손 = 어깨·팔꿈치 2관절 IK(팔꿈치 굽는 쪽은 지금 쪽 유지), 손끝·지휘봉 끝 = 손목을 돌림
+    /// </summary>
+    public bool EditDrag(EditHandle h, Vector3 world, MaestroMotion.Key key)
+    {
+        if (!started || key == null || data == null || iChest < 0) return false;
+        EnsureAims();
+        key.EnsureSize();
+        Vector2 T = WorldToArt(world);
+        switch (h)
+        {
+            case EditHandle.Root:
+            {
+                Vector2 d = T - rootArt;
+                key.root += new Vector2(-d.x / ArtH, d.y / ArtH);
+                return true;
+            }
+            case EditHandle.Lean:
+            {
+                Vector2 v = T - rootArt;
+                if (v.sqrMagnitude < 1e-6f) return false;
+                float want = Mathf.Atan2(-v.x, v.y) * Mathf.Rad2Deg; // + = 앞(그림 −x)으로 기움
+                key.lean += Mathf.DeltaAngle(rootLean, want);
+                return true;
+            }
+            case EditHandle.Chest: return Aim(iChest, restOffset[iHead], T, key, 0, chestScale);
+            case EditHandle.Head: return Aim(iHead, headAim, T, key, 1, 1f);
+            case EditHandle.BatonElbow: return Aim(iBS, restOffset[iBE], T, key, 2, 1f);
+            case EditHandle.BatonHand: return TwoBone(iBS, iBE, iBW, T, key, 2, 3);
+            case EditHandle.BatonTip: return Aim(iBW, batonAim, T, key, 4, 1f);
+            case EditHandle.OtherElbow: return Aim(iOS, restOffset[iOE], T, key, 7, 1f);
+            case EditHandle.OtherHand: return TwoBone(iOS, iOE, iOW, T, key, 7, 8);
+            case EditHandle.OtherFingers: return Aim(iOW, fingerAim, T, key, 9, 1f);
+            case EditHandle.BatonShoulder: key.bShoulder = Vector2.ClampMagnitude(key.bShoulder + ChestLocalDelta(T - bonePos[iBS]) / Mathf.Max(0.05f, extraW), maxShoulderShift); return true;
+            case EditHandle.OtherShoulder: key.oShoulder = Vector2.ClampMagnitude(key.oShoulder + ChestLocalDelta(T - bonePos[iOS]) / Mathf.Max(0.05f, extraW), maxShoulderShift); return true;
+            case EditHandle.Hip:
+            {
+                Vector2 d = T - bonePos[iChest];
+                key.hip += new Vector2(-d.x / ArtH, d.y / ArtH) / Mathf.Max(0.05f, extraW);
+                return true;
+            }
+            case EditHandle.Hem:
+            {
+                Vector2 d = T - HemPoint();
+                float w = Mathf.Pow(1f - Mathf.Clamp01(HemY / WaistY), 1.5f) * Mathf.Max(0.05f, extraW); // 자락 손잡이 높이에서 hem이 먹는 비율
+                key.hem += new Vector2(-d.x / ArtH, d.y / ArtH) / Mathf.Max(0.05f, w);
+                return true;
+            }
+            case EditHandle.Ornament:
+            {
+                if (iMoon < 0) return false;
+                if (!AimDelta(iMoon, moonAim, T, out float delta)) return false;
+                key.moon += delta / Mathf.Max(0.05f, extraW);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 뼈 b를 돌려 local 점이 T를 향하게 — 채널 ch에 바뀐 각도만큼 (scale = 채널 → 각도 배율)
+    private bool Aim(int b, Vector2 local, Vector2 T, MaestroMotion.Key key, int ch, float scale)
+    {
+        if (!AimDelta(b, local, T, out float delta)) return false;
+        key.ch[ch] += delta / Mathf.Max(0.01f, scale);
+        return true;
+    }
+
+    private bool AimDelta(int b, Vector2 local, Vector2 T, out float delta)
+    {
+        delta = 0f;
+        if (b < 0) return false;
+        Vector2 d = T - bonePos[b];
+        if (d.sqrMagnitude < 1e-8f || local.sqrMagnitude < 1e-8f) return false;
+        float want = (Mathf.Atan2(d.y, d.x) - Mathf.Atan2(local.y, local.x)) * Mathf.Rad2Deg;
+        delta = Mathf.DeltaAngle(boneAng[b] * Mathf.Rad2Deg, want);
+        return true;
+    }
+
+    // 그림 공간 이동 d → 상체 기준(상체가 기운 만큼 되돌림) 키 대비 비율 (x + = 앞)
+    private Vector2 ChestLocalDelta(Vector2 d)
+    {
+        Vector2 l = Rot(d, -boneAng[iChest]);
+        return new Vector2(-l.x / ArtH, l.y / ArtH);
+    }
+
+    // 몸 이동 손잡이 높이 = 바닥(그림을 묻은 만큼 위), 하체 자락 손잡이 높이 = 바닥 조금 위
+    private float RootHandleY => sinkPx * cell;
+    private float HemY => Mathf.Min(sinkPx * cell + ArtH * 0.06f, WaistY * 0.5f);
+    private Vector2 HemPoint() => rootArt + BendRoot(new Vector2(0f, HemY)) + LowerOffset(HemY);
+
+    // 2관절 IK: 위팔 a(자식 관절 b) · 아래팔 b(자식 관절 c)로 c 관절이 T에 오게
+    private bool TwoBone(int a, int b, int c, Vector2 T, MaestroMotion.Key key, int chA, int chB)
+    {
+        if (a < 0 || b < 0 || c < 0) return false;
+        Vector2 S = bonePos[a];
+        float l1 = restOffset[b].magnitude, l2 = restOffset[c].magnitude;
+        if (l1 < 1e-6f || l2 < 1e-6f) return false;
+        Vector2 toT = T - S;
+        float dist = Mathf.Clamp(toT.magnitude, Mathf.Abs(l1 - l2) + 1e-4f, l1 + l2 - 1e-4f);
+        float baseAng = Mathf.Atan2(toT.y, toT.x);
+        float cosA = Mathf.Clamp((l1 * l1 + dist * dist - l2 * l2) / (2f * l1 * dist), -1f, 1f);
+        float alpha = Mathf.Acos(cosA);
+        // 팔꿈치 후보 두 곳 중 지금 팔꿈치에 가까운 쪽 (굽는 방향이 갑자기 뒤집히지 않게)
+        Vector2 e1 = S + new Vector2(Mathf.Cos(baseAng + alpha), Mathf.Sin(baseAng + alpha)) * l1;
+        Vector2 e2 = S + new Vector2(Mathf.Cos(baseAng - alpha), Mathf.Sin(baseAng - alpha)) * l1;
+        Vector2 E = (e1 - bonePos[b]).sqrMagnitude <= (e2 - bonePos[b]).sqrMagnitude ? e1 : e2;
+        Vector2 Tc = S + toT.normalized * dist;
+
+        Vector2 ob = restOffset[b], oc = restOffset[c];
+        float wantA = (Mathf.Atan2(E.y - S.y, E.x - S.x) - Mathf.Atan2(ob.y, ob.x)) * Mathf.Rad2Deg;
+        float wantB = (Mathf.Atan2(Tc.y - E.y, Tc.x - E.x) - Mathf.Atan2(oc.y, oc.x)) * Mathf.Rad2Deg;
+        float curA = boneAng[a] * Mathf.Rad2Deg, curB = boneAng[b] * Mathf.Rad2Deg;
+        key.ch[chA] += Mathf.DeltaAngle(curA, wantA);
+        key.ch[chB] += Mathf.DeltaAngle(curB - curA, wantB - wantA);
+        return true;
+    }
+
+    /// <summary>모션 이벤트 기준 자리 (월드, 지금 보이는 자세)</summary>
+    public Vector3 MotionAnchorWorld(MaestroMotion.Anchor a)
+    {
+        if (!started || data == null || iChest < 0) return transform.position;
+        EnsureAims();
+        switch (a)
+        {
+            case MaestroMotion.Anchor.BatonTip: return BatonTip;
+            case MaestroMotion.Anchor.BatonHand: return W3(bonePos[iBW]);
+            case MaestroMotion.Anchor.OtherHand: return W3(BonePoint(iOW, fingerAim));
+            case MaestroMotion.Anchor.Head: return W3(BonePoint(iHead, headAim));
+            case MaestroMotion.Anchor.Feet: return W3(rootArt + new Vector2(0f, RootHandleY));
+            default: return BodyCenter;
+        }
+    }
+
+    /// <summary>모션 좌표(키 대비, x + = 앞) → 월드 이동량. 보스가 보는 쪽·크기 반영</summary>
+    public Vector3 MotionToWorldDelta(Vector2 r)
+    {
+        float h = (data != null ? data.artHeightPx : 150f) * cell * grow;
+        float front = -Mathf.Sign(FlipX == 0f ? 1f : FlipX); // 그림 −x = 앞
+        return new Vector3(r.x * h * front, r.y * h, 0f);
+    }
+
+    /// <summary>월드 이동량 → 모션 좌표 (MotionToWorldDelta의 반대)</summary>
+    public Vector2 WorldDeltaToMotion(Vector3 d)
+    {
+        float h = Mathf.Max(1e-4f, (data != null ? data.artHeightPx : 150f) * cell * grow);
+        float front = -Mathf.Sign(FlipX == 0f ? 1f : FlipX);
+        return new Vector2(d.x / (h * front), d.y / h);
+    }
+
+    /// <summary>뼈대 그리기용 — 뼈 b 관절과 부모 관절 (월드)</summary>
+    public int EditBoneCount => started ? bonePos.Length : 0;
+    public bool EditBone(int b, out Vector3 pos, out Vector3 parentPos)
+    {
+        pos = parentPos = transform.position;
+        if (!started || b < 0 || b >= bonePos.Length) return false;
+        pos = W3(bonePos[b]);
+        int p = data.bones[b].parent;
+        parentPos = p >= 0 ? W3(bonePos[p]) : W3(rootArt);
+        return true;
+    }
+
+    /// <summary>
+    /// 코드에 있던 몸짓을 모션 에셋으로 꺼낸다 (편집 출발점). 채널 키·몸 기울기·눌림·베기 몸 이동의 키 시간을 합쳐 그 시간마다 값을 찍는다
+    /// → 원래 키 시간에서는 똑같고, 그 사이는 거의 같다. 평소 지휘(None)·격렬한 지휘(ConductFast)는 박자 기반이라 못 꺼낸다
+    /// </summary>
+    public bool ExportGesture(MaestroGesture g, MaestroMotion m, float seconds)
+    {
+        Key[] keys; Vector2[] lean; Vector2[] squash = null;
+        switch (g)
+        {
+            case MaestroGesture.Swing: keys = SwingKeys; lean = LeanSwing; break;
+            case MaestroGesture.Spread: keys = SpreadKeys; lean = LeanSpread; break;
+            case MaestroGesture.Strike: keys = StrikeKeys; lean = LeanStrike; squash = SquashStrike; break;
+            case MaestroGesture.SlashLeft: keys = SlashLeftKeys; lean = LeanSlashLeft; squash = SquashSlash; break;
+            case MaestroGesture.SlashRight: keys = SlashRightKeys; lean = LeanSlashRight; squash = SquashSlash; break;
+            case MaestroGesture.RaiseBoth: keys = RaiseKeys; lean = LeanRaise; break;
+            default: return false;
+        }
+        bool slash = g == MaestroGesture.SlashLeft || g == MaestroGesture.SlashRight;
+        var times = new SortedSet<float>();
+        foreach (var k in keys) times.Add(k.t);
+        foreach (var v in lean) times.Add(v.x);
+        if (squash != null) foreach (var v in squash) times.Add(v.x);
+        if (slash) { times.Add(0.4f); times.Add(0.55f); }
+
+        m.keys.Clear();
+        m.length = Mathf.Max(0.05f, seconds);
+        m.loop = false;
+        m.crisp = g == MaestroGesture.Spread || g == MaestroGesture.Strike || slash;
+        float fwd = g == MaestroGesture.SlashLeft ? -1f : 1f;
+        foreach (float u in times)
+        {
+            var key = new MaestroMotion.Key { time = u * m.length };
+            EvalKeys(keys, u, key.ch);
+            key.lean = Piece(u, lean) * bodyLeanScale;
+            key.stretch = squash != null ? 1f + (Piece(u, squash) - 1f) * squashScale : 1f;
+            if (slash)
+            {
+                // GestureRoot와 같은 식 (키 대비) → 모션 root (x + = 앞 = 그림 −x)
+                Vector2 ready = new Vector2(-fwd * slashRootBack, -slashCrouch), lunge = new Vector2(fwd * slashRootLunge, -slashCrouch * 0.3f), v;
+                if (u < 0.4f) v = Vector2.Lerp(Vector2.zero, ready, Mathf.SmoothStep(0f, 1f, u / 0.4f));
+                else if (u < 0.55f) v = Vector2.Lerp(ready, lunge, Mathf.SmoothStep(0f, 1f, (u - 0.4f) / 0.15f));
+                else v = Vector2.Lerp(lunge, Vector2.zero, Mathf.SmoothStep(0f, 1f, (u - 0.55f) / 0.45f));
+                key.root = new Vector2(-v.x, v.y);
+            }
+            m.keys.Add(key);
+        }
+        m.memo = $"코드 몸짓 '{g}'에서 가져옴 ({System.DateTime.Now:yyyy-MM-dd})";
+        return true;
     }
 
     // ───────────────────────── 키 포즈 (11-25 사용자 결정 B-2) ─────────────────────────

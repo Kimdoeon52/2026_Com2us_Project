@@ -127,7 +127,7 @@ public class MaestroDebugPanel : MonoBehaviour
         GUILayout.EndHorizontal();
         foreach (MaestroGesture g in Enum.GetValues(typeof(MaestroGesture)))
         {
-            if (g == MaestroGesture.None) continue;
+            if (g == MaestroGesture.None || g == MaestroGesture.Custom) continue; // Custom = 모션 에셋 (모션 편집기에서 재생)
             if (!GUILayout.Button($"▶ {g}")) continue;
             if (g == MaestroGesture.SlashLeft || g == MaestroGesture.SlashRight)
                 look.PlayTimed(g, gestureSeconds * 0.45f, gestureSeconds * 0.2f, gestureSeconds * 0.35f);

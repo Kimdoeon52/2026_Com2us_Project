@@ -317,7 +317,13 @@ MonoBehaviour:
   swarm: {fileID: 27701181}
   data: {fileID: 11400000, guid: fac49e942daf087408ca4a56275b1e15, type: 2}
   reserveShape: {fileID: 11400000, guid: d96993eee54653640bd15b7f101014e5, type: 2}
+  poseSet: {fileID: 11400000, guid: 4f339018508521b4c8cad43e6cd0b057, type: 2}
+  motionSet: {fileID: 0}
   standalone: 0
+  poseStagger: 0.3
+  poseArcPx: 5
+  poseJitterPx: 0.35
+  poseBreath: 0.012
   hurtRectPx: {x: -12, y: 30, z: 30, w: 82}
   sinkPx: 14
   artFacing: -1
@@ -367,6 +373,18 @@ MonoBehaviour:
     beams: 6
   moveSmooth: 0.25
   leanPerSpeed: 5
+  bodyLeanScale: 1
+  bendCurve: 1.3
+  bodyLeanFrequency: 2.2
+  idleSway: 2.5
+  chestScale: 1
+  squashScale: 1
+  reserveScale: 0.7
+  slashCrouch: 0.08
+  slashRootBack: 0.05
+  slashRootLunge: 0.1
+  maxLean: 18
+  conductBeatsPerSecond: 1.3
   hitBurst: 14
   hitFlinch: 10
   turnSmooth: 0.2

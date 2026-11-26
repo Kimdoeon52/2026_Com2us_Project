@@ -1,19 +1,26 @@
 using UnityEngine;
-using RealSteel.Boss.Core;
 
 namespace RealSteel.Boss.Visual
 {
     /// <summary>
+    /// KKH.Boss.Visual이 BossControllerBase(Assembly-CSharp)를 직접 참조하지 않도록 분리하는 생존 조회 계약.
+    /// </summary>
+    public interface IBossAliveProvider
+    {
+        bool IsBossAlive { get; }
+    }
+
+    /// <summary>
     /// [2.5D(3D 필드) 환경 보스용 바닥 그림자 드라이버 (BossGroundShadow)]
     /// 3D 지형(RSTerrain)과 3D 콜라이더 굴곡을 따라 XZ 평면에 투영되는 RSBlobShadow(RE_AL STEEL/Blob Shadow)를
-    /// 보스(BossControllerBase)의 생존 상태, 스프라이트 가시성 및 착지 스쿼시 연출과 연동함.
+    /// 보스(IBossAliveProvider)의 생존 상태, 스프라이트 가시성 및 착지 스쿼시 연출과 연동함.
     /// </summary>
     [DefaultExecutionOrder(-10)]
     [RequireComponent(typeof(RSBlobShadow))]
     public class BossGroundShadow : MonoBehaviour
     {
         [Header("참조 (미지정 시 자동 탐색)")]
-        [SerializeField] private BossControllerBase bossController;
+        [SerializeField] private MonoBehaviour bossController;
         [SerializeField] private BossAnimationController animationController;
         [SerializeField] private SpriteRenderer bossSpriteRenderer;
         [SerializeField] private RSBlobShadow blobShadow;
@@ -73,7 +80,7 @@ namespace RealSteel.Boss.Visual
         {
             if (bossController == null)
             {
-                bossController = GetComponent<BossControllerBase>();
+                bossController = GetComponent<IBossAliveProvider>() as MonoBehaviour;
             }
             if (animationController == null)
             {
@@ -118,7 +125,7 @@ namespace RealSteel.Boss.Visual
         {
             if (blobShadow == null) return;
 
-            bool isDefeated = bossController != null && bossController.Snapshot != null && !bossController.Snapshot.IsAlive;
+            bool isDefeated = bossController is IBossAliveProvider aliveProvider && !aliveProvider.IsBossAlive;
             bool isHidden = bossSpriteRenderer != null
                 && (!bossSpriteRenderer.enabled || !bossSpriteRenderer.gameObject.activeInHierarchy);
 

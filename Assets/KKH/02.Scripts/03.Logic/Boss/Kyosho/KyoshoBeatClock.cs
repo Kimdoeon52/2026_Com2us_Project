@@ -10,7 +10,7 @@ namespace RealSteel.Boss.Kyosho
     /// AudioSettings.dspTime 기반으로 프레임 드랍에 흔들리지 않는 정확한 BPM 박자/마디 타이머를 제공함.
     /// Time.timeScale == 0 일시정지 구간은 자동 동결하여 일시정지 후에도 박자가 밀리지 않음.
     /// </summary>
-    public class KyoshoBeatClock : MonoBehaviour
+    public class KyoshoBeatClock : MonoBehaviour, IKyoshoBeatClock
     {
         [Header("박자 설정")]
         [SerializeField] private float bpm = 112f;

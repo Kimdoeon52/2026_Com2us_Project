@@ -9,8 +9,9 @@ using RealSteel.Boss.Visual;
 namespace RealSteel.Boss.Core
 {
     [DefaultExecutionOrder(500)]
-    public abstract class BossControllerBase : MonoBehaviour
+    public abstract class BossControllerBase : MonoBehaviour, IBossAliveProvider
     {
+        public bool IsBossAlive => Snapshot != null && Snapshot.IsAlive;
         [Header("1. 보스 데이터 원장 에셋")]
         [SerializeField] protected BossMasterData masterData;
 

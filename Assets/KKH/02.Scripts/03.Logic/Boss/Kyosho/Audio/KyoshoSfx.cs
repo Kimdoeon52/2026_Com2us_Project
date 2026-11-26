@@ -125,12 +125,12 @@ namespace RealSteel.Boss.Kyosho
         public static void PlaySolfegeNote(int symbolIndex, Vector3 worldPos, float volumeScale = 1f, int phraseStep = -1)
         {
             if (!Application.isPlaying) return;
-            int idx = Mathf.Clamp(symbolIndex, 0, KyoshoConstants.SolfegeFrequencies.Length - 1);
+            int idx = Mathf.Clamp(symbolIndex, 0, KyoshoDataConstants.SolfegeFrequencies.Length - 1);
 
             KyoshoSfxCue leadCue = (_data != null && _data.variationMelodyNotes != null && idx < _data.variationMelodyNotes.Length)
                 ? _data.variationMelodyNotes[idx]
                 : null;
-            float baseFreq = KyoshoConstants.SolfegeFrequencies[idx];
+            float baseFreq = KyoshoDataConstants.SolfegeFrequencies[idx];
 
             // 리드 멜로디 (원음)
             PlayHarmonicCueVoice(leadCue, $"solfege_{idx}", worldPos, 1f, 0.78f * volumeScale, fallbackDefaultVol: 0.70f);
@@ -548,7 +548,7 @@ namespace RealSteel.Boss.Kyosho
             }
         }
 
-        public static void SyncBgmWithBeatClock(KyoshoBeatClock clock)
+        public static void SyncBgmWithBeatClock(IKyoshoBeatClock clock)
         {
             if (_bgmSource == null || _bgmSource.clip == null) return;
             if (_bgmSource.isPlaying && BossAudioBridge.HasExternalBgmTakenOver())
@@ -834,7 +834,7 @@ namespace RealSteel.Boss.Kyosho
 
             if (data.variationMelodyNotes != null)
             {
-                for (int i = 0; i < data.variationMelodyNotes.Length && i < KyoshoConstants.SolfegeFrequencies.Length; i++)
+                for (int i = 0; i < data.variationMelodyNotes.Length && i < KyoshoDataConstants.SolfegeFrequencies.Length; i++)
                 {
                     WarmIfMissing(data.variationMelodyNotes[i], $"solfege_{i}");
                 }
@@ -865,8 +865,8 @@ namespace RealSteel.Boss.Kyosho
             if (key == "bgm_phase3") return SynthesizeBgmLoopSamples(3, out sampleRate);
             if (key != null && key.StartsWith("solfege_") && int.TryParse(key.Substring(8), out int sIdx))
             {
-                sIdx = Mathf.Clamp(sIdx, 0, KyoshoConstants.SolfegeFrequencies.Length - 1);
-                float freq = KyoshoConstants.SolfegeFrequencies[sIdx];
+                sIdx = Mathf.Clamp(sIdx, 0, KyoshoDataConstants.SolfegeFrequencies.Length - 1);
+                float freq = KyoshoDataConstants.SolfegeFrequencies[sIdx];
                 return BuildOrchestralToneSamples(freq, 0.44f, 0.50f, harmonic2: 0.36f, harmonic3: 0.18f, octaveShimmer: 0.18f, chorusDetune: 0.0035f, vibratoDepth: 0.0035f, expDecay: 5.8f);
             }
 

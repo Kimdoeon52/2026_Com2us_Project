@@ -2,45 +2,9 @@ using UnityEngine;
 
 namespace RealSteel.Boss.Kyosho
 {
-    public enum KyoshoPhaseState
-    {
-        Intro = 0,
-        Phase1 = 1,
-        Variation1 = 2,
-        Phase2 = 3,
-        Variation2 = 4,
-        Finale = 5,
-         FinalGroggy = 6,
-        Defeated = 7,
-        EncoreAwakening = 8,
-        Phase3 = 9
-    }
-
-    public enum KyoshoSectionType
-    {
-        Strings = 0,
-        Percussion = 1,
-        Brass = 2
-    }
-
-    public enum KyoshoBloomType
-    {
-        Note = 0,
-        Trumpet = 1,
-        Cymbal = 2
-    }
-
-    public enum KyoshoNoteType
-    {
-        Rest = 0,
-        Quarter = 1,
-        Eighth = 2,
-        Sixteenth = 3,
-        Triplet = 4
-    }
-
     /// <summary>
     /// 지역 3 보스 '쿄쇼 (Kyosho)' 공용 상수, ID, 색상 팔레트 및 난이도 파라미터 헬퍼.
+    /// (KyoshoPhaseState / KyoshoSectionType / KyoshoBloomType / KyoshoNoteType 열거형은 KKH.Boss.Kyosho.Data의 KyoshoEnums.cs로 분리됨)
     /// </summary>
     public static class KyoshoConstants
     {
@@ -86,16 +50,8 @@ namespace RealSteel.Boss.Kyosho
         public static readonly Color ConductP3CompoundColor = new Color(0.733f, 0.333f, 1.000f, 1f);// #BB55FF
         public static readonly Color SafeZoneGoldColor = new Color(1.000f, 0.840f, 0.280f, 1f);
 
-        // 변주곡 6종 문양 고유 계이름 주파수 (도~라: C4, D4, E4, F4, G4, A4)
-        public static readonly float[] SolfegeFrequencies =
-        {
-            261.63f, // 0: 𝄞 도 (C4)
-            293.66f, // 1: 𝄢 레 (D4)
-            329.63f, // 2: ♯ 미 (E4)
-            349.23f, // 3: ♭ 파 (F4)
-            392.00f, // 4: 𝄽 솔 (G4)
-            440.00f  // 5: ⌒ 라 (A4)
-        };
+        // 변주곡 6종 문양 고유 계이름 주파수 (도~라: KKH.Boss.Kyosho.Data 포워딩)
+        public static readonly float[] SolfegeFrequencies = KyoshoDataConstants.SolfegeFrequencies;
 
         // TMP 기본 폰트 호환을 위해 BMP 영역 심볼만 사용 (서로게이트 페어 SMP 기호 제거)
         public static readonly string[] SymbolGlyphs = { "♪", "♫", "♯", "♭", "//", "⌒" };

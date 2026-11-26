@@ -21,10 +21,10 @@ namespace RealSteel.Boss.Kyosho
         }
 
         private readonly List<LightRecord> _lights = new List<LightRecord>();
-        private KyoshoBeatClock _clock;
+        private IKyoshoBeatClock _clock;
         private float _pulse;
 
-        public void Bind(KyoshoBeatClock clock)
+        public void Bind(IKyoshoBeatClock clock)
         {
             Unbind();
             _clock = clock;

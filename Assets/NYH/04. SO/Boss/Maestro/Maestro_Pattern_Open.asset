@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98027832e0f97104aafc007b3b22f80d, type: 3}
+  m_Name: Maestro_Pattern_Open
+  m_EditorClassIdentifier: 
+  patternID: PATTERN_MAESTRO_OPEN
+  patternName: "\uBE5B\uC120 \uC5F0\uD0C0"
+  description: "\uB4A4\uD310\uC73C\uB85C \uBB3C\uB7EC\uB098 \uB450 \uD314\uC744 \uD65C\uC9DD
+    \uB4E0 \uB3D9\uC548, \uC190\uB05D\uC5D0\uC11C \uD50C\uB808\uC774\uC5B4 \uCABD\uC73C\uB85C
+    \uC608\uACE0\uC120 \u2192 \uBE5B\uC120\uC774 \uBE60\uB974\uAC8C \uAF42\uD798.
+    \uB05D\uB098\uBA74 \uC55E\uC73C\uB85C \uB3CC\uC544\uC634"
+  tellDuration: 0
+  postDelay: 1
+  hasDpsCheck: 0
+  requiredDamageToInterrupt: 300
+  interruptStunDuration: 3
+  targetPlayerPart: 0
+  partDurabilityDamage: 25
+  baseDamage: 50
+  damageRatio: 100
+  actionData: {fileID: 0}

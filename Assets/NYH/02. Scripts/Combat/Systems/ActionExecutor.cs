@@ -147,6 +147,9 @@ public class ActionExecutor : MonoBehaviour
             return;
         }
 
+        // 피격 무적은 히트스톱 중에도 줄인다 — 실제 시간 기준 (정지만큼 무적이 늘어나지 않게)
+        if (HitImmuneRemaining > 0) HitImmuneRemaining--;
+
         // 히트스톱 중이면 이번 틱은 통째로 건너뛴다 — 쿨타임·프레임·전진·발사가 전부 같이 멈춰야 정지가 끝난 뒤
         // 모든 타이밍이 정확히 그만큼만 밀린다. 정지 중 누른 입력은 입력원의 래치·버퍼에 남아 있으면 풀린 뒤 처리된다
         // (버퍼 길이보다 오래 멈추면 사라질 수 있음 — 플레이 확인 항목)
@@ -232,7 +235,20 @@ public class ActionExecutor : MonoBehaviour
     /// 판정이 끝난 뒤 HitDetection이 맞은 쪽에 알려주는 통로. 이벤트를 밖에서 직접 Invoke할 수 없어서 함수로 연다
     /// </summary>
     // 호출: HitDetection(근접·투사체 공통). 전달: OnDamaged → RobotView 점멸
-    public void NotifyDamaged(HitResolutionResult result) => OnDamaged?.Invoke(result);
+    public void NotifyDamaged(HitResolutionResult result)
+    {
+        // 맞을 때마다 피격 무적 (HitReactionData.HitImmunityFrames) — 로봇 공격·보스 공격(OnPlayerHpChanged)·폭발 모두 여기를 지난다.
+        // 회피로 피한 건 맞은 게 아니라 제외. 이미 무적이면 더 긴 쪽으로
+        if (result != null && !result.IsEvaded && hitReaction != null && hitReaction.HitImmunityFrames > HitImmuneRemaining)
+            HitImmuneRemaining = hitReaction.HitImmunityFrames;
+        OnDamaged?.Invoke(result);
+    }
+
+    /// <summary>피격 무적 남은 프레임 (2026-11-26). 0보다 크면 공격이 안 들어간다 — HitDetection.IsInvincibleNow가 본다</summary>
+    public int HitImmuneRemaining { get; private set; }
+
+    /// <summary>맞은 직후 무적 중인지</summary>
+    public bool IsHitImmune => HitImmuneRemaining > 0;
 
     // 코어 HP가 0이 됐는지 매 틱 확인해서 Dead로 보낸다. 피격 지점(HitDetection)에서만 확인하지 않는 이유:
     // 데미지가 들어오는 길이 근접·투사체·(나중의) 기믹·지속 피해 등 여러 갈래라, HP를 직접 보는 쪽이 빠뜨릴 일이 없다.

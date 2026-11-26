@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0730b19b24fe66e4b8dd4af7518f1e8b, type: 3}
   m_Name: Maestro_Motion_DrawCircle
   m_EditorClassIdentifier: 
-  length: 1
+  length: 2
   loop: 0
   crisp: 1
   memo: 
@@ -63,7 +63,7 @@ MonoBehaviour:
     moon: 0
     ease: 0
     note: 
-  - time: 0.58
+  - time: 1.17
     ch:
     - 0
     - 0
@@ -86,7 +86,30 @@ MonoBehaviour:
     moon: 0
     ease: 0
     note: 
-  - time: 0.75
+  - time: 1.4
+    ch:
+    - 0
+    - 0
+    - 337.41922
+    - 95.68899
+    - 31.657372
+    - 0
+    - 0.5
+    - 0
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 0, y: 0}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: 
+  - time: 1.44
     ch:
     - 0
     - 0
@@ -135,6 +158,9 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8102"
     time: 0.26
@@ -160,6 +186,9 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8103"
     time: 0.32
@@ -185,6 +214,9 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8104"
     time: 0.37
@@ -210,6 +242,9 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8105"
     time: 0.41
@@ -235,6 +270,9 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8106"
     time: 0.45
@@ -260,9 +298,12 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
   - type: 0
     name: "\uC8107"
-    time: 0.51
+    time: 0.5
     anchor: 0
     offset: {x: 0, y: 0}
     duration: 0.4
@@ -285,25 +326,27 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
-  - type: 1
-    name: "\uC1208"
-    time: 0.641
-    anchor: 1
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC8109"
+    time: 0.56
+    anchor: 0
     offset: {x: 0, y: 0}
-    duration: 0.6
+    duration: 0.4
     count: 1
-    memo: "\uC810\uC5D0\uC11C \uC74C\uD45C \uC0DD\uC131 \uD6C4 \uC120(\uD50C\uB808\uC774\uC5B4
-      \uBC29\uD5A5\uC73C\uB85C \uD558\uB098\uC529 \uB3CC\uC9C4)"
+    memo: 
     pointRole: 0
     pointFeel: 1
     spread: 0
     size: 0.05
     lineRole: 0
-    lineFeel: 6
+    lineFeel: 0
     feelStrength: 1
     path:
     - {x: 0, y: 0}
-    - {x: 1.5027803, y: -0.035400927}
+    - {x: 0.8, y: 0}
     curved: 1
     waveAmp: 0
     waveCount: 2
@@ -311,3 +354,237 @@ MonoBehaviour:
     width: 0.04
     interval: 0
     startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81010"
+    time: 0.62
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81011"
+    time: 0.69
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81012"
+    time: 0.75
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81013"
+    time: 0.81
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81014"
+    time: 0.88
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81015"
+    time: 0.94
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 0
+    name: "\uC81016"
+    time: 1
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.4
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.8, y: 0}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  - type: 1
+    name: "\uC12016"
+    time: 1.4
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.6
+    count: 1
+    memo: "\uC810 \uB9C8\uB2E4 \uC74C\uD45C \uC791\uC740 \uC74C\uD45C\uD0C4 \uC0DD\uC131\uD6C4
+      \uD50C\uB808\uC774\uC5B4 \uC5D0\uAC8C \uCC28\uB840\uCC28\uB840 \uD6C4\uB450\uB451
+      \uB5A8\uC5B4\uC9C0\uB294\uB370 \uC720\uB3C4\uC131\uC774\n\uB108\uBB34 \uB192\uC9C4
+      \uC54A\uC74C \uBC14\uB2E5\uC774\uB098 \uBCBD\uC5D0 \uBD80\uB51B\uD788\uBA74
+      \uBD80\uC234\uC9D0 \uB0A0\uB77C\uAC00\uB294 \uADA4\uB3C4\uB294 \uC9C1\uC120\uC801\uC774\uBA70\n\uD55C\uBC88\uC5D0
+      \uC3D8\uB294 \uB290\uB08C\uBCF4\uB2E8 \uD558\uB098\uC529 \uBE60\uB974\uAC8C
+      \uB2E4\uB2E4\uB2E4\uB2E5\uC3D8\uB294 \uB290\uB08C"
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.92162764, y: -0.59380126}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.04
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  hideDepth: 0.3

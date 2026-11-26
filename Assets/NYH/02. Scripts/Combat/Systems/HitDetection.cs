@@ -203,8 +203,13 @@ public class HitDetection : MonoBehaviour
     {
         bool invincible = IsDodging(defender);
         if (invincible && defender.FighterId == "Player") DodgeSuccessDirector.Trigger(defender);
-        return invincible;
+        // 2026-11-26: 맞은 직후 피격 무적(HitReactionData.HitImmunityFrames)도 무적 — 회피가 아니므로 회피 성공 연출은 안 띄운다.
+        // KKH 보스 공격(IsPlayerInvincible)·마에스트로 패턴·투사체·CSH 폭발이 전부 여기를 물어서 같이 막힌다
+        return invincible || IsHitImmune(defender);
     }
+
+    /// <summary>맞은 직후 피격 무적 중인지 (연출 없음)</summary>
+    public static bool IsHitImmune(ActionExecutor defender) => defender != null && defender.IsHitImmune;
 
     /// <summary>회피 무적 중인지만 본다 (연출 없음)</summary>
     public static bool IsDodging(ActionExecutor defender) =>
@@ -220,6 +225,10 @@ public class HitDetection : MonoBehaviour
         // ProcessHit은 딱 한 번만 불러야 한다 (ActionState.HasHitThisAction 설명 참고).
         // 2026-10-11: 다단히트 기술(화염 등)은 HitIntervalFrames가 지나면 다시 맞힐 수 있다 (ActionState.CanHitNow)
         if (!attacker.State.CanHitNow) return;
+
+        // 2026-11-26: 맞은 쪽이 피격 무적이면 판정 자체를 건너뛴다 — 회피(무적)처럼 '피함'으로 처리하면 회피 숫자가 뜨고
+        // 이 공격의 히트가 소모되므로. 무적이 끝난 뒤 같은 공격의 활성 구간이 남아 있으면 그때 맞을 수 있다
+        if (IsHitImmune(defender)) return;
 
         // mover가 아직 없으면(배선 전 등) 오른쪽을 본다고 가정 — BoxDrawer와 동일한 안전 기본값
         bool attackerFacingRight = attackerMover == null || attackerMover.FacingRight;

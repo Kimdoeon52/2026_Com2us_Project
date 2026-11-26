@@ -1,4 +1,4 @@
-using System.IO;
+﻿using System.IO;
 using RealSteel.NanoBoss;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -31,6 +31,12 @@ public static class MaestroBuilder
     private const string OrbitDataPath = DataFolder + "/Maestro_OrbitData.asset";
     private const string WavePatternPath = DataFolder + "/Maestro_Pattern_Wave.asset";
     private const string WaveDataPath = DataFolder + "/Maestro_WaveData.asset";
+    private const string OpenPatternPath = DataFolder + "/Maestro_Pattern_Open.asset";
+    private const string OpenDataPath = DataFolder + "/Maestro_OpenData.asset";
+    private const string OpenMotionPath = DataFolder + "/Motions/Maestro_Motion_OpenMotion.asset";
+    private const string CirclePatternPath = DataFolder + "/Maestro_Pattern_Circle.asset";
+    private const string CircleDataPath = DataFolder + "/Maestro_CircleData.asset";
+    private const string CircleMotionPath = DataFolder + "/Motions/Maestro_Motion_DrawCircle.asset";
     // 남는 봇 (몸 그림에 겹쳐 숨김) — 패턴이 빌려 쓴다 (커튼 3000 · 지휘봉 2400 · 음표 ~1500, 동시엔 하나). TODO 임시값
     private const int LookPoolBots = 4000;
     private const float DefaultDistanceFromPlayer = 6f; // 새로 세울 때 플레이어 오른쪽 거리(월드) — 배치 편의값
@@ -114,6 +120,8 @@ public static class MaestroBuilder
         EnsureSlashPattern(boss);
         EnsureOrbitPattern(boss);
         EnsureWavePattern(boss);
+        EnsureOpenPattern(boss);
+        EnsureCirclePattern(boss);
 
         Selection.activeGameObject = boss.gameObject;
         EditorSceneManager.MarkSceneDirty(boss.gameObject.scene);
@@ -233,6 +241,60 @@ public static class MaestroBuilder
         });
         var data = LoadOrCreate<MaestroWaveData>(WaveDataPath, null);
         EnsurePatternChild<MaestroWavePattern>(boss, "패턴_크레셴도", pattern, "waveData", data);
+    }
+
+    // 빛기둥 (11-26 사용자 — 패턴 제조기 모션 '오픈모션' 기반, 처음 '빛선 연타'에서 사용자 그림대로 바꿈). 기획서에 아직 없음. 부위 임시 머리
+    private const string OpenDescription = "순간이동으로 뒤판에 들어가 두 팔을 활짝 든 동안, 화면을 세로 띠로 나눠 빛기둥 칸 예고 → 낙하를 1~4번(매번 자리 뒤바꿈). 끝나면 순간이동으로 돌아옴";
+
+    private static void EnsureOpenPattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(OpenPatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_OPEN";
+            p.patternName = "빛기둥";
+            p.description = OpenDescription;
+            p.tellDuration = 0f;                // 예고는 패턴 안(예고선)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.Head; // TODO: 기획서에 없음 — 위에서 꽂히는 빛이라 임시로 머리
+        });
+        if (pattern.patternName == "빛선 연타")
+        {
+            pattern.patternName = "빛기둥";
+            pattern.description = OpenDescription;
+            EditorUtility.SetDirty(pattern);
+        }
+        var data = LoadOrCreate<MaestroOpenData>(OpenDataPath, null);
+        var oldChild = boss.transform.Find("패턴_빛선 연타");
+        if (oldChild != null) { Undo.RecordObject(oldChild.gameObject, "이름"); oldChild.name = "패턴_빛기둥"; }
+        if (data.motion == null)
+        {
+            data.motion = AssetDatabase.LoadAssetAtPath<MaestroMotion>(OpenMotionPath);
+            EditorUtility.SetDirty(data);
+            AssetDatabase.SaveAssets();
+            if (data.motion == null) Debug.LogWarning($"[Maestro] 빛선 연타 모션이 없음: {OpenMotionPath} — Maestro_OpenData에 직접 넣을 것");
+        }
+        EnsurePatternChild<MaestroOpenPattern>(boss, "패턴_빛기둥", pattern, "openData", data);
+    }
+
+    // 원 음표탄 (11-26 사용자 — 패턴 제조기 모션 '원그리기' + 메모). 기획서에 아직 없음. 부위 임시 왼팔(음표 탄 계열)
+    private static void EnsureCirclePattern(MaestroBossController boss)
+    {
+        var pattern = LoadOrCreate<BossPatternData>(CirclePatternPath, p =>
+        {
+            p.patternID = "PATTERN_MAESTRO_CIRCLE";
+            p.patternName = "원 음표탄";
+            p.description = "지휘봉으로 원을 그리며 음표가 차례로 맺힘 → 하나씩 빠르게(다다다닥) 플레이어 쪽으로, 약한 유도 뒤 직선";
+            p.tellDuration = 0f;                    // 예고는 패턴 안(맺히는 음표)
+            p.hasDpsCheck = false;
+            p.targetPlayerPart = BodyPart.LeftArm;  // TODO: 기획서에 없음 — 음표 탄 계열이라 임시로 왼팔
+        });
+        var data = LoadOrCreate<MaestroCircleData>(CircleDataPath, null);
+        bool dirty = false;
+        if (data.motion == null) { data.motion = AssetDatabase.LoadAssetAtPath<MaestroMotion>(CircleMotionPath); dirty = true; }
+        if (data.noteData == null) { data.noteData = AssetDatabase.LoadAssetAtPath<MaestroNoteData>(NoteDataPath); dirty = true; }
+        if (dirty) { EditorUtility.SetDirty(data); AssetDatabase.SaveAssets(); }
+        if (data.motion == null) Debug.LogWarning($"[Maestro] 원 음표탄 모션이 없음: {CircleMotionPath} — Maestro_CircleData에 직접 넣을 것");
+        EnsurePatternChild<MaestroCirclePattern>(boss, "패턴_원 음표탄", pattern, "circleData", data);
     }
 
     // 보스 자식에 패턴이 없으면 만들고, 비어 있는 연결(패턴 데이터·수치 에셋)만 채운다

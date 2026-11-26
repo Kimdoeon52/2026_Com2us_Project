@@ -1,0 +1,74 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0730b19b24fe66e4b8dd4af7518f1e8b, type: 3}
+  m_Name: "Maestro_Motion_\uC774\uD604\uBBFC\uD328\uD134\uB0B4\uB194"
+  m_EditorClassIdentifier: 
+  length: 1
+  loop: 0
+  crisp: 1
+  memo: 
+  keys:
+  - time: 0
+    ch:
+    - 0
+    - 0
+    - -374.03357
+    - 92.2113
+    - 0
+    - 0
+    - 0.5
+    - 0
+    - 0
+    - 0
+    - 0.3
+    lean: 0
+    root: {x: 0, y: 0}
+    stretch: 1
+    bShoulder: {x: 0, y: 0}
+    oShoulder: {x: 0, y: 0}
+    hip: {x: 0, y: 0}
+    hem: {x: 0, y: 0}
+    moon: 0
+    ease: 0
+    note: "\uC2DC\uC791"
+  events:
+  - type: 1
+    name: "\uC1201"
+    time: 0
+    anchor: 0
+    offset: {x: 0, y: 0}
+    duration: 0.6
+    count: 1
+    memo: 
+    pointRole: 0
+    pointFeel: 1
+    spread: 0
+    size: 0.05
+    lineRole: 0
+    lineFeel: 0
+    feelStrength: 1.022
+    path:
+    - {x: 0, y: 0}
+    - {x: 0.013890254, y: 0.19648011}
+    - {x: 0.6845202, y: 0.69129807}
+    - {x: 0.7317783, y: 1.6809025}
+    curved: 1
+    waveAmp: 0
+    waveCount: 2
+    aimAtPlayer: 0
+    width: 0.136
+    interval: 0
+    startAtPoint: 
+    changeDepth: 0
+    moveDepth: 0
+    moveGrow: 1
+  hideDepth: 0.3

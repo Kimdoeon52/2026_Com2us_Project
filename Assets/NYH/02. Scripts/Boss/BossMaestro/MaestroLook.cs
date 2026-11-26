@@ -647,8 +647,45 @@ public class MaestroLook : MonoBehaviour
         customMotion = m;
     }
 
+    /// <summary>모션 에셋 재생 빠르기 (0 = 그 자세로 멈춤). 패턴이 모션 시간을 직접 몰 때 0으로 두고 SetMotionTime</summary>
+    public float MotionTimeScale { get => motionTimeScale; set => motionTimeScale = Mathf.Max(0f, value); }
+    private float motionTimeScale = 1f;
+
+    /// <summary>재생 중인 모션 에셋의 시간을 직접 정한다 (PlayMotion(m, m.length)로 건 경우 = 모션 초)</summary>
+    public void SetMotionTime(float seconds)
+    {
+        if (gesture == MaestroGesture.Custom) gestureTime = Mathf.Max(0f, seconds);
+    }
+
+    /// <summary>
+    /// 순간이동 (11-26 사용자: 보스가 특정 위치로 옮겨 갈 때) — 몸 자리·크기·깊이를 바로 새 목표로 옮기고,
+    /// 그림 봇은 지금 자리에서 휘어진 궤적으로 차례로(봇마다 조금씩 늦게) 새 자리로 흘러와 다시 모인다. seconds = 다 모이는 시간.
+    /// 먼저 SetPose·SetDepth·SetFeet로 목표를 건 뒤 부를 것
+    /// </summary>
+    public void Teleport(float seconds)
+    {
+        if (!started || swarm == null) return;
+        seconds = Mathf.Max(0.1f, seconds);
+        feet = feetTarget; feetVel = Vector3.zero;
+        grow = growTarget; growVel = 0f;
+        back = backTarget; backVel = 0f;
+        foreach (var c in cloth) if (c != null) c.init = false; // 천은 새 자리에서 쉬는 모양으로 다시 시작
+        var bots = swarm.Bots;
+        float now = Time.time;
+        for (int k = 0; k < slotBot.Length; k++)
+        {
+            int i = slotBot[k];
+            if (i < 0 || i >= bots.Length) continue;
+            slotArriving[k] = true;
+            arriveFrom[k] = bots[i].pos;
+            arriveT0[k] = now + pixHash[k] * seconds * 0.35f;
+            arriveDur[k] = seconds * 0.65f * (0.8f + 0.4f * pixHash[k]);
+        }
+    }
+
     public void Play(MaestroGesture g, float seconds)
     {
+        motionTimeScale = 1f;
         timed = false;
         gesture = g;
         gestureTime = 0f;
@@ -807,7 +844,7 @@ public class MaestroLook : MonoBehaviour
         }
         else if (gesture != MaestroGesture.None)
         {
-            gestureTime += dt;
+            gestureTime += dt * (gesture == MaestroGesture.Custom ? motionTimeScale : 1f);
             if (gestureLength > 0f && gestureTime >= gestureLength) gesture = MaestroGesture.None;
         }
         gestureWeight = Mathf.SmoothDamp(gestureWeight, gesture == MaestroGesture.None ? 0f : 1f, ref gestureWeightVel, 0.12f, Mathf.Infinity, dt);

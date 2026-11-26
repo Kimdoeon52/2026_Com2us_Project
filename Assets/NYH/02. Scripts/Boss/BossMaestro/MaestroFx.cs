@@ -48,6 +48,10 @@ public class MaestroFx : MonoBehaviour
 
     public static Sprite Disc => discSprite != null ? discSprite : (discSprite = MakeSprite(64, (u, v) => { float d = Mathf.Sqrt(u * u + v * v); return Mathf.Exp(-d * d * 4.5f) * Mathf.Clamp01(1f - d); }));
     public static Sprite RingTex => ringSprite != null ? ringSprite : (ringSprite = MakeSprite(128, (u, v) => { float d = Mathf.Sqrt(u * u + v * v); return Mathf.Exp(-Mathf.Pow((d - 0.82f) / 0.07f, 2f)); }));
+    /// <summary>가장자리만 부드러운 꽉 찬 네모 (빛기둥·바닥 예고 칸) — 1단위 정사각, 크기로 늘려 씀</summary>
+    public static Sprite Column => columnSprite != null ? columnSprite : (columnSprite = MakeSprite(64, (u, v) => Mathf.Clamp01((1f - Mathf.Abs(u)) / 0.18f) * Mathf.Clamp01((1f - Mathf.Abs(v)) / 0.04f)));
+    private static Sprite columnSprite;
+
     public static Sprite Beam => beamSprite != null ? beamSprite : (beamSprite = MakeSprite(64, (u, v) => Mathf.Exp(-u * u * 6f) * Mathf.Clamp01(1.15f - Mathf.Abs(v))));
 
     public static Material Mat

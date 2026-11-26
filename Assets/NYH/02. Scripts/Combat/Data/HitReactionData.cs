@@ -35,6 +35,11 @@ public class HitReactionData : ScriptableObject
     [Tooltip("TODO: 임시값. 맞은 뒤 스프라이트가 깜빡이는 프레임 수. 0이면 점멸 없음")]
     [Min(0)] [SerializeField] private int flashFrames = 8;
 
+    [Header("피격 무적 시간")]
+    [Tooltip("맞을 때마다 이 프레임 동안 무적 (60fps — 9 = 0.15초, 15 = 0.25초). 0이면 없음. " +
+             "로봇 공격·보스 공격 모두 막힘, 회피 성공 연출은 안 나옴")]
+    [Min(0)][SerializeField] private int playerStaggerImmunity = 15;
+
     [SerializeField] private Color flashColor = new Color(1f, 0.45f, 0.45f, 1f);
 
     public ActionData HurtAction => hurtAction;
@@ -42,5 +47,7 @@ public class HitReactionData : ScriptableObject
     public int InterruptDamageThreshold => interruptDamageThreshold;
     public bool ReactInAir => reactInAir;
     public int FlashFrames => flashFrames;
+    /// <summary>맞은 뒤 무적 프레임 (ActionExecutor.NotifyDamaged가 건다)</summary>
+    public int HitImmunityFrames => playerStaggerImmunity;
     public Color FlashColor => flashColor;
 }
